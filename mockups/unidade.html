@@ -216,6 +216,137 @@
   }
   .comentario-lateral strong { display: block; font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--cor-primaria-escura); margin-bottom: var(--esp-1); }
 
+  /* ---------- Balão de artigo de lei citado ---------- */
+  /* Marcação discreta no texto corrido: sublinhado pontilhado em dourado,
+     nunca sólido nem grosso, para não poluir um parágrafo com várias
+     citações. Abre ao passar o mouse (hover) e ao chegar por tabulação
+     (foco), sem JavaScript: só CSS (:hover / :focus-within). */
+  .citacao-artigo-wrap { position: relative; display: inline; }
+  .citacao-artigo {
+    display: inline; background: none; border: none; margin: 0; padding: 0 1px;
+    font: inherit; color: inherit; cursor: help; text-decoration: none;
+    border-bottom: 1px dotted var(--cor-acento);
+    border-radius: 2px;
+  }
+  .citacao-artigo-wrap:hover .citacao-artigo,
+  .citacao-artigo-wrap:focus-within .citacao-artigo {
+    background: var(--cor-acento-claro); border-bottom-style: solid;
+  }
+  /* :focus-visible herda o contorno global do site (tokens.css); aqui só
+     garante que ele não fica cortado pelo padding zero do botão. */
+  .citacao-artigo:focus-visible { outline-offset: 3px; }
+
+  .balao-artigo {
+    position: absolute; top: calc(100% + 8px); left: 50%; z-index: 50;
+    width: 300px; max-width: calc(100vw - 2rem);
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-md); box-shadow: var(--sombra-elevada);
+    padding: var(--esp-4); font-size: var(--escala-sm); text-align: left; white-space: normal;
+    color: var(--cor-texto);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transform: translateX(-50%) translateY(-4px);
+    transition: opacity var(--transicao-rapida), transform var(--transicao-rapida);
+  }
+  .balao-artigo::before {
+    content: ""; position: absolute; top: -6px; left: 50%;
+    width: 12px; height: 12px; background: var(--cor-fundo-elevado);
+    border-left: 1px solid var(--cor-borda); border-top: 1px solid var(--cor-borda);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .citacao-artigo-wrap:hover .balao-artigo,
+  .citacao-artigo-wrap:focus-within .balao-artigo {
+    opacity: 1; visibility: visible; pointer-events: auto; transform: translateX(-50%) translateY(0);
+  }
+  /* Variação que abre para o lado esquerdo, para quando a citação fica perto
+     da borda direita da página e o balão padrão sairia da tela (ver a
+     citação do art. 319, II, do CPC no comentário lateral, e a segunda peça
+     da demonstração ao final desta aba). */
+  .balao-artigo--esquerda {
+    left: auto; right: 0; transform: translateX(0) translateY(-4px);
+  }
+  .balao-artigo--esquerda::before { left: auto; right: 16px; transform: rotate(45deg); }
+  .citacao-artigo-wrap:hover .balao-artigo--esquerda,
+  .citacao-artigo-wrap:focus-within .balao-artigo--esquerda {
+    transform: translateX(0) translateY(0);
+  }
+  .balao-cabecalho {
+    display: block; font-family: var(--fonte-titulo); font-weight: 700;
+    color: var(--cor-primaria-escura); margin-bottom: var(--esp-2); font-size: var(--escala-sm);
+  }
+  .balao-corpo { margin: 0 0 var(--esp-3); line-height: 1.55; }
+  .balao-rodape {
+    display: block; font-size: var(--escala-xs); color: var(--cor-texto-suave);
+    border-top: 1px solid var(--cor-borda); padding-top: var(--esp-2);
+  }
+  .balao-fechar { display: none; } /* só aparece na faixa de tela estreita, ver media query abaixo */
+
+  /* Tela estreita (celular): não existe hover, então o balão vira uma faixa
+     fixada na base da tela, alcançável por toque no gatilho (que também é
+     focável), com botão de fechar visível. */
+  @media (max-width: 640px) {
+    .balao-artigo, .balao-artigo--esquerda {
+      position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+      width: auto; max-width: none;
+      transform: translateY(100%);
+      border-radius: var(--raio-lg) var(--raio-lg) 0 0;
+      padding: var(--esp-5);
+      padding-bottom: calc(var(--esp-5) + env(safe-area-inset-bottom, 0px));
+      z-index: 70;
+    }
+    .balao-artigo::before, .balao-artigo--esquerda::before { display: none; }
+    .citacao-artigo-wrap:hover .balao-artigo, .citacao-artigo-wrap:focus-within .balao-artigo,
+    .citacao-artigo-wrap:hover .balao-artigo--esquerda, .citacao-artigo-wrap:focus-within .balao-artigo--esquerda {
+      transform: translateY(0);
+    }
+    .balao-fechar {
+      display: inline-flex; align-items: center; justify-content: center;
+      position: absolute; top: var(--esp-3); right: var(--esp-3);
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid var(--cor-borda); background: var(--cor-fundo-sutil);
+      color: var(--cor-texto); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0;
+    }
+  }
+
+  /* Impressão: sem balão (não faz sentido em papel). A citação some do
+     sublinhado e ganha, entre parênteses, a referência simples guardada em
+     data-ref, para o texto continuar completo e legível na folha. */
+  @media print {
+    .balao-artigo, .balao-artigo--esquerda { display: none !important; }
+    .citacao-artigo { border-bottom: none; background: none !important; color: inherit; cursor: auto; }
+    .citacao-artigo::after { content: " (" attr(data-ref) ")"; font-size: 0.85em; }
+  }
+
+  /* Painel de demonstração dos três estados do balão, só para referência de
+     design nesta aba (não é conteúdo real da petição). */
+  .demo-balao { margin-top: var(--esp-8); padding-top: var(--esp-6); border-top: 1px dashed var(--cor-borda); }
+  .demo-balao > .rotulo-bloco { display: block; margin-bottom: var(--esp-4); }
+  .demo-balao-grade { display: grid; grid-template-columns: repeat(3, minmax(200px, 1fr)); gap: var(--esp-5); align-items: start; }
+  .demo-balao-item { background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--esp-5); min-height: 220px; }
+  .demo-balao-item .legenda-estado { font-size: var(--escala-xs); color: var(--cor-texto-suave); margin: 0 0 var(--esp-5); }
+  .demo-moldura { display: block; text-align: center; padding-top: var(--esp-6); }
+  .demo-aberto {
+    opacity: 1 !important; visibility: visible !important; pointer-events: auto !important;
+    transform: translateX(-50%) translateY(0) !important; position: static !important;
+    display: block; margin-top: var(--esp-6); text-align: left;
+  }
+  .demo-aberto::before { display: none; }
+  .balao-artigo--esquerda.demo-aberto { transform: none !important; }
+  .moldura-celular {
+    width: 220px; margin-inline: auto; height: 340px; position: relative;
+    border: 8px solid var(--cor-primaria-escura); border-radius: 28px; overflow: hidden;
+    background: var(--cor-fundo); padding: var(--esp-4);
+  }
+  .demo-aberto-faixa {
+    position: absolute !important; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-width: none;
+    opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: none !important;
+    border-radius: var(--raio-lg) var(--raio-lg) 0 0; padding: var(--esp-4);
+  }
+  .demo-aberto-faixa::before { display: none; }
+  .demo-aberto-faixa .balao-fechar { display: inline-flex; }
+  @media (max-width: 900px) {
+    .demo-balao-grade { grid-template-columns: 1fr; }
+  }
+
   /* ---------- Aba Quiz ---------- */
   .cabecalho-quiz { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); margin-bottom: var(--esp-5); flex-wrap: wrap; }
   .progresso-quiz { display: flex; align-items: center; gap: var(--esp-3); }
@@ -289,6 +420,13 @@
     .marcador-alt { border-color: CanvasText; }
     .alternativa.selecionada .marcador-alt { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
     .botao-primario { border: 1px solid ButtonText; }
+    .citacao-artigo { border-bottom-color: LinkText; }
+    .citacao-artigo-wrap:hover .citacao-artigo, .citacao-artigo-wrap:focus-within .citacao-artigo { forced-color-adjust: none; background: Canvas; border-bottom-color: LinkText; }
+    .balao-artigo, .balao-artigo--esquerda { forced-color-adjust: none; background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
+    .balao-artigo::before, .balao-artigo--esquerda::before { forced-color-adjust: none; background: Canvas; border-color: CanvasText; }
+    .balao-cabecalho { color: CanvasText; }
+    .balao-rodape { border-top-color: CanvasText; }
+    .balao-fechar { forced-color-adjust: none; background: Canvas; border-color: CanvasText; color: CanvasText; }
   }
 
   @media (max-width: 980px) {
@@ -506,11 +644,11 @@
             <p>A autora constatou infiltração em seu apartamento, proveniente do imóvel da ré, que ocasionou danos a móveis e equipamentos de sua propriedade. Verificou-se que o vazamento decorreu da falta de manutenção da tubulação do apartamento superior. A autora buscou solução amigável; entretanto, a ré recusou-se a ressarcir os danos causados.</p>
 
             <h3 id="pt-direito">Do Direito</h3>
-            <p><strong>1. O ato ilícito por omissão negligente (art. 186 do Código Civil).</strong> A conduta da ré configura ato ilícito ao violar direito da autora por omissão negligente, consistente na falta de manutenção adequada de sua unidade.</p>
-            <p><strong>2. O dever de reparar (art. 927 do Código Civil).</strong> Configurado o ato ilícito, exsurge o dever de reparar: aquele que, por ato ilícito, causa dano a outrem fica obrigado a repará-lo.</p>
+            <p><strong>1. O ato ilícito por omissão negligente (<span class="citacao-artigo-wrap"><button type="button" class="citacao-artigo" data-ref="Código Civil, art. 186" aria-describedby="balao-cc186">art. 186 do Código Civil</button><span class="balao-artigo" id="balao-cc186" role="tooltip"><span class="balao-cabecalho">Código Civil, art. 186</span><p class="balao-corpo">"Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, ainda que exclusivamente moral, comete ato ilícito."</p><span class="balao-rodape">Fonte: Código Civil, Lei nº 10.406/2002</span><button type="button" class="balao-fechar" aria-label="Fechar" onclick="fecharBalao(this)">&times;</button></span></span>).</strong> A conduta da ré configura ato ilícito ao violar direito da autora por omissão negligente, consistente na falta de manutenção adequada de sua unidade.</p>
+            <p><strong>2. O dever de reparar (<span class="citacao-artigo-wrap"><button type="button" class="citacao-artigo" data-ref="Código Civil, art. 927" aria-describedby="balao-cc927">art. 927 do Código Civil</button><span class="balao-artigo" id="balao-cc927" role="tooltip"><span class="balao-cabecalho">Código Civil, art. 927</span><p class="balao-corpo">"Aquele que, por ato ilícito (arts. 186 e 187), causar dano a outrem, fica obrigado a repará-lo. Parágrafo único. Haverá obrigação de reparar o dano, independentemente de culpa, nos casos especificados em lei, ou quando a atividade normalmente desenvolvida pelo autor do dano implicar, por sua natureza, risco para os direitos de outrem."</p><span class="balao-rodape">Fonte: Código Civil, Lei nº 10.406/2002</span><button type="button" class="balao-fechar" aria-label="Fechar" onclick="fecharBalao(this)">&times;</button></span></span>).</strong> Configurado o ato ilícito, exsurge o dever de reparar: aquele que, por ato ilícito, causa dano a outrem fica obrigado a repará-lo.</p>
 
             <h3 id="pt-pedidos">Dos Pedidos</h3>
-            <p>Diante do exposto, requer a condenação da ré ao pagamento de indenização por danos materiais em R$ ..., conforme arts. 186 e 927 do Código Civil e art. 5º, incisos V e X, da Constituição Federal.</p>
+            <p>Diante do exposto, requer a condenação da ré ao pagamento de indenização por danos materiais em R$ ..., conforme arts. 186 e 927 do Código Civil e <span class="citacao-artigo-wrap"><button type="button" class="citacao-artigo" data-ref="Constituição Federal, art. 5º, V e X" aria-describedby="balao-cf5">art. 5º, incisos V e X, da Constituição Federal</button><span class="balao-artigo" id="balao-cf5" role="tooltip"><span class="balao-cabecalho">Constituição Federal, art. 5º</span><p class="balao-corpo"><strong>V.</strong> "é assegurado o direito de resposta, proporcional ao agravo, além da indenização por dano material, moral ou à imagem;"<br><strong>X.</strong> "são invioláveis a intimidade, a vida privada, a honra e a imagem das pessoas, assegurado o direito a indenização pelo dano material ou moral decorrente de sua violação;"</p><span class="balao-rodape">Fonte: Constituição Federal de 1988</span><button type="button" class="balao-fechar" aria-label="Fechar" onclick="fecharBalao(this)">&times;</button></span></span>.</p>
 
             <h3 id="pt-encerramento">Valor da causa e encerramento</h3>
             <p>Dá-se à causa o valor de R$ ... (... reais). Termos em que pede e espera deferimento. Local e data.</p>
@@ -524,7 +662,7 @@
             </div>
             <div class="comentario-lateral">
               <strong>Como fazer, Qualificação</strong>
-              O art. 319, II, do CPC exige qualificação completa de autor e réu. Quando faltar algum dado real, mantenha reticências: nunca invente.
+              O <span class="citacao-artigo-wrap"><button type="button" class="citacao-artigo" data-ref="CPC, art. 319, II" aria-describedby="balao-cpc319">art. 319, II, do CPC</button><span class="balao-artigo balao-artigo--esquerda" id="balao-cpc319" role="tooltip"><span class="balao-cabecalho">Código de Processo Civil, art. 319, II</span><p class="balao-corpo">"o nome, o estado civil, a existência de união estável, a profissão, o número de inscrição no Cadastro de Pessoas Físicas ou no Cadastro Nacional da Pessoa Jurídica, o endereço eletrônico, o domicílio e a residência do autor e do réu;"</p><span class="balao-rodape">Fonte: Código de Processo Civil, Lei nº 13.105/2015</span><button type="button" class="balao-fechar" aria-label="Fechar" onclick="fecharBalao(this)">&times;</button></span></span> exige qualificação completa de autor e réu. Quando faltar algum dado real, mantenha reticências: nunca invente. Esta citação abre para a esquerda de propósito: fica perto da borda direita da página, e o balão padrão sairia da tela.
             </div>
             <div class="comentario-lateral">
               <strong>Como fazer, Dos Fatos</strong>
@@ -535,6 +673,48 @@
               Encadeie o raciocínio em passos: primeiro o art. 186 define o ilícito, depois o art. 927 impõe a consequência (o dever de reparar).
             </div>
           </aside>
+        </div>
+
+        <div class="demo-balao">
+          <span class="rotulo-bloco">Referência de design do balão de artigo, não é conteúdo da petição</span>
+          <div class="demo-balao-grade">
+            <div class="demo-balao-item">
+              <p class="legenda-estado">Estado 1, balão aberto na posição padrão (abre abaixo, centralizado na citação)</p>
+              <span class="citacao-artigo-wrap demo-moldura">
+                <button type="button" class="citacao-artigo" tabindex="-1" data-ref="Código Civil, art. 927">art. 927 do Código Civil</button>
+                <span class="balao-artigo demo-aberto" role="tooltip">
+                  <span class="balao-cabecalho">Código Civil, art. 927</span>
+                  <p class="balao-corpo">"Aquele que, por ato ilícito (arts. 186 e 187), causar dano a outrem, fica obrigado a repará-lo."</p>
+                  <span class="balao-rodape">Fonte: Código Civil, Lei nº 10.406/2002</span>
+                </span>
+              </span>
+            </div>
+            <div class="demo-balao-item">
+              <p class="legenda-estado">Estado 2, balão virado para a esquerda: mesma citação do comentário lateral ao lado, perto da borda direita da página</p>
+              <span class="citacao-artigo-wrap demo-moldura">
+                <button type="button" class="citacao-artigo" tabindex="-1" data-ref="CPC, art. 319, II">art. 319, II, do CPC</button>
+                <span class="balao-artigo balao-artigo--esquerda demo-aberto" role="tooltip">
+                  <span class="balao-cabecalho">CPC, art. 319, II</span>
+                  <p class="balao-corpo">"o nome, o estado civil, a existência de união estável, a profissão [...], o domicílio e a residência do autor e do réu;"</p>
+                  <span class="balao-rodape">Fonte: Código de Processo Civil, Lei nº 13.105/2015</span>
+                </span>
+              </span>
+            </div>
+            <div class="demo-balao-item">
+              <p class="legenda-estado">Estado 3, tela estreita (celular): a citação abre uma faixa fixada na base da tela, com botão de fechar</p>
+              <div class="moldura-celular">
+                <span class="citacao-artigo-wrap">
+                  <button type="button" class="citacao-artigo" tabindex="-1" data-ref="Código Civil, art. 186">art. 186 do Código Civil</button>
+                  <span class="balao-artigo demo-aberto-faixa" role="tooltip">
+                    <span class="balao-cabecalho">Código Civil, art. 186</span>
+                    <p class="balao-corpo">"Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, ainda que exclusivamente moral, comete ato ilícito."</p>
+                    <span class="balao-rodape">Fonte: Código Civil, Lei nº 10.406/2002</span>
+                    <button type="button" class="balao-fechar" tabindex="-1" aria-label="Fechar">&times;</button>
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -621,6 +801,16 @@
       if (ativa) { painel.classList.add('ativo'); painel.removeAttribute('hidden'); }
       else { painel.classList.remove('ativo'); painel.setAttribute('hidden', ''); }
     });
+  }
+
+  /* Fecha o balão de artigo na faixa de tela estreita (onde não existe
+     hover): tira o foco de tudo dentro do balão, o que já basta para a
+     regra de CSS :focus-within deixar de mostrar a faixa. */
+  function fecharBalao(botao) {
+    var wrap = botao.closest('.citacao-artigo-wrap');
+    if (!wrap) return;
+    var focaveis = wrap.querySelectorAll('button');
+    focaveis.forEach(function (el) { el.blur(); });
   }
 </script>
 </body>

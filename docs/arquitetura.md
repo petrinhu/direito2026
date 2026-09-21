@@ -98,7 +98,6 @@ site_direito2026/
 ├── mockups/
 ├── public/                       # copiado cru para dist/
 │   ├── .htaccess
-│   ├── robots.txt                # bloqueio de rastreamento (decisão do líder)
 │   ├── manifest.webmanifest
 │   └── icones/
 ├── scripts/
@@ -763,7 +762,23 @@ Por que apêndice e não expansão em linha: um artigo citado cinco vezes aparec
 
 O apêndice é montado a partir do mesmo `dispositivos.ts` da unidade, que chega junto com o conteúdo. Fica no DOM sempre, escondido com `@media screen`, e por isso **imprimir funciona offline e não depende de o leitor ter aberto algum balão antes**. Componente: `ApendiceDispositivos`.
 
-### 12.7 Componentes e onde cada peça mora
+### 12.7 Manutenção do catálogo de leis
+
+[FATO] decisão do líder, 21/09/2026: **revisar a cada seis meses e sempre que conteúdo novo for publicado.** Cada dispositivo guarda a data da consulta, e o balão mostra essa data de forma discreta.
+
+| Quando | O que se faz |
+|---|---|
+| A cada seis meses | Reconferir na fonte oficial todos os dispositivos do catálogo. Atualizar `texto`, `dataConsulta` e, quando for o caso, `notaAlteracao`. |
+| Sempre que uma unidade nova é publicada | Conferir os dispositivos que ela cita, incluir os que faltarem e reconferir os que já estavam. Isso já é obrigatório na prática, porque o portão da seção 14 reprova a construção se algum id citado não existir. |
+| Quando uma lei muda fora dessas janelas | Atualizar na hora. Não esperar a janela dos seis meses. |
+
+**O que a interface mostra.** No rodapé do balão, em letra menor e sem competir com a redação: a sigla e o número do dispositivo, a data da consulta, e o link para a fonte oficial. Quando `notaAlteracao` existe, ela aparece **acima** da redação e em destaque, porque a informação de que aquele texto foi alterado ou revogado vale mais que o texto em si.
+
+[INFERÊNCIA] a data visível não é burocracia: é o que separa um material de estudo honesto de um que ensina redação revogada em silêncio. O leitor vê de quando é aquele texto e tem um clique para conferir.
+
+**Quem executa:** a revisão é trabalho de verificação jurídica, não de engenharia. O que a engenharia garante é que o dado tem os campos, que toda citação resolve, e que a data aparece na tela.
+
+### 12.8 Componentes e onde cada peça mora
 
 | Peça | Camada | Responsabilidade |
 |---|---|---|
@@ -790,7 +805,7 @@ O apêndice é montado a partir do mesmo `dispositivos.ts` da unidade, que chega
 
 [FATO, guia de compatibilidade, seção 1] Chrome, Firefox e Edge no iPhone e no iPad são invólucros sobre o WebKit do sistema. O guia acrescenta que, apesar de o Digital Markets Act ter obrigado a Apple a permitir motores alternativos, nenhum fabricante lançou um em produção até a consulta de 21/09/2026. [INFERÊNCIA] a consequência arquitetural é direta e não tem contorno: **no iOS não existe plano B de navegador**. Onde o WebKit não faz, ninguém faz naquele aparelho, e o contorno tem de estar no nosso código.
 
-Na prática são três motores a atender, não quatro: Blink (Chrome e Edge), Gecko (Firefox) e WebKit (Safari em toda plataforma, mais todo navegador no iOS). Edge não é um quarto alvo de engenharia; é um quarto alvo de verificação.
+Na prática são três motores a atender, não quatro: Blink (Chrome e Edge), Gecko (Firefox) e WebKit (Safari em toda plataforma, mais todo navegador no iOS). Edge não é um quarto alvo de engenharia. O Edge não está instalado neste sistema, mas **existe uma máquina virtual de Windows 11 aqui** (inventário e roteiro na seção 14), e é nela que os recursos próprios dele que o guia lista (Leitor Imersivo, tradutor, autopreenchimento) e o alto contraste do Windows passam a ser conferidos de verdade, uma vez por onda. A engenharia continua seguindo as regras do guia (marcação semântica correta, busca contra o índice do build e não contra o texto da tela, `autocomplete="off"` nos campos do quiz, `forced-colors` em vez da sintaxe removida), só que agora com prova em cima.
 
 É por isso que R9 entra como restrição na seção 1 e não como item de acabamento: um contorno de WebKit descoberto na última onda custa redesenho, e cada decisão abaixo já nasceu com ele considerado.
 
@@ -899,10 +914,25 @@ O desenho anterior supunha os três motores no CI. **Isso caiu quando o inventá
 | `/usr/bin/chromium-browser` (Blink) | Edge: não instalado |
 | `/usr/bin/firefox` (Gecko) | Epiphany ou qualquer navegador sobre WebKitGTK: não instalado |
 | biblioteca `webkit2gtk4.1-2.52.5`, sem nenhum navegador que a use | Nenhum navegador em flatpak |
+| **máquina virtual de Windows 11, desligada e persistente** (detalhe abaixo) | |
 
 **[FATO] decisão do líder, 21/09/2026, verbatim:** *"tenho instalados brave, chromium e safari. Os outros viram conferência manual dos usuarios depois"*. A intenção é clara e está acatada; o inventário acima corrige a parte do Safari, que não existe nesta plataforma.
 
-**Regra que fica: nenhum binário de navegador é baixado.**
+**[FATO] existe uma máquina virtual de Windows nesta máquina, conferida por `virsh` em 21/09/2026:**
+
+| Item | Valor medido |
+|---|---|
+| Domínio libvirt de sessão (`qemu:///session`) | `glintfx-win11-lab`, desligado, persistente, sem início automático |
+| Recursos | 4 vCPU, 8 GiB de memória |
+| Disco | `(disco da maquina virtual, fora do repositorio)`, 17 GB ocupados |
+| Mídia anexada | `win11-ltsc2024-ptbr-x64-eval.iso`, `answer-disc.iso`, `virtio-win-stable.iso` |
+| Rede | `type='user'` (slirp) com modelo `virtio`, o que faz o host ser alcançável de dentro do Windows pelo endereço `10.0.2.2` |
+
+[FATO, documentação da Microsoft, consultada em 21/09/2026] no Windows 11 Enterprise LTSC 2024 o **Edge é o navegador padrão e vem incluído**, ao contrário do Windows 10 LTSC, onde não vinha. O Internet Explorer não existe mais nessa versão.
+
+**[VERIFICAÇÃO PENDENTE, não é fato]** ninguém ligou a VM para confirmar que a instalação do Windows terminou e que o Edge está lá. O tamanho do disco sugere que sim, sugerir não é medir, e o primeiro uso da VM no plano começa por confirmar isso.
+
+**Regra que fica: nenhum binário de navegador é baixado.** A VM não é exceção: ela já existe, e nada é instalado dentro dela para este projeto.
 
 #### O que roda no portão automático
 
@@ -912,9 +942,22 @@ Blink, e só Blink. O Playwright é apontado por `executablePath` para o `chromi
 
 Ponto que precisa ficar escrito para ninguém concluir depois que dava e foi esquecido: **o Playwright não usa o Firefox do sistema.** Ele usa uma compilação própria, remendada, com um protocolo de automação que o Firefox de distribuição não expõe. Apontar `executablePath` para `/usr/bin/firefox` não funciona. Automatizar Gecko exigiria `npx playwright install firefox`, que é baixar binário de navegador, o que está vedado. Portanto **Gecko fica fora do automático**, e isso é consequência de uma decisão, não de um esquecimento.
 
+#### O que a VM de Windows passa a cobrir
+
+O Edge sai da coluna "sem como verificar". Com a VM, e **sem tocar na sessão gráfica do líder** (L-50), passam a ter prova quatro coisas que até agora não tinham nenhuma:
+
+1. **O Edge real**, e com ele os recursos próprios que o guia de compatibilidade lista como capazes de alterar a página: Leitor Imersivo, tradução automática e autopreenchimento.
+2. **Modo de alto contraste do Windows** (`forced-colors: active`), que é o cenário para o qual a regra existe e que nenhum navegador de Linux reproduz.
+3. **Impressão no Windows**, que tem diálogo e motor de impressão próprios.
+4. **Renderização de fonte no Windows**, com o hinting do sistema, que difere do Linux e do macOS e é onde o recorte da seção 10 pode surpreender.
+
+Continua sendo **verificação manual**, não portão automático: a VM não entra no CI.
+
+**Ligar a VM é trabalho pesado.** São 8 GiB de memória e 4 vCPU. Vale o portão de **um trabalho pesado por vez** (L-11): a VM não sobe junto com uma construção, com a suíte de testes nem com outra VM. Quem for usá-la fecha o que estiver pesado antes.
+
 #### Por que WebKit não entra de jeito nenhum
 
-Safari não existe para Linux. A biblioteca `webkit2gtk4.1` está no sistema, mas biblioteca não é navegador: seria preciso instalar algo como o Epiphany, que é instalar navegador (vedado pela L-57) e instalar pacote (L-51). O WebKit do Playwright é outro download. **Não há caminho automatizado para WebKit nesta máquina**, e é justamente o motor onde moram os maiores riscos deste projeto: o contorno do balão de citação, o `localStorage` que lança em modo privado, a expiração de 7 dias, a impressão e o limite de memória do canvas.
+**A VM de Windows não resolve isto.** Windows não tem WebKit, e o Safari para Windows foi descontinuado há mais de uma década. Safari não existe para Linux. A biblioteca `webkit2gtk4.1` está no sistema, mas biblioteca não é navegador: seria preciso instalar algo como o Epiphany, que é instalar navegador (vedado pela L-57) e instalar pacote (L-51). O WebKit do Playwright é outro download. **Não há caminho automatizado para WebKit nesta máquina**, e é justamente o motor onde moram os maiores riscos deste projeto: o contorno do balão de citação, o `localStorage` que lança em modo privado, a expiração de 7 dias, a impressão e o limite de memória do canvas.
 
 #### O que sai do automático e vira verificação manual declarada
 
@@ -924,9 +967,36 @@ Safari não existe para Linux. A biblioteca `webkit2gtk4.1` está no sistema, ma
 | Gecko (Firefox) | Passada manual no Firefox instalado, uma por onda, roteiro escrito | `qa-engineer` |
 | WebKit desktop (Safari em macOS) | Não verificável nesta máquina. Conferência do usuário, depois | Líder ou usuários |
 | WebKit móvel (iPhone, iPad) | Lista de verificação do líder, logo abaixo | Líder |
-| Recursos próprios do Edge (Leitor Imersivo, tradutor, autopreenchimento, alto contraste do Windows) | Não verificável nesta máquina. Conferência do usuário, depois | Usuários |
+| Edge real, mais alto contraste, impressão e fonte do Windows | Passada manual na VM `glintfx-win11-lab`, uma por onda, roteiro na lista abaixo | `qa-engineer` |
 
 **Regra de relato, sem exceção: nenhum fechamento de onda pode afirmar "três motores verdes".** A frase honesta é "Blink verde no automático; Gecko conferido à mão em tal data; WebKit não verificado nesta máquina". Um relatório que arredonde isso para cima é relato falso, e a L-06 já diz que cumprimento parcial é não.
+
+### Roteiro de conferência no Windows, na máquina virtual
+
+Executado pelo `qa-engineer`, uma vez por onda. Nada é instalado dentro da VM.
+
+**Passo 0, antes de tudo:** fechar construção, suíte e qualquer outro trabalho pesado. A VM pede 8 GiB e vale a regra de um pesado por vez (L-11).
+
+**Passo 1, no host:** subir a pré-visualização do site em `vite preview --host 0.0.0.0 --port 4173`. O `--host` é necessário: sem ele o servidor só escuta em `localhost` e a VM não alcança.
+
+**Passo 2:** ligar a VM (`virsh -c qemu:///session start glintfx-win11-lab`) e abrir o visualizador. **Na primeira vez, confirmar que a instalação do Windows terminou e que o Edge está presente**, que é a verificação ainda pendente registrada acima. Se não estiver, o roteiro para aqui e o achado é reportado; nada é instalado para contornar.
+
+**Passo 3, dentro do Windows, no Edge:** abrir `http://10.0.2.2:4173`. A rede da VM é do tipo `user`, então `10.0.2.2` é o host, sem nenhuma configuração de rede.
+
+**Passo 4, o que olhar:**
+
+| Tela | O que fazer | O que deve acontecer |
+|---|---|---|
+| Home e uma unidade | Navegar normalmente, trocar de aba, abrir o menu de três níveis | Nada divergente do Chromium no Linux. Divergência aqui é divergência de sistema, não de motor, e merece investigação. |
+| Uma unidade longa | Acionar o **Leitor Imersivo** do Edge | O texto do resumo é reconhecido como conteúdo principal. Perder o menu e as abas é esperado, é o que o recurso faz; perder o corpo do resumo não é. |
+| Uma unidade | Deixar o **tradutor** do Edge traduzir a página | A página continua utilizável. A busca não pode quebrar, porque ela consulta o índice do build e não o texto da tela. |
+| Quiz | Responder algumas perguntas | O autopreenchimento do Edge não pode aparecer nos campos do quiz. |
+| Site inteiro, nos dois temas | Ligar o **alto contraste** do Windows nos ajustes do sistema | Texto legível, foco visível, nenhum elemento sumindo. É o cenário de `forced-colors`, que nenhum navegador de Linux reproduz. |
+| Uma unidade | Mandar **imprimir** e conferir a pré-visualização | Mesmo resultado do PDF do Chromium: sem menu, sem balão, com o apêndice "Dispositivos citados" no fim. |
+| Qualquer página | Olhar os pesos da tipografia | O hinting do Windows difere do Linux. Título e negrito não podem ficar finos demais nem borrados. |
+| Citação legal | Apontar uma citação | O balão abre, não empurra o texto e não sai da tela. |
+
+**Passo 5:** desligar a VM. Deixá-la ligada segura 8 GiB.
 
 ### Lista de conferência no iPhone ou iPad, para o líder
 
@@ -970,13 +1040,13 @@ Executado pelo `qa-engineer`, nunca pelo orquestrador nem pelo implementador, em
 
 [FATO] decisão do líder, 21/09/2026: não indexar. O site continua aberto a quem tem o link.
 
-Implementação, os três juntos:
+**Mecanismo, decidido em 21/09/2026 depois da nota técnica deste documento: só a marcação nas páginas, sem bloqueio no `robots.txt`.**
 
-- `public/robots.txt` com `User-agent: *` e `Disallow: /`.
 - `<meta name="robots" content="noindex, nofollow">` no `index.html`.
-- `Header set X-Robots-Tag "noindex, nofollow"` no `.htaccess`.
+- `Header set X-Robots-Tag "noindex, nofollow"` no `.htaccess`, que cobre também os arquivos que não são HTML.
+- **Nenhum `Disallow` no `robots.txt`.** Bloquear o rastreamento impediria o rastreador de buscar a página, e portanto de ler a marcação de não indexação, com o efeito conhecido de a URL acabar listada sem descrição a partir de um link de terceiro. Deixando o rastreador entrar, ele lê o `noindex` e não indexa, que é o que o líder quer.
 
-**Nota técnica, sem reabrir a decisão.** Os dois primeiros mecanismos trabalham em sentidos que se atrapalham: `Disallow` impede o rastreador de **buscar** a página, e por isso ele nunca chega a **ler** a marcação `noindex`. O efeito conhecido é a URL aparecer no índice sem descrição, a partir de um link de terceiro. A decisão de usar os dois é do líder e está implementada como pedida. Se algum dia a URL aparecer num buscador sem descrição, o conserto é tirar o `Disallow` e deixar só o `noindex`, que aí passa a ser lido. Fica registrado aqui para quem for investigar não achar que é defeito novo.
+Verificação: `curl -sI` traz o cabeçalho `X-Robots-Tag`, e o `index.html` servido contém a marcação. Entram como V9 e V10 na lista de verificação pós-envio.
 
 ### Do build ao servidor
 
@@ -987,7 +1057,7 @@ Implementação, os três juntos:
    - `grep -rL 'data:font' dist/` não acha nada, ou seja, nenhuma fonte embutida sobrou
    - `bash scripts/verificar-proibicoes.sh dist/` (R3) sai zero
    - `node scripts/verificar-dispositivos.ts` sai zero, com `citações encontradas` maior que zero
-   - `test -f dist/robots.txt` e a marcação `noindex` presente no `index.html`
+   - a marcação `noindex` está presente no `index.html` construído
    - `npx vite preview` e abrir um deep link no navegador
 4. Empacotar: `direito2026_YYYYMMDD_HHMMSS.zip` a partir do conteúdo de `dist/` (o zip contém os arquivos na raiz, não uma pasta `dist/` dentro).
 5. Enviar (ver comparação abaixo).
@@ -1020,8 +1090,10 @@ O valor de `HOSTINGER_FTP_TOKEN` e de `HOSTINGER_API_TOKEN` nunca é lido, impre
 | V6 | `curl -s .../ \| bash scripts/verificar-proibicoes.sh -` sai zero | R3 valendo no ar, não só no repositório |
 | V7 | Certificado válido, sem conteúdo misto, checado no console do navegador | HTTPS realmente fechado |
 | V8 | Segundo carregamento com a rede desligada abre a unidade visitada | O service worker está ativo |
+| V9 | `curl -sI .../` traz `X-Robots-Tag: noindex, nofollow` | O cabeçalho de não indexação subiu com o `.htaccess` |
+| V10 | `curl -s .../ \| grep -c 'name="robots"'` maior que zero | A marcação de não indexação está no HTML servido |
 
-V1 a V6 são automatizáveis em `scripts/publicar.sh`, que termina com `exit 1` no primeiro que falhar. V7 e V8 são do `qa-engineer` em navegador real (L-13).
+V1 a V6, V9 e V10 são automatizáveis em `scripts/publicar.sh`, que termina com `exit 1` no primeiro que falhar. V7 e V8 são do `qa-engineer` em navegador real (L-13).
 
 ---
 
@@ -1067,15 +1139,9 @@ Resposta curta: **quase nenhuma, e nenhuma em runtime.** O alvo são as versões
 | Navegador WebKit do Playwright | Sim | **Sim, e não foi autorizado.** Ver o ponto de atenção logo abaixo. |
 | `@floating-ui/dom` | Sim, é contorno de `@position-try` | **Sim, enquanto o `@position-try` do Safari não estiver no alvo inteiro.** É a única dependência de runtime que existe puramente por compatibilidade, custa 0 KB para quem não precisa dela, e sai do projeto no dia em que o guia registrar suporte completo nos quatro. Marcar para reavaliação a cada revisão do guia. |
 
-**Ponto de atenção para o Playwright, e é o que sobra de aberto.** A autorização veio com a condição de apontar para o Brave já instalado, sem baixar navegador. O Brave é Chromium: **cobre Chrome e Edge, e não cobre Firefox nem WebKit.**
+**Ponto de atenção para o Playwright, agora resolvido e com a consequência assumida.** O Playwright aponta por `executablePath` para o `chromium-browser` ou o `brave-browser` já instalados, e **nenhum binário de navegador é baixado**.
 
-Consequência prática, dita sem rodeio: com essa condição, **o WebKit sai do CI**. Tudo o que as seções 12 e 14 descrevem como "e2e nos três motores" passa a ser, na prática, e2e em um motor automatizado mais dois motores verificados à mão. Os casos que mais dependem do WebKit (o contorno do `@position-try`, o balão que não pode sair da tela, o `localStorage` que lança em modo privado) são exatamente os que deixam de ter rede de proteção automática.
-
-Três saídas, e nenhuma é minha para escolher:
-
-1. Firefox e WebKit viram **verificação manual declarada**, uma passada por onda, registrada no fechamento como feita ou como não feita. É o que o plano assume por padrão, por ser o que respeita a condição do líder ao pé da letra.
-2. O Firefox do sistema, se estiver instalado, é apontado por `executablePath`, o que recupera um dos dois motores sem baixar nada. Vale conferir; não conferi.
-3. Autorizar só o binário WebKit do Playwright, que não é um navegador instalado no sistema e não aparece no menu de aplicativos. Isso é uma leitura possível da L-57, não uma certeza, e por isso vai como pendência e não como decisão minha (seção 18).
+O que isso custa, dito de frente: o Playwright não sabe dirigir o Firefox de distribuição (usa compilação própria), e não há nada com WebKit instalado nesta máquina. Então o portão automático é **Blink e só Blink**. Gecko vira passada manual no Firefox instalado; WebKit não tem cobertura automatizada nenhuma. O inventário medido, o raciocínio completo e a regra de relato estão na seção 14.
 
 ### Veredicto sobre as bibliotecas que o líder listou
 
@@ -1107,7 +1173,7 @@ Repositório, Vite mais Vue mais TypeScript, as quatro pastas de camada, `depend
 
 Currículo com os 10 períodos (só o primeiro com cadeira real, o resto `em-breve`), roteamento com as sete rotas, `MenuCurriculo` acessível de três níveis, `AlternadorTema`, home com `FundoAnimado`, a unidade piloto inteira nas três abas (9 blocos, peça em 6 seções, quiz de 60 perguntas), progresso no navegador, **balão de citação legal com o subconjunto de dispositivos da unidade e o apêndice de impressão (seção 12)**, folha de impressão, primeira publicação no destino.
 
-**Fechamento:** as sete rotas abrem por deep link em `vite preview` e no ar; unitários, de componente e e2e verdes; axe sem violação `serious` nem `critical` nas três páginas; screenshots do `qa-engineer` aprovados nos dois temas e nas três larguras; PDF de impressão conferido; as oito verificações V1 a V8 da seção 15 passando; `verificar-proibicoes.sh` verde no `dist/` e na resposta do servidor; **e2e verde no motor disponível no CI, com Firefox e WebKit verificados à mão e o resultado registrado, passada manual no Edge, e a conferência em iPhone e iPad real feita ou declarada como pendência, nunca omitida** (seção 14); todo `data-dispositivo` do piloto resolvido pelo portão, e o balão conferido nos dois caminhos de posicionamento, inclusive com `CSS.supports` forçado a falso.
+**Fechamento:** as sete rotas abrem por deep link em `vite preview` e no ar; unitários, de componente e e2e verdes; axe sem violação `serious` nem `critical` nas três páginas; screenshots do `qa-engineer` aprovados nos dois temas e nas três larguras; PDF de impressão conferido; as oito verificações V1 a V8 da seção 15 passando; `verificar-proibicoes.sh` verde no `dist/` e na resposta do servidor; **portão automático verde em Blink, passada manual no Firefox registrada com data, roteiro do Windows executado na máquina virtual com data, WebKit de computador declarado como não verificado nesta máquina, e a lista de oito itens conferida pelo líder no iPhone ou iPad** (seção 14); todo `data-dispositivo` do piloto resolvido pelo portão, e o balão conferido nos dois caminhos de posicionamento, inclusive com `CSS.supports` forçado a falso.
 
 ### Onda 2: busca e offline
 
@@ -1144,10 +1210,11 @@ Todas as cadeiras dos dez períodos cadastradas, com `em-breve` onde não há ma
 | RI7 | `localStorage` bloqueado apaga o progresso sem o leitor entender por quê. | Fallback em memória com a mesma interface, coberto por teste de componente com mock que lança. |
 | RI8 | R3 é violada por descuido num commit futuro (comentário, metadado, nome de pasta). | `verificar-proibicoes.sh` no pré-CI, no CI e na verificação pós-publicação, com `exit 1` e piso de varredura não vazio. |
 | RI9 | O progresso some no iPhone depois de 7 dias sem uso e o leitor conclui que o site é defeituoso. | Nenhum conteúdo atrás do progresso, estado zero renderizado como estado válido, promessa do rodapé limitada ao que o sistema garante, exportar e importar progresso na onda 3, e convite a "Adicionar à Tela de Início" (seção 8). |
-| RI10 | Verde no WebKit do Playwright é confundido com prova de que funciona no iPhone. | Está escrito na seção 14 que não é, e a lista de oito itens que só aparelho real prova é parte do fechamento de onda. Sem aparelho, vira pendência declarada, nunca item silenciosamente pulado. |
+| RI10 | Verde no automático é confundido com prova de que funciona no iPhone. | O automático hoje é só Blink, e está escrito na seção 14 que nem WebKit nem Gecko entram nele. A lista de oito itens do líder, no aparelho dele, é o que prova iOS, e é disparada no fechamento de cada onda. Nenhum relato de onda pode dizer "três motores verdes". |
 | RI11 | Um contorno de WebKit aparece tarde e obriga a redesenhar uma decisão já implementada. | R9 é restrição desde a seção 1, a tabela da seção 13 já mapeia as dez decisões que encostam no motor, e o guia de compatibilidade é leitura obrigatória antes da primeira linha de código. |
-| RI12 | O texto de um artigo no catálogo envelhece: a lei muda e o balão passa a ensinar redação revogada. | O balão sempre exibe `dataConsulta` e o link da fonte oficial, e `notaAlteracao` aparece em destaque quando existe. A revisão do catálogo entra como item de cadência, não como suposição de que lei não muda. |
-| RI13 | Sem WebKit no CI, um defeito de Safari passa despercebido até alguém abrir o site num iPhone. | Está escrito na seção 16 que o WebKit saiu do CI e por quê; Firefox e WebKit viram verificação manual **declarada** no fechamento de cada onda, e a pendência de autorizar o binário do Playwright está aberta na seção 18. Nenhum fechamento de onda pode dizer "três motores verdes" enquanto isso valer. |
+| RI12 | O texto de um artigo no catálogo envelhece: a lei muda e o balão passa a ensinar redação revogada. | Revisão a cada seis meses e a cada conteúdo novo publicado, decidida pelo líder (seção 12.7). O balão sempre exibe a data da consulta e o link da fonte, e a nota de alteração aparece acima da redação quando existe. |
+| RI13 | WebKit não tem nenhuma cobertura automatizada, e é o motor de maior risco deste projeto. | Não há contorno técnico nesta máquina: Safari não existe para Linux, instalar navegador é vedado (L-57) e baixar binário do Playwright também. O que resta é honestidade de processo: a limitação está escrita na seção 14, a lista do líder cobre WebKit móvel no fechamento de cada onda, WebKit de computador fica com os usuários, e nenhum fechamento pode arredondar isso para cima. A máquina virtual de Windows resolve Edge e o que é próprio do Windows, e **não** resolve WebKit. |
+| RI14 | A VM de Windows pode estar com a instalação incompleta ou sem o Edge, e o roteiro depender dela sem que ninguém tenha conferido. | O passo 1 do roteiro da seção 14 é justamente confirmar isso, e está escrito como verificação pendente, não como fato. Se o Edge não estiver lá, o roteiro para e o achado é reportado, sem instalar nada para contornar. |
 
 ### Decisões do líder, 21/09/2026
 
@@ -1164,13 +1231,9 @@ Registradas como fecho das pendências que este documento havia levantado. Não 
 
 ### Pendências abertas
 
-Sobraram três, nenhuma bloqueando a onda 0.
+**Nenhuma.** PA1, PA2 e PA3 foram decididas pelo líder em 21/09/2026 e estão incorporadas: a lista de conferência no aparelho dele (seção 14), a cobertura de motor limitada a Blink no automático (seção 14) e a cadência de seis meses do catálogo (seção 12.7).
 
-**PA1. Aparelho iOS para a verificação que só ele prova.** A seção 14 lista dez itens que exigem iPhone e iPad reais. Se não houver aparelho disponível, o fechamento de onda registra esses itens como não verificados, e o plano **não finge** que foram. Preciso saber se há aparelho.
-
-**PA2. Cobertura de motor no CI, consequência da condição do Playwright.** Apontar para o Brave cobre Chromium e deixa Firefox e WebKit de fora do CI, justamente os motores onde moram os riscos das seções 12 e 13. Três saídas na seção 16: verificação manual declarada (o que o plano assume), apontar para o Firefox do sistema se existir, ou autorizar apenas o binário WebKit do Playwright, que não é navegador instalado no sistema. A terceira é uma leitura possível da L-57 e não me cabe fazer sozinho.
-
-**PA3. Cadência de revisão do catálogo de dispositivos.** Lei muda. O balão mostra `dataConsulta` e a fonte, o que protege o leitor, mas não revisa nada sozinho. Falta decidir de quanto em quanto tempo o catálogo é reconferido, ou se a reconferência acontece só quando uma unidade nova é publicada.
+Fica no lugar delas **uma limitação declarada, que não é pendência porque não há decisão a tomar**: WebKit e Gecko não têm cobertura automatizada nesta máquina, e isso só muda se a proibição de baixar binário de navegador mudar. Enquanto valer, todo relato de fechamento de onda nomeia os três motores separadamente, com o estado real de cada um.
 
 ## Referências consultadas
 

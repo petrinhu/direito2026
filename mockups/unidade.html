@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Introdução ao Direito, Unidade 1: Fundamentos do Direito | Caderno de Direito</title>
+<meta name="description" content="Mockup da página de unidade: três abas (Resumo, Petição comentada, Quiz), índice lateral e barra de progresso de leitura.">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: var(--fonte-texto);
+    font-size: var(--escala-base);
+    line-height: var(--altura-linha-texto);
+  }
+  a { color: var(--cor-primaria); }
+  img, svg { max-width: 100%; }
+  .container { max-width: var(--largura-conteudo); margin-inline: auto; padding-inline: var(--esp-5); }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .pular-conteudo {
+    position: absolute; left: -999px; top: var(--esp-2);
+    background: var(--cor-primaria-escura); color: #fff;
+    padding: var(--esp-3) var(--esp-4); border-radius: var(--raio-sm); z-index: 100;
+  }
+  .pular-conteudo:focus { left: var(--esp-2); }
+  :focus-visible { outline: 3px solid var(--cor-primaria); outline-offset: 2px; }
+
+  /* Barra de progresso de leitura, no topo absoluto da viewport */
+  .barra-leitura {
+    position: sticky; top: 0; z-index: 60; height: 4px; background: var(--cor-borda);
+  }
+  .barra-leitura > span {
+    display: block; height: 100%; width: 38%; background: var(--cor-acento);
+    /* Estado estático: fica no valor fixo acima (representa uma leitura em
+       andamento) em qualquer navegador, inclusive Safari e Firefox, que ainda
+       não têm scroll-driven animations. */
+  }
+  /* Progressive enhancement, só entra se o motor suportar animation-timeline:
+     scroll(); testado com @supports para nunca quebrar Safari/Firefox. Hoje
+     (setembro de 2026) é suporte só de motor Blink (Chrome/Edge). */
+  @supports (animation-timeline: scroll()) {
+    .barra-leitura > span {
+      animation: crescer-com-rolagem auto linear;
+      animation-timeline: scroll(root);
+    }
+  }
+  @keyframes crescer-com-rolagem { from { width: 0%; } to { width: 100%; } }
+
+  header.topo {
+    position: sticky; top: 4px; z-index: 40;
+    background: var(--cor-fundo-elevado);
+    border-bottom: 1px solid var(--cor-borda);
+    /* Área segura do iPhone (notch/Dynamic Island em paisagem). Sem suporte
+       a env(), a declaração é ignorada e o topo fica em 0, igual a hoje. */
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .barra-topo {
+    display: flex; align-items: center; gap: var(--esp-5);
+    padding-block: var(--esp-3);
+    max-width: var(--largura-conteudo); margin-inline: auto;
+    padding-inline: var(--esp-5);
+    padding-inline: calc(var(--esp-5) + env(safe-area-inset-left, 0px)) calc(var(--esp-5) + env(safe-area-inset-right, 0px));
+  }
+  .marca {
+    font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.2rem;
+    color: var(--cor-primaria-escura); text-decoration: none; white-space: nowrap;
+  }
+  nav.nav-principal { display: flex; gap: var(--esp-4); flex: 1; }
+  nav.nav-principal a {
+    color: var(--cor-texto); text-decoration: none;
+    padding: var(--esp-2) var(--esp-1); font-weight: 600; font-size: var(--escala-sm);
+    border-bottom: 2px solid transparent;
+  }
+  nav.nav-principal a:hover { color: var(--cor-primaria); border-bottom-color: var(--cor-primaria); }
+  .busca-topo {
+    display: flex; align-items: center; gap: var(--esp-2);
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-md); padding: var(--esp-2) var(--esp-3);
+    min-width: 200px; max-width: 280px; flex: 1;
+  }
+  .busca-topo input {
+    border: none; background: none; outline: none; color: var(--cor-texto); font: inherit; width: 100%;
+    /* Nunca abaixo de 16px: Safari do iPhone dá zoom automático ao focar
+       campo com fonte menor que essa. */
+    font-size: max(1rem, 16px);
+  }
+  .busca-topo input::placeholder { color: var(--cor-texto-suave); }
+  kbd.atalho {
+    font-family: var(--fonte-mono); font-size: var(--escala-xs);
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda-forte);
+    border-radius: 4px; padding: 1px 6px; color: var(--cor-texto-suave); flex-shrink: 0;
+  }
+  .icone-lupa { flex-shrink: 0; color: var(--cor-texto-suave); }
+  .botao-tema {
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-md); width: 40px; height: 40px;
+    display: grid; place-items: center; cursor: pointer; color: var(--cor-texto); flex-shrink: 0;
+  }
+  .botao-tema:hover { border-color: var(--cor-primaria); }
+  .icone-tema-escuro { display: none; }
+  :root[data-theme="dark"] .icone-tema-claro { display: none; }
+  :root[data-theme="dark"] .icone-tema-escuro { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icone-tema-claro { display: none; }
+    :root:not([data-theme="light"]) .icone-tema-escuro { display: block; }
+  }
+
+  .trilha {
+    border-bottom: 1px solid var(--cor-borda); background: var(--cor-fundo-sutil);
+    padding-block: var(--esp-3);
+  }
+  nav.migalhas { font-size: var(--escala-xs); color: var(--cor-texto-suave); }
+  nav.migalhas a { color: var(--cor-texto-suave); }
+  nav.migalhas span[aria-current] { color: var(--cor-primaria); font-weight: 600; }
+
+  .cabecalho-unidade { padding-block: var(--esp-6) var(--esp-5); border-bottom: 1px solid var(--cor-borda); }
+  h1.titulo-unidade {
+    font-family: var(--fonte-titulo); font-size: var(--escala-xl); margin: 0 0 var(--esp-2);
+    color: var(--cor-primaria-escura); line-height: var(--altura-linha-titulo);
+  }
+  p.descricao-unidade { color: var(--cor-texto-suave); max-width: 62ch; margin: 0; }
+
+  /* ---------- Layout de duas colunas ---------- */
+  .layout-unidade {
+    display: grid; grid-template-columns: 260px 1fr; gap: var(--esp-7);
+    padding-block: var(--esp-6) var(--esp-9); align-items: start;
+  }
+  aside.indice {
+    position: sticky; top: 5.2rem;
+    border: 1px solid var(--cor-borda); border-radius: var(--raio-lg);
+    background: var(--cor-fundo-elevado); padding: var(--esp-4);
+  }
+  aside.indice h2 {
+    font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--cor-texto-suave); margin: 0 0 var(--esp-3); font-weight: 700;
+  }
+  aside.indice ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: bloco; }
+  aside.indice ol li a {
+    display: flex; align-items: baseline; gap: var(--esp-2);
+    text-decoration: none; color: var(--cor-texto); font-size: var(--escala-sm);
+    padding: var(--esp-2) var(--esp-2); border-radius: var(--raio-sm);
+    border-left: 2px solid transparent;
+  }
+  aside.indice ol li a::before {
+    counter-increment: bloco; content: counter(bloco);
+    font-family: var(--fonte-mono); font-size: 0.7rem; color: var(--cor-texto-suave);
+    flex-shrink: 0; width: 1.2em;
+  }
+  aside.indice ol li a:hover { background: var(--cor-fundo-sutil); color: var(--cor-primaria); }
+  aside.indice ol li a.ativo { color: var(--cor-primaria); border-left-color: var(--cor-primaria); font-weight: 600; background: var(--cor-primaria-clara); }
+  aside.indice .separador { height: 1px; background: var(--cor-borda); margin: var(--esp-3) 0; }
+
+  /* ---------- Abas ---------- */
+  .abas-lista { display: flex; gap: var(--esp-2); border-bottom: 1px solid var(--cor-borda); margin-bottom: var(--esp-6); }
+  .abas-lista button {
+    font: inherit; font-weight: 600; background: none; border: none; cursor: pointer;
+    padding: var(--esp-3) var(--esp-4); color: var(--cor-texto-suave);
+    border-bottom: 3px solid transparent; margin-bottom: -1px;
+  }
+  .abas-lista button[aria-selected="true"] { color: var(--cor-primaria-escura); border-bottom-color: var(--cor-acento); }
+  .abas-lista button:hover { color: var(--cor-primaria); }
+  .painel-aba { display: none; }
+  .painel-aba.ativo { display: block; }
+
+  /* ---------- Aba Resumo ---------- */
+  .bloco-resumo { padding-block: var(--esp-6); border-bottom: 1px solid var(--cor-borda); scroll-margin-top: 6.5rem; }
+  .bloco-resumo:first-child { padding-top: 0; }
+  .bloco-resumo:last-child { border-bottom: none; }
+  .rotulo-bloco { font-size: var(--escala-xs); color: var(--cor-texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  h2.titulo-bloco { font-family: var(--fonte-titulo); font-size: var(--escala-lg); color: var(--cor-primaria-escura); margin: var(--esp-1) 0 var(--esp-4); }
+  .texto-leitura { max-width: var(--largura-leitura); }
+  .texto-leitura p { margin: 0 0 var(--esp-4); }
+  .fonte-citada { font-size: var(--escala-xs); color: var(--cor-texto-suave); font-style: italic; margin-top: var(--esp-4); }
+
+  .linha-tempo { display: flex; gap: 0; overflow-x: auto; padding: var(--esp-5) 0; margin: var(--esp-5) 0; border-top: 1px solid var(--cor-borda); border-bottom: 1px solid var(--cor-borda); }
+  .marco-tempo { flex: 0 0 200px; padding-inline: var(--esp-4); position: relative; }
+  .marco-tempo:not(:last-child)::after { content: ""; position: absolute; top: 10px; right: 0; width: 100%; height: 1px; background: var(--cor-borda); }
+  .ponto-tempo { width: 12px; height: 12px; border-radius: 50%; background: var(--cor-primaria); margin-bottom: var(--esp-2); position: relative; z-index: 1; }
+  .marco-tempo.destaque .ponto-tempo { background: var(--cor-acento); }
+  .marco-tempo strong { display: block; font-family: var(--fonte-titulo); font-size: var(--escala-sm); color: var(--cor-texto); }
+  .marco-tempo span { display: block; font-size: var(--escala-xs); color: var(--cor-texto-suave); }
+
+  table.quadro-comparativo { width: 100%; border-collapse: collapse; margin: var(--esp-5) 0; font-size: var(--escala-sm); }
+  table.quadro-comparativo caption { text-align: left; font-size: var(--escala-xs); color: var(--cor-texto-suave); margin-bottom: var(--esp-2); }
+  table.quadro-comparativo th, table.quadro-comparativo td { border: 1px solid var(--cor-borda); padding: var(--esp-3); text-align: left; vertical-align: top; }
+  table.quadro-comparativo thead th { background: var(--cor-primaria-clara); color: var(--cor-primaria-escura); font-family: var(--fonte-titulo); }
+  table.quadro-comparativo tbody th { background: var(--cor-fundo-sutil); font-weight: 600; white-space: nowrap; }
+
+  blockquote.citacao-inline {
+    font-family: var(--fonte-titulo); font-style: italic; font-size: var(--escala-md);
+    border-left: 3px solid var(--cor-acento); padding-left: var(--esp-5); margin: var(--esp-6) 0;
+    color: var(--cor-primaria-escura); max-width: 56ch;
+  }
+  blockquote.citacao-inline footer { font-family: var(--fonte-texto); font-style: normal; font-size: var(--escala-sm); color: var(--cor-texto-suave); margin-top: var(--esp-2); }
+
+  /* ---------- Aba Petição ---------- */
+  .doc-peticao { display: grid; grid-template-columns: 1fr 300px; gap: var(--esp-6); align-items: start; }
+  .peca { max-width: 60ch; }
+  .peca h3 { font-family: var(--fonte-titulo); color: var(--cor-primaria-escura); font-size: var(--escala-md); margin: var(--esp-6) 0 var(--esp-3); scroll-margin-top: 6.5rem; }
+  .peca h3:first-child { margin-top: 0; }
+  .peca p { margin: 0 0 var(--esp-3); }
+  .peca .nome-acao { text-align: center; font-weight: 700; letter-spacing: 0.02em; margin: var(--esp-4) 0; }
+  .peca .assinatura { margin-top: var(--esp-5); }
+  .trilha-comentarios { position: sticky; top: 5.2rem; display: grid; gap: var(--esp-4); }
+  .comentario-lateral {
+    background: var(--cor-comentario-bg, var(--cor-primaria-clara)); border: 1px solid var(--cor-borda);
+    border-left: 3px solid var(--cor-primaria); border-radius: var(--raio-md);
+    padding: var(--esp-3) var(--esp-4); font-size: var(--escala-sm);
+  }
+  .comentario-lateral strong { display: block; font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--cor-primaria-escura); margin-bottom: var(--esp-1); }
+
+  /* ---------- Aba Quiz ---------- */
+  .cabecalho-quiz { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); margin-bottom: var(--esp-5); flex-wrap: wrap; }
+  .progresso-quiz { display: flex; align-items: center; gap: var(--esp-3); }
+  .progresso-quiz .texto { font-size: var(--escala-sm); color: var(--cor-texto-suave); font-weight: 600; }
+  .barra-progresso-quiz { width: 160px; height: 6px; border-radius: 99px; background: var(--cor-borda); overflow: hidden; }
+  .barra-progresso-quiz > span { display: block; height: 100%; width: 1.6%; background: var(--cor-primaria); }
+  .selo-categoria { font-size: var(--escala-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 10px; border-radius: 99px; background: var(--badge-teoria-bg, var(--cor-fundo-sutil)); color: var(--cor-primaria-escura); }
+
+  .cartao-pergunta {
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg);
+    padding: var(--esp-6); box-shadow: var(--sombra-cartao); max-width: 62ch;
+  }
+  .enunciado { font-family: var(--fonte-titulo); font-size: var(--escala-md); color: var(--cor-primaria-escura); margin: 0 0 var(--esp-5); line-height: 1.45; }
+  .lista-alternativas { list-style: none; margin: 0 0 var(--esp-5); padding: 0; display: grid; gap: var(--esp-3); }
+  .alternativa {
+    display: flex; align-items: flex-start; gap: var(--esp-3);
+    border: 1px solid var(--cor-borda); border-radius: var(--raio-md);
+    padding: var(--esp-3) var(--esp-4); cursor: pointer; font-size: var(--escala-sm);
+  }
+  .alternativa:hover { border-color: var(--cor-primaria); background: var(--cor-primaria-clara); }
+  .alternativa.selecionada { border-color: var(--cor-primaria); background: var(--cor-primaria-clara); font-weight: 600; }
+  .marcador-alt {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--cor-borda-forte);
+    display: grid; place-items: center; font-size: 0.7rem; font-weight: 700; color: var(--cor-texto-suave);
+  }
+  .alternativa.selecionada .marcador-alt { border-color: var(--cor-primaria); background: var(--cor-primaria); color: #fff; }
+  .rodape-pergunta { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-3); flex-wrap: wrap; }
+  .nota-quiz { font-size: var(--escala-xs); color: var(--cor-texto-suave); max-width: 34ch; }
+  .botao { font: inherit; font-weight: 600; border-radius: var(--raio-md); padding: var(--esp-3) var(--esp-5); text-decoration: none; display: inline-flex; align-items: center; gap: var(--esp-2); border: 1px solid transparent; cursor: pointer; }
+  .botao-primario { background: var(--cor-primaria-escura); color: #fff; }
+  .botao-primario:hover { background: var(--cor-primaria); }
+  .botao-primario[disabled] { background: var(--cor-desativado-bg); color: var(--cor-desativado-texto); cursor: not-allowed; }
+
+  .estado-secundario { margin-top: var(--esp-8); padding-top: var(--esp-6); border-top: 1px dashed var(--cor-borda); max-width: 62ch; }
+  .estado-secundario h3 { font-family: var(--fonte-titulo); color: var(--cor-primaria-escura); font-size: var(--escala-md); }
+  .estado-secundario > p.legenda-estado { font-size: var(--escala-xs); color: var(--cor-texto-suave); margin-top: -0.5rem; margin-bottom: var(--esp-4); }
+  .cartao-resultado { background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--esp-5); }
+  .placar { display: flex; align-items: baseline; gap: var(--esp-2); margin-bottom: var(--esp-4); }
+  .placar .numero { font-family: var(--fonte-titulo); font-size: var(--escala-xl); color: var(--cor-primaria); }
+  .placar .total { color: var(--cor-texto-suave); }
+  .revisao-item { border-top: 1px solid var(--cor-borda); padding-top: var(--esp-4); margin-top: var(--esp-4); font-size: var(--escala-sm); }
+  .revisao-item .resposta-certa { color: var(--cor-sucesso-texto); background: var(--cor-sucesso-bg); border: 1px solid var(--cor-sucesso-borda); border-radius: var(--raio-sm); padding: var(--esp-2) var(--esp-3); margin: var(--esp-2) 0; }
+  .revisao-item .explicacao { color: var(--cor-texto-suave); }
+
+  footer.rodape {
+    border-top: 1px solid var(--cor-borda);
+    padding-block: var(--esp-7);
+    /* Área segura de baixo do iPhone (faixa do gesto de voltar ao início). */
+    padding-block: var(--esp-7) calc(var(--esp-7) + env(safe-area-inset-bottom, 0px));
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+    background: var(--cor-fundo-sutil); color: var(--cor-texto-suave); font-size: var(--escala-sm);
+  }
+  footer.rodape .container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--esp-4); }
+  footer.rodape a { color: var(--cor-texto-suave); }
+  footer.rodape nav { display: flex; gap: var(--esp-4); flex-wrap: wrap; }
+
+  /* Modo de alto contraste do Windows (o que o Edge entrega em cima do SO).
+     O navegador troca as cores autorais por uma paleta de sistema restrita;
+     elementos que hoje só se distinguem por cor de fundo (barra de leitura,
+     barra do quiz, alternativa selecionada, selo de categoria) ganham aqui
+     borda/preenchimento explícitos em cores de sistema, para não
+     desaparecerem visualmente. */
+  @media (forced-colors: active) {
+    .barra-leitura { border-bottom: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; }
+    .barra-leitura > span { forced-color-adjust: none; background: Highlight; }
+    .barra-progresso-quiz { border: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; }
+    .barra-progresso-quiz > span { forced-color-adjust: none; background: Highlight; }
+    .selo-em-breve, .selo-categoria { border: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; color: CanvasText; }
+    .alternativa { border: 1px solid CanvasText; }
+    .alternativa.selecionada { border: 2px solid Highlight; }
+    .marcador-alt { border-color: CanvasText; }
+    .alternativa.selecionada .marcador-alt { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+    .botao-primario { border: 1px solid ButtonText; }
+  }
+
+  @media (max-width: 980px) {
+    .layout-unidade { grid-template-columns: 1fr; }
+    aside.indice { position: static; }
+    .doc-peticao { grid-template-columns: 1fr; }
+    .trilha-comentarios { position: static; }
+  }
+  @media (max-width: 640px) {
+    .barra-topo { flex-wrap: wrap; }
+    nav.nav-principal { order: 3; width: 100%; }
+    h1.titulo-unidade { font-size: 1.7rem; }
+    .linha-tempo { padding-block: var(--esp-4); }
+  }
+</style>
+</head>
+<body>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
+<div class="barra-leitura" role="progressbar" aria-label="Progresso de leitura da página" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+
+<header class="topo">
+  <div class="barra-topo">
+    <a class="marca" href="home-a.html">Caderno de Direito</a>
+    <nav class="nav-principal" aria-label="Navegação principal">
+      <a href="home-a.html">Períodos</a>
+      <a href="#">Sobre o caderno</a>
+    </nav>
+    <div class="busca-topo" role="search">
+      <svg class="icone-lupa" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <label for="campo-busca-u" class="sr-only">Buscar no conteúdo</label>
+      <input id="campo-busca-u" type="search" placeholder="Buscar no conteúdo...">
+      <kbd class="atalho">/</kbd>
+    </div>
+    <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+      <svg class="icone-tema-claro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icone-tema-escuro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="trilha">
+  <div class="container">
+    <nav class="migalhas" aria-label="Trilha de navegação">
+      <a href="home-a.html">1º período</a> /
+      <a href="home-a.html">Introdução ao Direito</a> /
+      <span aria-current="page">Unidade 1: Fundamentos do Direito</span>
+    </nav>
+  </div>
+</div>
+
+<div class="cabecalho-unidade">
+  <div class="container">
+    <h1 class="titulo-unidade">Unidade 1: Fundamentos do Direito</h1>
+    <p class="descricao-unidade">Resumo de estudo, petição comentada e quiz organizados a partir do conteúdo efetivamente trabalhado nesta unidade: 9 blocos teóricos, a petição comentada de um caso de responsabilidade civil e um quiz de 60 perguntas com feedback explicado.</p>
+  </div>
+</div>
+
+<main id="conteudo-principal" class="container">
+  <div class="layout-unidade">
+    <aside class="indice" aria-label="Índice da unidade">
+      <h2>Nesta unidade</h2>
+      <ol>
+        <li><a class="ativo" href="#bloco-1">O que é o Direito?</a></li>
+        <li><a href="#bloco-2">Linha do tempo histórica</a></li>
+        <li><a href="#bloco-3">Sociedade e Direito</a></li>
+        <li><a href="#bloco-4">Fontes do Direito e sistemas jurídicos</a></li>
+        <li><a href="#bloco-5">Zetética x Dogmática</a></li>
+        <li><a href="#bloco-6">Direito e Moral</a></li>
+        <li><a href="#bloco-7">Jusnaturalismo x Juspositivismo</a></li>
+        <li><a href="#bloco-8">Contratualismo e Soberania</a></li>
+        <li><a href="#bloco-9">Direito como Ciência: Método</a></li>
+      </ol>
+      <div class="separador"></div>
+      <h2>Nesta página</h2>
+      <ol style="counter-reset: none;">
+        <li><a href="#" style="padding-left:0;" onclick="return false;">Resumo</a></li>
+        <li><a href="#" style="padding-left:0;" onclick="return false;">Petição comentada</a></li>
+        <li><a href="#" style="padding-left:0;" onclick="return false;">Quiz</a></li>
+      </ol>
+    </aside>
+
+    <div class="conteudo-abas">
+      <div class="abas-lista" role="tablist" aria-label="Seções da unidade">
+        <button id="aba-resumo" role="tab" aria-selected="true" aria-controls="painel-resumo" onclick="mudarAba('resumo')">Resumo</button>
+        <button id="aba-peticao" role="tab" aria-selected="false" aria-controls="painel-peticao" onclick="mudarAba('peticao')">Petição comentada</button>
+        <button id="aba-quiz" role="tab" aria-selected="false" aria-controls="painel-quiz" onclick="mudarAba('quiz')">Quiz</button>
+      </div>
+
+      <!-- ======================= ABA RESUMO ======================= -->
+      <section id="painel-resumo" class="painel-aba ativo" role="tabpanel" aria-labelledby="aba-resumo">
+        <article class="bloco-resumo" id="bloco-1">
+          <p class="rotulo-bloco">Bloco 1 de 9</p>
+          <h2 class="titulo-bloco">O que é o Direito? Uma pergunta persistente</h2>
+          <div class="texto-leitura">
+            <p>Poucas perguntas intrigam tanto quem começa a estudar Direito quanto esta: afinal, o que é o Direito? H.L.A. Hart abre "O Conceito de Direito" observando que essa pergunta tem algo de estranho. Ninguém precisa escrever um livro inteiro para responder "o que é química" ou "o que é medicina": há um consenso razoável sobre o objeto dessas ciências. Já com o Direito, a pergunta persiste ao longo de séculos de teoria jurídica, sem que os próprios juristas cheguem a um acordo definitivo sobre a definição correta.</p>
+            <p>Hart explica essa perplexidade a partir da existência de casos-padrão e casos de fronteira. Casos-padrão são aquelas situações em que ninguém duvida de que existe Direito: um contrato assinado, uma sentença de um juiz, uma lei aprovada pelo Congresso. Já em situações de fronteira, a certeza desaparece, como no direito internacional (faltam um poder central capaz de impor sanções do mesmo jeito que um Estado nacional) e no chamado direito primitivo (sociedades sem um órgão legislativo centralizado, mas com regras de conduta reconhecidas pelo próprio grupo).</p>
+            <p class="fonte-citada">Fonte: HART, H.L.A. O Conceito de Direito, Cap. I ("Questões Persistentes").</p>
+          </div>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-2">
+          <p class="rotulo-bloco">Bloco 2 de 9</p>
+          <h2 class="titulo-bloco">Linha do tempo histórica</h2>
+          <div class="texto-leitura">
+            <p>Antes de entrar nas grandes correntes teóricas, vale situar no tempo os marcos históricos que formam o pano de fundo de toda a disciplina, da Babilônia antiga ao Jusnaturalismo Contratualista moderno.</p>
+          </div>
+          <div class="linha-tempo" role="img" aria-label="Linha do tempo do Código de Hamurabi ao Jusnaturalismo Contratualista">
+            <div class="marco-tempo"><span class="ponto-tempo"></span><strong>Código de Hamurabi</strong><span>Babilônia, aprox. 1772 a.C.</span></div>
+            <div class="marco-tempo"><span class="ponto-tempo"></span><strong>Períodos romanos</strong><span>Realeza, República, Império</span></div>
+            <div class="marco-tempo destaque"><span class="ponto-tempo"></span><strong>Lei das XII Tábuas</strong><span>450 a.C.</span></div>
+            <div class="marco-tempo destaque"><span class="ponto-tempo"></span><strong>Corpus Juris Civilis</strong><span>Justiniano, 527 d.C.</span></div>
+            <div class="marco-tempo"><span class="ponto-tempo"></span><strong>Europa Medieval</strong><span>Direito Canônico, 476 a 1453</span></div>
+            <div class="marco-tempo"><span class="ponto-tempo"></span><strong>Jusnaturalismo teológico</strong><span>São Tomás de Aquino</span></div>
+            <div class="marco-tempo"><span class="ponto-tempo"></span><strong>Jusnaturalismo Contratualista</strong><span>Hobbes, Locke, Rousseau</span></div>
+          </div>
+          <p class="fonte-citada">Fonte: slide "Aula 01: O que é Direito?".</p>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-3">
+          <p class="rotulo-bloco">Bloco 3 de 9</p>
+          <h2 class="titulo-bloco">Sociedade e Direito</h2>
+          <div class="texto-leitura">
+            <p>O princípio "onde há sociedade, há Direito" (ubi societas ibi jus) é ilustrado por São Tomás de Aquino a partir de três situações de isolamento social que confirmam, em vez de contradizer, a regra: mala fortuna (má sorte), corruptio naturae (natureza corrompida) e excellentia naturae (natureza excelente, como um sábio ou um santo eremita).</p>
+            <p>Toda conduta possível pode ser organizada em quatro categorias básicas: obrigatório fazer, proibido fazer, permitido fazer e permitido não fazer, estrutura elementar de qualquer sistema de regras de conduta.</p>
+          </div>
+          <blockquote class="citacao-inline">
+            "A paz é o fim do Direito, a luta é o meio."
+            <footer>Ihering, sobre a ideia de que direitos costumam ser conquistas históricas.</footer>
+          </blockquote>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-4">
+          <p class="rotulo-bloco">Bloco 4 de 9</p>
+          <h2 class="titulo-bloco">Fontes do Direito e os dois grandes sistemas jurídicos</h2>
+          <div class="texto-leitura">
+            <p>Países de tradição romanística (civil law), como o Brasil, organizam o Direito principalmente em códigos e leis escritas. Já os países de common law, como Inglaterra e Estados Unidos, atribuem papel central ao precedente judicial e ao costume. Reale observa uma aproximação recente entre os dois sistemas, mas não uma fusão: cada um mantém sua fonte principal.</p>
+            <p class="fonte-citada">Fonte: NADER, Paulo. Introdução ao Estudo do Direito, Cap. 14. REALE, Miguel. Lições Preliminares de Direito.</p>
+          </div>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-5">
+          <p class="rotulo-bloco">Bloco 5 de 9</p>
+          <h2 class="titulo-bloco">Zetética x Dogmática</h2>
+          <div class="texto-leitura">
+            <p>Ferraz Jr. explica que zetética deriva do grego zetein (perquirir, buscar, questionar), enquanto dogmática deriva de dokein (ensinar, doutrinar). Questões zetéticas têm função especulativa e são infinitas ("o que é algo?"); questões dogmáticas têm função diretiva e são finitas ("como deve ser decidido algo?").</p>
+          </div>
+          <blockquote class="citacao-inline">
+            "Embora entre ambas não haja uma linha divisória radical, toda investigação acentua mais um enfoque que o outro, mas sempre tem os dois."
+            <footer>Ferraz Jr., sobre a relação entre zetética e dogmática.</footer>
+          </blockquote>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-6">
+          <p class="rotulo-bloco">Bloco 6 de 9</p>
+          <h2 class="titulo-bloco">Direito e Moral / Regras de Trato Social</h2>
+          <div class="texto-leitura">
+            <p>Groppali distingue Direito e Moral por critérios formais: bilateralidade atributiva contra unilateralidade, exterioridade contra interioridade, heteronomia contra autonomia, coercibilidade contra incoercibilidade. O quadro a seguir reúne os mesmos critérios aplicados também às Regras de Trato Social e aos Preceitos Religiosos.</p>
+          </div>
+          <table class="quadro-comparativo">
+            <caption>Quadro comparativo final, bloco 6</caption>
+            <thead>
+              <tr><th scope="col">Critério</th><th scope="col">Direito</th><th scope="col">Moral</th><th scope="col">Trato Social</th><th scope="col">Preceitos Religiosos</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Bilateralidade</th><td>Bilateral atributivo</td><td>Unilateral</td><td>Unilateral</td><td>Unilateral</td></tr>
+              <tr><th scope="row">Heteronomia</th><td>Heterônomo</td><td>Autônoma</td><td>Heterônomas</td><td>Heterônomos</td></tr>
+              <tr><th scope="row">Exterioridade</th><td>Exterior</td><td>Interior</td><td>Exterior</td><td>Interior e exterior</td></tr>
+              <tr><th scope="row">Coercibilidade</th><td>Coercível (Estado)</td><td>Incoercível</td><td>Incoercíveis</td><td>Incoercíveis pelo Estado</td></tr>
+              <tr><th scope="row">Sanção</th><td>Prefixada em lei</td><td>Íntima (remorso)</td><td>Difusa</td><td>Da própria fé</td></tr>
+            </tbody>
+          </table>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-7">
+          <p class="rotulo-bloco">Bloco 7 de 9</p>
+          <h2 class="titulo-bloco">Jusnaturalismo x Juspositivismo</h2>
+          <div class="texto-leitura">
+            <p>A distinção entre direito natural e direito positivo remonta a Aristóteles. Bobbio propõe 6 critérios de distinção: universalidade x particularidade, imutabilidade x mutabilidade, natura x potestas, ratio x voluntas, atos internos x atos externos, e o bom em si x o simplesmente útil.</p>
+            <p class="fonte-citada">Fonte: BOBBIO, Norberto. O Positivismo Jurídico, Parte I.</p>
+          </div>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-8">
+          <p class="rotulo-bloco">Bloco 8 de 9</p>
+          <h2 class="titulo-bloco">Contratualismo e Soberania</h2>
+          <div class="texto-leitura">
+            <p>Hobbes defende soberania absoluta, indivisível e irrevogável. Locke defende poder legislativo supremo, mas limitado pelo contrato e pela lei natural, admitindo resistência. Rousseau funda a soberania na vontade geral: inalienável e indivisível, mas não absoluta.</p>
+          </div>
+        </article>
+
+        <article class="bloco-resumo" id="bloco-9">
+          <p class="rotulo-bloco">Bloco 9 de 9, aprofundamento</p>
+          <h2 class="titulo-bloco">Direito como Ciência: Método</h2>
+          <div class="texto-leitura">
+            <p>Pachukanis aplica ao Direito o método de Marx nos Grundrisse: partir de categorias simples (a relação jurídica) para depois reconstruir o concreto como totalidade rica de determinações, tratando a relação jurídica como categoria histórica, e não universalidade abstrata e eterna.</p>
+            <p class="fonte-citada">Fonte: PACHUKANIS, Evguiéni B. Teoria Geral do Direito e Marxismo.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- ======================= ABA PETIÇÃO ======================= -->
+      <section id="painel-peticao" class="painel-aba" role="tabpanel" aria-labelledby="aba-peticao" hidden>
+        <div class="doc-peticao">
+          <div class="peca">
+            <h3 id="pt-endereco">Endereçamento</h3>
+            <p>Excelentíssimo(a) Senhor(a) Doutor(a) Juiz(a) de Direito da ... Vara Cível da Comarca do Recife, PE.</p>
+
+            <h3 id="pt-qualificacao">Qualificação</h3>
+            <p>Juliana Silva, nacionalidade ..., estado civil ..., profissão ..., portadora do RG nº ... e inscrita no CPF nº ..., residente e domiciliada na Rua ..., nº ..., Recife/PE, vem, por meio de seu advogado, propor a presente</p>
+            <p class="nome-acao">AÇÃO DE INDENIZAÇÃO POR DANOS MATERIAIS</p>
+            <p>em face de Renata Rocha, qualificada nos mesmos moldes, pelos fatos e fundamentos a seguir expostos.</p>
+
+            <h3 id="pt-fatos">Dos Fatos</h3>
+            <p>A autora constatou infiltração em seu apartamento, proveniente do imóvel da ré, que ocasionou danos a móveis e equipamentos de sua propriedade. Verificou-se que o vazamento decorreu da falta de manutenção da tubulação do apartamento superior. A autora buscou solução amigável; entretanto, a ré recusou-se a ressarcir os danos causados.</p>
+
+            <h3 id="pt-direito">Do Direito</h3>
+            <p><strong>1. O ato ilícito por omissão negligente (art. 186 do Código Civil).</strong> A conduta da ré configura ato ilícito ao violar direito da autora por omissão negligente, consistente na falta de manutenção adequada de sua unidade.</p>
+            <p><strong>2. O dever de reparar (art. 927 do Código Civil).</strong> Configurado o ato ilícito, exsurge o dever de reparar: aquele que, por ato ilícito, causa dano a outrem fica obrigado a repará-lo.</p>
+
+            <h3 id="pt-pedidos">Dos Pedidos</h3>
+            <p>Diante do exposto, requer a condenação da ré ao pagamento de indenização por danos materiais em R$ ..., conforme arts. 186 e 927 do Código Civil e art. 5º, incisos V e X, da Constituição Federal.</p>
+
+            <h3 id="pt-encerramento">Valor da causa e encerramento</h3>
+            <p>Dá-se à causa o valor de R$ ... (... reais). Termos em que pede e espera deferimento. Local e data.</p>
+            <p class="assinatura">Nome do advogado, OAB nº ...</p>
+          </div>
+
+          <aside class="trilha-comentarios" aria-label="Comentários explicativos da petição">
+            <div class="comentario-lateral">
+              <strong>Como fazer, Endereçamento</strong>
+              O número da vara fica em reticências porque só é conhecido depois da distribuição do processo, que só ocorre após o protocolo.
+            </div>
+            <div class="comentario-lateral">
+              <strong>Como fazer, Qualificação</strong>
+              O art. 319, II, do CPC exige qualificação completa de autor e réu. Quando faltar algum dado real, mantenha reticências: nunca invente.
+            </div>
+            <div class="comentario-lateral">
+              <strong>Como fazer, Dos Fatos</strong>
+              Deve ser sucinto e cronológico: conta o que aconteceu sem ainda entrar na discussão jurídica, que vem em "Do Direito".
+            </div>
+            <div class="comentario-lateral">
+              <strong>Como fazer, Do Direito</strong>
+              Encadeie o raciocínio em passos: primeiro o art. 186 define o ilícito, depois o art. 927 impõe a consequência (o dever de reparar).
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ======================= ABA QUIZ ======================= -->
+      <section id="painel-quiz" class="painel-aba" role="tabpanel" aria-labelledby="aba-quiz" hidden>
+        <div class="cabecalho-quiz">
+          <div class="progresso-quiz">
+            <span class="texto">Pergunta 1 de 60</span>
+            <div class="barra-progresso-quiz" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="60" aria-label="Progresso do quiz"><span></span></div>
+          </div>
+          <span class="selo-categoria">Teoria</span>
+        </div>
+
+        <div class="cartao-pergunta">
+          <p class="enunciado">Segundo H.L.A. Hart, em "O Conceito de Direito", por que a pergunta "o que é o Direito?" é considerada persistente e peculiar em comparação com perguntas como "o que é química?"?</p>
+          <ul class="lista-alternativas">
+            <li class="alternativa"><span class="marcador-alt">A</span><span>Porque não existe nenhuma definição de Direito na história do pensamento jurídico.</span></li>
+            <li class="alternativa selecionada"><span class="marcador-alt">B</span><span>Porque, ao contrário de ciências como a química, os próprios juristas não chegam a um consenso sobre o objeto do Direito, e a pergunta atravessa séculos de teoria sem resposta definitiva.</span></li>
+            <li class="alternativa"><span class="marcador-alt">C</span><span>Porque o Direito é uma ciência exata, e por isso sua definição exige fórmulas matemáticas complexas.</span></li>
+            <li class="alternativa"><span class="marcador-alt">D</span><span>Porque a pergunta só interessa a filósofos, sem nenhuma relevância prática para advogados.</span></li>
+          </ul>
+          <div class="rodape-pergunta">
+            <p class="nota-quiz">As alternativas são embaralhadas a cada nova tentativa. Perguntas com artigo de lei fora dos 4 artigos-base da disciplina vêm marcadas.</p>
+            <button class="botao botao-primario" type="button">Confirmar resposta</button>
+          </div>
+        </div>
+
+        <div class="estado-secundario">
+          <h3>Estado final: resultado e revisão</h3>
+          <p class="legenda-estado">Aparece depois da pergunta 60. Mostrado aqui apenas como referência do segundo estado deste componente.</p>
+          <div class="cartao-resultado">
+            <div class="placar"><span class="numero">51</span><span class="total">/ 60 respostas corretas</span></div>
+            <div class="revisao-item">
+              <p class="enunciado" style="font-size: var(--escala-base);">Pergunta 1. Por que a pergunta "o que é o Direito?" é considerada persistente?</p>
+              <p class="resposta-certa">Resposta correta: os próprios juristas não chegam a um consenso sobre o objeto do Direito.</p>
+              <p class="explicacao">Hart parte da constatação de que, diferente de outras disciplinas com objeto relativamente pacífico, o Direito carrega uma perplexidade que atravessa a própria história da teoria jurídica.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="rodape">
+  <div class="container">
+    <p>Caderno de Direito: material de estudo pessoal, organizado por período, cadeira e unidade.</p>
+    <nav aria-label="Rodapé">
+      <a href="home-a.html">Períodos</a>
+      <a href="#conteudo-principal">Voltar ao topo</a>
+      <a href="#">Sobre o caderno</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  function alternarTema() {
+    var raiz = document.documentElement;
+    var atual = raiz.getAttribute('data-theme');
+    var novo = atual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', novo);
+    try { localStorage.setItem('caderno-tema', novo); } catch (e) {}
+  }
+  (function () {
+    try {
+      var salvo = localStorage.getItem('caderno-tema');
+      if (salvo) document.documentElement.setAttribute('data-theme', salvo);
+    } catch (e) {}
+  })();
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      ev.preventDefault();
+      document.getElementById('campo-busca-u').focus();
+    }
+  });
+
+  function mudarAba(nome) {
+    var abas = ['resumo', 'peticao', 'quiz'];
+    abas.forEach(function (a) {
+      var botao = document.getElementById('aba-' + a);
+      var painel = document.getElementById('painel-' + a);
+      var ativa = a === nome;
+      botao.setAttribute('aria-selected', ativa ? 'true' : 'false');
+      if (ativa) { painel.classList.add('ativo'); painel.removeAttribute('hidden'); }
+      else { painel.classList.remove('ativo'); painel.setAttribute('hidden', ''); }
+    });
+  }
+</script>
+</body>
+</html>

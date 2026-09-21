@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Caderno de Direito</title>
+<meta name="description" content="Mockup B da página inicial: abertura em grade dos períodos.">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: var(--fonte-texto);
+    font-size: var(--escala-base);
+    line-height: var(--altura-linha-texto);
+    transition: background var(--transicao-tema), color var(--transicao-tema);
+  }
+  a { color: var(--cor-primaria); }
+  img, svg { max-width: 100%; }
+  .container { max-width: var(--largura-conteudo); margin-inline: auto; padding-inline: var(--esp-5); }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .pular-conteudo {
+    position: absolute; left: -999px; top: var(--esp-2);
+    background: var(--cor-primaria-escura); color: #fff;
+    padding: var(--esp-3) var(--esp-4); border-radius: var(--raio-sm); z-index: 100;
+  }
+  .pular-conteudo:focus { left: var(--esp-2); }
+  :focus-visible { outline: 3px solid var(--cor-primaria); outline-offset: 2px; }
+
+  header.topo {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--cor-fundo-elevado);
+    border-bottom: 1px solid var(--cor-borda);
+    /* Área segura do iPhone (notch/Dynamic Island em paisagem). Sem suporte
+       a env(), a declaração é ignorada e o topo fica em 0, igual a hoje. */
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .barra-topo {
+    display: flex; align-items: center; gap: var(--esp-5);
+    padding-block: var(--esp-3);
+    max-width: var(--largura-conteudo); margin-inline: auto;
+    padding-inline: var(--esp-5);
+    padding-inline: calc(var(--esp-5) + env(safe-area-inset-left, 0px)) calc(var(--esp-5) + env(safe-area-inset-right, 0px));
+  }
+  .marca {
+    font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.35rem;
+    color: var(--cor-primaria-escura); text-decoration: none; white-space: nowrap;
+  }
+  nav.nav-principal { display: flex; gap: var(--esp-4); flex: 1; }
+  nav.nav-principal button.item-nav {
+    background: none; border: none; cursor: pointer; font: inherit;
+    color: var(--cor-texto); padding: var(--esp-2) var(--esp-1);
+    border-bottom: 2px solid transparent; font-weight: 600; font-size: var(--escala-sm);
+  }
+  nav.nav-principal button.item-nav[aria-expanded="true"],
+  nav.nav-principal button.item-nav:hover { color: var(--cor-primaria); border-bottom-color: var(--cor-primaria); }
+
+  .busca-topo {
+    display: flex; align-items: center; gap: var(--esp-2);
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-md); padding: var(--esp-2) var(--esp-3);
+    min-width: 220px; max-width: 320px; flex: 1;
+  }
+  .busca-topo input {
+    border: none; background: none; outline: none; color: var(--cor-texto);
+    font: inherit; width: 100%;
+    /* Nunca abaixo de 16px: Safari do iPhone dá zoom automático ao focar
+       campo com fonte menor que essa. */
+    font-size: max(1rem, 16px);
+  }
+  .busca-topo input::placeholder { color: var(--cor-texto-suave); }
+  kbd.atalho {
+    font-family: var(--fonte-mono); font-size: var(--escala-xs);
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda-forte);
+    border-radius: 4px; padding: 1px 6px; color: var(--cor-texto-suave); flex-shrink: 0;
+  }
+  .icone-lupa { flex-shrink: 0; color: var(--cor-texto-suave); }
+
+  .botao-tema {
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-md); width: 40px; height: 40px;
+    display: grid; place-items: center; cursor: pointer; color: var(--cor-texto);
+    flex-shrink: 0;
+  }
+  .botao-tema:hover { border-color: var(--cor-primaria); }
+  .icone-tema-escuro { display: none; }
+  :root[data-theme="dark"] .icone-tema-claro { display: none; }
+  :root[data-theme="dark"] .icone-tema-escuro { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icone-tema-claro { display: none; }
+    :root:not([data-theme="light"]) .icone-tema-escuro { display: block; }
+  }
+
+  .painel-menu {
+    border-top: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-sutil);
+  }
+  .painel-menu .container { padding-block: var(--esp-5); }
+  .painel-menu > .container > p.rotulo {
+    margin: 0 0 var(--esp-3); font-size: var(--escala-xs); text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--cor-texto-suave); font-weight: 600;
+  }
+  ul.lista-periodos { list-style: none; margin: 0; padding: 0; }
+  ul.lista-periodos > li { border-bottom: 1px solid var(--cor-borda); }
+  ul.lista-periodos > li:last-child { border-bottom: none; }
+  details.periodo > summary {
+    cursor: pointer; padding: var(--esp-3) var(--esp-2); list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--esp-3);
+    font-weight: 600; color: var(--cor-texto);
+  }
+  details.periodo > summary::-webkit-details-marker { display: none; }
+  details.periodo > summary::after {
+    content: "▾"; color: var(--cor-texto-suave); transition: transform var(--transicao-rapida);
+    flex-shrink: 0;
+  }
+  details.periodo[open] > summary::after { transform: rotate(180deg); }
+  details.periodo[open] > summary { color: var(--cor-primaria); }
+  .selo-em-breve {
+    font-size: var(--escala-xs); font-weight: 600; padding: 2px 8px; border-radius: 99px;
+    background: var(--cor-desativado-bg); color: var(--cor-desativado-texto); white-space: nowrap;
+  }
+  .conteudo-periodo { padding: 0 var(--esp-2) var(--esp-4) var(--esp-4); }
+  ul.lista-cadeiras { list-style: none; margin: var(--esp-2) 0 0; padding: 0; display: grid; gap: var(--esp-1); }
+  details.cadeira > summary {
+    cursor: pointer; padding: var(--esp-2) var(--esp-2); list-style: none;
+    display: flex; align-items: center; justify-content: space-between; gap: var(--esp-2);
+    border-radius: var(--raio-sm); font-size: var(--escala-sm);
+  }
+  details.cadeira > summary::-webkit-details-marker { display: none; }
+  details.cadeira[open] > summary, details.cadeira > summary:hover { background: var(--cor-primaria-clara); }
+  .conteudo-cadeira { padding: var(--esp-1) 0 var(--esp-2) var(--esp-4); }
+  ul.lista-unidades { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  ul.lista-unidades li a, ul.lista-unidades li span.unidade-inativa {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--esp-2);
+    padding: var(--esp-2) var(--esp-3); border-radius: var(--raio-sm);
+    font-size: var(--escala-sm); text-decoration: none; color: var(--cor-texto);
+  }
+  ul.lista-unidades li a:hover { background: var(--cor-fundo-elevado); color: var(--cor-primaria); }
+  ul.lista-unidades li span.unidade-inativa { color: var(--cor-desativado-texto); cursor: not-allowed; }
+  .cadeira-inativa > summary { color: var(--cor-desativado-texto); }
+
+  /* ---------- Dobra em grade ---------- */
+  .dobra-grade {
+    position: relative; overflow: hidden;
+    border-bottom: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-sutil);
+  }
+  .fundo-animado-b {
+    position: absolute; top: 0; right: 0; width: 46%; height: 100%; z-index: 0;
+    background: radial-gradient(circle at 70% 30%, var(--cor-primaria-clara) 0, transparent 60%);
+    opacity: 0.8;
+  }
+  .fundo-animado-b::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(var(--cor-borda) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    opacity: 0.5;
+    mask-image: linear-gradient(to left, black, transparent 85%);
+  }
+  .dobra-grade .container { position: relative; z-index: 1; padding-block: var(--esp-7) var(--esp-3); }
+  .cabecalho-hero-b { max-width: 40rem; margin-bottom: var(--esp-6); }
+  .selo-topo {
+    display: inline-block; font-size: var(--escala-xs); font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--cor-acento); margin-bottom: var(--esp-3);
+  }
+  h1.titulo-hero-b {
+    font-family: var(--fonte-titulo); font-weight: 700; margin: 0 0 var(--esp-4);
+    font-size: 2.3rem; line-height: var(--altura-linha-titulo); color: var(--cor-primaria-escura);
+  }
+  p.subtitulo-hero-b { font-size: var(--escala-md); color: var(--cor-texto-suave); margin: 0 0 var(--esp-5); max-width: 38rem; }
+  .acoes-hero { display: flex; gap: var(--esp-3); flex-wrap: wrap; }
+  .botao {
+    font: inherit; font-weight: 600; border-radius: var(--raio-md); padding: var(--esp-3) var(--esp-5);
+    text-decoration: none; display: inline-flex; align-items: center; gap: var(--esp-2);
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .botao-primario { background: var(--cor-primaria-escura); color: #fff; }
+  .botao-primario:hover { background: var(--cor-primaria); }
+  .botao-secundario { background: transparent; color: var(--cor-primaria-escura); border-color: var(--cor-borda-forte); }
+  .botao-secundario:hover { border-color: var(--cor-primaria); color: var(--cor-primaria); }
+
+  /* Grade de períodos, protagonista nesta variação */
+  .grade-periodos-hero {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--esp-3);
+    padding-bottom: var(--esp-6);
+  }
+  .cartao-periodo-b {
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda); border-radius: var(--raio-md);
+    padding: var(--esp-4); box-shadow: var(--sombra-cartao); text-decoration: none; color: var(--cor-texto);
+    display: flex; flex-direction: column; gap: var(--esp-1); transition: box-shadow var(--transicao-rapida), transform var(--transicao-rapida);
+    min-height: 108px;
+  }
+  .cartao-periodo-b:hover { box-shadow: var(--sombra-elevada); transform: translateY(-2px); }
+  .cartao-periodo-b.inativo { color: var(--cor-desativado-texto); pointer-events: none; background: var(--cor-fundo-sutil); }
+  .cartao-periodo-b.inativo:hover { box-shadow: var(--sombra-cartao); transform: none; }
+  .numero-periodo-b { font-family: var(--fonte-titulo); font-size: 1.5rem; font-weight: 700; color: var(--cor-primaria); }
+  .cartao-periodo-b.inativo .numero-periodo-b { color: var(--cor-desativado-texto); }
+  .nome-periodo-b { font-size: var(--escala-xs); font-weight: 600; line-height: 1.3; }
+  .meta-periodo-b { font-size: 0.7rem; color: var(--cor-texto-suave); margin-top: auto; }
+  .cartao-periodo-b.inativo .meta-periodo-b { color: var(--cor-desativado-texto); }
+
+  main { display: block; }
+  section { padding-block: var(--esp-8); }
+  /* Qualquer alvo de âncora (#sobre, #continuar, #painel-menu-periodos-b)
+     reserva espaço para não ficar escondido atrás do cabeçalho fixo. */
+  [id] { scroll-margin-top: 5rem; }
+  h2.titulo-secao {
+    font-family: var(--fonte-titulo); font-size: var(--escala-lg); margin: 0 0 var(--esp-2);
+    color: var(--cor-primaria-escura);
+  }
+  p.descricao-secao { color: var(--cor-texto-suave); margin: 0 0 var(--esp-6); max-width: 54ch; }
+
+  .cartao-continuar {
+    display: flex; gap: var(--esp-5); align-items: center; flex-wrap: wrap;
+    background: var(--cor-primaria-clara); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-lg); padding: var(--esp-6);
+  }
+  .cartao-continuar .icone-livro {
+    flex-shrink: 0; width: 56px; height: 56px; border-radius: var(--raio-md);
+    background: var(--cor-fundo-elevado); display: grid; place-items: center; color: var(--cor-primaria);
+    box-shadow: var(--sombra-cartao);
+  }
+  .cartao-continuar .info { flex: 1; min-width: 220px; }
+  .cartao-continuar .rotulo-continuar { font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--cor-texto-suave); font-weight: 600; }
+  .cartao-continuar h3 { font-family: var(--fonte-titulo); margin: var(--esp-1) 0 var(--esp-2); font-size: var(--escala-md); color: var(--cor-primaria-escura); }
+  .barra-progresso { height: 8px; border-radius: 99px; background: var(--cor-borda); overflow: hidden; max-width: 320px; margin-bottom: var(--esp-2); }
+  .barra-progresso > span { display: block; height: 100%; background: var(--cor-acento); width: 42%; }
+  .texto-progresso { font-size: var(--escala-xs); color: var(--cor-texto-suave); }
+
+  .destaques {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--esp-5);
+  }
+  .cartao-destaque {
+    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg);
+    padding: var(--esp-5); box-shadow: var(--sombra-cartao);
+  }
+  .cartao-destaque .numero { font-family: var(--fonte-titulo); font-size: var(--escala-lg); color: var(--cor-primaria); }
+  .cartao-destaque h3 { font-family: var(--fonte-titulo); margin: var(--esp-1) 0 var(--esp-2); color: var(--cor-primaria-escura); font-size: var(--escala-md); }
+  .cartao-destaque p { margin: 0; color: var(--cor-texto-suave); font-size: var(--escala-sm); }
+
+  footer.rodape {
+    border-top: 1px solid var(--cor-borda);
+    padding-block: var(--esp-7);
+    /* Área segura de baixo do iPhone (faixa do gesto de voltar ao início). */
+    padding-block: var(--esp-7) calc(var(--esp-7) + env(safe-area-inset-bottom, 0px));
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+    background: var(--cor-fundo-sutil); color: var(--cor-texto-suave); font-size: var(--escala-sm);
+  }
+  footer.rodape .container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--esp-4); }
+  footer.rodape a { color: var(--cor-texto-suave); }
+  footer.rodape nav { display: flex; gap: var(--esp-4); flex-wrap: wrap; }
+
+  /* Modo de alto contraste do Windows (o que o Edge entrega em cima do SO).
+     O navegador troca as cores autorais por uma paleta de sistema restrita;
+     elementos que hoje só se distinguem por cor de fundo (selo, barra de
+     progresso, cartão em grade) ganham aqui borda/preenchimento explícitos
+     em cores de sistema, para não desaparecerem visualmente. */
+  @media (forced-colors: active) {
+    .selo-em-breve { border: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; color: CanvasText; }
+    .barra-progresso { border: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; }
+    .barra-progresso > span { forced-color-adjust: none; background: Highlight; }
+    .botao-primario { border: 1px solid ButtonText; }
+    .botao-secundario { border: 1px solid ButtonText; }
+    .cartao-periodo-b, .cartao-periodo-b.inativo { border: 1px solid CanvasText; }
+  }
+
+  @media (max-width: 900px) {
+    .grade-periodos-hero { grid-template-columns: repeat(3, 1fr); }
+    .destaques { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .barra-topo { flex-wrap: wrap; }
+    nav.nav-principal { order: 3; width: 100%; }
+    .grade-periodos-hero { grid-template-columns: repeat(2, 1fr); }
+    h1.titulo-hero-b { font-size: 1.8rem; }
+    .fundo-animado-b { width: 100%; opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
+<header class="topo">
+  <div class="barra-topo">
+    <a class="marca" href="#">Caderno de Direito</a>
+    <nav class="nav-principal" aria-label="Navegação principal">
+      <button class="item-nav" type="button" aria-expanded="true" aria-controls="painel-menu-periodos-b">Períodos</button>
+      <button class="item-nav" type="button">Sobre o caderno</button>
+    </nav>
+    <div class="busca-topo" role="search">
+      <svg class="icone-lupa" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <label for="campo-busca-b" class="sr-only">Buscar no conteúdo</label>
+      <input id="campo-busca-b" type="search" placeholder="Buscar no conteúdo...">
+      <kbd class="atalho">/</kbd>
+    </div>
+    <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+      <svg class="icone-tema-claro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icone-tema-escuro" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <div class="painel-menu" id="painel-menu-periodos-b">
+    <div class="container">
+      <p class="rotulo">Navegue por período, cadeira e unidade</p>
+      <ul class="lista-periodos">
+        <li>
+          <details class="periodo" open>
+            <summary>1º período</summary>
+            <div class="conteudo-periodo">
+              <ul class="lista-cadeiras">
+                <li>
+                  <details class="cadeira" open>
+                    <summary>Introdução ao Direito</summary>
+                    <div class="conteudo-cadeira">
+                      <ul class="lista-unidades">
+                        <li><a href="unidade.html">Unidade 1: Fundamentos do Direito</a></li>
+                        <li><span class="unidade-inativa" aria-disabled="true">Unidade 2 <span class="selo-em-breve">em breve</span></span></li>
+                        <li><span class="unidade-inativa" aria-disabled="true">Unidade 3 <span class="selo-em-breve">em breve</span></span></li>
+                      </ul>
+                    </div>
+                  </details>
+                </li>
+                <li>
+                  <details class="cadeira cadeira-inativa">
+                    <summary>Direito Constitucional I <span class="selo-em-breve">em breve</span></summary>
+                  </details>
+                </li>
+                <li>
+                  <details class="cadeira cadeira-inativa">
+                    <summary>Ciência Política <span class="selo-em-breve">em breve</span></summary>
+                  </details>
+                </li>
+                <li>
+                  <details class="cadeira cadeira-inativa">
+                    <summary>Sociologia Jurídica <span class="selo-em-breve">em breve</span></summary>
+                  </details>
+                </li>
+                <li>
+                  <details class="cadeira cadeira-inativa">
+                    <summary>Economia <span class="selo-em-breve">em breve</span></summary>
+                  </details>
+                </li>
+              </ul>
+            </div>
+          </details>
+        </li>
+        <li><details class="periodo"><summary>2º período <span class="selo-em-breve">em breve</span></summary></details></li>
+        <li><details class="periodo"><summary>3º período <span class="selo-em-breve">em breve</span></summary></details></li>
+        <li><details class="periodo"><summary>4º período <span class="selo-em-breve">em breve</span></summary></details></li>
+        <li><details class="periodo"><summary>5º período <span class="selo-em-breve">em breve</span></summary></details></li>
+        <li><details class="periodo"><summary>6º a 10º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo-principal">
+  <section class="dobra-grade">
+    <div class="fundo-animado-b" aria-hidden="true"></div>
+    <!--
+      Espaço reservado para a animação de fundo em canvas, versão B: aqui a
+      animação ocupa só a faixa direita da dobra, atrás da grade de cartões
+      (que fica por cima, legível). Efeito pretendido: pontos finos conectados
+      por linhas quando próximos (padrão "constelação"), tom petróleo/dourado
+      em opacidade baixa, movimento lento e sem repetição abrupta. Sob
+      prefers-reduced-motion, fica só a trama de pontos estática já usada
+      aqui como espaço reservado.
+    -->
+    <div class="container">
+      <div class="cabecalho-hero-b">
+        <span class="selo-topo">Estudos de Direito</span>
+        <h1 class="titulo-hero-b">Escolha o período e comece a estudar.</h1>
+        <p class="subtitulo-hero-b">Dez períodos, cada um com suas cadeiras e unidades. O que já está pronto abre direto; o resto aparece aqui mesmo assim que for publicado.</p>
+        <div class="acoes-hero">
+          <a class="botao botao-primario" href="unidade.html">Continuar estudando</a>
+          <a class="botao botao-secundario" href="#sobre">Como o caderno funciona</a>
+        </div>
+      </div>
+
+      <div class="grade-periodos-hero">
+        <a class="cartao-periodo-b" href="#painel-menu-periodos-b">
+          <span class="numero-periodo-b">1º</span>
+          <span class="nome-periodo-b">Introdução ao Direito e fundamentos</span>
+          <span class="meta-periodo-b">1 de 5 cadeiras</span>
+        </a>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">2º</span>
+          <span class="nome-periodo-b">Civil II, Penal II, Administrativo I</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">3º</span>
+          <span class="nome-periodo-b">Obrigações, Processual Civil I</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">4º</span>
+          <span class="nome-periodo-b">Contratos, Direitos Humanos</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">5º</span>
+          <span class="nome-periodo-b">Responsabilidade Civil, Trib. I</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">6º</span>
+          <span class="nome-periodo-b">Direito de Família, Trib. II</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">7º</span>
+          <span class="nome-periodo-b">Sucessões, Trabalho I</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">8º</span>
+          <span class="nome-periodo-b">Direitos Reais, Ambiental</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">9º</span>
+          <span class="nome-periodo-b">Consumidor, Eleitoral</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+        <span class="cartao-periodo-b inativo" aria-disabled="true">
+          <span class="numero-periodo-b">10º</span>
+          <span class="nome-periodo-b">Mediação, Arbitragem, TCC</span>
+          <span class="meta-periodo-b">Em breve</span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section id="continuar">
+    <div class="container">
+      <div class="cartao-continuar">
+        <div class="icone-livro" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="info">
+          <p class="rotulo-continuar">Continuar de onde parou</p>
+          <h3>Introdução ao Direito, Unidade 1, aba Resumo</h3>
+          <div class="barra-progresso" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso de leitura da unidade"><span></span></div>
+          <p class="texto-progresso">Bloco 4 de 9: Fontes do Direito e os dois grandes sistemas jurídicos</p>
+        </div>
+        <a class="botao botao-primario" href="unidade.html">Continuar</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="sobre">
+    <div class="container">
+      <h2 class="titulo-secao">O que tem em cada unidade</h2>
+      <p class="descricao-secao">Toda unidade publicada segue a mesma estrutura em três abas, para você saber sempre onde encontrar cada coisa.</p>
+      <div class="destaques">
+        <div class="cartao-destaque">
+          <span class="numero">01</span>
+          <h3>Resumo</h3>
+          <p>Blocos teóricos com linha do tempo, quadros comparativos e citações de doutrina, na ordem em que o conteúdo foi trabalhado.</p>
+        </div>
+        <div class="cartao-destaque">
+          <span class="numero">02</span>
+          <h3>Petição comentada</h3>
+          <p>Uma peça jurídica real, seção por seção, com um comentário explicando a lógica de redação ao lado de cada trecho.</p>
+        </div>
+        <div class="cartao-destaque">
+          <span class="numero">03</span>
+          <h3>Quiz</h3>
+          <p>60 perguntas de múltipla escolha, uma de cada vez, com explicação e revisão completa ao final da tentativa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="container">
+    <p>Caderno de Direito: material de estudo pessoal, organizado por período, cadeira e unidade.</p>
+    <nav aria-label="Rodapé">
+      <a href="#sobre">Como funciona</a>
+      <a href="unidade.html">Unidade piloto</a>
+      <a href="#">Sobre o caderno</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  function alternarTema() {
+    var raiz = document.documentElement;
+    var atual = raiz.getAttribute('data-theme');
+    var novo = atual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', novo);
+    try { localStorage.setItem('caderno-tema', novo); } catch (e) {}
+  }
+  (function () {
+    try {
+      var salvo = localStorage.getItem('caderno-tema');
+      if (salvo) document.documentElement.setAttribute('data-theme', salvo);
+    } catch (e) {}
+  })();
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      ev.preventDefault();
+      document.getElementById('campo-busca-b').focus();
+    }
+  });
+</script>
+</body>
+</html>

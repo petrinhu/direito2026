@@ -1,12 +1,12 @@
 # Base de dispositivos legais
 
 Fonte de texto para o balão de citação (hover) do site. Cada dispositivo listado
-abaixo foi encontrado por varredura completa do arquivo fonte
-`arquivo de resumo da 1a unidade, fora deste repositorio` (bloco de
-dados `CONTEUDO`, dentro da tag `<script>` que começa na linha 552 do arquivo
-original) e teve o texto conferido diretamente na fonte oficial (planalto.gov.br)
-em 21/09/2026. O mesmo conteúdo está em `dispositivos-legais.json`, para consumo
-pelo site.
+abaixo foi encontrado por varredura completa do arquivo HTML de resumo da 1a
+unidade de Introdução ao Direito, do 1o período, que fica na árvore local de
+estudo, fora deste repositório (bloco de dados `CONTEUDO`, dentro da tag
+`<script>` que começa na linha 552 do arquivo original) e teve o texto
+conferido diretamente na fonte oficial (planalto.gov.br) em 21/09/2026. O
+mesmo conteúdo está em `dispositivos-legais.json`, para consumo pelo site.
 
 Varredura: 11 dispositivos distintos citados, todos verificados. Nenhum ficou sem
 confirmação.

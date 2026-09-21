@@ -61,6 +61,56 @@ Espaçamento em base 8px (0.25rem a 6rem). Largura de leitura de texto corrido t
 - **Botão primário desativado:** fundo e texto trocam para os tokens de desativado, cursor `not-allowed`.
 - **Tema:** troca por atributo `data-theme` na tag `<html>`, persistida em `localStorage`; na ausência de escolha manual, segue `prefers-color-scheme` do sistema.
 
+## Balão de artigo de lei citado
+
+Pedido do líder (21/09/2026): ao passar o mouse sobre um artigo de lei citado no texto, um balão mostra a redação do artigo, sem atrapalhar a página nem sair da tela. Implementado em `unidade.html`, na aba Petição comentada (4 citações reais: Código Civil art. 186, art. 927, Constituição Federal art. 5º incisos V e X, e Código de Processo Civil art. 319, II) e demonstrado à parte, ao final da mesma aba, num painel de referência com os três estados lado a lado.
+
+### Marcação no texto corrido
+
+A citação vira um botão inline (`<button class="citacao-artigo">`), sem aparência de botão: fundo transparente, sem borda própria, só um sublinhado pontilhado fino na cor de acento (dourado/âmbar), que fica sólido no hover/foco com um leve tingimento de fundo. Não é um link (não navega), por isso o cursor vira `help`, e o padrão de acessibilidade é o de tooltip do WAI-ARIA (`aria-describedby` no botão apontando para `role="tooltip"` no balão), não o de botão com estado aberto/fechado.
+
+### Conteúdo do balão
+
+Cabeçalho com o nome do diploma e o número do artigo (fonte com serifa, cor de marca), corpo com o texto do artigo entre aspas, e um rodapé discreto com a fonte oficial (por exemplo "Fonte: Código Civil, Lei nº 10.406/2002"), separado por uma linha fina.
+
+### Cores e contraste, balão
+
+O balão usa exatamente os tokens de "cartão elevado" já medidos na tabela de paleta acima (mesma cor de fundo), por isso os números de contraste são os mesmos, aqui reunidos no contexto do próprio componente.
+
+Valores fixos do balão, sem par de contraste (não são texto sobre fundo):
+
+| Elemento do balão | Modo claro | Modo escuro |
+|---|---|---|
+| Fundo do balão | `#ffffff` (`--cor-fundo-elevado`) | `#1a1f27` (`--cor-fundo-elevado`) |
+| Borda do balão | `#dcd7c8` (`--cor-borda`) | `#2c333d` (`--cor-borda`) |
+| Sombra | `--sombra-elevada`, a mesma sombra de cartão elevado no hover | `--sombra-elevada`, versão escura do mesmo token |
+
+Contraste do texto de dentro do balão, medido contra o fundo real do balão (não contra o fundo da página):
+
+| Par | Hex texto, claro | Contraste, claro | Hex texto, escuro | Contraste, escuro |
+|---|---|---|---|---|
+| Cabeçalho (nome do diploma) contra o fundo do balão | `#0d2440` | 15.63:1 | `#7fa8d6` | 6.68:1 |
+| Corpo do artigo contra o fundo do balão | `#1c1c1c` | 17.04:1 | `#eceff2` | 14.34:1 |
+| Rodapé da fonte contra o fundo do balão | `#4a4a4a` | 8.86:1 | `#b8c0cc` | 9.02:1 |
+
+Todos os pares do balão ficam bem acima do piso AA (4.5:1), inclusive no modo escuro, o mais apertado da paleta inteira.
+
+### Não empurrar o conteúdo nem sair da tela
+
+O balão é `position: absolute`, então nunca desloca o texto ao redor (não reflui o parágrafo). Abre centralizado abaixo da citação por padrão. Numa citação perto da borda direita (a do art. 319, II, do CPC, no comentário lateral da petição, e reproduzida no painel de demonstração), uma classe modificadora (`.balao-artigo--esquerda`) vira a âncora para a direita do balão em vez do centro, abrindo para a esquerda, e a setinha que aponta para a citação também troca de lado. A escolha de qual lado usar é manual nesse mockup (decidida por conhecer o layout); numa implementação real, o ponto certo para calcular automaticamente é medir a posição do gatilho contra a borda da viewport (`getBoundingClientRect`) e trocar a classe por JavaScript, porque `anchor-positioning` em CSS puro ainda não tem suporte em todos os motores (ver `docs/compatibilidade-navegadores.md`).
+
+### Tela estreita: faixa fixada embaixo
+
+Abaixo de 640px, o balão para de ser um balão flutuante e vira uma faixa (`position: fixed`, borda superior arredondada) presa à base da tela, com botão de fechar visível (círculo com "×" no canto superior direito da faixa). Sem hover em toque, a faixa abre com o mesmo gatilho de foco (tocar no botão da citação já foca ele em qualquer navegador móvel testável), e fecha ao tocar no "×", que tira o foco de tudo dentro do componente (função `fecharBalao`, a única linha de JavaScript nova além de trocar aba e tema). A faixa reserva `env(safe-area-inset-bottom)`, mesma técnica já usada no rodapé do site, para não ficar colada na faixa de gesto do iPhone.
+
+### Teclado
+
+O gatilho é um `<button>`, então já é alcançável por Tab sem precisar de `tabindex` extra, e abre o balão com `:focus-within`, junto com o hover. O contorno de foco visível é o mesmo padrão do resto do site (`outline: 3px solid var(--cor-primaria)`, de `tokens.css`), só com `outline-offset` maior para não ficar colado no sublinhado pontilhado.
+
+### Impressão
+
+Em `@media print`, o balão nunca aparece (`display: none`). A citação perde o sublinhado e ganha, entre parênteses e em corpo menor, a referência simples guardada num atributo `data-ref` (por exemplo "art. 186 do Código Civil (Código Civil, art. 186)"), para o texto continuar completo e legível no papel sem depender de interação nenhuma.
+
 ## Animação de fundo da home (canvas)
 
 Não implementada nos mockups, só reservada (`<div class="fundo-animado">` ou `.fundo-animado-b`, com comentário HTML explicando o efeito no próprio arquivo). Efeito pretendido: partículas ou pontos finos em opacidade baixa (até 0.5), na paleta petróleo/dourado, deslocando-se devagar (um ciclo a cada ~40 segundos), sem repetição abrupta nem brilho chamativo. Na variação A, ocupa a dobra inteira atrás do texto; na variação B, fica restrita à faixa direita, atrás da grade de períodos, que passa por cima. Sob `prefers-reduced-motion: reduce`, o canvas não anima: cai para o gradiente ou trama de pontos estático que já serve de espaço reservado no mockup.

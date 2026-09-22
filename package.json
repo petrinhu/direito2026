@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/gerar-indice-busca.ts && vue-tsc --noEmit && vite build && cp dist/index.html dist/404.html && bash scripts/verificar-pacote-publicavel.sh && node --import tsx scripts/verificar-colisao-rotas.ts && node --import tsx scripts/verificar-htaccess-pastas.ts && node --import tsx scripts/verificar-dispositivos-no-pacote.ts",
+    "build": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/gerar-indice-busca.ts && vue-tsc --noEmit && vite build && cp dist/index.html dist/404.html && bash scripts/verificar-pacote-publicavel.sh && node --import tsx scripts/verificar-colisao-rotas.ts && node --import tsx scripts/verificar-htaccess-pastas.ts && node --import tsx scripts/verificar-dispositivos-no-pacote.ts && bash scripts/verificar-fontes.sh",
+    "gerar:fontes": "bash scripts/gerar-fontes.sh",
     "preview": "vite preview",
     "test:unit": "vitest run tests/unidade tests/componente",
     "test:unit:watch": "vitest tests/unidade tests/componente",

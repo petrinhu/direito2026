@@ -6,9 +6,17 @@ export interface EstadoBalao {
   readonly botaoAncora: HTMLElement | undefined;
 }
 
+/** Ponto do ponteiro no instante em que o hover abriu o balão (seção 12.4). */
+export interface PontoPonteiro {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface ControladorCitacoes {
   readonly estado: EstadoBalao;
   ligar(regiao: HTMLElement): void;
+  /** Liga os escutadores de hoverable no próprio elemento do balão (seção 12.3). */
+  ligarBalao(balao: HTMLElement): void;
   desligar(): void;
 }
 
@@ -25,10 +33,11 @@ const TOLERANCIA_SAIDA_HOVER_MS = 200;
  */
 export function criarControladorCitacoes(params: {
   dispositivos: () => IndiceDispositivos | undefined;
-  aoAbrir: (dispositivoId: string, ancora: HTMLElement) => void;
+  aoAbrir: (dispositivoId: string, ancora: HTMLElement, ponto?: PontoPonteiro) => void;
   aoFechar: () => void;
 }): ControladorCitacoes {
   let regiaoAtual: HTMLElement | undefined;
+  let balaoAtual: HTMLElement | undefined;
   let temporizadorAbertura: ReturnType<typeof setTimeout> | undefined;
   let temporizadorFechamento: ReturnType<typeof setTimeout> | undefined;
 
@@ -38,14 +47,14 @@ export function criarControladorCitacoes(params: {
     return alvo instanceof HTMLElement && alvo.matches('button[data-dispositivo]');
   }
 
-  function abrir(botao: HTMLElement): void {
+  function abrir(botao: HTMLElement, ponto?: PontoPonteiro): void {
     const id = botao.dataset.dispositivo;
     if (!id) return;
     (estado as { aberto: boolean }).aberto = true;
     (estado as { dispositivoId: string | undefined }).dispositivoId = id;
     (estado as { botaoAncora: HTMLElement | undefined }).botaoAncora = botao;
     botao.setAttribute('aria-expanded', 'true');
-    params.aoAbrir(id, botao);
+    params.aoAbrir(id, botao, ponto);
   }
 
   function fechar(): void {
@@ -68,13 +77,43 @@ export function criarControladorCitacoes(params: {
         ? evento.target.closest('button[data-dispositivo]')
         : null;
     if (!(botao instanceof HTMLElement)) return;
+    const ponto: PontoPonteiro = { x: evento.clientX, y: evento.clientY };
     clearTimeout(temporizadorFechamento);
-    temporizadorAbertura = setTimeout(() => abrir(botao), ATRASO_INTENCAO_HOVER_MS);
+    clearTimeout(temporizadorAbertura);
+    temporizadorAbertura = setTimeout(() => abrir(botao, ponto), ATRASO_INTENCAO_HOVER_MS);
   }
 
+  /**
+   * Achado ao investigar o teste e2e desta correção: 'pointerleave' não é
+   * um único evento que borbulha - o navegador sintetiza um evento por
+   * NÍVEL de ancestral atravessado ao sair de uma estrutura aninhada
+   * (aqui, botão -> p -> div -> section -> div -> div -> div, sete
+   * disparos para um único movimento real do mouse). Sem cancelar o
+   * temporizador anterior antes de reagendar, cada nível deixava um
+   * setTimeout(fechar, ...) órfão para trás; cancelar só o último
+   * (aoBalaoPonteiroEntrar) não bastava, porque os órfãos disparavam do
+   * mesmo jeito. `clearTimeout` antes de reatribuir resolve na raiz,
+   * sem precisar de nenhuma lógica de geometria (polígono seguro).
+   */
   function aoPonteiroSair(evento: PointerEvent): void {
     if (evento.pointerType !== 'mouse') return;
     clearTimeout(temporizadorAbertura);
+    clearTimeout(temporizadorFechamento);
+    temporizadorFechamento = setTimeout(fechar, TOLERANCIA_SAIDA_HOVER_MS);
+  }
+
+  // Hoverable (WCAG 1.4.13): o mesmo par entrar/sair, agora no próprio
+  // balão, para o ponteiro poder atravessar de um para o outro sem que o
+  // fechamento agendado em aoPonteiroSair se cumpra no meio do caminho.
+  function aoBalaoPonteiroEntrar(evento: PointerEvent): void {
+    if (evento.pointerType !== 'mouse') return;
+    clearTimeout(temporizadorFechamento);
+  }
+
+  function aoBalaoPonteiroSair(evento: PointerEvent): void {
+    if (evento.pointerType !== 'mouse') return;
+    clearTimeout(temporizadorAbertura);
+    clearTimeout(temporizadorFechamento);
     temporizadorFechamento = setTimeout(fechar, TOLERANCIA_SAIDA_HOVER_MS);
   }
 
@@ -112,17 +151,29 @@ export function criarControladorCitacoes(params: {
     regiao.addEventListener('focusout', aoDesfocar, true);
   }
 
+  function ligarBalao(balao: HTMLElement): void {
+    balaoAtual = balao;
+    balao.addEventListener('pointerenter', aoBalaoPonteiroEntrar);
+    balao.addEventListener('pointerleave', aoBalaoPonteiroSair);
+  }
+
   function desligar(): void {
-    if (!regiaoAtual) return;
-    regiaoAtual.removeEventListener('pointerenter', aoPonteiroEntrar, true);
-    regiaoAtual.removeEventListener('pointerleave', aoPonteiroSair, true);
-    regiaoAtual.removeEventListener('click', aoClicar);
-    regiaoAtual.removeEventListener('focus', aoFocar, true);
-    regiaoAtual.removeEventListener('focusout', aoDesfocar, true);
-    regiaoAtual = undefined;
+    if (regiaoAtual) {
+      regiaoAtual.removeEventListener('pointerenter', aoPonteiroEntrar, true);
+      regiaoAtual.removeEventListener('pointerleave', aoPonteiroSair, true);
+      regiaoAtual.removeEventListener('click', aoClicar);
+      regiaoAtual.removeEventListener('focus', aoFocar, true);
+      regiaoAtual.removeEventListener('focusout', aoDesfocar, true);
+      regiaoAtual = undefined;
+    }
+    if (balaoAtual) {
+      balaoAtual.removeEventListener('pointerenter', aoBalaoPonteiroEntrar);
+      balaoAtual.removeEventListener('pointerleave', aoBalaoPonteiroSair);
+      balaoAtual = undefined;
+    }
     clearTimeout(temporizadorAbertura);
     clearTimeout(temporizadorFechamento);
   }
 
-  return { estado, ligar, desligar };
+  return { estado, ligar, ligarBalao, desligar };
 }

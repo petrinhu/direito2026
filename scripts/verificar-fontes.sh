@@ -3,8 +3,17 @@
 # em dist/ passar de 60 KB, ou se sobrar a sequência "data:font" em
 # qualquer arquivo de dist/ (fonte embutida em base64, o problema medido
 # no piloto: ~490 KB de @font-face inline).
+#
+# Achado do líder, 22/09/2026: nada aqui embaixo conferia se a fonte SERVE
+# de verdade, só se HÁ arquivo. O recorte do commit a68fc44 tinha 129
+# glifos por arquivo (passava neste portão sem problema), dos quais só a
+# letra "A" maiúscula - zero minúsculas, zero dígitos, zero acentuação.
+# scripts/verificar-fontes-glifos.py fecha esse buraco, lendo o arquivo de
+# verdade (fontTools) e conferindo o conjunto mínimo (26 maiúsculas, 26
+# minúsculas, dígitos, acentuação pt-br).
 set -uo pipefail
 
+AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST="${1:-dist}"
 
 if [ ! -d "$DIST" ]; then
@@ -36,6 +45,10 @@ OCORRENCIAS_DATA_FONT=$(grep -rl 'data:font' "$DIST" 2>/dev/null | wc -l || true
 if [ "$OCORRENCIAS_DATA_FONT" -gt 0 ]; then
   echo "fonte embutida em base64 encontrada em $OCORRENCIAS_DATA_FONT arquivo(s) de $DIST" >&2
   grep -rl 'data:font' "$DIST" >&2 || true
+  FALHOU=1
+fi
+
+if ! python3 "$AQUI/verificar-fontes-glifos.py" "$DIST"; then
   FALHOU=1
 fi
 

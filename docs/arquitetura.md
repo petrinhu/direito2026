@@ -616,36 +616,36 @@ A folha de impressão só é aceita contra PDF gerado por Chromium headless (L-4
 
 ## 10. Tipografia e fontes
 
-### O problema medido
+### O problema medido, original
 
-[FATO] o piloto tem 783.349 bytes, dos quais cerca de 490 KB são `@font-face` com `src: url(data:font/woff2;base64,...)` das famílias Inter e Lora (a partir da linha 10). Efeito observável: a página só começa a pintar depois de baixar o arquivo inteiro, e uma correção de uma vírgula no texto obriga o leitor a rebaixar os 490 KB de fonte junto.
+[FATO] o piloto tinha 783.349 bytes, dos quais cerca de 490 KB eram `@font-face` com `src: url(data:font/woff2;base64,...)` das famílias Inter e Lora. Efeito observável: a página só começava a pintar depois de baixar o arquivo inteiro, e uma correção de uma vírgula no texto obrigava o leitor a rebaixar os 490 KB de fonte junto. Resolvido no commit `a68fc44` com fontes próprias recortadas — mas o recorte daquele commit tinha um defeito grave, descrito abaixo.
 
-### Alvo
+### Estado atual: quatro arquivos `.woff2` em `public/assets/fontes/`
 
-Arquivos `.woff2` próprios em `src/ui/fontes/`, versionados no repositório, servidos pelo Vite com hash no nome e cache imutável de um ano. Nenhum CDN (R7).
+Origem: `@fontsource-variable/inter` e `@fontsource/lora` (devDependency, sem CDN, R7). `scripts/gerar-fontes.sh` gera os quatro arquivos finais a partir dos `.woff2` de origem (`inter-latin-wght-normal.woff2`, variável, instanciado por peso com `fonttools varLib.instancer`; `lora-latin-700-normal.woff2`, estático) e os recorta com `pyftsubset`. `npm run gerar:fontes` executa o script; ele não roda sozinho no `build` (mudar fonte é decisão deliberada, não passo automático de toda construção).
 
-### Como sair de um para o outro
+**[FATO, achado do líder, 22/09/2026, medido, não suposto] o recorte do commit `a68fc44` estava quebrado.** Relato do líder, verbatim: *"O 'A' maiúsculo está muito maior no texto que as outras maiúsculas."* Causa raiz medida com `fontTools`: os quatro arquivos tinham 129 glifos cada, dos quais **uma única letra maiúscula (A)**, **zero minúsculas** e **zero dígitos** — o intervalo de fato recortado era uma fatia arbitrária de Unicode (majoritariamente Latin Extended-A, usado por línguas da Europa Central/Oriental, não por português), não "o alfabeto do site" que a mensagem daquele commit descrevia. Toda letra que não fosse "A" caía na fonte de reserva (`Arial`/`Liberation Sans`, métrica diferente), e por isso o "A" próprio destoava visivelmente das outras maiúsculas.
 
-1. Trazer os arquivos originais por `@fontsource-variable/inter` e `@fontsource/lora`, que publicam os `.woff2` para self-host, sem CDN.
-2. Recortar com `pyftsubset` (pacote `fonttools`), em `scripts/recortar-fontes.sh`:
+**Conserto, ordem do líder, 22/09/2026, verbatim:** *"Não monte a lista a partir de uma amostra do texto atual: use o intervalo latino básico mais o suplemento latino, que é o que garante que conteúdo novo não quebre."* `scripts/gerar-fontes.sh` recorta agora contra um intervalo Unicode **fixo**, nunca extraído de uma amostra de texto:
 
-```bash
-pyftsubset InterVariable.woff2 \
-  --unicodes="U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD" \
-  --layout-features="kern,liga,clig,calt" \
-  --flavor=woff2 --output-file=src/ui/fontes/inter-var.woff2
-```
+- `U+0020-007E` (Basic Latin): as 26 maiúsculas, as 26 minúsculas, os 10 dígitos, e toda a pontuação ASCII.
+- `U+00A0-00FF` (Latin-1 Supplement): toda a acentuação do português nas duas caixas (á é í ó ú â ê ô ã õ à ç e as maiúsculas), grau (°), sinais de moeda ¢£¤¥, pontuação latina estendida (« » ¡ ¿).
+- `U+2026` (reticência tipográfica, "…"), usada de verdade em três telas ("Carregando…") — já incluída de graça dentro do arquivo de origem `-latin-` da Fontsource (o `unicode-range` dele cobre até `U+206F`).
 
-O intervalo acima é o mesmo `unicode-range` que o piloto já declara nos seus `@font-face`, então o recorte não perde nenhum caractere que o material use.
+Resultado, medido com `fontTools` (191 glifos por arquivo, cobrindo o conjunto inteiro acima):
 
-3. Quatro arquivos, não doze: Inter variável (cobre 400 a 700 num arquivo), Lora 400, Lora 600 e Lora itálico 400. [FATO] o piloto tem `@font-face` separados para Inter 400, 500, 600 e 700 e para Lora normal e itálico.
-4. `@font-face` local com `font-display: swap`; `<link rel="preload">` apenas para Inter variável e Lora 400, que são as duas usadas acima da dobra.
+| Arquivo | Antes (quebrado) | Depois (corrigido) | Teto do portão |
+|---|---|---|---|
+| `inter-400.woff2` | 6.824 B / 129 glifos | 16.028 B / 191 glifos | 60 KB |
+| `inter-500.woff2` | 6.984 B / 129 glifos | 16.472 B / 191 glifos | 60 KB |
+| `inter-700.woff2` | 7.000 B / 129 glifos | 16.588 B / 191 glifos | 60 KB |
+| `lora-700.woff2` | 8.004 B / 129 glifos | 17.672 B / 191 glifos | 60 KB |
 
-[INFERÊNCIA] Estimativa de resultado: entre 25 e 45 KB por arquivo recortado, abaixo de 150 KB no total, contra os 490 KB de hoje. É estimativa, não medição; a medição entra no fechamento da onda 0.
+Total sobe de ~28,8 KB para ~66,8 KB (quatro arquivos), ainda bem abaixo do teto de 60 KB **por arquivo** (nenhum passa de 17,7 KB) e uma fração pequena do pacote total. Nenhum corte adicional foi decidido sem medir e reportar primeiro (ordem do líder).
 
-**Alternativa sem instalar `fonttools`:** usar direto os subsets `latin` que o Fontsource já publica separados por `unicode-range`, sem recorte próprio. Fica maior que o recorte sob medida, mas não exige ferramenta nova. Decidir depois da autorização de instalação (seção 16).
+**Métrica de reserva (fallback) confirmada intacta:** `ascent-override`/`descent-override`/`size-adjust` das faces `Inter Fallback`/`Lora Fallback` (seção acima, técnica de Malchev) foram calculados a partir de `sTypoAscender`/`sTypoDescender`/`sTypoLineGap` da tabela `OS/2` — medido (não suposto) que esses três valores são **idênticos**, byte a byte, entre o arquivo quebrado e o corrigido: recortar glifos não altera a métrica de corpo da fonte. Nenhum recálculo foi necessário.
 
-**Gate:** `scripts/verificar-fontes.sh` reprova o build se algum `.woff2` em `dist/` passar de 60 KB, ou se sobrar a sequência `data:font` em qualquer arquivo de `dist/`. Termina com `exit 1` antes do empacotamento, não com um `echo` (L-36).
+**Gate, agora em duas camadas.** `scripts/verificar-fontes.sh` (chamado por `npm run build`, ao final — antes não era chamado por `build` nenhum, falha corrigida junto): (1) reprova se algum `.woff2` em `dist/` passar de 60 KB, ou se sobrar `data:font` embutido; (2) **portão novo**, `scripts/verificar-fontes-glifos.py` (Python + `fontTools`, já instalados nesta máquina, nada novo): lê cada `.woff2` de verdade e reprova se faltar qualquer uma das 26 maiúsculas, 26 minúsculas, 10 dígitos ou a acentuação pt-br. Achado do líder que motivou o portão novo, verbatim: *"o portão que faltava: o que existe hoje só confere se HÁ arquivo de fonte, não se a fonte SERVE."* Visto reprovando contra o recorte quebrado (85 glifos faltando por arquivo) antes do conserto, e verde depois — as duas rodadas medidas, não descritas de memória.
 
 ---
 
@@ -719,7 +719,7 @@ Apontar com o mouse não existe em celular. Os três caminhos são desenhados se
 
 | Entrada | Abre | Fecha | Detalhe |
 |---|---|---|---|
-| **Mouse** | `pointerenter` no botão, com 120 ms de intenção antes de abrir | sair do botão e do balão, com 200 ms de tolerância | O caminho de hover é ligado só dentro de `@media (hover: hover) and (pointer: fine)`. O balão é apontável, para o leitor conseguir selecionar e copiar o texto do artigo. |
+| **Mouse** | `pointerenter` no botão, com 120 ms de intenção antes de abrir | sair do botão **e** do balão, com 200 ms de tolerância | O caminho de hover é ligado só dentro de `@media (hover: hover) and (pointer: fine)`. O balão é apontável, para o leitor conseguir selecionar e copiar o texto do artigo. |
 | **Toque** | um toque no botão abre; outro toque fecha | toque fora, ou o botão de fechar | Sem hover, sem o problema clássico do primeiro toque virar hover e o segundo virar clique, porque o caminho de hover está atrás da media query acima. |
 | **Teclado** | o botão recebe foco e o balão abre quando `elemento.matches(':focus-visible')` for verdadeiro | `Esc`, pelo próprio navegador | Abrir só em `:focus-visible` evita que o clique do mouse dispare o caminho de teclado. |
 
@@ -727,15 +727,19 @@ Apontar com o mouse não existe em celular. Os três caminhos são desenhados se
 
 [INFERÊNCIA] `aria-live` foi preferido a `aria-describedby` permanente porque a redação de um artigo é um parágrafo, não uma etiqueta curta: com `aria-describedby` fixo, o leitor de tela recitaria o artigo inteiro toda vez que o foco passasse pelo botão, inclusive quando o leitor só quisesse seguir lendo.
 
+**Hoverable (WCAG 2.1 SC 1.4.13), ordem do líder, 22/09/2026, verbatim:** *"o balao NÃO pode sumir quando o ponteiro sai da citação em direção a ele. Enquanto o ponteiro estiver sobre a citação OU sobre o balão, ele fica aberto."* O balão precisa ser alcançável: o mesmo par entrar/sair do botão existe também no próprio elemento do balão (`ligarBalao`, em `citacoes.ts`), cancelando o fechamento agendado sempre que o ponteiro está confirmado sobre um dos dois. Sem `@floating-ui/react` (só `@floating-ui/dom` está instalado, e L-51 proíbe instalar pacote novo), a técnica de `safePolygon` (polígono seguro) não está disponível; a solução adotada é a mais simples documentada para o requisito "hoverable" — sem geometria de polígono, só o par entrar/sair espelhado no balão, com a mesma tolerância de 200 ms de saída já usada no botão. [FATO, medido ao investigar o teste e2e desta correção] `pointerleave` não é um único evento que borbulha: o navegador sintetiza um evento por nível de ancestral atravessado ao sair de uma estrutura aninhada (ex.: botão → `<p>` → `<div>` → `<section>` → `<div>` ×3, sete disparos para um único movimento real do mouse). Por isso `aoPonteiroSair` cancela sempre o temporizador de fechamento anterior antes de reagendar um novo — sem isso, cada nível de ancestral deixava um `setTimeout` órfão que fechava o balão mesmo depois de o ponteiro já estar dentro dele.
+
 ### 12.4 Posicionamento sem sair da tela e sem cobrir a linha
 
-Dois caminhos, escolhidos por detecção de recurso, nunca por detecção de navegador.
+**Ordem do líder, 22/09/2026, verbatim:** *"o balao está abrindo num local fixo, não no ponto onde está o mouse [...] Faça o balao aparecer no local atual do cursor do mouse."* Isto redefine o alvo do posicionamento por hover de mouse: não é mais o botão inteiro, é o **ponto** onde o ponteiro entrou. Clique, toque e teclado continuam âncorados ao elemento inteiro (não existe "ponto do ponteiro" nesses casos).
 
-**Caminho preferido, CSS puro (anchor positioning).** O controlador põe `anchor-name` apenas no botão ativo, um de cada vez; o balão declara `position-anchor`, `position-area` acima da linha, e `position-try-fallbacks: flip-block, flip-inline`, que é o que faz o balão virar para baixo quando não há espaço em cima e para o lado quando não há espaço na borda. Mais `position-visibility: anchors-visible`, para o balão sumir junto quando a citação rola para fora da tela.
+Dois caminhos, escolhidos por detecção de recurso **e** por existir ou não um ponto de ponteiro — nunca por detecção de navegador.
+
+**Caminho preferido, CSS puro (anchor positioning), só quando NÃO há ponto de ponteiro (clique/toque/teclado).** O controlador põe `anchor-name` apenas no botão ativo, um de cada vez; o balão declara `position-anchor`, `position-area` acima da linha, e `position-try-fallbacks: flip-block, flip-inline`, que é o que faz o balão virar para baixo quando não há espaço em cima e para o lado quando não há espaço na borda. Mais `position-visibility: anchors-visible`, para o balão sumir junto quando a citação rola para fora da tela. Anchor positioning nativo âncora sempre a um **elemento**, nunca a um ponto arbitrário do ponteiro — por isso este caminho fica reservado às aberturas sem ponto.
 
 **Por que precisa de contorno declarado.** [FATO, guia de compatibilidade, seção 2] o núcleo de anchor positioning está em Chrome e Edge 125+, Firefox 147+ (13/01/2026) e Safari desde a série 18, **mas o `@position-try` completo no Safari é mais recente que isso**, e a seção 6 do guia manda envolver anchor positioning completo em `@supports`. Sem `@position-try` o balão não vira, e num parágrafo perto do rodapé ele sairia da tela: exatamente o que o líder pediu para não acontecer.
 
-**Caminho de contorno, carregado só quando necessário.** Guarda em `CSS.supports('position-try-fallbacks', 'flip-block')`. Se faltar, o controlador faz `import('@floating-ui/dom')` e posiciona com `computePosition` mais `offset`, `flip`, `shift` e `size`. Quem tem suporte completo **nunca baixa esse pacote**: ele é um pedaço separado do build, buscado só no ramo do contorno.
+**Caminho de contorno com `@floating-ui/dom`, usado sempre que há um ponto de ponteiro (toda abertura por hover de mouse), e também como contorno de compatibilidade quando falta suporte nativo.** O controlador faz `import('@floating-ui/dom')` e posiciona com `computePosition` mais `offset`, `flip`, `shift` e `size`. Com ponto, a referência passada a `computePosition` não é o botão: é um [elemento virtual](https://floating-ui.com/docs/virtual-elements) (`getBoundingClientRect` devolvendo um retângulo de largura/altura zero nas coordenadas do ponteiro, com `contextElement` apontando para o botão). Sem ponto, a referência continua sendo o próprio botão, como antes. Quem tem suporte nativo completo **e** abriu sem ponto de ponteiro nunca baixa este pacote; toda abertura por hover de mouse passa por aqui, porque é o único jeito de seguir um ponto qualquer. [FATO, achado ao construir o e2e desta correção] `computePosition` precisa da opção `strategy: 'fixed'`, para casar com o `position: fixed` que de fato é aplicado ao balão — sem isso, a estratégia padrão (`'absolute'`, relativa ao documento) soma o scroll da página ao resultado, e um `position: fixed` (relativo à janela) aplicado com esse valor nasce fora da tela assim que a página está rolada. Esse descasamento existia mesmo antes desta correção (o caminho de contorno original já usava `position: fixed` sem declarar a estratégia) e é provavelmente parte da causa de fundo do relato do líder.
 
 **Os dois caminhos dividem os mesmos limites**, para o resultado ser o mesmo em qualquer motor:
 

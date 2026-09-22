@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -45,5 +46,29 @@ describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
   it('main.ts importa fontes.css', () => {
     const main = readFileSync(resolve(RAIZ, 'src/main.ts'), 'utf-8');
     expect(main).toMatch(/@\/ui\/estilos\/fontes\.css/);
+  });
+
+  /**
+   * Achado do líder, 22/09/2026, verbatim: "O 'A' maiúsculo está muito
+   * maior no texto que as outras maiúsculas." Causa medida: os quatro
+   * arquivos recortados tinham 129 glifos, dos quais só a letra "A"
+   * maiúscula - zero minúsculas, zero dígitos. Os testes acima (existe,
+   * abaixo de 60KB) já passavam com o recorte quebrado; nenhum deles
+   * conferia o CONTEÚDO da fonte. scripts/verificar-fontes-glifos.py
+   * fecha esse buraco (lê com fontTools, exige o conjunto mínimo: 26
+   * maiúsculas, 26 minúsculas, dígitos, acentuação pt-br) - chamado
+   * aqui via subprocesso para dar o mesmo sinal rápido de
+   * `npm run test:unit`, sem esperar `npm run build`.
+   */
+  it('cada fonte recortada tem o conjunto mínimo de glifos (maiúsculas, minúsculas, dígitos, acentuação)', () => {
+    const resultado = spawnSync(
+      'python3',
+      [resolve(RAIZ, 'scripts/verificar-fontes-glifos.py'), resolve(RAIZ, 'public/assets/fontes')],
+      { encoding: 'utf-8' }
+    );
+    expect(
+      resultado.status,
+      `saída do verificador:\n${resultado.stdout}\n${resultado.stderr}`
+    ).toBe(0);
   });
 });

@@ -20,6 +20,14 @@ test('trocar de tema persiste depois de recarregar', async ({ page }) => {
   await page.getByRole('button', { name: /tema/i }).click();
   const temaDepoisDoClique = await page.evaluate(() => document.documentElement.dataset.theme);
   await page.reload();
+  // O atributo de tema só é aplicado depois de `await carregarCurriculo()`
+  // resolver dentro de bootstrap() (main.ts) - não é garantido já existir
+  // no instante em que o evento 'load' da página dispara. Achado ao ligar
+  // o service worker (item 9 da onda): o registro extra antes de
+  // bootstrap() deixou essa corrida latente mais fácil de acontecer sob
+  // carga (suíte inteira em paralelo). Espera o atributo aparecer, em vez
+  // de ler no mesmo instante do reload.
+  await page.waitForFunction(() => document.documentElement.dataset.theme !== undefined);
   const temaDepoisDeRecarregar = await page.evaluate(() => document.documentElement.dataset.theme);
   expect(temaDepoisDeRecarregar).toBe(temaDepoisDoClique);
 });

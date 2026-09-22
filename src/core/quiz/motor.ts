@@ -34,10 +34,7 @@ function embaralhar<T>(itens: readonly T[], aleatorio: () => number): T[] {
  * produz a mesma ordem, tanto de perguntas quanto de alternativas: é o que
  * permite reconstituir a rodada só a partir da semente guardada.
  */
-export function embaralharRodada(
-  perguntas: readonly PerguntaQuiz[],
-  semente: number
-): RodadaQuiz {
+export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: number): RodadaQuiz {
   const aleatorio = criarGerador(semente);
   const perguntasEmbaralhadas = embaralhar(perguntas, aleatorio);
 

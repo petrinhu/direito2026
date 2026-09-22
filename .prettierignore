@@ -1,0 +1,10 @@
+node_modules
+dist
+docs
+mockups
+site
+src/conteudo
+src/dados
+public/busca
+src/ui/estilos/tokens.css
+*.md

@@ -5,7 +5,11 @@ import {
   desmarcarBlocoLido,
   marcarBlocoLido
 } from '@/core/progresso/calculo';
-import type { ChaveUnidade, RegistroProgressoUnidade, RepositorioProgresso } from '@/core/progresso/tipos';
+import type {
+  ChaveUnidade,
+  RegistroProgressoUnidade,
+  RepositorioProgresso
+} from '@/core/progresso/tipos';
 
 export interface StoreProgressoUnidade {
   readonly registro: Ref<RegistroProgressoUnidade>;

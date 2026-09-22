@@ -20,7 +20,10 @@ watch(() => route.query.q, buscarDaQuery);
 <template>
   <div class="pagina-busca">
     <h1>Busca</h1>
-    <PainelResultadosBusca :resultados="storeBusca.resultados.value" :termo="storeBusca.termo.value" />
+    <PainelResultadosBusca
+      :resultados="storeBusca.resultados.value"
+      :termo="storeBusca.termo.value"
+    />
   </div>
 </template>
 

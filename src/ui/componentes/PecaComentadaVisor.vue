@@ -8,7 +8,12 @@ defineProps<{ peca: PecaComentada }>();
   <article class="peca-comentada">
     <h2>{{ peca.titulo }}</h2>
     <p class="peca-comentada__nota" v-html="peca.notaHtml" />
-    <section v-for="secao in peca.secoes" :id="secao.id" :key="secao.id" class="peca-comentada__secao">
+    <section
+      v-for="secao in peca.secoes"
+      :id="secao.id"
+      :key="secao.id"
+      class="peca-comentada__secao"
+    >
       <h3>{{ secao.titulo }}</h3>
       <div class="peca-comentada__grade">
         <div class="peca-comentada__corpo" v-html="secao.corpoHtml" />

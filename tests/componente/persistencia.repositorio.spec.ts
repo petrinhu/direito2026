@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { criarRepositorioProgresso } from '@/app/persistencia/criarRepositorioProgresso';
 import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 

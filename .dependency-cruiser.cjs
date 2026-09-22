@@ -28,10 +28,10 @@ module.exports = {
     {
       name: 'ui-nao-pula-app',
       comment:
-        'src/ui apresenta; quem orquestra é src/app. Um componente de ui não importa src/core diretamente, sempre por trás de src/app (store, composable, adaptador).',
+        'src/ui apresenta; quem orquestra é src/app. Um componente de ui não importa LÓGICA de src/core diretamente, sempre por trás de um módulo de src/app (store, composable, adaptador, ou um repasse fino como src/app/quiz/motor.ts). Tipo é diferente: "import type" é apagado na compilação e o próprio plano manda a UI tipar contra core (seção 4), então só a dependência de VALOR (dependencyTypes sem "type-only") é proibida aqui.',
       severity: 'error',
       from: { path: '^src/ui' },
-      to: { path: '^src/core' }
+      to: { path: '^src/core', dependencyTypesNot: ['type-only'] }
     },
     {
       name: 'conteudo-so-tipos',

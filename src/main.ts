@@ -5,7 +5,12 @@ import { carregarCurriculo } from '@/app/carregamento/carregarCurriculo';
 import { criarRepositorioProgresso } from '@/app/persistencia/criarRepositorioProgresso';
 import { criarStoreTema } from '@/app/stores/tema';
 import { criarStoreBusca } from '@/app/stores/busca';
-import { CHAVE_CURRICULO, CHAVE_REPOSITORIO, CHAVE_STORE_BUSCA, CHAVE_STORE_TEMA } from '@/app/chaves';
+import {
+  CHAVE_CURRICULO,
+  CHAVE_REPOSITORIO,
+  CHAVE_STORE_BUSCA,
+  CHAVE_STORE_TEMA
+} from '@/app/chaves';
 import '@/ui/estilos/tokens.css';
 import '@/ui/estilos/base.css';
 import '@/ui/estilos/impressao.css';

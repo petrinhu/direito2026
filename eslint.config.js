@@ -5,6 +5,48 @@ import tsParser from '@typescript-eslint/parser';
 import vue from 'eslint-plugin-vue';
 import vueParser from 'vue-eslint-parser';
 
+// Globais escritos à mão (sem instalar o pacote "globals", fora da lista
+// autorizada do plano, seção 16): só os identificadores que o código
+// realmente usa, levantados por grep antes de escrever esta lista.
+const GLOBAIS_NAVEGADOR = {
+  window: 'readonly',
+  document: 'readonly',
+  localStorage: 'readonly',
+  sessionStorage: 'readonly',
+  Storage: 'readonly',
+  DOMException: 'readonly',
+  IntersectionObserver: 'readonly',
+  HTMLElement: 'readonly',
+  HTMLInputElement: 'readonly',
+  HTMLCanvasElement: 'readonly',
+  CanvasRenderingContext2D: 'readonly',
+  KeyboardEvent: 'readonly',
+  MouseEvent: 'readonly',
+  PointerEvent: 'readonly',
+  FocusEvent: 'readonly',
+  Event: 'readonly',
+  EventTarget: 'readonly',
+  CSS: 'readonly',
+  matchMedia: 'readonly',
+  requestAnimationFrame: 'readonly',
+  cancelAnimationFrame: 'readonly',
+  fetch: 'readonly',
+  Request: 'readonly',
+  Response: 'readonly'
+};
+
+const GLOBAIS_COMUNS = {
+  console: 'readonly',
+  setTimeout: 'readonly',
+  clearTimeout: 'readonly'
+};
+
+const GLOBAIS_NODE = {
+  process: 'readonly',
+  Buffer: 'readonly',
+  __dirname: 'readonly'
+};
+
 export default [
   js.configs.recommended,
   {
@@ -14,7 +56,8 @@ export default [
     files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { sourceType: 'module' }
+      parserOptions: { sourceType: 'module' },
+      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NAVEGADOR }
     },
     plugins: { '@typescript-eslint': tseslint },
     rules: {
@@ -23,10 +66,17 @@ export default [
     }
   },
   {
+    files: ['scripts/**/*.ts'],
+    languageOptions: {
+      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NODE }
+    }
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parser: vueParser,
-      parserOptions: { parser: tsParser, sourceType: 'module' }
+      parserOptions: { parser: tsParser, sourceType: 'module' },
+      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NAVEGADOR }
     },
     plugins: { vue, '@typescript-eslint': tseslint },
     rules: {
@@ -43,6 +93,12 @@ export default [
     files: ['tests/**/*.ts', 'scripts/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+  {
+    files: ['vite.config.ts'],
+    languageOptions: {
+      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NODE, Request: 'readonly' }
     }
   }
 ];

@@ -5,7 +5,12 @@ defineProps<{ resultados: readonly DocumentoBusca[]; termo: string }>();
 </script>
 
 <template>
-  <div class="painel-resultados-busca" role="region" aria-live="polite" aria-label="Resultados da busca">
+  <div
+    class="painel-resultados-busca"
+    role="region"
+    aria-live="polite"
+    aria-label="Resultados da busca"
+  >
     <p v-if="termo && resultados.length === 0">Nenhum resultado para "{{ termo }}".</p>
     <ul v-else>
       <li v-for="resultado in resultados" :key="resultado.id" class="painel-resultados-busca__item">

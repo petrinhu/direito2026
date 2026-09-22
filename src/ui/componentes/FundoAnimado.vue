@@ -18,7 +18,11 @@ function prefereMovimentoReduzido(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function desenharQuadroEstatico(ctx: CanvasRenderingContext2D, largura: number, altura: number): void {
+function desenharQuadroEstatico(
+  ctx: CanvasRenderingContext2D,
+  largura: number,
+  altura: number
+): void {
   const gradiente = ctx.createLinearGradient(0, 0, 0, altura);
   gradiente.addColorStop(0, '#0d2440');
   gradiente.addColorStop(1, '#163a5f');
@@ -95,7 +99,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvasRef" class="fundo-animado" :style="{ height: `${altura}px` }" aria-hidden="true" />
+  <canvas
+    ref="canvasRef"
+    class="fundo-animado"
+    :style="{ height: `${altura}px` }"
+    aria-hidden="true"
+  />
 </template>
 
 <style scoped>

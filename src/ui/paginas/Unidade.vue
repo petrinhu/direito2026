@@ -73,7 +73,9 @@ function navegarAba(aba: ChaveAba): void {
 }
 
 const contagemBlocos = computed(() =>
-  conteudo.value ? storeProgresso.value.contagem(conteudo.value.resumo.map((b) => b.id)) : { lidos: 0, total: 0 }
+  conteudo.value
+    ? storeProgresso.value.contagem(conteudo.value.resumo.map((b) => b.id))
+    : { lidos: 0, total: 0 }
 );
 </script>
 
@@ -95,7 +97,10 @@ const contagemBlocos = computed(() =>
             :blocos="conteudo.resumo"
             @bloco-lido="storeProgresso.marcarLido($event)"
           />
-          <PecaComentadaVisor v-else-if="aba === 'peticao' && conteudo.peticao" :peca="conteudo.peticao" />
+          <PecaComentadaVisor
+            v-else-if="aba === 'peticao' && conteudo.peticao"
+            :peca="conteudo.peticao"
+          />
           <MotorQuiz
             v-else-if="aba === 'quiz' && conteudo.quiz"
             :perguntas="conteudo.quiz"
@@ -106,12 +111,19 @@ const contagemBlocos = computed(() =>
             @responder="
               (idPergunta, indice) =>
                 storeProgresso.atualizar({
-                  quizRespostas: { ...storeProgresso.registro.value.quizRespostas, [idPergunta]: indice }
+                  quizRespostas: {
+                    ...storeProgresso.registro.value.quizRespostas,
+                    [idPergunta]: indice
+                  }
                 })
             "
             @finalizar="storeProgresso.atualizar({ quizFinalizado: true })"
             @reiniciar="
-              storeProgresso.atualizar({ quizSemente: undefined, quizRespostas: {}, quizFinalizado: false })
+              storeProgresso.atualizar({
+                quizSemente: undefined,
+                quizRespostas: {},
+                quizFinalizado: false
+              })
             "
           />
         </template>

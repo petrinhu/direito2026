@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
-import { montarRotuloDispositivo } from '@/core/dispositivos/rotulo';
+import { montarRotuloDispositivo } from '@/app/dispositivos/rotulo';
 import { criarControladorCitacoes } from './citacoes';
 
 const props = defineProps<{
@@ -15,10 +15,14 @@ const dispositivoAtualId = ref<string | undefined>();
 const ancoraAtual = ref<HTMLElement | undefined>();
 
 const dispositivoAtual = computed(() =>
-  dispositivoAtualId.value && props.dispositivos ? props.dispositivos[dispositivoAtualId.value] : undefined
+  dispositivoAtualId.value && props.dispositivos
+    ? props.dispositivos[dispositivoAtualId.value]
+    : undefined
 );
 
-const rotulo = computed(() => (dispositivoAtual.value ? montarRotuloDispositivo(dispositivoAtual.value) : ''));
+const rotulo = computed(() =>
+  dispositivoAtual.value ? montarRotuloDispositivo(dispositivoAtual.value) : ''
+);
 
 let controlador: ReturnType<typeof criarControladorCitacoes> | undefined;
 
@@ -100,7 +104,14 @@ onBeforeUnmount(() => controlador?.desligar());
 </script>
 
 <template>
-  <div id="balao-dispositivo" ref="balaoRef" popover="auto" role="note" aria-live="polite" class="balao-dispositivo">
+  <div
+    id="balao-dispositivo"
+    ref="balaoRef"
+    popover="auto"
+    role="note"
+    aria-live="polite"
+    class="balao-dispositivo"
+  >
     <template v-if="dispositivoAtual">
       <p v-if="dispositivoAtual.notaAlteracao" class="balao-dispositivo__nota">
         {{ dispositivoAtual.notaAlteracao }}

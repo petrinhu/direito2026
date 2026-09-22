@@ -58,13 +58,15 @@ export function criarControladorCitacoes(params: {
   }
 
   // Mouse: só dentro de hover fino, com intenção antes de abrir.
-  const consultaHover = typeof matchMedia === 'function'
-    ? matchMedia('(hover: hover) and (pointer: fine)')
-    : undefined;
+  const consultaHover =
+    typeof matchMedia === 'function' ? matchMedia('(hover: hover) and (pointer: fine)') : undefined;
 
   function aoPonteiroEntrar(evento: PointerEvent): void {
     if (evento.pointerType !== 'mouse' || !consultaHover?.matches) return;
-    const botao = evento.target instanceof HTMLElement ? evento.target.closest('button[data-dispositivo]') : null;
+    const botao =
+      evento.target instanceof HTMLElement
+        ? evento.target.closest('button[data-dispositivo]')
+        : null;
     if (!(botao instanceof HTMLElement)) return;
     clearTimeout(temporizadorFechamento);
     temporizadorAbertura = setTimeout(() => abrir(botao), ATRASO_INTENCAO_HOVER_MS);

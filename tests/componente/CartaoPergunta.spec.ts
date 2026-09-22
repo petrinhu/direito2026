@@ -18,12 +18,16 @@ function pergunta(): PerguntaEmbaralhada {
 
 describe('CartaoPergunta', () => {
   it('antes de responder, não mostra explicação', () => {
-    const wrapper = mount(CartaoPergunta, { props: { pergunta: pergunta(), respostaEscolhida: undefined } });
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: pergunta(), respostaEscolhida: undefined }
+    });
     expect(wrapper.text()).not.toContain('porque sim');
   });
 
   it('grupo de rádio nativo com o enunciado como rótulo (aria-labelledby)', () => {
-    const wrapper = mount(CartaoPergunta, { props: { pergunta: pergunta(), respostaEscolhida: undefined } });
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: pergunta(), respostaEscolhida: undefined }
+    });
     const grupo = wrapper.find('[role="radiogroup"]');
     expect(grupo.exists()).toBe(true);
     expect(grupo.attributes('aria-labelledby')).toBeTruthy();
@@ -31,14 +35,18 @@ describe('CartaoPergunta', () => {
   });
 
   it('escolher uma alternativa emite "responder" com o índice', async () => {
-    const wrapper = mount(CartaoPergunta, { props: { pergunta: pergunta(), respostaEscolhida: undefined } });
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: pergunta(), respostaEscolhida: undefined }
+    });
     const radios = wrapper.findAll('input[type="radio"]');
     await radios[2]!.setValue(true);
     expect(wrapper.emitted('responder')).toEqual([[2]]);
   });
 
   it('depois de responder, as alternativas ficam bloqueadas e a explicação aparece', () => {
-    const wrapper = mount(CartaoPergunta, { props: { pergunta: pergunta(), respostaEscolhida: 0 } });
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: pergunta(), respostaEscolhida: 0 }
+    });
     expect(wrapper.text()).toContain('porque sim');
     const radios = wrapper.findAll('input[type="radio"]');
     for (const radio of radios) {
@@ -47,7 +55,9 @@ describe('CartaoPergunta', () => {
   });
 
   it('certo e errado nunca só por cor: tem texto "Correta" e "incorreta"', () => {
-    const wrapper = mount(CartaoPergunta, { props: { pergunta: pergunta(), respostaEscolhida: 0 } });
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: pergunta(), respostaEscolhida: 0 }
+    });
     expect(wrapper.text()).toContain('Correta');
     expect(wrapper.text().toLowerCase()).toContain('incorreta');
   });

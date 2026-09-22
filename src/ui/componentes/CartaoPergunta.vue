@@ -47,10 +47,7 @@ function classeAlternativa(indice: number): string[] {
         <span v-if="respondida && indice === pergunta.indiceCorreto" class="cartao-pergunta__marca">
           Correta
         </span>
-        <span
-          v-else-if="respondida && indice === respostaEscolhida"
-          class="cartao-pergunta__marca"
-        >
+        <span v-else-if="respondida && indice === respostaEscolhida" class="cartao-pergunta__marca">
           Sua resposta, incorreta
         </span>
       </label>

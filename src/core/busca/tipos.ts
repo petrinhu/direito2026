@@ -19,3 +19,13 @@ export type IndiceBusca = readonly DocumentoBusca[];
 
 /** Teto fixado antes de existir a medição real (L-43, seção 7 da arquitetura). */
 export const TETO_INDICE_BUSCA_BYTES = 300 * 1024;
+
+/**
+ * Porta de saída para o motor de busca (Dependency Inversion, seção 7: "o
+ * resto do site conversa com uma interface MotorBusca, não com a
+ * biblioteca"). app/busca traz o adaptador concreto sobre MiniSearch; a
+ * troca por Pagefind (RI6) fica contida nesse adaptador.
+ */
+export interface MotorBusca {
+  consultar(termo: string): readonly DocumentoBusca[];
+}

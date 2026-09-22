@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { PerguntaQuiz } from '@/core/unidade/tipos';
-import { embaralharRodada, calcularPontuacao } from '@/core/quiz/motor';
+import { embaralharRodada, calcularPontuacao } from '@/app/quiz/motor';
 import CartaoPergunta from './CartaoPergunta.vue';
 import ResultadoQuiz from './ResultadoQuiz.vue';
 import GradeRevisao from './GradeRevisao.vue';
@@ -59,7 +59,9 @@ function anterior(): void {
 <template>
   <div class="motor-quiz">
     <template v-if="!finalizada">
-      <p class="motor-quiz__posicao">Pergunta {{ indiceAtual + 1 }} de {{ rodada.perguntas.length }}</p>
+      <p class="motor-quiz__posicao">
+        Pergunta {{ indiceAtual + 1 }} de {{ rodada.perguntas.length }}
+      </p>
       <CartaoPergunta
         v-if="rodada.perguntas[indiceAtual]"
         :pergunta="rodada.perguntas[indiceAtual]!"

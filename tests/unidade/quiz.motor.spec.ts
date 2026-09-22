@@ -63,7 +63,9 @@ describe('embaralharRodada', () => {
     const r1 = embaralharRodada(perguntasDeTeste(), 123);
     const r2 = embaralharRodada(perguntasDeTeste(), 123);
     expect(r1.perguntas.map((p) => p.id)).toEqual(r2.perguntas.map((p) => p.id));
-    expect(r1.perguntas.map((p) => p.alternativas)).toEqual(r2.perguntas.map((p) => p.alternativas));
+    expect(r1.perguntas.map((p) => p.alternativas)).toEqual(
+      r2.perguntas.map((p) => p.alternativas)
+    );
   });
 
   it('sementes diferentes tendem a produzir ordens diferentes', () => {
@@ -108,9 +110,7 @@ describe('calcularPontuacao', () => {
     const pontuacao = calcularPontuacao(rodada.perguntas, respostas);
     expect(pontuacao.acertos).toBe(3);
     expect(pontuacao.total).toBe(3);
-    const porCategoria = Object.fromEntries(
-      pontuacao.porCategoria.map((c) => [c.categoria, c])
-    );
+    const porCategoria = Object.fromEntries(pontuacao.porCategoria.map((c) => [c.categoria, c]));
     expect(porCategoria.teoria).toEqual({ categoria: 'teoria', acertos: 1, total: 1 });
     expect(porCategoria.peticao).toEqual({ categoria: 'peticao', acertos: 1, total: 1 });
     expect(porCategoria.fundamentos).toEqual({ categoria: 'fundamentos', acertos: 1, total: 1 });

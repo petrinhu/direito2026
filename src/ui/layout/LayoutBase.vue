@@ -17,7 +17,6 @@ defineProps<{
 const emit = defineEmits<{ buscar: [string] }>();
 
 const gavetaAberta = ref(false);
-const botaoGavetaRef = ref<HTMLElement | undefined>();
 
 function abrirGaveta(): void {
   gavetaAberta.value = true;
@@ -41,11 +40,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     @buscar="(termo) => emit('buscar', termo)"
   />
   <div class="layout-base__corpo">
-    <div
-      v-if="gavetaAberta"
-      class="layout-base__sobreposicao"
-      @click="fecharGaveta"
-    />
+    <div v-if="gavetaAberta" class="layout-base__sobreposicao" @click="fecharGaveta" />
     <aside
       class="layout-base__gaveta"
       :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"

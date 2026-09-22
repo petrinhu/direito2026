@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
-import { montarRotuloDispositivo } from '@/core/dispositivos/rotulo';
+import { montarRotuloDispositivo } from '@/app/dispositivos/rotulo';
 
 const props = defineProps<{ dispositivos: IndiceDispositivos | undefined }>();
 

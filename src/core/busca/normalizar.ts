@@ -4,8 +4,5 @@
  * arquitetura. `normalize('NFD')` é seguro nos quatro motores-alvo.
  */
 export function normalizarTermo(texto: string): string {
-  return texto
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+  return texto.toLocaleLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }

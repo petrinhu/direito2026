@@ -17,6 +17,7 @@
     "verificar:proibicoes": "bash scripts/verificar-proibicoes.sh",
     "verificar:dispositivos": "node --import tsx scripts/verificar-dispositivos.ts",
     "verificar:fontes": "bash scripts/verificar-fontes.sh",
+    "verificar:publicacao": "bash scripts/verificar-publicacao.sh",
     "preci": "bash scripts/preci.sh"
   },
   "dependencies": {

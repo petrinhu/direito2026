@@ -25,6 +25,14 @@ Todos os blocos estão dentro de `<IfModule>`, para o site não cair se o servid
 
 ## O que precisa ser conferido depois do envio ao servidor
 
+Os itens 1, 2, 3 (versão adaptada à SPA, ver a nota no próprio script) e 5
+abaixo agora rodam sozinhos, contra o endereço publicado, via
+`npm run verificar:publicacao -- https://<domínio>` (`scripts/verificar-
+publicacao.sh`). Reprova com erro se qualquer conferência falhar,
+incluindo o piso de zero conferência executada. Os itens 4 e 6 continuam
+manuais, de propósito (L-13: observação visual é do `qa-engineer`, nunca
+de script).
+
 1. `curl -sI https://<domínio>/` responde 200 e o cabeçalho `X-Robots-Tag: noindex, nofollow` aparece.
 2. `curl -s https://<domínio>/ | grep -c 'name="robots"'` maior que zero (a marcação está no HTML servido, não só no `.htaccess`).
 3. Acessar uma URL inexistente no domínio e confirmar que a página 404 própria aparece (não a padrão do Apache/Hostinger).

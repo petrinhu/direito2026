@@ -12,8 +12,8 @@
    componente, peso 500 do modo adaptado); Lora 700 (h1-h4 usam o peso
    bold padrão do navegador, nenhum h1-h6 pede peso 400 nem itálico).
 
-   CORREÇÃO (achado do líder, 22/09/2026, docs/arquitetura.md seção 10 tem
-   o relato completo): a versão original recortava contra "o alfabeto
+   CORREÇÃO 1 (achado do líder, 22/09/2026, docs/arquitetura.md seção 10
+   tem o relato completo): a versão original recortava contra "o alfabeto
    realmente usado no site", extraído de uma amostra do texto - o script
    dessa amostragem tinha um defeito e produziu um recorte com só a letra
    "A" maiúscula, zero minúsculas, zero dígitos (129 glifos, quase todos
@@ -24,11 +24,27 @@
    do português. scripts/verificar-fontes.sh confere o teto de 60KB por
    arquivo (agora entre 16KB e 17,7KB) e, via
    scripts/verificar-fontes-glifos.py, que o conjunto mínimo de glifos
-   está mesmo presente - não só que o arquivo existe. */
+   está mesmo presente - não só que o arquivo existe.
+
+   CORREÇÃO 2 (achado do líder, medido no site JÁ PUBLICADO, 22/09/2026):
+   a correção 1 não chegava a quem já tinha visitado o site. Os arquivos
+   moravam em public/assets/fontes/, copiados CRUS pelo Vite (nome fixo),
+   enquanto public/.htaccess marca todo .woff2 como
+   "Cache-Control: public, max-age=31536000, immutable" - seguro só
+   quando o nome muda a cada mudança de conteúdo. Com nome fixo e cache
+   de um ano, quem já tinha a fonte quebrada em cache continuaria com
+   ela por até um ano. Corrigido morando aqui (src/ui/estilos/fontes/),
+   referenciado por caminho RELATIVO: o Vite passa a tratar cada arquivo
+   como um asset importado pelo CSS, calcula o hash do conteúdo e escreve
+   o nome final (ex. inter-400-<hash>.woff2) tanto no arquivo publicado
+   quanto na regra @font-face abaixo - o cache de um ano continua, mas
+   agora é seguro, porque o nome muda sempre que o conteúdo muda.
+   scripts/verificar-cache-fingerprint.ts é o portão que prova isso, para
+   TODO o pacote, não só fontes. */
 
 @font-face {
   font-family: 'Inter';
-  src: url('/assets/fontes/inter-400.woff2') format('woff2');
+  src: url('./fontes/inter-400.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -36,7 +52,7 @@
 
 @font-face {
   font-family: 'Inter';
-  src: url('/assets/fontes/inter-500.woff2') format('woff2');
+  src: url('./fontes/inter-500.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -44,7 +60,7 @@
 
 @font-face {
   font-family: 'Inter';
-  src: url('/assets/fontes/inter-700.woff2') format('woff2');
+  src: url('./fontes/inter-700.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -52,7 +68,7 @@
 
 @font-face {
   font-family: 'Lora';
-  src: url('/assets/fontes/lora-700.woff2') format('woff2');
+  src: url('./fontes/lora-700.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -79,7 +95,7 @@
    do fallback) / (ascent+descent da fonte própria); os demais valores são
    a métrica da fonte própria dividida por esse size-adjust. Comando:
    python3 -c "from fontTools.ttLib import TTFont; ..." lendo sTypoAscender/
-   sTypoDescender/sTypoLineGap de public/assets/fontes/inter-400.woff2 e
+   sTypoDescender/sTypoLineGap de src/ui/estilos/fontes/inter-400.woff2 e
    lora-700.woff2 contra as fontes já instaladas nesta máquina que mais se
    aproximam do primeiro nome da pilha de fallback de cada token
    (Liberation Sans, clone métrico do Arial, para --fonte-texto; Liberation

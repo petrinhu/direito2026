@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
-# Gera os 4 .woff2 de public/assets/fontes/ a partir das fontes já
+# Gera os 4 .woff2 de src/ui/estilos/fontes/ a partir das fontes já
 # instaladas como devDependency (@fontsource-variable/inter,
 # @fontsource/lora), recortadas com pyftsubset/fonttools (já instalados
 # nesta máquina - nada novo, L-51).
+#
+# Por que em src/ e não em public/ (achado do líder, medido no site JÁ
+# PUBLICADO, 22/09/2026): arquivo em public/ é copiado CRU pelo Vite, com
+# nome fixo; public/.htaccess marca todo .woff2 como cache imutável de um
+# ano, e nome fixo + cache imutável é inseguro - quem já visitou o site
+# fica até um ano com a versão velha em cache, mesmo depois do conserto.
+# Em src/, o CSS referencia por caminho relativo e o Vite processa o
+# arquivo como asset: o nome final ganha o hash do conteúdo
+# (ex. inter-400-<hash>.woff2), então o cache de um ano fica seguro - o
+# nome só se repete se o conteúdo for byte a byte igual.
+# scripts/verificar-cache-fingerprint.ts é o portão que prova isso.
 #
 # Achado do líder, 22/09/2026, verbatim: "O 'A' maiúsculo está muito
 # maior no texto que as outras maiúsculas." Medido: o recorte anterior
@@ -34,7 +45,7 @@ set -euo pipefail
 
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RAIZ="$(dirname "$AQUI")"
-DEST="$RAIZ/public/assets/fontes"
+DEST="$RAIZ/src/ui/estilos/fontes"
 ESCALA="/var/tmp/builds/claude-1000/fontes-scratch"
 
 UNICODES="U+0020-007E,U+00A0-00FF,U+2026"

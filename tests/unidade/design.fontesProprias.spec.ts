@@ -11,15 +11,25 @@ import { describe, expect, it } from 'vitest';
  * teste prova que os arquivos recortados existem, ficam dentro do teto de
  * scripts/verificar-fontes.sh (60KB) e que os tokens realmente os usam
  * (nunca só a pilha de sistema).
+ *
+ * Fonte moram em src/ui/estilos/fontes/ (não public/assets/fontes/) desde
+ * o achado do líder, medido no site já publicado, 22/09/2026: em public/
+ * o Vite copia o arquivo cru, com nome fixo, e public/.htaccess marca
+ * .woff2 como cache imutável de um ano - nome fixo + cache imutável é
+ * inseguro (quem já tinha a versão quebrada em cache não recebia o
+ * conserto). Em src/, referenciado por caminho relativo em fontes.css, o
+ * Vite processa como asset e dá ao arquivo final um nome com hash do
+ * conteúdo (scripts/verificar-cache-fingerprint.ts é o portão que prova
+ * isso para o pacote inteiro, não só fontes).
  */
 const RAIZ = resolve(__dirname, '../..');
 const TETO_BYTES = 60 * 1024;
 
 const ARQUIVOS_ESPERADOS = [
-  'public/assets/fontes/inter-400.woff2',
-  'public/assets/fontes/inter-500.woff2',
-  'public/assets/fontes/inter-700.woff2',
-  'public/assets/fontes/lora-700.woff2'
+  'src/ui/estilos/fontes/inter-400.woff2',
+  'src/ui/estilos/fontes/inter-500.woff2',
+  'src/ui/estilos/fontes/inter-700.woff2',
+  'src/ui/estilos/fontes/lora-700.woff2'
 ];
 
 describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
@@ -30,11 +40,11 @@ describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
     expect(tamanho).toBeLessThanOrEqual(TETO_BYTES);
   });
 
-  it('fontes.css não referencia nenhuma origem externa (CDN)', () => {
+  it('fontes.css não referencia nenhuma origem externa (CDN), e usa caminho relativo (processado pelo Vite, com hash)', () => {
     const css = readFileSync(resolve(RAIZ, 'src/ui/estilos/fontes.css'), 'utf-8');
     expect(css).not.toMatch(/https?:\/\//);
-    expect(css).toMatch(/url\('\/assets\/fontes\/inter-400\.woff2'\)/);
-    expect(css).toMatch(/url\('\/assets\/fontes\/lora-700\.woff2'\)/);
+    expect(css).toMatch(/url\('\.\/fontes\/inter-400\.woff2'\)/);
+    expect(css).toMatch(/url\('\.\/fontes\/lora-700\.woff2'\)/);
   });
 
   it('tokens.css usa Lora/Inter como fonte primária (não só a pilha de sistema)', () => {
@@ -63,7 +73,7 @@ describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
   it('cada fonte recortada tem o conjunto mínimo de glifos (maiúsculas, minúsculas, dígitos, acentuação)', () => {
     const resultado = spawnSync(
       'python3',
-      [resolve(RAIZ, 'scripts/verificar-fontes-glifos.py'), resolve(RAIZ, 'public/assets/fontes')],
+      [resolve(RAIZ, 'scripts/verificar-fontes-glifos.py'), resolve(RAIZ, 'src/ui/estilos/fontes')],
       { encoding: 'utf-8' }
     );
     expect(

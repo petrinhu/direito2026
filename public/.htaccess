@@ -29,5 +29,22 @@ RewriteRule ^ index.html [L]
   <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+  <!-- Achado do líder, medido no site já publicado, 22/09/2026: cache
+       imutável de um ano só é seguro quando o NOME muda a cada mudança
+       de conteúdo (scripts/verificar-cache-fingerprint.ts é o portão que
+       prova isso para o pacote inteiro). Todo outro .svg/.png/.woff2/.js
+       /.css do pacote passa pelo Vite e ganha nome com hash de conteúdo
+       - mas o favicon precisa de um endereço ESTÁVEL, sem hash, porque
+       manifest.webmanifest e agentes externos (navegador, motor de
+       busca) o referenciam por um caminho fixo por convenção. Cache mais
+       curto aqui, não imutável: o preço de um favicon raramente
+       reaproveitado por até um dia é muito menor que o risco de uma
+       troca de ícone não chegar a ninguém por um ano. Precisa vir DEPOIS
+       do bloco genérico acima: "Header set" substitui o valor anterior
+       do mesmo cabeçalho, e o FilesMatch mais específico por nome só
+       vale se processado por último. -->
+  <FilesMatch "^favicon\.svg$">
+    Header set Cache-Control "public, max-age=86400, must-revalidate"
+  </FilesMatch>
   Header set X-Robots-Tag "noindex, nofollow"
 </IfModule>

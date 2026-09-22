@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
+// Import (não caminho cru em public/): achado do líder, medido no site já
+// publicado, 22/09/2026 - arquivo em public/ tem nome fixo, e
+// public/.htaccess marca .png como cache imutável de um ano; nome fixo +
+// cache imutável é inseguro (quem já visitou fica até um ano com a
+// versão velha). Importado, o Vite processa como asset e dá ao arquivo
+// final um nome com o hash do conteúdo.
+import logoOferecimento from './oferecimento-logo.png';
 
 /**
  * ANO_INICIAL é o ano do lançamento (2026), fixo por decisão do líder,
@@ -51,7 +58,7 @@ function apagar(): void {
         class="rodape__link-oferecimento"
       >
         <img
-          src="/assets/oferecimento-logo.png"
+          :src="logoOferecimento"
           width="95"
           height="53"
           alt="Dr. Petrus Silva Costa"

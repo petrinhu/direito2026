@@ -25,8 +25,9 @@ Contraste calculado pela fórmula de luminância relativa do WCAG 2.2 (não esti
 | Primária / cartão elevado | `#163a5f` | `#ffffff` | 11.64:1 | Links dentro de cartão |
 | Título/marca (`--cor-titulo-texto`) / fundo da página | `#0d2440` | `#faf9f5` | 14.84:1 | `h1`, `h2`, marca do cabeçalho |
 | Título/marca / cartão elevado | `#0d2440` | `#ffffff` | 15.63:1 | Título dentro de cartão |
-| Acento (dourado) / fundo da página | `#8a6d1f` | `#faf9f5` | **4.65:1** | Destaque raro em texto corrido |
-| Acento (dourado) / cartão elevado | `#8a6d1f` | `#ffffff` | **4.90:1** | Destaque raro em texto corrido |
+| Acento (dourado) / fundo da página | `#7c621c` | `#faf9f5` | 5.51:1 | Destaque raro em texto corrido |
+| Acento (dourado) / cartão elevado | `#7c621c` | `#ffffff` | 5.80:1 | Destaque raro em texto corrido |
+| Acento (dourado) / fundo de acento claro (`--cor-acento-claro`) | `#7c621c` | `#f3ead1` | 4.83:1 | Selo de acento de `BlocoTeorico.vue` ("Aprofundamento") |
 | Branco / primária-escura (cabeçalho, botão) | `#ffffff` | `#0d2440` | 15.63:1 | Botão primário, header |
 | Bordo (garnet, ênfase rara) / fundo da página | `#7a2331` | `#faf9f5` | 9.44:1 | Ênfase pontual |
 | Selo "em breve" texto (`--cor-selo-texto`) / fundo do selo (`--cor-selo-bg`) | `#5a5442` | `#ece7d6` | 6.10:1 | Badge "em breve", inclusive dentro de `<summary>` clicável |
@@ -54,7 +55,9 @@ Contraste calculado pela fórmula de luminância relativa do WCAG 2.2 (não esti
 1. `--cor-titulo-texto` nasceu porque título e marca usavam `--cor-primaria-escura` como `color:`. Esse token é pensado para FUNDO (cabeçalho, botão primário, atrás de texto branco); no modo escuro ele vale `#0b1a2c`, quase idêntico ao fundo da página (`#12161c`), e o texto que o usava como cor ficava com contraste medido de **1,04:1 a 1,06:1** (título e marca praticamente invisíveis). `--cor-titulo-texto` é sempre cor de TEXTO, nunca de fundo, e nos dois temas mede acima de 5,90:1 (ver linhas da tabela acima).
 2. `--cor-selo-texto`/`--cor-selo-bg` nasceram porque o selo "em breve" usava as variáveis genéricas de "desativado" (`--cor-desativado-texto`/`--cor-desativado-bg`), que no modo claro valem `#8a8672`/`#ece7d6`, **2,96:1**, abaixo do piso AA. A exceção de contraste de "controle desabilitado" do WCAG 1.4.3 não cobre esse selo, porque ele também aparece dentro de `<summary>` ainda clicável (abre/fecha período e cadeira), não é ele mesmo um controle desabilitado. `--cor-desativado-texto`/`--cor-desativado-bg` continuam do jeito que estavam, sem alteração: seguem usadas só em cartão de período/cadeira genuinamente inativo (`pointer-events:none`, `aria-disabled="true"`), onde a exceção do WCAG se aplica de verdade.
 
-**Pares mais apertados, depois da correção (os dois abaixo de AAA 7:1, mas acima de AA 4.5:1):** o acento dourado no modo claro, tanto contra o fundo da página (4.65:1) quanto contra o cartão elevado (4.90:1). Passam WCAG 2.2 AA folgado, mas ficam pertinho do limite se algum dia o dourado precisar escurecer ou o fundo clarear. Por isso o acento é usado só em texto curto (destaque raro em citações), nunca em parágrafo longo nem no selo "em breve" (que agora tem par dedicado, ver acima).
+**Pares mais apertados, depois da correção (abaixo de AAA 7:1, mas acima de AA 4.5:1):** o acento dourado no modo claro, contra o fundo da página (5.51:1), o cartão elevado (5.80:1) e o próprio fundo de acento claro (4.83:1, o par mais apertado dos três). Passam WCAG 2.2 AA, mas ficam mais perto do limite que o resto da paleta. Por isso o acento é usado só em texto curto (destaque raro em citações, selo curto), nunca em parágrafo longo.
+
+**Correção 22/09/2026 (achado do axe-core, verificação automática de acessibilidade, item 6 da onda de modo adaptado):** o selo de acento de `BlocoTeorico.vue` ("Aprofundamento", `--cor-acento` sobre `--cor-acento-claro`) nunca tinha entrado no portão de contraste de tokens (`tests/unidade/design.contrasteTokens.spec.ts`) nem nesta tabela — só os pares "acento sobre fundo da página" e "acento sobre cartão elevado" estavam medidos e documentados, nenhum deles é o par que o selo realmente usa. O axe-core, rodando contra a página construída, mediu **4,08:1** no tema claro (abaixo do piso AA de 4,5:1); o tema escuro já media 7,05:1 e não precisou de ajuste. Corrigido escurecendo `--cor-acento` de `#8a6d1f` para `#7c621c` (tema claro; tema escuro, `#d3b563`, sem alteração) — mesma família dourado/âmbar, ajuste pequeno, sem trocar de cor: o par do selo passou a medir **4,83:1**, com folga sobre o piso. O par novo entrou no portão de contraste de tokens, para nunca mais regredir sem ser pego automaticamente.
 
 ## Tipografia
 
@@ -98,9 +101,9 @@ Decisão do líder, 21/09/2026, verbatim: "Mantenha o design do arquivo original
 | Item de navegação (texto claro) | `#dbe4ef` | `#0d2440` | 12.17:1 | `#0b1a2c` | 13.65:1 |
 | Item "em breve" (badge translúcido) | `#b7c6d9` | `#253a53` (branco 10% sobre fundo claro) | 6.69:1 | `#233141` (branco 10% sobre fundo escuro) | 7.62:1 |
 | Item ativo (branco sobre destaque 14%) | `#ffffff` | `#2f435b` (branco 14% sobre fundo claro) | 10.12:1 | equivalente, mais claro no tema escuro | > 10:1 |
-| Marcador "lido" (ver correção acima) | `--cor-texto-invertido` | `--cor-acento` (`#8a6d1f`) | 4.65:1 | `--cor-acento` (`#d3b563`) | 8.81:1 |
+| Marcador "lido" (ver correção acima) | `--cor-texto-invertido` | `--cor-acento` (`#7c621c`, corrigido 22/09/2026) | 5.51:1 | `--cor-acento` (`#d3b563`) | 8.81:1 |
 
-Todos os pares passam AA (4.5:1), inclusive o mais apertado (marcador lido no claro, 4.65:1, corrigido acima).
+Todos os pares passam AA (4.5:1).
 
 ### Submenu da unidade e abas na lateral
 
@@ -157,7 +160,7 @@ Contraste do texto de dentro do balão, medido contra o fundo real do balão (n�
 | Corpo do artigo contra o fundo do balão | `#1c1c1c` | 17.04:1 | `#eceff2` | 14.34:1 |
 | Rodapé da fonte e data contra o fundo do balão | `#4a4a4a` | 8.86:1 | `#b8c0cc` | 9.02:1 |
 
-A nota de alteração usa o mesmo par de "acento contra fundo de acento claro" já usado em outros destaques do site: `#8a6d1f` sobre `#f3ead1` no claro, `#d3b563` sobre `#332b16` no escuro (tokens `--cor-acento`/`--cor-acento-claro`, mesmos hex já tabelados na paleta principal). Todos os pares do balão ficam bem acima do piso AA (4.5:1), inclusive no modo escuro, o mais apertado da paleta inteira.
+A nota de alteração usa o mesmo par de "acento contra fundo de acento claro" já usado em outros destaques do site: `#7c621c` sobre `#f3ead1` no claro (corrigido 22/09/2026, ver seção "Contraste", 4,83:1), `#d3b563` sobre `#332b16` no escuro, 7,05:1 (tokens `--cor-acento`/`--cor-acento-claro`, mesmos hex já tabelados na paleta principal). Todos os pares do balão passam o piso AA (4.5:1); o par de acento no claro é o mais apertado da paleta inteira, ainda assim com folga sobre o piso.
 
 ### Não empurrar o conteúdo nem sair da tela
 

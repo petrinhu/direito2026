@@ -97,7 +97,13 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
     nome: 'fio de progresso sobre o cabeçalho',
     texto: '--cor-cabecalho-progresso',
     fundo: '--cor-sidebar-fundo'
-  }
+  },
+  // Achado do axe-core (item 6 da onda, docs/design-visual.md): o selo de
+  // acento de BlocoTeorico.vue (--cor-acento sobre --cor-acento-claro)
+  // nunca tinha entrado neste portão. Medido 4,08:1 no tema claro, abaixo
+  // do piso — por isso passou despercebido até a verificação automática
+  // pegar de verdade.
+  { nome: 'selo de acento (bloco teórico)', texto: '--cor-acento', fundo: '--cor-acento-claro' }
 ];
 
 describe('contraste dos tokens de design', () => {

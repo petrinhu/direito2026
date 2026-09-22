@@ -112,7 +112,16 @@
      invisível (contraste medido 1,04:1, achado do QA em 21/09/2026). */
   --cor-titulo-texto: #0d2440;
 
-  --cor-acento: #8a6d1f;          /* dourado/âmbar, usar com parcimônia */
+  /* Achado do axe-core (item 6 da onda): o selo de acento de
+     BlocoTeorico.vue (--cor-acento sobre --cor-acento-claro) media
+     4,08:1 no tema claro, abaixo do piso AA (4,5:1). Escurecido de
+     #8a6d1f para #7c621c (4,83:1, com folga) — mesma família
+     dourado/âmbar, ajuste pequeno, sem trocar de cor. O tema escuro já
+     media 7,05:1 (#d3b563 sobre #332b16), não precisou de ajuste.
+     Registrado em docs/design-visual.md e coberto por
+     tests/unidade/design.contrasteTokens.spec.ts ("selo de acento"),
+     para nunca mais regredir sem o portão pegar. */
+  --cor-acento: #7c621c;          /* dourado/âmbar, usar com parcimônia */
   --cor-acento-claro: #f3ead1;    /* fundo de badge de acento */
 
   --cor-bordo: #7a2331;           /* garnet, ênfase rara, nunca decorativa */

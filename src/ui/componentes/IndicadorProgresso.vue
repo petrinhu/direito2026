@@ -4,9 +4,12 @@ defineProps<{ lidos: number; total: number }>();
 
 <template>
   <div class="indicador-progresso">
-    <p class="indicador-progresso__texto">{{ lidos }} de {{ total }} blocos lidos</p>
+    <p id="indicador-progresso-texto" class="indicador-progresso__texto">
+      {{ lidos }} de {{ total }} blocos lidos
+    </p>
     <div
       role="progressbar"
+      aria-labelledby="indicador-progresso-texto"
       :aria-valuenow="lidos"
       :aria-valuemin="0"
       :aria-valuemax="total"

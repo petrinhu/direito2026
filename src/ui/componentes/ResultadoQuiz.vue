@@ -31,6 +31,8 @@ const emit = defineEmits<{ reiniciar: [] }>();
 }
 
 .resultado-quiz__reiniciar {
+  /* Achado 3 da revisão: min-width nunca tinha sido conferido. */
+  min-width: 44px;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-5, 1.5rem);
   background: var(--cor-primaria, #163a5f);

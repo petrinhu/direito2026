@@ -111,6 +111,11 @@ function anterior(): void {
 }
 
 .motor-quiz__navegacao button {
+  /* Achado 3 da revisão (docs/revisao-modo-adaptado.md): só min-height
+     estava fixado; a largura dependia de padding/conteúdo, nunca
+     conferida. min-width garante o alvo mínimo (WCAG 2.5.5) mesmo com
+     rótulo curto. */
+  min-width: 44px;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-5, 1.5rem);
   border-radius: var(--raio-md, 10px);

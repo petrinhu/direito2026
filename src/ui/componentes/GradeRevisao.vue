@@ -38,6 +38,9 @@ function estado(pergunta: PerguntaEmbaralhada): 'certa' | 'errada' | 'sem-respos
 }
 
 .grade-revisao__item {
+  /* Achado 3 da revisão: min-width explícito, não só o piso indireto de
+     grid-template-columns (minmax(44px, 1fr) acima). */
+  min-width: 44px;
   min-height: 44px;
   border-radius: var(--raio-sm, 6px);
   border: 1px solid var(--cor-borda, #dcd7c8);

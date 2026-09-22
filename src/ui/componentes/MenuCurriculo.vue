@@ -330,6 +330,10 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   display: flex;
   align-items: center;
   width: 100%;
+  /* Achado 3 da revisão: min-width explícito (width:100% já garante isso
+     na prática, dentro da gaveta de 280px, mas o piso passa a ser
+     declarado, não implícito). */
+  min-width: 44px;
   min-height: 44px;
   text-align: left;
   background: none;
@@ -354,6 +358,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 .menu-curriculo a {
   display: flex;
   align-items: center;
+  /* Achado 3 da revisão: min-width nunca tinha sido conferido. */
+  min-width: 44px;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
   /* Era --cor-texto (pensado para --cor-fundo): mesma classe de bug do

@@ -103,6 +103,8 @@ const itens = computed<ItemTrilha[]>(() => {
 .trilha-navegacao a {
   color: var(--cor-sidebar-texto-suave, #b8c0cc);
   text-decoration: none;
+  /* Achado 3 da revisão: min-width nunca tinha sido conferido. */
+  min-width: 44px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;

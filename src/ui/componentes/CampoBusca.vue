@@ -52,6 +52,8 @@ function aoEnviar(): void {
   /* Nunca menor que 16px em tela estreita: evita o zoom automático do iOS
      Safari ao focar (guia de compatibilidade, seção 9). */
   font-size: max(16px, var(--escala-sm, 0.9375rem));
+  /* Achado 3 da revisão: min-width nunca tinha sido conferido. */
+  min-width: 44px;
   min-height: 44px;
   padding: 0 var(--esp-3, 0.75rem);
   border: 1px solid var(--cor-borda, #dcd7c8);

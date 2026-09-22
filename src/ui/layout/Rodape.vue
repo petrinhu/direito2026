@@ -146,6 +146,10 @@ function apagar(): void {
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
+  /* Achado 3 da revisão (docs/revisao-modo-adaptado.md): min-width nunca
+     tinha sido conferido; o texto do rótulo já é largo o bastante, mas o
+     piso agora é garantido por CSS, não por coincidência de conteúdo. */
+  min-width: 44px;
   min-height: 44px;
 }
 

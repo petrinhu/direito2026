@@ -1,16 +1,22 @@
 Options -MultiViews
+
+# Achado do líder, 22/09/2026: mod_dir do Apache acrescenta barra final por
+# redirecionamento (301) sempre que o caminho pedido bate um diretório
+# físico no servidor, mesmo sem listagem habilitada. Isso incluía /busca,
+# porque em algum momento existiu um diretório com esse nome no destino
+# (o índice de busca antes ficava em dist/busca/). Desligado aqui para
+# nenhuma rota da SPA correr esse risco, agora ou no futuro.
+<IfModule mod_dir.c>
+  DirectorySlash Off
+</IfModule>
+
 RewriteEngine On
 RewriteBase /
-# Achado do líder, 22/09/2026, medido no site publicado: a condição
-# genérica de diretório ("-d", qualquer pasta que exista no disco do
-# servidor) deixava passar direto pastas SOBRANDO de um envio anterior
-# (a publicação sobrepõe, não limpa; ver docs/publicacao.md). Uma pasta
-# órfã com o mesmo nome do primeiro segmento de uma rota da SPA volta a
-# sequestrar a rota, mesmo depois de o pacote novo não ter mais aquela
-# pasta. Troca: lista explícita das pastas que ESTE pacote realmente
-# serve direto (hoje assets/ e icones/), nunca "qualquer diretório
-# existente". scripts/verificar-htaccess-pastas.ts confere que esta
-# lista bate com as pastas reais de todo build, e reprova se divergir.
+# Lista explícita das pastas que este pacote realmente serve direto (hoje
+# assets/ e icones/), mais robusta que a condição genérica de diretório
+# ("-d", qualquer pasta que exista no disco do servidor):
+# scripts/verificar-htaccess-pastas.ts confere que esta lista bate com as
+# pastas reais de todo build, e reprova se divergir.
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_URI} ^/(assets|icones)(/|$)
 RewriteRule ^ - [L]

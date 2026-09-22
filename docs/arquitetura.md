@@ -43,6 +43,8 @@ Publicar um site estático de estudo que reúne o material de todos os períodos
 
 **Substituição:** onde estava o nome do professor entra a palavra `professor`; onde estava o nome da instituição entra a palavra `faculdade`. [FATO] as partes da petição (autora e ré) são fictícias e **ficam como estão**, por decisão do líder.
 
+**R3 NÃO é uma proibição geral de nome de pessoa.** Esclarecimento do líder, 22/09/2026, verbatim: "pode deixar no texto o nome dos autores dos livros e das figuras historicas". R3 vale para exatamente dois nomes reais — o do professor e o da instituição de ensino do piloto — e para mais nenhum. Nome de autor citado como referência bibliográfica (Hart, Bobbio, Ferraz Jr., Groppali, Kelsen e outros) e nome de figura histórica (Hobbes, Locke, Rousseau, Justiniano, Hamurabi e outros) são conteúdo de estudo e **ficam no texto**, sempre. Por isso `verificar-proibicoes.sh` não usa nenhuma regra genérica de "parece nome próprio": ele só compara contra os dois termos exatos do arquivo externo (`grep -qF`, string fixa), e um agente futuro que veja um nome próprio no conteúdo não deve apagá-lo por zelo nem estreitar o portão além dos dois termos reais — isso reintroduziria exatamente o mesmo vazamento que R3 fecha, só que ao contrário (apagando referência legítima).
+
 **Portão `verificar-proibicoes.sh`, obrigatório (L-36):**
 
 - Lê os termos de `~/.config/secrets/` (caminho fora do repositório, mesma convenção já usada nesta máquina), nunca de um arquivo versionado.

@@ -1,0 +1,51 @@
+{
+  "name": "caderno-de-direito",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/gerar-indice-busca.ts && vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest run tests/unidade tests/componente",
+    "test:unit:watch": "vitest tests/unidade tests/componente",
+    "test:e2e": "playwright test",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --check .",
+    "typecheck": "vue-tsc --noEmit",
+    "camadas": "depcruise src --config .dependency-cruiser.cjs",
+    "verificar:proibicoes": "bash scripts/verificar-proibicoes.sh",
+    "verificar:dispositivos": "node --import tsx scripts/verificar-dispositivos.ts",
+    "verificar:fontes": "bash scripts/verificar-fontes.sh",
+    "preci": "bash scripts/preci.sh"
+  },
+  "dependencies": {
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0",
+    "minisearch": "^7.1.0",
+    "@floating-ui/dom": "^1.6.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.0",
+    "@vue/test-utils": "^2.4.6",
+    "@fontsource-variable/inter": "^5.1.0",
+    "@fontsource/lora": "^5.1.0",
+    "@playwright/test": "^1.47.0",
+    "@axe-core/playwright": "^4.10.0",
+    "@eslint/js": "^9.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.5.0",
+    "@typescript-eslint/parser": "^8.5.0",
+    "dependency-cruiser": "^16.4.0",
+    "eslint": "^9.10.0",
+    "eslint-plugin-vue": "^9.28.0",
+    "vue-eslint-parser": "^9.4.0",
+    "jsdom": "^25.0.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.0",
+    "vitest": "^2.1.0",
+    "vue-tsc": "^2.1.0"
+  }
+}

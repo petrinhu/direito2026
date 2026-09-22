@@ -3,3 +3,7 @@ dist/
 .vite/
 *.log
 mockups/capturas/
+playwright-report/
+test-results/
+public/busca/indice.json
+src/conteudo/**/dispositivos.ts

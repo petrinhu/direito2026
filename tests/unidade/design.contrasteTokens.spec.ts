@@ -70,7 +70,12 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   // Botão primário: as duas variáveis mudam JUNTAS com o tema (não é o
   // bug da lateral, onde uma delas ficava fixa) — entra no portão mesmo
   // assim, para nunca precisar descobrir de novo por acidente.
-  { nome: 'botão primário', texto: '--cor-texto-invertido', fundo: '--cor-primaria' }
+  { nome: 'botão primário', texto: '--cor-texto-invertido', fundo: '--cor-primaria' },
+  // Rodapé (ordem do líder, 22/09/2026, linha de oferecimento e linha de
+  // direitos): o par já existia em uso desde a fundação, mas nunca tinha
+  // entrado neste portão. A linha de oferecimento usa o par dedicado da
+  // lateral, já coberto acima ('texto suave sobre a lateral').
+  { nome: 'texto suave sobre fundo da página', texto: '--cor-texto-suave', fundo: '--cor-fundo' }
 ];
 
 describe('contraste dos tokens de design', () => {

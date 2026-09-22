@@ -89,6 +89,14 @@
   --cor-primaria: #163a5f;        /* azul-petróleo, marca/links/ícones */
   --cor-primaria-escura: #0d2440; /* SÓ FUNDO: cabeçalho, hero, botão primário */
   --cor-primaria-clara: #eaf1f8;  /* fundo de trilha ativa, hover sutil */
+  /* Cor e deslocamento do anel de foco, num token dedicado (achado 4 da
+     revisão, docs/revisao-modo-adaptado.md): fora do modo adaptado segue
+     --cor-primaria como sempre; dentro dele, o bloco data-modo-adaptado
+     abaixo redefine os dois para o preto/4px que docs/modo-adaptado.md
+     §2 fixa por escrito, sem precisar de --cor-primaria (que no modo já
+     vale #0d2440, 14,84:1, abaixo do 21:1 pedido para o par de foco). */
+  --cor-foco: var(--cor-primaria);
+  --foco-deslocamento: 2px;
   /* Cor de TEXTO para título/marca, nunca cor de fundo. Existe separada de
      --cor-primaria-escura de propósito: aquele token vira #0b1a2c no modo
      escuro (pensado para ficar atrás de texto branco), e usar o mesmo valor
@@ -304,6 +312,13 @@
 
   --alvo-toque-minimo: 44px; /* era 24px, piso AA do resto do site */
   --foco-espessura: 4px;     /* era 2px */
+  /* Achado 4 da revisão: contorno de foco preto (21:1), não o azul-escuro
+     de --cor-primaria (14,84:1) - docs/modo-adaptado.md §2/§3 fixam os
+     dois valores por escrito. Deslocamento maior que o padrão (2px) para
+     o anel nunca colar na borda estrutural de 2px do próprio cartão
+     (tokens.css, --cartao-borda, mesma seção). */
+  --cor-foco: #000000;
+  --foco-deslocamento: 4px;
 
   /* Cabeçalho mais alto: em tela estreita a linha do cabeçalho quebra em
      mais de uma linha (BarraTopo.vue, seção 4 da especificação), então a

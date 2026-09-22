@@ -48,8 +48,11 @@ const ARIA_LABEL_LIGADO = 'Desativar modo de leitura adaptada e voltar ao tamanh
 }
 
 .botao-modo-adaptado:focus-visible {
-  outline: var(--foco-espessura, 2px) solid var(--cor-primaria, #163a5f);
-  outline-offset: 2px;
+  /* Twin do achado 4 (docs/revisao-modo-adaptado.md): mesma correção de
+     base.css, --cor-foco/--foco-deslocamento (tokens.css), preto/4px
+     dentro do modo adaptado. */
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
+  outline-offset: var(--foco-deslocamento, 2px);
 }
 
 .botao-modo-adaptado__rotulo {

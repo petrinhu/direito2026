@@ -123,8 +123,12 @@ summary {
 }
 
 :focus-visible {
-  outline: var(--foco-espessura, 2px) solid var(--cor-primaria);
-  outline-offset: 2px;
+  /* Achado 4 da revisão (docs/revisao-modo-adaptado.md): --cor-foco e
+     --foco-deslocamento (tokens.css) valem --cor-primaria/2px fora do
+     modo adaptado (igual a antes) e #000000/4px dentro dele, o par de
+     contraste 21:1 que docs/modo-adaptado.md §3 fixa por escrito. */
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria));
+  outline-offset: var(--foco-deslocamento, 2px);
 }
 
 /* Alto contraste do Windows (forced-colors: active): não redefinir cor,

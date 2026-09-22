@@ -1,0 +1,43 @@
+<script setup lang="ts">
+import type { BlocoResumo } from '@/core/unidade/tipos';
+import BlocoTeorico from './BlocoTeorico.vue';
+
+defineProps<{ blocos: readonly BlocoResumo[] }>();
+const emit = defineEmits<{ 'bloco-lido': [string] }>();
+</script>
+
+<template>
+  <div class="visor-resumo">
+    <nav aria-label="Sumário do resumo" class="visor-resumo__sumario">
+      <ol>
+        <li v-for="bloco in blocos" :key="bloco.id">
+          <a :href="`#${bloco.id}`">{{ bloco.titulo }}</a>
+        </li>
+      </ol>
+    </nav>
+    <BlocoTeorico
+      v-for="bloco in blocos"
+      :key="bloco.id"
+      :bloco="bloco"
+      @lido="emit('bloco-lido', $event)"
+    />
+  </div>
+</template>
+
+<style scoped>
+.visor-resumo__sumario {
+  max-width: var(--largura-coluna-leitura, 760px);
+  margin-inline: auto;
+  padding-top: var(--esp-5, 1.5rem);
+}
+
+.visor-resumo__sumario ol {
+  padding-left: var(--esp-5, 1.5rem);
+}
+
+@media print {
+  .visor-resumo__sumario {
+    display: none;
+  }
+}
+</style>

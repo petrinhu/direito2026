@@ -11,6 +11,8 @@ export interface StoreProgressoUnidade {
   readonly registro: Ref<RegistroProgressoUnidade>;
   marcarLido(blocoId: string): void;
   desmarcarLido(blocoId: string): void;
+  /** Atualiza e persiste qualquer subconjunto do registro (aba, semente e respostas do quiz). */
+  atualizar(patch: Partial<Omit<RegistroProgressoUnidade, 'versao'>>): void;
   contagem(idsBlocosExistentes: readonly string[]): { lidos: number; total: number };
 }
 
@@ -39,5 +41,9 @@ export function criarStoreProgresso(
     return contarBlocosLidos(registro.value, idsBlocosExistentes);
   }
 
-  return { registro, marcarLido, desmarcarLido, contagem };
+  function atualizar(patch: Partial<Omit<RegistroProgressoUnidade, 'versao'>>): void {
+    persistir({ ...registro.value, ...patch, atualizadoEm: new Date().toISOString() });
+  }
+
+  return { registro, marcarLido, desmarcarLido, atualizar, contagem };
 }

@@ -1,0 +1,66 @@
+<script setup lang="ts">
+import type { PecaComentada } from '@/core/unidade/tipos';
+
+defineProps<{ peca: PecaComentada }>();
+</script>
+
+<template>
+  <article class="peca-comentada">
+    <h2>{{ peca.titulo }}</h2>
+    <p class="peca-comentada__nota" v-html="peca.notaHtml" />
+    <section v-for="secao in peca.secoes" :id="secao.id" :key="secao.id" class="peca-comentada__secao">
+      <h3>{{ secao.titulo }}</h3>
+      <div class="peca-comentada__grade">
+        <div class="peca-comentada__corpo" v-html="secao.corpoHtml" />
+        <aside class="peca-comentada__comentario" aria-label="Como fazer">
+          <div v-html="secao.comentarioHtml" />
+        </aside>
+      </div>
+    </section>
+  </article>
+</template>
+
+<style scoped>
+.peca-comentada {
+  max-width: var(--largura-coluna-leitura, 760px);
+  margin-inline: auto;
+  padding-block: var(--esp-6, 2rem);
+}
+
+.peca-comentada__nota {
+  background: var(--cor-fundo-sutil, #f2efe6);
+  padding: var(--esp-4, 1rem);
+  border-radius: var(--raio-sm, 6px);
+}
+
+.peca-comentada__secao {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-block: var(--esp-6, 2rem);
+}
+
+.peca-comentada__grade {
+  display: grid;
+  gap: var(--esp-4, 1rem);
+}
+
+.peca-comentada__comentario {
+  background: var(--cor-primaria-clara, #eaf1f8);
+  border-radius: var(--raio-sm, 6px);
+  padding: var(--esp-4, 1rem);
+}
+
+@media (min-width: 880px) {
+  .peca-comentada__grade {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Impressão: comentário sempre abaixo do trecho, nunca em coluna lateral (seção 9). */
+@media print {
+  .peca-comentada__grade {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

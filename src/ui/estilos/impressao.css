@@ -1,0 +1,42 @@
+/* Folha de impressão (seção 9 da arquitetura). Aceita só contra PDF
+   gerado por Chromium headless (L-46), nunca contra a pré-visualização do
+   navegador na sessão do líder (L-50). */
+
+@media print {
+  .layout-base__gaveta,
+  .barra-topo,
+  .rodape,
+  .visor-resumo__sumario,
+  .motor-quiz__navegacao,
+  .resultado-quiz__reiniciar,
+  .grade-revisao,
+  #balao-dispositivo,
+  .indicador-progresso,
+  .campo-busca {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .bloco-teorico,
+  .quadro-resumo,
+  .peca-comentada__secao,
+  .cartao-pergunta {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Link sobrevive ao papel (seção 9). */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+}

@@ -1,0 +1,8 @@
+# Não indexar (seção 15 da arquitetura): decisão do líder, 21/09/2026.
+# Nenhum Disallow aqui de propósito. Bloquear o rastreamento impediria o
+# rastreador de buscar a página e, portanto, de ler a marcação
+# <meta name="robots" content="noindex, nofollow"> em cada página e o
+# cabeçalho X-Robots-Tag do .htaccess. Deixando o rastreador entrar, ele lê
+# o noindex e não indexa, que é o efeito que o líder pediu. O site continua
+# aberto a quem tem o link.
+User-agent: *

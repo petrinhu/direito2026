@@ -1,0 +1,59 @@
+/* Reset mínimo e defaults tipográficos globais. Os tokens (cor, espaço,
+   tipografia) vêm de tokens.css, importado antes deste arquivo. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* 100dvh com 100vh como reserva antes dela na mesma regra (guia de
+     compatibilidade, seção 9): o Safari do iPhone conta a barra de
+     ferramentas retrátil em vh e corta conteúdo sem isso. */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: var(--fonte-texto);
+  font-size: var(--escala-base);
+  line-height: var(--altura-linha-texto);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--fonte-titulo);
+  line-height: var(--altura-linha-titulo);
+  color: var(--cor-titulo-texto);
+}
+
+a {
+  color: var(--cor-primaria);
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+/* Alto contraste do Windows (forced-colors: active): não redefinir cor,
+   só garantir que bordas/ícones tenham um traçado que o navegador possa
+   substituir (seção 13 da arquitetura, verificado na VM do Windows). */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+  }
+}

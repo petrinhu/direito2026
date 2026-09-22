@@ -1,0 +1,126 @@
+import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
+
+export interface EstadoBalao {
+  readonly aberto: boolean;
+  readonly dispositivoId: string | undefined;
+  readonly botaoAncora: HTMLElement | undefined;
+}
+
+export interface ControladorCitacoes {
+  readonly estado: EstadoBalao;
+  ligar(regiao: HTMLElement): void;
+  desligar(): void;
+}
+
+const ATRASO_INTENCAO_HOVER_MS = 120;
+const TOLERANCIA_SAIDA_HOVER_MS = 200;
+
+/**
+ * Controlador único por delegação de evento (seção 12.2): não existe um
+ * balão por citação, existe um elemento popover compartilhado na página e
+ * um controlador que escuta a região de conteúdo inteira. Este módulo é
+ * puro TypeScript sobre DOM (por isso mora em ui/, não em core), sem Vue:
+ * o próprio plano (seção 12.8) o descreve como um controlador, não um
+ * componente.
+ */
+export function criarControladorCitacoes(params: {
+  dispositivos: () => IndiceDispositivos | undefined;
+  aoAbrir: (dispositivoId: string, ancora: HTMLElement) => void;
+  aoFechar: () => void;
+}): ControladorCitacoes {
+  let regiaoAtual: HTMLElement | undefined;
+  let temporizadorAbertura: ReturnType<typeof setTimeout> | undefined;
+  let temporizadorFechamento: ReturnType<typeof setTimeout> | undefined;
+
+  const estado: EstadoBalao = { aberto: false, dispositivoId: undefined, botaoAncora: undefined };
+
+  function ehBotaoCitacao(alvo: EventTarget | null): alvo is HTMLElement {
+    return alvo instanceof HTMLElement && alvo.matches('button[data-dispositivo]');
+  }
+
+  function abrir(botao: HTMLElement): void {
+    const id = botao.dataset.dispositivo;
+    if (!id) return;
+    (estado as { aberto: boolean }).aberto = true;
+    (estado as { dispositivoId: string | undefined }).dispositivoId = id;
+    (estado as { botaoAncora: HTMLElement | undefined }).botaoAncora = botao;
+    botao.setAttribute('aria-expanded', 'true');
+    params.aoAbrir(id, botao);
+  }
+
+  function fechar(): void {
+    if (!estado.aberto) return;
+    estado.botaoAncora?.setAttribute('aria-expanded', 'false');
+    (estado as { aberto: boolean }).aberto = false;
+    (estado as { dispositivoId: string | undefined }).dispositivoId = undefined;
+    (estado as { botaoAncora: HTMLElement | undefined }).botaoAncora = undefined;
+    params.aoFechar();
+  }
+
+  // Mouse: só dentro de hover fino, com intenção antes de abrir.
+  const consultaHover = typeof matchMedia === 'function'
+    ? matchMedia('(hover: hover) and (pointer: fine)')
+    : undefined;
+
+  function aoPonteiroEntrar(evento: PointerEvent): void {
+    if (evento.pointerType !== 'mouse' || !consultaHover?.matches) return;
+    const botao = evento.target instanceof HTMLElement ? evento.target.closest('button[data-dispositivo]') : null;
+    if (!(botao instanceof HTMLElement)) return;
+    clearTimeout(temporizadorFechamento);
+    temporizadorAbertura = setTimeout(() => abrir(botao), ATRASO_INTENCAO_HOVER_MS);
+  }
+
+  function aoPonteiroSair(evento: PointerEvent): void {
+    if (evento.pointerType !== 'mouse') return;
+    clearTimeout(temporizadorAbertura);
+    temporizadorFechamento = setTimeout(fechar, TOLERANCIA_SAIDA_HOVER_MS);
+  }
+
+  // Toque: um toque abre, outro fecha. A media query acima já impede que o
+  // caminho de hover interfira, então não há o problema clássico de
+  // primeiro-toque-vira-hover.
+  function aoClicar(evento: MouseEvent): void {
+    const botao = ehBotaoCitacao(evento.target) ? evento.target : null;
+    if (!botao) return;
+    if (estado.aberto && estado.botaoAncora === botao) {
+      fechar();
+    } else {
+      abrir(botao);
+    }
+  }
+
+  // Teclado: só abre em :focus-visible, nunca em foco por clique de mouse.
+  function aoFocar(evento: FocusEvent): void {
+    const botao = evento.target;
+    if (!(botao instanceof HTMLElement) || !botao.matches('button[data-dispositivo]')) return;
+    if (botao.matches(':focus-visible')) abrir(botao);
+  }
+
+  function aoDesfocar(evento: FocusEvent): void {
+    const botao = evento.target;
+    if (botao instanceof HTMLElement && botao === estado.botaoAncora) fechar();
+  }
+
+  function ligar(regiao: HTMLElement): void {
+    regiaoAtual = regiao;
+    regiao.addEventListener('pointerenter', aoPonteiroEntrar, true);
+    regiao.addEventListener('pointerleave', aoPonteiroSair, true);
+    regiao.addEventListener('click', aoClicar);
+    regiao.addEventListener('focus', aoFocar, true);
+    regiao.addEventListener('focusout', aoDesfocar, true);
+  }
+
+  function desligar(): void {
+    if (!regiaoAtual) return;
+    regiaoAtual.removeEventListener('pointerenter', aoPonteiroEntrar, true);
+    regiaoAtual.removeEventListener('pointerleave', aoPonteiroSair, true);
+    regiaoAtual.removeEventListener('click', aoClicar);
+    regiaoAtual.removeEventListener('focus', aoFocar, true);
+    regiaoAtual.removeEventListener('focusout', aoDesfocar, true);
+    regiaoAtual = undefined;
+    clearTimeout(temporizadorAbertura);
+    clearTimeout(temporizadorFechamento);
+  }
+
+  return { estado, ligar, desligar };
+}

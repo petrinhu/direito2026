@@ -15,10 +15,16 @@
   /* Fontes de verdade da produção (pendência da onda, docs/design-visual.md:
      "hospedada no próprio site"): Lora (título) e Inter (texto),
      recortadas para o alfabeto do site e servidas por fontes.css, sem CDN.
-     A pilha de sistema continua como RESERVA (nunca some): cobre o
-     instante antes da fonte própria carregar e qualquer falha de rede. */
-  --fonte-titulo: 'Lora', Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
-  --fonte-texto: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+     Logo depois do nome real vem a face sintética de métrica ajustada
+     ("Inter Fallback"/"Lora Fallback", fontes.css) - ela some a hora que
+     a fonte própria termina de carregar, mas até lá ocupa a MESMA altura
+     que a fonte própria ocuparia, então a troca não sacode o leiaute. A
+     pilha de sistema crua continua depois, como reserva de verdade: cobre
+     qualquer falha de rede em que nem a face sintética exista no sistema. */
+  --fonte-titulo: 'Lora', 'Lora Fallback', Georgia, "Iowan Old Style", "Palatino Linotype",
+    "Book Antiqua", serif;
+  --fonte-texto: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
   --fonte-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --escala-xs: 0.8125rem;   /* 13px, legendas e metadados */

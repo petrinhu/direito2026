@@ -47,3 +47,49 @@
   font-style: normal;
   font-display: swap;
 }
+
+/* Ajuste de métrica para a troca de fonte não sacudir o leiaute (pedido
+   do líder): `font-display: swap` acima já evita texto invisível (mostra
+   a pilha de sistema na hora, troca quando a fonte própria termina de
+   baixar) - falta impedir que a TROCA mude a altura ocupada pelo texto
+   (o "pulo" de layout que troca de fonte costuma causar, porque cada
+   fonte tem métricas verticais diferentes para o mesmo tamanho nominal).
+
+   Duas famílias sintéticas ("Inter Fallback"/"Lora Fallback"), sem
+   arquivo de fonte nenhum (`src: local(...)` só, resolve contra a fonte
+   do próprio sistema já usada como fallback) com `ascent-override`/
+   `descent-override`/`line-gap-override`/`size-adjust` calculados para
+   que a métrica vertical do fallback imite a da fonte própria. O
+   navegador usa esta face ANTES da fonte própria terminar de carregar
+   (ela entra na pilha logo depois do nome real), então a área ocupada já
+   nasce do tamanho certo, e a troca não move nada embaixo.
+
+   Números medidos nesta máquina (não estimados), com fontTools, técnica
+   de Malchev ("The Perfect Font Fallback"): size-adjust = (ascent+descent
+   do fallback) / (ascent+descent da fonte própria); os demais valores são
+   a métrica da fonte própria dividida por esse size-adjust. Comando:
+   python3 -c "from fontTools.ttLib import TTFont; ..." lendo sTypoAscender/
+   sTypoDescender/sTypoLineGap de public/assets/fontes/inter-400.woff2 e
+   lora-700.woff2 contra as fontes já instaladas nesta máquina que mais se
+   aproximam do primeiro nome da pilha de fallback de cada token
+   (Liberation Sans, clone métrico do Arial, para --fonte-texto; Liberation
+   Serif, a serifa genérica mais próxima disponível aqui, para
+   --fonte-titulo — não há arquivo de Georgia nesta máquina, fonte
+   proprietária, então este é o melhor material de referência local). */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans');
+  ascent-override: 124.9%;
+  descent-override: 31.1%;
+  line-gap-override: 0%;
+  size-adjust: 77.56%;
+}
+
+@font-face {
+  font-family: 'Lora Fallback';
+  src: local('Georgia'), local('Liberation Serif');
+  ascent-override: 141.63%;
+  descent-override: 38.58%;
+  line-gap-override: 0%;
+  size-adjust: 71.03%;
+}

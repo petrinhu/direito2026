@@ -1,49 +1,10 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-
-const routes: RouteRecordRaw[] = [
-  { path: '/', name: 'home', component: () => import('@/ui/paginas/Home.vue') },
-  { path: '/busca', name: 'busca', component: () => import('@/ui/paginas/Busca.vue') },
-  {
-    path: '/p/:periodo',
-    name: 'periodo',
-    component: () => import('@/ui/paginas/Periodo.vue'),
-    props: true
-  },
-  {
-    path: '/p/:periodo/:cadeira',
-    name: 'cadeira',
-    component: () => import('@/ui/paginas/Cadeira.vue'),
-    props: true
-  },
-  {
-    path: '/p/:periodo/:cadeira/:unidade',
-    name: 'unidade-resumo',
-    component: () => import('@/ui/paginas/Unidade.vue'),
-    props: (route) => ({ ...route.params, aba: 'resumo' })
-  },
-  {
-    path: '/p/:periodo/:cadeira/:unidade/peticao',
-    name: 'unidade-peticao',
-    component: () => import('@/ui/paginas/Unidade.vue'),
-    props: (route) => ({ ...route.params, aba: 'peticao' })
-  },
-  {
-    path: '/p/:periodo/:cadeira/:unidade/quiz',
-    name: 'unidade-quiz',
-    component: () => import('@/ui/paginas/Unidade.vue'),
-    props: (route) => ({ ...route.params, aba: 'quiz' })
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'nao-encontrado',
-    component: () => import('@/ui/paginas/NaoEncontrado.vue')
-  }
-];
+import { createRouter, createWebHistory } from 'vue-router';
+import { rotas } from './rotas';
 
 export function criarRouter() {
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-    routes,
+    routes: rotas,
     scrollBehavior(to) {
       if (to.hash) return { el: to.hash, behavior: 'smooth' };
       return { top: 0 };

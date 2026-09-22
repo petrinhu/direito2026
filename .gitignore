@@ -5,5 +5,5 @@ dist/
 mockups/capturas/
 playwright-report/
 test-results/
-public/busca/indice.json
+public/assets/busca-indice.json
 src/conteudo/**/dispositivos.ts

@@ -1,8 +1,18 @@
 /**
- * Gera public/busca/indice.json antes do `vite build` (seção 7 da
+ * Gera public/assets/busca-indice.json antes do `vite build` (seção 7 da
  * arquitetura). Roda em Node, importando os mesmos arquivos de
  * src/conteudo/ que o site importa em runtime (via o mesmo registro de
  * carregadores que o app usa, src/app/carregamento/carregadores.ts).
+ *
+ * Achado do líder, 22/09/2026, medido no site publicado: o destino
+ * anterior, public/busca/indice.json, virava dist/busca/ no pacote, e essa
+ * PASTA colidia com a ROTA /busca da SPA. No Apache, quando existe
+ * diretório com o mesmo nome do caminho pedido, ele redireciona para
+ * .../busca/ (301) e, como listagem é proibida, devolve 403. Por isso o
+ * destino agora é um arquivo de nome único dentro de assets/ (a mesma
+ * pasta dos chunks JS/CSS com hash, que nunca é nome de rota da
+ * aplicação): nenhuma rota pode colidir com pasta nenhuma do pacote
+ * (portão: scripts/verificar-colisao-rotas.sh).
  *
  * Piso de varredura obrigatório (L-36): imprime sempre
  * "documentos encontrados: N / indexados: M", mesmo com N zero, e sai 1
@@ -19,7 +29,7 @@ import { curriculo } from '../src/conteudo/curriculo';
 import { CARREGADORES } from '../src/app/carregamento/carregadores';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
-const SAIDA = resolve(AQUI, '../public/busca/indice.json');
+const SAIDA = resolve(AQUI, '../public/assets/busca-indice.json');
 
 async function principal(): Promise<void> {
   const documentos: DocumentoBusca[] = [];

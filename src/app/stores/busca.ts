@@ -11,8 +11,10 @@ export interface StoreBusca {
 
 /**
  * Import dinâmico do índice no primeiro foco do CampoBusca (seção 7): o
- * módulo do MiniSearch e o public/busca/indice.json só descem quando o
- * leitor de fato vai buscar.
+ * módulo do MiniSearch e o índice de busca só descem quando o leitor de
+ * fato vai buscar. O índice fica em assets/busca-indice.json (achado do
+ * líder, 22/09/2026: um destino public/busca/ virava pasta dist/busca/ no
+ * pacote e colidia com a ROTA /busca da SPA, 403 no Apache).
  */
 export function criarStoreBusca(): StoreBusca {
   const termo = ref('');
@@ -28,7 +30,7 @@ export function criarStoreBusca(): StoreBusca {
     carregamentoEmCurso = (async () => {
       const [{ carregarMotorBuscaDeJson }, resposta] = await Promise.all([
         import('@/app/busca/criarMotorBuscaMiniSearch'),
-        fetch(`${import.meta.env.BASE_URL}busca/indice.json`)
+        fetch(`${import.meta.env.BASE_URL}assets/busca-indice.json`)
       ]);
       const json = await resposta.text();
       motor = carregarMotorBuscaDeJson(json);

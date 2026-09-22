@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChaveAba } from '@/core/curriculo/tipos';
+import { ROTULOS_ABA as ROTULOS } from '@/app/curriculo/rotulosAba';
 
 const props = defineProps<{
   abas: readonly ChaveAba[];
@@ -8,12 +9,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ navegar: [ChaveAba] }>();
-
-const ROTULOS: Record<ChaveAba, string> = {
-  resumo: 'Resumo',
-  peticao: 'Petição comentada',
-  quiz: 'Quiz'
-};
 
 const abasVisiveis = computed(() => props.abas);
 

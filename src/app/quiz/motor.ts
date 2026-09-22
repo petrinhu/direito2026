@@ -4,4 +4,9 @@
 // quando o módulo em si é só um repasse. Tipos continuam indo direto
 // (import type), porque tipo é apagado na compilação e não é a
 // preocupação do gate.
-export { embaralharRodada, corrigirResposta, calcularPontuacao } from '@/core/quiz/motor';
+export {
+  embaralharRodada,
+  corrigirResposta,
+  calcularPontuacao,
+  contarPorCategoria
+} from '@/core/quiz/motor';

@@ -1,14 +1,9 @@
 <script setup lang="ts">
 import type { Pontuacao } from '@/core/quiz/tipos';
+import { ROTULOS_CATEGORIA_QUIZ as ROTULOS_CATEGORIA } from '@/app/quiz/rotulosCategoria';
 
 defineProps<{ pontuacao: Pontuacao }>();
 const emit = defineEmits<{ reiniciar: [] }>();
-
-const ROTULOS_CATEGORIA: Record<string, string> = {
-  teoria: 'Teoria',
-  peticao: 'Petição',
-  fundamentos: 'Fundamentos'
-};
 </script>
 
 <template>

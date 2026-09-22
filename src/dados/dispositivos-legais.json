@@ -1,0 +1,123 @@
+[
+  {
+    "id": "cf-5-v",
+    "diploma": "Constituição da República Federativa do Brasil de 1988",
+    "diplomaSigla": "CF/88",
+    "artigo": "5º",
+    "inciso": "V",
+    "texto": "Art. 5º Todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade, nos termos seguintes:\nV - é assegurado o direito de resposta, proporcional ao agravo, além da indenização por dano material, moral ou à imagem;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cf-5-x",
+    "diploma": "Constituição da República Federativa do Brasil de 1988",
+    "diplomaSigla": "CF/88",
+    "artigo": "5º",
+    "inciso": "X",
+    "texto": "Art. 5º Todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade, nos termos seguintes:\nX - são invioláveis a intimidade, a vida privada, a honra e a imagem das pessoas, assegurado o direito a indenização pelo dano material ou moral decorrente de sua violação;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cf-5-xxxv",
+    "diploma": "Constituição da República Federativa do Brasil de 1988",
+    "diplomaSigla": "CF/88",
+    "artigo": "5º",
+    "inciso": "XXXV",
+    "texto": "Art. 5º Todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade, nos termos seguintes:\nXXXV - a lei não excluirá da apreciação do Poder Judiciário lesão ou ameaça a direito;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cc-186",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "186",
+    "inciso": "",
+    "texto": "Art. 186. Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, ainda que exclusivamente moral, comete ato ilícito.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": "Sem alteração de redação. Há registro de ADI nº 7055 e ADI nº 6792 pendentes (\"Vide ADI\") que questionam a constitucionalidade de dispositivos ligados a este artigo; a redação do texto legal permanece a mesma."
+  },
+  {
+    "id": "cc-187",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "187",
+    "inciso": "",
+    "texto": "Art. 187. Também comete ato ilícito o titular de um direito que, ao exercê-lo, excede manifestamente os limites impostos pelo seu fim econômico ou social, pela boa-fé ou pelos bons costumes.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cc-927",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "927",
+    "inciso": "",
+    "texto": "Art. 927. Aquele que, por ato ilícito (arts. 186 e 187), causar dano a outrem, fica obrigado a repará-lo.\nParágrafo único. Haverá obrigação de reparar o dano, independentemente de culpa, nos casos especificados em lei, ou quando a atividade normalmente desenvolvida pelo autor do dano implicar, por sua natureza, risco para os direitos de outrem.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": "Sem alteração de redação. Há registro de ADI nº 7055 e ADI nº 6792 pendentes (\"Vide ADI\") ligadas a este artigo; a redação do texto legal permanece a mesma."
+  },
+  {
+    "id": "cc-944",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "944",
+    "inciso": "",
+    "texto": "Art. 944. A indenização mede-se pela extensão do dano.\nParágrafo único. Se houver excessiva desproporção entre a gravidade da culpa e o dano, poderá o juiz reduzir, eqüitativamente, a indenização.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": "Sem alteração de redação. A grafia \"eqüitativamente\" (com trema) é a que consta do texto compilado oficial do Planalto."
+  },
+  {
+    "id": "cpc-319",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "319",
+    "inciso": "",
+    "texto": "Art. 319. A petição inicial indicará:\nI - o juízo a que é dirigida;\nII - os nomes, os prenomes, o estado civil, a existência de união estável, a profissão, o número de inscrição no Cadastro de Pessoas Físicas ou no Cadastro Nacional da Pessoa Jurídica, o endereço eletrônico, o domicílio e a residência do autor e do réu;\nIII - o fato e os fundamentos jurídicos do pedido;\nIV - o pedido com as suas especificações;\nV - o valor da causa;\nVI - as provas com que o autor pretende demonstrar a verdade dos fatos alegados;\nVII - a opção do autor pela realização ou não de audiência de conciliação ou de mediação.\n§ 1º Caso não disponha das informações previstas no inciso II, poderá o autor, na petição inicial, requerer ao juiz diligências necessárias a sua obtenção.\n§ 2º A petição inicial não será indeferida se, a despeito da falta de informações a que se refere o inciso II, for possível a citação do réu.\n§ 3º A petição inicial não será indeferida pelo não atendimento ao disposto no inciso II deste artigo se a obtenção de tais informações tornar impossível ou excessivamente oneroso o acesso à justiça.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cpc-319-ii",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "319",
+    "inciso": "II",
+    "texto": "II - os nomes, os prenomes, o estado civil, a existência de união estável, a profissão, o número de inscrição no Cadastro de Pessoas Físicas ou no Cadastro Nacional da Pessoa Jurídica, o endereço eletrônico, o domicílio e a residência do autor e do réu;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cpc-319-v",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "319",
+    "inciso": "V",
+    "texto": "V - o valor da causa;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  },
+  {
+    "id": "cpc-320",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "320",
+    "inciso": "",
+    "texto": "Art. 320. A petição inicial será instruída com os documentos indispensáveis à propositura da ação.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-21",
+    "notaAlteracao": ""
+  }
+]

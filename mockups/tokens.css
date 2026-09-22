@@ -52,6 +52,15 @@
   /* --- Largura de leitura ---------------------------------------------- */
   --largura-leitura: 68ch;
   --largura-conteudo: 1180px;
+  /* Esqueleto do arquivo piloto (decisão do líder, 21/09/2026: "mantenha o
+     design do arquivo original com o menu lateral"). Coluna de leitura da
+     área de conteúdo, medida no piloto: max-width 760px, centralizada. */
+  --largura-coluna-leitura: 760px;
+  --largura-sidebar: 280px;
+  /* Ponto de quebra em que a lateral sai da tela e vira menu deslizante,
+     igual ao piloto: 880px, não os 640px usados no resto do site. Escrito
+     em pixel puro em cada @media (custom property não funciona dentro da
+     condição de uma media query, só nas declarações). */
 
   /* --- Transição (respeita prefers-reduced-motion nos seletores) ------- */
   --transicao-rapida: 150ms ease;
@@ -71,8 +80,14 @@
   --cor-texto-invertido: #faf9f5;
 
   --cor-primaria: #163a5f;        /* azul-petróleo, marca/links/ícones */
-  --cor-primaria-escura: #0d2440; /* cabeçalho, hero, botão primário */
+  --cor-primaria-escura: #0d2440; /* SÓ FUNDO: cabeçalho, hero, botão primário */
   --cor-primaria-clara: #eaf1f8;  /* fundo de trilha ativa, hover sutil */
+  /* Cor de TEXTO para título/marca, nunca cor de fundo. Existe separada de
+     --cor-primaria-escura de propósito: aquele token vira #0b1a2c no modo
+     escuro (pensado para ficar atrás de texto branco), e usar o mesmo valor
+     como `color:` sobre o fundo escuro da página deixa o texto quase
+     invisível (contraste medido 1,04:1, achado do QA em 21/09/2026). */
+  --cor-titulo-texto: #0d2440;
 
   --cor-acento: #8a6d1f;          /* dourado/âmbar, usar com parcimônia */
   --cor-acento-claro: #f3ead1;    /* fundo de badge de acento */
@@ -90,6 +105,15 @@
   --cor-desativado-texto: #8a8672;
   --cor-desativado-bg: #ece7d6;
   --cor-desativado-borda: #d8d2ba;
+
+  /* Par dedicado do selo "em breve", separado do par de desativado acima.
+     Achado CRÍTICO do QA (21/09/2026): o selo usava --cor-desativado-texto
+     sobre --cor-desativado-bg, 2,96:1, abaixo de AA. Essa exceção de
+     contraste de "controle desabilitado" do WCAG 1.4.3 não cobre o selo,
+     porque ele aparece também dentro de <summary> ainda clicável (abre e
+     fecha o período/cadeira), não é ele mesmo um controle desabilitado. */
+  --cor-selo-texto: #5a5442;
+  --cor-selo-bg: #ece7d6;
 
   color-scheme: light;
 }
@@ -111,6 +135,7 @@
     --cor-primaria: #7fa8d6;
     --cor-primaria-escura: #0b1a2c;
     --cor-primaria-clara: #132a42;
+    --cor-titulo-texto: #7fa8d6;
 
     --cor-acento: #d3b563;
     --cor-acento-claro: #332b16;
@@ -128,6 +153,9 @@
     --cor-desativado-texto: #6b7280;
     --cor-desativado-bg: #232935;
     --cor-desativado-borda: #333b47;
+
+    --cor-selo-texto: #d8d2ba;
+    --cor-selo-bg: #2e2a1c;
 
     --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
     --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -154,6 +182,7 @@
   --cor-primaria: #7fa8d6;
   --cor-primaria-escura: #0b1a2c;
   --cor-primaria-clara: #132a42;
+  --cor-titulo-texto: #7fa8d6;
 
   --cor-acento: #d3b563;
   --cor-acento-claro: #332b16;
@@ -171,6 +200,9 @@
   --cor-desativado-texto: #6b7280;
   --cor-desativado-bg: #232935;
   --cor-desativado-borda: #333b47;
+
+  --cor-selo-texto: #d8d2ba;
+  --cor-selo-bg: #2e2a1c;
 
   --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);

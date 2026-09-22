@@ -18,7 +18,7 @@ const lista = computed(() => (props.dispositivos ? Object.values(props.dispositi
     <h2>Dispositivos citados</h2>
     <ol>
       <li v-for="dispositivo in lista" :key="dispositivo.id">
-        <strong>{{ montarRotuloDispositivo(dispositivo) }}</strong> ({{ dispositivo.diploma }}) —
+        <strong>{{ montarRotuloDispositivo(dispositivo) }}</strong> ({{ dispositivo.diploma }}):
         {{ dispositivo.texto }}
         <span class="apendice-dispositivos__meta">
           Fonte: {{ dispositivo.urlFonte }}. Consultado em {{ dispositivo.dataConsulta }}.

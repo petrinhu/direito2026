@@ -1,0 +1,49 @@
+/* Fontes próprias, hospedadas no próprio site (docs/design-visual.md,
+   "Fonte de verdade recomendada para produção: Lora / Inter, também
+   hospedada no próprio site"; pendência da onda: até aqui o site usava só
+   pilha de sistema). Sem CDN externo (zero requisição de rede fora do
+   pacote publicado, mesma regra do resto do projeto).
+
+   Origem: @fontsource/lora e @fontsource-variable/inter, já presentes em
+   devDependencies. Cada arquivo aqui é um RECORTE (pyftsubset, disponível
+   nesta máquina) contra o alfabeto latino + latino estendido + pontuação
+   tipográfica realmente usada no site (todo texto de src/, arquivos .vue
+   e .ts, que inclui o conteúdo em português com acentuação), nunca o pacote
+   completo da fonte. Pesos: só os que o CSS do projeto usa de verdade
+   (grep -rn "font-weight" src/ui): Inter 400/500/700 (corpo, negrito de
+   componente, peso 500 do modo adaptado); Lora 700 (h1-h4 usam o peso
+   bold padrão do navegador, nenhum h1-h6 pede peso 400 nem itálico).
+   scripts/verificar-fontes.sh confere o teto de 60KB por arquivo (todos
+   ficaram entre 6,8KB e 8KB) e a ausência de fonte embutida em base64. */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fontes/inter-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fontes/inter-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fontes/inter-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lora';
+  src: url('/assets/fontes/lora-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

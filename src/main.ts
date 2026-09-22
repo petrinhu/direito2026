@@ -13,6 +13,7 @@ import {
   CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
 } from '@/app/chaves';
+import '@/ui/estilos/fontes.css';
 import '@/ui/estilos/tokens.css';
 import '@/ui/estilos/base.css';
 import '@/ui/estilos/impressao.css';

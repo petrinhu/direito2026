@@ -5,6 +5,7 @@ import {
   CHAVE_CURRICULO,
   CHAVE_REPOSITORIO,
   CHAVE_STORE_BUSCA,
+  CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
 } from '@/app/chaves';
 import LayoutBase from '@/ui/layout/LayoutBase.vue';
@@ -13,6 +14,7 @@ const curriculo = inject(CHAVE_CURRICULO)!;
 const repositorio = inject(CHAVE_REPOSITORIO)!;
 const storeTema = inject(CHAVE_STORE_TEMA)!;
 const storeBusca = inject(CHAVE_STORE_BUSCA)!;
+const storeModoAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO)!;
 const route = useRoute();
 const router = useRouter();
 
@@ -28,6 +30,7 @@ function aoBuscar(termo: string): void {
     :repositorio="repositorio"
     :store-tema="storeTema"
     :store-busca="storeBusca"
+    :store-modo-adaptado="storeModoAdaptado"
     @buscar="aoBuscar"
   >
     <router-view />

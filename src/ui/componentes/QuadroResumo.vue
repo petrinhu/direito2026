@@ -25,4 +25,16 @@ defineProps<{ itens: readonly string[] }>();
 .quadro-resumo h4 {
   margin-top: 0;
 }
+
+/* Modo de leitura adaptada, achado ao medir o critério 2 da especificação
+   (viewport 320px, nenhuma rolagem horizontal): a fonte maior do modo, em
+   itens de lista já apertados pela coluna estreita, empurra algum trecho
+   sem ponto de quebra disponível para fora da caixa (scrollWidth maior
+   que clientWidth no <li>, sem aumentar a própria caixa: sobra visual, não
+   captada por um elemento "largo demais"). overflow-wrap garante que
+   qualquer trecho sem espaço de sobra sempre quebre dentro da caixa, em
+   vez de vazar para a página. */
+:root[data-modo-adaptado='on'] .quadro-resumo li {
+  overflow-wrap: anywhere;
+}
 </style>

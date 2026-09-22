@@ -71,4 +71,15 @@ function aoEnviar(): void {
   outline: 2px solid var(--cor-primaria, #163a5f);
   outline-offset: 2px;
 }
+
+/* Modo de leitura adaptada: sem largura própria, o <input> usa a largura
+   padrão do navegador (~20 caracteres), que cresce junto com o font-size
+   maior do modo e deixa de caber em tela estreita mesmo sozinho na
+   própria linha (achado ao medir o critério 2 da especificação, viewport
+   320px). min() com rem (ancorado no font-size da raiz, que não muda com
+   a escala do modo) desacopla a largura do campo do crescimento da
+   fonte. */
+:root[data-modo-adaptado='on'] .campo-busca__input {
+  width: min(100%, 15rem);
+}
 </style>

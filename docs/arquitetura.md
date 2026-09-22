@@ -926,7 +926,7 @@ O desenho anterior supunha os três motores no CI. **Isso caiu quando o inventá
 |---|---|
 | Domínio libvirt de sessão (`qemu:///session`) | `glintfx-win11-lab`, desligado, persistente, sem início automático |
 | Recursos | 4 vCPU, 8 GiB de memória |
-| Disco | `(disco da maquina virtual, fora do repositorio)`, 17 GB ocupados |
+| Disco | disco próprio da VM, fora deste repositório, 17 GB ocupados |
 | Mídia anexada | `win11-ltsc2024-ptbr-x64-eval.iso`, `answer-disc.iso`, `virtio-win-stable.iso` |
 | Rede | `type='user'` (slirp) com modelo `virtio`, o que faz o host ser alcançável de dentro do Windows pelo endereço `10.0.2.2` |
 

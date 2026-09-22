@@ -277,6 +277,101 @@
   color-scheme: dark;
 }
 
+/* ==========================================================================
+   MODO DE LEITURA ADAPTADA (baixa visão), docs/modo-adaptado.md.
+   Liga por cima do tema claro/escuro já escolhido (nunca o substitui):
+   atributo próprio `data-modo-adaptado="on"`, gravado por
+   src/app/stores/modoAdaptado.ts, nunca um terceiro valor de `data-theme`.
+   Números e cores fixados pelo líder, 22/09/2026 (fundo branco, texto
+   preto, contraste máximo); ver docs/modo-adaptado.md, seções 2 e 3, para
+   o raciocínio por trás de cada valor. ========================================================================== */
+:root[data-modo-adaptado="on"] {
+  --escala-xs: 1.125rem;    /* 18px, era 13px */
+  --escala-sm: 1.3125rem;   /* 21px, era 15px */
+  --escala-base: 1.5rem;    /* 24px, era 17px */
+  --escala-md: 1.75rem;     /* 28px, era 20px */
+  --escala-lg: 2.4375rem;   /* 39px, era 28px */
+  --escala-xl: 3.5rem;      /* 56px, era 40px */
+  --escala-xxl: 4.5625rem;  /* 73px, era 52px */
+
+  --altura-linha-texto: 1.8; /* era 1.7 */
+  --letra-espaco: 0.12em;    /* fora do modo: 0 (ver base.css) */
+  --palavra-espaco: 0.16em;  /* fora do modo: normal (ver base.css) */
+  --paragrafo-espaco: 2em;   /* fora do modo: 0 (ver base.css) */
+
+  --largura-leitura: 60ch;        /* era 68ch */
+  --largura-coluna-leitura: 60ch; /* era 760px fixo; ch acompanha a fonte */
+
+  --alvo-toque-minimo: 44px; /* era 24px, piso AA do resto do site */
+  --foco-espessura: 4px;     /* era 2px */
+
+  /* Cabeçalho mais alto: em tela estreita a linha do cabeçalho quebra em
+     mais de uma linha (BarraTopo.vue, seção 4 da especificação), então a
+     folga que LayoutBase.vue e o scroll-padding-top de base.css reservam
+     para o cabeçalho fixo precisa crescer junto, senão o conteúdo nasce
+     escondido atrás dele. Medido (não estimado) contra o pior caso real:
+     três linhas empilhadas em 320px, com os alvos de toque de 44px do
+     modo. */
+  --altura-cabecalho: 220px; /* era 64px */
+
+  /* Bordas estruturais compostas (largura+estilo+cor num token só, para o
+     componente referenciar sem precisar de seletor próprio por modo). */
+  --cartao-borda: 2px solid var(--cor-texto);
+  --cartao-alt-correta-borda: 3px double #000000;
+  --cartao-alt-incorreta-borda: 3px dashed #000000;
+
+  /* Paleta preto e branco, contraste máximo (seção 3 da especificação). */
+  --cor-fundo: #ffffff;
+  --cor-fundo-elevado: #ffffff;
+  --cor-fundo-sutil: #ffffff;
+
+  --cor-texto: #000000;
+  --cor-texto-suave: #000000; /* sem segundo tom de cinza: ou é texto, ou não aparece */
+  --cor-texto-invertido: #ffffff;
+
+  --cor-primaria: #0d2440;        /* 14,84:1 contra #ffffff */
+  --cor-primaria-escura: #0d2440;
+  --cor-primaria-clara: #ffffff;
+  --cor-titulo-texto: #0d2440;
+
+  --cor-acento: #0d2440;       /* nenhum dourado sobrevive no modo */
+  --cor-acento-claro: #ffffff;
+
+  --cor-bordo: #7a2331; /* link visitado, 9,44:1 contra #ffffff */
+
+  --cor-sucesso-texto: #000000;
+  --cor-sucesso-bg: #ffffff;
+  --cor-sucesso-borda: #000000;
+
+  --cor-erro-texto: #000000;
+  --cor-erro-bg: #ffffff;
+  --cor-erro-borda: #000000;
+
+  --cor-desativado-texto: #000000;
+  --cor-desativado-bg: #ffffff;
+  --cor-desativado-borda: #000000;
+
+  --cor-selo-texto: #000000;
+  --cor-selo-bg: #ffffff;
+
+  --cor-sidebar-fundo: #ffffff;
+  --cor-sidebar-texto: #000000;
+  --cor-sidebar-texto-suave: #000000;
+  --cor-sidebar-item-ativo-fundo: #ffffff;
+  --cor-sidebar-item-ativo-texto: #000000;
+  --cor-sidebar-selo-texto: #000000;
+  --cor-sidebar-selo-bg: #ffffff;
+
+  --cor-cabecalho-progresso: #0d2440;
+  --cor-hero-texto: #000000;
+
+  --sombra-cartao: none;   /* borda estrutural substitui a sombra (seção 2) */
+  --sombra-elevada: none;
+  --sombra-foco: 0 0 0 4px rgba(0, 0, 0, 0.001); /* :focus-visible usa outline, não esta sombra */
+
+  color-scheme: light;
+}
+
 /* Reduzir movimento: qualquer transição/animação nos mockups deve checar
    esta preferência antes de rodar (ver home-a.html / home-b.html, canvas). */
 @media (prefers-reduced-motion: reduce) {

@@ -15,6 +15,7 @@ export class RepositorioMemoria implements RepositorioProgresso {
   private readonly registros = new Map<ChaveUnidade, RegistroProgressoUnidade>();
   private tema: TemaEscolhido | undefined;
   private avisoArmazenamentoVisto = false;
+  private modoAdaptado = false;
 
   ler(chave: ChaveUnidade): RegistroProgressoUnidade | undefined {
     return this.registros.get(chave);
@@ -47,9 +48,19 @@ export class RepositorioMemoria implements RepositorioProgresso {
     return true;
   }
 
+  lerModoAdaptado(): boolean {
+    return this.modoAdaptado;
+  }
+
+  salvarModoAdaptado(ativo: boolean): boolean {
+    this.modoAdaptado = ativo;
+    return true;
+  }
+
   limparTudo(): void {
     this.registros.clear();
     this.tema = undefined;
     this.avisoArmazenamentoVisto = false;
+    this.modoAdaptado = false;
   }
 }

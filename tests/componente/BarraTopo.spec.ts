@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils';
 import BarraTopo from '@/ui/layout/BarraTopo.vue';
 import { criarStoreTema } from '@/app/stores/tema';
 import { criarStoreBusca } from '@/app/stores/busca';
+import { criarStoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
@@ -23,7 +24,8 @@ function montarProps() {
     curriculo: curriculoVazio(),
     caminhoAtual: '',
     storeTema: criarStoreTema(repo),
-    storeBusca: criarStoreBusca()
+    storeBusca: criarStoreBusca(),
+    storeModoAdaptado: criarStoreModoAdaptado(repo)
   };
 }
 
@@ -104,6 +106,21 @@ describe('BarraTopo', () => {
 
     expect(wrapper.find('header').classes()).not.toContain('barra-topo--oculta');
     wrapper.unmount();
+  });
+
+  it('com o modo adaptado ligado, nunca ganha a classe de oculto, mesmo rolando bastante para baixo', async () => {
+    const props = montarProps();
+    props.storeModoAdaptado.alternar();
+    const wrapper = mount(BarraTopo, { props });
+
+    definirScrollY(0);
+    dispararScroll();
+    definirScrollY(400);
+    dispararScroll();
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('header').classes()).not.toContain('barra-topo--oculta');
+    expect(wrapper.find('header').classes()).toContain('barra-topo--fixa');
   });
 
   it('emite abrir-gaveta ao clicar no botão da gaveta', async () => {

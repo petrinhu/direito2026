@@ -121,12 +121,17 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
 
 .cartao-pergunta__alt--correta {
   background: var(--cor-sucesso-bg, #e8f5e9);
-  border: 1px solid var(--cor-sucesso-borda, #6fae74);
+  /* Fora do modo adaptado, --cartao-alt-correta-borda não existe: a
+     segunda alternativa dentro de var() é o valor de sempre. Dentro do
+     modo, tokens.css redefine para borda dupla sólida 3px preta (seção 3
+     da especificação): cor deixa de ser o sinal, a espessura/estilo da
+     borda também diferencia acerto de erro em escala de cinza. */
+  border: var(--cartao-alt-correta-borda, 1px solid var(--cor-sucesso-borda, #6fae74));
 }
 
 .cartao-pergunta__alt--incorreta {
   background: var(--cor-erro-bg, #ffebee);
-  border: 1px solid var(--cor-erro-borda, #dd9a98);
+  border: var(--cartao-alt-incorreta-borda, 1px solid var(--cor-erro-borda, #dd9a98));
 }
 
 .cartao-pergunta__explicacao {

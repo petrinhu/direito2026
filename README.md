@@ -9,6 +9,7 @@ Este README é o hub: aponta para a documentação, não a repete.
 - [`docs/arquitetura.md`](docs/arquitetura.md): a especificação. Estrutura de pastas, modelo de dados, roteamento, componentes, busca, progresso, offline, impressão, acessibilidade, citação legal, testes, publicação e o fatiamento em ondas.
 - [`docs/compatibilidade-navegadores.md`](docs/compatibilidade-navegadores.md): fonte única das regras de navegador (Chrome, Firefox, Safari, Edge).
 - [`docs/design-visual.md`](docs/design-visual.md): paleta, tipografia, componentes visuais.
+- [`docs/modo-adaptado.md`](docs/modo-adaptado.md): especificação do modo de leitura adaptada para baixa visão (texto maior, contraste máximo).
 - [`docs/dispositivos-legais.md`](docs/dispositivos-legais.md): procedência do catálogo de dispositivos legais.
 - [`docs/publicacao.md`](docs/publicacao.md): runbook de deploy.
 

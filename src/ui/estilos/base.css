@@ -46,6 +46,16 @@ body {
   font-family: var(--fonte-texto);
   font-size: var(--escala-base);
   line-height: var(--altura-linha-texto);
+  /* Espaçamento de letra/palavra do modo de leitura adaptada (WCAG 1.4.12):
+     0/normal fora do modo, valores fixados dentro dele (tokens.css). */
+  letter-spacing: var(--letra-espaco, normal);
+  word-spacing: var(--palavra-espaco, normal);
+}
+
+/* Espaço entre parágrafos do modo de leitura adaptada (WCAG 1.4.12): 0
+   fora do modo, 2x o tamanho da fonte dentro dele (tokens.css). */
+p {
+  margin-block-end: var(--paragrafo-espaco, 0);
 }
 
 h1,
@@ -55,6 +65,39 @@ h4 {
   font-family: var(--fonte-titulo);
   line-height: var(--altura-linha-titulo);
   color: var(--cor-titulo-texto);
+}
+
+/* Modo de leitura adaptada: títulos perdem a serifa (docs/modo-adaptado.md,
+   seção 2) e o corpo ganha um traço mais firme (peso 500), sem virar
+   negrito. */
+:root[data-modo-adaptado='on'] h1,
+:root[data-modo-adaptado='on'] h2,
+:root[data-modo-adaptado='on'] h3,
+:root[data-modo-adaptado='on'] h4 {
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+}
+
+:root[data-modo-adaptado='on'] body {
+  font-weight: 500;
+}
+
+/* Modo de leitura adaptada, achado ao medir o critério 2 da especificação
+   (viewport 320px, nenhuma rolagem horizontal): título com palavra longa
+   sem ponto de quebra ("Contratualismo", por exemplo) não cabe na coluna
+   estreita no tamanho de fonte grande do modo (h2 chega a 39px) e
+   ultrapassa a largura da página, sem que a CAIXA do título cresça (o
+   texto vaza visualmente por cima da borda, por isso não aparece numa
+   varredura de elemento "largo demais", só na diferença entre
+   scrollWidth e clientWidth). overflow-wrap garante a quebra dentro da
+   caixa quando não há espaço de sobra, sem cortar nem esconder palavra
+   nenhuma (WCAG 1.4.10 Refluxo). */
+:root[data-modo-adaptado='on'] h1,
+:root[data-modo-adaptado='on'] h2,
+:root[data-modo-adaptado='on'] h3,
+:root[data-modo-adaptado='on'] h4,
+:root[data-modo-adaptado='on'] p {
+  overflow-wrap: anywhere;
 }
 
 a {
@@ -68,8 +111,19 @@ canvas {
   display: block;
 }
 
+/* Alvo mínimo de toque (WCAG 2.5.8 fora do modo, WCAG 2.5.5 dentro dele):
+   24px fora, 44px dentro (tokens.css). Só altura mínima aqui; largura
+   mínima já é tratada individualmente em cada componente. */
+button,
+a,
+input,
+[role='button'],
+summary {
+  min-height: var(--alvo-toque-minimo, 24px);
+}
+
 :focus-visible {
-  outline: 2px solid var(--cor-primaria);
+  outline: var(--foco-espessura, 2px) solid var(--cor-primaria);
   outline-offset: 2px;
 }
 

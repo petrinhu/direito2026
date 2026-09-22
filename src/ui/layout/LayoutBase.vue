@@ -4,6 +4,7 @@ import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
+import type { StoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import BarraTopo from './BarraTopo.vue';
 import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
@@ -15,6 +16,7 @@ defineProps<{
   repositorio: RepositorioProgresso;
   storeTema: StoreTema;
   storeBusca: StoreBusca;
+  storeModoAdaptado: StoreModoAdaptado;
 }>();
 
 const emit = defineEmits<{ buscar: [string] }>();
@@ -41,6 +43,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     :caminho-atual="caminhoAtual"
     :store-tema="storeTema"
     :store-busca="storeBusca"
+    :store-modo-adaptado="storeModoAdaptado"
     @abrir-gaveta="abrirGaveta"
     @buscar="(termo) => emit('buscar', termo)"
   />

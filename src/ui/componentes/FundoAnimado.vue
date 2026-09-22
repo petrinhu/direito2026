@@ -18,6 +18,22 @@ function prefereMovimentoReduzido(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/**
+ * Modo de leitura adaptada (docs/modo-adaptado.md, seção 6): desliga todo
+ * movimento da página, mesmo que o sistema não peça prefers-reduced-motion,
+ * porque o próprio ganho de contraste do modo é anulado por um fundo que
+ * continua em movimento atrás do texto. Lida direto do atributo, não de um
+ * store injetado: o mesmo padrão de checagem única no setup já usado para
+ * prefers-reduced-motion acima, e o atributo já está aplicado em
+ * document.documentElement antes deste componente montar (o store é criado
+ * de forma síncrona em main.ts, antes de app.mount).
+ */
+function prefereModoAdaptado(): boolean {
+  return (
+    typeof document !== 'undefined' && document.documentElement.hasAttribute('data-modo-adaptado')
+  );
+}
+
 function desenharQuadroEstatico(
   ctx: CanvasRenderingContext2D,
   largura: number,
@@ -71,7 +87,7 @@ onMounted(() => {
     return;
   }
 
-  if (prefereMovimentoReduzido()) {
+  if (prefereMovimentoReduzido() || prefereModoAdaptado()) {
     desenharQuadroEstatico(ctx, largura, altura);
     return;
   }

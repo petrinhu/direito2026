@@ -62,6 +62,13 @@ defineProps<{ peca: PecaComentada }>();
   }
 }
 
+/* Modo de leitura adaptada: sempre empilhado, mesmo acima de 880px
+   (docs/modo-adaptado.md, seção 4): o texto maior não deixa espaço
+   horizontal para as duas colunas ficarem legíveis lado a lado. */
+:root[data-modo-adaptado='on'] .peca-comentada__grade {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* Impressão: comentário sempre abaixo do trecho, nunca em coluna lateral (seção 9). */
 @media print {
   .peca-comentada__grade {

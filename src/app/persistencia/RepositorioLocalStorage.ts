@@ -13,6 +13,7 @@ function chaveProgresso(chave: ChaveUnidade): string {
 
 const CHAVE_TEMA = `${PREFIXO}:tema`;
 const CHAVE_AVISO_ARMAZENAMENTO = `${PREFIXO}:aviso-armazenamento-visto`;
+const CHAVE_MODO_ADAPTADO = `${PREFIXO}:modo-adaptado`;
 
 /**
  * Implementação sobre localStorage. Toda operação fica em try/catch: a cota
@@ -81,6 +82,23 @@ export class RepositorioLocalStorage implements RepositorioProgresso {
   marcarAvisoArmazenamentoVisto(): boolean {
     try {
       localStorage.setItem(CHAVE_AVISO_ARMAZENAMENTO, '1');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  lerModoAdaptado(): boolean {
+    try {
+      return localStorage.getItem(CHAVE_MODO_ADAPTADO) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  salvarModoAdaptado(ativo: boolean): boolean {
+    try {
+      localStorage.setItem(CHAVE_MODO_ADAPTADO, ativo ? 'true' : 'false');
       return true;
     } catch {
       return false;

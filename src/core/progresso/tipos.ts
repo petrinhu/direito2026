@@ -28,6 +28,13 @@ export interface RepositorioProgresso {
   lerTema(): TemaEscolhido | undefined;
   salvarTema(tema: TemaEscolhido): boolean;
   /**
+   * Modo de leitura adaptada (baixa visão), docs/modo-adaptado.md. Booleano,
+   * não um tipo com "sistema": o modo nunca liga sozinho por preferência do
+   * sistema (seção 7 da especificação), só pelo clique explícito no botão.
+   */
+  lerModoAdaptado(): boolean;
+  salvarModoAdaptado(ativo: boolean): boolean;
+  /**
    * Marca de que a faixa de aviso de armazenamento (ordem do líder,
    * 22/09/2026) já foi confirmada. Sobre localStorage, sobrevive a
    * recarregar a página; sobre a implementação em memória (armazenamento

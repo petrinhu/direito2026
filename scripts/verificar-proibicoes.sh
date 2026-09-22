@@ -95,7 +95,7 @@ else
         *) varrer_conteudo "$arquivo" ;;
       esac
     fi
-  done < <(find "$DIRETORIO" \
+  done < <(find "$DIRETORIO" -mindepth 1 \
     \( -path '*/node_modules' -o -path '*/.git' -o -name 'dist' \) -prune -o \
     -type f -print0)
 fi

@@ -370,6 +370,16 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   background: var(--cor-sidebar-item-ativo-fundo, #1a3a5c);
 }
 
+/* Modo de leitura adaptada: --cor-sidebar-item-ativo-fundo vira branco
+   igual ao resto da lateral (docs/modo-adaptado.md, seção 3, "mesma
+   régua" preto/branco), então o item atual perderia o destaque de fundo.
+   Uma borda sólida preta substitui o preenchimento como segundo sinal,
+   além do font-weight (que já existe) e do aria-current (para leitor de
+   tela): cor nunca é o único sinal em lugar nenhum do modo. */
+:root[data-modo-adaptado='on'] .menu-curriculo a[aria-current='page'] {
+  border: 2px solid var(--cor-texto, #000000);
+}
+
 /* Linha da unidade: link (navega) + botão de alternar (só expande/recolhe
    o submenu) lado a lado, dois alvos de foco distintos e cada um com seu
    próprio papel — padrão descrito nas referências pesquisadas (sumário de

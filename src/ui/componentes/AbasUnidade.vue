@@ -73,6 +73,13 @@ function moverFoco(indiceAtual: number, direcao: 1 | -1): void {
   border-bottom: 1px solid var(--cor-borda, #dcd7c8);
 }
 
+/* Modo de leitura adaptada: mesmo raciocínio de BarraTopo.vue, a fonte
+   maior não cabe mais numa linha só em tela estreita; quebra em vez de
+   estourar a largura da página. */
+:root[data-modo-adaptado='on'] .abas-unidade__lista {
+  flex-wrap: wrap;
+}
+
 .abas-unidade__tab {
   padding: var(--esp-3, 0.75rem) var(--esp-4, 1rem);
   text-decoration: none;

@@ -3,7 +3,9 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
+import type { StoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import AlternadorTema from '../componentes/AlternadorTema.vue';
+import BotaoModoAdaptado from '../componentes/BotaoModoAdaptado.vue';
 import CampoBusca from '../componentes/CampoBusca.vue';
 import TrilhaNavegacao from '../componentes/TrilhaNavegacao.vue';
 
@@ -12,6 +14,7 @@ const props = defineProps<{
   caminhoAtual: string;
   storeTema: StoreTema;
   storeBusca: StoreBusca;
+  storeModoAdaptado: StoreModoAdaptado;
 }>();
 const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
 
@@ -42,7 +45,12 @@ function aoRolar(): void {
   rolado.value = atual > 8;
   fracaoLeitura.value = calcularFracaoLeitura();
 
-  if (!prefereMenosMovimento) {
+  // O modo adaptado soma-se a prefers-reduced-motion como motivo de nunca
+  // recolher: o próprio botão do modo precisa continuar visível o tempo
+  // todo (requisito do líder, "botão visível no cabeçalho, em toda
+  // página"), e um cabeçalho que soma e some é movimento que o modo existe
+  // para eliminar (docs/modo-adaptado.md, seção 6).
+  if (!prefereMenosMovimento && !props.storeModoAdaptado.ativo.value) {
     // Limiar de 80px antes de recolher: evita esconder o cabeçalho por
     // um tremor mínimo de rolagem logo no topo da página.
     if (atual > ultimoScrollY && atual > 80) oculta.value = true;
@@ -77,7 +85,7 @@ onBeforeUnmount(() => {
     :class="{
       'barra-topo--oculta': oculta,
       'barra-topo--rolado': rolado,
-      'barra-topo--fixa': prefereMenosMovimento
+      'barra-topo--fixa': prefereMenosMovimento || props.storeModoAdaptado.ativo.value
     }"
     @focusin="aoReceberFoco"
   >
@@ -96,6 +104,7 @@ onBeforeUnmount(() => {
         class="barra-topo__trilha"
       />
       <CampoBusca :store="storeBusca" @enviar="(termo) => emit('buscar', termo)" />
+      <BotaoModoAdaptado :store="storeModoAdaptado" />
       <AlternadorTema :store="storeTema" />
     </div>
 
@@ -170,6 +179,18 @@ onBeforeUnmount(() => {
   gap: var(--esp-4, 1rem);
   padding: var(--esp-3, 0.75rem) var(--esp-5, 1.5rem);
   min-height: var(--altura-cabecalho, 64px);
+}
+
+/* Modo de leitura adaptada: a fonte maior não cabe mais numa linha só em
+   tela estreita (docs/modo-adaptado.md, seção 4, "Trilha do cabeçalho...
+   quebra em mais de uma linha se o texto maior não couber numa linha só,
+   nunca corta com reticências"). --altura-cabecalho cresce junto (definido
+   dentro do bloco do modo em tokens.css), porque LayoutBase.vue e o
+   scroll-padding-top de base.css usam essa mesma variável para nunca
+   deixar o conteúdo nascer escondido atrás do cabeçalho fixo. */
+:root[data-modo-adaptado='on'] .barra-topo__linha {
+  flex-wrap: wrap;
+  row-gap: var(--esp-2, 0.5rem);
 }
 
 .barra-topo__trilha {

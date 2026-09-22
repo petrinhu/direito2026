@@ -53,6 +53,52 @@ test.describe('critério 4: todo alvo interativo mede >= 44x44 CSS px com o modo
       expect(m.altura, `${m.seletor}: altura ${m.altura}px`).toBeGreaterThanOrEqual(44);
     }
   });
+
+  // Achado do QA final (docs/qa-final-onda.md): os links do sumário do
+  // Resumo (VisorResumo.vue) ficavam de fora da lista de seletores acima
+  // (página diferente da do quiz) e mediam só 29px de altura com o modo
+  // ligado, abaixo do piso de 44x44.
+  test('sumário do resumo', async ({ page }) => {
+    await page.goto('/p/p1/intr-direito/u1');
+    await ligarModoPeloBotao(page);
+    await page.locator('.visor-resumo__sumario a').first().waitFor({ state: 'visible' });
+
+    const medidas = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.visor-resumo__sumario a')).map((el) => {
+        const r = (el as HTMLElement).getBoundingClientRect();
+        return { largura: r.width, altura: r.height };
+      })
+    );
+
+    expect(medidas.length).toBeGreaterThan(0);
+    for (const m of medidas) {
+      expect(m.largura, `largura ${m.largura}px`).toBeGreaterThanOrEqual(44);
+      expect(m.altura, `altura ${m.altura}px`).toBeGreaterThanOrEqual(44);
+    }
+  });
+
+  // Gêmeo do mesmo padrão (varredura própria, L-17): a lista de cadeiras da
+  // página de Período (Periodo.vue) também é um `<a>` cru dentro de `<li>`,
+  // sem min-height/min-width próprios — o token global de base.css não tem
+  // efeito porque o elemento fica `inline`.
+  test('lista de cadeiras da página de período', async ({ page }) => {
+    await page.goto('/p/p1');
+    await ligarModoPeloBotao(page);
+    await page.locator('.pagina-periodo li a').first().waitFor({ state: 'visible' });
+
+    const medidas = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.pagina-periodo li a')).map((el) => {
+        const r = (el as HTMLElement).getBoundingClientRect();
+        return { largura: r.width, altura: r.height };
+      })
+    );
+
+    expect(medidas.length).toBeGreaterThan(0);
+    for (const m of medidas) {
+      expect(m.largura, `largura ${m.largura}px`).toBeGreaterThanOrEqual(44);
+      expect(m.altura, `altura ${m.altura}px`).toBeGreaterThanOrEqual(44);
+    }
+  });
 });
 
 test.describe('critério 5: fonte do corpo, computada pela página, >= 24px', () => {

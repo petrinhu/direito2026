@@ -21,20 +21,20 @@ function perguntas(): readonly PerguntaQuiz[] {
     {
       id: 1,
       categoria: 'teoria',
-      enunciado: 'p1',
-      alternativas: ['a', 'b', 'c', 'd'],
+      enunciadoHtml: 'p1',
+      alternativasHtml: ['a', 'b', 'c', 'd'],
       correta: 0,
       fonteExtra: false,
-      explicacao: 'x'
+      explicacaoHtml: 'x'
     },
     {
       id: 2,
       categoria: 'teoria',
-      enunciado: 'p2',
-      alternativas: ['a', 'b', 'c', 'd'],
+      enunciadoHtml: 'p2',
+      alternativasHtml: ['a', 'b', 'c', 'd'],
       correta: 1,
       fonteExtra: false,
-      explicacao: 'x'
+      explicacaoHtml: 'x'
     }
   ];
 }

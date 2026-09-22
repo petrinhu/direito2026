@@ -5,10 +5,11 @@ export type { CategoriaQuiz, PerguntaQuiz };
 export interface PerguntaEmbaralhada {
   readonly id: number;
   readonly categoria: CategoriaQuiz;
-  readonly enunciado: string;
-  readonly explicacao: string;
+  /** HTML confiável: ver o mesmo campo em PerguntaQuiz (core/unidade/tipos.ts). */
+  readonly enunciadoHtml: string;
+  readonly explicacaoHtml: string;
   readonly fonteExtra: boolean;
-  readonly alternativas: readonly [string, string, string, string];
+  readonly alternativasHtml: readonly [string, string, string, string];
   readonly indiceCorreto: 0 | 1 | 2 | 3;
 }
 

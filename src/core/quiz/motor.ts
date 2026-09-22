@@ -41,7 +41,7 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
   const resultado: PerguntaEmbaralhada[] = perguntasEmbaralhadas.map((pergunta) => {
     const indicesOriginais = [0, 1, 2, 3] as const;
     const ordem = embaralhar(indicesOriginais, aleatorio);
-    const alternativas = ordem.map((i) => pergunta.alternativas[i]) as [
+    const alternativasHtml = ordem.map((i) => pergunta.alternativasHtml[i]) as [
       string,
       string,
       string,
@@ -51,10 +51,10 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
     return {
       id: pergunta.id,
       categoria: pergunta.categoria,
-      enunciado: pergunta.enunciado,
-      explicacao: pergunta.explicacao,
+      enunciadoHtml: pergunta.enunciadoHtml,
+      explicacaoHtml: pergunta.explicacaoHtml,
       fonteExtra: pergunta.fonteExtra,
-      alternativas,
+      alternativasHtml,
       indiceCorreto
     };
   });

@@ -49,14 +49,22 @@ export type CategoriaQuiz = 'teoria' | 'peticao' | 'fundamentos';
 export interface PerguntaQuiz {
   readonly id: number;
   readonly categoria: CategoriaQuiz;
-  readonly enunciado: string;
+  /**
+   * HTML confiável, de origem interna (mesma regra de corpoHtml acima,
+   * RI5/seção 4.4): enunciado, alternativa e explicação legitimamente
+   * carregam o botão de citação (seção 12.1), então os três campos
+   * terminam em "Html" e são renderizados com v-html, nunca com `{{ }}`
+   * (achado do QA, 22/09/2026: `{{ }}` escapa a marcação e ela aparecia
+   * crua na tela).
+   */
+  readonly enunciadoHtml: string;
   /** Sempre 4 alternativas. A tupla trava isso no compilador. */
-  readonly alternativas: readonly [string, string, string, string];
+  readonly alternativasHtml: readonly [string, string, string, string];
   /** Índice da correta no array original, antes de embaralhar. */
   readonly correta: 0 | 1 | 2 | 3;
   /** true quando a explicação apoia-se em artigo fora do conjunto base da disciplina. */
   readonly fonteExtra: boolean;
-  readonly explicacao: string;
+  readonly explicacaoHtml: string;
 }
 
 export interface ConteudoUnidade {

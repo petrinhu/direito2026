@@ -63,7 +63,15 @@ async function principal(): Promise<void> {
             pedacos.push(secao.corpoHtml, secao.comentarioHtml);
         }
         if (conteudo.quiz) {
-          for (const pergunta of conteudo.quiz) pedacos.push(pergunta.explicacao);
+          // Mesmo gêmeo de scripts/gerar-dispositivos-por-unidade.ts: os
+          // três campos carregam citação, não só explicacaoHtml.
+          for (const pergunta of conteudo.quiz) {
+            pedacos.push(
+              pergunta.enunciadoHtml,
+              pergunta.explicacaoHtml,
+              ...pergunta.alternativasHtml
+            );
+          }
         }
 
         const ids = extrairCitacoes(pedacos.join(' '));

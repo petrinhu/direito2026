@@ -37,7 +37,12 @@ function coletarHtmlDaUnidade(
   }
   if (conteudo.quiz) {
     for (const pergunta of conteudo.quiz) {
-      pedacos.push(pergunta.explicacao);
+      // Os três campos legitimamente carregam botão de citação (achado
+      // do QA, 22/09/2026): só explicacaoHtml era varrido aqui, e duas
+      // citações que só existem em enunciado ficavam de fora do
+      // subconjunto gerado ('cf-5-xxxv' e 'cc-944', achadas pelo aviso
+      // "não é citado por nenhuma unidade" que sumiu com esta correção).
+      pedacos.push(pergunta.enunciadoHtml, pergunta.explicacaoHtml, ...pergunta.alternativasHtml);
     }
   }
   return pedacos.join(' ');

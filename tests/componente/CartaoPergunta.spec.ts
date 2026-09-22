@@ -8,10 +8,10 @@ function pergunta(): PerguntaEmbaralhada {
   return {
     id: 1,
     categoria: 'teoria',
-    enunciado: 'Qual é a capital?',
-    explicacao: 'porque sim',
+    enunciadoHtml: 'Qual é a capital?',
+    explicacaoHtml: 'porque sim',
     fonteExtra: false,
-    alternativas: ['a', 'b', 'c', 'd'],
+    alternativasHtml: ['a', 'b', 'c', 'd'],
     indiceCorreto: 2
   };
 }

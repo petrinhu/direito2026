@@ -58,7 +58,7 @@ export function montarDocumentosUnidade(params: ParametrosUnidade): DocumentoBus
 
   if (conteudo.quiz && conteudo.quiz.length > 0) {
     // Só os enunciados, nunca a resposta correta: a busca não pode virar gabarito.
-    const corpo = removerTags(conteudo.quiz.map((p) => p.enunciado).join(' '));
+    const corpo = removerTags(conteudo.quiz.map((p) => p.enunciadoHtml).join(' '));
     documentos.push({
       id: `${base}/quiz`,
       url: `/p/${base}/quiz`,

@@ -7,29 +7,29 @@ function perguntasDeTeste(): readonly PerguntaQuiz[] {
     {
       id: 1,
       categoria: 'teoria',
-      enunciado: 'Pergunta 1',
-      alternativas: ['a', 'b', 'c', 'd'],
+      enunciadoHtml: 'Pergunta 1',
+      alternativasHtml: ['a', 'b', 'c', 'd'],
       correta: 0,
       fonteExtra: false,
-      explicacao: 'porque a'
+      explicacaoHtml: 'porque a'
     },
     {
       id: 2,
       categoria: 'peticao',
-      enunciado: 'Pergunta 2',
-      alternativas: ['w', 'x', 'y', 'z'],
+      enunciadoHtml: 'Pergunta 2',
+      alternativasHtml: ['w', 'x', 'y', 'z'],
       correta: 2,
       fonteExtra: true,
-      explicacao: 'porque y'
+      explicacaoHtml: 'porque y'
     },
     {
       id: 3,
       categoria: 'fundamentos',
-      enunciado: 'Pergunta 3',
-      alternativas: ['1', '2', '3', '4'],
+      enunciadoHtml: 'Pergunta 3',
+      alternativasHtml: ['1', '2', '3', '4'],
       correta: 3,
       fonteExtra: false,
-      explicacao: 'porque 4'
+      explicacaoHtml: 'porque 4'
     }
   ];
 }
@@ -46,7 +46,9 @@ describe('embaralharRodada', () => {
 
     for (const original of perguntasDeTeste()) {
       const embaralhada = rodada.perguntas.find((p) => p.id === original.id)!;
-      expect([...embaralhada.alternativas].sort()).toEqual([...original.alternativas].sort());
+      expect([...embaralhada.alternativasHtml].sort()).toEqual(
+        [...original.alternativasHtml].sort()
+      );
     }
   });
 
@@ -54,8 +56,8 @@ describe('embaralharRodada', () => {
     const rodada = embaralharRodada(perguntasDeTeste(), 7);
     for (const original of perguntasDeTeste()) {
       const embaralhada = rodada.perguntas.find((p) => p.id === original.id)!;
-      const textoCorretoOriginal = original.alternativas[original.correta];
-      expect(embaralhada.alternativas[embaralhada.indiceCorreto]).toBe(textoCorretoOriginal);
+      const textoCorretoOriginal = original.alternativasHtml[original.correta];
+      expect(embaralhada.alternativasHtml[embaralhada.indiceCorreto]).toBe(textoCorretoOriginal);
     }
   });
 
@@ -63,8 +65,8 @@ describe('embaralharRodada', () => {
     const r1 = embaralharRodada(perguntasDeTeste(), 123);
     const r2 = embaralharRodada(perguntasDeTeste(), 123);
     expect(r1.perguntas.map((p) => p.id)).toEqual(r2.perguntas.map((p) => p.id));
-    expect(r1.perguntas.map((p) => p.alternativas)).toEqual(
-      r2.perguntas.map((p) => p.alternativas)
+    expect(r1.perguntas.map((p) => p.alternativasHtml)).toEqual(
+      r2.perguntas.map((p) => p.alternativasHtml)
     );
   });
 
@@ -74,7 +76,7 @@ describe('embaralharRodada', () => {
     const mudou =
       r1.perguntas.map((p) => p.id).join(',') !== r2.perguntas.map((p) => p.id).join(',') ||
       r1.perguntas.some(
-        (p, i) => p.alternativas.join('|') !== r2.perguntas[i]!.alternativas.join('|')
+        (p, i) => p.alternativasHtml.join('|') !== r2.perguntas[i]!.alternativasHtml.join('|')
       );
     expect(mudou).toBe(true);
   });

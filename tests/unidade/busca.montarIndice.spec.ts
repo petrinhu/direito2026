@@ -32,11 +32,11 @@ function unidadeDeExemplo(): ConteudoUnidade {
       {
         id: 1,
         categoria: 'teoria',
-        enunciado: 'p1',
-        alternativas: ['a', 'b', 'c', 'd'],
+        enunciadoHtml: 'p1',
+        alternativasHtml: ['a', 'b', 'c', 'd'],
         correta: 0,
         fonteExtra: false,
-        explicacao: 'x'
+        explicacaoHtml: 'x'
       }
     ]
   };

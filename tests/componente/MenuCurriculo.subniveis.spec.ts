@@ -48,29 +48,29 @@ function conteudoDeTeste(): ConteudoUnidade {
       {
         id: 1,
         categoria: 'teoria',
-        enunciado: 'e',
-        alternativas: ['a', 'b', 'c', 'd'],
+        enunciadoHtml: 'e',
+        alternativasHtml: ['a', 'b', 'c', 'd'],
         correta: 0,
         fonteExtra: false,
-        explicacao: 'x'
+        explicacaoHtml: 'x'
       },
       {
         id: 2,
         categoria: 'teoria',
-        enunciado: 'e',
-        alternativas: ['a', 'b', 'c', 'd'],
+        enunciadoHtml: 'e',
+        alternativasHtml: ['a', 'b', 'c', 'd'],
         correta: 0,
         fonteExtra: false,
-        explicacao: 'x'
+        explicacaoHtml: 'x'
       },
       {
         id: 3,
         categoria: 'peticao',
-        enunciado: 'e',
-        alternativas: ['a', 'b', 'c', 'd'],
+        enunciadoHtml: 'e',
+        alternativasHtml: ['a', 'b', 'c', 'd'],
         correta: 0,
         fonteExtra: false,
-        explicacao: 'x'
+        explicacaoHtml: 'x'
       }
     ]
   };

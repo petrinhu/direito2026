@@ -35,12 +35,19 @@ const periodosComMaterial = curriculo.filter((p) => p.cadeiras.length > 0);
   max-width: var(--largura-conteudo, 1180px);
   margin: -140px auto 0;
   padding: var(--esp-6, 2rem);
-  color: var(--cor-texto-invertido, #faf9f5);
+  color: var(--cor-hero-texto, #faf9f5);
 }
 
 .pagina-home__hero h1 {
   font-family: var(--fonte-titulo);
   font-size: var(--escala-xxl, 3.25rem);
+  /* Achado do QA em produção, 22/09/2026: sem esta linha, a regra global
+     "h1 { color: var(--cor-titulo-texto) }" de base.css vence a herança
+     do pai acima, porque herança nunca ganha de uma declaração explícita
+     no próprio elemento. O hero fica sobre o FundoAnimado (fundo sempre
+     escuro nos dois temas), e --cor-titulo-texto no tema claro é escuro:
+     contraste medido 1,09:1 a 1,24:1, título quase invisível. */
+  color: var(--cor-hero-texto, #faf9f5);
 }
 
 .pagina-home__lista {

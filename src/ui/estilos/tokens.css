@@ -115,6 +115,30 @@
   --cor-selo-texto: #5a5442;
   --cor-selo-bg: #ece7d6;
 
+  /* Par dedicado da barra lateral (achado do líder, 22/09/2026, terceira
+     vez que essa classe de erro aparece: a lateral tem fundo escuro nos
+     DOIS temas, por desenho, então o texto dela nunca pode depender de
+     uma variável que inverte com o tema, como --cor-texto-invertido
+     dependia. Cada elemento interno da lateral usa só este par, nunca
+     --cor-primaria-escura nem --cor-texto-invertido diretamente.
+     Contraste medido (fórmula WCAG 2.2): 14,84:1 claro e 16,63:1 escuro. */
+  --cor-sidebar-fundo: #0d2440;
+  --cor-sidebar-texto: #faf9f5;
+  --cor-sidebar-texto-suave: #b8c0cc; /* 8,52:1 contra --cor-sidebar-fundo */
+  --cor-sidebar-item-ativo-fundo: #1a3a5c;
+  --cor-sidebar-item-ativo-texto: #faf9f5; /* 11,05:1 contra o fundo ativo */
+  --cor-sidebar-selo-texto: #d8d2ba; /* 10,31:1 contra --cor-sidebar-fundo */
+  --cor-sidebar-selo-bg: #1a3a5c;
+
+  /* Par dedicado do hero da home (achado do QA em produção, 22/09/2026,
+     MESMA classe de erro da lateral): o hero fica sobre o FundoAnimado, um
+     canvas que é sempre escuro nos dois temas, mas o <h1> herdava
+     --cor-titulo-texto do base.css global (`h1 { color: ... }`), que no
+     tema claro é #0d2440, quase invisível sobre o próprio fundo escuro
+     (contraste medido pelo QA: 1,09:1 a 1,24:1). Contraste com este par:
+     11,05:1 a 14,84:1 nas duas pontas do gradiente do canvas. */
+  --cor-hero-texto: #faf9f5;
+
   color-scheme: light;
 }
 
@@ -156,6 +180,19 @@
 
     --cor-selo-texto: #d8d2ba;
     --cor-selo-bg: #2e2a1c;
+
+    /* Mesmos valores do modo claro, declarados de novo de propósito: a
+       lateral não muda com o tema (ver bloco :root acima), e repetir aqui
+       impede que um ajuste futuro do tema escuro haja por engano sobre
+       um valor herdado. */
+    --cor-sidebar-fundo: #0d2440;
+    --cor-sidebar-texto: #faf9f5;
+    --cor-sidebar-texto-suave: #b8c0cc;
+    --cor-sidebar-item-ativo-fundo: #1a3a5c;
+    --cor-sidebar-item-ativo-texto: #faf9f5;
+    --cor-sidebar-selo-texto: #d8d2ba;
+    --cor-sidebar-selo-bg: #1a3a5c;
+    --cor-hero-texto: #faf9f5;
 
     --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
     --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -203,6 +240,17 @@
 
   --cor-selo-texto: #d8d2ba;
   --cor-selo-bg: #2e2a1c;
+
+  /* Mesmos valores do modo claro, declarados de novo de propósito: ver o
+     comentário equivalente no bloco @media acima. */
+  --cor-sidebar-fundo: #0d2440;
+  --cor-sidebar-texto: #faf9f5;
+  --cor-sidebar-texto-suave: #b8c0cc;
+  --cor-sidebar-item-ativo-fundo: #1a3a5c;
+  --cor-sidebar-item-ativo-texto: #faf9f5;
+  --cor-sidebar-selo-texto: #d8d2ba;
+  --cor-sidebar-selo-bg: #1a3a5c;
+  --cor-hero-texto: #faf9f5;
 
   --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);

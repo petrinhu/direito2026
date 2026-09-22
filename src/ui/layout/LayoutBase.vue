@@ -77,8 +77,12 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 .layout-base__gaveta {
   width: var(--largura-sidebar, 280px);
   flex-shrink: 0;
-  background: var(--cor-primaria-escura, #0d2440);
-  color: var(--cor-texto-invertido, #faf9f5);
+  /* Par dedicado da lateral (achado do líder, 22/09/2026): fundo escuro
+     nos dois temas, por desenho, então nunca uma variável que inverte
+     com o tema (--cor-primaria-escura e --cor-texto-invertido colapsavam
+     no mesmo valor no tema escuro, texto sumindo). */
+  background: var(--cor-sidebar-fundo, #0d2440);
+  color: var(--cor-sidebar-texto, #faf9f5);
   min-height: 100dvh;
   min-height: 100vh;
 }

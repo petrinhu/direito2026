@@ -112,7 +112,11 @@ function ehAtual(caminho: string, caminhoAtual: string): boolean {
 
 .menu-curriculo__botao:focus-visible,
 .menu-curriculo a:focus-visible {
-  outline: 2px solid var(--cor-primaria, #163a5f);
+  /* Par dedicado da lateral (achado do líder, 22/09/2026): o menu vive
+     sempre sobre --cor-sidebar-fundo, nunca sobre --cor-fundo, então o
+     anel de foco tem de ter contraste contra O FUNDO REAL do elemento
+     (L-42), não contra o token genérico de marca. */
+  outline: 2px solid var(--cor-sidebar-texto, #faf9f5);
   outline-offset: 2px;
 }
 
@@ -122,13 +126,31 @@ function ehAtual(caminho: string, caminhoAtual: string): boolean {
   display: flex;
   align-items: center;
   padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
-  color: var(--cor-texto, #1c1c1c);
+  /* Era --cor-texto (pensado para --cor-fundo): mesma classe de bug do
+     fundo da lateral, só que no texto do link. --cor-texto no tema claro
+     é quase preto sobre um fundo de lateral que é sempre escuro nos dois
+     temas: contraste medido 1,09:1 antes da correção. */
+  color: var(--cor-sidebar-texto, #faf9f5);
   text-decoration: none;
 }
 
 .menu-curriculo a[aria-current='page'] {
-  color: var(--cor-primaria, #163a5f);
+  color: var(--cor-sidebar-item-ativo-texto, #faf9f5);
   font-weight: 600;
-  background: var(--cor-primaria-clara, #eaf1f8);
+  background: var(--cor-sidebar-item-ativo-fundo, #1a3a5c);
+}
+
+/* EstadoEmBreve (rótulo e selo "em breve") também vive só dentro da
+   lateral aqui: mesma correção, achada na mesma varredura de contraste.
+   --cor-desativado-texto/--cor-selo-* são pensados para --cor-fundo, e
+   mediam 4,27:1 (abaixo do piso de 4,5:1) contra o fundo escuro da
+   lateral no tema claro. */
+.menu-curriculo :deep(.estado-em-breve) {
+  color: var(--cor-sidebar-texto-suave, #b8c0cc);
+}
+
+.menu-curriculo :deep(.estado-em-breve__selo) {
+  color: var(--cor-sidebar-selo-texto, #d8d2ba);
+  background: var(--cor-sidebar-selo-bg, #1a3a5c);
 }
 </style>

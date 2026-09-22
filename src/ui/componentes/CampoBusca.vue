@@ -57,7 +57,14 @@ function aoEnviar(): void {
   border: 1px solid var(--cor-borda, #dcd7c8);
   border-radius: var(--raio-md, 10px);
   background: var(--cor-fundo-elevado, #fff);
-  color: inherit;
+  /* Era `color: inherit`: dentro da barra de topo (fundo escuro fixo,
+     texto sempre claro), o campo herdava a cor clara da barra por cima
+     do próprio fundo claro do input, quase branco sobre branco. O input
+     tem fundo PRÓPRIO (--cor-fundo-elevado, que segue o tema), então a
+     cor de texto certa é a que acompanha esse fundo, --cor-texto, nunca
+     herdada do container em volta. Contraste medido: 1,05:1 antes,
+     17,04:1 depois (achado do líder, 22/09/2026, mesma varredura). */
+  color: var(--cor-texto, #1c1c1c);
 }
 
 .campo-busca__input:focus-visible {

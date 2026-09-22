@@ -66,9 +66,12 @@ export default [
     }
   },
   {
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'tests/**/*.ts', 'playwright.config.ts'],
     languageOptions: {
-      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NODE }
+      // Testes e scripts rodam em Node: precisam dos globais de Node além
+      // dos de navegador (ex.: process.env para apontar um caminho de
+      // teste, __dirname para resolver um arquivo local).
+      globals: { ...GLOBAIS_COMUNS, ...GLOBAIS_NAVEGADOR, ...GLOBAIS_NODE }
     }
   },
   {

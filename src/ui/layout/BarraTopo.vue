@@ -30,8 +30,12 @@ const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
   align-items: center;
   gap: var(--esp-4, 1rem);
   padding: var(--esp-3, 0.75rem) var(--esp-5, 1.5rem);
-  background: var(--cor-primaria-escura, #0d2440);
-  color: var(--cor-texto-invertido, #faf9f5);
+  /* Mesmo par dedicado da lateral (src/ui/layout/LayoutBase.vue): fundo
+     escuro fixo nos dois temas, achado do líder, 22/09/2026. Era
+     --cor-primaria-escura/--cor-texto-invertido, que colapsam no mesmo
+     valor no tema escuro (a mesma classe de bug, num segundo elemento). */
+  background: var(--cor-sidebar-fundo, #0d2440);
+  color: var(--cor-sidebar-texto, #faf9f5);
 }
 
 .barra-topo__marca {

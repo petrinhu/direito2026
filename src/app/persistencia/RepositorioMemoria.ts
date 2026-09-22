@@ -14,6 +14,7 @@ import type {
 export class RepositorioMemoria implements RepositorioProgresso {
   private readonly registros = new Map<ChaveUnidade, RegistroProgressoUnidade>();
   private tema: TemaEscolhido | undefined;
+  private avisoArmazenamentoVisto = false;
 
   ler(chave: ChaveUnidade): RegistroProgressoUnidade | undefined {
     return this.registros.get(chave);
@@ -31,5 +32,24 @@ export class RepositorioMemoria implements RepositorioProgresso {
   salvarTema(tema: TemaEscolhido): boolean {
     this.tema = tema;
     return true;
+  }
+
+  lerAvisoArmazenamentoVisto(): boolean {
+    return this.avisoArmazenamentoVisto;
+  }
+
+  marcarAvisoArmazenamentoVisto(): boolean {
+    // Nunca toca localStorage (é por isso que esta classe existe): a marca
+    // dura só esta instância, ou seja, só a sessão atual. Sem laço porque
+    // dentro da mesma sessão a leitura seguinte já vem true; volta a false
+    // numa sessão nova porque nunca foi gravada de verdade.
+    this.avisoArmazenamentoVisto = true;
+    return true;
+  }
+
+  limparTudo(): void {
+    this.registros.clear();
+    this.tema = undefined;
+    this.avisoArmazenamentoVisto = false;
   }
 }

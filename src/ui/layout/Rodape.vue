@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { RepositorioProgresso } from '@/core/progresso/tipos';
+import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
+
 /**
  * ANO_INICIAL é o ano do lançamento (2026), fixo por decisão do líder,
  * 22/09/2026. O segundo ano da linha de direitos vem de Date, nunca
@@ -8,6 +11,12 @@
  */
 const ANO_INICIAL = 2026;
 const anoAtual = new Date().getFullYear();
+
+const props = defineProps<{ repositorio: RepositorioProgresso }>();
+
+function apagar(): void {
+  apagarTudoComConfirmacao(props.repositorio);
+}
 </script>
 
 <template>
@@ -60,7 +69,12 @@ const anoAtual = new Date().getFullYear();
     -->
     <p class="rodape__direitos">Copyright © — {{ ANO_INICIAL }}—{{ anoAtual }}</p>
     <p>Material de estudo sem valor oficial.</p>
-    <p>O progresso fica salvo neste navegador.</p>
+    <p>
+      O progresso fica salvo neste navegador.
+      <button type="button" class="rodape__apagar" @click="apagar">
+        Apagar os dados guardados
+      </button>
+    </p>
   </footer>
 </template>
 
@@ -120,6 +134,24 @@ const anoAtual = new Date().getFullYear();
   display: block;
   width: 47.5px;
   height: 26.5px;
+}
+
+.rodape__apagar {
+  /* Herda a cor do <p> pai (--cor-texto-suave sobre --cor-fundo, já
+     medido no portão de contraste), não introduz par novo. */
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  min-height: 44px;
+}
+
+.rodape__apagar:focus-visible {
+  outline: 2px solid var(--cor-primaria, #163a5f);
+  outline-offset: 2px;
 }
 
 @media print {

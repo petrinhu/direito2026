@@ -12,6 +12,7 @@ function chaveProgresso(chave: ChaveUnidade): string {
 }
 
 const CHAVE_TEMA = `${PREFIXO}:tema`;
+const CHAVE_AVISO_ARMAZENAMENTO = `${PREFIXO}:aviso-armazenamento-visto`;
 
 /**
  * Implementação sobre localStorage. Toda operação fica em try/catch: a cota
@@ -66,6 +67,36 @@ export class RepositorioLocalStorage implements RepositorioProgresso {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  lerAvisoArmazenamentoVisto(): boolean {
+    try {
+      return localStorage.getItem(CHAVE_AVISO_ARMAZENAMENTO) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  marcarAvisoArmazenamentoVisto(): boolean {
+    try {
+      localStorage.setItem(CHAVE_AVISO_ARMAZENAMENTO, '1');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  limparTudo(): void {
+    try {
+      const chaves: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const chaveArmazenamento = localStorage.key(i);
+        if (chaveArmazenamento?.startsWith(PREFIXO)) chaves.push(chaveArmazenamento);
+      }
+      for (const chaveArmazenamento of chaves) localStorage.removeItem(chaveArmazenamento);
+    } catch {
+      // Não há o que fazer: se não dá para ler/remover, não há o que limpar.
     }
   }
 

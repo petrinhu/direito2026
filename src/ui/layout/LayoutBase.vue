@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
+import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
 import BarraTopo from './BarraTopo.vue';
 import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
+import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
 
 defineProps<{
   curriculo: Curriculo;
   caminhoAtual: string;
+  repositorio: RepositorioProgresso;
   storeTema: StoreTema;
   storeBusca: StoreBusca;
 }>();
@@ -54,7 +57,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
       <slot />
     </main>
   </div>
-  <Rodape />
+  <Rodape :repositorio="repositorio" />
+  <AvisoArmazenamento :repositorio="repositorio" />
 </template>
 
 <style scoped>

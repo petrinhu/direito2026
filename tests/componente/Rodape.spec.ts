@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Rodape from '@/ui/layout/Rodape.vue';
+import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 
 /**
  * Ordem do líder, 22/09/2026, verbatim: "ponha discretamente no rodapé
@@ -10,29 +11,40 @@ import Rodape from '@/ui/layout/Rodape.vue';
  * [travessão] ano_atual_dinamico]". O segundo ano tem de vir da data do
  * navegador, nunca escrito à mão: os dois primeiros testes provam isso
  * congelando o relógio em anos diferentes.
+ *
+ * O link de apagar dados (ordem do líder sobre a faixa de armazenamento,
+ * mesma data: "Esse link também precisa existir no rodapé, para quem
+ * quiser apagar depois") é o mesmo comportamento testado a fundo em
+ * AvisoArmazenamento.spec.ts; aqui só prova que ele existe e chama o
+ * mesmo caminho de confirmação.
  */
+function montarProps() {
+  return { repositorio: new RepositorioMemoria() };
+}
+
 describe('Rodape', () => {
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('em 2026, a linha de direitos mostra Copyright © — 2026—2026', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-15T12:00:00Z'));
-    const wrapper = mount(Rodape);
+    const wrapper = mount(Rodape, { props: montarProps() });
     expect(wrapper.text()).toContain('Copyright © — 2026—2026');
   });
 
   it('em 2030, o segundo ano da linha de direitos vira 2030 (vem da data, não está escrito à mão)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2030-01-05T12:00:00Z'));
-    const wrapper = mount(Rodape);
+    const wrapper = mount(Rodape, { props: montarProps() });
     expect(wrapper.text()).toContain('Copyright © — 2026—2030');
     expect(wrapper.text()).not.toContain('2026—2026');
   });
 
   it('mostra a linha de oferecimento com logo e link para drpetrus.top, abrindo em nova aba com noopener', () => {
-    const wrapper = mount(Rodape);
+    const wrapper = mount(Rodape, { props: montarProps() });
     const link = wrapper.find('a.rodape__link-oferecimento');
     expect(link.exists()).toBe(true);
     expect(link.attributes('href')).toBe('https://drpetrus.top');
@@ -49,8 +61,23 @@ describe('Rodape', () => {
   });
 
   it('a linha de oferecimento vem antes da linha de direitos', () => {
-    const wrapper = mount(Rodape);
+    const wrapper = mount(Rodape, { props: montarProps() });
     const texto = wrapper.text();
     expect(texto.indexOf('oferecimento')).toBeLessThan(texto.indexOf('Copyright'));
+  });
+
+  it('tem um link para apagar os dados guardados, que confirma antes de limpar', async () => {
+    vi.stubGlobal('confirm', () => true);
+    vi.stubGlobal('location', { ...window.location, reload: vi.fn() });
+
+    const repositorio = new RepositorioMemoria();
+    repositorio.salvarTema('escuro');
+    const wrapper = mount(Rodape, { props: { repositorio } });
+
+    const botaoApagar = wrapper.find('.rodape__apagar');
+    expect(botaoApagar.exists()).toBe(true);
+    await botaoApagar.trigger('click');
+
+    expect(repositorio.lerTema()).toBeUndefined();
   });
 });

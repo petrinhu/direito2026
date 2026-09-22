@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { CHAVE_CURRICULO, CHAVE_STORE_BUSCA, CHAVE_STORE_TEMA } from '@/app/chaves';
+import {
+  CHAVE_CURRICULO,
+  CHAVE_REPOSITORIO,
+  CHAVE_STORE_BUSCA,
+  CHAVE_STORE_TEMA
+} from '@/app/chaves';
 import LayoutBase from '@/ui/layout/LayoutBase.vue';
 
 const curriculo = inject(CHAVE_CURRICULO)!;
+const repositorio = inject(CHAVE_REPOSITORIO)!;
 const storeTema = inject(CHAVE_STORE_TEMA)!;
 const storeBusca = inject(CHAVE_STORE_BUSCA)!;
 const route = useRoute();
@@ -19,6 +25,7 @@ function aoBuscar(termo: string): void {
   <LayoutBase
     :curriculo="curriculo"
     :caminho-atual="route.path.replace(/^\//, '')"
+    :repositorio="repositorio"
     :store-tema="storeTema"
     :store-busca="storeBusca"
     @buscar="aoBuscar"

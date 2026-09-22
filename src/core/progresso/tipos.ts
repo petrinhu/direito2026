@@ -27,4 +27,16 @@ export interface RepositorioProgresso {
   salvar(chave: ChaveUnidade, registro: RegistroProgressoUnidade): boolean;
   lerTema(): TemaEscolhido | undefined;
   salvarTema(tema: TemaEscolhido): boolean;
+  /**
+   * Marca de que a faixa de aviso de armazenamento (ordem do líder,
+   * 22/09/2026) já foi confirmada. Sobre localStorage, sobrevive a
+   * recarregar a página; sobre a implementação em memória (armazenamento
+   * indisponível), dura só a sessão atual, de propósito: sem isso a
+   * faixa reapareceria a cada página, em laço, quando o navegador bloqueia
+   * o armazenamento persistente.
+   */
+  lerAvisoArmazenamentoVisto(): boolean;
+  marcarAvisoArmazenamentoVisto(): boolean;
+  /** Apaga progresso, tema e a marca do aviso. Devolve o site ao estado inicial. */
+  limparTudo(): void;
 }

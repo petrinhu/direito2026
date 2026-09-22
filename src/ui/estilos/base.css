@@ -19,6 +19,24 @@ html {
      debaixo do cabeçalho fixo. scroll-padding-top cobre os dois casos
      (hash nativo e router.scrollBehavior) num lugar só. */
   scroll-padding-top: var(--altura-cabecalho, 64px);
+  /* Defeito relatado pelo líder (22/09/2026): fonte grande demais no
+     cabeçalho, só no Safari/iOS. Causa: o WebKit aplica por padrão
+     (`auto`) um algoritmo de inflação de texto a blocos de "largura
+     cheia" do container, mesmo com font-size fixo em rem — é exatamente
+     o caso de `.barra-topo__trilha` (BarraTopo.vue), `flex: 1;
+     min-width: 0`, com texto curto dentro de viewport estreita. `100%`
+     em vez de `none` porque só neutraliza a inflação automática, sem
+     desabilitar zoom/acessibilidade nenhuma. Declarado no `html`, não só
+     no cabeçalho, para valer no site inteiro (qualquer outro bloco com o
+     mesmo padrão de largura). O prefixo `-webkit-` é obrigatório: o
+     Safari (desktop e iOS) só respeita essa forma; a sem prefixo é o
+     nome padronizado, para quando os demais motores adotarem.
+     Fontes, consultadas 22/09/2026: MDN
+     (https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/text-size-adjust)
+     e BrowserStack
+     (https://www.browserstack.com/guide/webkit-text-size-adjust). */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {

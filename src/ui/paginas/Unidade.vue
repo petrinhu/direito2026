@@ -3,6 +3,7 @@ import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { CHAVE_CURRICULO, CHAVE_REPOSITORIO } from '@/app/chaves';
 import { criarStoreProgresso } from '@/app/stores/progresso';
+import { CARREGADORES_DISPOSITIVOS } from '@/app/carregamento/carregadoresDispositivos';
 import type { ChaveAba } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
@@ -50,15 +51,24 @@ async function carregar(): Promise<void> {
   } finally {
     carregando.value = false;
   }
+  const carregarDispositivos = CARREGADORES_DISPOSITIVOS[chaveUnidade.value];
+  if (!carregarDispositivos) {
+    dispositivos.value = undefined;
+    return;
+  }
   try {
-    const modulo = await import(
-      /* @vite-ignore */ `@/conteudo/${props.periodo}/${props.cadeira}/${props.unidade}/dispositivos`
+    dispositivos.value = await carregarDispositivos();
+  } catch (erro) {
+    // Falha visível (prioridade zero, achado do líder): antes, um catch
+    // silencioso escondia qualquer erro de carregamento, e o balão/
+    // apêndice simplesmente não apareciam, sem log nenhum. O balão
+    // (BalaoDispositivo.vue) já mostra "Redação não disponível" ao
+    // leitor quando dispositivos.value fica undefined; o console.error
+    // aqui é o que faltava para quem constrói o site perceber o defeito.
+    console.error(
+      `Unidade.vue: falha ao carregar dispositivos legais de "${chaveUnidade.value}"`,
+      erro
     );
-    dispositivos.value = modulo.dispositivos;
-  } catch {
-    // Gerado no build (scripts/gerar-dispositivos-por-unidade.ts, seção
-    // 12.5); ausente em dev antes de rodar o gerador. O balão trata isso
-    // como "indisponível sem conexão", nunca como balão vazio.
     dispositivos.value = undefined;
   }
 }

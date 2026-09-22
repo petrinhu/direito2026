@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/gerar-indice-busca.ts && vue-tsc --noEmit && vite build && cp dist/index.html dist/404.html && bash scripts/verificar-pacote-publicavel.sh && node --import tsx scripts/verificar-colisao-rotas.ts && node --import tsx scripts/verificar-htaccess-pastas.ts",
+    "build": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/gerar-indice-busca.ts && vue-tsc --noEmit && vite build && cp dist/index.html dist/404.html && bash scripts/verificar-pacote-publicavel.sh && node --import tsx scripts/verificar-colisao-rotas.ts && node --import tsx scripts/verificar-htaccess-pastas.ts && node --import tsx scripts/verificar-dispositivos-no-pacote.ts",
     "preview": "vite preview",
     "test:unit": "vitest run tests/unidade tests/componente",
     "test:unit:watch": "vitest tests/unidade tests/componente",
@@ -16,6 +16,7 @@
     "camadas": "depcruise src --config .dependency-cruiser.cjs",
     "verificar:proibicoes": "bash scripts/verificar-proibicoes.sh",
     "verificar:dispositivos": "node --import tsx scripts/verificar-dispositivos.ts",
+    "verificar:dispositivos-no-pacote": "node --import tsx scripts/verificar-dispositivos-no-pacote.ts",
     "verificar:fontes": "bash scripts/verificar-fontes.sh",
     "verificar:publicacao": "bash scripts/verificar-publicacao.sh",
     "preci": "bash scripts/preci.sh"

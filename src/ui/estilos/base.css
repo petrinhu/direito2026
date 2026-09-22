@@ -13,6 +13,12 @@ html {
      ferramentas retrátil em vh e corta conteúdo sem isso. */
   min-height: 100vh;
   min-height: 100dvh;
+  /* BarraTopo.vue virou position:fixed (cabeçalho recolhível, ordem do
+     líder, 22/09/2026). Sem isto, todo salto por âncora (#bloco-N do
+     MenuCurriculo, scrollBehavior do router) empurraria o alvo para
+     debaixo do cabeçalho fixo. scroll-padding-top cobre os dois casos
+     (hash nativo e router.scrollBehavior) num lugar só. */
+  scroll-padding-top: var(--altura-cabecalho, 64px);
 }
 
 body {

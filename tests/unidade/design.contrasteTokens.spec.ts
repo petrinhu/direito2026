@@ -75,7 +75,21 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   // direitos): o par já existia em uso desde a fundação, mas nunca tinha
   // entrado neste portão. A linha de oferecimento usa o par dedicado da
   // lateral, já coberto acima ('texto suave sobre a lateral').
-  { nome: 'texto suave sobre fundo da página', texto: '--cor-texto-suave', fundo: '--cor-fundo' }
+  { nome: 'texto suave sobre fundo da página', texto: '--cor-texto-suave', fundo: '--cor-fundo' },
+  // Cabeçalho (ordem do líder, 22/09/2026): trilha de navegação sobre a
+  // faixa (mesmo par da lateral) e o fio de progresso dourado, que por
+  // ser cor nova (não reaproveita --cor-acento, que muda com o tema)
+  // entra no portão desde o nascimento.
+  {
+    nome: 'trilha de navegação sobre o cabeçalho',
+    texto: '--cor-sidebar-texto-suave',
+    fundo: '--cor-sidebar-fundo'
+  },
+  {
+    nome: 'fio de progresso sobre o cabeçalho',
+    texto: '--cor-cabecalho-progresso',
+    fundo: '--cor-sidebar-fundo'
+  }
 ];
 
 describe('contraste dos tokens de design', () => {

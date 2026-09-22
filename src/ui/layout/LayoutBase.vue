@@ -34,6 +34,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 <template>
   <a href="#conteudo-principal" class="layout-base__pular">Pular para o conteúdo</a>
   <BarraTopo
+    :curriculo="curriculo"
+    :caminho-atual="caminhoAtual"
     :store-tema="storeTema"
     :store-busca="storeBusca"
     @abrir-gaveta="abrirGaveta"
@@ -72,6 +74,11 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 
 .layout-base__corpo {
   display: flex;
+  /* BarraTopo.vue virou position:fixed (cabeçalho recolhível, ordem do
+     líder, 22/09/2026): sem este respiro o conteúdo nasceria coberto
+     pela faixa. A folga extra (esp-2) absorve a onda + o fio de
+     progresso, que ficam pendurados um pouco abaixo do cabeçalho. */
+  padding-top: calc(var(--altura-cabecalho, 64px) + var(--esp-2, 0.5rem));
 }
 
 .layout-base__gaveta {

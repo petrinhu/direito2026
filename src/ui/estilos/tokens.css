@@ -62,6 +62,13 @@
      em pixel puro em cada @media (custom property não funciona dentro da
      condição de uma media query, só nas declarações). */
 
+  /* Altura do cabeçalho fixo (BarraTopo.vue, ordem do líder, 22/09/2026).
+     Usado tanto no min-height do próprio cabeçalho quanto no
+     padding-top/scroll-padding-top de quem fica por baixo dele, para o
+     conteúdo nunca nascer escondido nem um salto por âncora terminar
+     debaixo da faixa. */
+  --altura-cabecalho: 64px;
+
   /* --- Transição (respeita prefers-reduced-motion nos seletores) ------- */
   --transicao-rapida: 150ms ease;
   --transicao-tema: 200ms ease;
@@ -130,6 +137,15 @@
   --cor-sidebar-selo-texto: #d8d2ba; /* 10,31:1 contra --cor-sidebar-fundo */
   --cor-sidebar-selo-bg: #1a3a5c;
 
+  /* Fio de progresso de leitura, dourado, preso na base do cabeçalho
+     (ordem do líder, 22/09/2026). Mesma classe de cuidado da lateral: o
+     cabeçalho é sempre escuro nos dois temas, então este dourado NÃO usa
+     --cor-acento (que muda com o tema e, medido, cai para 3,19:1 no tema
+     claro contra --cor-sidebar-fundo — abaixo do piso). Valor fixo nos
+     dois temas, igual ao dourado que o tema escuro já usa em
+     --cor-acento (7,86:1 contra --cor-sidebar-fundo, medido). */
+  --cor-cabecalho-progresso: #d3b563;
+
   /* Par dedicado do hero da home (achado do QA em produção, 22/09/2026,
      MESMA classe de erro da lateral): o hero fica sobre o FundoAnimado, um
      canvas que é sempre escuro nos dois temas, mas o <h1> herdava
@@ -192,6 +208,7 @@
     --cor-sidebar-item-ativo-texto: #faf9f5;
     --cor-sidebar-selo-texto: #d8d2ba;
     --cor-sidebar-selo-bg: #1a3a5c;
+    --cor-cabecalho-progresso: #d3b563;
     --cor-hero-texto: #faf9f5;
 
     --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -250,6 +267,7 @@
   --cor-sidebar-item-ativo-texto: #faf9f5;
   --cor-sidebar-selo-texto: #d8d2ba;
   --cor-sidebar-selo-bg: #1a3a5c;
+  --cor-cabecalho-progresso: #d3b563;
   --cor-hero-texto: #faf9f5;
 
   --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);

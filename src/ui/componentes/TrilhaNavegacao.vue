@@ -142,4 +142,44 @@ const itens = computed<ItemTrilha[]>(() => {
     content: '/';
   }
 }
+
+/* Críticos 1 e 2 do QA (docs/qa-modo-adaptado.md): com flex-wrap:nowrap e
+   white-space:nowrap acima, o texto de cada item não cabia na caixa
+   encolhida e PINTAVA POR CIMA do item vizinho (achado 1, qualquer
+   largura), e na home (um item só) vazava pra fora da tela sem gerar
+   rolagem (achado 2, mesma causa). docs/modo-adaptado.md §4 já pedia
+   "quebra em mais de uma linha [...] nunca corta com reticências" para
+   este exato componente sob o modo - nunca implementado. Este bloco
+   sobrepõe tanto o nowrap padrão quanto o truncamento por reticências de
+   tela estreita acima (que também corta, o que o modo proíbe), sempre
+   que o modo estiver ligado, em qualquer largura. */
+:root[data-modo-adaptado='on'] .trilha-navegacao ol {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+:root[data-modo-adaptado='on'] .trilha-navegacao li {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+:root[data-modo-adaptado='on'] .trilha-navegacao li:last-child {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+:root[data-modo-adaptado='on']
+  .trilha-navegacao
+  ol[data-truncavel='true']
+  li:nth-last-child(n + 3) {
+  display: flex;
+}
+
+:root[data-modo-adaptado='on']
+  .trilha-navegacao
+  ol[data-truncavel='true']
+  li:nth-last-child(2)::before {
+  content: '/' !important;
+  margin: 0 var(--esp-2, 0.5rem);
+}
 </style>

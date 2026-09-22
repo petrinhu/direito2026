@@ -69,13 +69,27 @@ h4 {
 
 /* Modo de leitura adaptada: títulos perdem a serifa (docs/modo-adaptado.md,
    seção 2) e o corpo ganha um traço mais firme (peso 500), sem virar
-   negrito. */
+   negrito.
+
+   IMPORTANTE 3 do QA (docs/qa-modo-adaptado.md): sem `!important`, esta
+   regra empata em especificidade com QUALQUER `<style scoped>` de
+   componente que também mire h1-h4 (o compilador scoped do Vue injeta um
+   seletor de atributo por regra, e este seletor já tem um seletor de
+   atributo próprio - `:root[data-modo-adaptado='on']` -, então o empate é
+   estrutural, não acidental), e num empate vence quem carrega por
+   último no CSS final, nunca o modo por definição. Achado real:
+   Home.vue, `.pagina-home__hero h1 { font-family: var(--fonte-titulo) }`
+   vencia sempre. `!important` é a única garantia GERAL (vale para todo
+   componente presente e futuro, sem precisar de correção caso a caso a
+   cada novo `<style scoped>` que declare font-family/font-weight de
+   título): o modo de acessibilidade sempre vence decoração de
+   componente, por desenho. */
 :root[data-modo-adaptado='on'] h1,
 :root[data-modo-adaptado='on'] h2,
 :root[data-modo-adaptado='on'] h3,
 :root[data-modo-adaptado='on'] h4 {
-  font-family: var(--fonte-texto);
-  font-weight: 700;
+  font-family: var(--fonte-texto) !important;
+  font-weight: 700 !important;
 }
 
 :root[data-modo-adaptado='on'] body {

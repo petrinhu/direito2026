@@ -5,6 +5,7 @@ import { embaralharRodada, calcularPontuacao } from '@/app/quiz/motor';
 import CartaoPergunta from './CartaoPergunta.vue';
 import ResultadoQuiz from './ResultadoQuiz.vue';
 import GradeRevisao from './GradeRevisao.vue';
+import PlacarQuiz from './PlacarQuiz.vue';
 
 const props = defineProps<{
   perguntas: readonly PerguntaQuiz[];
@@ -31,6 +32,17 @@ const sementeEfetiva = computed(() => props.semente ?? 1);
 const rodada = computed(() => embaralharRodada(props.perguntas, sementeEfetiva.value));
 const indiceAtual = ref(0);
 const pontuacao = computed(() => calcularPontuacao(rodada.value.perguntas, props.respostasSalvas));
+
+/**
+ * Denominador do placar (ordem do líder, 22/09/2026): quantas perguntas
+ * DESTA rodada já têm resposta salva — nunca o total do quiz, que
+ * aparece à parte em PlacarQuiz. Escopado à rodada (não
+ * Object.keys(respostasSalvas).length cru) pela mesma razão de
+ * calcularPontuacao: uma chave estranha no registro não deve contar.
+ */
+const respondidas = computed(
+  () => rodada.value.perguntas.filter((p) => props.respostasSalvas[p.id] !== undefined).length
+);
 
 watch(
   () => props.semente,
@@ -62,6 +74,11 @@ function anterior(): void {
       <p class="motor-quiz__posicao">
         Pergunta {{ indiceAtual + 1 }} de {{ rodada.perguntas.length }}
       </p>
+      <PlacarQuiz
+        :acertos="pontuacao.acertos"
+        :respondidas="respondidas"
+        :total-quiz="rodada.perguntas.length"
+      />
       <CartaoPergunta
         v-if="rodada.perguntas[indiceAtual]"
         :pergunta="rodada.perguntas[indiceAtual]!"

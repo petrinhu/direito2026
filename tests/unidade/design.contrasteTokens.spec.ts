@@ -61,6 +61,14 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
     texto: '--cor-sucesso-texto',
     fundo: '--cor-sucesso-bg'
   },
+  // Par de erro, gêmeo do de sucesso acima: nunca tinha entrado no portão
+  // (achado ao escrever o placar do quiz, ordem do líder, 22/09/2026, que
+  // é o primeiro lugar a usar --cor-erro-texto como TEXTO, não só borda).
+  {
+    nome: 'marcador de erro (placar do quiz)',
+    texto: '--cor-erro-texto',
+    fundo: '--cor-erro-bg'
+  },
   // O balão de citação legal usa as mesmas variáveis do cartão (seção 12).
   { nome: 'balão de citação', texto: '--cor-texto', fundo: '--cor-fundo-elevado' },
   // Hero da home (achado do QA em produção, 22/09/2026): fica sobre o

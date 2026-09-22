@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Caderno de Direito: tokens de design
+   Personalidade: "jurídico moderno sóbrio". Serifa nos títulos, sem serifa
+   no texto corrido. Azul-petróleo como cor de marca, dourado/âmbar como
+   acento raro. Modo claro é o padrão; modo escuro redefine as mesmas
+   variáveis dentro de duas guardas (prefers-color-scheme para quem não
+   escolheu nada, atributo data-theme para quem já usou o botão de troca).
+
+   Razões de contraste medidas (fórmula WCAG 2.2, cálculo real, não
+   estimativa) estão documentadas par a par em docs/design-visual.md.
+   ========================================================================== */
+
+:root {
+  /* --- Tipografia ---------------------------------------------------- */
+  /* Pilha de sistema usada NOS MOCKUPS (nenhuma fonte é baixada aqui).
+     Fontes de verdade recomendadas para produção: título = Lora (serifa),
+     texto = Inter (sem serifa), ver docs/design-visual.md. */
+  --fonte-titulo: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  --fonte-texto: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fonte-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --escala-xs: 0.8125rem;   /* 13px, legendas e metadados */
+  --escala-sm: 0.9375rem;   /* 15px, texto secundário */
+  --escala-base: 1.0625rem; /* 17px, corpo de leitura longa */
+  --escala-md: 1.25rem;     /* 20px, subtítulo de cartão */
+  --escala-lg: 1.75rem;     /* 28px, título de seção */
+  --escala-xl: 2.5rem;      /* 40px, título de página */
+  --escala-xxl: 3.25rem;    /* 52px, título de home */
+
+  --altura-linha-titulo: 1.2;
+  --altura-linha-texto: 1.7; /* generosa: leitura longa sem cansar */
+
+  /* --- Espaçamento (base 8px) ----------------------------------------- */
+  --esp-1: 0.25rem;
+  --esp-2: 0.5rem;
+  --esp-3: 0.75rem;
+  --esp-4: 1rem;
+  --esp-5: 1.5rem;
+  --esp-6: 2rem;
+  --esp-7: 3rem;
+  --esp-8: 4rem;
+  --esp-9: 6rem;
+
+  /* --- Raio e sombra (cartões discretos) ------------------------------- */
+  --raio-sm: 6px;
+  --raio-md: 10px;
+  --raio-lg: 16px;
+  --sombra-cartao: 0 1px 3px rgba(13, 36, 64, 0.06), 0 1px 2px rgba(13, 36, 64, 0.08);
+  --sombra-elevada: 0 8px 24px rgba(13, 36, 64, 0.12);
+  --sombra-foco: 0 0 0 3px rgba(22, 58, 95, 0.35);
+
+  /* --- Largura de leitura ---------------------------------------------- */
+  --largura-leitura: 68ch;
+  --largura-conteudo: 1180px;
+  /* Esqueleto do arquivo piloto (decisão do líder, 21/09/2026: "mantenha o
+     design do arquivo original com o menu lateral"). Coluna de leitura da
+     área de conteúdo, medida no piloto: max-width 760px, centralizada. */
+  --largura-coluna-leitura: 760px;
+  --largura-sidebar: 280px;
+  /* Ponto de quebra em que a lateral sai da tela e vira menu deslizante,
+     igual ao piloto: 880px, não os 640px usados no resto do site. Escrito
+     em pixel puro em cada @media (custom property não funciona dentro da
+     condição de uma media query, só nas declarações). */
+
+  /* --- Transição (respeita prefers-reduced-motion nos seletores) ------- */
+  --transicao-rapida: 150ms ease;
+  --transicao-tema: 200ms ease;
+
+  /* ======================================================================
+     MODO CLARO (padrão)
+     ====================================================================== */
+  --cor-fundo: #faf9f5;
+  --cor-fundo-elevado: #ffffff;
+  --cor-fundo-sutil: #f2efe6;
+  --cor-borda: #dcd7c8;
+  --cor-borda-forte: #c3bca4;
+
+  --cor-texto: #1c1c1c;
+  --cor-texto-suave: #4a4a4a;
+  --cor-texto-invertido: #faf9f5;
+
+  --cor-primaria: #163a5f;        /* azul-petróleo, marca/links/ícones */
+  --cor-primaria-escura: #0d2440; /* SÓ FUNDO: cabeçalho, hero, botão primário */
+  --cor-primaria-clara: #eaf1f8;  /* fundo de trilha ativa, hover sutil */
+  /* Cor de TEXTO para título/marca, nunca cor de fundo. Existe separada de
+     --cor-primaria-escura de propósito: aquele token vira #0b1a2c no modo
+     escuro (pensado para ficar atrás de texto branco), e usar o mesmo valor
+     como `color:` sobre o fundo escuro da página deixa o texto quase
+     invisível (contraste medido 1,04:1, achado do QA em 21/09/2026). */
+  --cor-titulo-texto: #0d2440;
+
+  --cor-acento: #8a6d1f;          /* dourado/âmbar, usar com parcimônia */
+  --cor-acento-claro: #f3ead1;    /* fundo de badge de acento */
+
+  --cor-bordo: #7a2331;           /* garnet, ênfase rara, nunca decorativa */
+
+  --cor-sucesso-texto: #1b4620;
+  --cor-sucesso-bg: #e8f5e9;
+  --cor-sucesso-borda: #6fae74;
+
+  --cor-erro-texto: #611b1b;
+  --cor-erro-bg: #ffebee;
+  --cor-erro-borda: #dd9a98;
+
+  --cor-desativado-texto: #8a8672;
+  --cor-desativado-bg: #ece7d6;
+  --cor-desativado-borda: #d8d2ba;
+
+  /* Par dedicado do selo "em breve", separado do par de desativado acima.
+     Achado CRÍTICO do QA (21/09/2026): o selo usava --cor-desativado-texto
+     sobre --cor-desativado-bg, 2,96:1, abaixo de AA. Essa exceção de
+     contraste de "controle desabilitado" do WCAG 1.4.3 não cobre o selo,
+     porque ele aparece também dentro de <summary> ainda clicável (abre e
+     fecha o período/cadeira), não é ele mesmo um controle desabilitado. */
+  --cor-selo-texto: #5a5442;
+  --cor-selo-bg: #ece7d6;
+
+  color-scheme: light;
+}
+
+/* Modo escuro por preferência do sistema, só enquanto o visitante não
+   escolheu nada manualmente (ausência do atributo data-theme). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cor-fundo: #12161c;
+    --cor-fundo-elevado: #1a1f27;
+    --cor-fundo-sutil: #1f242d;
+    --cor-borda: #2c333d;
+    --cor-borda-forte: #3a4250;
+
+    --cor-texto: #eceff2;
+    --cor-texto-suave: #b8c0cc;
+    --cor-texto-invertido: #0b1a2c;
+
+    --cor-primaria: #7fa8d6;
+    --cor-primaria-escura: #0b1a2c;
+    --cor-primaria-clara: #132a42;
+    --cor-titulo-texto: #7fa8d6;
+
+    --cor-acento: #d3b563;
+    --cor-acento-claro: #332b16;
+
+    --cor-bordo: #e29a9a;
+
+    --cor-sucesso-texto: #bfe8c4;
+    --cor-sucesso-bg: #173a1c;
+    --cor-sucesso-borda: #3f8a48;
+
+    --cor-erro-texto: #f0c6c4;
+    --cor-erro-bg: #3a1a1a;
+    --cor-erro-borda: #9a4a48;
+
+    --cor-desativado-texto: #6b7280;
+    --cor-desativado-bg: #232935;
+    --cor-desativado-borda: #333b47;
+
+    --cor-selo-texto: #d8d2ba;
+    --cor-selo-bg: #2e2a1c;
+
+    --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --sombra-foco: 0 0 0 3px rgba(127, 168, 214, 0.45);
+
+    color-scheme: dark;
+  }
+}
+
+/* Modo escuro por escolha explícita no botão de troca (grava em
+   localStorage e aplica data-theme="dark" na tag <html>). Vale mesmo em
+   sistema claro. */
+:root[data-theme="dark"] {
+  --cor-fundo: #12161c;
+  --cor-fundo-elevado: #1a1f27;
+  --cor-fundo-sutil: #1f242d;
+  --cor-borda: #2c333d;
+  --cor-borda-forte: #3a4250;
+
+  --cor-texto: #eceff2;
+  --cor-texto-suave: #b8c0cc;
+  --cor-texto-invertido: #0b1a2c;
+
+  --cor-primaria: #7fa8d6;
+  --cor-primaria-escura: #0b1a2c;
+  --cor-primaria-clara: #132a42;
+  --cor-titulo-texto: #7fa8d6;
+
+  --cor-acento: #d3b563;
+  --cor-acento-claro: #332b16;
+
+  --cor-bordo: #e29a9a;
+
+  --cor-sucesso-texto: #bfe8c4;
+  --cor-sucesso-bg: #173a1c;
+  --cor-sucesso-borda: #3f8a48;
+
+  --cor-erro-texto: #f0c6c4;
+  --cor-erro-bg: #3a1a1a;
+  --cor-erro-borda: #9a4a48;
+
+  --cor-desativado-texto: #6b7280;
+  --cor-desativado-bg: #232935;
+  --cor-desativado-borda: #333b47;
+
+  --cor-selo-texto: #d8d2ba;
+  --cor-selo-bg: #2e2a1c;
+
+  --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --sombra-foco: 0 0 0 3px rgba(127, 168, 214, 0.45);
+
+  color-scheme: dark;
+}
+
+/* Reduzir movimento: qualquer transição/animação nos mockups deve checar
+   esta preferência antes de rodar (ver home-a.html / home-b.html, canvas). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

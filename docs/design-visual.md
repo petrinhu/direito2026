@@ -199,6 +199,26 @@ Reestruturado em `unidade.html` como uma grade de duas colunas **por trecho**, n
 
 Abaixo de 700px, cada linha vira uma coluna só, e o comentário desce para logo depois do trecho que ele explica, igual ao arquivo piloto (`grid-template-columns: minmax(0, 1fr)`, sem precisar mover nada no HTML, porque os dois já são vizinhos na mesma seção).
 
+## Regra permanente: mockup não tem vitrine de componente
+
+Decisão do líder, 21/09/2026, depois de encontrar duas rodadas seguidas: "o quiz está quebrado e tem uma demonstracao no final, com aparencia do menu." A réplica estática da barra lateral (`.demo-sidebar`, HTML e CSS) foi removida por inteiro, junto com a moldura de celular que só existia para ela. Antes dela já tinham saído o painel de demonstração do balão e o painel de demonstração do menu suspenso (rodadas anteriores). Varredura feita depois da remoção, por "demo", "réplica" e "referência de design" no arquivo inteiro: nenhuma ocorrência HTML restante (as únicas batidas do termo em texto são "demonstrar" dentro do corpo real do art. 319, VI, do CPC, que é conteúdo da petição, não uma vitrine).
+
+Regra daqui em diante: o mockup mostra a página como ela vai ser. Nenhum estado de componente entra como réplica estática ao lado do componente real; quando um estado só aparece por interação (o balão aberto, o resultado do quiz), ele é demonstrado fazendo a interação funcionar de verdade, não desenhando uma cópia parada dela.
+
+## Quiz funcional (amostra de 10 perguntas reais)
+
+Achado do líder, 21/09/2026, verbatim: "o quiz está quebrado." O painel antes era uma fotografia: pergunta 1 sempre com uma alternativa já marcada, botão que não fazia nada, e um placar de "51 de 60" exposto o tempo inteiro, mesmo sem ninguém ter respondido nada. Reescrito com JavaScript simples (mesmo padrão do balão e do menu: sem framework, sem biblioteca nova), funcional de ponta a ponta dentro do mockup.
+
+**Conteúdo:** 10 perguntas copiadas verbatim do bloco de quiz do arquivo piloto de resumo da 1a unidade de Introdução ao Direito (mesma árvore local de estudo, fora deste repositório, já usada para o balão e para a linha do tempo), categoria "teoria", com as 4 alternativas e a explicação de cada uma. Nenhuma pergunta foi inventada nem parafraseada. A interface deixa explícito, acima da primeira pergunta, que o quiz completo daquela unidade tem 60 perguntas e que o mockup traz uma amostra de 10.
+
+**Fluxo:** uma pergunta por vez. Clicar numa alternativa a marca (não trava a resposta ainda). O botão "Confirmar resposta" só habilita depois de uma alternativa marcada; ao confirmar, a alternativa certa fica destacada em verde, a errada marcada (se houver) fica em vermelho, a explicação aparece, e o botão vira "Próxima pergunta" (ou "Ver resultado" na última). A barra e o texto de progresso acompanham a pergunta atual. Sem transição entre perguntas, em qualquer configuração de sistema: a troca de conteúdo é instantânea (substituição direta de texto e reconstrução da lista de alternativas), não uma animação que precisaria ser desligada sob `prefers-reduced-motion`; por isso o mockup respeita essa preferência sem precisar de nenhuma regra de CSS dedicada a ela aqui.
+
+**Resultado só ao final:** o bloco de resultado (`#quiz-resultado`) nasce com o atributo `hidden` e só é revelado por JavaScript depois da última pergunta confirmada, com o placar real (contagem de acertos nas respostas realmente dadas) e a revisão das 10 perguntas, cada uma com a resposta que a pessoa deu, a resposta certa e a explicação. Enquanto o quiz está em andamento, esse bloco não existe visualmente na tela.
+
+**Teclado e leitor de tela:** as alternativas são `<button>` reais (não `<li>` estático), então já são alcançáveis por Tab e acionáveis por Enter e espaço sem JavaScript extra, com o mesmo contorno de foco visível do resto do site. Usam `aria-pressed` para comunicar a seleção (não `role="radio"`, que exigiria navegação por seta implementada à parte para ficar completo; o padrão de botão de alternância já é correto sozinho para "uma marcada por vez", que aqui é regra de JavaScript, não do papel ARIA). Uma região de status (`role="status"`, `aria-live="polite"`, visualmente escondida) anuncia o resultado de cada resposta e o resultado final, para quem usa leitor de tela e não veria só pela cor.
+
+**Bug de CSS corrigido no caminho:** `.cabecalho-quiz` tinha `display: flex` sem guarda contra o atributo `hidden`, o mesmo defeito já corrigido uma vez em `.balao-nota` (`display` de autor vence `display: none` de UA do `hidden` quando têm a mesma especificidade). Corrigido com `:not([hidden])`, mesma solução.
+
 ## Animação de fundo da home (canvas)
 
 Não implementada no mockup, só reservada (`<div class="fundo-animado">`, com comentário HTML explicando o efeito no próprio arquivo). Efeito pretendido: partículas ou pontos finos em opacidade baixa (até 0.5), na paleta petróleo/dourado, deslocando-se devagar (um ciclo a cada ~40 segundos), sem repetição abrupta nem brilho chamativo, atrás do texto da primeira dobra. Sob `prefers-reduced-motion: reduce`, o canvas não anima: cai para o gradiente estático que já serve de espaço reservado no mockup.

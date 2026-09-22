@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Caderno de Direito</title>
+<meta name="description" content="Página inicial, esqueleto derivado do arquivo piloto: barra lateral fixa com a árvore de currículo, conteúdo em coluna de leitura centralizada.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100%; }
+  body {
+    margin: 0; overflow-x: hidden; max-width: 100%;
+    background: var(--cor-fundo); color: var(--cor-texto);
+    font-family: var(--fonte-texto); font-size: var(--escala-base); line-height: var(--altura-linha-texto);
+  }
+  a { color: var(--cor-primaria); text-decoration: underline; text-underline-offset: 2px; }
+  img, svg { max-width: 100%; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .pular-conteudo { position: absolute; left: -999px; top: var(--esp-2); background: var(--cor-primaria-escura); color: #fff; padding: var(--esp-3) var(--esp-4); border-radius: var(--raio-sm); z-index: 300; }
+  .pular-conteudo:focus { left: var(--esp-2); }
+  :focus-visible { outline: 3px solid var(--cor-primaria); outline-offset: 2px; }
+  h1, h2, h3, h4 { font-family: var(--fonte-titulo); color: var(--cor-titulo-texto); line-height: var(--altura-linha-titulo); }
+
+  /* ---------- Barra de progresso de leitura, fixa no topo ---------- */
+  .barra-progresso { position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 220; background: transparent; }
+  .barra-progresso__preenchimento { height: 100%; background: linear-gradient(90deg, var(--cor-primaria), var(--cor-acento)); width: 38%; }
+
+  /* ---------- Topbar (só abaixo do ponto de quebra) ---------- */
+  .topbar {
+    position: fixed; top: 4px; left: 0; right: 0; height: 52px; z-index: 150;
+    display: none; align-items: center; gap: var(--esp-3); padding-inline: var(--esp-4);
+    padding-inline: calc(var(--esp-4) + env(safe-area-inset-left, 0px)) calc(var(--esp-4) + env(safe-area-inset-right, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--cor-fundo-elevado); border-bottom: 1px solid var(--cor-borda);
+  }
+  .topbar__titulo { font-family: var(--fonte-titulo); font-weight: 600; font-size: 1rem; color: var(--cor-titulo-texto); flex: 1; }
+  .botao-menu {
+    width: 40px; height: 40px; border-radius: var(--raio-md); border: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-elevado); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; padding: 0;
+  }
+  .botao-menu span, .botao-menu span::before, .botao-menu span::after {
+    content: ""; display: block; width: 20px; height: 2px; background: var(--cor-texto); position: relative;
+  }
+  .botao-menu span::before { position: absolute; top: -6px; }
+  .botao-menu span::after { position: absolute; top: 6px; }
+  .botao-tema {
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda); border-radius: var(--raio-md);
+    width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; color: var(--cor-texto); flex-shrink: 0; padding: 0;
+  }
+  .botao-tema:hover { border-color: var(--cor-primaria); }
+  .icone-tema-escuro { display: none; }
+  :root[data-theme="dark"] .icone-tema-claro { display: none; }
+  :root[data-theme="dark"] .icone-tema-escuro { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icone-tema-claro { display: none; }
+    :root:not([data-theme="light"]) .icone-tema-escuro { display: block; }
+  }
+
+  .fundo-escurecido { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 180; display: none; }
+  .fundo-escurecido.aberta { display: block; }
+
+  /* ---------- Barra lateral ---------- */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--largura-sidebar);
+    background: var(--cor-primaria-escura); color: #e7edf4; overflow-y: auto;
+    padding: var(--esp-5) var(--esp-4) var(--esp-6); z-index: 190;
+  }
+  .sidebar__titulo { font-family: var(--fonte-titulo); font-size: 1.1rem; font-weight: 700; color: #fff; margin: var(--esp-1) 0 var(--esp-1); }
+  .sidebar__subtitulo { font-size: var(--escala-xs); color: #b7c6d9; margin: 0 0 var(--esp-5); }
+  .busca-sidebar {
+    display: flex; align-items: center; gap: var(--esp-2); background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18); border-radius: var(--raio-md); padding: var(--esp-2) var(--esp-3);
+    margin-bottom: var(--esp-3);
+  }
+  .busca-sidebar input {
+    border: none; background: none; outline: none; color: #fff; font: inherit; width: 100%;
+    font-size: max(1rem, 16px);
+  }
+  .busca-sidebar input::placeholder { color: #b7c6d9; }
+  .busca-sidebar kbd { font-family: var(--fonte-mono); font-size: var(--escala-xs); background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.24); border-radius: 4px; padding: 1px 6px; color: #dbe4ef; flex-shrink: 0; }
+  .sidebar .botao-tema { margin-bottom: var(--esp-5); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); color: #fff; }
+  .sidebar .botao-tema:hover { border-color: #fff; }
+
+  .sidebar nav ul { list-style: none; margin: 0; padding: 0; }
+  .sidebar nav li { margin-bottom: 2px; }
+  .sidebar nav a, .sidebar nav span.inativa, .sidebar nav summary {
+    display: flex; align-items: center; gap: var(--esp-2); text-decoration: none; color: #dbe4ef;
+    font-size: var(--escala-sm); padding: var(--esp-2) var(--esp-2); border-radius: var(--raio-sm);
+    cursor: pointer; list-style: none;
+  }
+  .sidebar nav summary::-webkit-details-marker { display: none; }
+  .sidebar nav a:hover, .sidebar nav summary:hover { background: rgba(255, 255, 255, 0.08); }
+  .sidebar nav a.ativa { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 600; }
+  .sidebar nav span.inativa { color: #7f93ab; cursor: not-allowed; }
+  .sidebar nav details[open] > summary { color: #fff; }
+  .sidebar__marcador {
+    width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #7f93ab; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #dbe4ef;
+  }
+  .sidebar__marcador.lido { background: var(--cor-acento); border-color: var(--cor-acento); color: #2b2205; }
+  .sidebar__secao-grupo { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8fa2ba; margin: var(--esp-5) 0 var(--esp-2) var(--esp-2); }
+  .sidebar__secao-grupo:first-of-type { margin-top: var(--esp-2); }
+  .selo-em-breve { font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 99px; background: rgba(255,255,255,0.1); color: #b7c6d9; white-space: nowrap; margin-left: auto; }
+  .arvore-cadeiras, .arvore-unidades { padding-left: var(--esp-4); margin: 2px 0 var(--esp-2); }
+  details.cadeira-item > summary, li > span.cadeira-inativa { font-size: var(--escala-sm); }
+  .sidebar__progresso { margin-top: var(--esp-6); padding-top: var(--esp-4); border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: var(--escala-xs); color: #b7c6d9; }
+
+  /* ---------- Conteúdo ---------- */
+  .conteudo { margin-left: var(--largura-sidebar); padding: var(--esp-8) clamp(1rem, 4vw, 3.5rem) var(--esp-9); }
+  .conteudo__interior { max-width: var(--largura-coluna-leitura); margin: 0 auto; }
+  section { scroll-margin-top: 1rem; }
+
+  .capa { padding: var(--esp-4) 0 var(--esp-7); border-bottom: 1px solid var(--cor-borda); margin-bottom: var(--esp-7); position: relative; }
+  .capa__disciplina { display: inline-block; font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--cor-acento); font-weight: 700; margin-bottom: var(--esp-3); }
+  .capa h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin: 0.25rem 0 var(--esp-4); }
+  .capa p { color: var(--cor-texto-suave); max-width: 60ch; margin: 0 0 var(--esp-5); }
+  .capa .acoes-hero { display: flex; gap: var(--esp-3); flex-wrap: wrap; }
+  .botao { font: inherit; font-weight: 600; border-radius: var(--raio-md); padding: var(--esp-3) var(--esp-5); text-decoration: none; display: inline-flex; align-items: center; gap: var(--esp-2); border: 1px solid transparent; cursor: pointer; }
+  .botao-primario { background: var(--cor-primaria-escura); color: #fff; }
+  .botao-primario:hover { background: var(--cor-primaria); }
+  .botao-secundario { background: transparent; color: var(--cor-titulo-texto); border-color: var(--cor-borda-forte); text-decoration: none; }
+  .botao-secundario:hover { border-color: var(--cor-primaria); color: var(--cor-primaria); }
+
+  .fundo-animado {
+    position: absolute; top: 0; right: -10%; width: 55%; height: 100%; z-index: -1;
+    background: radial-gradient(circle at 70% 30%, var(--cor-primaria-clara) 0, transparent 60%);
+    opacity: 0.7; pointer-events: none;
+  }
+  /* Espaço reservado para animação de fundo em canvas, ver docs/design-visual.md. */
+
+  .cartao-continuar {
+    display: flex; gap: var(--esp-5); align-items: center; flex-wrap: wrap;
+    background: var(--cor-primaria-clara); border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-lg); padding: var(--esp-6); margin-bottom: var(--esp-7);
+  }
+  .cartao-continuar .icone-livro { flex-shrink: 0; width: 56px; height: 56px; border-radius: var(--raio-md); background: var(--cor-fundo-elevado); display: grid; place-items: center; color: var(--cor-primaria); box-shadow: var(--sombra-cartao); }
+  .cartao-continuar .info { flex: 1; min-width: 200px; }
+  .cartao-continuar .rotulo-continuar { font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--cor-texto-suave); font-weight: 600; }
+  .cartao-continuar h2 { margin: var(--esp-1) 0 var(--esp-2); font-size: var(--escala-md); }
+  .barra-progresso-unidade { height: 8px; border-radius: 99px; background: var(--cor-borda); overflow: hidden; max-width: 320px; margin-bottom: var(--esp-2); }
+  .barra-progresso-unidade > span { display: block; height: 100%; background: var(--cor-acento); width: 42%; }
+  .texto-progresso { font-size: var(--escala-xs); color: var(--cor-texto-suave); margin: 0; }
+
+  .publicado {
+    border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--esp-5);
+    background: var(--cor-fundo-elevado); box-shadow: var(--sombra-cartao); margin-bottom: var(--esp-7);
+    display: flex; gap: var(--esp-4); align-items: flex-start; flex-wrap: wrap;
+  }
+  .publicado h2 { font-size: var(--escala-md); margin: 0 0 var(--esp-2); }
+  .publicado p { margin: 0; color: var(--cor-texto-suave); max-width: 46ch; }
+  .publicado .selo-disponivel { font-size: var(--escala-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--cor-sucesso-texto); background: var(--cor-sucesso-bg); border: 1px solid var(--cor-sucesso-borda); border-radius: 99px; padding: 3px 10px; flex-shrink: 0; }
+
+  blockquote.citacao { font-family: var(--fonte-titulo); font-style: italic; font-size: var(--escala-md); border-left: 3px solid var(--cor-acento); padding-left: var(--esp-5); margin: var(--esp-7) 0 0; color: var(--cor-titulo-texto); }
+  blockquote.citacao footer { font-family: var(--fonte-texto); font-style: normal; font-size: var(--escala-sm); color: var(--cor-texto-suave); margin-top: var(--esp-2); }
+
+  footer.rodape { margin-top: var(--esp-8); padding-top: var(--esp-5); border-top: 1px solid var(--cor-borda); font-size: var(--escala-xs); color: var(--cor-texto-suave); }
+  footer.rodape nav { display: flex; gap: var(--esp-4); flex-wrap: wrap; margin-top: var(--esp-2); }
+  footer.rodape a { color: var(--cor-texto-suave); }
+
+  /* ---------- Painel de demonstração da lateral aberta em tela estreita ---------- */
+  .demo-sidebar { margin-top: var(--esp-8); padding-top: var(--esp-6); border-top: 1px dashed var(--cor-borda); }
+  .demo-sidebar > p.rotulo-demo { font-size: var(--escala-xs); color: var(--cor-texto-suave); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 var(--esp-4); }
+  .moldura-celular-menu {
+    width: 260px; height: 420px; border: 8px solid var(--cor-primaria-escura); border-radius: 28px;
+    overflow: hidden; position: relative; background: var(--cor-fundo);
+  }
+  .moldura-celular-menu .sidebar { position: absolute; width: 210px; }
+  .moldura-celular-menu .topbar { position: absolute; display: flex; top: 0; }
+
+  @media (max-width: 880px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; top: 56px; }
+    .sidebar.aberta { transform: translateX(0); }
+    .conteudo { margin-left: 0; padding-top: 4.5rem; }
+    .topbar { display: flex; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar { transition: none; }
+  }
+  @media (max-width: 640px) {
+    .capa h1 { font-size: 1.7rem; }
+    .cartao-continuar, .publicado { padding: var(--esp-4); }
+  }
+
+  /* ---------- Modo de alto contraste do Windows ---------- */
+  @media (forced-colors: active) {
+    .sidebar { forced-color-adjust: none; background: Canvas; color: CanvasText; border-right: 1px solid CanvasText; }
+    .sidebar nav a.ativa { forced-color-adjust: none; background: Highlight; color: HighlightText; }
+    .sidebar__marcador { border-color: CanvasText; }
+    .sidebar__marcador.lido { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+    .selo-em-breve { border: 1px solid CanvasText; forced-color-adjust: none; background: Canvas; color: CanvasText; }
+    .botao-primario, .botao-secundario { border: 1px solid ButtonText; }
+    .publicado .selo-disponivel { border: 1px solid CanvasText; }
+  }
+</style>
+</head>
+<body>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
+<div class="barra-progresso" role="progressbar" aria-label="Progresso de leitura da página" aria-valuenow="38" aria-valuemin="0" aria-valuemax="100"><div class="barra-progresso__preenchimento"></div></div>
+
+<header class="topbar">
+  <button class="botao-menu" type="button" aria-label="Abrir menu de navegação" aria-expanded="false" aria-controls="sidebar-principal" onclick="alternarMenu()"><span></span></button>
+  <span class="topbar__titulo">Caderno de Direito</span>
+  <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+    <svg class="icone-tema-claro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="icone-tema-escuro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</header>
+
+<div class="fundo-escurecido" id="fundo-escurecido" onclick="fecharMenu()"></div>
+
+<aside class="sidebar" id="sidebar-principal" aria-label="Navegação do currículo">
+  <p class="sidebar__titulo">Caderno de Direito</p>
+  <p class="sidebar__subtitulo">Estudos de Direito, por período e unidade</p>
+  <div class="busca-sidebar" role="search">
+    <label for="campo-busca-home" class="sr-only">Buscar no conteúdo</label>
+    <input id="campo-busca-home" type="search" placeholder="Buscar...">
+    <kbd>/</kbd>
+  </div>
+  <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+    <svg class="icone-tema-claro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="icone-tema-escuro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <span>Alternar tema</span>
+  </button>
+
+  <nav aria-label="Currículo por período">
+    <p class="sidebar__secao-grupo">Períodos</p>
+    <ul>
+      <li>
+        <details open>
+          <summary><span class="sidebar__marcador">1</span> 1º período</summary>
+          <ul class="arvore-cadeiras">
+            <li>
+              <details open>
+                <summary>Introdução ao Direito</summary>
+                <ul class="arvore-unidades">
+                  <li><a href="unidade.html" class="ativa">Unidade 1: Fundamentos</a></li>
+                  <li><span class="inativa">Unidade 2 <span class="selo-em-breve">em breve</span></span></li>
+                  <li><span class="inativa">Unidade 3 <span class="selo-em-breve">em breve</span></span></li>
+                </ul>
+              </details>
+            </li>
+            <li><span class="inativa">Direito Constitucional I <span class="selo-em-breve">em breve</span></span></li>
+            <li><span class="inativa">Ciência Política <span class="selo-em-breve">em breve</span></span></li>
+            <li><span class="inativa">Sociologia Jurídica <span class="selo-em-breve">em breve</span></span></li>
+            <li><span class="inativa">Economia <span class="selo-em-breve">em breve</span></span></li>
+          </ul>
+        </details>
+      </li>
+      <li><details><summary><span class="sidebar__marcador">2</span> 2º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">3</span> 3º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">4</span> 4º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">5</span> 5º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">6</span> 6º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">7</span> 7º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">8</span> 8º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">9</span> 9º período <span class="selo-em-breve">em breve</span></summary></details></li>
+      <li><details><summary><span class="sidebar__marcador">10</span> 10º período <span class="selo-em-breve">em breve</span></summary></details></li>
+    </ul>
+  </nav>
+
+  <div class="sidebar__progresso">Publicado: 1 de 50 cadeiras (1º período, Introdução ao Direito).</div>
+</aside>
+
+<main class="conteudo" id="conteudo-principal">
+  <div class="conteudo__interior">
+
+    <section class="capa">
+      <div class="fundo-animado" aria-hidden="true"></div>
+      <!--
+        Espaço reservado para a animação de fundo em canvas, atrás do texto
+        desta primeira dobra. Efeito pretendido, opacidade baixa (até 0.5),
+        partículas ou pontos finos na paleta petróleo/dourado, movimento
+        lento (um ciclo a cada ~40s), sem repetição abrupta. Sob
+        prefers-reduced-motion, sem animação: fica só o gradiente estático já
+        usado aqui como espaço reservado.
+      -->
+      <span class="capa__disciplina">Estudos de Direito</span>
+      <h1>Um caderno de estudo para quem já entende a lei pela metade e quer entender por inteiro.</h1>
+      <p>Resumos organizados por período e cadeira, petições comentadas trecho a trecho e quizzes com revisão explicada. A lateral mostra a estrutura inteira; comece pelo que já está pronto.</p>
+      <div class="acoes-hero">
+        <a class="botao botao-primario" href="unidade.html">Continuar estudando</a>
+        <a class="botao botao-secundario" href="#publicado">O que já está publicado</a>
+      </div>
+    </section>
+
+    <div class="cartao-continuar">
+      <div class="icone-livro" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </div>
+      <div class="info">
+        <p class="rotulo-continuar">Continuar de onde parou</p>
+        <h2>Introdução ao Direito, Unidade 1, aba Resumo</h2>
+        <div class="barra-progresso-unidade" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100" aria-label="Progresso de leitura da unidade"><span></span></div>
+        <p class="texto-progresso">Bloco 4 de 9: Fontes do Direito e os dois grandes sistemas jurídicos</p>
+      </div>
+      <a class="botao botao-primario" href="unidade.html">Continuar</a>
+    </div>
+
+    <div class="publicado" id="publicado">
+      <div style="flex:1; min-width:200px;">
+        <h2>Introdução ao Direito, 1º período</h2>
+        <p>A única cadeira publicada até agora. Resumo em 9 blocos, petição comentada e quiz de 60 perguntas, todos na Unidade 1. O resto do currículo aparece na lateral, marcado como "em breve", à medida que for ficando pronto.</p>
+      </div>
+      <span class="selo-disponivel">Disponível</span>
+    </div>
+
+    <blockquote class="citacao">
+      "A paz é o fim do Direito, a luta é o meio."
+      <footer>Ihering, citado no bloco Sociedade e Direito, Unidade 1 de Introdução ao Direito.</footer>
+    </blockquote>
+
+    <footer class="rodape">
+      <p>Caderno de Direito, 2026. Material de estudo pessoal, sem valor oficial.</p>
+      <nav aria-label="Rodapé">
+        <a href="unidade.html">Unidade piloto</a>
+        <a href="#">Sobre o caderno</a>
+      </nav>
+    </footer>
+
+    <div class="demo-sidebar">
+      <p class="rotulo-demo">Referência de design, lateral aberta em tela estreita (réplica estática, não é o menu real)</p>
+      <div class="moldura-celular-menu" aria-hidden="true">
+        <header class="topbar" style="display:flex;">
+          <span class="botao-menu" style="pointer-events:none;"><span></span></span>
+          <span class="topbar__titulo">Caderno de Direito</span>
+        </header>
+        <aside class="sidebar" style="transform:none; top:56px;">
+          <p class="sidebar__titulo" style="font-size:0.95rem;">Caderno de Direito</p>
+          <p class="sidebar__subtitulo">Estudos de Direito</p>
+          <nav aria-label="Currículo, réplica">
+            <p class="sidebar__secao-grupo">Períodos</p>
+            <ul>
+              <li><span class="ativa" style="display:flex; padding:6px; border-radius:6px;"><span class="sidebar__marcador">1</span>&nbsp;1º período</span></li>
+              <li><span class="inativa" style="display:flex; padding:6px;">2º período <span class="selo-em-breve">em breve</span></span></li>
+              <li><span class="inativa" style="display:flex; padding:6px;">3º período <span class="selo-em-breve">em breve</span></span></li>
+            </ul>
+          </nav>
+        </aside>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  function alternarTema() {
+    var raiz = document.documentElement;
+    var atual = raiz.getAttribute('data-theme');
+    var novo = atual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', novo);
+    try { localStorage.setItem('caderno-tema', novo); } catch (e) {}
+  }
+  (function () {
+    try {
+      var salvo = localStorage.getItem('caderno-tema');
+      if (salvo) document.documentElement.setAttribute('data-theme', salvo);
+    } catch (e) {}
+  })();
+
+  var sidebar = document.getElementById('sidebar-principal');
+  var fundo = document.getElementById('fundo-escurecido');
+  var botaoMenu = document.querySelector('header.topbar .botao-menu');
+
+  function abrirMenu() {
+    sidebar.classList.add('aberta');
+    fundo.classList.add('aberta');
+    botaoMenu.setAttribute('aria-expanded', 'true');
+    document.addEventListener('keydown', aoTeclado);
+    var primeiroFocavel = sidebar.querySelector('input, a, button, summary');
+    if (primeiroFocavel) primeiroFocavel.focus();
+  }
+  function fecharMenu() {
+    sidebar.classList.remove('aberta');
+    fundo.classList.remove('aberta');
+    botaoMenu.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('keydown', aoTeclado);
+    botaoMenu.focus();
+  }
+  function alternarMenu() {
+    if (sidebar.classList.contains('aberta')) fecharMenu(); else abrirMenu();
+  }
+  function aoTeclado(ev) {
+    if (ev.key === 'Escape') { fecharMenu(); return; }
+    if (ev.key !== 'Tab') return;
+    /* Foco preso dentro da lateral enquanto ela estiver aberta em tela estreita. */
+    var focaveis = sidebar.querySelectorAll('input, a, button, summary, [tabindex]:not([tabindex="-1"])');
+    if (!focaveis.length) return;
+    var primeiro = focaveis[0];
+    var ultimo = focaveis[focaveis.length - 1];
+    if (ev.shiftKey && document.activeElement === primeiro) { ev.preventDefault(); ultimo.focus(); }
+    else if (!ev.shiftKey && document.activeElement === ultimo) { ev.preventDefault(); primeiro.focus(); }
+  }
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 880) fecharMenu();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Página não encontrada - Caderno de Direito</title>
+<meta name="description" content="Página não encontrada.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { overflow-x: hidden; max-width: 100%; }
+  body {
+    margin: 0; overflow-x: hidden; max-width: 100%;
+    background: var(--cor-fundo); color: var(--cor-texto);
+    font-family: var(--fonte-texto); font-size: var(--escala-base); line-height: var(--altura-linha-texto);
+  }
+  a { color: var(--cor-primaria); text-decoration: underline; text-underline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--cor-primaria); outline-offset: 2px; }
+  h1 { font-family: var(--fonte-titulo); color: var(--cor-titulo-texto); line-height: var(--altura-linha-titulo); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .pular-conteudo { position: absolute; left: -999px; top: var(--esp-2); background: var(--cor-primaria-escura); color: #fff; padding: var(--esp-3) var(--esp-4); border-radius: var(--raio-sm); z-index: 300; }
+  .pular-conteudo:focus { left: var(--esp-2); width: auto; height: auto; margin: 0; overflow: visible; clip: auto; }
+  .capa__disciplina { display: inline-block; font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--cor-acento); font-weight: 700; margin-bottom: var(--esp-3); }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 150;
+    display: none; align-items: center; gap: var(--esp-3); padding-inline: var(--esp-4);
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--cor-fundo-elevado); border-bottom: 1px solid var(--cor-borda);
+  }
+  .topbar__titulo { font-family: var(--fonte-titulo); font-weight: 600; font-size: 1rem; color: var(--cor-titulo-texto); flex: 1; }
+  .botao-menu {
+    width: 40px; height: 40px; border-radius: var(--raio-md); border: 1px solid var(--cor-borda);
+    background: var(--cor-fundo-elevado); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; padding: 0;
+  }
+  .botao-menu span, .botao-menu span::before, .botao-menu span::after {
+    content: ""; display: block; width: 20px; height: 2px; background: var(--cor-texto); position: relative;
+  }
+  .botao-menu span::before { position: absolute; top: -6px; }
+  .botao-menu span::after { position: absolute; top: 6px; }
+  .botao-tema {
+    background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda); border-radius: var(--raio-md);
+    width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer; color: var(--cor-texto); flex-shrink: 0; padding: 0;
+  }
+  .icone-tema-escuro { display: none; }
+  :root[data-theme="dark"] .icone-tema-claro { display: none; }
+  :root[data-theme="dark"] .icone-tema-escuro { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icone-tema-claro { display: none; }
+    :root:not([data-theme="light"]) .icone-tema-escuro { display: block; }
+  }
+
+  .fundo-escurecido { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 180; display: none; }
+  .fundo-escurecido.aberta { display: block; }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--largura-sidebar);
+    background: var(--cor-primaria-escura); color: #e7edf4; overflow-y: auto;
+    padding: var(--esp-5) var(--esp-4) var(--esp-6); z-index: 190;
+  }
+  .sidebar__titulo { font-family: var(--fonte-titulo); font-size: 1.1rem; font-weight: 700; color: #fff; margin: var(--esp-1) 0 var(--esp-1); }
+  .sidebar__subtitulo { font-size: var(--escala-xs); color: #b7c6d9; margin: 0 0 var(--esp-5); }
+  .sidebar .botao-tema { margin-bottom: var(--esp-5); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); color: #fff; }
+  .sidebar .botao-tema:hover { border-color: #fff; }
+  .sidebar nav a {
+    display: flex; align-items: center; gap: var(--esp-2); text-decoration: none; color: #dbe4ef;
+    font-size: var(--escala-sm); padding: var(--esp-2) var(--esp-2); border-radius: var(--raio-sm);
+  }
+  .sidebar nav a:hover { background: rgba(255, 255, 255, 0.08); }
+
+  .conteudo { margin-left: var(--largura-sidebar); padding: var(--esp-8) clamp(1rem, 4vw, 3.5rem) var(--esp-9); }
+  .conteudo__interior { max-width: var(--largura-coluna-leitura); margin: 0 auto; }
+  .erro h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin: 0.25rem 0 var(--esp-4); }
+  .erro p { color: var(--cor-texto-suave); max-width: 60ch; margin: 0 0 var(--esp-5); }
+  .botao { font: inherit; font-weight: 600; border-radius: var(--raio-md); padding: var(--esp-3) var(--esp-5); text-decoration: none; display: inline-flex; align-items: center; gap: var(--esp-2); border: 1px solid transparent; cursor: pointer; }
+  .botao-primario { background: var(--cor-primaria-escura); color: #fff; }
+  .botao-primario:hover { background: var(--cor-primaria); }
+
+  @media (max-width: 880px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; top: 56px; }
+    .sidebar.aberta { transform: translateX(0); }
+    .conteudo { margin-left: 0; padding-top: 4.5rem; }
+    .topbar { display: flex; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar { transition: none; }
+  }
+
+  @media (forced-colors: active) {
+    .sidebar { forced-color-adjust: none; background: Canvas; color: CanvasText; border-right: 1px solid CanvasText; }
+    .botao-primario { border: 1px solid ButtonText; }
+  }
+</style>
+</head>
+<body>
+<a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+
+<header class="topbar">
+  <button class="botao-menu" type="button" aria-label="Abrir menu de navegação" aria-expanded="false" aria-controls="sidebar-principal" onclick="alternarMenu()"><span></span></button>
+  <span class="topbar__titulo">Caderno de Direito</span>
+  <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+    <svg class="icone-tema-claro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="icone-tema-escuro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</header>
+
+<div class="fundo-escurecido" id="fundo-escurecido" onclick="fecharMenu()"></div>
+
+<aside class="sidebar" id="sidebar-principal" aria-label="Navegação">
+  <p class="sidebar__titulo">Caderno de Direito</p>
+  <p class="sidebar__subtitulo">Estudos de Direito, por período e unidade</p>
+  <button class="botao-tema" type="button" aria-label="Alternar tema claro e escuro" onclick="alternarTema()">
+    <svg class="icone-tema-claro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="icone-tema-escuro" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <span>Alternar tema</span>
+  </button>
+  <nav aria-label="Voltar">
+    <a href="./">&#8592; Voltar ao início</a>
+  </nav>
+</aside>
+
+<main class="conteudo" id="conteudo-principal">
+  <div class="conteudo__interior">
+    <section class="erro">
+      <span class="capa__disciplina">Erro 404</span>
+      <h1>Esta página não foi encontrada.</h1>
+      <p>O endereço digitado não existe ou o conteúdo ainda não foi publicado. Volte ao início e use a lateral para encontrar o período e a cadeira que procura.</p>
+      <a class="botao botao-primario" href="./">Voltar ao início</a>
+    </section>
+  </div>
+</main>
+
+<script>
+  function alternarTema() {
+    var raiz = document.documentElement;
+    var atual = raiz.getAttribute('data-theme');
+    var novo = atual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', novo);
+    try { localStorage.setItem('caderno-tema', novo); } catch (e) {}
+  }
+  (function () {
+    try {
+      var salvo = localStorage.getItem('caderno-tema');
+      if (salvo) document.documentElement.setAttribute('data-theme', salvo);
+    } catch (e) {}
+  })();
+
+  var sidebar = document.getElementById('sidebar-principal');
+  var fundo = document.getElementById('fundo-escurecido');
+  var botaoMenu = document.querySelector('header.topbar .botao-menu');
+
+  function abrirMenu() {
+    sidebar.classList.add('aberta');
+    fundo.classList.add('aberta');
+    botaoMenu.setAttribute('aria-expanded', 'true');
+  }
+  function fecharMenu() {
+    sidebar.classList.remove('aberta');
+    fundo.classList.remove('aberta');
+    botaoMenu.setAttribute('aria-expanded', 'false');
+  }
+  function alternarMenu() {
+    if (sidebar.classList.contains('aberta')) fecharMenu(); else abrirMenu();
+  }
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 880) fecharMenu();
+  });
+</script>
+</body>
+</html>

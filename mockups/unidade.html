@@ -91,14 +91,16 @@
 
   .sidebar nav ul { list-style: none; margin: 0; padding: 0; }
   .sidebar nav li { margin-bottom: 2px; }
-  .sidebar nav a, .sidebar nav span.inativa, .sidebar nav summary {
+  .sidebar nav a, .sidebar nav span.inativa, .sidebar nav summary, .sidebar nav button {
     display: flex; align-items: center; gap: var(--esp-2); text-decoration: none; color: #dbe4ef;
     font-size: var(--escala-sm); padding: var(--esp-2) var(--esp-2); border-radius: var(--raio-sm);
     cursor: pointer; list-style: none; background: none; border: none; width: 100%; text-align: left; font: inherit;
   }
   .sidebar nav summary::-webkit-details-marker { display: none; }
   .sidebar nav a:hover, .sidebar nav summary:hover, .sidebar nav button:hover { background: rgba(255, 255, 255, 0.08); }
-  .sidebar nav a.ativa { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 600; }
+  .sidebar nav a.ativa, .sidebar nav summary.ativa, .sidebar nav button[aria-selected="true"] {
+    background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 600;
+  }
   .sidebar nav span.inativa { color: #7f93ab; cursor: not-allowed; }
   .sidebar nav details[open] > summary { color: #fff; }
   .sidebar__marcador {
@@ -114,7 +116,6 @@
   .sidebar__secao-grupo:first-of-type { margin-top: var(--esp-2); }
   .selo-em-breve { font-size: 0.68rem; font-weight: 600; padding: 1px 7px; border-radius: 99px; background: rgba(255,255,255,0.1); color: #b7c6d9; white-space: nowrap; margin-left: auto; }
   .arvore-cadeiras, .arvore-unidades { padding-left: var(--esp-4); margin: 2px 0 var(--esp-2); }
-  .sidebar__divisor { height: 1px; background: rgba(255, 255, 255, 0.12); margin: var(--esp-5) 0; }
   .sidebar__progresso { margin-top: var(--esp-6); padding-top: var(--esp-4); border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: var(--escala-xs); color: #b7c6d9; }
 
   /* ---------- Conteúdo ---------- */
@@ -129,16 +130,28 @@
   p.descricao-unidade { color: var(--cor-texto-suave); max-width: 62ch; margin: 0 0 var(--esp-5); }
 
   /* ---------- Abas ---------- */
-  .abas-lista { display: flex; gap: var(--esp-2); border-bottom: 1px solid var(--cor-borda); margin-bottom: var(--esp-6); flex-wrap: wrap; }
-  .abas-lista button {
-    font: inherit; font-weight: 600; background: none; border: none; cursor: pointer;
-    padding: var(--esp-3) var(--esp-4); color: var(--cor-texto-suave);
-    border-bottom: 3px solid transparent; margin-bottom: -1px;
-  }
-  .abas-lista button[aria-selected="true"] { color: var(--cor-titulo-texto); border-bottom-color: var(--cor-acento); }
-  .abas-lista button:hover { color: var(--cor-primaria); }
+  /* Os botões em si vivem na lateral agora (.aba-lateral, terceiro nível da
+     árvore) e, em tela estreita, na faixa fixa abaixo da barra superior
+     (.abas-faixa-mobile). Aqui só o painel de conteúdo de cada aba. */
   .painel-aba { display: none; }
   .painel-aba.ativo { display: block; }
+
+  .arvore-abas, .arvore-blocos { padding-left: var(--esp-4); margin: 2px 0 var(--esp-2); }
+  .sidebar .aba-lateral { font-weight: 600; }
+
+  /* Faixa de abas fixa, só abaixo do ponto de quebra da lateral (880px). */
+  .abas-faixa-mobile {
+    display: none; gap: var(--esp-1);
+    position: fixed; left: 0; right: 0; z-index: 140;
+    background: var(--cor-fundo-elevado); border-bottom: 1px solid var(--cor-borda);
+    padding-inline: clamp(1rem, 4vw, 3.5rem); overflow-x: auto;
+  }
+  .abas-faixa-mobile button {
+    font: inherit; font-weight: 600; font-size: var(--escala-sm); background: none; border: none; cursor: pointer;
+    padding: var(--esp-3) var(--esp-3); color: var(--cor-texto-suave); white-space: nowrap;
+    border-bottom: 3px solid transparent; flex-shrink: 0;
+  }
+  .abas-faixa-mobile button[aria-selected="true"] { color: var(--cor-titulo-texto); border-bottom-color: var(--cor-acento); }
 
   /* ---------- Aba Resumo ---------- */
   .bloco-resumo { padding-block: var(--esp-6); border-bottom: 1px solid var(--cor-borda); scroll-margin-top: 5.5rem; }
@@ -203,13 +216,24 @@
   blockquote.citacao-inline footer { font-family: var(--fonte-texto); font-style: normal; font-size: var(--escala-sm); color: var(--cor-texto-suave); margin-top: var(--esp-2); }
 
   /* ---------- Aba Petição ---------- */
-  .doc-peticao { display: grid; grid-template-columns: 1fr 240px; gap: var(--esp-4); align-items: start; }
-  .peca h3 { font-family: var(--fonte-titulo); color: var(--cor-titulo-texto); font-size: var(--escala-md); margin: var(--esp-6) 0 var(--esp-3); scroll-margin-top: 5.5rem; }
-  .peca h3:first-child { margin-top: 0; }
-  .peca p { margin: 0 0 var(--esp-3); }
-  .peca .nome-acao { text-align: center; font-weight: 700; letter-spacing: 0.02em; margin: var(--esp-4) 0; }
-  .peca .assinatura { margin-top: var(--esp-5); }
-  .trilha-comentarios { position: sticky; top: var(--esp-5); display: grid; gap: var(--esp-4); }
+  /* Uma grade de duas colunas POR TRECHO (não uma coluna de trecho ao lado
+     de uma coluna com todos os comentários empilhados): o líder pediu que
+     cada comentário fique alinhado, topo com topo, ao trecho que ele
+     explica (achado 21/09/2026). `.peticao-secao` é a linha da grade;
+     `.peca-trecho` é a peça em si, `.comentario-lateral` é o comentário
+     daquele trecho, na mesma linha. */
+  .peticao-secoes { display: flex; flex-direction: column; }
+  .peticao-secao {
+    display: grid; grid-template-columns: 1fr 240px; gap: var(--esp-4); align-items: start;
+    padding-block: var(--esp-5); border-bottom: 1px solid var(--cor-borda);
+  }
+  .peticao-secao:first-child { padding-top: 0; }
+  .peticao-secao:last-child { border-bottom: none; }
+  .peca-trecho h3 { font-family: var(--fonte-titulo); color: var(--cor-titulo-texto); font-size: var(--escala-md); margin: 0 0 var(--esp-3); scroll-margin-top: 5.5rem; }
+  .peca-trecho p { margin: 0 0 var(--esp-3); }
+  .peca-trecho p:last-child { margin-bottom: 0; }
+  .peca-trecho .nome-acao { text-align: center; font-weight: 700; letter-spacing: 0.02em; margin: var(--esp-4) 0; }
+  .peca-trecho .assinatura { margin-top: var(--esp-5); }
   .comentario-lateral {
     background: var(--cor-primaria-clara); border: 1px solid var(--cor-borda);
     border-left: 3px solid var(--cor-primaria); border-radius: var(--raio-md);
@@ -217,8 +241,10 @@
   }
   .comentario-lateral strong { display: block; font-size: var(--escala-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--cor-titulo-texto); margin-bottom: var(--esp-1); }
   @media (max-width: 700px) {
-    .doc-peticao { grid-template-columns: minmax(0, 1fr); }
-    .trilha-comentarios { position: static; }
+    /* Abaixo do ponto de quebra, o comentário desce para logo depois do
+       trecho que ele explica, igual ao arquivo piloto: a caixa azul clara
+       vem em sequência, não numa coluna à parte. */
+    .peticao-secao { grid-template-columns: minmax(0, 1fr); }
   }
 
   /* ---------- Balão de artigo de lei citado (aprovado, sem mudança) ---------- */
@@ -234,7 +260,14 @@
   .citacao-artigo:focus-visible { outline-offset: 3px; }
 
   #balao-dispositivo {
-    position: fixed; z-index: 60; margin: 0;
+    /* z-index acima da lateral (190), do fundo escurecido (180) e da barra
+       de progresso (220): achado do líder, 21/09/2026, "o balão não abre
+       ao passar o mouse" (segunda causa, ver docs/design-visual.md). O
+       balão até abria (display:block), mas em citações perto do início da
+       coluna de leitura, o cálculo de posição podia colocá-lo atrás da
+       lateral, que é opaca e tinha z-index maior. Visualmente indistinguível
+       de "não abriu". */
+    position: fixed; z-index: 300; margin: 0;
     width: 300px; max-width: calc(100vw - 2rem);
     background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda);
     border-radius: var(--raio-md); box-shadow: var(--sombra-elevada);
@@ -267,7 +300,7 @@
       border-radius: var(--raio-lg) var(--raio-lg) 0 0;
       padding: var(--esp-5);
       padding-bottom: calc(var(--esp-5) + env(safe-area-inset-bottom, 0px));
-      z-index: 210;
+      z-index: 300;
     }
     .balao-fechar {
       display: inline-flex; align-items: center; justify-content: center;
@@ -280,7 +313,7 @@
 
   @media print {
     #balao-dispositivo { display: none !important; }
-    .sidebar, .topbar, .abas-lista { display: none !important; }
+    .sidebar, .topbar, .abas-faixa-mobile { display: none !important; }
     .conteudo { margin-left: 0; }
     .painel-aba { display: block !important; }
     .conteudo-abas { counter-reset: dispositivo; }
@@ -292,7 +325,7 @@
       content: "[" counter(dispositivo) "]";
       font-size: 0.7em; vertical-align: super; margin-left: 1px;
     }
-    .demo-balao, .demo-sidebar { display: none !important; }
+    .demo-sidebar { display: none !important; }
     .apendice-impressao { display: block !important; }
   }
   .apendice-impressao { display: none; }
@@ -306,30 +339,10 @@
   .apendice-impressao .disp-texto { white-space: pre-line; margin: var(--esp-2) 0; }
   .apendice-impressao .disp-fonte { font-size: var(--escala-xs); color: var(--cor-texto-suave); }
 
-  .demo-balao { margin-top: var(--esp-8); padding-top: var(--esp-6); border-top: 1px dashed var(--cor-borda); }
-  .demo-balao > .rotulo-bloco { display: block; margin-bottom: var(--esp-4); }
-  .demo-balao-grade { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: var(--esp-5); align-items: start; }
-  .demo-balao-item { background: var(--cor-fundo-sutil); border: 1px solid var(--cor-borda); border-radius: var(--raio-lg); padding: var(--esp-5); min-height: 220px; }
-  .demo-balao-item .legenda-estado { font-size: var(--escala-xs); color: var(--cor-texto-suave); margin: 0 0 var(--esp-5); }
-  .demo-moldura { display: block; text-align: center; padding-top: var(--esp-6); position: relative; }
-  .demo-balao-replica {
-    display: block; position: static; margin-top: var(--esp-6); text-align: left;
-    width: auto; max-width: none;
-    background: var(--cor-fundo-elevado); border: 1px solid var(--cor-borda);
-    border-radius: var(--raio-md); box-shadow: var(--sombra-elevada);
-    padding: var(--esp-4); font-size: var(--escala-sm); color: var(--cor-texto); line-height: 1.55;
-  }
-  .moldura-celular {
-    width: 200px; margin-inline: auto; height: 320px; position: relative;
-    border: 8px solid var(--cor-primaria-escura); border-radius: 28px; overflow: hidden;
-    background: var(--cor-fundo); padding: var(--esp-4);
-  }
-  .demo-balao-replica.demo-faixa {
-    position: absolute; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-width: none;
-    border-radius: var(--raio-lg) var(--raio-lg) 0 0; padding: var(--esp-4); margin-top: 0;
-  }
-  .demo-balao-replica.demo-faixa .balao-fechar { display: inline-flex; }
-  @media (max-width: 900px) { .demo-balao-grade { grid-template-columns: 1fr; } }
+  /* O painel de demonstração do balão (.demo-balao) foi removido por ordem
+     do líder, 21/09/2026: réplicas estáticas no meio do conteúdo davam a
+     impressão de que o balão real era estático. O balão real (mais abaixo)
+     é o único; ver a seção do balão em docs/design-visual.md. */
 
   /* ---------- Aba Quiz ---------- */
   .cabecalho-quiz { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); margin-bottom: var(--esp-5); flex-wrap: wrap; }
@@ -388,8 +401,15 @@
   @media (max-width: 880px) {
     .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; top: 56px; }
     .sidebar.aberta { transform: translateX(0); }
-    .conteudo { margin-left: 0; padding-top: 4.5rem; }
     .topbar { display: flex; }
+    /* Faixa de abas presa logo abaixo da barra superior: garante um jeito
+       visível de trocar de seção sem abrir o menu, já que a lateral (onde
+       as abas moraram no lugar dela) está fora da tela aqui. */
+    .abas-faixa-mobile {
+      display: flex;
+      top: calc(56px + env(safe-area-inset-top, 0px));
+    }
+    .conteudo { margin-left: 0; padding-top: 7.5rem; }
   }
   @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
   @media (max-width: 640px) { h1.titulo-unidade { font-size: 1.7rem; } }
@@ -407,7 +427,7 @@
     .botao-primario { border: 1px solid ButtonText; }
     .citacao-artigo { border-bottom-color: LinkText; }
     .citacao-artigo:hover, .citacao-artigo[aria-expanded="true"] { forced-color-adjust: none; background: Canvas; border-bottom-color: LinkText; }
-    #balao-dispositivo, .demo-balao-replica { forced-color-adjust: none; background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
+    #balao-dispositivo { forced-color-adjust: none; background: Canvas; color: CanvasText; border: 1px solid CanvasText; }
     .balao-nota { forced-color-adjust: none; background: Canvas; border-left-color: CanvasText; }
     .balao-cabecalho { color: CanvasText; }
     .balao-rodape { border-top-color: CanvasText; }
@@ -459,7 +479,29 @@
               <details open>
                 <summary>Introdução ao Direito</summary>
                 <ul class="arvore-unidades">
-                  <li><a href="unidade.html" class="ativa">Unidade 1: Fundamentos</a></li>
+                  <li>
+                    <details class="unidade-aberta" open>
+                      <summary class="ativa">Unidade 1: Fundamentos</summary>
+                      <ul class="arvore-abas">
+                        <li>
+                          <button type="button" id="aba-lateral-resumo" class="aba-lateral" aria-selected="true" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">R</span> Resumo</button>
+                          <ul class="arvore-blocos">
+                            <li><a href="#bloco-1" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> O que é o Direito?</a></li>
+                            <li><a href="#bloco-2" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> Linha do tempo histórica</a></li>
+                            <li><a href="#bloco-3" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> Sociedade e Direito</a></li>
+                            <li><a href="#bloco-4" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">4</span> Fontes do Direito</a></li>
+                            <li><a href="#bloco-5" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">5</span> Zetética x Dogmática</a></li>
+                            <li><a href="#bloco-6" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">6</span> Direito e Moral</a></li>
+                            <li><a href="#bloco-7" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">7</span> Jusnaturalismo x Juspositivismo</a></li>
+                            <li><a href="#bloco-8" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">8</span> Contratualismo e Soberania</a></li>
+                            <li><a href="#bloco-9" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">9</span> Direito como Ciência</a></li>
+                          </ul>
+                        </li>
+                        <li><button type="button" id="aba-lateral-peticao" class="aba-lateral" aria-selected="false" onclick="mudarAba('peticao'); fecharMenu();"><span class="sidebar__marcador">P</span> Petição comentada</button></li>
+                        <li><button type="button" id="aba-lateral-quiz" class="aba-lateral" aria-selected="false" onclick="mudarAba('quiz'); fecharMenu();"><span class="sidebar__marcador">Q</span> Quiz</button></li>
+                      </ul>
+                    </details>
+                  </li>
                   <li><span class="inativa">Unidade 2 <span class="selo-em-breve">em breve</span></span></li>
                   <li><span class="inativa">Unidade 3 <span class="selo-em-breve">em breve</span></span></li>
                 </ul>
@@ -484,30 +526,17 @@
     </ul>
   </nav>
 
-  <div class="sidebar__divisor"></div>
-
-  <nav aria-label="Seções desta unidade">
-    <p class="sidebar__secao-grupo">Teoria</p>
-    <ul>
-      <li><a href="#bloco-1" class="ativa" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> O que é o Direito?</a></li>
-      <li><a href="#bloco-2" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> Linha do tempo histórica</a></li>
-      <li><a href="#bloco-3" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador lido">✓</span> Sociedade e Direito</a></li>
-      <li><a href="#bloco-4" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">4</span> Fontes do Direito</a></li>
-      <li><a href="#bloco-5" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">5</span> Zetética x Dogmática</a></li>
-      <li><a href="#bloco-6" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">6</span> Direito e Moral</a></li>
-      <li><a href="#bloco-7" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">7</span> Jusnaturalismo x Juspositivismo</a></li>
-      <li><a href="#bloco-8" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">8</span> Contratualismo e Soberania</a></li>
-      <li><a href="#bloco-9" onclick="mudarAba('resumo'); fecharMenu();"><span class="sidebar__marcador">9</span> Direito como Ciência</a></li>
-    </ul>
-    <p class="sidebar__secao-grupo">Prática</p>
-    <ul>
-      <li><button type="button" onclick="mudarAba('peticao'); fecharMenu();"><span class="sidebar__marcador">P</span> Petição comentada</button></li>
-      <li><button type="button" onclick="mudarAba('quiz'); fecharMenu();"><span class="sidebar__marcador">Q</span> Quiz (60 perguntas)</button></li>
-    </ul>
-  </nav>
-
   <div class="sidebar__progresso">Leitura: 3 de 11 seções marcadas como lidas.</div>
 </aside>
+
+<!-- Faixa de abas presa abaixo da barra superior, só em tela estreita (onde a
+     lateral recolhe): sem ela não haveria jeito de trocar de seção sem abrir
+     o menu. -->
+<div class="abas-faixa-mobile" role="tablist" aria-label="Seções da unidade">
+  <button id="aba-resumo" role="tab" aria-selected="true" aria-controls="painel-resumo" onclick="mudarAba('resumo')">Resumo</button>
+  <button id="aba-peticao" role="tab" aria-selected="false" aria-controls="painel-peticao" onclick="mudarAba('peticao')">Petição</button>
+  <button id="aba-quiz" role="tab" aria-selected="false" aria-controls="painel-quiz" onclick="mudarAba('quiz')">Quiz</button>
+</div>
 
 <main class="conteudo" id="conteudo-principal">
   <div class="conteudo__interior">
@@ -519,11 +548,12 @@
     </div>
 
     <div class="conteudo-abas">
-      <div class="abas-lista" role="tablist" aria-label="Seções da unidade">
-        <button id="aba-resumo" role="tab" aria-selected="true" aria-controls="painel-resumo" onclick="mudarAba('resumo')">Resumo</button>
-        <button id="aba-peticao" role="tab" aria-selected="false" aria-controls="painel-peticao" onclick="mudarAba('peticao')">Petição comentada</button>
-        <button id="aba-quiz" role="tab" aria-selected="false" aria-controls="painel-quiz" onclick="mudarAba('quiz')">Quiz</button>
-      </div>
+      <!-- Os botões de aba antes viviam aqui, em cima do conteúdo. Agora
+           vivem na lateral, como terceiro nível da árvore (Resumo, Petição
+           comentada, Quiz dentro de "Unidade 1"), fixos no lugar enquanto a
+           página rola. Em tela estreita, onde a lateral recolhe, a faixa
+           .abas-faixa-mobile (fora deste bloco, logo depois da lateral no
+           HTML) cumpre o mesmo papel. -->
 
       <!-- ======================= ABA RESUMO ======================= -->
       <section id="painel-resumo" class="painel-aba ativo" role="tabpanel" aria-labelledby="aba-resumo">
@@ -691,88 +721,75 @@
 
       <!-- ======================= ABA PETIÇÃO ======================= -->
       <section id="painel-peticao" class="painel-aba" role="tabpanel" aria-labelledby="aba-peticao" hidden>
-        <div class="doc-peticao">
-          <div class="peca">
-            <h3 id="pt-endereco">Endereçamento</h3>
-            <p>Excelentíssimo(a) Senhor(a) Doutor(a) Juiz(a) de Direito da ... Vara Cível da Comarca do Recife, PE.</p>
-
-            <h3 id="pt-qualificacao">Qualificação</h3>
-            <p>Juliana Silva, nacionalidade ..., estado civil ..., profissão ..., portadora do RG nº ... e inscrita no CPF nº ..., residente e domiciliada na Rua ..., nº ..., Recife/PE, vem, por meio de seu advogado, propor a presente</p>
-            <p class="nome-acao">AÇÃO DE INDENIZAÇÃO POR DANOS MATERIAIS</p>
-            <p>em face de Renata Rocha, qualificada nos mesmos moldes, pelos fatos e fundamentos a seguir expostos.</p>
-
-            <h3 id="pt-fatos">Dos Fatos</h3>
-            <p>A autora constatou infiltração em seu apartamento, proveniente do imóvel da ré, que ocasionou danos a móveis e equipamentos de sua propriedade. Verificou-se que o vazamento decorreu da falta de manutenção da tubulação do apartamento superior. A autora buscou solução amigável; entretanto, a ré recusou-se a ressarcir os danos causados.</p>
-
-            <h3 id="pt-direito">Do Direito</h3>
-            <p><strong>1. O ato ilícito por omissão negligente (<button type="button" class="citacao-artigo" data-id="cc-186" aria-expanded="false" aria-controls="balao-dispositivo">art. 186 do Código Civil</button>).</strong> A conduta da ré configura ato ilícito ao violar direito da autora por omissão negligente, consistente na falta de manutenção adequada de sua unidade.</p>
-            <p><strong>2. O dever de reparar (<button type="button" class="citacao-artigo" data-id="cc-927" aria-expanded="false" aria-controls="balao-dispositivo">art. 927 do Código Civil</button>).</strong> Configurado o ato ilícito, exsurge o dever de reparar: aquele que, por ato ilícito, causa dano a outrem fica obrigado a repará-lo.</p>
-
-            <h3 id="pt-pedidos">Dos Pedidos</h3>
-            <p>Diante do exposto, requer a condenação da ré ao pagamento de indenização por danos materiais em R$ ..., conforme arts. 186 e 927 do Código Civil e <button type="button" class="citacao-artigo" data-id="cf-5-v-x" aria-expanded="false" aria-controls="balao-dispositivo">art. 5º, incisos V e X, da Constituição Federal</button>.</p>
-
-            <h3 id="pt-encerramento">Valor da causa e encerramento</h3>
-            <p>Dá-se à causa o valor de R$ ... (... reais). Termos em que pede e espera deferimento. Local e data.</p>
-            <p class="assinatura">Nome do advogado, OAB nº ...</p>
-          </div>
-
-          <aside class="trilha-comentarios" aria-label="Comentários explicativos da petição">
-            <div class="comentario-lateral">
+        <div class="peticao-secoes">
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-endereco">Endereçamento</h3>
+              <p>Excelentíssimo(a) Senhor(a) Doutor(a) Juiz(a) de Direito da ... Vara Cível da Comarca do Recife, PE.</p>
+            </div>
+            <aside class="comentario-lateral">
               <strong>Endereçamento</strong>
               O número da vara fica em reticências: só é conhecido depois da distribuição do processo, que ocorre após o protocolo.
+            </aside>
+          </div>
+
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-qualificacao">Qualificação</h3>
+              <p>Juliana Silva, nacionalidade ..., estado civil ..., profissão ..., portadora do RG nº ... e inscrita no CPF nº ..., residente e domiciliada na Rua ..., nº ..., Recife/PE, vem, por meio de seu advogado, propor a presente</p>
+              <p class="nome-acao">AÇÃO DE INDENIZAÇÃO POR DANOS MATERIAIS</p>
+              <p>em face de Renata Rocha, qualificada nos mesmos moldes, pelos fatos e fundamentos a seguir expostos.</p>
             </div>
-            <div class="comentario-lateral">
+            <aside class="comentario-lateral">
               <strong>Qualificação</strong>
               O <button type="button" class="citacao-artigo" data-id="cpc-319-ii" aria-expanded="false" aria-controls="balao-dispositivo">art. 319, II, do CPC</button> exige qualificação completa. Esta citação fica perto da borda direita de propósito: o controlador detecta e abre o balão virado para o outro lado.
+            </aside>
+          </div>
+
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-fatos">Dos Fatos</h3>
+              <p>A autora constatou infiltração em seu apartamento, proveniente do imóvel da ré, que ocasionou danos a móveis e equipamentos de sua propriedade. Verificou-se que o vazamento decorreu da falta de manutenção da tubulação do apartamento superior. A autora buscou solução amigável; entretanto, a ré recusou-se a ressarcir os danos causados.</p>
             </div>
-            <div class="comentario-lateral">
+            <aside class="comentario-lateral">
               <strong>Dos Fatos</strong>
               Sucinto e cronológico: conta o que aconteceu sem entrar na discussão jurídica, que vem em "Do Direito".
+            </aside>
+          </div>
+
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-direito">Do Direito</h3>
+              <p><strong>1. O ato ilícito por omissão negligente (<button type="button" class="citacao-artigo" data-id="cc-186" aria-expanded="false" aria-controls="balao-dispositivo">art. 186 do Código Civil</button>).</strong> A conduta da ré configura ato ilícito ao violar direito da autora por omissão negligente, consistente na falta de manutenção adequada de sua unidade.</p>
+              <p><strong>2. O dever de reparar (<button type="button" class="citacao-artigo" data-id="cc-927" aria-expanded="false" aria-controls="balao-dispositivo">art. 927 do Código Civil</button>).</strong> Configurado o ato ilícito, exsurge o dever de reparar: aquele que, por ato ilícito, causa dano a outrem fica obrigado a repará-lo.</p>
             </div>
-            <div class="comentario-lateral">
+            <aside class="comentario-lateral">
               <strong>Do Direito</strong>
               Encadeie o raciocínio: primeiro o art. 186 define o ilícito, depois o art. 927 impõe a consequência.
-            </div>
-          </aside>
-        </div>
+            </aside>
+          </div>
 
-        <div class="demo-balao">
-          <span class="rotulo-bloco">Referência de design do balão de artigo, réplicas estáticas, não é o balão real nem conteúdo da petição</span>
-          <div class="demo-balao-grade">
-            <div class="demo-balao-item">
-              <p class="legenda-estado">Estado 1, balão aberto na posição padrão (abre abaixo, alinhado à citação)</p>
-              <div class="demo-moldura">
-                <button type="button" class="citacao-artigo" tabindex="-1">art. 927 do Código Civil</button>
-                <div class="demo-balao-replica" aria-hidden="true">
-                  <span class="balao-cabecalho">Código Civil, art. 927</span>
-                  <p class="balao-corpo">"Aquele que, por ato ilícito (arts. 186 e 187), causar dano a outrem, fica obrigado a repará-lo."</p>
-                  <span class="balao-rodape">Fonte: planalto.gov.br. Consultado em 21/09/2026.</span>
-                </div>
-              </div>
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-pedidos">Dos Pedidos</h3>
+              <p>Diante do exposto, requer a condenação da ré ao pagamento de indenização por danos materiais em R$ ..., conforme arts. 186 e 927 do Código Civil e <button type="button" class="citacao-artigo" data-id="cf-5-v-x" aria-expanded="false" aria-controls="balao-dispositivo">art. 5º, incisos V e X, da Constituição Federal</button>.</p>
             </div>
-            <div class="demo-balao-item">
-              <p class="legenda-estado">Estado 2, balão virado para o outro lado: mesma citação do comentário lateral ao lado, perto da borda direita, sem sair da tela</p>
-              <div class="demo-moldura">
-                <button type="button" class="citacao-artigo" tabindex="-1">art. 319, II, do CPC</button>
-                <div class="demo-balao-replica" aria-hidden="true" style="margin-left: auto;">
-                  <span class="balao-cabecalho">CPC, art. 319, II</span>
-                  <p class="balao-corpo">"o nome, o estado civil, a existência de união estável, a profissão [...], o domicílio e a residência do autor e do réu;"</p>
-                  <span class="balao-rodape">Fonte: planalto.gov.br. Consultado em 21/09/2026.</span>
-                </div>
-              </div>
+            <aside class="comentario-lateral">
+              <strong>Dos Pedidos</strong>
+              É a quinta e última pergunta de toda petição: transformar o problema em pedidos concretos. O pedido remete sempre aos mesmos fundamentos já apresentados em "Do Direito", sem base jurídica nova nesta seção.
+            </aside>
+          </div>
+
+          <div class="peticao-secao">
+            <div class="peca-trecho">
+              <h3 id="pt-encerramento">Valor da causa e encerramento</h3>
+              <p>Dá-se à causa o valor de R$ ... (... reais). Termos em que pede e espera deferimento. Local e data.</p>
+              <p class="assinatura">Nome do advogado, OAB nº ...</p>
             </div>
-            <div class="demo-balao-item">
-              <p class="legenda-estado">Estado 3, tela estreita ou toque: a citação abre uma faixa fixada na base da tela, com botão de fechar</p>
-              <div class="moldura-celular">
-                <button type="button" class="citacao-artigo" tabindex="-1">art. 186 do Código Civil</button>
-                <div class="demo-balao-replica demo-faixa" aria-hidden="true">
-                  <span class="balao-cabecalho">Código Civil, art. 186</span>
-                  <p class="balao-corpo">"Aquele que, por ação ou omissão voluntária, negligência ou imprudência, violar direito e causar dano a outrem, ainda que exclusivamente moral, comete ato ilícito."</p>
-                  <span class="balao-rodape">Fonte: planalto.gov.br. Consultado em 21/09/2026.</span>
-                  <button type="button" class="balao-fechar" tabindex="-1" aria-label="Fechar">&times;</button>
-                </div>
-              </div>
-            </div>
+            <aside class="comentario-lateral">
+              <strong>Valor da causa e encerramento</strong>
+              O art. 319, V, do CPC exige a indicação do valor da causa, aqui em reticências por falta de dado real: nunca invente. O fecho, a data e a assinatura com o número da OAB são elementos formais obrigatórios.
+            </aside>
           </div>
         </div>
 
@@ -927,10 +944,14 @@ X - são invioláveis a intimidade, a vida privada, a honra e a imagem das pesso
   function mudarAba(nome) {
     var abas = ['resumo', 'peticao', 'quiz'];
     abas.forEach(function (a) {
-      var botao = document.getElementById('aba-' + a);
-      var painel = document.getElementById('painel-' + a);
       var ativa = a === nome;
-      botao.setAttribute('aria-selected', ativa ? 'true' : 'false');
+      /* Dois gatilhos por aba agora: o da lateral (desktop) e o da faixa
+         fixa (tela estreita). Os dois sincronizam juntos. */
+      var botaoLateral = document.getElementById('aba-lateral-' + a);
+      if (botaoLateral) botaoLateral.setAttribute('aria-selected', ativa ? 'true' : 'false');
+      var botaoFaixa = document.getElementById('aba-' + a);
+      if (botaoFaixa) botaoFaixa.setAttribute('aria-selected', ativa ? 'true' : 'false');
+      var painel = document.getElementById('painel-' + a);
       if (ativa) { painel.classList.add('ativo'); painel.removeAttribute('hidden'); }
       else { painel.classList.remove('ativo'); painel.setAttribute('hidden', ''); }
     });
@@ -1053,6 +1074,18 @@ X - são invioláveis a intimidade, a vida privada, a honra e a imagem das pesso
       var largura = balao.offsetWidth || 300;
       balao.style.maxHeight = 'min(70vh, 420px)';
       balao.style.overflowY = 'auto';
+      /* Limite esquerdo real: não é só a borda da viewport (16px), é a
+         borda direita da lateral quando ela está visível (0 se estiver fora
+         da tela por translateX). Sem isto, o balão de uma citação perto do
+         início da coluna de leitura calculava posição válida contra a
+         viewport, mas ficava atrás da lateral (mais opaca e com z-index
+         maior), invisível na prática mesmo com display:block. */
+      var sidebarEl = document.getElementById('sidebar-principal');
+      var limiteEsquerdo = 16;
+      if (sidebarEl) {
+        var rectLateral = sidebarEl.getBoundingClientRect();
+        if (rectLateral.right > 0) limiteEsquerdo = rectLateral.right + 16;
+      }
       var espacoDireita = window.innerWidth - (rect.left + rect.width / 2 + largura / 2);
       if (espacoDireita < 16) {
         balao.style.left = 'auto';
@@ -1060,7 +1093,7 @@ X - são invioláveis a intimidade, a vida privada, a honra e a imagem das pesso
       } else {
         balao.style.right = 'auto';
         var esquerda = rect.left + rect.width / 2 - largura / 2;
-        esquerda = Math.max(16, Math.min(esquerda, window.innerWidth - largura - 16));
+        esquerda = Math.max(limiteEsquerdo, Math.min(esquerda, window.innerWidth - largura - 16));
         balao.style.left = esquerda + 'px';
       }
       var espacoAbaixo = window.innerHeight - rect.bottom;

@@ -88,21 +88,33 @@ const contagemBlocos = computed(() =>
       :lidos="contagemBlocos.lidos"
       :total="contagemBlocos.total"
     />
+    <!--
+      Achado ao investigar o estouro de largura em 360px (relatado pelo
+      QA, 22/09/2026): este slot é renderizado uma vez POR ABA dentro de
+      AbasUnidade.vue (um <div role="tabpanel"> por aba, v-show troca
+      qual fica visível). O default slot aqui embaixo IGNORAVA o `aba`
+      escopado do slot e usava o `aba` de fora (a rota), então as TRÊS
+      abas mostravam o mesmo conteúdo (o da rota atual): resumo inteiro
+      (9 blocos, ids duplicados 3x) sempre que a rota era resumo, e o
+      mesmo para petição/quiz. Corrigido usando o `aba` escopado
+      (`abaDoPainel`), que é diferente em cada uma das três renderizações
+      do slot — agora cada painel mostra só o seu próprio conteúdo.
+    -->
     <AbasUnidade :abas="referenciaUnidade.abas" :aba-ativa="aba" @navegar="navegarAba">
-      <template #default>
+      <template #default="{ aba: abaDoPainel }">
         <p v-if="carregando">Carregando…</p>
         <template v-else-if="conteudo">
           <VisorResumo
-            v-if="aba === 'resumo'"
+            v-if="abaDoPainel === 'resumo'"
             :blocos="conteudo.resumo"
             @bloco-lido="storeProgresso.marcarLido($event)"
           />
           <PecaComentadaVisor
-            v-else-if="aba === 'peticao' && conteudo.peticao"
+            v-else-if="abaDoPainel === 'peticao' && conteudo.peticao"
             :peca="conteudo.peticao"
           />
           <MotorQuiz
-            v-else-if="aba === 'quiz' && conteudo.quiz"
+            v-else-if="abaDoPainel === 'quiz' && conteudo.quiz"
             :perguntas="conteudo.quiz"
             :semente="storeProgresso.registro.value.quizSemente"
             :respostas-salvas="storeProgresso.registro.value.quizRespostas ?? {}"

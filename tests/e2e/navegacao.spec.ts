@@ -43,3 +43,36 @@ test('nenhum erro no console ao navegar da home até o quiz', async ({ page }) =
   await page.goto('/p/p1/intr-direito/u1/quiz');
   expect(erros).toEqual([]);
 });
+
+/**
+ * Achado ao investigar o estouro de tabela em 360px (QA, 22/09/2026):
+ * AbasUnidade.vue renderiza o slot padrão uma vez POR ABA (um
+ * role="tabpanel" por aba, v-show troca qual fica visível); Unidade.vue
+ * ignorava o `aba` escopado do slot e usava o da rota, então as TRÊS
+ * abas mostravam o mesmo conteúdo: o resumo inteiro (9 blocos) aparecia
+ * 3 vezes no DOM, com ids duplicados (bloco-0, bloco-0, bloco-0...).
+ * IDs duplicados são HTML inválido e getElementById só acha o primeiro
+ * — risco real para âncora, mesmo funcionando por sorte de ordem hoje.
+ */
+test('cada aba (resumo/petição/quiz) renderiza seu conteúdo uma única vez, sem id duplicado', async ({
+  page
+}) => {
+  await page.goto('/p/p1/intr-direito/u1');
+  await page.locator('table').first().waitFor({ state: 'attached' });
+
+  const diagnostico = await page.evaluate(() => {
+    const blocos = Array.from(document.querySelectorAll('.bloco-teorico'));
+    const idsComContagem = new Map<string, number>();
+    for (const el of document.querySelectorAll('[id]')) {
+      idsComContagem.set(el.id, (idsComContagem.get(el.id) ?? 0) + 1);
+    }
+    const idsDuplicados = [...idsComContagem.entries()].filter(([, n]) => n > 1);
+    return {
+      totalBlocosResumo: blocos.length,
+      idsDuplicados
+    };
+  });
+
+  expect(diagnostico.totalBlocosResumo).toBe(9);
+  expect(diagnostico.idsDuplicados).toEqual([]);
+});

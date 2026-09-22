@@ -167,6 +167,7 @@ export const resumo: readonly BlocoResumo[] = [
         <p>Ferraz Jr., a partir de Luhmann, chama de "princípio da inegabilidade dos pontos de partida" o fato de que, na dogmática, certas premissas (como o princípio da legalidade) são tratadas como vinculantes e não podem ser negadas no curso da argumentação, mesmo sendo, em si, resultado de uma decisão política, e não de uma evidência. Por isso se diz que a zetética "parte de evidências" (sempre sujeitas a revisão), enquanto a dogmática "parte de dogmas" (subtraídos à dúvida por decisão ou por poder).</p>
         <p>O autor também descreve a "dupla abstração" do saber dogmático: as normas jurídicas já são, em si, um produto abstrato da vida social; as regras de interpretação dessas normas constituem um segundo nível de abstração, incidindo sobre o primeiro. O jurista dogmático opera nesse segundo nível, o que traz o risco de distanciamento progressivo da realidade social que a norma pretende regular.</p>
         <h3>O quadro classificatório da zetética jurídica</h3>
+        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead><tr><th>Tipo</th><th>Pura</th><th>Aplicada</th></tr></thead>
           <tbody>
@@ -174,6 +175,7 @@ export const resumo: readonly BlocoResumo[] = [
             <tr><td><strong>Zetética analítica</strong></td><td>Filosofia do direito, lógica formal das normas</td><td>Metodologia jurídica, teoria geral do direito, lógica do raciocínio jurídico</td></tr>
           </tbody>
         </table>
+        </div>
         <p>Já as disciplinas dogmáticas são as ciências do Direito propriamente ditas: civil, penal, constitucional, processual, tributário, administrativo, internacional, econômico, do trabalho, entre outras.</p>
         <h3>Dois exemplos clássicos do livro</h3>
         <p><strong>Alimentos entre ex-cônjuges:</strong> a zetética pode perguntar se é justo que um ex-cônjuge pague alimentos ao outro; a dogmática, ao contrário, aplica a norma vigente que prevê esse dever, sem reabrir essa discussão a cada caso.</p>
@@ -209,6 +211,7 @@ export const resumo: readonly BlocoResumo[] = [
         <h3>Regras de Trato Social</h3>
         <p>As Regras de Trato Social (usos, convenções de etiqueta, costumes de cortesia) têm natureza social e exterioridade, mas são unilaterais e heterônomas (impostas pelo grupo, sem gerar um direito exigível), e incoercíveis (não há aparato estatal para impor seu cumprimento). Sua sanção é difusa (reprovação social, e não uma pena jurídica), e variam conforme a classe social ou a cultura de cada grupo (isonomia por classe/cultura).</p>
         <h3>Quadro comparativo final</h3>
+        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead><tr><th>Critério</th><th>Direito</th><th>Moral</th><th>Regras de Trato Social</th><th>Preceitos Religiosos</th></tr></thead>
           <tbody>
@@ -219,6 +222,7 @@ export const resumo: readonly BlocoResumo[] = [
             <tr><td>Tipo de sanção</td><td>Prefixada em lei</td><td>Íntima (remorso)</td><td>Difusa (reprovação social)</td><td>Da própria fé</td></tr>
           </tbody>
         </table>
+        </div>
       `,
       resumo: [
         'Tomásio: Direito = foro externo; Moral = foro interno.',
@@ -248,6 +252,7 @@ export const resumo: readonly BlocoResumo[] = [
         </ul>
         <h3>Da teoria ao projeto político</h3>
         <p>A Revolução Francesa (1789) é o momento em que a teoria jusnaturalista contratualista deixa de ser apenas uma construção filosófica e se converte em projeto político concreto. A Declaração dos Direitos do Homem e do Cidadão, em seus arts. 1º e 2º, afirma que os homens nascem e permanecem livres e iguais em direitos, e que a finalidade de toda associação política é a conservação dos direitos naturais e imprescritíveis do homem (liberdade, propriedade, segurança, resistência à opressão). Pouco depois, o Código Civil de Napoleão (1804) representa a consolidação prática do positivismo: o direito privado passa a ser sistematizado numa lei escrita, com forte influência da tradição romanística herdada do Corpus Juris Civilis.</p>
+        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead><tr><th>Critério</th><th>Jusnaturalismo</th><th>Juspositivismo</th></tr></thead>
           <tbody>
@@ -256,6 +261,7 @@ export const resumo: readonly BlocoResumo[] = [
             <tr><td>Fundamento de validade</td><td>Justiça, razão</td><td>Forma (processo legislativo correto)</td></tr>
           </tbody>
         </table>
+        </div>
       `,
       resumo: [
         'Aristóteles: physikón díkaion (natural, universal) x nomikón díkaion (convencional, variável).',
@@ -279,6 +285,7 @@ export const resumo: readonly BlocoResumo[] = [
         <p>Locke, considerado o pai do liberalismo político, defende que o poder legislativo é supremo, mas não absoluto: permanece limitado pelo próprio contrato social e pela lei natural, que reconhece direitos básicos à vida, à liberdade e à propriedade. A soberania popular é inalienável e indivisível na sua fonte (o povo), ainda que seu exercício seja delegado a representantes. Locke rompe com o absolutismo ao admitir que o povo resista a um governo que viole esse pacto.</p>
         <h3>Rousseau</h3>
         <p>Rousseau funda a soberania na vontade geral. Ela é inalienável e indivisível, mas não absoluta, já que está limitada pela própria busca do bem comum. Seu modelo é bipartido: de um lado, o soberano (o próprio povo, que legisla); de outro, o governo (que apenas administra e pode ser destituído).</p>
+        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead><tr><th>Aspecto</th><th>Hobbes</th><th>Locke</th><th>Rousseau</th></tr></thead>
           <tbody>
@@ -287,6 +294,7 @@ export const resumo: readonly BlocoResumo[] = [
             <tr><td>Resistência ao governo</td><td>Não admitida</td><td>Admitida</td><td>Admitida (destituição do governo)</td></tr>
           </tbody>
         </table>
+        </div>
         <p>Os três convergem em partir de um estado de natureza hipotético e de um pacto fundador, e em considerar a soberania popular ou soberana como indivisível. Divergem, sobretudo, quanto aos limites do poder soberano: absoluto em Hobbes, limitado em Locke e Rousseau.</p>
       `,
       resumo: [

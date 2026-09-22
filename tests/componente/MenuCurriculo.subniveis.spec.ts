@@ -199,7 +199,10 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     expect(linkSecao!.attributes('href')).toBe('/p/p1/intr-direito/u1/peticao#enderecamento');
   });
 
-  it('sob Quiz, agrupa por categoria real do dado com a contagem, sem inventar rótulo', async () => {
+  it('Quiz é item final, sem submenu: link direto, sem botão nem seta de abrir', async () => {
+    // Ordem do líder, 22/09/2026, verbatim: "quiz nao precisa de
+    // submenu". Antes desta ordem, Quiz agrupava por categoria com
+    // contagem (5o nível); esse agrupamento foi removido.
     const wrapper = mount(MenuCurriculo, {
       props: {
         curriculo: curriculoComCarregar(() => Promise.resolve(conteudoDeTeste())),
@@ -211,16 +214,21 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     await new Promise((r) => setTimeout(r, 0));
     await wrapper.vm.$nextTick();
 
+    // Nenhum botão chamado "Quiz": não há nada para abrir.
     const botaoQuiz = wrapper.findAll('button').find((b) => b.text() === 'Quiz');
-    await botaoQuiz!.trigger('click');
+    expect(botaoQuiz).toBeUndefined();
 
-    const texto = wrapper.text();
-    expect(texto).toContain('Teoria (2)');
-    expect(texto).toContain('Petição (1)');
-    expect(texto).not.toContain('Fundamentos');
-
-    const linkQuiz = wrapper.findAll('a').find((a) => a.text().startsWith('Teoria'));
+    // É um link real, direto para a aba.
+    const linkQuiz = wrapper.findAll('a').find((a) => a.text() === 'Quiz');
+    expect(linkQuiz).toBeTruthy();
     expect(linkQuiz!.attributes('href')).toBe('/p/p1/intr-direito/u1/quiz');
+
+    // Nenhum resto do agrupamento por categoria que existiu antes.
+    const texto = wrapper.text();
+    expect(texto).not.toContain('Teoria');
+    expect(texto).not.toContain('Fundamentos');
+    expect(texto).not.toContain('(2)');
+    expect(texto).not.toContain('(1)');
   });
 
   it('Escape no botão de alternar unidade fecha o nível e devolve o foco', async () => {

@@ -1,4 +1,4 @@
-import type { CategoriaQuiz, PerguntaQuiz } from '../unidade/tipos';
+import type { PerguntaQuiz } from '../unidade/tipos';
 import type { PerguntaEmbaralhada, Pontuacao, PontuacaoCategoria, RodadaQuiz } from './tipos';
 
 /**
@@ -101,26 +101,4 @@ export function calcularPontuacao(
   );
 
   return { acertos, total: perguntas.length, porCategoria };
-}
-
-export interface ContagemCategoria {
-  readonly categoria: CategoriaQuiz;
-  readonly contagem: number;
-}
-
-/**
- * Agrupa as perguntas (não embaralhadas, como vêm do conteúdo) por
- * categoria e conta quantas há em cada uma. Usado pelo 4o nível do menu
- * (MenuCurriculo.vue, submenu de Quiz, ordem do líder 22/09/2026): mostra
- * a categoria com a contagem, sem embaralhar nem tocar em resposta/rodada.
- * Ordem de saída: a de primeira aparição da categoria no array de entrada.
- */
-export function contarPorCategoria(
-  perguntas: readonly PerguntaQuiz[]
-): readonly ContagemCategoria[] {
-  const contagemMapa = new Map<CategoriaQuiz, number>();
-  for (const pergunta of perguntas) {
-    contagemMapa.set(pergunta.categoria, (contagemMapa.get(pergunta.categoria) ?? 0) + 1);
-  }
-  return [...contagemMapa.entries()].map(([categoria, contagem]) => ({ categoria, contagem }));
 }

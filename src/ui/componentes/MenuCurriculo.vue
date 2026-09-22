@@ -3,8 +3,6 @@ import { reactive } from 'vue';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
-import { ROTULOS_CATEGORIA_QUIZ } from '@/app/quiz/rotulosCategoria';
-import { contarPorCategoria } from '@/app/quiz/motor';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 
 defineProps<{
@@ -258,40 +256,20 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                             </li>
                           </ul>
                         </li>
-                        <li
-                          v-if="
-                            unidade.abas.includes('quiz') &&
-                            conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))?.quiz
-                          "
-                        >
-                          <button
-                            type="button"
+                        <li v-if="unidade.abas.includes('quiz')">
+                          <!--
+                            Ordem do líder, 22/09/2026, verbatim: "quiz
+                            nao precisa de submenu". Item final, link
+                            direto para a aba, sem seta (não abre nada) e
+                            sem nível 5: era agrupado por categoria com
+                            contagem, removido por esta mesma ordem.
+                          -->
+                          <a
+                            :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/quiz`"
                             class="menu-curriculo__botao"
-                            :aria-expanded="estaAberto(`ab-quiz-${unidade.id}`) ? 'true' : 'false'"
-                            :aria-controls="`lista-quiz-${unidade.id}`"
-                            @click="alternar(`ab-quiz-${unidade.id}`)"
-                            @keydown.esc="fechar(`ab-quiz-${unidade.id}`, $event)"
                           >
-                            <span class="menu-curriculo__seta" aria-hidden="true" />
                             {{ ROTULOS_ABA.quiz }}
-                          </button>
-                          <ul
-                            v-show="estaAberto(`ab-quiz-${unidade.id}`)"
-                            :id="`lista-quiz-${unidade.id}`"
-                            class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
-                          >
-                            <li
-                              v-for="grupo in contarPorCategoria(
-                                conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))!
-                                  .quiz!
-                              )"
-                              :key="grupo.categoria"
-                            >
-                              <a :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/quiz`">
-                                {{ ROTULOS_CATEGORIA_QUIZ[grupo.categoria] }} ({{ grupo.contagem }})
-                              </a>
-                            </li>
-                          </ul>
+                          </a>
                         </li>
                       </template>
                     </ul>

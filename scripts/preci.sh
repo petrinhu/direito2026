@@ -27,6 +27,8 @@ passo "citações resolvem no catálogo" node --import tsx scripts/verificar-dis
 passo "termos proibidos (R3), fonte" bash scripts/verificar-proibicoes.sh src
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
 passo "testes unitários e de componente" npx vitest run tests/unidade tests/componente
+passo "construção" npx vite build
+passo "pacote publicável (sem mapa, sem caminho de máquina)" bash scripts/verificar-pacote-publicavel.sh
 
 if [ "$falhou" -ne 0 ]; then
   echo "preci: um ou mais passos falharam" >&2

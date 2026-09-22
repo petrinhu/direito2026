@@ -15,6 +15,12 @@ export default defineConfig({
       injectRegister: null,
       manifest: false, // manifest.webmanifest é escrito à mão em public/, não gerado
       workbox: {
+        // Nunca mapa de código no service worker gerado: mesma razão do
+        // build.sourcemap abaixo, e o Workbox tem opção própria, separada
+        // da do Vite (achado real, 22/09/2026: sw.js.map e workbox-*.js.map
+        // vazavam caminho absoluto da máquina mesmo com sourcemap:false no
+        // Vite, porque o Workbox gera o dele por conta própria).
+        sourcemap: false,
         globPatterns: ['**/*.{js,css,html,woff2,svg,png,json}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
@@ -39,7 +45,11 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    sourcemap: true
+    // Nunca mapa de código no pacote de produção (achado do líder,
+    // 22/09/2026): o mapa carrega o caminho absoluto de disco de quem
+    // construiu, e publicar isso expõe a estrutura de pastas pessoal.
+    // Diagnóstico local usa CADERNO_SOURCEMAP=true npm run build.
+    sourcemap: process.env.CADERNO_SOURCEMAP === 'true'
   },
   css: {
     transformer: 'lightningcss'

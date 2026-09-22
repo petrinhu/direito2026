@@ -25,6 +25,7 @@ import MiniSearch from 'minisearch';
 import { montarDocumentosUnidade } from '../src/core/busca/montarIndice';
 import { TETO_INDICE_BUSCA_BYTES, type DocumentoBusca } from '../src/core/busca/tipos';
 import { normalizarTermo } from '../src/core/busca/normalizar';
+import { validarIndiceGerado } from '../src/core/busca/validarIndice';
 import { curriculo } from '../src/conteudo/curriculo';
 import { CARREGADORES } from '../src/app/carregamento/carregadores';
 
@@ -78,17 +79,14 @@ async function principal(): Promise<void> {
   console.log(`unidades publicadas varridas: ${unidadesEncontradas}`);
   console.log(`tamanho do índice: ${tamanhoBytes} bytes (teto ${TETO_INDICE_BUSCA_BYTES} bytes)`);
 
-  if (documentos.length === 0) {
-    console.error(
-      'gerar-indice-busca: zero documento indexado é varredura quebrada, não conteúdo limpo'
-    );
-    process.exitCode = 1;
-  }
-
-  if (tamanhoBytes > TETO_INDICE_BUSCA_BYTES) {
-    console.error(
-      `gerar-indice-busca: índice passou do teto de ${TETO_INDICE_BUSCA_BYTES} bytes (seção 7, RI6): considerar fatiar por período`
-    );
+  // Validação extraída para src/core/busca/validarIndice.ts (item 9 da
+  // onda): mesma regra de sempre, agora testável de verdade sem precisar
+  // rodar este script inteiro (tests/unidade/busca.validarIndice.spec.ts).
+  const validacao = validarIndiceGerado(documentos.length, tamanhoBytes);
+  if (!validacao.ok) {
+    for (const mensagem of validacao.mensagens) {
+      console.error(`gerar-indice-busca: ${mensagem}`);
+    }
     process.exitCode = 1;
   }
 }

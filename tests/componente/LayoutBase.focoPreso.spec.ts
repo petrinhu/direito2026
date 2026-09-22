@@ -26,7 +26,13 @@ function curriculoDeTeste(): Curriculo {
           nome: 'Introdução ao Direito',
           estado: 'publicado',
           unidades: [
-            { id: 'u1', rotulo: 'Unidade 1', titulo: 'Unidade 1', estado: 'publicado', abas: ['resumo'] }
+            {
+              id: 'u1',
+              rotulo: 'Unidade 1',
+              titulo: 'Unidade 1',
+              estado: 'publicado',
+              abas: ['resumo']
+            }
           ]
         }
       ]

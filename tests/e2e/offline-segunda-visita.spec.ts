@@ -46,9 +46,10 @@ test('segunda visita a uma unidade já visitada, com a rede desligada, ainda abr
     await page.reload();
     controlada = await page.evaluate(() => navigator.serviceWorker?.controller != null);
   }
-  expect(controlada, `página não ficou controlada pelo service worker em ${MAX_RECARGAS} recargas`).toBe(
-    true
-  );
+  expect(
+    controlada,
+    `página não ficou controlada pelo service worker em ${MAX_RECARGAS} recargas`
+  ).toBe(true);
 
   await context.setOffline(true);
   try {

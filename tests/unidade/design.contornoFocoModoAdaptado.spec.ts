@@ -14,15 +14,13 @@ import { extrairVariaveisHex, recortarBlocoDeSeletorTopoDeArquivo } from '@/core
  */
 const CAMINHO_TOKENS = resolve(__dirname, '../../src/ui/estilos/tokens.css');
 const CAMINHO_BASE_CSS = resolve(__dirname, '../../src/ui/estilos/base.css');
-const CAMINHO_BOTAO = resolve(
-  __dirname,
-  '../../src/ui/componentes/BotaoModoAdaptado.vue'
-);
+const CAMINHO_BOTAO = resolve(__dirname, '../../src/ui/componentes/BotaoModoAdaptado.vue');
 
 function carregarBlocoModoAdaptado(): Record<string, string> {
   const cssTexto = readFileSync(CAMINHO_TOKENS, 'utf-8');
   const bloco = recortarBlocoDeSeletorTopoDeArquivo(cssTexto, ':root[data-modo-adaptado="on"]');
-  if (!bloco) throw new Error('não achei o bloco :root[data-modo-adaptado="on"] em ' + CAMINHO_TOKENS);
+  if (!bloco)
+    throw new Error('não achei o bloco :root[data-modo-adaptado="on"] em ' + CAMINHO_TOKENS);
   return extrairVariaveisHex(bloco);
 }
 
@@ -31,7 +29,10 @@ describe('contorno de foco do modo adaptado', () => {
 
   it('--cor-foco, dentro do modo, é #000000 (21:1 contra o fundo branco)', () => {
     expect(tokens['--cor-foco']).toBe('#000000');
-    const contraste = calcularContraste(tokens['--cor-foco'] as string, tokens['--cor-fundo'] as string);
+    const contraste = calcularContraste(
+      tokens['--cor-foco'] as string,
+      tokens['--cor-fundo'] as string
+    );
     expect(contraste).toBeGreaterThanOrEqual(20);
   });
 

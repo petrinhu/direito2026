@@ -11,7 +11,11 @@ import { test, expect, type Page } from '@playwright/test';
  */
 
 async function ligarModoPeloBotao(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Ativar modo de leitura adaptada: texto maior e contraste máximo em preto e branco' }).click();
+  await page
+    .getByRole('button', {
+      name: 'Ativar modo de leitura adaptada: texto maior e contraste máximo em preto e branco'
+    })
+    .click();
   await page.locator('[data-modo-adaptado="on"]').waitFor({ state: 'attached' });
 }
 
@@ -92,7 +96,9 @@ test.describe('critério 6: acerto/erro do quiz não depende de cor', () => {
       incorreta = cartao.locator('.cartao-pergunta__alt--incorreta').first();
       incorretaCount = await incorreta.count();
     }
-    expect(incorretaCount, 'nenhuma das 8 tentativas caiu numa alternativa errada').toBeGreaterThan(0);
+    expect(incorretaCount, 'nenhuma das 8 tentativas caiu numa alternativa errada').toBeGreaterThan(
+      0
+    );
 
     const estiloCorreta = await correta.evaluate((el) => {
       const c = getComputedStyle(el);

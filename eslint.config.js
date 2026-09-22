@@ -32,7 +32,9 @@ const GLOBAIS_NAVEGADOR = {
   cancelAnimationFrame: 'readonly',
   fetch: 'readonly',
   Request: 'readonly',
-  Response: 'readonly'
+  Response: 'readonly',
+  getComputedStyle: 'readonly',
+  navigator: 'readonly'
 };
 
 const GLOBAIS_COMUNS = {

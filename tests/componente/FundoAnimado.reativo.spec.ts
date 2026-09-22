@@ -22,7 +22,9 @@ function stubContexto2D(): void {
     fillRect: () => undefined,
     fillStyle: ''
   };
-  HTMLCanvasElement.prototype.getContext = vi.fn(() => ctxFalso) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = vi.fn(
+    () => ctxFalso
+  ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 }
 
 function criarStoreFalso(inicial: boolean): StoreModoAdaptado {
@@ -34,8 +36,8 @@ describe('FundoAnimado, reatividade ao modo adaptado', () => {
     stubContexto2D();
     vi.stubGlobal(
       'requestAnimationFrame',
-      vi.fn((cb: FrameRequestCallback) => {
-        // nunca dispara sozinho: cada teste controla o avanço chamando o cb
+      vi.fn(() => {
+        // nunca dispara sozinho: só serve para os testes contarem chamadas
         return 1;
       })
     );

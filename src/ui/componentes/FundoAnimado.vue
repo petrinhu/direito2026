@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
 
 const props = defineProps<{ altura: number }>();
+
+// Opcional (undefined) de propósito: alguns testes de componente montam
+// este arquivo isolado, sem o provide do composition root.
+const storeModoAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO, undefined);
 
 const canvasRef = ref<HTMLCanvasElement | undefined>();
 let quadro: number | undefined;
 let observadorVisibilidade: IntersectionObserver | undefined;
 let ativo = true;
+// Guardados fora do onMounted para o watcher abaixo poder parar/retomar a
+// animação sem precisar remontar o componente inteiro.
+let ctxSalvo: CanvasRenderingContext2D | undefined;
+let larguraSalva = 0;
+let alturaSalva = 0;
 
 // Limites fixados ANTES de qualquer medição (L-43, seção 6): a área de
 // backing store do canvas é a causa mais comum de o WebKit derrubar a aba
@@ -22,16 +32,17 @@ function prefereMovimentoReduzido(): boolean {
  * Modo de leitura adaptada (docs/modo-adaptado.md, seção 6): desliga todo
  * movimento da página, mesmo que o sistema não peça prefers-reduced-motion,
  * porque o próprio ganho de contraste do modo é anulado por um fundo que
- * continua em movimento atrás do texto. Lida direto do atributo, não de um
- * store injetado: o mesmo padrão de checagem única no setup já usado para
- * prefers-reduced-motion acima, e o atributo já está aplicado em
- * document.documentElement antes deste componente montar (o store é criado
- * de forma síncrona em main.ts, antes de app.mount).
+ * continua em movimento atrás do texto.
+ *
+ * Achado 1 da revisão (docs/revisao-modo-adaptado.md): a versão anterior só
+ * lia `document.documentElement.hasAttribute('data-modo-adaptado')` uma vez,
+ * em onMounted — ligar o modo com a home já aberta (sem recarregar) não
+ * parava a animação em curso. Agora o componente injeta o store de verdade
+ * e observa `ativo` ao vivo (watcher abaixo), então esta função só serve
+ * para a decisão inicial em onMounted; o caminho reativo é o watcher.
  */
 function prefereModoAdaptado(): boolean {
-  return (
-    typeof document !== 'undefined' && document.documentElement.hasAttribute('data-modo-adaptado')
-  );
+  return Boolean(storeModoAdaptado?.ativo.value);
 }
 
 function desenharQuadroEstatico(
@@ -87,6 +98,10 @@ onMounted(() => {
     return;
   }
 
+  ctxSalvo = ctx;
+  larguraSalva = largura;
+  alturaSalva = altura;
+
   if (prefereMovimentoReduzido() || prefereModoAdaptado()) {
     desenharQuadroEstatico(ctx, largura, altura);
     return;
@@ -106,6 +121,30 @@ onMounted(() => {
 
   animar(ctx, largura, altura);
 });
+
+/**
+ * Achado 1 (docs/revisao-modo-adaptado.md): reage AO VIVO à alternância do
+ * modo adaptado, sem esperar recarregar a página. Ligar o modo para a
+ * animação em curso e desenha o quadro estático; desligar retoma a
+ * animação (a menos que o sistema peça prefers-reduced-motion, que nunca
+ * é anulado pelo desligamento do modo).
+ */
+watch(
+  () => storeModoAdaptado?.ativo.value,
+  (ligado) => {
+    if (!ctxSalvo) return;
+    if (ligado) {
+      if (quadro !== undefined) {
+        cancelAnimationFrame(quadro);
+        quadro = undefined;
+      }
+      desenharQuadroEstatico(ctxSalvo, larguraSalva, alturaSalva);
+    } else if (!prefereMovimentoReduzido() && quadro === undefined) {
+      ativo = true;
+      animar(ctxSalvo, larguraSalva, alturaSalva);
+    }
+  }
+);
 
 onBeforeUnmount(() => {
   ativo = false;

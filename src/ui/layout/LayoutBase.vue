@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import type { StoreTema } from '@/app/stores/tema';
@@ -22,17 +22,56 @@ defineProps<{
 const emit = defineEmits<{ buscar: [string] }>();
 
 const gavetaAberta = ref(false);
+const gavetaRef = ref<HTMLElement | undefined>();
+
+// Pendência da onda (não fazia parte da especificação original): com a
+// gaveta aberta em tela estreita, o foco do teclado não pode escapar para
+// o conteúdo atrás dela (WCAG 2.4.3 Ordem de foco / prática de diálogo
+// modal do WAI-ARIA Authoring Practices), e fechar devolve o foco a quem
+// abriu, nunca deixa o foco "perdido" no topo da página.
+const SELETOR_FOCAVEL = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+let elementoAntesDeAbrir: HTMLElement | null = null;
+
+function elementosFocaveis(): HTMLElement[] {
+  if (!gavetaRef.value) return [];
+  return Array.from(gavetaRef.value.querySelectorAll<HTMLElement>(SELETOR_FOCAVEL));
+}
 
 function abrirGaveta(): void {
+  elementoAntesDeAbrir = document.activeElement as HTMLElement | null;
   gavetaAberta.value = true;
+  nextTick(() => {
+    elementosFocaveis()[0]?.focus();
+  });
 }
 
 function fecharGaveta(): void {
   gavetaAberta.value = false;
+  elementoAntesDeAbrir?.focus();
+  elementoAntesDeAbrir = null;
 }
 
 function aoTeclaNaGaveta(evento: KeyboardEvent): void {
-  if (evento.key === 'Escape') fecharGaveta();
+  if (evento.key === 'Escape') {
+    fecharGaveta();
+    return;
+  }
+  if (evento.key !== 'Tab') return;
+
+  const focaveis = elementosFocaveis();
+  if (focaveis.length === 0) {
+    evento.preventDefault();
+    return;
+  }
+  const primeiro = focaveis[0]!;
+  const ultimo = focaveis[focaveis.length - 1]!;
+  if (evento.shiftKey && document.activeElement === primeiro) {
+    evento.preventDefault();
+    ultimo.focus();
+  } else if (!evento.shiftKey && document.activeElement === ultimo) {
+    evento.preventDefault();
+    primeiro.focus();
+  }
 }
 </script>
 
@@ -50,6 +89,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   <div class="layout-base__corpo">
     <div v-if="gavetaAberta" class="layout-base__sobreposicao" @click="fecharGaveta" />
     <aside
+      ref="gavetaRef"
       class="layout-base__gaveta"
       :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"
       @keydown="aoTeclaNaGaveta"
@@ -131,6 +171,26 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
     z-index: 80;
+  }
+}
+
+/* Achado 2 da revisão (docs/revisao-modo-adaptado.md): a transição da
+   gaveta em tela estreita nunca era desligada, nem pelo modo adaptado nem
+   por prefers-reduced-motion, apesar de a especificação (docs/modo-
+   adaptado.md, seção 6) e a media query de movimento reduzido do resto do
+   site pedirem os dois. Mesmo padrão já usado em BarraTopo.vue (seletor
+   :root[data-modo-adaptado='on'], que o compilador scoped do Vue deixa
+   fora da escopagem por ser ancestral, não o elemento do próprio
+   componente). */
+@media (max-width: 880px) {
+  :root[data-modo-adaptado='on'] .layout-base__gaveta {
+    transition: none;
+  }
+}
+
+@media (max-width: 880px) and (prefers-reduced-motion: reduce) {
+  .layout-base__gaveta {
+    transition: none;
   }
 }
 

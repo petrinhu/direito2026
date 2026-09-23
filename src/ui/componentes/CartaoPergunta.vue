@@ -63,7 +63,11 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
           :disabled="respondida"
           @change="escolher(indice as 0 | 1 | 2 | 3)"
         />
-        <span v-html="alternativaHtml" @click="pararPropagacaoSeCitacao" />
+        <span
+          class="cartao-pergunta__alt-texto"
+          v-html="alternativaHtml"
+          @click="pararPropagacaoSeCitacao"
+        />
         <span v-if="respondida && indice === pergunta.indiceCorreto" class="cartao-pergunta__marca">
           Correta
         </span>
@@ -105,6 +109,12 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
   padding: 0;
 }
 
+.cartao-pergunta__enunciado {
+  /* Mesma insurança do texto de alternativa acima: enunciado também vem
+     de conteúdo (v-html) e pode conter um token longo sem espaço. */
+  overflow-wrap: anywhere;
+}
+
 .cartao-pergunta__alternativas {
   display: flex;
   flex-direction: column;
@@ -117,6 +127,27 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
   gap: var(--esp-2, 0.5rem);
   padding: var(--esp-2, 0.5rem);
   border-radius: var(--raio-sm, 6px);
+}
+
+/*
+  Achado do QA (docs/qa-redacao-u1.md, "Rodada final"): em 360px, 2 de 10
+  cargas do quiz estouravam a largura da página (80px numa pergunta com
+  alternativas em lista separada por vírgula, 13px noutra) — intermitente
+  porque o quiz sorteia a ordem a cada carga, só acontecia com certas
+  perguntas/alternativas específicas. Causa raiz, clássica de flex row:
+  um item de flexbox tem `min-width: auto` por padrão, que o navegador
+  resolve para o tamanho MÍNIMO DE CONTEÚDO do item — para texto, a
+  largura do maior "token" sem quebra (sem espaço). Um trecho como
+  "Data/Advogado/OAB/UF" (barra não é ponto de quebra em CSS por
+  padrão) podia ser mais largo que o espaço restante na linha, e o item
+  de flex se recusava a encolher além disso, estourando o cartão e, com
+  ele, a página inteira. `min-width: 0` autoriza o item a encolher abaixo
+  do próprio conteúdo; `overflow-wrap: anywhere` autoriza quebrar DENTRO
+  de um token longo sem espaço, como último recurso, sem alterar o texto.
+*/
+.cartao-pergunta__alt-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .cartao-pergunta__alt--correta {

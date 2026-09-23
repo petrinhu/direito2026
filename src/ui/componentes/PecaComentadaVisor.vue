@@ -70,6 +70,22 @@ defineProps<{ peca: PecaComentada }>();
   gap: var(--esp-4, 1rem);
 }
 
+/*
+  Mesma classe de defeito descrita em CartaoPergunta.vue (achado do QA,
+  docs/qa-redacao-u1.md): item de grid também tem min-width:auto por
+  padrão (resolve para o maior token de conteúdo sem quebra), e as duas
+  colunas de 880px+ (grid-template-columns abaixo) não usam minmax(0, …),
+  diferente da versão de modo adaptado que já usa. Ambos os lados vêm de
+  v-html (docs/conteudo, podem trazer citação/URL longa sem espaço), por
+  isso ganham a mesma dupla de proteção por precaução (varredura pedida
+  pelo QA), mesmo sem estouro reproduzido aqui.
+*/
+.peca-comentada__corpo,
+.peca-comentada__comentario {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .peca-comentada__comentario {
   background: var(--cor-primaria-clara, #eaf1f8);
   border-radius: var(--raio-sm, 6px);

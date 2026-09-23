@@ -77,3 +77,36 @@ O achado CRÍTICO 2 de uma rodada de QA anterior (citação de artigo aparecendo
 ## Capturas
 
 Em `mockups/capturas/redacao/`: 24 capturas da varredura sistemática (`{resumo,peticao,quiz}-{claro,escuro}-{360,1280}-modo{on,off}.png`), mais `sidebar-periodo1-aberto.png` e `peticao-balao-art1571-aberto.png`.
+
+## Rodada final, antes da publicação (mesmo protocolo de isolamento)
+
+Pacote reconstruído às 07:29 de 23/09/2026. Mesma prova de isolamento da rodada anterior (variáveis de barramento/Wayland/X removidas, `XDG_RUNTIME_DIR`/`TMPDIR` próprios, GPU desligada, vigia concorrente, zero achados fora do baseline nas duas execuções desta rodada).
+
+### Suíte de ponta a ponta, depois da correção do id duplicado
+
+98 testes, dois alvos: **blink 49/49 passou, brave 49/49 passou, 0 falhas, 0 pulados.** O teste que antes falhava (`navegacao.spec.ts:65`, id duplicado) passa agora nos dois alvos, e a verificação automática de acessibilidade (axe-core) continua sem violação grave em nenhuma das duas unidades.
+
+### Item 2: cartão e link na home
+
+Dois cartões distintos na home (`Introdução ao Direito` e `Português e Redação Jurídica 1`), cada um com nome de cadeira em destaque (`h3.cartao-unidade__cadeira`) e `href` correto (`/p/p1/intr-direito/u1` e `/p/p1/redacao-juridica-1/u1`), confirmados nos dois temas, 360 e 1280px, com o modo adaptado ligado e desligado (8 combinações, sem rolagem lateral em nenhuma). Barra lateral da home: o botão da cadeira nova abre a lista, o link da unidade aponta para `/p/p1/redacao-juridica-1/u1`, e o clique navega de fato para lá.
+
+### Item 3: resumo com 15 blocos
+
+Os 15 blocos do resumo (eram 9, mais 6 nos últimos dois relatos, líder falou em "três blocos novos" mas a fonte tem 15 no total desde já) aparecem todos, e não há rolagem lateral em 360px.
+
+### Item 4: rolagem de 13px no quiz, REPRODUZIDA (achado mais sério do que na rodada de manhã)
+
+Repeti 10 carregamentos (tema escuro, 360px, modo adaptado ligado). Reproduziu em **2 das 10 tentativas**, não 0:
+
+- **Tentativa 5: `scrollWidth=440` contra `clientWidth=360`, 80px de estouro** (bem mais grave que os 13px vistos de manhã). Pergunta: "Segundo a estrutura de oito passos ensinada em sala para a redação da petição inicial, qual é a sequência correta?" As quatro alternativas são listas separadas por vírgula (ex.: "Qualificação, Endereçamento, Direito, Fatos, Valor da Causa, Dos Pedidos, Data/Advogado/OAB/UF, Termos em que pede deferimento."), e a captura mostra uma borda vertical do cartão da pergunta esticada além da coluna de 360px, com o marcador da alternativa ("○") descolado do início do texto. Captura: `mockups/capturas/redacao-final/quiz-overflow-repro-tentativa5.png`.
+- **Tentativa 9: `scrollWidth=373`, 13px de estouro** (o mesmo tamanho visto de manhã). Pergunta sobre o art. 1.658 do Código Civil (fundamento da partilha, casos Ana/Carlos e Marina/Ricardo). Captura: `mockups/capturas/redacao-final/quiz-overflow-repro-tentativa9.png`.
+
+Achado real e intermitente (ligado ao conteúdo de perguntas/alternativas específicas com listas separadas por vírgula/barra que não quebram linha em 360px), não um artefato do meu método de teste. Não corrigido por mim, apenas relatado.
+
+### Sessão do líder
+
+Portal ativo, sem processo de teste sobrando nas duas execuções desta rodada. Coredumps: 742 → 746 durante a suíte e2e (4 novos), e 746 → 746 (nenhum novo) durante o QA visual final. Os 4 novos são o mesmo padrão sintético já visto de manhã (`kill -SEGV`/`kill -ABRT` numa aba de Konsole diferente da minha) mais um crash de `xmlstarlet` num projeto completamente diferente (`glintfx-win-lab`), também na mesma aba alheia — nada disso é dos meus processos de navegador.
+
+### Capturas desta rodada
+
+`mockups/capturas/redacao-final/`: 8 capturas da home (2 temas × 2 larguras × modo on/off), `home-sidebar-cadeira-nova.png`, `resumo-15-blocos-360.png`, e as 2 capturas do estouro do quiz reproduzido.

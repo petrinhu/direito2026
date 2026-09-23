@@ -18,7 +18,13 @@ const PAGINAS_PRINCIPAIS: ReadonlyArray<{ nome: string; caminho: string }> = [
   { nome: 'unidade (resumo)', caminho: '/p/p1/intr-direito/u1' },
   { nome: 'unidade (petição)', caminho: '/p/p1/intr-direito/u1/peticao' },
   { nome: 'unidade (quiz)', caminho: '/p/p1/intr-direito/u1/quiz' },
-  { nome: 'busca', caminho: '/busca' }
+  { nome: 'busca', caminho: '/busca' },
+  // Unidade de Redação Jurídica 1 (22/09/2026): as mesmas três abas, agora
+  // também com os três extras interativos do resumo (checklist do art.
+  // 319, cartões que viram, dicas de forma).
+  { nome: 'redação: unidade (resumo)', caminho: '/p/p1/redacao-juridica-1/u1' },
+  { nome: 'redação: unidade (petição)', caminho: '/p/p1/redacao-juridica-1/u1/peticao' },
+  { nome: 'redação: unidade (quiz)', caminho: '/p/p1/redacao-juridica-1/u1/quiz' }
 ];
 
 const GRAVIDADES_QUE_REPROVAM = ['critical', 'serious'] as const;

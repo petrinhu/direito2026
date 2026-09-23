@@ -77,6 +77,41 @@ test.describe('critério 4: todo alvo interativo mede >= 44x44 CSS px com o modo
     }
   });
 
+  // Extras interativos da unidade de Redação Jurídica 1 (22/09/2026):
+  // checklist do art. 319 (label + input) e os cartões das cinco
+  // perguntas, mesmo padrão de prova que o sumário do resumo acima.
+  test('extras do resumo (checklist do art. 319 e cartões das cinco perguntas)', async ({
+    page
+  }) => {
+    await page.goto('/p/p1/redacao-juridica-1/u1');
+    await ligarModoPeloBotao(page);
+    await page.locator('.cartoes-cinco-perguntas__cartao').first().waitFor({ state: 'visible' });
+
+    const seletores = [
+      '.checklist-319__rotulo',
+      '.checklist-319__rotulo input',
+      '.cartoes-cinco-perguntas__cartao'
+    ];
+
+    const medidas = await page.evaluate((sels: string[]) => {
+      const resultado: Array<{ seletor: string; largura: number; altura: number }> = [];
+      for (const seletor of sels) {
+        for (const el of Array.from(document.querySelectorAll(seletor))) {
+          const r = (el as HTMLElement).getBoundingClientRect();
+          if (r.width === 0 && r.height === 0) continue;
+          resultado.push({ seletor, largura: r.width, altura: r.height });
+        }
+      }
+      return resultado;
+    }, seletores);
+
+    expect(medidas.length).toBeGreaterThan(0);
+    for (const m of medidas) {
+      expect(m.largura, `${m.seletor}: largura ${m.largura}px`).toBeGreaterThanOrEqual(44);
+      expect(m.altura, `${m.seletor}: altura ${m.altura}px`).toBeGreaterThanOrEqual(44);
+    }
+  });
+
   // Gêmeo do mesmo padrão (varredura própria, L-17): a lista de cadeiras da
   // página de Período (Periodo.vue) também é um `<a>` cru dentro de `<li>`,
   // sem min-height/min-width próprios — o token global de base.css não tem

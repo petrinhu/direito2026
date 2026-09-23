@@ -14,7 +14,14 @@ const ENDERECOS: ReadonlyArray<{ caminho: string; h1: RegExp }> = [
   { caminho: '/p/p1/intr-direito', h1: /Introdução ao Direito/ },
   { caminho: '/p/p1/intr-direito/u1', h1: /Resumo de estudo, petição comentada e quiz/ },
   { caminho: '/p/p1/intr-direito/u1/peticao', h1: /Resumo de estudo, petição comentada e quiz/ },
-  { caminho: '/p/p1/intr-direito/u1/quiz', h1: /Resumo de estudo, petição comentada e quiz/ }
+  { caminho: '/p/p1/intr-direito/u1/quiz', h1: /Resumo de estudo, petição comentada e quiz/ },
+  { caminho: '/p/p1/redacao-juridica-1', h1: /Português e Redação Jurídica 1/ },
+  { caminho: '/p/p1/redacao-juridica-1/u1', h1: /Resumo de estudo, petição comentada e quiz/ },
+  {
+    caminho: '/p/p1/redacao-juridica-1/u1/peticao',
+    h1: /Resumo de estudo, petição comentada e quiz/
+  },
+  { caminho: '/p/p1/redacao-juridica-1/u1/quiz', h1: /Resumo de estudo, petição comentada e quiz/ }
 ];
 
 for (const { caminho, h1 } of ENDERECOS) {

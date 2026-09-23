@@ -83,6 +83,7 @@ function estaMarcado(id: string): boolean {
   align-items: center;
   gap: var(--esp-2, 0.5rem);
   min-height: var(--alvo-toque-minimo, 24px);
+  min-width: var(--alvo-toque-minimo, 24px);
   cursor: pointer;
 }
 

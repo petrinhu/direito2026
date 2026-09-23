@@ -8,7 +8,11 @@ defineProps<{ peca: PecaComentada }>();
   <article class="peca-comentada">
     <h2>{{ peca.titulo }}</h2>
     <p class="peca-comentada__nota" v-html="peca.notaHtml" />
-    <section v-if="peca.enunciadoHtml" class="peca-comentada__enunciado" aria-label="Enunciado do caso">
+    <section
+      v-if="peca.enunciadoHtml"
+      class="peca-comentada__enunciado"
+      aria-label="Enunciado do caso"
+    >
       <h3>O enunciado do caso</h3>
       <div v-html="peca.enunciadoHtml" />
     </section>

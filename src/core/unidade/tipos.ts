@@ -13,9 +13,7 @@ export interface MetaUnidade {
  * fechado de propósito, igual a ChaveAba.
  */
 export type ChaveComponenteExtra =
-  | 'checklist-art-319'
-  | 'cartoes-cinco-perguntas'
-  | 'dicas-forma-professora';
+  'checklist-art-319' | 'cartoes-cinco-perguntas' | 'dicas-forma-professora';
 
 /** Um bloco teórico do resumo. */
 export interface BlocoResumo {

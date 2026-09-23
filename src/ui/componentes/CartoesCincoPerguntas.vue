@@ -29,7 +29,11 @@ function alternar(indice: number): void {
 </script>
 
 <template>
-  <div class="cartoes-cinco-perguntas" role="group" aria-label="Cartões das cinco perguntas de toda petição">
+  <div
+    class="cartoes-cinco-perguntas"
+    role="group"
+    aria-label="Cartões das cinco perguntas de toda petição"
+  >
     <button
       v-for="(cartao, indice) in CARTOES"
       :key="cartao.frente"

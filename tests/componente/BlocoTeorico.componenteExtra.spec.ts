@@ -25,7 +25,9 @@ function blocoBase(extra: Partial<BlocoResumo> = {}): BlocoResumo {
 
 describe('BlocoTeorico, componenteExtra', () => {
   it('sem componenteExtra, nenhum dos três extras aparece', () => {
-    const wrapper = mount(BlocoTeorico, { props: { bloco: blocoBase(), itensChecklistMarcados: [] } });
+    const wrapper = mount(BlocoTeorico, {
+      props: { bloco: blocoBase(), itensChecklistMarcados: [] }
+    });
     expect(wrapper.findComponent({ name: 'ChecklistArt319' }).exists()).toBe(false);
     expect(wrapper.findComponent({ name: 'CartoesCincoPerguntas' }).exists()).toBe(false);
     expect(wrapper.findComponent({ name: 'DicasFormaProfessora' }).exists()).toBe(false);

@@ -15,7 +15,12 @@ function pecaBase(extra: Partial<PecaComentada> = {}): PecaComentada {
     titulo: 'Petição de teste',
     notaHtml: '<p>nota</p>',
     secoes: [
-      { id: 's1', titulo: 'Seção 1', corpoHtml: '<p>corpo</p>', comentarioHtml: '<p>comentário</p>' }
+      {
+        id: 's1',
+        titulo: 'Seção 1',
+        corpoHtml: '<p>corpo</p>',
+        comentarioHtml: '<p>comentário</p>'
+      }
     ],
     ...extra
   };

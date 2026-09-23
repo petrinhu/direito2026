@@ -19,6 +19,10 @@ import {
   agendarVerificacoesAtualizacao,
   type FonteAgendamentoSW
 } from '@/app/atualizacaoSW/agendarVerificacoesAtualizacao';
+import {
+  criarTratadorFalhaModulo,
+  type ArmazenamentoRecarga
+} from '@/app/atualizacaoSW/recarregarAoFalharModulo';
 import '@/ui/estilos/fontes.css';
 import '@/ui/estilos/tokens.css';
 import '@/ui/estilos/base.css';
@@ -60,6 +64,55 @@ function criarFonteAgendamentoSW(router: Router): FonteAgendamentoSW {
     }
   };
 }
+
+/**
+ * Complemento ao caso acima (mesmo pedido do líder, 23/09/2026): uma aba
+ * que já estava aberta na versão A, ao navegar para uma seção ainda não
+ * visitada, pede um pedaço de código com hash da versão A que a
+ * publicação da B apagou do servidor. A regra de fallback do `.htaccess`
+ * devolve `index.html` no lugar do módulo, o `import()` dinâmico falha, e
+ * a seção fica em branco sem aviso. O Vite emite `vite:preloadError` no
+ * `window` para exatamente este caso (documentação oficial, "Load Error
+ * Handling"); recarregar busca `index.html` e os módulos já na versão B.
+ *
+ * `sessionStorage` com carimbo de tempo evita laço: se a página acabou de
+ * recarregar por esta causa há poucos segundos e volta a falhar (comum,
+ * porque a mesma navegação pode disparar mais de um `import()` velho em
+ * sequência), a segunda falha não recarrega de novo - evita a página
+ * ficar recarregando sem parar caso a causa não se resolva.
+ */
+const CHAVE_MARCA_RECARGA_MODULO = 'caderno-direito:recarga-modulo-em';
+const JANELA_PROTECAO_LACO_MS = 10_000;
+
+function criarArmazenamentoRecargaReal(): ArmazenamentoRecarga {
+  return {
+    lerMarcaRecente() {
+      try {
+        const valor = window.sessionStorage.getItem(CHAVE_MARCA_RECARGA_MODULO);
+        if (!valor) return false;
+        const registradoEm = Number(valor);
+        return Number.isFinite(registradoEm) && Date.now() - registradoEm < JANELA_PROTECAO_LACO_MS;
+      } catch {
+        // sessionStorage bloqueado (modo privado, política do navegador):
+        // não travar o recarregamento por causa disso.
+        return false;
+      }
+    },
+    gravarMarca() {
+      try {
+        window.sessionStorage.setItem(CHAVE_MARCA_RECARGA_MODULO, String(Date.now()));
+      } catch {
+        // sem sessionStorage, a proteção contra laço fica ausente aqui,
+        // mas o recarregamento em si (o que importa) continua funcionando.
+      }
+    }
+  };
+}
+
+window.addEventListener(
+  'vite:preloadError',
+  criarTratadorFalhaModulo(criarArmazenamentoRecargaReal(), () => window.location.reload())
+);
 
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();

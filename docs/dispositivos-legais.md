@@ -11,6 +11,11 @@ mesmo conteúdo está em `dispositivos-legais.json`, para consumo pelo site.
 Varredura: 11 dispositivos distintos citados, todos verificados. Nenhum ficou sem
 confirmação.
 
+**Atualização de 22/09/2026:** acrescentados 14 dispositivos novos, usados na
+petição comentada do caso Marina e Ricardo (ação de divórcio litigioso c/c
+partilha e danos morais), todos conferidos no texto compilado do Planalto na
+mesma data. Catálogo total: 25 dispositivos.
+
 ## Constituição Federal de 1988
 
 ### cf-5-v: art. 5º, inciso V
@@ -51,6 +56,35 @@ Fonte: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
 Citado na linha 776, marcado no próprio material como `fonteExtra: true`
 (não é um dos "4 artigos-base" do caso estudado).
 
+### cf-226-6: art. 226, § 6º
+
+> § 6º O casamento civil pode ser dissolvido pelo divórcio.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+(consulta em 22/09/2026). Redação dada pela Emenda Constitucional nº 66, de
+2010 [ec-66-2010]. A redação anterior condicionava o divórcio à prévia
+separação judicial por mais de um ano ou à separação de fato comprovada por
+mais de dois anos; a EC 66/2010 suprimiu essa exigência.
+
+Fundamento do pedido de divórcio na petição comentada do caso Marina e
+Ricardo.
+
+## Emenda Constitucional nº 66, de 2010
+
+### ec-66-2010: art. 1º
+
+> Art. 1º O § 6º do art. 226 da Constituição Federal passa a vigorar com a
+> seguinte redação:
+> "Art. 226. ...
+> § 6º O casamento civil pode ser dissolvido pelo divórcio." (NR)
+
+Fonte: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc66.htm
+(consulta em 22/09/2026). Ementa oficial: "Dá nova redação ao § 6º do art. 226
+da Constituição Federal, que dispõe sobre a dissolubilidade do casamento civil
+pelo divórcio, suprimindo o requisito de prévia separação judicial por mais de
+1 (um) ano ou de comprovada separação de fato por mais de 2 (dois) anos."
+Publicada no DOU de 14/07/2010, em vigor na data da publicação (art. 2º).
+
 ## Código Civil (Lei nº 10.406/2002)
 
 ### cc-186: art. 186
@@ -66,6 +100,121 @@ de inconstitucionalidade pendentes de julgamento, que não alteram a redação
 vigente do artigo.
 
 Citado nas linhas 346, 358, 360, 361, 362, 369, 374, 378, 783 e 788.
+
+### cc-1571: art. 1.571
+
+> Art. 1.571. A sociedade conjugal termina:
+> I - pela morte de um dos cônjuges;
+> II - pela nulidade ou anulação do casamento;
+> III - pela separação judicial;
+> IV - pelo divórcio.
+> § 1º O casamento válido só se dissolve pela morte de um dos cônjuges ou pelo
+> divórcio, aplicando-se a presunção estabelecida neste Código quanto ao
+> ausente.
+> § 2º Dissolvido o casamento pelo divórcio direto ou por conversão, o cônjuge
+> poderá manter o nome de casado; salvo, no segundo caso, dispondo em
+> contrário a sentença de separação judicial.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). O inciso III e o § 2º não foram atualizados pelo
+Legislativo após a EC 66/2010 [ec-66-2010]. O STF, no Tema 1053 de
+repercussão geral (RE 1.167.478/RJ), decidiu que a separação judicial deixou
+de subsistir como figura autônoma; essa informação sobre o Tema 1053 veio de
+fonte secundária, não da fonte oficial do STF, por falha de conexão nesta
+consulta.
+
+Fundamento do tópico do divórcio (inciso IV) na petição comentada do caso
+Marina e Ricardo, e artigo usado pela professora no quadro para o mesmo
+tópico no caso Ana e Carlos.
+
+### cc-1571-iv: art. 1.571, inciso IV
+
+> IV - pelo divórcio.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+### cc-1580: art. 1.580
+
+> Art. 1.580. Decorrido um ano do trânsito em julgado da sentença que houver
+> decretado a separação judicial, ou da decisão concessiva da medida cautelar
+> de separação de corpos, qualquer das partes poderá requerer sua conversão
+> em divórcio.
+> § 1º A conversão em divórcio da separação judicial dos cônjuges será
+> decretada por sentença, da qual não constará referência à causa que a
+> determinou.
+> § 2º O divórcio poderá ser requerido, por um ou por ambos os cônjuges, no
+> caso de comprovada separação de fato por mais de dois anos.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Mantém a redação original de 2002, que trata da
+conversão da separação judicial em divórcio e do divórcio por separação de
+fato de mais de dois anos. Não fundamenta a dispensa de causa para o
+divórcio; essa dispensa decorre do art. 226, § 6º, da CF [cf-226-6], na
+redação da EC 66/2010 [ec-66-2010]. O modelo original da peça citava este
+artigo para esse fim; a versão comentada retirou a citação do corpo da peça
+e registrou a explicação no comentário.
+
+### cc-1583: art. 1.583
+
+> Art. 1.583. A guarda será unilateral ou compartilhada. (Redação dada pela
+> Lei nº 11.698, de 2008)
+> § 1º Compreende-se por guarda unilateral a atribuída a um só dos genitores
+> ou a alguém que o substitua (art. 1.584, § 5º) e, por guarda compartilhada
+> a responsabilização conjunta e o exercício de direitos e deveres do pai e
+> da mãe que não vivam sob o mesmo teto, concernentes ao poder familiar dos
+> filhos comuns. (Incluído pela Lei nº 11.698, de 2008)
+> § 2º Na guarda compartilhada, o tempo de convívio com os filhos deve ser
+> dividido de forma equilibrada com a mãe e com o pai, sempre tendo em vista
+> as condições fáticas e os interesses dos filhos. (Redação dada pela Lei nº
+> 13.058, de 2014)
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Caput com redação da Lei nº 11.698/2008; § 2º com
+redação da Lei nº 13.058/2014.
+
+### cc-1658: art. 1.658
+
+> Art. 1.658. No regime de comunhão parcial, comunicam-se os bens que
+> sobrevierem ao casal, na constância do casamento, com as exceções dos
+> artigos seguintes.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+Fundamento do tópico da partilha na petição comentada, e artigo usado pela
+professora no quadro para o mesmo tópico no caso Ana e Carlos.
+
+### cc-1660-i: art. 1.660, inciso I
+
+> I - os bens adquiridos na constância do casamento por título oneroso, ainda
+> que só em nome de um dos cônjuges;
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+### cc-1694: art. 1.694
+
+> Art. 1.694. Podem os parentes, os cônjuges ou companheiros pedir uns aos
+> outros os alimentos de que necessitem para viver de modo compatível com a
+> sua condição social, inclusive para atender às necessidades de sua
+> educação.
+> § 1º Os alimentos devem ser fixados na proporção das necessidades do
+> reclamante e dos recursos da pessoa obrigada.
+> § 2º Os alimentos serão apenas os indispensáveis à subsistência, quando a
+> situação de necessidade resultar de culpa de quem os pleiteia.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+### cc-1696: art. 1.696
+
+> Art. 1.696. O direito à prestação de alimentos é recíproco entre pais e
+> filhos, e extensivo a todos os ascendentes, recaindo a obrigação nos mais
+> próximos em grau, uns em falta de outros.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+(consulta em 22/09/2026). Sem alteração de redação.
 
 ### cc-187: art. 187 (correlato)
 
@@ -110,6 +259,52 @@ Citado na linha 804, marcado como `fonteExtra: true` (correlato ao art. 927,
 trata da medida da indenização).
 
 ## Código de Processo Civil (Lei nº 13.105/2015)
+
+### cpc-85: art. 85 (caput)
+
+> Art. 85. A sentença condenará o vencido a pagar honorários ao advogado do
+> vencedor.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm
+(consulta em 22/09/2026). Transcrito apenas o caput, que é o citado no pedido
+de honorários de sucumbência de petição inicial. O artigo tem parágrafos
+extensos sobre percentuais e critérios de fixação (com o § 6º-A incluído pela
+Lei nº 14.365/2022), não reproduzidos por não serem objeto da citação da peça
+em estudo.
+
+### cpc-292: art. 292
+
+> Art. 292. O valor da causa constará da petição inicial ou da reconvenção e
+> será:
+> I - na ação de cobrança de dívida, a soma monetariamente corrigida do
+> principal, dos juros de mora vencidos e de outras penalidades, se houver,
+> até a data de propositura da ação;
+> II - na ação que tiver por objeto a existência, a validade, o cumprimento, a
+> modificação, a resolução, a resilição ou a rescisão de ato jurídico, o valor
+> do ato ou o de sua parte controvertida;
+> III - na ação de alimentos, a soma de 12 (doze) prestações mensais pedidas
+> pelo autor;
+> IV - na ação de divisão, de demarcação e de reivindicação, o valor de
+> avaliação da área ou do bem objeto do pedido;
+> V - na ação indenizatória, inclusive a fundada em dano moral, o valor
+> pretendido;
+> VI - na ação em que há cumulação de pedidos, a quantia correspondente à
+> soma dos valores de todos eles;
+> VII - na ação em que os pedidos são alternativos, o de maior valor;
+> VIII - na ação em que houver pedido subsidiário, o valor do pedido
+> principal.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+### cpc-294: art. 294
+
+> Art. 294. A tutela provisória pode fundamentar-se em urgência ou evidência.
+> Parágrafo único. A tutela provisória de urgência, cautelar ou antecipada,
+> pode ser concedida em caráter antecedente ou incidental.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm
+(consulta em 22/09/2026). Sem alteração de redação.
 
 ### cpc-319: art. 319 (citado sem inciso específico)
 
@@ -170,6 +365,17 @@ Fonte: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm
 (consulta em 21/09/2026). Sem alteração de redação.
 
 Citado nas linhas 386, 715 e 718.
+
+### cpc-319-vii: art. 319, inciso VII
+
+> VII - a opção do autor pela realização ou não de audiência de conciliação
+> ou de mediação.
+
+Fonte: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm
+(consulta em 22/09/2026). Sem alteração de redação.
+
+Fundamento do tópico da audiência de conciliação na petição comentada do
+caso Marina e Ricardo.
 
 ### cpc-320: art. 320 (correlato)
 

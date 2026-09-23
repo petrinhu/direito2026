@@ -119,5 +119,159 @@
     "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
     "dataConsulta": "2026-09-21",
     "notaAlteracao": ""
+  },
+  {
+    "id": "cf-226-6",
+    "diploma": "Constituição da República Federativa do Brasil de 1988",
+    "diplomaSigla": "CF/88",
+    "artigo": "226",
+    "inciso": "§ 6º",
+    "texto": "§ 6º O casamento civil pode ser dissolvido pelo divórcio.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Redação dada pela Emenda Constitucional nº 66, de 2010 [ec-66-2010]. A redação anterior condicionava o divórcio à prévia separação judicial por mais de um ano ou à separação de fato comprovada por mais de dois anos; a EC 66/2010 suprimiu essa exigência."
+  },
+  {
+    "id": "ec-66-2010",
+    "diploma": "Emenda Constitucional nº 66, de 13 de julho de 2010",
+    "diplomaSigla": "EC 66/2010",
+    "artigo": "1º",
+    "inciso": "",
+    "texto": "Art. 1º O § 6º do art. 226 da Constituição Federal passa a vigorar com a seguinte redação:\n\"Art. 226. ...\n§ 6º O casamento civil pode ser dissolvido pelo divórcio.\" (NR)",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc66.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Ementa oficial: \"Dá nova redação ao § 6º do art. 226 da Constituição Federal, que dispõe sobre a dissolubilidade do casamento civil pelo divórcio, suprimindo o requisito de prévia separação judicial por mais de 1 (um) ano ou de comprovada separação de fato por mais de 2 (dois) anos.\" Publicada no DOU de 14/07/2010, em vigor na data da publicação (art. 2º)."
+  },
+  {
+    "id": "cc-1571",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1571",
+    "inciso": "",
+    "texto": "Art. 1.571. A sociedade conjugal termina:\nI - pela morte de um dos cônjuges;\nII - pela nulidade ou anulação do casamento;\nIII - pela separação judicial;\nIV - pelo divórcio.\n§ 1º O casamento válido só se dissolve pela morte de um dos cônjuges ou pelo divórcio, aplicando-se a presunção estabelecida neste Código quanto ao ausente.\n§ 2º Dissolvido o casamento pelo divórcio direto ou por conversão, o cônjuge poderá manter o nome de casado; salvo, no segundo caso, dispondo em contrário a sentença de separação judicial.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "O inciso III (\"pela separação judicial\") e a referência à sentença de separação judicial no § 2º não foram atualizados pelo Legislativo após a Emenda Constitucional nº 66/2010 [ec-66-2010]. O STF, no julgamento de mérito do Tema 1053 de repercussão geral (RE 1.167.478/RJ, confirmação obtida apenas por fonte secundária, não pela fonte oficial do STF nesta consulta), decidiu que a separação judicial deixou de subsistir como figura autônoma, ressalvado o estado civil de quem já se separou antes da emenda."
+  },
+  {
+    "id": "cc-1571-iv",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1571",
+    "inciso": "IV",
+    "texto": "IV - pelo divórcio.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cc-1580",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1580",
+    "inciso": "",
+    "texto": "Art. 1.580. Decorrido um ano do trânsito em julgado da sentença que houver decretado a separação judicial, ou da decisão concessiva da medida cautelar de separação de corpos, qualquer das partes poderá requerer sua conversão em divórcio.\n§ 1º A conversão em divórcio da separação judicial dos cônjuges será decretada por sentença, da qual não constará referência à causa que a determinou.\n§ 2º O divórcio poderá ser requerido, por um ou por ambos os cônjuges, no caso de comprovada separação de fato por mais de dois anos.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Mantém a redação original de 2002, que trata da conversão da separação judicial em divórcio e do divórcio por separação de fato de mais de dois anos. Não é o fundamento correto para afirmar que o divórcio dispensa causa: essa dispensa decorre do art. 226, § 6º, da Constituição Federal [cf-226-6], na redação dada pela EC 66/2010 [ec-66-2010]."
+  },
+  {
+    "id": "cc-1583",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1583",
+    "inciso": "",
+    "texto": "Art. 1.583. A guarda será unilateral ou compartilhada. (Redação dada pela Lei nº 11.698, de 2008)\n§ 1º Compreende-se por guarda unilateral a atribuída a um só dos genitores ou a alguém que o substitua (art. 1.584, § 5º) e, por guarda compartilhada a responsabilização conjunta e o exercício de direitos e deveres do pai e da mãe que não vivam sob o mesmo teto, concernentes ao poder familiar dos filhos comuns. (Incluído pela Lei nº 11.698, de 2008)\n§ 2º Na guarda compartilhada, o tempo de convívio com os filhos deve ser dividido de forma equilibrada com a mãe e com o pai, sempre tendo em vista as condições fáticas e os interesses dos filhos. (Redação dada pela Lei nº 13.058, de 2014)",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Caput com redação dada pela Lei nº 11.698/2008; § 2º com redação dada pela Lei nº 13.058/2014."
+  },
+  {
+    "id": "cc-1658",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1658",
+    "inciso": "",
+    "texto": "Art. 1.658. No regime de comunhão parcial, comunicam-se os bens que sobrevierem ao casal, na constância do casamento, com as exceções dos artigos seguintes.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cc-1660-i",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1660",
+    "inciso": "I",
+    "texto": "I - os bens adquiridos na constância do casamento por título oneroso, ainda que só em nome de um dos cônjuges;",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cc-1694",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1694",
+    "inciso": "",
+    "texto": "Art. 1.694. Podem os parentes, os cônjuges ou companheiros pedir uns aos outros os alimentos de que necessitem para viver de modo compatível com a sua condição social, inclusive para atender às necessidades de sua educação.\n§ 1º Os alimentos devem ser fixados na proporção das necessidades do reclamante e dos recursos da pessoa obrigada.\n§ 2º Os alimentos serão apenas os indispensáveis à subsistência, quando a situação de necessidade resultar de culpa de quem os pleiteia.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cc-1696",
+    "diploma": "Código Civil (Lei nº 10.406, de 10 de janeiro de 2002)",
+    "diplomaSigla": "CC",
+    "artigo": "1696",
+    "inciso": "",
+    "texto": "Art. 1.696. O direito à prestação de alimentos é recíproco entre pais e filhos, e extensivo a todos os ascendentes, recaindo a obrigação nos mais próximos em grau, uns em falta de outros.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cpc-85",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "85",
+    "inciso": "",
+    "texto": "Art. 85. A sentença condenará o vencido a pagar honorários ao advogado do vencedor.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Transcrito apenas o caput, que é o normalmente citado no pedido de honorários de sucumbência de petição inicial. O artigo tem parágrafos extensos (com redação alterada pela Lei nº 14.365/2022 no § 6º-A) sobre os percentuais e critérios de fixação, não reproduzidos aqui por não serem objeto da citação da peça em estudo."
+  },
+  {
+    "id": "cpc-292",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "292",
+    "inciso": "",
+    "texto": "Art. 292. O valor da causa constará da petição inicial ou da reconvenção e será:\nI - na ação de cobrança de dívida, a soma monetariamente corrigida do principal, dos juros de mora vencidos e de outras penalidades, se houver, até a data de propositura da ação;\nII - na ação que tiver por objeto a existência, a validade, o cumprimento, a modificação, a resolução, a resilição ou a rescisão de ato jurídico, o valor do ato ou o de sua parte controvertida;\nIII - na ação de alimentos, a soma de 12 (doze) prestações mensais pedidas pelo autor;\nIV - na ação de divisão, de demarcação e de reivindicação, o valor de avaliação da área ou do bem objeto do pedido;\nV - na ação indenizatória, inclusive a fundada em dano moral, o valor pretendido;\nVI - na ação em que há cumulação de pedidos, a quantia correspondente à soma dos valores de todos eles;\nVII - na ação em que os pedidos são alternativos, o de maior valor;\nVIII - na ação em que houver pedido subsidiário, o valor do pedido principal.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cpc-294",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "294",
+    "inciso": "",
+    "texto": "Art. 294. A tutela provisória pode fundamentar-se em urgência ou evidência.\nParágrafo único. A tutela provisória de urgência, cautelar ou antecipada, pode ser concedida em caráter antecedente ou incidental.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
+  },
+  {
+    "id": "cpc-319-vii",
+    "diploma": "Código de Processo Civil (Lei nº 13.105, de 16 de março de 2015)",
+    "diplomaSigla": "CPC",
+    "artigo": "319",
+    "inciso": "VII",
+    "texto": "VII - a opção do autor pela realização ou não de audiência de conciliação ou de mediação.",
+    "urlFonte": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13105.htm",
+    "dataConsulta": "2026-09-22",
+    "notaAlteracao": "Sem alteração de redação."
   }
 ]

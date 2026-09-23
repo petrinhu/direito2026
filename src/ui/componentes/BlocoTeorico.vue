@@ -2,9 +2,15 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { BlocoResumo } from '@/core/unidade/tipos';
 import QuadroResumo from './QuadroResumo.vue';
+import ChecklistArt319 from './ChecklistArt319.vue';
+import CartoesCincoPerguntas from './CartoesCincoPerguntas.vue';
+import DicasFormaProfessora from './DicasFormaProfessora.vue';
 
-const props = defineProps<{ bloco: BlocoResumo }>();
-const emit = defineEmits<{ lido: [string] }>();
+const props = withDefaults(
+  defineProps<{ bloco: BlocoResumo; itensChecklistMarcados?: readonly string[] }>(),
+  { itensChecklistMarcados: () => [] }
+);
+const emit = defineEmits<{ lido: [string]; 'alternar-item-checklist': [string] }>();
 
 const raizRef = ref<HTMLElement | undefined>();
 let observador: IntersectionObserver | undefined;
@@ -39,6 +45,13 @@ onBeforeUnmount(() => observador?.disconnect());
     <p class="bloco-teorico__fonte">{{ bloco.fonte }}</p>
     <!-- v-html só recebe corpoHtml, que vem de src/conteudo/ (seção 4.4). -->
     <div class="bloco-teorico__corpo" v-html="bloco.corpoHtml" />
+    <ChecklistArt319
+      v-if="bloco.componenteExtra === 'checklist-art-319'"
+      :marcados="itensChecklistMarcados"
+      @alternar="emit('alternar-item-checklist', $event)"
+    />
+    <CartoesCincoPerguntas v-else-if="bloco.componenteExtra === 'cartoes-cinco-perguntas'" />
+    <DicasFormaProfessora v-else-if="bloco.componenteExtra === 'dicas-forma-professora'" />
     <QuadroResumo :itens="bloco.resumo" />
     <p class="bloco-teorico__exemplo">
       <strong>Na prática do operador do direito:</strong>

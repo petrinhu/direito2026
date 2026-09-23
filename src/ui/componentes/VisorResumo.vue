@@ -2,8 +2,11 @@
 import type { BlocoResumo } from '@/core/unidade/tipos';
 import BlocoTeorico from './BlocoTeorico.vue';
 
-defineProps<{ blocos: readonly BlocoResumo[] }>();
-const emit = defineEmits<{ 'bloco-lido': [string] }>();
+withDefaults(
+  defineProps<{ blocos: readonly BlocoResumo[]; itensChecklistMarcados?: readonly string[] }>(),
+  { itensChecklistMarcados: () => [] }
+);
+const emit = defineEmits<{ 'bloco-lido': [string]; 'alternar-item-checklist': [string] }>();
 </script>
 
 <template>
@@ -19,7 +22,9 @@ const emit = defineEmits<{ 'bloco-lido': [string] }>();
       v-for="bloco in blocos"
       :key="bloco.id"
       :bloco="bloco"
+      :itens-checklist-marcados="itensChecklistMarcados"
       @lido="emit('bloco-lido', $event)"
+      @alternar-item-checklist="emit('alternar-item-checklist', $event)"
     />
   </div>
 </template>

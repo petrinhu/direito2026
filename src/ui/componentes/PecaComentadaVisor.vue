@@ -8,6 +8,10 @@ defineProps<{ peca: PecaComentada }>();
   <article class="peca-comentada">
     <h2>{{ peca.titulo }}</h2>
     <p class="peca-comentada__nota" v-html="peca.notaHtml" />
+    <section v-if="peca.enunciadoHtml" class="peca-comentada__enunciado" aria-label="Enunciado do caso">
+      <h3>O enunciado do caso</h3>
+      <div v-html="peca.enunciadoHtml" />
+    </section>
     <section
       v-for="secao in peca.secoes"
       :id="secao.id"
@@ -36,6 +40,19 @@ defineProps<{ peca: PecaComentada }>();
   background: var(--cor-fundo-sutil, #f2efe6);
   padding: var(--esp-4, 1rem);
   border-radius: var(--raio-sm, 6px);
+}
+
+.peca-comentada__enunciado {
+  background: var(--cor-fundo-elevado, #fff);
+  border: 1px solid var(--cor-borda, #dcd7c8);
+  border-radius: var(--raio-sm, 6px);
+  padding: var(--esp-4, 1rem);
+  margin-block: var(--esp-5, 1.5rem);
+}
+
+.peca-comentada__enunciado h3 {
+  font-family: var(--fonte-titulo);
+  margin-block-start: 0;
 }
 
 .peca-comentada__secao {

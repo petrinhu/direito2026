@@ -117,7 +117,9 @@ const contagemBlocos = computed(() =>
           <VisorResumo
             v-if="abaDoPainel === 'resumo'"
             :blocos="conteudo.resumo"
+            :itens-checklist-marcados="storeProgresso.registro.value.itensChecklistMarcados ?? []"
             @bloco-lido="storeProgresso.marcarLido($event)"
+            @alternar-item-checklist="storeProgresso.alternarChecklist($event)"
           />
           <PecaComentadaVisor
             v-else-if="abaDoPainel === 'peticao' && conteudo.peticao"

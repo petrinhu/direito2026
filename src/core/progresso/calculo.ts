@@ -37,6 +37,29 @@ export function desmarcarBlocoLido(
 }
 
 /**
+ * Alterna (toggle) um item de checklist: marca se não estava marcado,
+ * desmarca se já estava. Mesmo padrão imutável de marcarBlocoLido, mas num
+ * único helper porque a UI de checklist sempre alterna, nunca marca e
+ * desmarca como duas ações distintas (diferente do bloco lido, que é
+ * marcado por scroll e desmarcado por um botão à parte).
+ */
+export function alternarItemChecklist(
+  registro: RegistroProgressoUnidade,
+  itemId: string,
+  agora: string
+): RegistroProgressoUnidade {
+  const marcados = registro.itensChecklistMarcados ?? [];
+  const jaMarcado = marcados.includes(itemId);
+  return {
+    ...registro,
+    itensChecklistMarcados: jaMarcado
+      ? marcados.filter((id) => id !== itemId)
+      : [...marcados, itemId],
+    atualizadoEm: agora
+  };
+}
+
+/**
  * Conta lidos contra o total de blocos que a unidade TEM HOJE, não contra o
  * que já esteve marcado alguma vez: se o conteúdo mudou e um bloco marcado
  * não existe mais, ele não entra na contagem nem no denominador.

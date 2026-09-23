@@ -5,6 +5,18 @@ export interface MetaUnidade {
   readonly descricao: string;
 }
 
+/**
+ * Chaves dos componentes interativos "extra" que podem aparecer dentro de
+ * um bloco de resumo (BlocoResumo.componenteExtra), além do corpoHtml
+ * estático. Nasceram com a unidade de Redação Jurídica 1 (checklist do
+ * art. 319, cartões das cinco perguntas, dicas de forma da professora);
+ * fechado de propósito, igual a ChaveAba.
+ */
+export type ChaveComponenteExtra =
+  | 'checklist-art-319'
+  | 'cartoes-cinco-perguntas'
+  | 'dicas-forma-professora';
+
 /** Um bloco teórico do resumo. */
 export interface BlocoResumo {
   /** Âncora estável dentro da página. Ex.: 'bloco-0'. */
@@ -22,6 +34,12 @@ export interface BlocoResumo {
   readonly resumo: readonly string[];
   /** Parágrafo "na prática do operador do direito", em HTML confiável. */
   readonly exemploHtml: string;
+  /**
+   * Componente interativo renderizado entre corpoHtml e o quadro-resumo,
+   * quando o bloco carrega um dos três extras da unidade. Ausente na
+   * maioria dos blocos (é a exceção, não a regra).
+   */
+  readonly componenteExtra?: ChaveComponenteExtra;
 }
 
 /** Uma seção da peça comentada. */
@@ -40,6 +58,13 @@ export interface PecaComentada {
   readonly titulo: string;
   /** Nota introdutória que explica a natureza do documento e dos comentários. */
   readonly notaHtml: string;
+  /**
+   * Enunciado do caso, transcrito por inteiro, exibido antes das seções da
+   * peça (ordem do líder, 22/09/2026: "para facilitar o entendimento da
+   * peça"). Opcional: a unidade-piloto (Introdução ao Direito) não tem
+   * enunciado, só o caso já resolvido na peça; a de Redação Jurídica 1 tem.
+   */
+  readonly enunciadoHtml?: string;
   readonly secoes: readonly SecaoPeca[];
 }
 

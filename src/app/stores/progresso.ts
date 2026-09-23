@@ -1,5 +1,6 @@
 import { ref, type Ref } from 'vue';
 import {
+  alternarItemChecklist,
   contarBlocosLidos,
   criarRegistroVazio,
   desmarcarBlocoLido,
@@ -15,6 +16,8 @@ export interface StoreProgressoUnidade {
   readonly registro: Ref<RegistroProgressoUnidade>;
   marcarLido(blocoId: string): void;
   desmarcarLido(blocoId: string): void;
+  /** Extra (a) da unidade de Redação Jurídica 1: alterna um item de checklist. */
+  alternarChecklist(itemId: string): void;
   /** Atualiza e persiste qualquer subconjunto do registro (aba, semente e respostas do quiz). */
   atualizar(patch: Partial<Omit<RegistroProgressoUnidade, 'versao'>>): void;
   contagem(idsBlocosExistentes: readonly string[]): { lidos: number; total: number };
@@ -45,9 +48,13 @@ export function criarStoreProgresso(
     return contarBlocosLidos(registro.value, idsBlocosExistentes);
   }
 
+  function alternarChecklist(itemId: string): void {
+    persistir(alternarItemChecklist(registro.value, itemId, new Date().toISOString()));
+  }
+
   function atualizar(patch: Partial<Omit<RegistroProgressoUnidade, 'versao'>>): void {
     persistir({ ...registro.value, ...patch, atualizadoEm: new Date().toISOString() });
   }
 
-  return { registro, marcarLido, desmarcarLido, atualizar, contagem };
+  return { registro, marcarLido, desmarcarLido, alternarChecklist, atualizar, contagem };
 }

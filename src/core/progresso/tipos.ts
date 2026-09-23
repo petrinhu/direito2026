@@ -12,6 +12,14 @@ export interface RegistroProgressoUnidade {
   /** Mapa id da pergunta -> índice escolhido, na ordem embaralhada da semente acima. */
   readonly quizRespostas?: Readonly<Record<number, 0 | 1 | 2 | 3>>;
   readonly quizFinalizado?: boolean;
+  /**
+   * Ids de item marcado num checklist interativo do resumo (extra (a) da
+   * unidade de Redação Jurídica 1, docs/arquitetura.md): genérico o
+   * bastante para qualquer checklist futuro, não só o art. 319 do CPC.
+   * Mesma persistência tolerante a armazenamento indisponível que já vale
+   * para blocosLidos (RepositorioLocalStorage/RepositorioMemoria).
+   */
+  readonly itensChecklistMarcados?: readonly string[];
 }
 
 export type TemaEscolhido = 'sistema' | 'claro' | 'escuro';

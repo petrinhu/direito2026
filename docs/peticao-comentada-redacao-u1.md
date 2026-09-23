@@ -85,47 +85,27 @@ modelo original: o modelo citava também o art. 1.580 do Código Civil
 explicação de por que ele foi retirado vem no comentário do tópico "Do
 Divórcio", logo abaixo, onde a questão aparece de forma completa.
 
-### I - Dos Fatos
+### 1. Dos Fatos
 
 > A Autora e o Réu contraíram matrimônio há aproximadamente 12 (doze) anos,
-> sob o regime da comunhão parcial de bens.
->
-> Durante o casamento, constituíram patrimônio comum, formado principalmente
-> por uma casa, um veículo e investimentos financeiros.
->
-> Ocorre que a convivência conjugal tornou-se insustentável em razão da
-> conduta do Réu, que passou a manter relacionamento extraconjugal com outra
-> mulher.
->
-> A situação ultrapassou os limites da esfera privada do casal. O Réu passou
-> a frequentar publicamente restaurantes, festas e eventos acompanhado da
-> terceira pessoa, realizando publicações em redes sociais com fotografias e
-> declarações de afeto.
->
-> As publicações foram visualizadas e compartilhadas por amigos e familiares
-> da Autora, que passou a sofrer constrangimentos e questionamentos públicos
-> acerca da infidelidade do marido.
->
-> Como se não bastasse, o Réu encaminhou mensagens a pessoas do círculo
-> social do casal afirmando que a Autora "não era mais sua mulher de
-> verdade" e que estaria "livre para viver sua vida", embora ainda estivesse
-> formalmente casado.
->
-> A conduta do Réu provocou profunda humilhação e constrangimento à Autora,
-> atingindo sua honra e imagem perante pessoas de seu convívio social.
->
-> Diante da ruptura definitiva da vida conjugal, não há interesse da Autora
-> na manutenção do casamento, razão pela qual busca judicialmente a
-> decretação do divórcio, a partilha do patrimônio comum e a reparação pelos
-> danos morais suportados.
+> sob o regime da comunhão parcial de bens, e, na constância do casamento,
+> constituíram patrimônio comum. Ocorre que o Réu passou a manter
+> relacionamento extraconjugal com outra mulher, exposto publicamente em
+> redes sociais, mediante fotografias e declarações de afeto compartilhadas
+> por amigos e familiares da Autora. O Réu também enviou mensagens a pessoas
+> do círculo social do casal depreciando o casamento, causando à Autora
+> humilhação e constrangimento perante seu convívio social. Diante da
+> ruptura da vida conjugal, a Autora busca a decretação do divórcio, a
+> partilha do patrimônio comum e a reparação pelos danos morais suportados.
 
-**Comentário:** narra os fatos em ordem cronológica, sem citar lei nesta
-seção (a fundamentação legal fica reservada para o tópico seguinte, "Do
-Direito"). Reúne as informações que respondem às perguntas básicas de toda
-petição: quem são as partes, o que aconteceu e por quê a autora está indo a
-juízo.
+**Comentário:** os fatos vão em até dez linhas, em ordem cronológica e sem
+argumentação nem citação de lei (a fundamentação fica reservada para o
+tópico seguinte, "Do Direito", inclusive para o detalhamento de cada
+situação no FATO de cada tópico). Aqui entra só o que é juridicamente
+relevante para sustentar os pedidos: quem são as partes, o que aconteceu e
+por que a autora está indo a juízo.
 
-### II - Do Direito
+### 2. Do Direito
 
 Cada tópico segue o método ensinado em sala: FATO (o recorte do caso que
 importa para aquele pedido específico), FUNDAMENTO (a lei que sustenta o
@@ -261,7 +241,7 @@ narrado na seção "Dos Fatos"; é uma exigência formal do art. 319, VII, do
 CPC, que toda petição inicial precisa responder, dizendo se a parte quer ou
 não a audiência.
 
-### III - Dos Pedidos
+### 3. Dos Pedidos
 
 > Diante do exposto, requer:
 >
@@ -312,8 +292,6 @@ apareceram (divórcio, partilha, danos morais, tutela provisória, audiência),
 depois o pedido de sucumbência, e, por último, sempre nesta ordem, os dois
 itens que fecham toda petição, a citação do réu para se defender e o pedido
 de produção de todas as provas admitidas em direito.
-
-### IV - Do Valor da Causa
 
 > Dá-se à causa, para fins fiscais e de alçada, o valor de R$ __________,
 > correspondente à soma do proveito econômico pretendido com a partilha dos

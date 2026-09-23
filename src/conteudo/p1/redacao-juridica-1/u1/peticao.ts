@@ -56,24 +56,26 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'dos-fatos',
-      titulo: 'I - Dos Fatos',
+      titulo: '1. Dos Fatos',
       corpoHtml: `
-      <p>A Autora e o Réu contraíram matrimônio há aproximadamente 12 (doze) anos, sob o regime da comunhão parcial de bens.</p>
-      <p>Durante o casamento, constituíram patrimônio comum, formado principalmente por uma casa, um veículo e investimentos financeiros.</p>
-      <p>Ocorre que a convivência conjugal tornou-se insustentável em razão da conduta do Réu, que passou a manter relacionamento extraconjugal com outra mulher.</p>
-      <p>A situação ultrapassou os limites da esfera privada do casal. O Réu passou a frequentar publicamente restaurantes, festas e eventos acompanhado da terceira pessoa, realizando publicações em redes sociais com fotografias e declarações de afeto.</p>
-      <p>As publicações foram visualizadas e compartilhadas por amigos e familiares da Autora, que passou a sofrer constrangimentos e questionamentos públicos acerca da infidelidade do marido.</p>
-      <p>Como se não bastasse, o Réu encaminhou mensagens a pessoas do círculo social do casal afirmando que a Autora "não era mais sua mulher de verdade" e que estaria "livre para viver sua vida", embora ainda estivesse formalmente casado.</p>
-      <p>A conduta do Réu provocou profunda humilhação e constrangimento à Autora, atingindo sua honra e imagem perante pessoas de seu convívio social.</p>
-      <p>Diante da ruptura definitiva da vida conjugal, não há interesse da Autora na manutenção do casamento, razão pela qual busca judicialmente a decretação do divórcio, a partilha do patrimônio comum e a reparação pelos danos morais suportados.</p>
+      <p>A Autora e o Réu contraíram matrimônio há aproximadamente 12 (doze) anos, sob o regime da comunhão parcial de bens, e, na constância do casamento, constituíram patrimônio comum. Ocorre que o Réu passou a manter relacionamento extraconjugal com outra mulher, exposto publicamente em redes sociais, mediante fotografias e declarações de afeto compartilhadas por amigos e familiares da Autora. O Réu também enviou mensagens a pessoas do círculo social do casal depreciando o casamento, causando à Autora humilhação e constrangimento perante seu convívio social. Diante da ruptura da vida conjugal, a Autora busca a decretação do divórcio, a partilha do patrimônio comum e a reparação pelos danos morais suportados.</p>
       `,
       comentarioHtml: `
-      <strong>Como fazer</strong>Narra os fatos em ordem cronológica, sem citar lei nesta seção (a fundamentação legal fica reservada para o tópico seguinte, "Do Direito"). Reúne as informações que respondem às perguntas básicas de toda petição: quem são as partes, o que aconteceu e por que a autora está indo a juízo.
+      <strong>Como fazer</strong>Os fatos vão em até dez linhas, em ordem cronológica e sem argumentação nem citação de lei (a fundamentação fica reservada para o tópico seguinte, "Do Direito", inclusive para o detalhamento de cada situação no FATO de cada tópico). Aqui entra só o que é juridicamente relevante para sustentar os pedidos: quem são as partes, o que aconteceu e por que a autora está indo a juízo.
+      `,
+    },
+    {
+      id: 'do-direito',
+      titulo: '2. Do Direito',
+      // Seção-título "guarda-chuva", sem corpo próprio (como no quadro da
+      // professora): só organiza os tópicos 2.1 a 2.5 que vêm a seguir.
+      comentarioHtml: `
+      <strong>Como fazer</strong>Cada tópico segue o método ensinado em sala: FATO (o recorte do caso que importa para aquele pedido específico), FUNDAMENTO (a lei que sustenta o pedido) e PEDIDO (uma frase curta e resumida, remetendo ao fato e ao fundamento descritos; o detalhamento de cada pedido fica reservado para a seção "Dos Pedidos", mais adiante).
       `,
     },
     {
       id: 'do-direito-divorcio',
-      titulo: 'II.1 - Do Direito: Do Divórcio',
+      titulo: '2.1 Do Divórcio',
       corpoHtml: `
       <p><strong>FATO:</strong> Marina e Ricardo estão casados há 12 anos, sob o regime da comunhão parcial de bens. O casamento entrou em crise após a descoberta, por Marina, do relacionamento extraconjugal mantido por Ricardo, tornando insustentável a convivência conjugal. Por essa razão, Marina requer o divórcio.</p>
       <p><strong>FUNDAMENTO:</strong> Com base no art. <button type="button" class="citacao" data-dispositivo="cf-226-6" aria-expanded="false" aria-controls="balao-dispositivo">226, § 6º, da Constituição Federal</button>, na redação dada pela <button type="button" class="citacao" data-dispositivo="ec-66-2010" aria-expanded="false" aria-controls="balao-dispositivo">Emenda Constitucional nº 66, de 2010</button>, o casamento civil pode ser dissolvido pelo divórcio, sem necessidade de prévia separação nem de demonstração de causa. O art. <button type="button" class="citacao" data-dispositivo="cc-1571-iv" aria-expanded="false" aria-controls="balao-dispositivo">1.571, IV, do Código Civil</button> estabelece o divórcio como causa de dissolução da sociedade conjugal.</p>
@@ -85,7 +87,7 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'do-direito-partilha',
-      titulo: 'II.2 - Do Direito: Da Partilha dos Bens',
+      titulo: '2.2 Da Partilha dos Bens',
       corpoHtml: `
       <p><strong>FATO:</strong> Durante a constância do casamento, sob o regime da comunhão parcial de bens, o casal adquiriu, mediante esforço comum, uma casa avaliada em R$ 500.000,00, um veículo avaliado em R$ 80.000,00 e investimentos no valor aproximado de R$ 120.000,00.</p>
       <p><strong>FUNDAMENTO:</strong> Em conformidade com os arts. <button type="button" class="citacao" data-dispositivo="cc-1658" aria-expanded="false" aria-controls="balao-dispositivo">1.658</button> e <button type="button" class="citacao" data-dispositivo="cc-1660-i" aria-expanded="false" aria-controls="balao-dispositivo">1.660, I</button>, do Código Civil, no regime da comunhão parcial comunicam-se os bens adquiridos onerosamente na constância do casamento, havendo previsão legal para a divisão dos bens.</p>
@@ -97,7 +99,7 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'do-direito-danos-morais',
-      titulo: 'II.3 - Do Direito: Dos Danos Morais',
+      titulo: '2.3 Dos Danos Morais',
       corpoHtml: `
       <p><strong>FATO:</strong> Ricardo expôs publicamente o relacionamento extraconjugal, publicando fotografias e declarações de afeto em redes sociais, compartilhadas por amigos e familiares de Marina, e enviou mensagens a amigos em comum depreciando o casamento, causando a Marina humilhação e constrangimento perante seu círculo social.</p>
       <p><strong>FUNDAMENTO:</strong> Os arts. <button type="button" class="citacao" data-dispositivo="cf-5-v" aria-expanded="false" aria-controls="balao-dispositivo">5º, V</button>, e <button type="button" class="citacao" data-dispositivo="cf-5-x" aria-expanded="false" aria-controls="balao-dispositivo">5º, X</button>, da Constituição Federal asseguram o direito à indenização por dano material ou moral decorrente da violação da honra, da intimidade e da imagem. Os arts. <button type="button" class="citacao" data-dispositivo="cc-186" aria-expanded="false" aria-controls="balao-dispositivo">186</button> e <button type="button" class="citacao" data-dispositivo="cc-927" aria-expanded="false" aria-controls="balao-dispositivo">927</button> do Código Civil estabelecem que aquele que, por ato ilícito, causar dano a outrem fica obrigado a repará-lo.</p>
@@ -109,7 +111,7 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'do-direito-tutela-provisoria',
-      titulo: 'II.4 - Do Direito: Da Tutela Provisória',
+      titulo: '2.4 Da Tutela Provisória',
       corpoHtml: `
       <p><strong>FATO:</strong> Há risco de que publicações contendo imagens, mensagens ou declarações ofensivas a Marina continuem disponíveis nas redes sociais durante a tramitação do processo.</p>
       <p><strong>FUNDAMENTO:</strong> O <button type="button" class="citacao" data-dispositivo="cpc-294" aria-expanded="false" aria-controls="balao-dispositivo">art. 294 do Código de Processo Civil</button> admite a tutela provisória fundada em urgência, cabível para determinar, desde logo, a retirada de publicações que exponham indevidamente a Autora.</p>
@@ -121,7 +123,7 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'do-direito-audiencia-conciliacao',
-      titulo: 'II.5 - Do Direito: Da Audiência de Conciliação',
+      titulo: '2.5 Da Audiência de Conciliação',
       corpoHtml: `
       <p><strong>FATO:</strong> A Autora manifesta, desde já, interesse na realização de audiência de conciliação antes do prosseguimento do feito.</p>
       <p><strong>FUNDAMENTO:</strong> O <button type="button" class="citacao" data-dispositivo="cpc-319-vii" aria-expanded="false" aria-controls="balao-dispositivo">art. 319, VII, do Código de Processo Civil</button> exige que a petição inicial indique a opção do autor pela realização ou não de audiência de conciliação ou de mediação.</p>
@@ -133,7 +135,7 @@ export const peticao: PecaComentada = {
     },
     {
       id: 'dos-pedidos',
-      titulo: 'III - Dos Pedidos',
+      titulo: '3. Dos Pedidos',
       corpoHtml: `
       <p>Diante do exposto, requer:</p>
       <p>a) seja decretado o divórcio das partes, independentemente da concordância do Réu, nos termos do art. <button type="button" class="citacao" data-dispositivo="cf-226-6" aria-expanded="false" aria-controls="balao-dispositivo">226, § 6º, da Constituição Federal</button> e do art. <button type="button" class="citacao" data-dispositivo="cc-1571-iv" aria-expanded="false" aria-controls="balao-dispositivo">1.571, IV, do Código Civil</button>;</p>
@@ -151,19 +153,10 @@ export const peticao: PecaComentada = {
       <p>h) seja o Réu condenado ao pagamento das custas processuais e dos honorários advocatícios sucumbenciais, na forma do <button type="button" class="citacao" data-dispositivo="cpc-85" aria-expanded="false" aria-controls="balao-dispositivo">art. 85 do Código de Processo Civil</button>;</p>
       <p>i) a citação do Réu para, querendo, apresentar contestação;</p>
       <p>j) a produção de todas as provas admitidas em direito.</p>
-      `,
-      comentarioHtml: `
-      <strong>Como fazer</strong>Esta seção desenvolve, em alíneas, tudo o que foi pedido de forma resumida em cada tópico de "Do Direito". A ordem segue o roteiro ensinado em sala: primeiro os pedidos de mérito, na ordem em que os tópicos apareceram (divórcio, partilha, danos morais, tutela provisória, audiência), depois o pedido de sucumbência, e, por último, sempre nesta ordem, os dois itens que fecham toda petição, a citação do réu para se defender e o pedido de produção de todas as provas admitidas em direito.
-      `,
-    },
-    {
-      id: 'valor-da-causa',
-      titulo: 'IV - Do Valor da Causa',
-      corpoHtml: `
       <p>Dá-se à causa, para fins fiscais e de alçada, o valor de R$ __________, correspondente à soma do proveito econômico pretendido com a partilha dos bens e do valor atribuído ao pedido de indenização por danos morais, observando-se o <button type="button" class="citacao" data-dispositivo="cpc-292" aria-expanded="false" aria-controls="balao-dispositivo">art. 292 do Código de Processo Civil</button>.</p>
       `,
       comentarioHtml: `
-      <strong>Como fazer</strong>O valor da causa, no CPC, segue critérios específicos conforme o tipo de pedido (art. 292); numa ação que cumula partilha e dano moral, soma-se o proveito econômico pretendido em cada um dos pedidos cumulados.
+      <strong>Como fazer</strong>Esta seção desenvolve, em alíneas, tudo o que foi pedido de forma resumida em cada tópico de "Do Direito". A ordem segue o roteiro ensinado em sala: primeiro os pedidos de mérito, na ordem em que os tópicos apareceram (divórcio, partilha, danos morais, tutela provisória, audiência), depois o pedido de sucumbência, e, por último, sempre nesta ordem, os dois itens que fecham toda petição, a citação do réu para se defender e o pedido de produção de todas as provas admitidas em direito. Logo em seguida, sem título próprio, vem o valor da causa: no CPC, ele segue critérios específicos conforme o tipo de pedido (art. 292); numa ação que cumula partilha e dano moral, soma-se o proveito econômico pretendido em cada um dos pedidos cumulados.
       `,
     },
     {

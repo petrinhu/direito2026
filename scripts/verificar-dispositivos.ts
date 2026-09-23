@@ -60,7 +60,9 @@ async function principal(): Promise<void> {
         for (const bloco of conteudo.resumo) pedacos.push(bloco.corpoHtml, bloco.exemploHtml);
         if (conteudo.peticao) {
           for (const secao of conteudo.peticao.secoes)
-            pedacos.push(secao.corpoHtml, secao.comentarioHtml);
+            // Mesmo gêmeo de scripts/gerar-dispositivos-por-unidade.ts:
+            // corpoHtml é opcional (seção-título "guarda-chuva").
+            pedacos.push(secao.corpoHtml ?? '', secao.comentarioHtml);
         }
         if (conteudo.quiz) {
           // Mesmo gêmeo de scripts/gerar-dispositivos-por-unidade.ts: os

@@ -23,12 +23,22 @@ defineProps<{ peca: PecaComentada }>();
       class="peca-comentada__secao"
     >
       <h3>{{ secao.titulo }}</h3>
-      <div class="peca-comentada__grade">
+      <!--
+        Pedido do líder, 23/09/2026: uma seção-título "guarda-chuva" (ex.:
+        "2. Do Direito", que só organiza os tópicos 2.1-2.5 seguintes, sem
+        texto de peça próprio) não tem secao.corpoHtml. Sem a grade de
+        duas colunas nesse caso: um bloco vazio no lugar do corpo, mesmo
+        sem texto, ainda reservaria espaço em branco.
+      -->
+      <div v-if="secao.corpoHtml" class="peca-comentada__grade">
         <div class="peca-comentada__corpo" v-html="secao.corpoHtml" />
         <aside class="peca-comentada__comentario" aria-label="Como fazer">
           <div v-html="secao.comentarioHtml" />
         </aside>
       </div>
+      <aside v-else class="peca-comentada__comentario" aria-label="Como fazer">
+        <div v-html="secao.comentarioHtml" />
+      </aside>
     </section>
   </article>
 </template>

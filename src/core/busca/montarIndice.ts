@@ -41,7 +41,10 @@ export function montarDocumentosUnidade(params: ParametrosUnidade): DocumentoBus
 
   if (conteudo.peticao) {
     for (const secao of conteudo.peticao.secoes) {
-      const corpo = removerTags(`${secao.corpoHtml} ${secao.comentarioHtml}`);
+      // corpoHtml é opcional (seção-título "guarda-chuva", sem texto de
+      // peça próprio): sem o `?? ''`, a interpolação de template vira a
+      // STRING "undefined" e essa palavra entraria no índice de busca.
+      const corpo = removerTags(`${secao.corpoHtml ?? ''} ${secao.comentarioHtml}`);
       documentos.push({
         id: `${base}/peticao#${secao.id}`,
         url: `/p/${base}/peticao#${secao.id}`,

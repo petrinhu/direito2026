@@ -32,7 +32,10 @@ function coletarHtmlDaUnidade(
   }
   if (conteudo.peticao) {
     for (const secao of conteudo.peticao.secoes) {
-      pedacos.push(secao.corpoHtml, secao.comentarioHtml);
+      // corpoHtml é opcional (seção-título "guarda-chuva", sem texto de
+      // peça próprio, ex.: "2. Do Direito"): sem `?? ''`, um `undefined`
+      // aqui quebraria o tipo `string[]` de `pedacos`.
+      pedacos.push(secao.corpoHtml ?? '', secao.comentarioHtml);
     }
   }
   if (conteudo.quiz) {

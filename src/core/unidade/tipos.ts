@@ -46,8 +46,14 @@ export interface SecaoPeca {
   readonly id: string;
   /** Ex.: 'Endereçamento', 'Qualificação', 'Dos Fatos'. */
   readonly titulo: string;
-  /** O texto da peça em si. */
-  readonly corpoHtml: string;
+  /**
+   * O texto da peça em si. Opcional: uma seção-título "guarda-chuva"
+   * (ex.: "2. Do Direito", que só organiza os tópicos 2.1 a 2.5 que vêm
+   * depois dela, sem texto de peça próprio) não tem corpo nenhum, só
+   * título e comentário explicando o método. Ausente, não vazio: uma
+   * string vazia ainda desenharia um bloco em branco.
+   */
+  readonly corpoHtml?: string;
   /** O comentário "como fazer", exibido em destaque ao lado ou abaixo. */
   readonly comentarioHtml: string;
 }

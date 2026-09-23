@@ -18,5 +18,14 @@ export const CARREGADORES: RegistroDeCarregadores = {
       import('@/conteudo/p1/intr-direito/u1/quiz')
     ]);
     return { meta, resumo, peticao, quiz };
+  },
+  'p1/redacao-juridica-1/u1': async (): Promise<ConteudoUnidade> => {
+    const [{ meta }, { resumo }, { peticao }, { quiz }] = await Promise.all([
+      import('@/conteudo/p1/redacao-juridica-1/u1/meta'),
+      import('@/conteudo/p1/redacao-juridica-1/u1/resumo'),
+      import('@/conteudo/p1/redacao-juridica-1/u1/peticao'),
+      import('@/conteudo/p1/redacao-juridica-1/u1/quiz')
+    ]);
+    return { meta, resumo, peticao, quiz };
   }
 };

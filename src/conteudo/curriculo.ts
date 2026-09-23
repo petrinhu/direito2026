@@ -30,11 +30,26 @@ const cadeiraIntrDireito: Cadeira = {
   unidades: [unidade1IntrDireito],
 };
 
+const unidade1RedacaoJuridica: ReferenciaUnidade = {
+  id: 'u1',
+  rotulo: 'Unidade 1',
+  titulo: 'Resumo de estudo, petição comentada e quiz',
+  estado: 'publicado',
+  abas: ['resumo', 'peticao', 'quiz'],
+};
+
+const cadeiraRedacaoJuridica: Cadeira = {
+  id: 'redacao-juridica-1',
+  nome: 'Português e Redação Jurídica 1',
+  estado: 'publicado',
+  unidades: [unidade1RedacaoJuridica],
+};
+
 const periodo1: Periodo = {
   id: 'p1',
   numero: 1,
   rotulo: '1º período',
-  cadeiras: [cadeiraIntrDireito],
+  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica],
 };
 
 function periodoEmBreve(numero: number): Periodo {

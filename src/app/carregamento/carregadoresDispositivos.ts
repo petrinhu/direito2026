@@ -25,5 +25,9 @@ export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos = {
   'p1/intr-direito/u1': async (): Promise<IndiceDispositivos> => {
     const { dispositivos } = await import('@/conteudo/p1/intr-direito/u1/dispositivos');
     return dispositivos;
+  },
+  'p1/redacao-juridica-1/u1': async (): Promise<IndiceDispositivos> => {
+    const { dispositivos } = await import('@/conteudo/p1/redacao-juridica-1/u1/dispositivos');
+    return dispositivos;
   }
 };

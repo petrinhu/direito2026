@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { criarTratadorFalhaModulo, type ArmazenamentoRecarga } from '@/app/atualizacaoSW/recarregarAoFalharModulo';
+import {
+  criarTratadorFalhaModulo,
+  type ArmazenamentoRecarga
+} from '@/app/atualizacaoSW/recarregarAoFalharModulo';
 
 /**
  * Cobre o caso levantado pelo líder (23/09/2026): aba aberta com o

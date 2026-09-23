@@ -3,15 +3,19 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Onda 2 liga o service worker de verdade (seção 9 da arquitetura). Nesta
-// onda o plugin já entra configurado para não reabrir a decisão depois,
-// mas registerType 'prompt' evita troca de conteúdo sob o leitor.
+// Onda 2 ligou o service worker de verdade (seção 9 da arquitetura). Onda
+// seguinte (23/09/2026, pedido do líder) trocou 'prompt' por 'autoUpdate':
+// o service worker novo assume sozinho (skipWaiting + clientsClaim, que o
+// plugin liga automaticamente para este registerType) em vez de esperar
+// todas as abas fecharem - era essa espera que deixava leitor preso na
+// versão antiga. Ver docs/arquitetura.md, seção 9, para o raciocínio
+// completo e a ordem do líder verbatim.
 export default defineConfig({
   base: '/',
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: null,
       manifest: false, // manifest.webmanifest é escrito à mão em public/, não gerado
       workbox: {

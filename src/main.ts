@@ -14,30 +14,52 @@ import {
   CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
 } from '@/app/chaves';
+import type { Router } from 'vue-router';
+import {
+  agendarVerificacoesAtualizacao,
+  type FonteAgendamentoSW
+} from '@/app/atualizacaoSW/agendarVerificacoesAtualizacao';
 import '@/ui/estilos/fontes.css';
 import '@/ui/estilos/tokens.css';
 import '@/ui/estilos/base.css';
 import '@/ui/estilos/impressao.css';
 
 /**
- * Pendência da onda: vite.config.ts já configurava o service worker
- * (workbox, registerType 'prompt', CacheFirst para conteúdo, NetworkFirst
- * para navegação), mas `injectRegister: null` significa que nada o
- * registra sozinho - e nenhum código chamava registerSW() em lugar
- * nenhum. Sem isto, a segunda visita a uma unidade já aberta, com a rede
- * desligada, nunca funcionava (o service worker simplesmente não existia
- * em tempo de execução).
- *
- * `registerType: 'prompt'` significa que uma atualização nova NÃO
- * substitui o service worker em uso sozinha (skipWaiting fica sob
- * controle): isto evita trocar o conteúdo sob o leitor no meio de uma
- * leitura (mesma preocupação já registrada no comentário de
- * vite.config.ts). Uma UI de "nova versão disponível" (onNeedRefresh)
- * fica fora do escopo desta correção - o essencial aqui é o registro
- * existir, para o cache funcionar; o prompt de atualização é melhoria
- * futura, não pendência desta onda.
+ * Onda anterior deixou o registro do service worker pendente de política
+ * de atualização (comentário removido nesta correção, ver histórico do
+ * git). Onda de 23/09/2026 (pedido do líder, verbatim: "pode dar comando
+ * na página para o conteúdo ser recarregado sempre? Muita gente entra na
+ * página nova e só ve a antiga e reclama que não apareceu nada") resolveu
+ * isto: vite.config.ts agora usa registerType 'autoUpdate', que liga
+ * skipWaiting + clientsClaim no service worker gerado. Com isso, quando o
+ * navegador encontra uma versão nova, ela assume sozinha - sem esperar
+ * todas as abas fecharem, que era a causa raiz de o leitor ficar preso na
+ * versão antiga (no celular, "todas as abas fecharem" quase nunca
+ * acontece). Uma vez ativa, essa versão nova recarrega automaticamente a
+ * aba (comportamento embutido do plugin para este registerType); o que
+ * falta a nós é só CHECAR por versão nova nos momentos certos, porque a
+ * checagem automática do navegador não cobre bem um SPA (o usuário pode
+ * ficar horas numa unidade sem disparar navegação nenhuma). Ver
+ * docs/arquitetura.md, seção 9, para o raciocínio completo.
  */
-registerSW({ immediate: true });
+function criarFonteAgendamentoSW(router: Router): FonteAgendamentoSW {
+  return {
+    definirIntervalo(callback, intervaloMs) {
+      const id = window.setInterval(callback, intervaloMs);
+      return () => window.clearInterval(id);
+    },
+    aoFicarVisivel(callback) {
+      const ouvinte = () => {
+        if (document.visibilityState === 'visible') callback();
+      };
+      document.addEventListener('visibilitychange', ouvinte);
+      return () => document.removeEventListener('visibilitychange', ouvinte);
+    },
+    aoTrocarRota(callback) {
+      return router.afterEach(() => callback());
+    }
+  };
+}
 
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();
@@ -55,6 +77,21 @@ async function bootstrap(): Promise<void> {
 
   const router = criarRouter();
   app.use(router);
+
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const verificar = () => {
+        registration.update().catch(() => {
+          // Falha de rede na checagem não é erro do leitor: a próxima
+          // tentativa (intervalo, visibilidade ou rota) resolve sozinha.
+        });
+      };
+      agendarVerificacoesAtualizacao(verificar, criarFonteAgendamentoSW(router));
+    }
+  });
+
   await router.isReady();
   app.mount('#app');
 }

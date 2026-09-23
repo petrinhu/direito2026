@@ -196,6 +196,67 @@ export const resumo: readonly BlocoResumo[] = [
   {
     id: 'bloco-9',
     numero: 10,
+    titulo: 'O ponto cego da traição: dano privado x dano público',
+    fonte: 'Slides da disciplina, aula sobre a petição de divórcio, partilha e danos morais.',
+    corpoHtml: `
+      <p>Um caso de divórcio com infidelidade traz uma pergunta que a petição comentada desta unidade (caso Marina e Ricardo, aba "Petição") já respondeu na prática: traição, por si só, gera automaticamente dano moral? A aula apresenta dois lados dessa pergunta.</p>
+      <p>Pelo lado do <strong>fim privado</strong>: o simples fim do casamento, incluindo a causa da separação, tende a ser tratado como mero aborrecimento da vida conjugal, que não gera, automaticamente, responsabilidade civil. Casais se separam por infidelidade o tempo todo, sem que isso vire, sozinho, uma ação de indenização.</p>
+      <p>Pelo lado do <strong>fato jurídico</strong>: quando a conduta ultrapassa o âmbito privado do casal (por exemplo, com exposição pública, fotografias, declarações em redes sociais e mensagens a terceiros), passam a estar presentes o ato ilícito, o dano e o nexo causal, porque a humilhação ultrapassa a esfera privada da dissolução conjugal e atinge a honra e a imagem perante terceiros.</p>
+    `,
+    resumo: [
+      'A pergunta: traição, por si só, gera automaticamente dano moral?',
+      'Fim privado: mero aborrecimento da vida conjugal, sem responsabilidade civil automática.',
+      'Fato jurídico: exposição pública (fotos, redes sociais, mensagens a terceiros) configura ato ilícito, dano e nexo causal.'
+    ],
+    exemploHtml: `É exatamente essa distinção que sustenta o tópico "Dos Danos Morais" da petição comentada: não é o fim do casamento de Marina e Ricardo que gera o pedido de indenização, é a exposição pública da situação perante o círculo social de Marina.`
+  },
+  {
+    id: 'bloco-10',
+    numero: 11,
+    titulo: 'A matriz de provas: do fato ao documento',
+    fonte: 'Slides da disciplina, aula sobre a petição de divórcio, partilha e danos morais.',
+    corpoHtml: `
+      <p>Para cada fato relevante de uma petição, a aula ensina a desenhar a prova correspondente: prova não é uma formalidade vazia, é o que sustenta o gatilho da prova (bloco 3) no caso concreto. Aplicada ao caso Marina e Ricardo, a matriz fica assim:</p>
+      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+        <table>
+          <thead><tr><th>Fato</th><th>Prova</th></tr></thead>
+          <tbody>
+            <tr><td>Casamento e regime de bens</td><td>Certidão de casamento</td></tr>
+            <tr><td>Relacionamento extraconjugal</td><td>Mensagens e fotografias</td></tr>
+            <tr><td>Exposição pública</td><td>Fotografias de festas/eventos e publicações</td></tr>
+            <tr><td>Publicação em rede social</td><td>Prints de tela</td></tr>
+            <tr><td>Repercussão perante terceiros</td><td>Mensagens de terceiros e testemunhas</td></tr>
+            <tr><td>Patrimônio comum (casa, carro, investimentos)</td><td>Documentos dos bens e comprovantes de aquisição</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `,
+    resumo: [
+      'Para cada fato relevante, desenhar a prova correspondente.',
+      'Matriz aplicada ao caso Marina e Ricardo: casamento, infidelidade, exposição pública, publicação, repercussão e patrimônio, cada um com sua prova.'
+    ],
+    exemploHtml: `Antes de protocolar, o advogado confere a matriz linha por linha: se um fato relevante não tem prova associada, ou a petição perde força naquele ponto, ou falta reunir o documento antes de ajuizar a ação.`
+  },
+  {
+    id: 'bloco-11',
+    numero: 12,
+    titulo: 'Vícios de linguagem: a versão a evitar e a versão recomendada',
+    fonte: 'Slides da disciplina, aula sobre a petição de divórcio, partilha e danos morais.',
+    corpoHtml: `
+      <p>A aula compara, lado a lado, duas versões do mesmo trecho de fundamentação, para mostrar na prática os vícios de linguagem que a redação jurídica evita.</p>
+      <p><strong>Versão a evitar:</strong> "O requerido foi um homem extremamente cruel, horrível, sem caráter e completamente irresponsável, que destruiu emocionalmente a autora, sendo evidente que merece ser severamente punido por tudo aquilo que fez." Essa versão acumula três vícios: é subjetiva ("horrível, sem caráter"), parte para o ataque pessoal em vez do argumento jurídico ("merece ser severamente punido") e não tem precisão técnica ("extremamente cruel", "destruiu emocionalmente").</p>
+      <p><strong>Versão recomendada:</strong> "O requerido expôs publicamente a autora em circunstâncias que, segundo a narrativa apresentada, ultrapassariam o âmbito privado da dissolução conjugal, ocasionando repercussões perante familiares, amigos e colegas de trabalho." Essa versão segue a fórmula fato + precisão + objetividade: comunica a gravidade da conduta sem insultar a parte contrária.</p>
+    `,
+    resumo: [
+      'Vícios da versão a evitar: subjetivismo, ataque pessoal (ad hominem), falta de precisão técnica.',
+      'Fórmula da versão recomendada: fato + precisão + objetividade.',
+      'Comunicar a gravidade da conduta sem insultar a parte contrária.'
+    ],
+    exemploHtml: `O tópico "Dos Danos Morais" da petição comentada desta unidade segue exatamente a versão recomendada: descreve a exposição pública da conduta de Ricardo com precisão e objetividade, sem qualificar o réu com adjetivos pessoais.`
+  },
+  {
+    id: 'bloco-12',
+    numero: 13,
     titulo: 'Checklist: os requisitos do art. 319 do CPC',
     fonte: 'Guia de estudo da petição inicial (peticao-inicial.pdf).',
     corpoHtml: `
@@ -209,8 +270,8 @@ export const resumo: readonly BlocoResumo[] = [
     exemploHtml: `Antes de protocolar qualquer petição, revisar este checklist item a item é uma forma rápida de garantir que nenhum requisito formal do art. 319 foi esquecido.`
   },
   {
-    id: 'bloco-10',
-    numero: 11,
+    id: 'bloco-13',
+    numero: 14,
     titulo: 'As cinco perguntas de toda petição',
     fonte: 'Guia de estudo da petição inicial (peticao-inicial.pdf) e quadro de sala, foto de 18/09/2026.',
     corpoHtml: `
@@ -227,8 +288,8 @@ export const resumo: readonly BlocoResumo[] = [
     exemploHtml: `Ao travar na redação de uma petição, repassar as cinco perguntas, uma a uma, costuma revelar qual delas ainda não foi respondida: normalmente é aí que está o bloqueio.`
   },
   {
-    id: 'bloco-11',
-    numero: 12,
+    id: 'bloco-14',
+    numero: 15,
     titulo: 'Dicas de forma da professora',
     fonte: 'Quadro de sala, foto de 10/09/2026.',
     corpoHtml: `

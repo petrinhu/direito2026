@@ -157,7 +157,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                             ? 'true'
                             : 'false'
                         "
-                        :aria-controls="`lista-u-${unidade.id}`"
+                        :aria-controls="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
                         :aria-label="`Mostrar submenu de ${unidade.rotulo}`"
                         @click="
                           alternarUnidade(chaveUnidade(periodo.id, cadeira.id, unidade.id), unidade)
@@ -172,7 +172,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                     <ul
                       v-if="unidade.abas.length > 0"
                       v-show="estaAberto(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`)"
-                      :id="`lista-u-${unidade.id}`"
+                      :id="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
                       class="menu-curriculo__nivel-4 menu-curriculo__lista--guia"
                     >
                       <li
@@ -189,18 +189,35 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                             type="button"
                             class="menu-curriculo__botao"
                             :aria-expanded="
-                              estaAberto(`ab-resumo-${unidade.id}`) ? 'true' : 'false'
+                              estaAberto(
+                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                                ? 'true'
+                                : 'false'
                             "
-                            :aria-controls="`lista-resumo-${unidade.id}`"
-                            @click="alternar(`ab-resumo-${unidade.id}`)"
-                            @keydown.esc="fechar(`ab-resumo-${unidade.id}`, $event)"
+                            :aria-controls="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                            @click="
+                              alternar(
+                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                            "
+                            @keydown.esc="
+                              fechar(
+                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                $event
+                              )
+                            "
                           >
                             <span class="menu-curriculo__seta" aria-hidden="true" />
                             {{ ROTULOS_ABA.resumo }}
                           </button>
                           <ul
-                            v-show="estaAberto(`ab-resumo-${unidade.id}`)"
-                            :id="`lista-resumo-${unidade.id}`"
+                            v-show="
+                              estaAberto(
+                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                            "
+                            :id="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
                             class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
                           >
                             <li
@@ -228,18 +245,35 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                             type="button"
                             class="menu-curriculo__botao"
                             :aria-expanded="
-                              estaAberto(`ab-peticao-${unidade.id}`) ? 'true' : 'false'
+                              estaAberto(
+                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                                ? 'true'
+                                : 'false'
                             "
-                            :aria-controls="`lista-peticao-${unidade.id}`"
-                            @click="alternar(`ab-peticao-${unidade.id}`)"
-                            @keydown.esc="fechar(`ab-peticao-${unidade.id}`, $event)"
+                            :aria-controls="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                            @click="
+                              alternar(
+                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                            "
+                            @keydown.esc="
+                              fechar(
+                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                $event
+                              )
+                            "
                           >
                             <span class="menu-curriculo__seta" aria-hidden="true" />
                             {{ ROTULOS_ABA.peticao }}
                           </button>
                           <ul
-                            v-show="estaAberto(`ab-peticao-${unidade.id}`)"
-                            :id="`lista-peticao-${unidade.id}`"
+                            v-show="
+                              estaAberto(
+                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                              )
+                            "
+                            :id="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
                             class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
                           >
                             <li

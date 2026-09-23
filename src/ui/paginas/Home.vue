@@ -21,6 +21,8 @@ const periodosComMaterial = curriculo.filter((p) => p.cadeiras.length > 0);
           <CartaoUnidade
             v-for="unidade in cadeira.unidades"
             :key="unidade.id"
+            :periodo="periodo"
+            :cadeira="cadeira"
             :unidade="unidade"
             :href="`/p/${periodo.id}/${cadeira.id}/${unidade.id}`"
           />

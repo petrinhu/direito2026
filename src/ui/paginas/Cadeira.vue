@@ -18,6 +18,8 @@ const cadeira = computed(() => periodo.value?.cadeiras.find((c) => c.id === prop
       <CartaoUnidade
         v-for="unidade in cadeira.unidades"
         :key="unidade.id"
+        :periodo="periodo!"
+        :cadeira="cadeira"
         :unidade="unidade"
         :href="`/p/${periodo!.id}/${cadeira.id}/${unidade.id}`"
       />

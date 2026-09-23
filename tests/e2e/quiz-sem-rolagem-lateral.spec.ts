@@ -21,21 +21,43 @@ import { test, expect, type Page } from '@playwright/test';
  */
 test.use({ viewport: { width: 360, height: 800 } });
 
+/**
+ * Achado do QA na primeira versão deste arquivo: a faixa de aviso de
+ * armazenamento (AvisoArmazenamento.vue, fixa no rodapé, primeira
+ * visita) nunca era dispensada, e em 360px ela cobre a área dos botões
+ * "Anterior"/"Próxima" — o clique em "Próxima" expirava depois da
+ * primeira pergunta, reprovando o teste sempre (contra o pacote
+ * corrigido OU não), sem provar nada. As três chaves abaixo são
+ * pré-carregadas em localStorage (mesmo padrão de
+ * tests/e2e/modo-adaptado-320.spec.ts para o modo adaptado) ANTES de
+ * `page.goto`, em vez de clicar em "Entendi"/"Ativar modo...": o teste
+ * não depende de nenhum desses botões existirem nem do texto exato do
+ * rótulo deles.
+ */
 const CHAVE_TEMA = 'caderno-direito:v1:tema';
+const CHAVE_MODO_ADAPTADO = 'caderno-direito:v1:modo-adaptado';
+const CHAVE_AVISO_ARMAZENAMENTO_VISTO = 'caderno-direito:v1:aviso-armazenamento-visto';
 
 async function irParaQuizEscuroModoAdaptado(page: Page, caminho: string): Promise<void> {
-  // Tema escuro pré-carregado via localStorage (lido de forma síncrona no
-  // boot da store, src/app/stores/tema.ts): mais confiável do que clicar
-  // no alternador, que exigiria adivinhar o rótulo/estado inicial.
-  await page.addInitScript((chave) => window.localStorage.setItem(chave, 'escuro'), CHAVE_TEMA);
+  await page.addInitScript(
+    ({ chaveTema, chaveModo, chaveAviso }) => {
+      window.localStorage.setItem(chaveTema, 'escuro');
+      window.localStorage.setItem(chaveModo, 'true');
+      window.localStorage.setItem(chaveAviso, '1');
+    },
+    {
+      chaveTema: CHAVE_TEMA,
+      chaveModo: CHAVE_MODO_ADAPTADO,
+      chaveAviso: CHAVE_AVISO_ARMAZENAMENTO_VISTO
+    }
+  );
   await page.goto(caminho);
-  await page
-    .getByRole('button', {
-      name: 'Ativar modo de leitura adaptada: texto maior e contraste máximo em preto e branco'
-    })
-    .click();
   await page.locator('[data-modo-adaptado="on"]').waitFor({ state: 'attached' });
   await page.locator('.cartao-pergunta').first().waitFor({ state: 'visible' });
+  // Prova de que a faixa de fato não apareceu (e não só que o teste
+  // parou de precisar dela): se ela existisse no DOM, os cliques em
+  // "Próxima" mais abaixo arriscariam o mesmo timeout de antes.
+  await expect(page.locator('.aviso-armazenamento')).toHaveCount(0);
 }
 
 async function medirEstouro(page: Page): Promise<{ scrollWidth: number; clientWidth: number }> {

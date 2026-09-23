@@ -105,8 +105,37 @@ Achado real e intermitente (ligado ao conteúdo de perguntas/alternativas espec�
 
 ### Sessão do líder
 
-Portal ativo, sem processo de teste sobrando nas duas execuções desta rodada. Coredumps: 742 → 746 durante a suíte e2e (4 novos), e 746 → 746 (nenhum novo) durante o QA visual final. Os 4 novos são o mesmo padrão sintético já visto de manhã (`kill -SEGV`/`kill -ABRT` numa aba de Konsole diferente da minha) mais um crash de `xmlstarlet` num projeto completamente diferente (`glintfx-win-lab`), também na mesma aba alheia — nada disso é dos meus processos de navegador.
+Portal ativo, sem processo de teste sobrando nas duas execuções desta rodada. Coredumps: 742 → 746 durante a suíte e2e (4 novos), e 746 → 746 (nenhum novo) durante o QA visual final. Os 4 novos são o mesmo padrão sintético já visto de manhã (`kill -SEGV`/`kill -ABRT` numa aba de Konsole diferente da minha) mais um crash de `xmlstarlet` num projeto completamente diferente (`glintfx-win-lab`), também na mesma aba alheia; nada disso é dos meus processos de navegador.
 
 ### Capturas desta rodada
 
 `mockups/capturas/redacao-final/`: 8 capturas da home (2 temas × 2 larguras × modo on/off), `home-sidebar-cadeira-nova.png`, `resumo-15-blocos-360.png`, e as 2 capturas do estouro do quiz reproduzido.
+
+## Verificação da correção (commit f2067e4), vermelho/verde
+
+Mesmo protocolo de isolamento. Pacote reconstruído às 07:52 de 23/09/2026 (286 testes sem tela verdes, segundo o time-lead).
+
+### Bug encontrado no teste novo (`tests/e2e/quiz-sem-rolagem-lateral.spec.ts`)
+
+Rodei o arquivo como pedido, direto pelo Playwright, contra uma cópia mutada (vermelho) e contra o `dist/` original (verde). Os dois deram o MESMO erro: timeout de 30s tentando clicar em "Próxima", porque a faixa `.aviso-armazenamento` (aviso de armazenamento local, com os botões "Apagar os dados guardados"/"Entendi") nunca é dispensada pelo teste e intercepta o clique depois da 1ª pergunta. Isso não prova nada sobre a correção, é um bug do arquivo de teste em si (faltou marcar `caderno-direito:v1:aviso-armazenamento-visto` ou clicar em "Entendi" antes de varrer as perguntas). Reportado, não corrigi o arquivo de teste.
+
+### Vermelho/verde por script próprio (mesma varredura completa, 90 perguntas)
+
+Como o arquivo oficial não deu sinal válido, escrevi uma verificação independente que reproduz a mesma varredura completa (30 perguntas da unidade nova + 60 da piloto, uma a uma, escuro/360px/modo adaptado), mas também marca o aviso como visto antes de navegar.
+
+**Cópia mutada, fora da árvore** (`/var/tmp/pwt/dist-vermelho`, cópia de `dist/`, nunca o original): removi as duas regras da correção (`.cartao-pergunta__alt-texto{overflow-wrap:anywhere;min-width:0}` e `.cartao-pergunta__enunciado{overflow-wrap:anywhere}`) só na cópia, conferido por `grep` antes e depois; md5 do `dist/index.html` original conferido igual antes e depois de toda a rodada.
+
+- **VERMELHO:** 90 perguntas analisadas, **7 falharam**: pergunta 14/30 (Redação Jurídica 1, "estrutura de oito passos", 440 contra 360), pergunta 19/30 e 22/30 (mesma unidade), e 4 perguntas da unidade piloto (20/60, 36/60, 48/60, 49/60). Prova de que as duas regras da correção são a causa raiz, não coincidência.
+- **VERDE** (contra `dist/` original, sem tocar nada): 90 perguntas analisadas, **0 falhas**.
+
+### Suíte de ponta a ponta completa, dois alvos, contra o `dist/` original
+
+98 dos testes reais do produto passam nos dois alvos (blink e brave). As únicas 4 falhas são o arquivo de teste novo com o bug do aviso de armazenamento descrito acima (2 testes × 2 alvos), não um defeito do produto.
+
+### Conferência visual da pergunta "estrutura de oito passos"
+
+Contra o `dist/` original, escuro, 360px, modo adaptado ligado: a pergunta apareceu na posição 23/30 desta carga, com `scrollWidth=360` igual a `clientWidth=360`, sem estouro. Captura: `mockups/capturas/redacao-final/quiz-oito-passos-corrigido-escuro-360-modoon.png`.
+
+### Sessão do líder
+
+Portal ativo, sem processo de teste sobrando, em todas as execuções desta rodada. Coredumps: 746 baseline, subiu para 748 ao final (2 novos), mesmo padrão sintético (`kill -SEGV`/`kill -ABRT`) de uma aba de Konsole alheia, já visto nas rodadas anteriores.

@@ -276,6 +276,15 @@ onBeforeUnmount(() => {
   flex: 1 1 8rem;
 }
 
+@media (max-width: 640px) {
+  /* Base maior para a trilha: com 8rem (128px) ela dividia a primeira linha
+     com o menu e a busca e o texto era cortado (COSMÉTICO 2 do QA). Com
+     14rem a busca desce para a linha de baixo, junto dos botões. */
+  .barra-topo__trilha {
+    flex-basis: 14rem;
+  }
+}
+
 .barra-topo__botao-gaveta {
   display: none;
   min-height: 44px;

@@ -143,6 +143,36 @@ const itens = computed<ItemTrilha[]>(() => {
   }
 }
 
+/*
+  COSMÉTICO 2 do QA (docs/qa-conserto-cabecalho-quiz.md): em modo normal, a
+  320px e 360px, o texto da trilha era cortado seco ("Unidade/1 Resu") e o "1"
+  ficava sobreposto à barra, porque o <a> era inline-flex (texto em item
+  anônimo, onde text-overflow não age) e todos os itens encolhiam. Agora só o
+  último item encolhe, e o link é um bloco de uma linha que trunca com
+  reticências. Só no modo normal: o modo adaptado quebra em várias linhas,
+  nunca trunca (bloco abaixo).
+*/
+:root:not([data-modo-adaptado='on']) .trilha-navegacao li {
+  flex: 0 0 auto;
+}
+
+:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child {
+  flex: 0 1 auto;
+}
+
+:root:not([data-modo-adaptado='on']) .trilha-navegacao a {
+  display: block;
+  line-height: 44px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child a {
+  min-width: 0;
+}
+
 /* Críticos 1 e 2 do QA (docs/qa-modo-adaptado.md): com flex-wrap:nowrap e
    white-space:nowrap acima, o texto de cada item não cabia na caixa
    encolhida e PINTAVA POR CIMA do item vizinho (achado 1, qualquer

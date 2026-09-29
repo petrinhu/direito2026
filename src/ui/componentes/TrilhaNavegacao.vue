@@ -120,6 +120,14 @@ const itens = computed<ItemTrilha[]>(() => {
   outline-offset: 2px;
 }
 
+/* Modo normal: a lista tem overflow:hidden e recortava o anel desenhado fora
+   da caixa do link (o teclado via só uma barra de 2px, achado da rodada 3 do
+   QA). Deslocamento negativo desenha o anel por dentro. O modo adaptado não
+   recorta (overflow visível) e mantém o anel de fora. */
+:root:not([data-modo-adaptado='on']) .trilha-navegacao a:focus-visible {
+  outline-offset: -2px;
+}
+
 .trilha-navegacao a[aria-current='page'] {
   color: var(--cor-sidebar-texto, #faf9f5);
   font-weight: 600;

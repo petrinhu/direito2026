@@ -68,6 +68,7 @@ describe('resumo de Filosofia Jurídica', () => {
   it('não cita dispositivo de lei nem usa travessão, e não diz que autor errou', () => {
     const tudo = JSON.stringify(resumo) + JSON.stringify(meta);
     expect(tudo).not.toContain('data-dispositivo');
+    expect(tudo.toLowerCase()).not.toMatch(/conferir|convém|a conferir/);
     expect(tudo).not.toMatch(/[–—]/);
     expect(tudo.toLowerCase()).not.toMatch(/\b(errou|erro do|equivocou-se)\b/);
   });

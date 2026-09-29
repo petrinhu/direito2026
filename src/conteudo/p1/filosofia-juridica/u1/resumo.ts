@@ -254,17 +254,22 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Lei divina</strong>: a que vem das Escrituras. Os slides destacam as três primeiras; Wolkmer, ao expor as questões 90 a 97 da <em>Suma</em>, acrescenta a divina, completando as quatro.</li>
       </ul>
       <p>A lei natural não se confunde com os decretos do soberano temporal: estes pertencem à lei humana. E a lei natural é a mesma para todos nos princípios gerais; as conclusões de detalhe valem na maioria dos casos, com exceções (o exemplo da <em>Suma</em>, q. 94, art. 4, é devolver o que foi emprestado, que em um caso particular pode ser danoso).</p>
-      <h3>Lei humana contra lei natural: uma divergência e a escolha feita aqui</h3>
-      <p>Wolkmer expõe que, em Tomás, a lei humana só tem caráter de lei na medida em que deriva da lei natural, e a que se afasta dela "não será lei, senão a corrupção da lei". O Manual de Humanística, em passagem que convém conferir no livro, parece dizer o contrário: que no conflito entre lei humana e lei natural prevaleceria a humana. Este resumo adota a leitura de Wolkmer, por duas razões: ela acompanha o texto da <em>Suma</em> nas questões sobre a lei, e é coerente com o restante do esquema tomista, no qual a lei humana é derivada e subordinada. A leitura do Manual fica registrada como divergência de fonte, a conferir antes de ser usada em resposta. No conflito com a lei eterna, as duas fontes concordam que esta prevalece.</p>
+      <h3>Lei humana contra lei natural: duas leituras na bibliografia</h3>
+      <p>Os autores de apoio leem de modo diferente o que Tomás diz sobre o conflito entre a lei humana e a lei natural:</p>
+      <ul>
+        <li><strong>Wolkmer</strong>: a lei humana só tem caráter de lei na medida em que deriva da lei natural, e a que se afasta dela "não será lei, senão a corrupção da lei".</li>
+        <li><strong>Manual de Humanística</strong>: para Aquino, no conflito entre a lei humana e a lei natural, deve prevalecer a humana, respeitada mesmo quando eventualmente se mostre contrária ao bem comum.</li>
+      </ul>
+      <p>As duas leituras não se reduzem uma à outra, e o material não as concilia. O ponto em que os dois autores concordam é o conflito com a lei eterna: nele, esta prevalece. Em resposta de prova, atribua a tese ao autor que a sustenta (segundo Wolkmer, segundo o Manual) em vez de apresentá-la como posição única de Tomás.</p>
     `,
     resumo: [
       'Suma Teológica; síntese entre Aristóteles e o cristianismo; razão a serviço da fé.',
       'Justiça comutativa e distributiva recebidas de Aristóteles, integradas à caridade.',
       'Lei eterna, lei natural (razão), lei humana (positiva) e lei divina (Escrituras).',
       'Lei natural não é decreto do soberano: este é lei humana.',
-      'A lei humana que se afasta da natural "não será lei, senão a corrupção da lei" (Wolkmer).'
+      'Lei humana x lei natural: para Wolkmer, a que se afasta da natural "não será lei, senão a corrupção da lei"; para o Manual de Humanística, prevalece a humana. No conflito com a lei eterna, prevalece a eterna nas duas leituras.'
     ],
-    exemploHtml: `Ao discutir se uma norma legal muito injusta ainda obriga, o raciocínio de Tomás oferece uma resposta em camadas: a lei humana vale por derivar da natural. Sem essa derivação, falta o que a faria lei em sentido pleno.`
+    exemploHtml: `Ao discutir se uma norma legal muito injusta ainda obriga, as duas leituras dão respostas diferentes: em uma, a lei que se afasta da natural deixa de ser lei em sentido pleno; na outra, a lei humana deve ser respeitada mesmo quando se mostre contrária ao bem comum.`
   },
   {
     id: 'bloco-9',

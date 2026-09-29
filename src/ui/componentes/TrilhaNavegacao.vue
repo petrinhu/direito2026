@@ -144,38 +144,85 @@ const itens = computed<ItemTrilha[]>(() => {
 }
 
 /*
-  Modo normal: quem encolhe primeiro são os itens intermediários, e a página
-  atual (último item) nunca encolhe. COSMÉTICO 2 do QA
+  Modo normal: a página atual (último item) sempre aparece; o que não cabe
+  com largura legível SAI DA ÁRVORE (display:none, por consulta de contêiner
+  na própria trilha), em vez de encolher até 0px. Link espremido a 0px
+  continuaria na ordem de Tab sem ficar visível, e foco invisível reprova
+  WCAG 2.4.7 e 2.4.11 (achado do líder, 29/09/2026). COSMÉTICO 2 do QA
   (docs/qa-conserto-cabecalho-quiz.md): o <a> era inline-flex (texto em item
-  anônimo, onde text-overflow não age) e o texto era cortado seco. IMPORTANTE 1
-  da rodada 2: a primeira correção deixava os intermediários rígidos e só o
-  último encolhia, e ele chegava a 0px. Receita padrão de breadcrumb
-  responsivo: min-width 0 em toda a cadeia flex, ellipsis em cada rótulo,
-  flex-shrink 1 nos ancestrais e 0 na página atual, com max-width 100% para
-  ela nunca passar da caixa. A caixa da trilha tem no mínimo a base de 8rem
-  (BarraTopo.vue, o cabeçalho quebra de linha antes de espremê-la), então a
-  página atual sempre cabe. O modo adaptado quebra em várias linhas e nunca
+  anônimo, onde text-overflow não age) e o texto era cortado seco; agora é
+  bloco de uma linha com reticências.
+
+  Larguras por construção, sem JS: cada intermediário mede no máximo 9rem de
+  link mais a barra (~10,5rem) e a página atual no máximo 10rem, todos sem
+  encolher. As consultas abaixo só deixam aparecer quantos intermediários
+  cabem somando esses máximos: 21rem para 1, 32rem para 2, 42rem para 3
+  (a "página atual" sozinha cabe em qualquer largura, a caixa tem no mínimo
+  8rem, BarraTopo.vue). O modo adaptado quebra em várias linhas e nunca
   trunca (bloco abaixo).
 */
+.trilha-navegacao {
+  container-type: inline-size;
+}
+
 :root:not([data-modo-adaptado='on']) .trilha-navegacao li {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
-  overflow: hidden;
 }
 
 :root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child {
-  flex: 0 0 auto;
-  max-width: 100%;
+  max-width: min(100%, 10rem);
 }
 
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
   display: block;
   line-height: 44px;
   min-width: 0;
-  max-width: 100%;
+  max-width: 9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child a {
+  max-width: 100%;
+}
+
+/* O primeiro item que continua visível leva "…" no lugar da barra, para a
+   pessoa saber que há níveis omitidos (mesma marca do corte de tela estreita
+   acima). :not(:first-child) evita a marca quando nada foi omitido. */
+@container (max-width: 20.99rem) {
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:not(:last-child) {
+    display: none;
+  }
+
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child:not(:first-child)::before {
+    content: '\2026';
+  }
+}
+
+@container (min-width: 21rem) and (max-width: 31.99rem) {
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(n + 3) {
+    display: none;
+  }
+
+  :root:not([data-modo-adaptado='on'])
+    .trilha-navegacao
+    li:nth-last-child(2):not(:first-child)::before {
+    content: '\2026';
+  }
+}
+
+@container (min-width: 32rem) and (max-width: 41.99rem) {
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(n + 4) {
+    display: none;
+  }
+
+  :root:not([data-modo-adaptado='on'])
+    .trilha-navegacao
+    li:nth-last-child(3):not(:first-child)::before {
+    content: '\2026';
+  }
 }
 
 /* Críticos 1 e 2 do QA (docs/qa-modo-adaptado.md): com flex-wrap:nowrap e

@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extrairCitacoes } from '../src/core/dispositivos/extrairCitacoes';
+import { coletarHtmlDaUnidade } from '../src/core/dispositivos/citacoesDaUnidade';
 import { validarDispositivo } from '../src/core/dispositivos/validar';
 import type { CatalogoDispositivos } from '../src/core/dispositivos/tipos';
 import { curriculo } from '../src/conteudo/curriculo';
@@ -56,27 +57,7 @@ async function principal(): Promise<void> {
         if (!carregar) continue;
 
         const conteudo = await carregar();
-        const pedacos: string[] = [];
-        for (const bloco of conteudo.resumo) pedacos.push(bloco.corpoHtml, bloco.exemploHtml);
-        if (conteudo.peticao) {
-          for (const secao of conteudo.peticao.secoes)
-            // Mesmo gêmeo de scripts/gerar-dispositivos-por-unidade.ts:
-            // corpoHtml é opcional (seção-título "guarda-chuva").
-            pedacos.push(secao.corpoHtml ?? '', secao.comentarioHtml);
-        }
-        if (conteudo.quiz) {
-          // Mesmo gêmeo de scripts/gerar-dispositivos-por-unidade.ts: os
-          // três campos carregam citação, não só explicacaoHtml.
-          for (const pergunta of conteudo.quiz) {
-            pedacos.push(
-              pergunta.enunciadoHtml,
-              pergunta.explicacaoHtml,
-              ...pergunta.alternativasHtml
-            );
-          }
-        }
-
-        const ids = extrairCitacoes(pedacos.join(' '));
+        const ids = extrairCitacoes(coletarHtmlDaUnidade(conteudo));
         citacoesEncontradas += ids.length;
         for (const id of ids) {
           idsCitados.add(id);

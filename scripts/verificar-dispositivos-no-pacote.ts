@@ -49,13 +49,14 @@ async function principal(): Promise<void> {
         const caminho = `${periodo.id}/${cadeira.id}/${unidade.id}`;
         const carregar = CARREGADORES_DISPOSITIVOS[caminho];
         if (!carregar) {
-          // Unidade publicada sem carregador de dispositivos nenhum: só é
-          // aceitável se ela genuinamente não cita nenhum dispositivo, o
-          // que scripts/verificar-dispositivos.ts já teria acusado (zero
-          // citação é falha lá). Aqui, sem carregador, não há o que
-          // conferir no pacote - conta como unidade varrida, zero
-          // dispositivo, sem reprovar por si só.
-          unidadesVarridas += 1;
+          // Toda unidade publicada precisa de carregador de dispositivos,
+          // mesmo a que não cita artigo nenhum (índice vazio). Sem ele,
+          // uma unidade que CITA ficaria com o balão quebrado e este
+          // portão passaria em silêncio: ausência aqui é reprovação.
+          console.error(
+            `verificar-dispositivos-no-pacote: unidade publicada '${caminho}' sem carregador de dispositivos`
+          );
+          falhou = true;
           continue;
         }
         unidadesVarridas += 1;

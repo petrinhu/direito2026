@@ -11,45 +11,16 @@
 import { writeFileSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { extrairCitacoes } from '../src/core/dispositivos/extrairCitacoes';
-import type {
-  CatalogoDispositivos,
-  DispositivoLegal,
-  IndiceDispositivos
-} from '../src/core/dispositivos/tipos';
+import {
+  conteudoArquivoDispositivos,
+  resolverCitacoesDaUnidade
+} from '../src/core/dispositivos/citacoesDaUnidade';
+import type { CatalogoDispositivos, IndiceDispositivos } from '../src/core/dispositivos/tipos';
 import { curriculo } from '../src/conteudo/curriculo';
 import { CARREGADORES } from '../src/app/carregamento/carregadores';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CATALOGO_PATH = resolve(AQUI, '../src/dados/dispositivos-legais.json');
-
-function coletarHtmlDaUnidade(
-  conteudo: Awaited<ReturnType<(typeof CARREGADORES)[string]>>
-): string {
-  const pedacos: string[] = [];
-  for (const bloco of conteudo.resumo) {
-    pedacos.push(bloco.corpoHtml, bloco.exemploHtml);
-  }
-  if (conteudo.peticao) {
-    for (const secao of conteudo.peticao.secoes) {
-      // corpoHtml é opcional (seção-título "guarda-chuva", sem texto de
-      // peça próprio, ex.: "2. Do Direito"): sem `?? ''`, um `undefined`
-      // aqui quebraria o tipo `string[]` de `pedacos`.
-      pedacos.push(secao.corpoHtml ?? '', secao.comentarioHtml);
-    }
-  }
-  if (conteudo.quiz) {
-    for (const pergunta of conteudo.quiz) {
-      // Os três campos legitimamente carregam botão de citação (achado
-      // do QA, 22/09/2026): só explicacaoHtml era varrido aqui, e duas
-      // citações que só existem em enunciado ficavam de fora do
-      // subconjunto gerado ('cf-5-xxxv' e 'cc-944', achadas pelo aviso
-      // "não é citado por nenhuma unidade" que sumiu com esta correção).
-      pedacos.push(pergunta.enunciadoHtml, pergunta.explicacaoHtml, ...pergunta.alternativasHtml);
-    }
-  }
-  return pedacos.join(' ');
-}
 
 async function principal(): Promise<void> {
   const catalogo = JSON.parse(readFileSync(CATALOGO_PATH, 'utf-8')) as CatalogoDispositivos;
@@ -68,29 +39,21 @@ async function principal(): Promise<void> {
         if (!carregar) continue;
 
         const conteudo = await carregar();
-        const html = coletarHtmlDaUnidade(conteudo);
-        const ids = extrairCitacoes(html);
-        citacoesEncontradas += ids.length;
-
-        const subconjunto: Record<string, DispositivoLegal> = {};
-        for (const id of ids) {
-          const dispositivo = catalogoPorId[id];
-          if (!dispositivo) {
-            console.error(`gerar-dispositivos-por-unidade: citação órfã '${id}' em ${caminho}`);
-            process.exitCode = 1;
-            continue;
-          }
-          subconjunto[id] = dispositivo;
-          citacoesResolvidas += 1;
+        const { encontradas, subconjunto, orfas } = resolverCitacoesDaUnidade(
+          conteudo,
+          catalogoPorId
+        );
+        citacoesEncontradas += encontradas.length;
+        citacoesResolvidas += encontradas.length - orfas.length;
+        for (const id of orfas) {
+          console.error(`gerar-dispositivos-por-unidade: citação órfã '${id}' em ${caminho}`);
+          process.exitCode = 1;
         }
 
+        // Unidade com zero citação (ex.: Sociologia Jurídica) é legítima:
+        // gera o módulo com objeto vazio, para o carregador não quebrar.
         const destino = resolve(AQUI, `../src/conteudo/${caminho}/dispositivos.ts`);
-        const conteudoArquivo = `// Arquivo GERADO por scripts/gerar-dispositivos-por-unidade.ts. Não editar à mão.
-import type { IndiceDispositivos } from '../../../../core/dispositivos/tipos';
-
-export const dispositivos: IndiceDispositivos = ${JSON.stringify(subconjunto, null, 2)};
-`;
-        writeFileSync(destino, conteudoArquivo, 'utf-8');
+        writeFileSync(destino, conteudoArquivoDispositivos(subconjunto), 'utf-8');
         unidadesGeradas += 1;
       }
     }

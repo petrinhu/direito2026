@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { curriculo } from '../../src/conteudo/curriculo';
+import { calcularContraste } from '../../src/core/design/contraste';
 import {
   caminhosParaCabecalho,
   esperarLayoutAssentar,
@@ -202,11 +203,23 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
           const itens = Array.from(lista.querySelectorAll<HTMLElement>('li')).filter(
             (li) => getComputedStyle(li).display !== 'none'
           );
-          let fimAnterior = -Infinity;
+          // Sobreposição é cruzamento nos DOIS eixos: em modo adaptado a trilha
+          // quebra em várias linhas, e itens de linhas diferentes têm
+          // intervalos horizontais iguais sem se tocar.
+          const caixas = itens.map((li) => li.getBoundingClientRect());
+          for (let a = 0; a < caixas.length; a++) {
+            for (let b = a + 1; b < caixas.length; b++) {
+              const horizontal =
+                Math.min(caixas[a]!.right, caixas[b]!.right) -
+                Math.max(caixas[a]!.left, caixas[b]!.left);
+              const vertical =
+                Math.min(caixas[a]!.bottom, caixas[b]!.bottom) -
+                Math.max(caixas[a]!.top, caixas[b]!.top);
+              if (horizontal > 0.5 && vertical > 1) achados.push('itens da trilha se sobrepõem');
+            }
+          }
           for (const li of itens) {
             const caixaItem = li.getBoundingClientRect();
-            if (caixaItem.left < fimAnterior - 0.5) achados.push('itens da trilha se sobrepõem');
-            fimAnterior = caixaItem.right;
             const link = li.querySelector<HTMLElement>('a')!;
             const caixaLink = link.getBoundingClientRect();
             const texto = link.textContent?.trim() ?? '';
@@ -265,4 +278,58 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
       }
     });
   }
+}
+
+/**
+ * Anel de foco dos links da trilha em modo normal (achado da rodada 3 do QA):
+ * o `overflow: hidden` da lista recortava o contorno desenhado FORA da caixa
+ * do link, e o teclado via só uma barra de 2px. O anel tem de ficar dentro da
+ * caixa (offset negativo, no mínimo -2px, ou sombra interna) e medir >= 3:1
+ * contra o fundo real do cabeçalho, nos dois temas.
+ */
+for (const tema of ['claro', 'escuro'] as const) {
+  test(`anel de foco do link da trilha, modo normal, tema ${tema}: dentro da caixa e com contraste >= 3:1`, async ({
+    page
+  }) => {
+    await prepararEstadoInicial(page, { tema, modoAdaptado: false });
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await page.goto('/p/p1/sociologia-juridica/u1');
+    const link = page.locator('.trilha-navegacao li:last-child a');
+    await link.waitFor({ state: 'visible' });
+    await link.focus();
+    const medida = await link.evaluate((el) => {
+      const estilo = getComputedStyle(el);
+      const fundo = getComputedStyle(document.querySelector('.barra-topo')!).backgroundColor;
+      return {
+        focusVisible: el.matches(':focus-visible'),
+        estiloDoContorno: estilo.outlineStyle,
+        larguraDoContorno: parseFloat(estilo.outlineWidth),
+        deslocamento: parseFloat(estilo.outlineOffset),
+        sombra: estilo.boxShadow,
+        corDoContorno: estilo.outlineColor,
+        fundo
+      };
+    });
+    expect(medida.focusVisible, 'o link recebeu :focus-visible').toBe(true);
+    const contornoInterno =
+      medida.estiloDoContorno !== 'none' &&
+      medida.larguraDoContorno >= 2 &&
+      medida.deslocamento <= -2;
+    const sombraInterna = medida.sombra.includes('inset');
+    expect(
+      contornoInterno || sombraInterna,
+      `anel fora da caixa seria cortado: ${JSON.stringify(medida)}`
+    ).toBe(true);
+    const paraHex = (css: string): string =>
+      '#' +
+      (/\(([^)]+)\)/.exec(css)?.[1] ?? '0,0,0')
+        .split(/[\s,/]+/)
+        .slice(0, 3)
+        .map((v) => Math.round(Number(v)).toString(16).padStart(2, '0'))
+        .join('');
+    expect(
+      calcularContraste(paraHex(medida.corDoContorno), paraHex(medida.fundo)),
+      `contorno ${medida.corDoContorno} sobre ${medida.fundo}`
+    ).toBeGreaterThanOrEqual(3);
+  });
 }

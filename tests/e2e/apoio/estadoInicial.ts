@@ -36,34 +36,52 @@ export async function prepararEstadoInicial(page: Page, estado: EstadoInicial): 
 }
 
 /**
- * Espera o layout assentar depois de trocar o viewport: dois quadros e,
- * em seguida, o fim de toda animação ou transição FINITA em andamento (a
- * gaveta lateral anima o `transform` ao cruzar 880px, e nesse intervalo o
- * botão dela cobre o cabeçalho) e, com `doTopo`, volta ao topo da página. Sem espera fixa em milissegundos. Animação
- * infinita (fundo da home) fica de fora, senão nunca terminaria.
+ * Espera o layout assentar depois de trocar o viewport: dois quadros e o fim
+ * de toda animação ou transição FINITA em andamento (a gaveta lateral anima o
+ * `transform` ao cruzar 880px, e nesse intervalo o botão dela cobre o
+ * cabeçalho). Sem espera fixa em milissegundos. Animação infinita (fundo da
+ * home) fica de fora, senão nunca terminaria.
+ *
+ * Com `doTopo`, depois disso rola ao topo, espera de novo (o reflow da
+ * troca de largura reposiciona a rolagem por âncora, e rolar ANTES de o
+ * layout assentar era desfeito) e só devolve quando `scrollY` continua 0 em
+ * dois quadros seguidos; se não estabilizar, falha com mensagem clara em vez
+ * de deixar a medida partir de uma página rolada.
  */
 export async function esperarLayoutAssentar(
   page: Page,
   opcoes: { doTopo: boolean } = { doTopo: false }
 ): Promise<void> {
   await page.evaluate(async ({ doTopo }) => {
-    // Ao redimensionar, a página pode ficar rolada (âncora de rolagem); no
-    // modo adaptado o cabeçalho não é fixo e, rolado, seus controles saem da
-    // tela e elementFromPoint devolve null. Medida de cabeçalho parte do topo (`doTopo`).
-    if (doTopo) window.scrollTo(0, 0);
-    const doisQuadros = (): Promise<void> =>
-      new Promise((resolver) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolver()))
-      );
-    await doisQuadros();
-    for (let volta = 0; volta < 10; volta++) {
-      const finitas = document
-        .getAnimations()
-        .filter((animacao) => animacao.effect?.getComputedTiming().iterations !== Infinity);
-      if (finitas.length === 0) return;
-      await Promise.allSettled(finitas.map((animacao) => animacao.finished));
-      await doisQuadros();
+    const quadro = (): Promise<void> =>
+      new Promise((resolver) => requestAnimationFrame(() => resolver()));
+    const assentar = async (): Promise<void> => {
+      await quadro();
+      await quadro();
+      for (let volta = 0; volta < 10; volta++) {
+        const finitas = document
+          .getAnimations()
+          .filter((animacao) => animacao.effect?.getComputedTiming().iterations !== Infinity);
+        if (finitas.length === 0) return;
+        await Promise.allSettled(finitas.map((animacao) => animacao.finished));
+        await quadro();
+        await quadro();
+      }
+    };
+
+    await assentar();
+    if (!doTopo) return;
+    window.scrollTo(0, 0);
+    await assentar();
+    for (let tentativa = 0; tentativa < 10; tentativa++) {
+      const antes = window.scrollY;
+      await quadro();
+      await quadro();
+      if (antes === 0 && window.scrollY === 0) return;
+      window.scrollTo(0, 0);
+      await assentar();
     }
+    throw new Error(`scrollY não estabilizou em 0 (ficou em ${window.scrollY})`);
   }, opcoes);
 }
 

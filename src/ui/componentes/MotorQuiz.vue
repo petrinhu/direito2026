@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { PerguntaQuiz } from '@/core/unidade/tipos';
+import type { IndiceAlternativa, PerguntaQuiz } from '@/core/unidade/tipos';
 import { embaralharRodada, calcularPontuacao } from '@/app/quiz/motor';
 import CartaoPergunta from './CartaoPergunta.vue';
 import ResultadoQuiz from './ResultadoQuiz.vue';
@@ -11,13 +11,13 @@ const props = defineProps<{
   perguntas: readonly PerguntaQuiz[];
   /** undefined = ainda não há rodada salva; o componente gera e emite uma. */
   semente: number | undefined;
-  respostasSalvas: Readonly<Record<number, 0 | 1 | 2 | 3>>;
+  respostasSalvas: Readonly<Record<number, IndiceAlternativa>>;
   finalizada: boolean;
 }>();
 
 const emit = defineEmits<{
   'semente-gerada': [number];
-  responder: [number, 0 | 1 | 2 | 3];
+  responder: [number, IndiceAlternativa];
   finalizar: [];
   reiniciar: [];
 }>();

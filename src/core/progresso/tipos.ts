@@ -1,3 +1,5 @@
+import type { IndiceAlternativa } from '../unidade/tipos';
+
 /** Chave completa de progresso de uma unidade, ex.: 'p1/intr-direito/u1'. */
 export type ChaveUnidade = string;
 
@@ -10,7 +12,7 @@ export interface RegistroProgressoUnidade {
   /** Semente do embaralhamento da rodada de quiz em curso ou concluída. */
   readonly quizSemente?: number;
   /** Mapa id da pergunta -> índice escolhido, na ordem embaralhada da semente acima. */
-  readonly quizRespostas?: Readonly<Record<number, 0 | 1 | 2 | 3>>;
+  readonly quizRespostas?: Readonly<Record<number, IndiceAlternativa>>;
   readonly quizFinalizado?: boolean;
   /**
    * Ids de item marcado num checklist interativo do resumo (extra (a) da

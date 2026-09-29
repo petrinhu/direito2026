@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PerguntaEmbaralhada } from '@/core/quiz/tipos';
+import type { IndiceAlternativa, PerguntaEmbaralhada } from '@/core/quiz/tipos';
+import { rotuloAlternativa, mostrarLetras } from '@/app/quiz/rotuloAlternativa';
 
 const props = defineProps<{
   pergunta: PerguntaEmbaralhada;
-  respostaEscolhida: 0 | 1 | 2 | 3 | undefined;
+  respostaEscolhida: IndiceAlternativa | undefined;
 }>();
 
-const emit = defineEmits<{ responder: [0 | 1 | 2 | 3] }>();
+const emit = defineEmits<{ responder: [IndiceAlternativa] }>();
 
 const respondida = computed(() => props.respostaEscolhida !== undefined);
 const idEnunciado = computed(() => `enunciado-${props.pergunta.id}`);
 
-function escolher(indice: 0 | 1 | 2 | 3): void {
+const comLetras = computed(() => mostrarLetras(props.pergunta.alternativasHtml.length));
+
+function escolher(indice: IndiceAlternativa): void {
   if (respondida.value) return;
   emit('responder', indice);
 }
@@ -61,8 +64,9 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
           :value="indice"
           :checked="respostaEscolhida === indice"
           :disabled="respondida"
-          @change="escolher(indice as 0 | 1 | 2 | 3)"
+          @change="escolher(indice as IndiceAlternativa)"
         />
+        <span v-if="comLetras" class="cartao-pergunta__letra">{{ rotuloAlternativa(indice) }}</span>
         <span
           class="cartao-pergunta__alt-texto"
           v-html="alternativaHtml"
@@ -82,6 +86,9 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
       aria-live="polite"
       v-html="pergunta.explicacaoHtml"
     />
+    <p v-if="respondida && pergunta.gabaritoDoCaderno" class="cartao-pergunta__nota-caderno">
+      Esta resposta vem do caderno de estudo; não é o gabarito oficial da professora.
+    </p>
     <p v-if="respondida && pergunta.fonteExtra" class="cartao-pergunta__aviso">
       Esta explicação se apoia em artigo complementar, fora do conjunto-base da disciplina.
     </p>
@@ -148,6 +155,18 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
 .cartao-pergunta__alt-texto {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.cartao-pergunta__letra {
+  flex: none;
+  font-weight: 700;
+  min-width: 1.25em;
+}
+
+.cartao-pergunta__nota-caderno {
+  margin-top: var(--esp-2, 0.5rem);
+  font-size: var(--escala-xs, 0.8125rem);
+  color: var(--cor-texto-suave, #4a4a4a);
 }
 
 .cartao-pergunta__alt--correta {

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import MotorQuiz from '@/ui/componentes/MotorQuiz.vue';
 import CartaoPergunta from '@/ui/componentes/CartaoPergunta.vue';
-import type { PerguntaQuiz } from '@/core/unidade/tipos';
+import type { IndiceAlternativa, PerguntaQuiz } from '@/core/unidade/tipos';
 
 /**
  * Ordem do líder, 22/09/2026, verbatim: "Faltou no quiz um placar a cada
@@ -78,7 +78,7 @@ describe('MotorQuiz, placar por pergunta', () => {
     const cartao2 = wrapper.findComponent(CartaoPergunta);
     const idPergunta2 = cartao2.props('pergunta').id;
     const indiceCorreto2 = cartao2.props('pergunta').indiceCorreto;
-    const indiceErrado2 = ((indiceCorreto2 + 1) % 4) as 0 | 1 | 2 | 3;
+    const indiceErrado2 = ((indiceCorreto2 + 1) % 4) as IndiceAlternativa;
 
     await wrapper.setProps({
       respostasSalvas: {

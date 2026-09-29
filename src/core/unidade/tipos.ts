@@ -72,8 +72,23 @@ export interface PecaComentada {
   readonly secoes: readonly SecaoPeca[];
 }
 
-/** Categorias de pergunta previstas pelo piloto (40, 10 e 10 perguntas). */
-export type CategoriaQuiz = 'teoria' | 'peticao' | 'fundamentos';
+/**
+ * Categorias de pergunta. As três primeiras nasceram no piloto (40, 10 e 10
+ * perguntas); as quatro seguintes são da unidade de Sociologia Jurídica.
+ */
+export type CategoriaQuiz =
+  'teoria' | 'peticao' | 'fundamentos' | 'atividade' | 'conceitos' | 'classicos' | 'aplicacao';
+
+/** Posição de uma alternativa na ordem original: 0 é A, 4 é E. */
+export type IndiceAlternativa = 0 | 1 | 2 | 3 | 4;
+
+/**
+ * Quatro alternativas (Introdução ao Direito e Redação Jurídica 1) ou cinco
+ * (Sociologia Jurídica). A união de tuplas trava o número no compilador; o
+ * teste de conteúdo garante que `correta` cabe no tamanho.
+ */
+export type AlternativasQuiz =
+  readonly [string, string, string, string] | readonly [string, string, string, string, string];
 
 export interface PerguntaQuiz {
   readonly id: number;
@@ -87,13 +102,19 @@ export interface PerguntaQuiz {
    * crua na tela).
    */
   readonly enunciadoHtml: string;
-  /** Sempre 4 alternativas. A tupla trava isso no compilador. */
-  readonly alternativasHtml: readonly [string, string, string, string];
+  /** 4 ou 5 alternativas. A união de tuplas trava isso no compilador. */
+  readonly alternativasHtml: AlternativasQuiz;
   /** Índice da correta no array original, antes de embaralhar. */
-  readonly correta: 0 | 1 | 2 | 3;
+  readonly correta: IndiceAlternativa;
   /** true quando a explicação apoia-se em artigo fora do conjunto base da disciplina. */
   readonly fonteExtra: boolean;
   readonly explicacaoHtml: string;
+  /**
+   * true quando a resposta certa vem do caderno de estudo e não de um
+   * gabarito oficial da professora: a explicação ganha uma nota neutra
+   * dizendo isso. Ausente nas demais (nunca `false`).
+   */
+  readonly gabaritoDoCaderno?: true;
 }
 
 export interface ConteudoUnidade {

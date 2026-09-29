@@ -1,4 +1,4 @@
-import type { PerguntaQuiz } from '../unidade/tipos';
+import type { AlternativasQuiz, IndiceAlternativa, PerguntaQuiz } from '../unidade/tipos';
 import type { PerguntaEmbaralhada, Pontuacao, PontuacaoCategoria, RodadaQuiz } from './tipos';
 
 /**
@@ -39,15 +39,15 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
   const perguntasEmbaralhadas = embaralhar(perguntas, aleatorio);
 
   const resultado: PerguntaEmbaralhada[] = perguntasEmbaralhadas.map((pergunta) => {
-    const indicesOriginais = [0, 1, 2, 3] as const;
+    // Os índices vêm do tamanho da própria pergunta (4 ou 5): com 4, a
+    // sequência sorteada é a de sempre, então uma semente já gravada no
+    // navegador continua reconstituindo a mesma rodada.
+    const indicesOriginais = pergunta.alternativasHtml.map((_, i) => i as IndiceAlternativa);
     const ordem = embaralhar(indicesOriginais, aleatorio);
-    const alternativasHtml = ordem.map((i) => pergunta.alternativasHtml[i]) as [
-      string,
-      string,
-      string,
-      string
-    ];
-    const indiceCorreto = ordem.indexOf(pergunta.correta) as 0 | 1 | 2 | 3;
+    const alternativasHtml = ordem.map(
+      (i) => pergunta.alternativasHtml[i]
+    ) as unknown as AlternativasQuiz;
+    const indiceCorreto = ordem.indexOf(pergunta.correta) as IndiceAlternativa;
     return {
       id: pergunta.id,
       categoria: pergunta.categoria,
@@ -55,7 +55,8 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
       explicacaoHtml: pergunta.explicacaoHtml,
       fonteExtra: pergunta.fonteExtra,
       alternativasHtml,
-      indiceCorreto
+      indiceCorreto,
+      ...(pergunta.gabaritoDoCaderno ? { gabaritoDoCaderno: true as const } : {})
     };
   });
 
@@ -69,14 +70,14 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
 
 export function corrigirResposta(
   pergunta: PerguntaEmbaralhada,
-  indiceEscolhido: 0 | 1 | 2 | 3
+  indiceEscolhido: IndiceAlternativa
 ): boolean {
   return indiceEscolhido === pergunta.indiceCorreto;
 }
 
 export function calcularPontuacao(
   perguntas: readonly PerguntaEmbaralhada[],
-  respostas: Readonly<Record<number, 0 | 1 | 2 | 3>>
+  respostas: Readonly<Record<number, IndiceAlternativa>>
 ): Pontuacao {
   const porCategoriaMapa = new Map<string, { acertos: number; total: number }>();
 

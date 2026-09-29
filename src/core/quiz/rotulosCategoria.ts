@@ -10,5 +10,9 @@ import type { CategoriaQuiz } from './tipos';
 export const ROTULOS_CATEGORIA_QUIZ: Record<CategoriaQuiz, string> = {
   teoria: 'Teoria',
   peticao: 'Petição',
-  fundamentos: 'Fundamentos'
+  fundamentos: 'Fundamentos',
+  atividade: 'Atividade da aula',
+  conceitos: 'Conceitos',
+  classicos: 'Os clássicos',
+  aplicacao: 'Aplicação'
 };

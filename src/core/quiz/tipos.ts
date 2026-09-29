@@ -1,6 +1,11 @@
-import type { CategoriaQuiz, PerguntaQuiz } from '../unidade/tipos';
+import type {
+  AlternativasQuiz,
+  CategoriaQuiz,
+  IndiceAlternativa,
+  PerguntaQuiz
+} from '../unidade/tipos';
 
-export type { CategoriaQuiz, PerguntaQuiz };
+export type { AlternativasQuiz, CategoriaQuiz, IndiceAlternativa, PerguntaQuiz };
 
 export interface PerguntaEmbaralhada {
   readonly id: number;
@@ -9,14 +14,15 @@ export interface PerguntaEmbaralhada {
   readonly enunciadoHtml: string;
   readonly explicacaoHtml: string;
   readonly fonteExtra: boolean;
-  readonly alternativasHtml: readonly [string, string, string, string];
-  readonly indiceCorreto: 0 | 1 | 2 | 3;
+  readonly alternativasHtml: AlternativasQuiz;
+  readonly indiceCorreto: IndiceAlternativa;
+  readonly gabaritoDoCaderno?: true;
 }
 
 export interface RodadaQuiz {
   readonly perguntas: readonly PerguntaEmbaralhada[];
   /** Chave: id da pergunta. Valor: índice escolhido na ordem embaralhada. */
-  readonly respostas: Readonly<Record<number, 0 | 1 | 2 | 3>>;
+  readonly respostas: Readonly<Record<number, IndiceAlternativa>>;
   readonly indiceAtual: number;
   readonly finalizada: boolean;
 }

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { PerguntaEmbaralhada } from '@/core/quiz/tipos';
+import type { IndiceAlternativa, PerguntaEmbaralhada } from '@/core/quiz/tipos';
 
 const props = defineProps<{
   perguntas: readonly PerguntaEmbaralhada[];
-  respostas: Readonly<Record<number, 0 | 1 | 2 | 3>>;
+  respostas: Readonly<Record<number, IndiceAlternativa>>;
 }>();
 const emit = defineEmits<{ selecionar: [number] }>();
 

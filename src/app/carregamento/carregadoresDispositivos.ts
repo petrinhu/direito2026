@@ -29,5 +29,11 @@ export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos = {
   'p1/redacao-juridica-1/u1': async (): Promise<IndiceDispositivos> => {
     const { dispositivos } = await import('@/conteudo/p1/redacao-juridica-1/u1/dispositivos');
     return dispositivos;
+  },
+  // Sociologia Jurídica não cita artigo de lei: o módulo gerado exporta um
+  // índice vazio, e o balão e o apêndice simplesmente não têm o que mostrar.
+  'p1/sociologia-juridica/u1': async (): Promise<IndiceDispositivos> => {
+    const { dispositivos } = await import('@/conteudo/p1/sociologia-juridica/u1/dispositivos');
+    return dispositivos;
   }
 };

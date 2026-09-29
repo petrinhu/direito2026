@@ -27,5 +27,14 @@ export const CARREGADORES: RegistroDeCarregadores = {
       import('@/conteudo/p1/redacao-juridica-1/u1/quiz')
     ]);
     return { meta, resumo, peticao, quiz };
+  },
+  // Sem petição: esta cadeira só tem resumo e quiz.
+  'p1/sociologia-juridica/u1': async (): Promise<ConteudoUnidade> => {
+    const [{ meta }, { resumo }, { quiz }] = await Promise.all([
+      import('@/conteudo/p1/sociologia-juridica/u1/meta'),
+      import('@/conteudo/p1/sociologia-juridica/u1/resumo'),
+      import('@/conteudo/p1/sociologia-juridica/u1/quiz')
+    ]);
+    return { meta, resumo, quiz };
   }
 };

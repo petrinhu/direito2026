@@ -45,11 +45,30 @@ const cadeiraRedacaoJuridica: Cadeira = {
   unidades: [unidade1RedacaoJuridica],
 };
 
+/**
+ * Sociologia Jurídica não tem petição: só resumo e quiz. As abas listadas
+ * aqui são o que rota, menu, trilha, busca e cartão da home seguem.
+ */
+const unidade1Sociologia: ReferenciaUnidade = {
+  id: 'u1',
+  rotulo: 'Unidade 1',
+  titulo: 'Resumo de estudo e quiz',
+  estado: 'publicado',
+  abas: ['resumo', 'quiz'],
+};
+
+const cadeiraSociologia: Cadeira = {
+  id: 'sociologia-juridica',
+  nome: 'Sociologia Jurídica',
+  estado: 'publicado',
+  unidades: [unidade1Sociologia],
+};
+
 const periodo1: Periodo = {
   id: 'p1',
   numero: 1,
   rotulo: '1º período',
-  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica],
+  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica, cadeiraSociologia],
 };
 
 function periodoEmBreve(numero: number): Periodo {

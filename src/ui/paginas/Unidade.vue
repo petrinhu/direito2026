@@ -9,6 +9,7 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
 import AbasUnidade from '../componentes/AbasUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
+import NaoEncontrado from './NaoEncontrado.vue';
 import VisorResumo from '../componentes/VisorResumo.vue';
 import PecaComentadaVisor from '../componentes/PecaComentadaVisor.vue';
 import MotorQuiz from '../componentes/MotorQuiz.vue';
@@ -33,6 +34,12 @@ const referenciaUnidade = computed(() =>
     ?.cadeiras.find((c) => c.id === props.cadeira)
     ?.unidades.find((u) => u.id === props.unidade)
 );
+
+/**
+ * Aba pedida pela URL que a unidade não tem (ex.: /peticao numa cadeira
+ * sem petição): mostrar "não encontrada" em vez de uma página em branco.
+ */
+const abaExiste = computed(() => referenciaUnidade.value?.abas.includes(props.aba) ?? false);
 
 const chaveUnidade = computed(() => `${props.periodo}/${props.cadeira}/${props.unidade}`);
 const storeProgresso = computed(() => criarStoreProgresso(repositorio, chaveUnidade.value));
@@ -91,6 +98,7 @@ const contagemBlocos = computed(() =>
 
 <template>
   <EstadoEmBreve v-if="!referenciaUnidade" rotulo="Unidade não encontrada" />
+  <NaoEncontrado v-else-if="!abaExiste" />
   <div v-else ref="regiaoConteudoRef" class="pagina-unidade">
     <h1>{{ referenciaUnidade.titulo }}</h1>
     <IndicadorProgresso

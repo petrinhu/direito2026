@@ -170,6 +170,11 @@
      dois temas, igual ao dourado que o tema escuro já usa em
      --cor-acento (7,86:1 contra --cor-sidebar-fundo, medido). */
   --cor-cabecalho-progresso: #d3b563;
+  /* Fundo do cabeçalho depois de rolar a página (BarraTopo.vue). Par
+     dedicado, lido pelo portão de contraste: o valor antes era escrito à mão
+     no componente e ficava azul-marinho também no modo adaptado, com texto
+     preto por cima (achado do QA, 28/09/2026). */
+  --cor-cabecalho-rolado-fundo: rgba(13, 36, 64, 0.86);
 
   /* Par dedicado do hero da home (achado do QA em produção, 22/09/2026,
      MESMA classe de erro da lateral): o hero fica sobre o FundoAnimado, um
@@ -337,13 +342,9 @@
   --cor-foco: #000000;
   --foco-deslocamento: 4px;
 
-  /* Cabeçalho mais alto: em tela estreita a linha do cabeçalho quebra em
-     mais de uma linha (BarraTopo.vue, seção 4 da especificação), então a
-     folga que LayoutBase.vue e o scroll-padding-top de base.css reservam
-     para o cabeçalho fixo precisa crescer junto, senão o conteúdo nasce
-     escondido atrás dele. Medido (não estimado) contra o pior caso real:
-     três linhas empilhadas em 320px, com os alvos de toque de 44px do
-     modo. */
+  /* Reserva inicial para o cabeçalho fixo, só até BarraTopo.vue medir a
+     altura real e publicá-la nesta mesma variável (a faixa quebra em mais de
+     uma linha em tela estreita, então nenhum número escrito à mão acerta). */
   --altura-cabecalho: 220px; /* era 64px */
 
   /* Bordas estruturais compostas (largura+estilo+cor num token só, para o
@@ -395,6 +396,9 @@
   --cor-sidebar-selo-bg: #ffffff;
 
   --cor-cabecalho-progresso: #0d2440;
+  /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:
+     texto preto do cabeçalho mede 21:1 contra ele, rolado ou não. */
+  --cor-cabecalho-rolado-fundo: #ffffff;
   --cor-hero-texto: #000000;
 
   --sombra-cartao: none;   /* borda estrutural substitui a sombra (seção 2) */

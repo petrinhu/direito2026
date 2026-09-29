@@ -49,7 +49,9 @@ function aoRolar(): void {
   // recolher: o próprio botão do modo precisa continuar visível o tempo
   // todo (requisito do líder, "botão visível no cabeçalho, em toda
   // página"), e um cabeçalho que soma e some é movimento que o modo existe
-  // para eliminar (docs/modo-adaptado.md, seção 6).
+  // para eliminar (docs/modo-adaptado.md, seção 6). Exceção registrada em
+  // docs/modo-adaptado.md, seção 4.1: até 880px o cabeçalho do modo não é
+  // fixo, então o botão fica no topo de cada página, não em toda rolagem.
   if (!prefereMenosMovimento && !props.storeModoAdaptado.ativo.value) {
     // Limiar de 80px antes de recolher: evita esconder o cabeçalho por
     // um tremor mínimo de rolagem logo no topo da página.
@@ -193,15 +195,48 @@ onBeforeUnmount(() => {
 }
 
 .barra-topo--rolado {
-  /* rgba fixo do mesmo hex de --cor-sidebar-fundo (#0d2440), não
-     color-mix/rgb(from ...): ver o mesmo raciocínio em MenuCurriculo.vue. */
-  background: rgba(13, 36, 64, 0.86);
+  /* Token dedicado (tokens.css), não mais um rgba escrito aqui: no modo
+     adaptado o texto do cabeçalho é preto e o fundo rolado ficava
+     azul-marinho (achado do QA, 28/09/2026). Fora do modo continua o mesmo
+     rgba de --cor-sidebar-fundo (#0d2440), não color-mix/rgb(from ...): ver
+     o mesmo raciocínio em MenuCurriculo.vue. */
+  background: var(--cor-cabecalho-rolado-fundo, rgba(13, 36, 64, 0.86));
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
 .barra-topo--rolado .barra-topo__onda-forma {
-  fill: rgba(13, 36, 64, 0.86);
+  fill: var(--cor-cabecalho-rolado-fundo, rgba(13, 36, 64, 0.86));
+}
+
+/* Modo adaptado: fundo opaco, sem o desfoque do que passa por trás (é
+   movimento visual que o modo existe para eliminar, seção 6). */
+:root[data-modo-adaptado='on'] .barra-topo--rolado {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/*
+  Modo adaptado em tela estreita: o cabeçalho sai do fluxo fixo e rola junto
+  com a página (achado do QA, 28/09/2026: a 360px ele tinha 433px, cobria o
+  título e passava de 2/3 da altura de uma janela de 640px). Com o texto
+  maior do modo e a trilha sem reticências (seção 4), nenhum arranjo cabe em
+  40% da tela; a pessoa alcança o botão do modo e o tema no topo de cada
+  página, e o título nunca fica escondido. Acima de 880px (mesmo ponto de
+  quebra da gaveta) continua fixo. --altura-cabecalho vira 0px por
+  publicarAlturaReservada (script acima). A onda e o fio de progresso
+  penduram fora da faixa: sem fio (não há o que acompanhar num cabeçalho que
+  rola), e a onda ganha margem para não cobrir o início do conteúdo.
+*/
+@media (max-width: 880px) {
+  :root[data-modo-adaptado='on'] .barra-topo {
+    position: relative;
+    margin-bottom: var(--esp-4, 1rem);
+  }
+
+  :root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
+    display: none;
+  }
 }
 
 .barra-topo--fixa {

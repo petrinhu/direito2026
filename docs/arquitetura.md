@@ -1288,3 +1288,15 @@ Sociologia Jurídica tem quiz de 80 perguntas com cinco alternativas; as outras 
 **Decisão sobre as letras:** a letra (A a E) aparece, e o leitor de tela a anuncia, só nas perguntas de cinco alternativas (`mostrarLetras` em `src/core/quiz/rotuloAlternativa.ts`). Nas de quatro nada mudou. Estender as letras às outras cadeiras é uma linha (`mostrarLetras` devolver `true`), e fica para o líder decidir se quiser.
 
 A marca `gabaritoDoCaderno: true` mostra, depois de responder, a nota neutra de que a resposta vem do caderno de estudo e não do gabarito oficial.
+
+## Pergunta de verdadeiro ou falso e selo "Revisão do professor" (29/09/2026)
+
+Filosofia Jurídica traz quiz de 80 perguntas: 40 de cinco alternativas e 40 de verdadeiro ou falso, das quais 33 são do simulado do professor. `PerguntaQuiz` virou união discriminada (`src/core/unidade/tipos.ts`): `PerguntaMultiplaEscolha` (a de sempre, campo `tipo` omitido, 4 ou 5 alternativas) e `PerguntaVerdadeiroOuFalso` (`tipo: 'verdadeiro-ou-falso'`, `correta: boolean`, sem `alternativasHtml`). Nada mudou nas perguntas existentes: a semente antiga sorteia a mesma ordem.
+
+**Decisão do sorteio:** as perguntas V/F entram no sorteio da ordem das perguntas, mas as alternativas nunca são embaralhadas nem gastam número do gerador. O motor entrega `alternativasHtml = ['Verdadeiro', 'Falso']` (constante em `src/core/quiz/alternativasVerdadeiroOuFalso.ts`) e `indiceCorreto` 0 ou 1, então correção, placar, revisão e o progresso salvo (`Record<number, IndiceAlternativa>`) não mudaram. Sem letras (`mostrarLetras(2)` é falso).
+
+**Selo:** campo opcional `origem: 'professor'` em qualquer tipo de pergunta. O cartão mostra "Revisão do professor" antes do enunciado, em negrito, com o par `--cor-selo-professor-texto` sobre `--cor-selo-professor-bg` (tokens.css, tema claro, escuro automático, escuro escolhido e modo adaptado). O portão de contraste mede 4,5:1 texto/fundo do selo e 3:1 do fundo do selo contra o cartão (WCAG 1.4.3 e 1.4.11). No modo adaptado o selo continua como texto, sem fundo colorido: preto sobre branco com borda sólida de 2px (`--selo-professor-borda`). Convive com `gabaritoDoCaderno`: o selo aparece sempre; a nota do caderno, só depois de responder.
+
+**Categorias novas:** `antiga` (Idade Antiga), `media` (Idade Média), `revisao` (Revisão do professor), em `src/core/quiz/rotulosCategoria.ts`.
+
+**Verificação no navegador:** `tests/e2e/quiz-verdadeiro-ou-falso-selo.spec.ts` varre a rodada e se declara ignorado nas unidades sem V/F nem selo (hoje todas), passando a rodar quando Filosofia for publicada.

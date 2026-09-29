@@ -39,11 +39,18 @@ export async function prepararEstadoInicial(page: Page, estado: EstadoInicial): 
  * Espera o layout assentar depois de trocar o viewport: dois quadros e,
  * em seguida, o fim de toda animação ou transição FINITA em andamento (a
  * gaveta lateral anima o `transform` ao cruzar 880px, e nesse intervalo o
- * botão dela cobre o cabeçalho). Sem espera fixa em milissegundos. Animação
+ * botão dela cobre o cabeçalho) e, com `doTopo`, volta ao topo da página. Sem espera fixa em milissegundos. Animação
  * infinita (fundo da home) fica de fora, senão nunca terminaria.
  */
-export async function esperarLayoutAssentar(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+export async function esperarLayoutAssentar(
+  page: Page,
+  opcoes: { doTopo: boolean } = { doTopo: false }
+): Promise<void> {
+  await page.evaluate(async ({ doTopo }) => {
+    // Ao redimensionar, a página pode ficar rolada (âncora de rolagem); no
+    // modo adaptado o cabeçalho não é fixo e, rolado, seus controles saem da
+    // tela e elementFromPoint devolve null. Medida de cabeçalho parte do topo (`doTopo`).
+    if (doTopo) window.scrollTo(0, 0);
     const doisQuadros = (): Promise<void> =>
       new Promise((resolver) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolver()))
@@ -57,7 +64,7 @@ export async function esperarLayoutAssentar(page: Page): Promise<void> {
       await Promise.allSettled(finitas.map((animacao) => animacao.finished));
       await doisQuadros();
     }
-  });
+  }, opcoes);
 }
 
 /** Páginas que exercitam o cabeçalho: a home e o resumo de cada unidade do currículo. */

@@ -187,7 +187,8 @@ async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promis
             const trecho = document.createRange();
             trecho.setStart(no, palavra.index ?? 0);
             trecho.setEnd(no, (palavra.index ?? 0) + palavra[0].length);
-            const fragmentos = Array.from(trecho.getClientRects());
+            // Retângulo de largura zero na fronteira de linha não é fragmento.
+            const fragmentos = Array.from(trecho.getClientRects()).filter((f) => f.width > 0);
             if (fragmentos.length < 2) continue;
             const larguraInteira = fragmentos.reduce((soma, f) => soma + f.width, 0);
             if (larguraInteira <= larguraTexto) {

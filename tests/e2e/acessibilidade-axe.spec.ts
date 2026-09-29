@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { curriculo } from '../../src/conteudo/curriculo';
+import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 
 /**
  * Item 6 da onda: verificação automática de acessibilidade nas páginas
@@ -13,18 +15,16 @@ import AxeBuilder from '@axe-core/playwright';
  * são listadas no relatório, sem reprovar, para não travar a onda por
  * achado cosmético fora do escopo desta correção.
  */
+/**
+ * Home, busca e cada aba de cada unidade publicada, esta parte montada a
+ * partir do currículo (tests/e2e/apoio/rotasDoCurriculo.ts): uma unidade
+ * nova é verificada sem editar este arquivo, e uma cadeira sem petição
+ * não ganha rota de petição.
+ */
 const PAGINAS_PRINCIPAIS: ReadonlyArray<{ nome: string; caminho: string }> = [
   { nome: 'home', caminho: '/' },
-  { nome: 'unidade (resumo)', caminho: '/p/p1/intr-direito/u1' },
-  { nome: 'unidade (petição)', caminho: '/p/p1/intr-direito/u1/peticao' },
-  { nome: 'unidade (quiz)', caminho: '/p/p1/intr-direito/u1/quiz' },
   { nome: 'busca', caminho: '/busca' },
-  // Unidade de Redação Jurídica 1 (22/09/2026): as mesmas três abas, agora
-  // também com os três extras interativos do resumo (checklist do art.
-  // 319, cartões que viram, dicas de forma).
-  { nome: 'redação: unidade (resumo)', caminho: '/p/p1/redacao-juridica-1/u1' },
-  { nome: 'redação: unidade (petição)', caminho: '/p/p1/redacao-juridica-1/u1/peticao' },
-  { nome: 'redação: unidade (quiz)', caminho: '/p/p1/redacao-juridica-1/u1/quiz' }
+  ...rotasDeUnidades(curriculo).map((r) => ({ nome: r.nome, caminho: r.caminho }))
 ];
 
 const GRAVIDADES_QUE_REPROVAM = ['critical', 'serious'] as const;

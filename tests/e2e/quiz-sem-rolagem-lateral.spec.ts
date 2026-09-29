@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
+import { curriculo } from '../../src/conteudo/curriculo';
+import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 
 /**
  * Achado do QA (docs/qa-redacao-u1.md, seção "Rodada final"): em tema
@@ -8,7 +10,7 @@ import { test, expect, type Page } from '@playwright/test';
  * vírgula; 13px numa pergunta sobre o art. 1.658). O quiz sorteia a
  * ordem a cada carga, então testar só ALGUMAS perguntas passa por sorte
  * (como passou antes). Este teste substitui a sorte por varredura
- * completa: percorre as 30 perguntas da unidade nova E as 60 da
+ * completa: percorre todas as perguntas de cada unidade (hoje 30, 60 e 80, lidas da tela)
  * unidade-piloto, uma a uma, na mesma combinação que reproduziu o
  * defeito.
  *
@@ -68,17 +70,27 @@ async function medirEstouro(page: Page): Promise<{ scrollWidth: number; clientWi
 }
 
 /**
- * Percorre as `total` perguntas da rodada atual, clicando em "Próxima" a
+ * Lê "Pergunta 1 de N" na tela: o total vem da própria rodada renderizada,
+ * então uma unidade nova ou uma pergunta a mais entra na varredura sem
+ * editar este arquivo (antes: 30 e 60 escritos à mão).
+ */
+async function lerTotalDePerguntas(page: Page): Promise<number> {
+  const texto = await page.locator('.motor-quiz__posicao').innerText();
+  const total = Number(/de (\d+)/.exec(texto)?.[1]);
+  expect(total, `total lido de "${texto}"`).toBeGreaterThan(0);
+  return total;
+}
+
+/**
+ * Percorre TODAS as perguntas da rodada atual, clicando em "Próxima" a
  * cada passo, e mede o estouro de largura da PÁGINA em cada uma. A ordem
  * é embaralhada (semente aleatória a cada carga), mas percorrer as N-1
  * transições cobre as N perguntas de qualquer jeito, seja qual for a
- * ordem sorteada.
+ * ordem sorteada. Com cinco alternativas (Sociologia Jurídica), confere
+ * também as cinco letras A a E, que são o item mais largo do cartão.
  */
-async function varrerTodasAsPerguntas(
-  page: Page,
-  total: number,
-  nomeUnidade: string
-): Promise<void> {
+async function varrerTodasAsPerguntas(page: Page, nomeUnidade: string): Promise<number> {
+  const total = await lerTotalDePerguntas(page);
   for (let indice = 0; indice < total; indice++) {
     await expect(page.locator('.cartao-pergunta')).toBeVisible();
     const { scrollWidth, clientWidth } = await medirEstouro(page);
@@ -89,22 +101,27 @@ async function varrerTodasAsPerguntas(
         `scrollWidth ${scrollWidth} vs clientWidth ${clientWidth}`
     ).toBe(clientWidth);
 
+    const alternativas = await page.locator('.cartao-pergunta input[type="radio"]').count();
+    if (alternativas === 5) {
+      const letras = await page.locator('.cartao-pergunta__letra').allInnerTexts();
+      expect(letras, `${nomeUnidade}, pergunta ${indice + 1}`).toEqual(['A', 'B', 'C', 'D', 'E']);
+    }
+
     if (indice < total - 1) {
       await page.getByRole('button', { name: 'Próxima' }).click();
     }
   }
+  return total;
 }
 
-test('unidade Português e Redação Jurídica 1: nenhuma das 30 perguntas estoura 360px, escuro, modo adaptado', async ({
-  page
-}) => {
-  await irParaQuizEscuroModoAdaptado(page, '/p/p1/redacao-juridica-1/u1/quiz');
-  await varrerTodasAsPerguntas(page, 30, 'Redação Jurídica 1');
-});
-
-test('unidade-piloto (Introdução ao Direito): nenhuma das 60 perguntas estoura 360px, escuro, modo adaptado', async ({
-  page
-}) => {
-  await irParaQuizEscuroModoAdaptado(page, '/p/p1/intr-direito/u1/quiz');
-  await varrerTodasAsPerguntas(page, 60, 'Introdução ao Direito');
-});
+/**
+ * Uma varredura por unidade que tem aba de quiz, tirada do currículo
+ * (tests/e2e/apoio/rotasDoCurriculo.ts). A de Sociologia Jurídica cobre as
+ * 80 perguntas de cinco alternativas.
+ */
+for (const rota of rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('/quiz'))) {
+  test(`${rota.nome}: nenhuma pergunta estoura 360px, escuro, modo adaptado`, async ({ page }) => {
+    await irParaQuizEscuroModoAdaptado(page, rota.caminho);
+    await varrerTodasAsPerguntas(page, rota.nome);
+  });
+}

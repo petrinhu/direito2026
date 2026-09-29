@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { curriculo } from '../../src/conteudo/curriculo';
+import { rotasDoCurriculo, rotasDeAbaAusente } from './apoio/rotasDoCurriculo';
 
 /**
  * Prova, sem navegador com janela (headless, Playwright/Blink), que as
@@ -7,21 +9,17 @@ import { test, expect } from '@playwright/test';
  * carga de página no servidor de preview, exercitando o fallback de
  * history mode servido pelo `vite preview`.
  */
-const ENDERECOS: ReadonlyArray<{ caminho: string; h1: RegExp }> = [
-  { caminho: '/', h1: /Caderno de Direito/ },
-  { caminho: '/busca', h1: /Busca/ },
-  { caminho: '/p/p1', h1: /1º período/ },
-  { caminho: '/p/p1/intr-direito', h1: /Introdução ao Direito/ },
-  { caminho: '/p/p1/intr-direito/u1', h1: /Resumo de estudo, petição comentada e quiz/ },
-  { caminho: '/p/p1/intr-direito/u1/peticao', h1: /Resumo de estudo, petição comentada e quiz/ },
-  { caminho: '/p/p1/intr-direito/u1/quiz', h1: /Resumo de estudo, petição comentada e quiz/ },
-  { caminho: '/p/p1/redacao-juridica-1', h1: /Português e Redação Jurídica 1/ },
-  { caminho: '/p/p1/redacao-juridica-1/u1', h1: /Resumo de estudo, petição comentada e quiz/ },
-  {
-    caminho: '/p/p1/redacao-juridica-1/u1/peticao',
-    h1: /Resumo de estudo, petição comentada e quiz/
-  },
-  { caminho: '/p/p1/redacao-juridica-1/u1/quiz', h1: /Resumo de estudo, petição comentada e quiz/ }
+/**
+ * Além de "/" e "/busca", os endereços vêm do currículo (tests/e2e/apoio/
+ * rotasDoCurriculo.ts): período, cadeira e cada aba de cada unidade
+ * publicada. Uma unidade nova entra no currículo e é testada sem tocar
+ * neste arquivo. Antes, cada rota era escrita à mão, e a terceira cadeira
+ * teria ficado de fora.
+ */
+const ENDERECOS: ReadonlyArray<{ caminho: string; h1: string }> = [
+  { caminho: '/', h1: 'Caderno de Direito' },
+  { caminho: '/busca', h1: 'Busca' },
+  ...rotasDoCurriculo(curriculo)
 ];
 
 for (const { caminho, h1 } of ENDERECOS) {
@@ -32,5 +30,12 @@ for (const { caminho, h1 } of ENDERECOS) {
     });
     await page.goto(caminho);
     await expect(page.locator('h1')).toContainText(h1);
+  });
+}
+
+for (const caminho of rotasDeAbaAusente(curriculo)) {
+  test(`aba que a unidade não tem, ${caminho}, abre "não encontrada"`, async ({ page }) => {
+    await page.goto(caminho);
+    await expect(page.locator('h1')).toContainText('Página não encontrada');
   });
 }

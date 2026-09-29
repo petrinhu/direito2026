@@ -103,7 +103,14 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   // nunca tinha entrado neste portão. Medido 4,08:1 no tema claro, abaixo
   // do piso — por isso passou despercebido até a verificação automática
   // pegar de verdade.
-  { nome: 'selo de acento (bloco teórico)', texto: '--cor-acento', fundo: '--cor-acento-claro' }
+  { nome: 'selo de acento (bloco teórico)', texto: '--cor-acento', fundo: '--cor-acento-claro' },
+  // Selo "Revisão do professor" do cartão de pergunta (ordem do líder,
+  // 29/09/2026): letra em destaque sobre fundo em destaque.
+  {
+    nome: 'selo Revisão do professor',
+    texto: '--cor-selo-professor-texto',
+    fundo: '--cor-selo-professor-bg'
+  }
 ];
 
 describe('contraste dos tokens de design', () => {
@@ -129,5 +136,39 @@ describe('contraste dos tokens de design', () => {
     expect(contraste, `${texto} (${corTexto}) sobre ${fundo} (${corFundo})`).toBeGreaterThanOrEqual(
       PISO_CONTRASTE_TEXTO_NORMAL
     );
+  });
+});
+
+/**
+ * WCAG 1.4.11: o fundo do selo precisa se distinguir do fundo do cartão onde
+ * ele aparece (--cor-fundo-elevado) por no mínimo 3:1, senão o selo some.
+ */
+const PISO_CONTRASTE_NAO_TEXTO = 3;
+
+describe('selo Revisão do professor contra o cartão', () => {
+  const temas = carregarTemas();
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s, fundo do selo contra o cartão, no mínimo 3:1',
+    (tema) => {
+      const selo = temas[tema]['--cor-selo-professor-bg'];
+      const cartao = temas[tema]['--cor-fundo-elevado'];
+      expect(selo, 'variável --cor-selo-professor-bg ausente').toBeDefined();
+      expect(calcularContraste(selo as string, cartao as string)).toBeGreaterThanOrEqual(
+        PISO_CONTRASTE_NAO_TEXTO
+      );
+    }
+  );
+
+  it('o tema escuro automático (prefers-color-scheme) repete o par do tema escuro escolhido', () => {
+    const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+    for (const variavel of ['--cor-selo-professor-texto', '--cor-selo-professor-bg']) {
+      const valores = [
+        ...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
+      ].map((m) => (m[1] as string).toLowerCase());
+      // claro, escuro automático, escuro escolhido, modo adaptado.
+      expect(valores, variavel).toHaveLength(4);
+      expect(valores[1], variavel).toBe(valores[2]);
+    }
   });
 });

@@ -82,3 +82,33 @@ describe('contraste dos tokens do modo de leitura adaptada', () => {
     );
   });
 });
+
+/**
+ * Selo "Revisão do professor" no modo adaptado (ordem do líder, 29/09/2026):
+ * a informação continua como TEXTO, mas sem fundo colorido: preto sobre
+ * branco, com borda preta para o selo continuar reconhecível.
+ */
+describe('selo Revisão do professor no modo adaptado', () => {
+  const tokens = carregarBlocoModoAdaptado();
+  const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+
+  it('é preto sobre branco', () => {
+    expect(tokens['--cor-selo-professor-texto']).toBe('#000000');
+    expect(tokens['--cor-selo-professor-bg']).toBe('#ffffff');
+    expect(tokens['--cor-selo-professor-bg']).toBe(tokens['--cor-fundo-elevado']);
+  });
+
+  it('mede no mínimo 20:1', () => {
+    expect(
+      calcularContraste(
+        tokens['--cor-selo-professor-texto'] as string,
+        tokens['--cor-selo-professor-bg'] as string
+      )
+    ).toBeGreaterThanOrEqual(PISO_CONTRASTE_PAR_PRINCIPAL);
+  });
+
+  it('tem borda preta sólida definida só neste bloco', () => {
+    expect(css).toMatch(/--selo-professor-borda:\s*2px solid #000000;/);
+    expect(css.match(/--selo-professor-borda\s*:/g)).toHaveLength(1);
+  });
+});

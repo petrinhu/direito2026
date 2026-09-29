@@ -147,6 +147,12 @@
   --cor-selo-texto: #5a5442;
   --cor-selo-bg: #ece7d6;
 
+  /* Selo "Revisão do professor" (cartão de pergunta), ordem do líder,
+     29/09/2026: letra e fundo em destaque. Par dedicado, medido pelo portão
+     (4,5:1 texto/fundo e 3:1 fundo do selo/fundo do cartão). */
+  --cor-selo-professor-texto: #ffffff;
+  --cor-selo-professor-bg: #7a2331;
+
   /* Par dedicado da barra lateral (achado do líder, 22/09/2026, terceira
      vez que essa classe de erro aparece: a lateral tem fundo escuro nos
      DOIS temas, por desenho, então o texto dela nunca pode depender de
@@ -226,6 +232,8 @@
 
     --cor-selo-texto: #d8d2ba;
     --cor-selo-bg: #2e2a1c;
+    --cor-selo-professor-texto: #12161c;
+    --cor-selo-professor-bg: #e29a9a;
 
     /* Mesmos valores do modo claro, declarados de novo de propósito: a
        lateral não muda com o tema (ver bloco :root acima), e repetir aqui
@@ -287,6 +295,8 @@
 
   --cor-selo-texto: #d8d2ba;
   --cor-selo-bg: #2e2a1c;
+  --cor-selo-professor-texto: #12161c;
+  --cor-selo-professor-bg: #e29a9a;
 
   /* Mesmos valores do modo claro, declarados de novo de propósito: ver o
      comentário equivalente no bloco @media acima. */
@@ -386,6 +396,9 @@
 
   --cor-selo-texto: #000000;
   --cor-selo-bg: #ffffff;
+  --cor-selo-professor-texto: #000000;
+  --cor-selo-professor-bg: #ffffff;
+  --selo-professor-borda: 2px solid #000000; /* sem fundo colorido: a borda é o que delimita o selo */
 
   --cor-sidebar-fundo: #ffffff;
   --cor-sidebar-texto: #000000;

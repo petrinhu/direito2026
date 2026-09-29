@@ -56,7 +56,7 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
         v-for="(alternativaHtml, indice) in pergunta.alternativasHtml"
         :key="indice"
         class="cartao-pergunta__alt"
-        :class="classeAlternativa(indice)"
+        :class="[classeAlternativa(indice), { 'cartao-pergunta__alt--com-letra': comLetras }]"
       >
         <input
           type="radio"
@@ -128,12 +128,34 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
   gap: var(--esp-2, 0.5rem);
 }
 
+/*
+  Grade, não linha flex (achado CRÍTICO 1 de docs/qa-sociologia-u1.md): com
+  radio, letra, texto e marca ("Correta" / "Sua resposta, incorreta") na
+  mesma linha, a marca e a letra tomavam a largura toda em tela estreita
+  com o modo adaptado, e o texto da alternativa ficava com 16px, quebrando
+  letra por letra. Agora o texto tem a coluna 1fr só para ele (minmax(0, 1fr)
+  deixa encolher e quebrar sem estourar) e a marca desce para a linha de
+  baixo, na mesma coluna do texto, sempre dentro do mesmo <label>.
+*/
 .cartao-pergunta__alt {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--esp-2, 0.5rem);
+  column-gap: var(--esp-2, 0.5rem);
+  row-gap: var(--esp-1, 0.25rem);
   padding: var(--esp-2, 0.5rem);
   border-radius: var(--raio-sm, 6px);
+}
+
+.cartao-pergunta__alt--com-letra {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+/* Sempre a última coluna (a do texto), com ou sem letra. */
+.cartao-pergunta__marca {
+  grid-column: -2 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /*
@@ -158,9 +180,19 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
 }
 
 .cartao-pergunta__letra {
-  flex: none;
   font-weight: 700;
   min-width: 1.25em;
+}
+
+/* Tela estreita: cada pixel de borda e respiro sai da largura do texto. */
+@media (max-width: 480px) {
+  .cartao-pergunta {
+    padding: var(--esp-3, 0.75rem);
+  }
+
+  .cartao-pergunta__letra {
+    min-width: 1em;
+  }
 }
 
 .cartao-pergunta__nota-caderno {

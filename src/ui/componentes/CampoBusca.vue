@@ -38,6 +38,13 @@ function aoEnviar(): void {
   display: flex;
   align-items: center;
   gap: var(--esp-2, 0.5rem);
+  /* Largura-base pequena e teto: no cabeçalho em tela estreita a busca divide
+     a linha com a trilha e os botões (IMPORTANTE 2 de
+     docs/qa-sociologia-u1.md), em vez de pedir os ~20 caracteres do padrão
+     do navegador e empurrar os botões para fora da tela. */
+  flex: 1 1 6rem;
+  min-width: 0;
+  max-width: 16rem;
 }
 
 .campo-busca__rotulo {
@@ -55,6 +62,8 @@ function aoEnviar(): void {
   /* Achado 3 da revisão: min-width nunca tinha sido conferido. */
   min-width: 44px;
   min-height: 44px;
+  flex: 1 1 auto;
+  width: 100%;
   padding: 0 var(--esp-3, 0.75rem);
   border: 1px solid var(--cor-borda, #dcd7c8);
   border-radius: var(--raio-md, 10px);

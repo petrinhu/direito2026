@@ -134,3 +134,54 @@ describe('BarraTopo', () => {
     expect(wrapper.find('nav[aria-label="Trilha de navegação"]').exists()).toBe(true);
   });
 });
+
+/**
+ * A altura que o resto da página reserva por baixo do cabeçalho fixo
+ * (`--altura-cabecalho`, LayoutBase.vue e scroll-padding-top) vinha de um
+ * número escrito à mão em tokens.css (64px, 220px no modo adaptado) que não
+ * acompanhava o cabeçalho real quando ele quebra em 2 ou 3 linhas (IMPORTANTE
+ * 1 e 2 de docs/qa-sociologia-u1.md: 433px reais contra 220px reservados).
+ * Agora o cabeçalho publica a própria altura medida; quando não é fixo
+ * (modo adaptado em tela estreita), não reserva nada.
+ */
+describe('BarraTopo, altura reservada para o conteúdo', () => {
+  const alturaOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (alturaOriginal)
+      Object.defineProperty(HTMLElement.prototype, 'offsetHeight', alturaOriginal);
+    document.documentElement.style.removeProperty('--altura-cabecalho');
+  });
+
+  function simularCabecalho(posicao: string, altura: number): void {
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+      configurable: true,
+      get: () => altura
+    });
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      position: posicao
+    } as ReturnType<typeof window.getComputedStyle>);
+  }
+
+  it('cabeçalho fixo publica a altura medida em --altura-cabecalho', () => {
+    simularCabecalho('fixed', 173);
+    const wrapper = mount(BarraTopo, { props: montarProps() });
+    expect(document.documentElement.style.getPropertyValue('--altura-cabecalho')).toBe('173px');
+    wrapper.unmount();
+  });
+
+  it('cabeçalho fora do fluxo fixo não reserva altura nenhuma', () => {
+    simularCabecalho('static', 433);
+    const wrapper = mount(BarraTopo, { props: montarProps() });
+    expect(document.documentElement.style.getPropertyValue('--altura-cabecalho')).toBe('0px');
+    wrapper.unmount();
+  });
+
+  it('ao sair da página, devolve a variável ao valor dos tokens', () => {
+    simularCabecalho('fixed', 173);
+    const wrapper = mount(BarraTopo, { props: montarProps() });
+    wrapper.unmount();
+    expect(document.documentElement.style.getPropertyValue('--altura-cabecalho')).toBe('');
+  });
+});

@@ -25,6 +25,7 @@ const ROTULOS = { sistema: 'Tema do sistema', claro: 'Tema claro', escuro: 'Tema
   gap: var(--esp-2, 0.5rem);
   min-height: 44px;
   min-width: 44px;
+  max-width: 100%;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
   background: none;
   border: 1px solid var(--cor-borda, #dcd7c8);
@@ -41,5 +42,24 @@ const ROTULOS = { sistema: 'Tema do sistema', claro: 'Tema claro', escuro: 'Tema
 
 .alternador-tema__rotulo {
   font-size: var(--escala-sm, 0.9375rem);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+/* Tela estreita, modo normal: só o ícone (sol/lua), para os três controles
+   do cabeçalho caberem sem sair da tela (IMPORTANTE 2 de
+   docs/qa-sociologia-u1.md). O nome acessível não muda: vem do aria-label do
+   botão, e o texto continua no DOM, só escondido dos olhos (mesma técnica do
+   rótulo da busca). No modo adaptado o texto fica, porque quem liga o modo
+   precisa do rótulo grande. */
+@media (max-width: 640px) {
+  :root:not([data-modo-adaptado='on']) .alternador-tema__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
 }
 </style>

@@ -67,6 +67,16 @@ Nenhum par usa cor de matiz (nem o dourado, nem o azul-petróleo dos temas norma
 | Faixa de aviso (material de estudo sem valor oficial) | Mesmo texto e posição; borda mais espessa (seção 2) para não depender só da cor de fundo para se destacar. |
 | Rodapé | Mesmo conteúdo (nome do site, ano, aviso de material de estudo, aviso de progresso salvo no navegador); texto maior, mesmo tratamento de link da seção 3. |
 
+### 4.1 Cabeçalho em tela estreita (decisão de 28/09/2026, achados do QA)
+
+Medido pelo QA (`docs/qa-sociologia-u1.md`, IMPORTANTE 2): em modo normal, em larguras até cerca de 453px, o cabeçalho tinha 487px de conteúdo e cortava o excedente, deixando "Leitura ampliada" com 11px visíveis e "Tema" fora da tela. A pessoa de baixa visão não alcançava o botão deste modo no celular. Desenho escolhido, o mais simples (nenhum menu novo, nenhum controle escondido):
+
+- **O cabeçalho quebra em 2 linhas (3 em 320px), em qualquer largura e nos dois modos.** Cada item tem uma largura-base (trilha, busca) ou o tamanho do conteúdo (botões); o que não cabe desce para a linha de baixo, em vez de sair da tela. Nenhum controle sai da janela em nenhuma largura de 320px a 1280px.
+- **Busca com largura-base pequena e teto** (6rem a 16rem), em vez das ~20 colunas padrão do navegador.
+- **Modo normal, até 640px: o botão de tema mostra só o ícone (sol ou lua).** O texto continua no DOM (escondido dos olhos) e o nome acessível continua sendo o `aria-label` do botão, "Tema claro. Ativar o próximo tema." O botão deste modo mantém o rótulo visível "Leitura ampliada" em toda largura: é o que a pessoa procura. No modo adaptado o rótulo do tema também fica visível.
+- **Rótulos dos botões quebram** dentro do botão quando o texto grande do modo passa da largura da tela (o botão nunca passa de 100% da linha).
+- **A altura reservada para o conteúdo não é mais um número fixo.** O cabeçalho mede a própria altura e a publica em `--altura-cabecalho` (o `padding-top` do corpo e o `scroll-padding-top` leem essa variável). Os valores de `tokens.css` (64px e 220px) ficam só como reserva até o script rodar.
+
 ## 5. Comportamento
 
 - **Persistência:** uma chave própria no `localStorage`, separada da chave de tema (`caderno-direito:v1:modo-adaptado`), lida na subida da página. Falha de leitura ou escrita segue a mesma regra de robustez já definida para tema e progresso (`docs/arquitetura.md`, seção 8): o site funciona igual, só não lembra a escolha entre visitas.

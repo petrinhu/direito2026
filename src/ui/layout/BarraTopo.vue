@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
@@ -69,18 +69,53 @@ function aoReceberFoco(): void {
   oculta.value = false;
 }
 
+/**
+ * Altura que LayoutBase.vue (padding-top) e base.css (scroll-padding-top)
+ * reservam por baixo do cabeçalho fixo. O número escrito em tokens.css
+ * (64px, 220px no modo adaptado) não acompanha o cabeçalho real quando ele
+ * quebra em 2 ou 3 linhas em tela estreita (medido pelo QA: 433px reais
+ * contra 220px reservados, título coberto), então o próprio cabeçalho
+ * publica a altura que tem. Fora do fluxo fixo (modo adaptado em tela
+ * estreita, ver o CSS abaixo) ele não cobre nada e não reserva nada.
+ */
+const raiz = ref<HTMLElement | null>(null);
+let observadorDeTamanho: { disconnect: () => void } | undefined;
+
+function publicarAlturaReservada(): void {
+  const cabecalho = raiz.value;
+  if (!cabecalho) return;
+  const fixo = getComputedStyle(cabecalho).position === 'fixed';
+  document.documentElement.style.setProperty(
+    '--altura-cabecalho',
+    fixo ? `${cabecalho.offsetHeight}px` : '0px'
+  );
+}
+
+watch(() => props.storeModoAdaptado.ativo.value, publicarAlturaReservada, { flush: 'post' });
+
 onMounted(() => {
   window.addEventListener('scroll', aoRolar, { passive: true });
+  window.addEventListener('resize', publicarAlturaReservada);
   aoRolar();
+  publicarAlturaReservada();
+  if (typeof window.ResizeObserver === 'function' && raiz.value) {
+    const observador = new window.ResizeObserver(publicarAlturaReservada);
+    observador.observe(raiz.value);
+    observadorDeTamanho = observador;
+  }
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', aoRolar);
+  window.removeEventListener('resize', publicarAlturaReservada);
+  observadorDeTamanho?.disconnect();
+  document.documentElement.style.removeProperty('--altura-cabecalho');
 });
 </script>
 
 <template>
   <header
+    ref="raiz"
     class="barra-topo"
     :class="{
       'barra-topo--oculta': oculta,
@@ -173,30 +208,37 @@ onBeforeUnmount(() => {
   transition: none;
 }
 
+/*
+  Quebra em mais de uma linha em qualquer largura e em qualquer modo
+  (IMPORTANTE 2 de docs/qa-sociologia-u1.md: sem quebra, o cabeçalho tinha
+  487px de conteúdo em 360px e cortava "Leitura ampliada" e "Tema"). Cada
+  item tem uma largura-base própria (trilha, busca) ou o tamanho do conteúdo
+  (botões): o que não cabe desce para a linha de baixo em vez de sair da
+  tela. A altura da faixa, que passa a variar, é publicada pelo script
+  acima (--altura-cabecalho). O min-height é um valor próprio, não
+  --altura-cabecalho: essa variável agora é a MEDIDA deste elemento, e
+  usá-la aqui faria a faixa nunca mais encolher.
+*/
 .barra-topo__linha {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--esp-4, 1rem);
+  gap: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
   padding: var(--esp-3, 0.75rem) var(--esp-5, 1.5rem);
-  min-height: var(--altura-cabecalho, 64px);
+  min-height: 4rem;
 }
 
-/* Modo de leitura adaptada: a fonte maior não cabe mais numa linha só em
-   tela estreita (docs/modo-adaptado.md, seção 4, "Trilha do cabeçalho...
-   quebra em mais de uma linha se o texto maior não couber numa linha só,
-   nunca corta com reticências"). --altura-cabecalho cresce junto (definido
-   dentro do bloco do modo em tokens.css), porque LayoutBase.vue e o
-   scroll-padding-top de base.css usam essa mesma variável para nunca
-   deixar o conteúdo nascer escondido atrás do cabeçalho fixo. */
-:root[data-modo-adaptado='on'] .barra-topo__linha {
-  flex-wrap: wrap;
-  row-gap: var(--esp-2, 0.5rem);
+@media (max-width: 640px) {
+  .barra-topo__linha {
+    column-gap: var(--esp-2, 0.5rem);
+    padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  }
 }
 
 .barra-topo__trilha {
   margin-right: auto;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 8rem;
 }
 
 .barra-topo__botao-gaveta {

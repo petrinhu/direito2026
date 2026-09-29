@@ -37,6 +37,9 @@ const ARIA_LABEL_LIGADO = 'Desativar modo de leitura adaptada e voltar ao tamanh
   gap: var(--esp-2, 0.5rem);
   min-height: var(--alvo-toque-minimo, 44px);
   min-width: var(--alvo-toque-minimo, 44px);
+  /* Com o texto maior do modo adaptado, o rótulo pode passar da largura da
+     tela estreita: quebra em vez de sair dela. */
+  max-width: 100%;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
   background: none;
   border: 1px solid var(--cor-borda, #dcd7c8);
@@ -57,5 +60,8 @@ const ARIA_LABEL_LIGADO = 'Desativar modo de leitura adaptada e voltar ao tamanh
 
 .botao-modo-adaptado__rotulo {
   font-size: var(--escala-sm, 0.9375rem);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 </style>

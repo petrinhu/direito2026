@@ -1,6 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 import { curriculo } from '../../src/conteudo/curriculo';
 import { calcularContraste } from '../../src/core/design/contraste';
+import { quiz as quizIntr } from '../../src/conteudo/p1/intr-direito/u1/quiz';
+import { quiz as quizRedacao } from '../../src/conteudo/p1/redacao-juridica-1/u1/quiz';
+import { quiz as quizSociologia } from '../../src/conteudo/p1/sociologia-juridica/u1/quiz';
+import { quiz as quizFilosofia } from '../../src/conteudo/p1/filosofia-juridica/u1/quiz';
+import type { PerguntaQuiz } from '../../src/core/unidade/tipos';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 import { prepararEstadoInicial, type EstadoInicial } from './apoio/estadoInicial';
 
@@ -132,6 +137,26 @@ async function varrer(page: Page, total: number): Promise<LeituraDoCartao[]> {
   return leituras;
 }
 
+/**
+ * O conteúdo é a fonte de quantos selos a tela TEM de mostrar: sem isso, um
+ * selo removido do template deixava o teste verde (nenhum cartão com selo,
+ * nada a medir). Toda unidade com quiz tem de estar aqui; uma unidade nova
+ * sem entrada reprova em vez de passar sem conferir.
+ */
+const QUIZ_POR_CADEIRA: Record<string, readonly PerguntaQuiz[]> = {
+  'intr-direito': quizIntr,
+  'redacao-juridica-1': quizRedacao,
+  'sociologia-juridica': quizSociologia,
+  'filosofia-juridica': quizFilosofia
+};
+
+function perguntasDoProfessor(caminho: string): readonly PerguntaQuiz[] {
+  const cadeira = /^\/p\/[^/]+\/([^/]+)\//.exec(caminho)?.[1] ?? '';
+  const quiz = QUIZ_POR_CADEIRA[cadeira];
+  if (!quiz) throw new Error(`quiz da cadeira "${cadeira}" ausente em QUIZ_POR_CADEIRA`);
+  return quiz.filter((p) => p.origem === 'professor');
+}
+
 const rotasDeQuiz = rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('/quiz'));
 
 for (const rota of rotasDeQuiz) {
@@ -146,6 +171,25 @@ for (const rota of rotasDeQuiz) {
         const leituras = await varrer(page, total);
 
         const comSelo = leituras.filter((l) => l.selo !== null);
+        const doProfessor = perguntasDoProfessor(rota.caminho);
+        if (rota.caminho.includes('/filosofia-juridica/')) {
+          // Decisão do líder: 20 do simulado do professor, ids 1 a 20.
+          expect(doProfessor.map((p) => p.id).sort((x, y) => x - y)).toEqual(
+            Array.from({ length: 20 }, (_, i) => i + 1)
+          );
+        }
+        expect(
+          comSelo.length,
+          `${rota.nome}: cartões com selo na tela x perguntas com origem professor no conteúdo`
+        ).toBe(doProfessor.length);
+        // Todo selo aparece numa pergunta de verdadeiro ou falso do simulado
+        // (as do professor são V/F) e nenhuma outra o ganha.
+        for (const l of comSelo) {
+          expect(l.radios, `selo em "${l.enunciado}": só nas de verdadeiro ou falso`).toBe(2);
+        }
+        expect(leituras.length - comSelo.length, `${rota.nome}: cartões sem selo`).toBe(
+          total - doProfessor.length
+        );
         const verdadeiroOuFalso = leituras.filter((l) => l.radios === 2);
         test.skip(
           comSelo.length === 0 && verdadeiroOuFalso.length === 0,

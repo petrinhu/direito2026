@@ -54,8 +54,8 @@ onBeforeUnmount(() => observador?.disconnect());
     <DicasFormaProfessora v-else-if="bloco.componenteExtra === 'dicas-forma-professora'" />
     <QuadroResumo :itens="bloco.resumo" />
     <p class="bloco-teorico__exemplo">
-      <strong>Na prática do operador do direito:</strong>
-      <span v-html="bloco.exemploHtml" />
+      <strong>Na prática do operador do direito:</strong>{{ ' '
+      }}<span v-html="bloco.exemploHtml" />
     </p>
   </section>
 </template>

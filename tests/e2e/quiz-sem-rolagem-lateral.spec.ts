@@ -40,26 +40,39 @@ const CHAVE_TEMA = 'caderno-direito:v1:tema';
 const CHAVE_MODO_ADAPTADO = 'caderno-direito:v1:modo-adaptado';
 const CHAVE_AVISO_ARMAZENAMENTO_VISTO = 'caderno-direito:v1:aviso-armazenamento-visto';
 
-async function irParaQuizEscuroModoAdaptado(page: Page, caminho: string): Promise<void> {
+interface EstadoInicial {
+  tema: 'claro' | 'escuro';
+  modoAdaptado: boolean;
+}
+
+async function irParaQuiz(page: Page, caminho: string, estado: EstadoInicial): Promise<void> {
   await page.addInitScript(
-    ({ chaveTema, chaveModo, chaveAviso }) => {
-      window.localStorage.setItem(chaveTema, 'escuro');
-      window.localStorage.setItem(chaveModo, 'true');
+    ({ chaveTema, chaveModo, chaveAviso, tema, modoAdaptado }) => {
+      window.localStorage.setItem(chaveTema, tema);
+      if (modoAdaptado) window.localStorage.setItem(chaveModo, 'true');
       window.localStorage.setItem(chaveAviso, '1');
     },
     {
       chaveTema: CHAVE_TEMA,
       chaveModo: CHAVE_MODO_ADAPTADO,
-      chaveAviso: CHAVE_AVISO_ARMAZENAMENTO_VISTO
+      chaveAviso: CHAVE_AVISO_ARMAZENAMENTO_VISTO,
+      tema: estado.tema,
+      modoAdaptado: estado.modoAdaptado
     }
   );
   await page.goto(caminho);
-  await page.locator('[data-modo-adaptado="on"]').waitFor({ state: 'attached' });
+  if (estado.modoAdaptado) {
+    await page.locator('[data-modo-adaptado="on"]').waitFor({ state: 'attached' });
+  }
   await page.locator('.cartao-pergunta').first().waitFor({ state: 'visible' });
   // Prova de que a faixa de fato não apareceu (e não só que o teste
   // parou de precisar dela): se ela existisse no DOM, os cliques em
   // "Próxima" mais abaixo arriscariam o mesmo timeout de antes.
   await expect(page.locator('.aviso-armazenamento')).toHaveCount(0);
+}
+
+async function irParaQuizEscuroModoAdaptado(page: Page, caminho: string): Promise<void> {
+  await irParaQuiz(page, caminho, { tema: 'escuro', modoAdaptado: true });
 }
 
 async function medirEstouro(page: Page): Promise<{ scrollWidth: number; clientWidth: number }> {
@@ -124,4 +137,110 @@ for (const rota of rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('
     await irParaQuizEscuroModoAdaptado(page, rota.caminho);
     await varrerTodasAsPerguntas(page, rota.nome);
   });
+}
+
+/**
+ * Defeito CRÍTICO do QA (docs/qa-sociologia-u1.md, "CRÍTICO 1"): a varredura
+ * acima só mede `scrollWidth`, e o texto da alternativa colapsava para 16px
+ * (3px no Firefox) sem estourar a página, quebrando letra por letra. Aqui
+ * se mede a LARGURA ÚTIL do texto de cada alternativa, antes e depois de
+ * responder (a marca "Correta"/"Sua resposta, incorreta" só existe depois),
+ * em 320px e 360px, com e sem modo adaptado, em toda pergunta de todo quiz
+ * (percorridas em ordem, sem depender do sorteio).
+ *
+ * Piso: o texto ocupa no mínimo metade da largura do cartão. Palavra que
+ * cabe numa linha do texto não pode aparecer quebrada em duas: mede-se,
+ * por palavra, se a soma dos fragmentos (um por linha) cabia na largura do
+ * texto; se cabia, a quebra no meio foi desnecessária.
+ */
+const PISO_LARGURA_TEXTO_SOBRE_CARTAO = 0.5;
+const LARGURAS_DO_CELULAR = [320, 360] as const;
+
+async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promise<string[]> {
+  return page.evaluate(
+    ({ piso, respondida }) => {
+      const problemas: string[] = [];
+      const cartao = document.querySelector<HTMLElement>('.cartao-pergunta');
+      if (!cartao) return ['cartão da pergunta ausente'];
+      const caixaCartao = cartao.getBoundingClientRect();
+      const alternativas = Array.from(
+        cartao.querySelectorAll<HTMLElement>('.cartao-pergunta__alt')
+      );
+      let marcas = 0;
+      alternativas.forEach((alt, indice) => {
+        const texto = alt.querySelector<HTMLElement>('.cartao-pergunta__alt-texto');
+        if (!texto) {
+          problemas.push(`alternativa ${indice}: sem texto`);
+          return;
+        }
+        const larguraTexto = texto.getBoundingClientRect().width;
+        if (larguraTexto < piso * caixaCartao.width) {
+          problemas.push(
+            `alternativa ${indice}: texto com ${larguraTexto.toFixed(0)}px de ` +
+              `${caixaCartao.width.toFixed(0)}px do cartão (piso ${piso * 100}%)`
+          );
+        }
+        const percurso = document.createTreeWalker(texto, window.NodeFilter.SHOW_TEXT);
+        for (let no = percurso.nextNode(); no; no = percurso.nextNode()) {
+          const conteudo = no.textContent ?? '';
+          for (const palavra of conteudo.matchAll(/[^\s\-/]+/g)) {
+            const trecho = document.createRange();
+            trecho.setStart(no, palavra.index ?? 0);
+            trecho.setEnd(no, (palavra.index ?? 0) + palavra[0].length);
+            const fragmentos = Array.from(trecho.getClientRects());
+            if (fragmentos.length < 2) continue;
+            const larguraInteira = fragmentos.reduce((soma, f) => soma + f.width, 0);
+            if (larguraInteira <= larguraTexto) {
+              problemas.push(
+                `alternativa ${indice}: palavra "${palavra[0]}" quebrada no meio ` +
+                  `(inteira ocupa ${larguraInteira.toFixed(0)}px, linha tem ${larguraTexto.toFixed(0)}px)`
+              );
+            }
+          }
+        }
+        const marca = alt.querySelector<HTMLElement>('.cartao-pergunta__marca');
+        if (marca) {
+          marcas += 1;
+          const caixaMarca = marca.getBoundingClientRect();
+          const dentro =
+            caixaMarca.width > 0 &&
+            caixaMarca.left >= caixaCartao.left - 1 &&
+            caixaMarca.right <= caixaCartao.right + 1;
+          if (!dentro) problemas.push(`alternativa ${indice}: marca fora do cartão`);
+          if (marca.closest('label') !== alt) problemas.push(`alternativa ${indice}: marca solta`);
+        }
+      });
+      if (respondida && marcas === 0) problemas.push('depois de responder, nenhuma marca visível');
+      if (!respondida && marcas > 0) problemas.push('antes de responder, já há marca');
+      return problemas;
+    },
+    { piso: PISO_LARGURA_TEXTO_SOBRE_CARTAO, respondida: depoisDeResponder }
+  );
+}
+
+for (const rota of rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('/quiz'))) {
+  for (const largura of LARGURAS_DO_CELULAR) {
+    for (const modoAdaptado of [false, true]) {
+      const rotuloModo = modoAdaptado ? 'modo adaptado' : 'modo normal';
+      test(`${rota.nome}: texto das alternativas com largura útil e sem palavra partida, ${largura}px, ${rotuloModo}`, async ({
+        page
+      }) => {
+        test.setTimeout(180_000);
+        await page.setViewportSize({ width: largura, height: 800 });
+        await irParaQuiz(page, rota.caminho, { tema: 'claro', modoAdaptado });
+        const total = await lerTotalDePerguntas(page);
+        for (let indice = 0; indice < total; indice++) {
+          const enunciado = (await page.locator('.cartao-pergunta__enunciado').innerText()).slice(
+            0,
+            60
+          );
+          const rotulo = `${rota.nome}, ${largura}px, ${rotuloModo}, pergunta ${indice + 1}/${total} ("${enunciado}")`;
+          expect(await medirAlternativas(page, false), `${rotulo}, antes de responder`).toEqual([]);
+          await page.locator('.cartao-pergunta input[type="radio"]').first().check({ force: true });
+          expect(await medirAlternativas(page, true), `${rotulo}, depois de responder`).toEqual([]);
+          if (indice < total - 1) await page.getByRole('button', { name: 'Próxima' }).click();
+        }
+      });
+    }
+  }
 }

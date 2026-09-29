@@ -85,3 +85,35 @@ describe('CartaoPergunta, nota do gabarito do caderno', () => {
     expect(wrapper.find('.cartao-pergunta__nota-caderno').exists()).toBe(false);
   });
 });
+
+describe('CartaoPergunta, estrutura da alternativa (largura do texto em tela estreita)', () => {
+  it('só a alternativa com letra leva o modificador que reserva a coluna da letra', () => {
+    const comLetra = mount(CartaoPergunta, {
+      props: { pergunta: perguntaDeCinco(), respostaEscolhida: undefined }
+    });
+    for (const alt of comLetra.findAll('.cartao-pergunta__alt')) {
+      expect(alt.classes()).toContain('cartao-pergunta__alt--com-letra');
+    }
+    const semLetra = mount(CartaoPergunta, {
+      props: { pergunta: perguntaDeQuatro(), respostaEscolhida: undefined }
+    });
+    for (const alt of semLetra.findAll('.cartao-pergunta__alt')) {
+      expect(alt.classes()).not.toContain('cartao-pergunta__alt--com-letra');
+    }
+  });
+
+  it('a marca fica dentro do mesmo label da alternativa, depois do texto', () => {
+    const wrapper = mount(CartaoPergunta, {
+      props: { pergunta: perguntaDeCinco(), respostaEscolhida: 0 }
+    });
+    for (const indice of [0, 4]) {
+      const alt = wrapper.findAll('.cartao-pergunta__alt')[indice]!;
+      expect(alt.element.tagName).toBe('LABEL');
+      const filhos = Array.from(alt.element.children).map((f) => f.className);
+      const posTexto = filhos.findIndex((c) => c.includes('cartao-pergunta__alt-texto'));
+      const posMarca = filhos.findIndex((c) => c.includes('cartao-pergunta__marca'));
+      expect(posTexto).toBeGreaterThanOrEqual(0);
+      expect(posMarca).toBeGreaterThan(posTexto);
+    }
+  });
+});

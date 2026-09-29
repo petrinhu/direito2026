@@ -11,10 +11,16 @@ describe('Home com o currículo real', () => {
   });
   const links = wrapper.findAll('a.cartao-unidade');
 
-  it('mostra um cartão por cadeira publicada, os três com nome e link distintos', () => {
-    expect(links).toHaveLength(3);
-    expect(new Set(links.map((l) => l.attributes('href'))).size).toBe(3);
-    expect(new Set(links.map((l) => l.text())).size).toBe(3);
+  it('mostra um cartão por cadeira publicada, os quatro com nome e link distintos', () => {
+    expect(links).toHaveLength(4);
+    expect(new Set(links.map((l) => l.attributes('href'))).size).toBe(4);
+    expect(new Set(links.map((l) => l.text())).size).toBe(4);
+  });
+
+  it('o cartão de Filosofia Jurídica traz o nome da cadeira e não oferece petição', () => {
+    const cartao = links.find((l) => l.attributes('href') === '/p/p1/filosofia-juridica/u1')!;
+    expect(cartao.text()).toContain('Filosofia Jurídica');
+    expect(cartao.text().toLowerCase()).not.toContain('peti');
   });
 
   it('o cartão de Sociologia Jurídica traz o nome da cadeira e não oferece petição', () => {

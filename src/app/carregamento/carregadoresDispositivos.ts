@@ -35,5 +35,10 @@ export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos = {
   'p1/sociologia-juridica/u1': async (): Promise<IndiceDispositivos> => {
     const { dispositivos } = await import('@/conteudo/p1/sociologia-juridica/u1/dispositivos');
     return dispositivos;
+  },
+  // Filosofia Jurídica também não cita artigo de lei: índice vazio.
+  'p1/filosofia-juridica/u1': async (): Promise<IndiceDispositivos> => {
+    const { dispositivos } = await import('@/conteudo/p1/filosofia-juridica/u1/dispositivos');
+    return dispositivos;
   }
 };

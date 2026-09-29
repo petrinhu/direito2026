@@ -64,11 +64,30 @@ const cadeiraSociologia: Cadeira = {
   unidades: [unidade1Sociologia],
 };
 
+/**
+ * Filosofia Jurídica (Idade Antiga e Idade Média) também não tem petição:
+ * só resumo e quiz.
+ */
+const unidade1Filosofia: ReferenciaUnidade = {
+  id: 'u1',
+  rotulo: 'Unidade 1',
+  titulo: 'Resumo de estudo e quiz',
+  estado: 'publicado',
+  abas: ['resumo', 'quiz'],
+};
+
+const cadeiraFilosofia: Cadeira = {
+  id: 'filosofia-juridica',
+  nome: 'Filosofia Jurídica',
+  estado: 'publicado',
+  unidades: [unidade1Filosofia],
+};
+
 const periodo1: Periodo = {
   id: 'p1',
   numero: 1,
   rotulo: '1º período',
-  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica, cadeiraSociologia],
+  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica, cadeiraSociologia, cadeiraFilosofia],
 };
 
 function periodoEmBreve(numero: number): Periodo {

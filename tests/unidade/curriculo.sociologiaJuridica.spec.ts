@@ -6,10 +6,10 @@ const periodo1 = curriculo.find((p) => p.id === 'p1')!;
 const sociologia = periodo1.cadeiras.find((c) => c.id === 'sociologia-juridica');
 
 describe('currículo: Sociologia Jurídica, 1a unidade', () => {
-  it('a cadeira entra no 1º período com o nome dela, como terceira publicada', () => {
+  it('a cadeira entra no 1º período com o nome dela, entre as publicadas', () => {
     expect(sociologia?.nome).toBe('Sociologia Jurídica');
     expect(sociologia?.estado).toBe('publicado');
-    expect(periodo1.cadeiras.filter((c) => c.estado === 'publicado')).toHaveLength(3);
+    expect(periodo1.cadeiras.filter((c) => c.estado === 'publicado')).toHaveLength(4);
   });
 
   it('tem só duas abas, resumo e quiz, e o título não fala de petição', () => {

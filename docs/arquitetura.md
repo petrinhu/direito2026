@@ -1291,7 +1291,7 @@ A marca `gabaritoDoCaderno: true` mostra, depois de responder, a nota neutra de 
 
 ## Pergunta de verdadeiro ou falso e selo "Revisão do professor" (29/09/2026)
 
-Filosofia Jurídica traz quiz de 80 perguntas: 40 de cinco alternativas e 40 de verdadeiro ou falso, das quais 33 são do simulado do professor. `PerguntaQuiz` virou união discriminada (`src/core/unidade/tipos.ts`): `PerguntaMultiplaEscolha` (a de sempre, campo `tipo` omitido, 4 ou 5 alternativas) e `PerguntaVerdadeiroOuFalso` (`tipo: 'verdadeiro-ou-falso'`, `correta: boolean`, sem `alternativasHtml`). Nada mudou nas perguntas existentes: a semente antiga sorteia a mesma ordem.
+Filosofia Jurídica traz quiz de 80 perguntas: 40 de cinco alternativas e 40 de verdadeiro ou falso, das quais 20 são do simulado do professor. `PerguntaQuiz` virou união discriminada (`src/core/unidade/tipos.ts`): `PerguntaMultiplaEscolha` (a de sempre, campo `tipo` omitido, 4 ou 5 alternativas) e `PerguntaVerdadeiroOuFalso` (`tipo: 'verdadeiro-ou-falso'`, `correta: boolean`, sem `alternativasHtml`). Nada mudou nas perguntas existentes: a semente antiga sorteia a mesma ordem.
 
 **Decisão do sorteio:** as perguntas V/F entram no sorteio da ordem das perguntas, mas as alternativas nunca são embaralhadas nem gastam número do gerador. O motor entrega `alternativasHtml = ['Verdadeiro', 'Falso']` (constante em `src/core/quiz/alternativasVerdadeiroOuFalso.ts`) e `indiceCorreto` 0 ou 1, então correção, placar, revisão e o progresso salvo (`Record<number, IndiceAlternativa>`) não mudaram. Sem letras (`mostrarLetras(2)` é falso).
 

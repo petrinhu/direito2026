@@ -22,7 +22,9 @@ export function coletarHtmlDaUnidade(conteudo: ConteudoUnidade): string {
   if (conteudo.quiz) {
     // Os três campos legitimamente carregam botão de citação.
     for (const pergunta of conteudo.quiz) {
-      pedacos.push(pergunta.enunciadoHtml, pergunta.explicacaoHtml, ...pergunta.alternativasHtml);
+      pedacos.push(pergunta.enunciadoHtml, pergunta.explicacaoHtml);
+      // Verdadeiro ou falso não tem alternativas próprias (são fixas).
+      if (pergunta.tipo !== 'verdadeiro-ou-falso') pedacos.push(...pergunta.alternativasHtml);
     }
   }
   return pedacos.join(' ');

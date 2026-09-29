@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { embaralharRodada, corrigirResposta, calcularPontuacao } from '@/core/quiz/motor';
-import type { IndiceAlternativa, PerguntaQuiz } from '@/core/unidade/tipos';
+import type { IndiceAlternativa, PerguntaMultiplaEscolha } from '@/core/unidade/tipos';
 
-function perguntasDeTeste(): readonly PerguntaQuiz[] {
+function perguntasDeTeste(): readonly PerguntaMultiplaEscolha[] {
   return [
     {
       id: 1,
@@ -127,7 +127,7 @@ describe('calcularPontuacao', () => {
 });
 
 describe('perguntas com cinco alternativas (Sociologia Jurídica)', () => {
-  function perguntasDeCinco(): readonly PerguntaQuiz[] {
+  function perguntasDeCinco(): readonly PerguntaMultiplaEscolha[] {
     return [
       {
         id: 101,

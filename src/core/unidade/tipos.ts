@@ -74,10 +74,21 @@ export interface PecaComentada {
 
 /**
  * Categorias de pergunta. As três primeiras nasceram no piloto (40, 10 e 10
- * perguntas); as quatro seguintes são da unidade de Sociologia Jurídica.
+ * perguntas); as quatro seguintes são da unidade de Sociologia Jurídica; as
+ * três últimas (Idade Antiga, Idade Média, revisão do professor) são de
+ * Filosofia Jurídica.
  */
 export type CategoriaQuiz =
-  'teoria' | 'peticao' | 'fundamentos' | 'atividade' | 'conceitos' | 'classicos' | 'aplicacao';
+  | 'teoria'
+  | 'peticao'
+  | 'fundamentos'
+  | 'atividade'
+  | 'conceitos'
+  | 'classicos'
+  | 'aplicacao'
+  | 'antiga'
+  | 'media'
+  | 'revisao';
 
 /** Posição de uma alternativa na ordem original: 0 é A, 4 é E. */
 export type IndiceAlternativa = 0 | 1 | 2 | 3 | 4;
@@ -90,7 +101,13 @@ export type IndiceAlternativa = 0 | 1 | 2 | 3 | 4;
 export type AlternativasQuiz =
   readonly [string, string, string, string] | readonly [string, string, string, string, string];
 
-export interface PerguntaQuiz {
+/** Duas alternativas fixas de uma pergunta de verdadeiro ou falso. */
+export type AlternativasVerdadeiroOuFalso = readonly [string, string];
+
+/** Quem redigiu a pergunta, quando não foi o caderno. Hoje só o professor. */
+export type OrigemPergunta = 'professor';
+
+interface PerguntaBase {
   readonly id: number;
   readonly categoria: CategoriaQuiz;
   /**
@@ -102,10 +119,6 @@ export interface PerguntaQuiz {
    * crua na tela).
    */
   readonly enunciadoHtml: string;
-  /** 4 ou 5 alternativas. A união de tuplas trava isso no compilador. */
-  readonly alternativasHtml: AlternativasQuiz;
-  /** Índice da correta no array original, antes de embaralhar. */
-  readonly correta: IndiceAlternativa;
   /** true quando a explicação apoia-se em artigo fora do conjunto base da disciplina. */
   readonly fonteExtra: boolean;
   readonly explicacaoHtml: string;
@@ -115,7 +128,35 @@ export interface PerguntaQuiz {
    * dizendo isso. Ausente nas demais (nunca `false`).
    */
   readonly gabaritoDoCaderno?: true;
+  /**
+   * 'professor' quando a pergunta é do simulado do professor: o cartão
+   * mostra o selo "Revisão do professor" antes do enunciado. Ausente nas
+   * demais.
+   */
+  readonly origem?: OrigemPergunta;
 }
+
+/** Quatro ou cinco alternativas, embaralhadas a cada rodada. `tipo` é omitido. */
+export interface PerguntaMultiplaEscolha extends PerguntaBase {
+  readonly tipo?: 'multipla-escolha';
+  /** 4 ou 5 alternativas. A união de tuplas trava isso no compilador. */
+  readonly alternativasHtml: AlternativasQuiz;
+  /** Índice da correta no array original, antes de embaralhar. */
+  readonly correta: IndiceAlternativa;
+}
+
+/**
+ * Afirmação para julgar. As alternativas são fixas ("Verdadeiro", "Falso",
+ * nessa ordem, sem letras e nunca embaralhadas), então a pergunta não
+ * declara alternativas: só diz se a afirmação é verdadeira.
+ */
+export interface PerguntaVerdadeiroOuFalso extends PerguntaBase {
+  readonly tipo: 'verdadeiro-ou-falso';
+  /** true se a afirmação do enunciado é verdadeira. */
+  readonly correta: boolean;
+}
+
+export type PerguntaQuiz = PerguntaMultiplaEscolha | PerguntaVerdadeiroOuFalso;
 
 export interface ConteudoUnidade {
   readonly meta: MetaUnidade;

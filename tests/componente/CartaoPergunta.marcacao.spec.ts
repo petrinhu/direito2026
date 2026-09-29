@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import CartaoPergunta from '@/ui/componentes/CartaoPergunta.vue';
 import type { PerguntaEmbaralhada } from '@/core/quiz/tipos';
-import { quiz as perguntasReais } from '@/conteudo/p1/intr-direito/u1/quiz';
+import { quiz as quizIntro } from '@/conteudo/p1/intr-direito/u1/quiz';
+import type { PerguntaMultiplaEscolha } from '@/core/unidade/tipos';
+
+// Introdução ao Direito só tem múltipla escolha (4 alternativas).
+const perguntasReais = quizIntro as readonly PerguntaMultiplaEscolha[];
 
 /**
  * Achado do QA (relatado pelo orquestrador): numa pergunta do quiz, a

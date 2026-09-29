@@ -1,4 +1,5 @@
 import type { AlternativasQuiz, IndiceAlternativa, PerguntaQuiz } from '../unidade/tipos';
+import { ALTERNATIVAS_VERDADEIRO_OU_FALSO } from './alternativasVerdadeiroOuFalso';
 import type { PerguntaEmbaralhada, Pontuacao, PontuacaoCategoria, RodadaQuiz } from './tipos';
 
 /**
@@ -39,6 +40,29 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
   const perguntasEmbaralhadas = embaralhar(perguntas, aleatorio);
 
   const resultado: PerguntaEmbaralhada[] = perguntasEmbaralhadas.map((pergunta) => {
+    const marcas = {
+      ...(pergunta.gabaritoDoCaderno ? { gabaritoDoCaderno: true as const } : {}),
+      ...(pergunta.origem ? { origem: pergunta.origem } : {})
+    };
+    const comum = {
+      id: pergunta.id,
+      categoria: pergunta.categoria,
+      enunciadoHtml: pergunta.enunciadoHtml,
+      explicacaoHtml: pergunta.explicacaoHtml,
+      fonteExtra: pergunta.fonteExtra
+    };
+
+    if (pergunta.tipo === 'verdadeiro-ou-falso') {
+      // Não gasta sorteio: as alternativas ficam sempre na ordem fixa.
+      return {
+        ...comum,
+        tipo: 'verdadeiro-ou-falso' as const,
+        alternativasHtml: ALTERNATIVAS_VERDADEIRO_OU_FALSO,
+        indiceCorreto: (pergunta.correta ? 0 : 1) as IndiceAlternativa,
+        ...marcas
+      };
+    }
+
     // Os índices vêm do tamanho da própria pergunta (4 ou 5): com 4, a
     // sequência sorteada é a de sempre, então uma semente já gravada no
     // navegador continua reconstituindo a mesma rodada.
@@ -48,16 +72,7 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
       (i) => pergunta.alternativasHtml[i]
     ) as unknown as AlternativasQuiz;
     const indiceCorreto = ordem.indexOf(pergunta.correta) as IndiceAlternativa;
-    return {
-      id: pergunta.id,
-      categoria: pergunta.categoria,
-      enunciadoHtml: pergunta.enunciadoHtml,
-      explicacaoHtml: pergunta.explicacaoHtml,
-      fonteExtra: pergunta.fonteExtra,
-      alternativasHtml,
-      indiceCorreto,
-      ...(pergunta.gabaritoDoCaderno ? { gabaritoDoCaderno: true as const } : {})
-    };
+    return { ...comum, alternativasHtml, indiceCorreto, ...marcas };
   });
 
   return {

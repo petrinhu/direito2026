@@ -28,6 +28,9 @@ export type {
   PecaComentada,
   CategoriaQuiz,
   PerguntaQuiz,
+  PerguntaMultiplaEscolha,
+  PerguntaVerdadeiroOuFalso,
+  OrigemPergunta,
   ConteudoUnidade,
 } from '../core/unidade/tipos';
 

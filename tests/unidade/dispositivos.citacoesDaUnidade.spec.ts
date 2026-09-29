@@ -5,7 +5,7 @@ import {
   conteudoArquivoDispositivos
 } from '@/core/dispositivos/citacoesDaUnidade';
 import type { DispositivoLegal, IndiceDispositivos } from '@/core/dispositivos/tipos';
-import type { ConteudoUnidade } from '@/core/unidade/tipos';
+import type { ConteudoUnidade, PerguntaMultiplaEscolha } from '@/core/unidade/tipos';
 
 const CC186: DispositivoLegal = {
   id: 'cc-186',
@@ -73,7 +73,7 @@ describe('resolverCitacoesDaUnidade, o que continua reprovando', () => {
 
   it('enxerga citação que só existe em enunciado, alternativa ou explicação do quiz', () => {
     const base = unidadeSemCitacao();
-    const p = base.quiz![0]!;
+    const p = base.quiz![0] as PerguntaMultiplaEscolha;
     const conteudo: ConteudoUnidade = {
       ...base,
       quiz: [
@@ -105,5 +105,29 @@ describe('coletarHtmlDaUnidade', () => {
     expect(html).toContain('Sociologia pura');
     expect(html).toContain('COMENTARIO');
     expect(html).not.toContain('undefined');
+  });
+});
+
+describe('coletarHtmlDaUnidade, pergunta de verdadeiro ou falso', () => {
+  it('lê enunciado e explicação e não quebra sem alternativas próprias', () => {
+    const base = unidadeSemCitacao();
+    const conteudo: ConteudoUnidade = {
+      ...base,
+      quiz: [
+        {
+          id: 2,
+          tipo: 'verdadeiro-ou-falso',
+          categoria: 'antiga',
+          enunciadoHtml: '<button data-dispositivo="cc-186">a</button>',
+          correta: true,
+          fonteExtra: false,
+          explicacaoHtml: '<button data-dispositivo="cc-999">x</button>'
+        }
+      ]
+    };
+    expect([...resolverCitacoesDaUnidade(conteudo, CATALOGO).encontradas].sort()).toEqual([
+      'cc-186',
+      'cc-999'
+    ]);
   });
 });

@@ -1,11 +1,20 @@
 import type {
   AlternativasQuiz,
+  AlternativasVerdadeiroOuFalso,
+  OrigemPergunta,
   CategoriaQuiz,
   IndiceAlternativa,
   PerguntaQuiz
 } from '../unidade/tipos';
 
-export type { AlternativasQuiz, CategoriaQuiz, IndiceAlternativa, PerguntaQuiz };
+export type {
+  AlternativasQuiz,
+  AlternativasVerdadeiroOuFalso,
+  CategoriaQuiz,
+  IndiceAlternativa,
+  OrigemPergunta,
+  PerguntaQuiz
+};
 
 export interface PerguntaEmbaralhada {
   readonly id: number;
@@ -14,9 +23,13 @@ export interface PerguntaEmbaralhada {
   readonly enunciadoHtml: string;
   readonly explicacaoHtml: string;
   readonly fonteExtra: boolean;
-  readonly alternativasHtml: AlternativasQuiz;
+  /** Verdadeiro ou falso: sempre as duas alternativas fixas, nessa ordem. */
+  readonly alternativasHtml: AlternativasQuiz | AlternativasVerdadeiroOuFalso;
   readonly indiceCorreto: IndiceAlternativa;
+  /** Só presente (e só 'verdadeiro-ou-falso') nas perguntas de verdadeiro ou falso. */
+  readonly tipo?: 'verdadeiro-ou-falso';
   readonly gabaritoDoCaderno?: true;
+  readonly origem?: OrigemPergunta;
 }
 
 export interface RodadaQuiz {

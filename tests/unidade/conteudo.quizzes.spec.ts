@@ -3,12 +3,25 @@ import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
-import type { PerguntaQuiz } from '@/core/unidade/tipos';
+import type { PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
 
-const TODOS: ReadonlyArray<{ nome: string; quiz: readonly PerguntaQuiz[]; alternativas: 4 | 5 }> = [
-  { nome: 'Introdução ao Direito', quiz: quizIntr, alternativas: 4 },
-  { nome: 'Redação Jurídica 1', quiz: quizRedacao, alternativas: 4 },
-  { nome: 'Sociologia Jurídica', quiz: quizSociologia, alternativas: 5 }
+/** Estas três cadeiras só têm múltipla escolha; um verdadeiro ou falso aqui é erro de conteúdo. */
+function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMultiplaEscolha[] {
+  return quiz.map((p) => {
+    if (p.tipo === 'verdadeiro-ou-falso')
+      throw new Error(`id ${p.id}: verdadeiro ou falso inesperado`);
+    return p;
+  });
+}
+
+const TODOS: ReadonlyArray<{
+  nome: string;
+  quiz: readonly PerguntaMultiplaEscolha[];
+  alternativas: 4 | 5;
+}> = [
+  { nome: 'Introdução ao Direito', quiz: soMultiplaEscolha(quizIntr), alternativas: 4 },
+  { nome: 'Redação Jurídica 1', quiz: soMultiplaEscolha(quizRedacao), alternativas: 4 },
+  { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 }
 ];
 
 describe.each(TODOS)('quiz de $nome', ({ quiz, alternativas }) => {

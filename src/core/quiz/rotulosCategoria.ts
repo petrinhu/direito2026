@@ -14,5 +14,8 @@ export const ROTULOS_CATEGORIA_QUIZ: Record<CategoriaQuiz, string> = {
   atividade: 'Atividade da aula',
   conceitos: 'Conceitos',
   classicos: 'Os clássicos',
-  aplicacao: 'Aplicação'
+  aplicacao: 'Aplicação',
+  antiga: 'Idade Antiga',
+  media: 'Idade Média',
+  revisao: 'Revisão do professor'
 };

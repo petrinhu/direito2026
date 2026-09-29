@@ -30,3 +30,12 @@ describe('registros de carregamento cobrem o currículo', () => {
     expect(Object.keys(CARREGADORES_DISPOSITIVOS).sort()).toEqual([...publicadas].sort());
   });
 });
+
+describe('carregador de Filosofia Jurídica', () => {
+  it('entrega meta, resumo e o quiz de 80 perguntas', async () => {
+    const conteudo = await CARREGADORES['p1/filosofia-juridica/u1']!();
+    expect(conteudo.resumo.length).toBeGreaterThan(0);
+    expect(conteudo.quiz).toHaveLength(80);
+    expect(conteudo.peticao).toBeUndefined();
+  });
+});

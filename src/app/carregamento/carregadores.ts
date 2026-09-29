@@ -37,13 +37,13 @@ export const CARREGADORES: RegistroDeCarregadores = {
     ]);
     return { meta, resumo, quiz };
   },
-  // Sem petição: esta cadeira só tem resumo e quiz. O quiz entra no
-  // Promise.all quando a pasta quiz/ da unidade estiver completa.
+  // Sem petição: esta cadeira só tem resumo e quiz.
   'p1/filosofia-juridica/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }] = await Promise.all([
+    const [{ meta }, { resumo }, { quiz }] = await Promise.all([
       import('@/conteudo/p1/filosofia-juridica/u1/meta'),
-      import('@/conteudo/p1/filosofia-juridica/u1/resumo')
+      import('@/conteudo/p1/filosofia-juridica/u1/resumo'),
+      import('@/conteudo/p1/filosofia-juridica/u1/quiz')
     ]);
-    return { meta, resumo };
+    return { meta, resumo, quiz };
   }
 };

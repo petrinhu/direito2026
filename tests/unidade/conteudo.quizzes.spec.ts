@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
+import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/quiz';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
-import type { PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
+import type {
+  PerguntaMultiplaEscolha,
+  PerguntaQuiz,
+  PerguntaVerdadeiroOuFalso
+} from '@/core/unidade/tipos';
 
 /** Estas três cadeiras só têm múltipla escolha; um verdadeiro ou falso aqui é erro de conteúdo. */
 function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMultiplaEscolha[] {
@@ -70,5 +75,61 @@ describe('quiz de Sociologia Jurídica, conjunto', () => {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10
     ]);
     expect(marcadas.every((p) => p.categoria === 'atividade')).toBe(true);
+  });
+});
+
+describe('quiz de Filosofia Jurídica, conjunto', () => {
+  const multipla = quizFilosofia.filter(
+    (p): p is PerguntaMultiplaEscolha => p.tipo !== 'verdadeiro-ou-falso'
+  );
+  const verdadeiroOuFalso = quizFilosofia.filter(
+    (p): p is PerguntaVerdadeiroOuFalso => p.tipo === 'verdadeiro-ou-falso'
+  );
+
+  it('tem 80 perguntas, ids únicos de 1 a 80', () => {
+    expect(quizFilosofia).toHaveLength(80);
+    expect(quizFilosofia.map((p) => p.id).sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 80 }, (_, i) => i + 1)
+    );
+  });
+
+  it('40 de múltipla escolha, cada uma com cinco alternativas não vazias e correta que cabe', () => {
+    expect(multipla).toHaveLength(40);
+    for (const p of multipla) {
+      expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(5);
+      for (const a of p.alternativasHtml) expect(a.trim(), `id ${p.id}`).not.toBe('');
+      expect(p.correta, `id ${p.id}`).toBeGreaterThanOrEqual(0);
+      expect(p.correta, `id ${p.id}`).toBeLessThan(5);
+    }
+  });
+
+  it('40 de verdadeiro ou falso, sem alternativasHtml e com correta booleana', () => {
+    expect(verdadeiroOuFalso).toHaveLength(40);
+    for (const p of verdadeiroOuFalso) {
+      expect('alternativasHtml' in p, `id ${p.id}`).toBe(false);
+      expect(typeof p.correta, `id ${p.id}`).toBe('boolean');
+    }
+  });
+
+  it('as 20 do professor (ids 1 a 20) têm origem professor, são V/F e só elas', () => {
+    const doProfessor = quizFilosofia.filter((p) => p.origem === 'professor');
+    expect(doProfessor.map((p) => p.id).sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 1)
+    );
+    expect(doProfessor.every((p) => p.tipo === 'verdadeiro-ou-falso')).toBe(true);
+  });
+
+  it('nenhuma leva a nota do caderno (o gabarito é do professor)', () => {
+    expect(quizFilosofia.filter((p) => 'gabaritoDoCaderno' in p)).toEqual([]);
+  });
+
+  it('explicação preenchida e categoria com rótulo em todas', () => {
+    for (const p of quizFilosofia) {
+      expect(p.explicacaoHtml.trim(), `id ${p.id}`).not.toBe('');
+      expect(ROTULOS_CATEGORIA_QUIZ[p.categoria], `id ${p.id}`).toBeTruthy();
+    }
+    expect(new Set(quizFilosofia.map((p) => p.categoria))).toEqual(
+      new Set(['revisao', 'antiga', 'media'])
+    );
   });
 });

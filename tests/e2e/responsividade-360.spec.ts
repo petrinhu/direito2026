@@ -155,3 +155,55 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
     });
   }
 }
+
+/**
+ * COSMÉTICO 2 do QA (docs/qa-conserto-cabecalho-quiz.md): em modo normal, a
+ * 320px e 360px a trilha do cabeçalho era cortada ("Unidade/1 Resu"), sem
+ * reticências, e a 320px o "1" ficava sobreposto à barra. Sem sobreposição
+ * entre itens, cada link dentro da caixa da trilha e, se o texto não
+ * couber, truncado com reticências (nunca cortado seco).
+ */
+for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/')) {
+  test(`trilha do cabeçalho de ${caminho}, modo normal: sem sobreposição e sem corte seco em 320px, 360px e 412px`, async ({
+    page
+  }) => {
+    await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+    await page.setViewportSize({ width: 412, height: 800 });
+    await page.goto(caminho);
+    await page.locator('.trilha-navegacao a').first().waitFor({ state: 'visible' });
+    for (const largura of [320, 360, 412]) {
+      await page.setViewportSize({ width: largura, height: 800 });
+      await esperarLayoutAssentar(page);
+      const problemas = await page.evaluate(() => {
+        const achados: string[] = [];
+        const lista = document.querySelector<HTMLElement>('.trilha-navegacao ol')!;
+        const caixaLista = lista.getBoundingClientRect();
+        const itens = Array.from(lista.querySelectorAll<HTMLElement>('li')).filter(
+          (li) => getComputedStyle(li).display !== 'none'
+        );
+        let fimAnterior = -Infinity;
+        for (const li of itens) {
+          const caixaItem = li.getBoundingClientRect();
+          if (caixaItem.left < fimAnterior - 0.5) achados.push('itens da trilha se sobrepõem');
+          fimAnterior = caixaItem.right;
+          const link = li.querySelector<HTMLElement>('a')!;
+          const caixaLink = link.getBoundingClientRect();
+          const texto = link.textContent?.trim() ?? '';
+          if (caixaLink.left < caixaLista.left - 0.5 || caixaLink.right > caixaLista.right + 0.5) {
+            achados.push(`"${texto}" passa da caixa da trilha`);
+          }
+          if (caixaLink.right > caixaItem.right + 0.5)
+            achados.push(`"${texto}" passa do próprio item`);
+          if (link.scrollWidth > link.clientWidth + 1) {
+            const estilo = getComputedStyle(link);
+            if (estilo.textOverflow !== 'ellipsis' || estilo.overflow !== 'hidden') {
+              achados.push(`"${texto}" cortado sem reticências`);
+            }
+          }
+        }
+        return achados;
+      });
+      expect(problemas, `${caminho}, ${largura}px`).toEqual([]);
+    }
+  });
+}

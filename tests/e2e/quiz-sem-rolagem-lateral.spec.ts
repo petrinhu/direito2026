@@ -46,6 +46,13 @@ interface EstadoInicial {
 }
 
 async function irParaQuiz(page: Page, caminho: string, estado: EstadoInicial): Promise<void> {
+  // O quiz sorteia a ordem das perguntas e das alternativas a partir de
+  // Math.random (MotorQuiz.vue, semente nova a cada carga). Valor fixo: a
+  // rodada é sempre a mesma, então o percurso é determinístico de verdade e
+  // um empate de subpixel não aparece e some conforme o sorteio.
+  await page.addInitScript(() => {
+    Math.random = () => 0.123456789;
+  });
   await page.addInitScript(
     ({ chaveTema, chaveModo, chaveAviso, tema, modoAdaptado }) => {
       window.localStorage.setItem(chaveTema, tema);
@@ -146,7 +153,7 @@ for (const rota of rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('
  * se mede a LARGURA ÚTIL do texto de cada alternativa, antes e depois de
  * responder (a marca "Correta"/"Sua resposta, incorreta" só existe depois),
  * em 320px e 360px, com e sem modo adaptado, em toda pergunta de todo quiz
- * (percorridas em ordem, sem depender do sorteio).
+ * (percorridas com a semente do sorteio fixada, ver irParaQuiz).
  *
  * Piso: o texto ocupa no mínimo metade da largura do cartão. Palavra que
  * cabe numa linha do texto não pode aparecer quebrada em duas: mede-se,
@@ -154,11 +161,12 @@ for (const rota of rotasDeUnidades(curriculo).filter((r) => r.caminho.endsWith('
  * texto; se cabia, a quebra no meio foi desnecessária.
  */
 const PISO_LARGURA_TEXTO_SOBRE_CARTAO = 0.5;
+const TOLERANCIA_DE_SUBPIXEL = 2;
 const LARGURAS_DO_CELULAR = [320, 360] as const;
 
 async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promise<string[]> {
   return page.evaluate(
-    ({ piso, respondida }) => {
+    ({ piso, respondida, TOLERANCIA_DE_SUBPIXEL }) => {
       const problemas: string[] = [];
       const cartao = document.querySelector<HTMLElement>('.cartao-pergunta');
       if (!cartao) return ['cartão da pergunta ausente'];
@@ -183,7 +191,7 @@ async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promis
         const percurso = document.createTreeWalker(texto, window.NodeFilter.SHOW_TEXT);
         for (let no = percurso.nextNode(); no; no = percurso.nextNode()) {
           const conteudo = no.textContent ?? '';
-          for (const palavra of conteudo.matchAll(/[^\s\-/]+/g)) {
+          for (const palavra of conteudo.matchAll(/[^\s-]+/g)) {
             const trecho = document.createRange();
             trecho.setStart(no, palavra.index ?? 0);
             trecho.setEnd(no, (palavra.index ?? 0) + palavra[0].length);
@@ -191,7 +199,7 @@ async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promis
             const fragmentos = Array.from(trecho.getClientRects()).filter((f) => f.width > 0);
             if (fragmentos.length < 2) continue;
             const larguraInteira = fragmentos.reduce((soma, f) => soma + f.width, 0);
-            if (larguraInteira <= larguraTexto) {
+            if (larguraInteira + TOLERANCIA_DE_SUBPIXEL <= larguraTexto) {
               problemas.push(
                 `alternativa ${indice}: palavra "${palavra[0]}" quebrada no meio ` +
                   `(inteira ocupa ${larguraInteira.toFixed(0)}px, linha tem ${larguraTexto.toFixed(0)}px)`
@@ -215,7 +223,11 @@ async function medirAlternativas(page: Page, depoisDeResponder: boolean): Promis
       if (!respondida && marcas > 0) problemas.push('antes de responder, já há marca');
       return problemas;
     },
-    { piso: PISO_LARGURA_TEXTO_SOBRE_CARTAO, respondida: depoisDeResponder }
+    {
+      piso: PISO_LARGURA_TEXTO_SOBRE_CARTAO,
+      respondida: depoisDeResponder,
+      TOLERANCIA_DE_SUBPIXEL
+    }
   );
 }
 

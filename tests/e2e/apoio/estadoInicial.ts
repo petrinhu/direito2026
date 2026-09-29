@@ -35,14 +35,29 @@ export async function prepararEstadoInicial(page: Page, estado: EstadoInicial): 
   );
 }
 
-/** Espera o layout assentar depois de trocar o viewport (dois quadros). */
+/**
+ * Espera o layout assentar depois de trocar o viewport: dois quadros e,
+ * em seguida, o fim de toda animação ou transição FINITA em andamento (a
+ * gaveta lateral anima o `transform` ao cruzar 880px, e nesse intervalo o
+ * botão dela cobre o cabeçalho). Sem espera fixa em milissegundos. Animação
+ * infinita (fundo da home) fica de fora, senão nunca terminaria.
+ */
 export async function esperarLayoutAssentar(page: Page): Promise<void> {
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolver) =>
+  await page.evaluate(async () => {
+    const doisQuadros = (): Promise<void> =>
+      new Promise((resolver) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolver()))
-      )
-  );
+      );
+    await doisQuadros();
+    for (let volta = 0; volta < 10; volta++) {
+      const finitas = document
+        .getAnimations()
+        .filter((animacao) => animacao.effect?.getComputedTiming().iterations !== Infinity);
+      if (finitas.length === 0) return;
+      await Promise.allSettled(finitas.map((animacao) => animacao.finished));
+      await doisQuadros();
+    }
+  });
 }
 
 /** Páginas que exercitam o cabeçalho: a home e o resumo de cada unidade do currículo. */

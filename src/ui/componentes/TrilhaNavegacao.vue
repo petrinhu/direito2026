@@ -144,33 +144,38 @@ const itens = computed<ItemTrilha[]>(() => {
 }
 
 /*
-  COSMÉTICO 2 do QA (docs/qa-conserto-cabecalho-quiz.md): em modo normal, a
-  320px e 360px, o texto da trilha era cortado seco ("Unidade/1 Resu") e o "1"
-  ficava sobreposto à barra, porque o <a> era inline-flex (texto em item
-  anônimo, onde text-overflow não age) e todos os itens encolhiam. Agora só o
-  último item encolhe, e o link é um bloco de uma linha que trunca com
-  reticências. Só no modo normal: o modo adaptado quebra em várias linhas,
-  nunca trunca (bloco abaixo).
+  Modo normal: quem encolhe primeiro são os itens intermediários, e a página
+  atual (último item) nunca encolhe. COSMÉTICO 2 do QA
+  (docs/qa-conserto-cabecalho-quiz.md): o <a> era inline-flex (texto em item
+  anônimo, onde text-overflow não age) e o texto era cortado seco. IMPORTANTE 1
+  da rodada 2: a primeira correção deixava os intermediários rígidos e só o
+  último encolhia, e ele chegava a 0px. Receita padrão de breadcrumb
+  responsivo: min-width 0 em toda a cadeia flex, ellipsis em cada rótulo,
+  flex-shrink 1 nos ancestrais e 0 na página atual, com max-width 100% para
+  ela nunca passar da caixa. A caixa da trilha tem no mínimo a base de 8rem
+  (BarraTopo.vue, o cabeçalho quebra de linha antes de espremê-la), então a
+  página atual sempre cabe. O modo adaptado quebra em várias linhas e nunca
+  trunca (bloco abaixo).
 */
 :root:not([data-modo-adaptado='on']) .trilha-navegacao li {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 :root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  max-width: 100%;
 }
 
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
   display: block;
   line-height: 44px;
+  min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child a {
-  min-width: 0;
 }
 
 /* Críticos 1 e 2 do QA (docs/qa-modo-adaptado.md): com flex-wrap:nowrap e

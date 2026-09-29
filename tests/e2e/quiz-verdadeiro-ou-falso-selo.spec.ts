@@ -234,5 +234,19 @@ for (const rota of rotasDeQuiz) {
     await expect(page.locator('.cartao-pergunta__marca')).not.toHaveCount(0);
     await expect(page.locator('.cartao-pergunta input[type="radio"]').first()).toBeDisabled();
     await expect(page.locator('.cartao-pergunta__explicacao')).toBeVisible();
+
+    // O foco não se perde em <body>: vai para o bloco do resultado, e o
+    // próximo Tab segue para os botões de navegação do quiz.
+    await expect(page.locator('.cartao-pergunta__resultado')).toBeFocused();
+    await page.keyboard.press('Tab');
+    const foco = await page.evaluate(() => {
+      const ativo = document.activeElement;
+      return {
+        emBody: ativo === document.body,
+        naNavegacao: ativo?.closest('.motor-quiz__navegacao') !== null
+      };
+    });
+    expect(foco.emBody, 'foco caiu em body depois do Tab').toBe(false);
+    expect(foco.naNavegacao, 'Tab depois do resultado segue para os botões do quiz').toBe(true);
   });
 }

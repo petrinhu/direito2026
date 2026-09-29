@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type { IndiceAlternativa, PerguntaEmbaralhada } from '@/core/quiz/tipos';
 import { rotuloAlternativa, mostrarLetras } from '@/app/quiz/rotuloAlternativa';
 
@@ -17,8 +17,27 @@ const ehVerdadeiroOuFalso = computed(() => props.pergunta.tipo === 'verdadeiro-o
 
 const comLetras = computed(() => mostrarLetras(props.pergunta.alternativasHtml.length));
 
+const resultadoRef = ref<HTMLElement | undefined>();
+// Só a resposta dada AGORA move o foco; abrir uma pergunta já respondida não.
+let focoPendente = false;
+
+const acertou = computed(() => props.respostaEscolhida === props.pergunta.indiceCorreto);
+
+/**
+ * Responder desabilita os radios e o foco caía em <body>. O foco vai para o
+ * bloco do resultado (tabindex -1): o leitor anuncia o veredito e a
+ * explicação, e o próximo Tab segue para o que vem depois do cartão.
+ */
+watch(respondida, async (agora) => {
+  if (!agora || !focoPendente) return;
+  focoPendente = false;
+  await nextTick();
+  resultadoRef.value?.focus();
+});
+
 function escolher(indice: IndiceAlternativa): void {
   if (respondida.value) return;
+  focoPendente = true;
   emit('responder', indice);
 }
 
@@ -90,18 +109,18 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
         </span>
       </label>
     </div>
-    <p
-      v-if="respondida"
-      class="cartao-pergunta__explicacao"
-      aria-live="polite"
-      v-html="pergunta.explicacaoHtml"
-    />
-    <p v-if="respondida && pergunta.gabaritoDoCaderno" class="cartao-pergunta__nota-caderno">
-      Esta resposta vem do caderno de estudo; não é o gabarito oficial da professora.
-    </p>
-    <p v-if="respondida && pergunta.fonteExtra" class="cartao-pergunta__aviso">
-      Esta explicação se apoia em artigo complementar, fora do conjunto-base da disciplina.
-    </p>
+    <div v-if="respondida" ref="resultadoRef" class="cartao-pergunta__resultado" tabindex="-1">
+      <p class="cartao-pergunta__veredito">
+        {{ acertou ? 'Resposta correta.' : 'Resposta incorreta.' }}
+      </p>
+      <p class="cartao-pergunta__explicacao" v-html="pergunta.explicacaoHtml" />
+      <p v-if="pergunta.gabaritoDoCaderno" class="cartao-pergunta__nota-caderno">
+        Esta resposta vem do caderno de estudo; não é o gabarito oficial da professora.
+      </p>
+      <p v-if="pergunta.fonteExtra" class="cartao-pergunta__aviso">
+        Esta explicação se apoia em artigo complementar, fora do conjunto-base da disciplina.
+      </p>
+    </div>
   </article>
 </template>
 
@@ -239,6 +258,20 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
 .cartao-pergunta__alt--incorreta {
   background: var(--cor-erro-bg, #ffebee);
   border: var(--cartao-alt-incorreta-borda, 1px solid var(--cor-erro-borda, #dd9a98));
+}
+
+.cartao-pergunta__resultado {
+  position: relative;
+}
+
+.cartao-pergunta__veredito {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .cartao-pergunta__explicacao {

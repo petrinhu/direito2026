@@ -162,7 +162,9 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
  * o último item encolhia até 0px e a busca passava por cima). Varre de 320px a
  * 1280px, nos dois modos. Regras: a página atual (último item) fica sempre
  * visível, com largura mínima legível, dentro da tela e nunca coberta por outro
- * controle; os itens intermediários podem colapsar, mas nunca se sobrepõem;
+ * controle; os itens intermediários saem da árvore (display:none) quando não
+ * cabem com o piso, e o que continua na ordem de foco tem largura legível e
+ * não é cortado (nunca um link de 0px, que seria foco invisível);
  * texto que não cabe termina em reticências, nunca corte seco.
  */
 const LARGURAS_DA_TRILHA = [
@@ -210,6 +212,22 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
             const texto = link.textContent?.trim() ?? '';
             if (caixaLink.right > caixaItem.right + 0.5) {
               achados.push(`"${texto}" passa do próprio item`);
+            }
+            // Todo link que ainda está na ordem de foco (item sem display:none)
+            // aparece inteiro dentro da trilha e com largura legível: o texto
+            // inteiro ou, no mínimo, o piso. Link espremido a 0px seria foco
+            // invisível (WCAG 2.4.7 e 2.4.11); o que não cabe sai da árvore.
+            const exigidoDoLink = Math.min(link.scrollWidth, piso);
+            if (caixaLink.width < exigidoDoLink - 0.5) {
+              achados.push(
+                `"${texto}" com ${caixaLink.width.toFixed(0)}px na ordem de foco (mínimo ${exigidoDoLink.toFixed(0)}px)`
+              );
+            }
+            if (
+              caixaLink.left < caixaLista.left - 0.5 ||
+              caixaLink.right > caixaLista.right + 0.5
+            ) {
+              achados.push(`"${texto}" cortado pela caixa da trilha`);
             }
             if (link.scrollWidth > link.clientWidth + 1) {
               const estilo = getComputedStyle(link);

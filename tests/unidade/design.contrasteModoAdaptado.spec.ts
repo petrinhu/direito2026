@@ -49,6 +49,22 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string; piso: n
     texto: '--cor-sidebar-texto',
     fundo: '--cor-sidebar-fundo',
     piso: PISO_CONTRASTE_AAA
+  },
+  // IMPORTANTE 1 do QA (docs/qa-sociologia-u1.md): rolado, o cabeçalho ficava
+  // com fundo azul-marinho escrito à mão em BarraTopo.vue e texto preto.
+  // Par dedicado, lido daqui, para o fundo rolado nunca mais divergir do
+  // texto do cabeçalho.
+  {
+    nome: 'texto do cabeçalho rolado',
+    texto: '--cor-sidebar-texto',
+    fundo: '--cor-cabecalho-rolado-fundo',
+    piso: PISO_CONTRASTE_AAA
+  },
+  {
+    nome: 'trilha do cabeçalho rolado',
+    texto: '--cor-sidebar-texto-suave',
+    fundo: '--cor-cabecalho-rolado-fundo',
+    piso: PISO_CONTRASTE_AAA
   }
 ];
 

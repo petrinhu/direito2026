@@ -13,7 +13,8 @@ import type { BlocoResumo } from '../../../tipos';
  * Blocos 1 a 5: a disciplina, o campo e o controle social. Blocos 6 a 9:
  * os clássicos (Marx, Durkheim, Weber, Ehrlich com o contraste com Kelsen).
  * Bloco 10: o quadro comparativo. Blocos 11 e 12: os dois artigos de apoio.
- * Bloco 13: leitura crítica do artigo-base, sempre em voz atribuída.
+ * A leitura crítica do artigo-base não é bloco à parte: entra dentro dos
+ * blocos 6 a 10, no mesmo nível, sempre em voz atribuída (decisão do líder).
  */
 export const resumo: readonly BlocoResumo[] = [
   {
@@ -177,13 +178,17 @@ export const resumo: readonly BlocoResumo[] = [
       <p>No capitalismo, trabalhadores e capitalistas aparecem juridicamente como sujeitos livres e iguais. Essa <strong>igualdade formal</strong> torna possível o contrato, inclusive o contrato de trabalho, pelo qual a força de trabalho vira mercadoria. Na leitura do artigo, liberdade e igualdade jurídicas são um artifício necessário à exploração mediada pelo contrato, e não emancipação efetiva. Nas sociedades pré-capitalistas a dominação era direta e pessoal; no capitalismo a burguesia domina indiretamente, pelo Estado e pelo direito. A pergunta para debate nos slides: ser juridicamente igual significa possuir as mesmas condições materiais?</p>
       <h3>Dominação e transformação</h3>
       <p>O direito pode contribuir para manter privilégios e desigualdades estruturais; a luta por direitos sociais, por sua vez, pode reduzir desigualdades e exploração, e a perspectiva marxista aponta também para a superação das formas de exploração de classe. A ideia-chave: o direito deve ser analisado dentro das relações sociais e de poder. O artigo observa ainda que o crime pode ser lido, nessa tradição, como artifício jurídico de proteção dos bens da classe dominante.</p>
+      <h3>Leitura crítica desta seção</h3>
+      <p>A tese acima é a leitura que a disciplina adota. Uma leitura crítica que acompanha o estudo do artigo aponta, como pontos para pensar, que o texto afirma ao mesmo tempo que o direito, como fenômeno específico, só existe no capitalismo e que a institucionalização de normas está ligada à luta de classes em toda a história dos modos de produção; que apresenta o Estado como "comitê da burguesia" e, em seguida, como capitalista por razões estruturais (Mascaro), e não por ser ocupado por burgueses; e que declara o direito produto e produtor das relações sociais, enquanto a seção marxista o determina pela estrutura econômica. Esses pares pedem leitura conjunta: cabe ao estudante saber conciliá-los.</p>
+      <p>Uma objeção possível, de outras tradições, é que há direito anterior e irredutível ao capitalismo. Tomás de Aquino (lei eterna, natural, humana e divina), Locke (vida, liberdade e propriedade anteriores ao governo civil), Grotius e Finnis (bens humanos básicos) sustentariam isso; Mises objetaria que a propriedade é condição de cálculo econômico e de cooperação entre estranhos, e não só privilégio de classe; Bastiat e Burke, que a lei protege bens que já existiam e que o direito herdado não se demole por abstração. São contrapontos atribuídos, não veredito do caderno.</p>
     `,
     resumo: [
       'Marx parte das condições materiais de produção e das classes; a história é luta de classes.',
       'Infraestrutura (forças produtivas e relações de produção) e superestrutura (ideologia, política e direito): o direito está na superestrutura, determinado pela estrutura econômica.',
       'A forma abstrata e codificada da lei alimenta a ilusão de autonomia do direito; a crítica marxista revela poder e desigualdade sob a forma jurídica.',
       'Igualdade jurídica formal viabiliza o contrato, inclusive o de trabalho; não equivale a igualdade real de condições.',
-      'O direito pode manter privilégios e, pela luta por direitos sociais, também reduzir a exploração.'
+      'O direito pode manter privilégios e, pela luta por direitos sociais, também reduzir a exploração.',
+      'Leitura crítica (atribuída): pares de passagens do artigo pedem leitura conjunta; tradições jusnaturalista e liberal objetam que há direito anterior ao capitalismo.'
     ],
     exemploHtml: `No contrato de trabalho ou no de aluguel, empregador e empregado, locador e locatário são "iguais" e "livres" para contratar. A leitura marxista pergunta o que essa igualdade no papel esconde quando as condições materiais das partes são muito diferentes.`
   },
@@ -205,13 +210,16 @@ export const resumo: readonly BlocoResumo[] = [
       <h3>Crime e sanção</h3>
       <p>Para Durkheim o <strong>crime é um fato social normal</strong>, presente em qualquer sociedade (geral, coercitivo, exterior); só se torna <strong>patológico</strong> quando deixa de apresentar o caráter regular esperado. A função da sanção é proteger a coesão social e satisfazer a consciência comum ferida pelo crime, não meramente corrigir ou intimidar o infrator. É o que a atividade da aula pede: a punição como reforço da consciência coletiva e da coesão social.</p>
       <p>O artigo faz uma observação crítica: a vontade punitiva nos países modernos não diminuiu como o esquema durkheimiano sugeriria. O apetite repressivo continua forte, o que tensiona a previsão de que o direito penal perderia importância.</p>
+      <h3>Leitura crítica desta seção</h3>
+      <p>Uma leitura crítica que acompanha o estudo do artigo observa duas tensões: a sanção é apresentada como proteção da coesão e satisfação da consciência comum e, noutro trecho, a pena "não passa de" vingança de uma sociedade arbitrária e irracional; e o corpo do texto diz que o recuo do direito penal não se confirma, enquanto a conclusão volta a usar a distinção entre direito repressivo e restitutivo como chave de leitura. Uma objeção possível, de matriz jusnaturalista (Tomás de Aquino, Finnis), é que tratar o direito como símbolo da solidariedade colapsa o dever-ser no ser: a consciência coletiva pode exigir o injusto, e o jurista precisaria de outro critério para julgar a norma vigente. São contrapontos atribuídos.</p>
     `,
     resumo: [
       'Fato social: maneira de agir com coerção exterior e existência própria; o direito é expressão dele e indicador do grau de coesão.',
       'Solidariedade mecânica (semelhança, consciência coletiva forte) tem direito repressivo; orgânica (divisão do trabalho) tem direito restitutivo.',
       'Crime é fato social normal; patológico só quando deixa de ser regular.',
       'A sanção protege a coesão e satisfaz a consciência comum, e não visa só corrigir ou intimidar.',
-      'Observação do artigo: o apetite punitivo moderno não diminuiu como o esquema sugeriria.'
+      'Observação do artigo: o apetite punitivo moderno não diminuiu como o esquema sugeriria.',
+      'Leitura crítica (atribuída): tensão entre a função da sanção e a pena como vingança; objeção de que fato social não é critério de justiça.'
     ],
     exemploHtml: `Uma pena criminal ou uma multa de trânsito são sanções repressivas, castigo. Uma ação de despejo por aluguel atrasado ou de cumprimento de um contrato de compra e venda têm sanção típica restitutiva: pagar o devido, restituir o imóvel, indenizar.`
   },
@@ -236,13 +244,16 @@ export const resumo: readonly BlocoResumo[] = [
       <p>O artigo enfatiza a dominação legal e sua relação com o Direito e a burocracia moderna.</p>
       <h3>Burocracia e racionalização</h3>
       <p>A <strong>burocracia</strong> organiza a dominação legal por meio de normas, competências, registros e procedimentos previsíveis: é a forma máxima de dominação legal nas sociedades modernas. <strong>Racionalizar</strong> é conectar meios e fins, antecipar possibilidades para alcançar determinado objetivo. O Direito moderno aparece integrado ao corpo burocrático do Estado; a formalização aumenta previsibilidade e estabilidade, mas também consolida estruturas de poder. Weber nota ainda que os juízes detêm o monopólio de decidir, e o artigo lê o Poder Judiciário como uma "empresa de dominação".</p>
+      <h3>Leitura crítica desta seção</h3>
+      <p>Uma leitura crítica que acompanha o estudo do artigo nota que a exposição de Weber apresenta o direito racional-legal como válido para todos e redutor do peso da riqueza, e que a conclusão da mesma seção lê o direito penal como veículo das ideias da elite política e judiciária, sem distinguir a pretensão da ordem do seu uso. Uma objeção possível é que a crença na legalidade explica a eficácia da obediência, mas não a validade normativa, e que a forma racional-legal também pode ser o freio contra o arbítrio carismático ou tradicional. São contrapontos atribuídos.</p>
     `,
     resumo: [
       'Weber estuda capitalismo industrial, racionalização e desencantamento do mundo; não reduz tudo à economia e é o clássico que mais se dedicou ao direito.',
       'Ação social: conduta com sentido subjetivo, orientada por outros; a sociologia compreensiva busca as condições que geram essa ação.',
       'Poder: probabilidade de impor a própria vontade mesmo diante de oposição; dominação: mando que produz obediência.',
       'Três tipos de dominação legítima: legal-racional, tradicional e carismática.',
-      'Burocracia: forma máxima da dominação legal (normas, competências, registros, previsibilidade); racionalizar é conectar meios e fins.'
+      'Burocracia: forma máxima da dominação legal (normas, competências, registros, previsibilidade); racionalizar é conectar meios e fins.',
+      'Leitura crítica (atribuída): direito de todos e direito da elite na mesma seção; a forma racional-legal como possível freio ao arbítrio.'
     ],
     exemploHtml: `O INSS, a Receita Federal, o cartório e o tribunal funcionam com procedimentos escritos, competências definidas e recursos. Uma multa ou uma sentença são obedecidas, em boa parte, porque as pessoas creem na legitimidade do procedimento legal, e não porque o servidor seja carismático ou um "senhor tradicional".`
   },
@@ -333,13 +344,17 @@ export const resumo: readonly BlocoResumo[] = [
         <li>Por que as pessoas obedecem às normas jurídicas?</li>
         <li>O Direito apenas mantém a ordem existente ou também pode transformá-la?</li>
       </ul>
+      <h3>Leitura crítica da convergência</h3>
+      <p>A convergência é a tese que a disciplina adota e que a atividade cobra. Uma leitura crítica que acompanha o estudo do artigo observa que o resumo e a conclusão falam em convergência quanto ao direito como instrumento de dominação e de transformação, enquanto o corpo descreve o direito durkheimiano como algo que "germina" da vida social; convém ler a convergência como acordo no ponto de partida (o direito é central e ligado ao poder), não como a mesma tese nos três.</p>
+      <p>Uma objeção possível à ideia de transformação social pelo direito vem de Hayek (ordem espontânea contra o construtivismo), Sowell (visão restrita, trade-offs e conhecimento disperso), Leoni e Oakeshott: tratar o direito como instrumento de um fim social deslocaria o jurista de guardião de regras de convívio para engenheiro social. O mesmo parecer crítico reconhece o que permanece útil: a história social das instituições, as afinidades entre contrato, propriedade e troca em Marx, o vocabulário durkheimiano de sanção e diferenciação social, e a descrição weberiana da burocracia. Fonte dessas leituras: versões "contradições" e "crítica" que acompanham o artigo (Revista Aracê, 2025).</p>
     `,
     resumo: [
       'Marx: luta de classes, materialismo histórico; direito como instrumento da classe dominante.',
       'Durkheim: coerção social, método positivista e explicativo; lei penal como expressão da consciência coletiva.',
       'Weber: dominação legítima, método compreensivo; direito como dominação racional-legal do Estado.',
       'Ehrlich: pluralismo jurídico, observação da prática social; regras vivas que regulam a vida sem estarem no código.',
-      'Convergência: o direito é fenômeno social central, ligado a relações de poder, que pode manter a ordem e também transformá-la.'
+      'Convergência: o direito é fenômeno social central, ligado a relações de poder, que pode manter a ordem e também transformá-la.',
+      'Leitura crítica (atribuída): a convergência é acordo no ponto de partida; Hayek, Sowell, Leoni e Oakeshott objetam à transformação social pelo direito.'
     ],
     exemploHtml: `Diante de uma mesma situação, como o pagamento de um tributo, cada autor chama a atenção para algo diferente: Marx, quem é beneficiado pela estrutura econômica; Durkheim, a sanção como coerção social; Weber, a obediência por crença na legitimidade do procedimento legal; Ehrlich, as práticas reais de cumprimento.`
   },
@@ -381,7 +396,6 @@ export const resumo: readonly BlocoResumo[] = [
     titulo: 'Narrativa e discurso no direito: polifonia e verdade no processo',
     fonte:
       'TRINDADE, André Karam; KARAM, Henriete. Polifonia e verdade nas narrativas processuais. Seqüência: Estudos Jurídicos e Políticos, Florianópolis, n. 80, p. 51-74, 2018. DOI 10.5007/2177-7055.2018v39n80p51.',
-    badge: 'Aprofundamento',
     corpoHtml: `
       <p>O artigo se insere no campo do <strong>Direito e Literatura</strong>, na vertente do "Direito como Literatura": olha o processo judicial em seu caráter narrativo e polifônico. Liga-se à aula porque o direito, como a mídia, também se faz por narrativas e discursos, e o poder decide qual delas vale.</p>
       <h3>Polifonia e dialogismo (Bakhtin)</h3>
@@ -403,43 +417,5 @@ export const resumo: readonly BlocoResumo[] = [
       'Conclusão: a decisão é uma ficção assumida como verdade; a coisa julgada torna a narrativa vencedora imutável.'
     ],
     exemploHtml: `Numa audiência, a versão da acusação, a da defesa, a das testemunhas e a de um perito competem entre si. Um estudante que entende a polifonia percebe que a sentença não "descobre" simplesmente a verdade: escolhe, entre os relatos, o que será tratado como verdadeiro, e por isso a fundamentação importa.`
-  },
-  {
-    id: 'bloco-12',
-    numero: 13,
-    titulo: 'Leitura crítica do artigo-base: tensões internas e objeções de outras tradições',
-    fonte:
-      'Leituras críticas que acompanham o estudo do artigo TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem: o direito nas teorias de Marx, Durkheim e Weber. Revista Aracê, v. 7, n. 11, p. 1-18, 2025 (versões "contradições" e "crítica").',
-    badge: 'Aprofundamento',
-    corpoHtml: `
-      <p><strong>Como usar este bloco.</strong> A ementa pede o desenvolvimento da capacidade de leitura crítica, e ler criticamente é perguntar o que um texto afirma, como se sustenta e onde outras leituras discordam. Este bloco não substitui os blocos 6 a 10: para a atividade e para o quiz, vale a tese do artigo tal como ali apresentada (o direito é um fenômeno social ligado às relações de poder, com Marx, Durkheim e Weber convergindo nesse ponto). Aqui aparecem, sempre com atribuição, leituras que se fazem <em>sobre</em> o artigo. Elas não são o veredito do caderno.</p>
-      <h3>A. Passagens que pedem leitura conjunta</h3>
-      <p>Um estudo do texto aponta sete pares de passagens do próprio artigo que convém ler lado a lado. Nessa leitura de estudo, os quatro primeiros são classificados como contradições lógicas e os três últimos como tensões; para os fins deste caderno, o proveito está em saber conciliar cada par.</p>
-      <ol>
-        <li><strong>Convergência dos três autores.</strong> O resumo e a conclusão dizem que os três convergem ao ver o direito como instrumento de dominação e, potencialmente, de transformação; no corpo, o direito durkheimiano "germina" da vida social e o marxista tem limites que só a superação da ordem jurídica removeria. Ler a convergência como convergência no ponto de partida (o direito é central e ligado ao poder) evita exigir dos três a mesma tese.</li>
-        <li><strong>Direito só no capitalismo e luta de classes "em toda sociedade".</strong> O artigo diz que o direito, como fenômeno específico, só existe no capitalismo e, ao mesmo tempo, que a institucionalização de normas está ligada à luta de classes na história de todos os modos de produção.</li>
-        <li><strong>O Estado como "comitê da burguesia" e o Estado capitalista "por razões estruturais".</strong> A primeira tese vê o Estado como instrumento da classe; a segunda (de Mascaro, citada no artigo) afirma que ele é capitalista por sua forma, e não por ser ocupado por burgueses.</li>
-        <li><strong>A função da sanção em Durkheim.</strong> A sanção protege a coesão e satisfaz a consciência comum; e, noutro trecho, a pena "não passa de" vingança de uma sociedade arbitrária e irracional.</li>
-        <li><strong>O recuo do direito penal.</strong> O corpo do texto diz que a tese durkheimiana do declínio do direito penal não se confirma; a conclusão volta a usar a distinção entre direito repressivo e restitutivo como chave de leitura.</li>
-        <li><strong>Direito de todos e direito da elite.</strong> A exposição de Weber apresenta o direito racional-legal como válido para todos e redutor do peso da riqueza; a conclusão da mesma seção lê o direito penal como veículo das ideias da elite política e judiciária.</li>
-        <li><strong>Produto e produtor das relações sociais.</strong> O objetivo declarado é situar o direito como produto e produtor das relações sociais, enquanto a seção marxista o determina pela estrutura econômica.</li>
-      </ol>
-      <h3>B. O que outras tradições objetam</h3>
-      <p>Um parecer de crítica teórico-jurídica sobre o mesmo artigo, de matriz jusnaturalista e liberal clássica, faz quatro objeções. Elas são a voz dessas tradições, não do caderno.</p>
-      <ul>
-        <li><strong>Sobre Marx.</strong> Tomás de Aquino (lei eterna, natural, humana e divina), Locke (vida, liberdade e propriedade anteriores ao governo civil), Grotius e Finnis (bens humanos básicos) sustentariam que há direito anterior ao capitalismo e irredutível à superestrutura. Mises objetaria que a propriedade é condição de cálculo econômico e de cooperação entre estranhos, e não só privilégio de classe.</li>
-        <li><strong>Sobre Durkheim.</strong> Tratar o direito como símbolo da solidariedade colapsaria o dever-ser no ser: a consciência coletiva pode exigir o injusto, e o jurista perderia o critério para dizer que uma norma vigente é injusta.</li>
-        <li><strong>Sobre Weber.</strong> A crença na legalidade explica a eficácia da obediência, mas não a validade normativa; e a forma racional-legal também pode ser um freio ao arbítrio.</li>
-        <li><strong>Sobre a ideia de transformação social pelo direito.</strong> Hayek (ordem espontânea contra o construtivismo), Sowell (visão restrita, trade-offs e conhecimento disperso), Bastiat, Burke, Leoni e Oakeshott apontariam que tratar o direito como instrumento de um fim social desloca o jurista de guardião de regras de convívio para engenheiro social.</li>
-      </ul>
-      <p>O próprio parecer reconhece o que permanece útil: o lembrete de que o jurista não pode ignorar a história social das instituições; as afinidades entre contrato, propriedade e troca apontadas por Marx; o vocabulário de Durkheim para relacionar sanção e diferenciação social; a descrição weberiana da burocracia e do risco de o Judiciário se fechar como estamento. Sua ressalva final é que a crítica ao direito deve conservar um padrão com o qual julgar o poder.</p>
-    `,
-    resumo: [
-      'Este bloco é exercício de leitura crítica: não substitui a tese do artigo cobrada na atividade e no quiz.',
-      'Sete pares de passagens do artigo pedem leitura conjunta (convergência dos três, direito só no capitalismo, Estado como comitê ou estrutural, função da sanção, recuo do penal, direito de todos e da elite, produto e produtor).',
-      'Crítica jusnaturalista e liberal clássica: há direito anterior ao capitalismo; fato social não é norma de justiça; legalidade não é justiça; direito como instrumento tem limites.',
-      'A própria crítica reconhece o que fica: história social das instituições, contrato e troca em Marx, vocabulário durkheimiano, burocracia em Weber.'
-    ],
-    exemploHtml: `Numa resenha crítica, em vez de dizer só "o artigo está certo" ou "está errado", o estudante identifica a tese, aponta a passagem onde ela se tensiona com outra e nomeia a tradição que objetaria. Esse é o exercício de leitura crítica que a ementa pede.`
   }
 ];

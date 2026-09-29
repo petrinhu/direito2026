@@ -49,4 +49,13 @@ describe('quiz de Sociologia Jurídica, conjunto', () => {
     const cats = new Set(quizSociologia.map((p) => p.categoria));
     expect([...cats].sort()).toEqual(['aplicacao', 'atividade', 'classicos', 'conceitos']);
   });
+
+  it('as 10 da atividade (ids 1 a 10) levam a marca do caderno e só elas', () => {
+    const marcadas = quizSociologia.filter((p) => p.gabaritoDoCaderno === true);
+    expect(marcadas).toHaveLength(10);
+    expect(marcadas.map((p) => p.id).sort((a, b) => a - b)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+    ]);
+    expect(marcadas.every((p) => p.categoria === 'atividade')).toBe(true);
+  });
 });

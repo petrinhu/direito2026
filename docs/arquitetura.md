@@ -1278,3 +1278,13 @@ Fica no lugar delas **uma limitação declarada, que não é pendência porque n
 - [iOS Safari, limite de `history.pushState`, Apple Developer Forums](https://developer.apple.com/forums/thread/71510)
 
 As duas últimas sustentam apenas as afirmações das seções 8 e 5 sobre WebKit. A pesquisa ampla de compatibilidade é do guia irmão, não deste documento.
+
+---
+
+## Quiz com cinco alternativas e letras A a E (28/09/2026)
+
+Sociologia Jurídica tem quiz de 80 perguntas com cinco alternativas; as outras duas cadeiras seguem com quatro. `PerguntaQuiz.alternativasHtml` é união de tuplas (4 ou 5) e `correta` vai de 0 a 4. O motor sorteia pelo tamanho de cada pergunta, então a ordem das rodadas de quatro alternativas ficou idêntica (semente antiga congelada em teste).
+
+**Decisão sobre as letras:** a letra (A a E) aparece, e o leitor de tela a anuncia, só nas perguntas de cinco alternativas (`mostrarLetras` em `src/core/quiz/rotuloAlternativa.ts`). Nas de quatro nada mudou. Estender as letras às outras cadeiras é uma linha (`mostrarLetras` devolver `true`), e fica para o líder decidir se quiser.
+
+A marca `gabaritoDoCaderno: true` mostra, depois de responder, a nota neutra de que a resposta vem do caderno de estudo e não do gabarito oficial.

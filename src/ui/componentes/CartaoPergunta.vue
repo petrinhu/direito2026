@@ -13,6 +13,8 @@ const emit = defineEmits<{ responder: [IndiceAlternativa] }>();
 const respondida = computed(() => props.respostaEscolhida !== undefined);
 const idEnunciado = computed(() => `enunciado-${props.pergunta.id}`);
 
+const ehVerdadeiroOuFalso = computed(() => props.pergunta.tipo === 'verdadeiro-ou-falso');
+
 const comLetras = computed(() => mostrarLetras(props.pergunta.alternativasHtml.length));
 
 function escolher(indice: IndiceAlternativa): void {
@@ -45,7 +47,15 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
 </script>
 
 <template>
-  <article class="cartao-pergunta">
+  <article
+    class="cartao-pergunta"
+    :class="{ 'cartao-pergunta--verdadeiro-ou-falso': ehVerdadeiroOuFalso }"
+  >
+    <!-- Texto, nunca só cor: no modo adaptado o selo perde o fundo colorido
+         e continua aqui, como palavra, com borda (tokens.css). -->
+    <p v-if="pergunta.origem === 'professor'" class="cartao-pergunta__selo-professor">
+      Revisão do professor
+    </p>
     <!-- v-html só recebe enunciadoHtml/alternativasHtml/explicacaoHtml, que
          vêm de src/conteudo/ (seção 4.4): legitimamente carregam o botão
          de citação (seção 12.1), então `{{ }}` (que escapa HTML) mostrava
@@ -193,6 +203,21 @@ function pararPropagacaoSeCitacao(evento: MouseEvent): void {
   .cartao-pergunta__letra {
     min-width: 1em;
   }
+}
+
+.cartao-pergunta__selo-professor {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0 0 var(--esp-2, 0.5rem);
+  padding: var(--esp-1, 0.25rem) var(--esp-2, 0.5rem);
+  border: var(--selo-professor-borda, none);
+  border-radius: var(--raio-sm, 6px);
+  background: var(--cor-selo-professor-bg, #7a2331);
+  color: var(--cor-selo-professor-texto, #ffffff);
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
 .cartao-pergunta__nota-caderno {

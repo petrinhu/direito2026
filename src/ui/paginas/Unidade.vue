@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { CHAVE_CURRICULO, CHAVE_REPOSITORIO } from '@/app/chaves';
 import { criarStoreProgresso } from '@/app/stores/progresso';
@@ -55,6 +55,19 @@ const carregando = ref(false);
 const dispositivos = ref<IndiceDispositivos | undefined>();
 const regiaoConteudoRef = ref<HTMLElement | undefined>();
 
+/**
+ * O roteador rola até a âncora da URL ANTES de o conteúdo existir (ele chega
+ * por import dinâmico), e o link "Ver o tema no Resumo" caía no topo. Depois
+ * de montar o conteúdo, rola até o bloco; o cabeçalho fixo é coberto pelo
+ * scroll-padding-top de base.css.
+ */
+async function rolarParaAncoraDaUrl(): Promise<void> {
+  const hash = window.location.hash;
+  if (hash.length < 2) return;
+  await nextTick();
+  document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView({ block: 'start' });
+}
+
 async function carregar(): Promise<void> {
   const referencia = referenciaUnidade.value;
   if (!referencia?.carregar) return;
@@ -64,6 +77,7 @@ async function carregar(): Promise<void> {
   } finally {
     carregando.value = false;
   }
+  await rolarParaAncoraDaUrl();
   const carregarDispositivos = CARREGADORES_DISPOSITIVOS[chaveUnidade.value];
   if (!carregarDispositivos) {
     dispositivos.value = undefined;

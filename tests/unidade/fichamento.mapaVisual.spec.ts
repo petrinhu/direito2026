@@ -5,7 +5,6 @@ import {
   arvoreVisual,
   abertosIniciaisVisual,
   caminhoLigacao,
-  enquadrar,
   layoutRadial,
   rotuloVisual,
   todosAbertos
@@ -133,14 +132,5 @@ describe('caminhoLigacao e enquadrar', () => {
 
   it('a curva não tem NaN nem com o pai na origem e o filho em cima dele', () => {
     expect(caminhoLigacao({ x: 0, y: 0 }, { x: 0, y: 0 })).not.toContain('NaN');
-  });
-
-  it('enquadrar encolhe quando o mapa cresce e nunca passa de 1,2', () => {
-    const raiz = arvoreVisual(dados);
-    const pequeno = enquadrar(layoutRadial(raiz, new Set([raiz.id])), 1000, 700);
-    const grande = enquadrar(layoutRadial(raiz, new Set(todosAbertos(raiz))), 1000, 700);
-    expect(pequeno).toBeLessThanOrEqual(1.2);
-    expect(grande).toBeLessThan(pequeno);
-    expect(grande).toBeGreaterThan(0);
   });
 });

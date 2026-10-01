@@ -78,6 +78,12 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string; piso: n
     fundo: '--cor-fundo',
     piso: PISO_CONTRASTE_PAR_PRINCIPAL
   },
+  {
+    nome: 'mapa visual, nó central',
+    texto: '--cor-mapa-centro-texto',
+    fundo: '--cor-mapa-centro-fundo',
+    piso: PISO_CONTRASTE_PAR_PRINCIPAL
+  },
   ...[1, 2, 3, 4, 5, 6].map((n) => ({
     nome: `mapa visual, tom de ramo ${n}`,
     texto: `--cor-mapa-ramo-${n}-texto`,

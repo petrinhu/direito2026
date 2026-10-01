@@ -2,7 +2,7 @@ import { construirArvoreMapa, idsExpansiveis } from './arvoreMapa';
 import type { MapaFichamento, NoMapa } from './tipos';
 
 /** Raio de cada anel, do centro para fora: raiz, período, pensador, detalhe, conceito. */
-const RAIOS = [0, 170, 350, 540, 700, 860] as const;
+const RAIOS = [0, 190, 390, 560, 720, 880] as const;
 
 export interface NoPosicionado {
   readonly no: NoMapa;
@@ -62,7 +62,16 @@ export function alternarTodosRamos(raiz: NoMapa, abertos: ReadonlySet<string>): 
  * Disposição radial: a raiz no centro, cada nível num anel, e cada nó com a
  * fatia de ângulo proporcional ao número de folhas visíveis dele.
  */
-export function layoutRadial(raiz: NoMapa, abertos: ReadonlySet<string>): NoPosicionado[] {
+export interface OpcoesLayout {
+  /** Horizontal: Antiguidade à esquerda e Idade Média à direita. Vertical: em cima e embaixo. */
+  readonly orientacao?: 'horizontal' | 'vertical';
+}
+
+export function layoutRadial(
+  raiz: NoMapa,
+  abertos: ReadonlySet<string>,
+  opcoes: OpcoesLayout = {}
+): NoPosicionado[] {
   const saida: NoPosicionado[] = [];
   let proximoRamo = 0;
 
@@ -99,14 +108,19 @@ export function layoutRadial(raiz: NoMapa, abertos: ReadonlySet<string>): NoPosi
     const total = peso(no);
     let cursor = inicio;
     filhos.forEach((filho, indice) => {
-      const fatia = ((fim - inicio) * peso(filho)) / total;
+      // Cada período recebe um hemisfério inteiro, qualquer que seja o número de pensadores.
+      const fatia =
+        profundidade === 0
+          ? (fim - inicio) / filhos.length
+          : ((fim - inicio) * peso(filho)) / total;
       const ramoFilho = profundidade === 0 ? indice : (ramoDoPensador.get(filho.id) ?? ramo);
       posicionar(filho, cursor, cursor + fatia, profundidade + 1, ramoFilho, no.id);
       cursor += fatia;
     });
   };
 
-  posicionar(raiz, -Math.PI / 2, (3 * Math.PI) / 2, 0, 0);
+  const inicioDoGiro = opcoes.orientacao === 'vertical' ? Math.PI : Math.PI / 2;
+  posicionar(raiz, inicioDoGiro, inicioDoGiro + 2 * Math.PI, 0, 0);
   return saida;
 }
 
@@ -129,13 +143,68 @@ export function caminhoLigacao(
   return `M ${numero(pai.x)} ${numero(pai.y)} C ${c1}, ${c2}, ${numero(filho.x)} ${numero(filho.y)}`;
 }
 
-/** Escala que faz o mapa inteiro caber na janela (no máximo 1,2). */
-export function enquadrar(
-  posicionados: readonly NoPosicionado[],
+export interface CaixaDoNo {
+  readonly x: number;
+  readonly y: number;
+  readonly largura: number;
+  readonly altura: number;
+}
+
+/**
+ * Vista (escala e deslocamento) que faz TODAS as cápsulas caberem na janela,
+ * centralizando a caixa do conjunto. Sem piso de escala: cabe sempre; se
+ * ficar pequeno demais, quem decide é o layout vertical e o zoom.
+ */
+export function ajustarVista(
+  caixas: readonly CaixaDoNo[],
   largura: number,
-  altura: number
-): number {
-  const meiaLargura = Math.max(...posicionados.map((p) => Math.abs(p.x))) + 120;
-  const meiaAltura = Math.max(...posicionados.map((p) => Math.abs(p.y))) + 30;
-  return Math.min(largura / 2 / meiaLargura, altura / 2 / meiaAltura, 1.2);
+  altura: number,
+  margem = 12
+): { x: number; y: number; k: number } {
+  const esq = Math.min(...caixas.map((c) => c.x - c.largura / 2));
+  const dir = Math.max(...caixas.map((c) => c.x + c.largura / 2));
+  const topo = Math.min(...caixas.map((c) => c.y - c.altura / 2));
+  const base = Math.max(...caixas.map((c) => c.y + c.altura / 2));
+  const k = Math.min(
+    (largura - 2 * margem) / (dir - esq),
+    (altura - 2 * margem) / (base - topo),
+    1.2
+  );
+  return { k, x: -((esq + dir) / 2) * k, y: -((topo + base) / 2) * k };
+}
+
+/**
+ * Quebra o rótulo em até `maxLinhas` linhas, só entre palavras, medindo cada
+ * linha com `medir` (largura real do texto). O que não couber vira reticências
+ * na última linha; nada é cortado em silêncio.
+ */
+export function quebrarRotulo(
+  texto: string,
+  larguraMaxima: number,
+  medir: (s: string) => number,
+  maxLinhas = 3
+): string[] {
+  const palavras = texto.split(/\s+/).filter(Boolean);
+  const linhas: string[] = [];
+  let atual = '';
+  let i = 0;
+  for (; i < palavras.length; i++) {
+    const candidata = atual ? `${atual} ${palavras[i]}` : palavras[i]!;
+    if (!atual || medir(candidata) <= larguraMaxima) {
+      atual = candidata;
+      continue;
+    }
+    if (linhas.length === maxLinhas - 1) break;
+    linhas.push(atual);
+    atual = palavras[i]!;
+  }
+  const sobra = i < palavras.length ? [atual, ...palavras.slice(i)].join(' ') : atual;
+  if (i < palavras.length) {
+    let ultima = sobra;
+    while (ultima.length > 1 && medir(`${ultima}…`) > larguraMaxima) ultima = ultima.slice(0, -1);
+    linhas.push(`${ultima.trimEnd()}…`);
+  } else if (atual) {
+    linhas.push(atual);
+  }
+  return linhas;
 }

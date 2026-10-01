@@ -305,3 +305,46 @@ describe('mapa visual, seis tons de ramo', () => {
     }
   });
 });
+
+describe('mapa visual, nó central', () => {
+  const temas = carregarTemas();
+  const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s: texto do centro contra o fundo dele, no mínimo 4,5:1',
+    (tema) => {
+      expect(
+        calcularContraste(
+          temas[tema]['--cor-mapa-centro-texto'] as string,
+          temas[tema]['--cor-mapa-centro-fundo'] as string
+        )
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  );
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s: o nó central se destaca da página, no mínimo 3:1',
+    (tema) => {
+      const pagina = temas[tema]['--cor-fundo'] as string;
+      const fundo = calcularContraste(temas[tema]['--cor-mapa-centro-fundo'] as string, pagina);
+      const contorno = calcularContraste(
+        temas[tema]['--cor-mapa-centro-contorno'] as string,
+        pagina
+      );
+      expect(Math.max(fundo, contorno), 'fundo ou contorno do centro').toBeGreaterThanOrEqual(3);
+      expect(contorno, 'contorno do centro').toBeGreaterThanOrEqual(3);
+    }
+  );
+
+  it.each(['fundo', 'texto', 'contorno'])(
+    '%s do centro: o escuro automático repete o escolhido',
+    (parte) => {
+      const variavel = `--cor-mapa-centro-${parte}`;
+      const valores = [
+        ...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
+      ].map((m) => (m[1] as string).toLowerCase());
+      expect(valores, variavel).toHaveLength(4);
+      expect(valores[1], variavel).toBe(valores[2]);
+    }
+  );
+});

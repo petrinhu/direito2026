@@ -9,7 +9,8 @@ export {
   alternarTodosRamos,
   arvoreVisual,
   caminhoLigacao,
-  enquadrar,
+  ajustarVista,
+  quebrarRotulo,
   layoutRadial,
   rotuloVisual,
   todosAbertos

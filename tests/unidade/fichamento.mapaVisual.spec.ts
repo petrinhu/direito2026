@@ -43,6 +43,10 @@ describe('arvoreVisual', () => {
     expect(r.endsWith('…')).toBe(true);
   });
 
+  it('o atalho da ficha não vira cápsula (é link no painel de detalhe)', () => {
+    expect(percorrer(raiz).some((n) => n.tipo === 'ficha')).toBe(false);
+  });
+
   it('é diferente da árvore completa (mesma fonte, outra forma)', () => {
     expect(percorrer(raiz).length).toBeLessThan(percorrer(construirArvoreMapa(dados)).length);
   });
@@ -55,7 +59,12 @@ describe('layoutRadial', () => {
   it('começa mostrando a raiz, os períodos e os pensadores, sem os detalhes', () => {
     const ids = layoutRadial(raiz, abertos).map((p) => p.no.id);
     expect(ids).toEqual(
-      expect.arrayContaining(['mapa-raiz', 'mapa-era-antiga', 'mapa-pensador-alfa', 'mapa-pensador-gama'])
+      expect.arrayContaining([
+        'mapa-raiz',
+        'mapa-era-antiga',
+        'mapa-pensador-alfa',
+        'mapa-pensador-gama'
+      ])
     );
     expect(ids).not.toContain('mapa-alfa-modo');
   });

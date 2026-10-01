@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import type { NoMapa } from '@/core/fichamento/tipos';
 import { abertosIniciais, idsExpansiveis, interpretarTecla, nosVisiveis } from '@/app/fichamento';
 import NoMapaMental from './NoMapaMental.vue';
@@ -56,12 +56,14 @@ function aoTeclar(evento: KeyboardEvent): void {
   if (acao.ativar) document.getElementById(acao.ativar)?.querySelector('a')?.click();
 }
 
-function abrirTodos(): void {
-  trocarAbertos(new Set(idsExpansiveis(props.arvore)));
-}
+const tudoAberto = computed(() =>
+  idsExpansiveis(props.arvore).every((id) => abertos.value.has(id))
+);
 
-function fecharAteAsFases(): void {
-  trocarAbertos(abertosIniciais(props.arvore));
+function alternarTodos(): void {
+  trocarAbertos(
+    tudoAberto.value ? abertosIniciais(props.arvore) : new Set(idsExpansiveis(props.arvore))
+  );
   const visivel = nosVisiveis(props.arvore, abertos.value).some((no) => no.id === focoId.value);
   // O item com tabindex 0 ficou dentro de um ramo que acabou de fechar:
   // volta à raiz, em vez de deixar o ciclo de Tab sem nenhum item.
@@ -70,24 +72,25 @@ function fecharAteAsFases(): void {
 </script>
 
 <template>
-  <section class="mapa-mental" aria-labelledby="mapa-mental-titulo">
-    <h2 id="mapa-mental-titulo" class="mapa-mental__titulo">Mapa mental</h2>
+  <div class="mapa-mental-lista">
     <p class="mapa-mental__ajuda">
-      Do período histórico ao pensador e ao modo de pensar dele. Toque ou clique num ramo para abrir
-      e fechar. Pelo teclado: setas para andar, seta para a direita abre, seta para a esquerda
-      fecha, Enter ou Espaço alterna. Prefere texto corrido? Veja o
-      <a :href="`${baseUnidade}/fichamento`">Fichamento</a>.
+      Toque ou clique num ramo para abrir e fechar. Pelo teclado: setas para andar, seta para a
+      direita abre, seta para a esquerda fecha, Enter ou Espaço alterna.
     </p>
     <div class="mapa-mental__acoes">
-      <button type="button" class="mapa-mental__acao" @click="abrirTodos">
-        Abrir todos os ramos
-      </button>
-      <button type="button" class="mapa-mental__acao" @click="fecharAteAsFases">
-        Fechar até as fases
+      <button
+        type="button"
+        class="mapa-mental__acao"
+        aria-controls="mapa-mental-arvore"
+        :aria-expanded="tudoAberto ? 'true' : 'false'"
+        @click="alternarTodos"
+      >
+        {{ tudoAberto ? 'Recolher até as fases' : 'Abrir todos os ramos' }}
       </button>
     </div>
     <div class="mapa-mental__area">
       <ul
+        id="mapa-mental-arvore"
         role="tree"
         aria-label="Mapa mental de Filosofia Jurídica"
         class="mapa-mental__arvore"
@@ -105,20 +108,10 @@ function fecharAteAsFases(): void {
         />
       </ul>
     </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>
-.mapa-mental {
-  max-width: var(--largura-conteudo, 1180px);
-  margin-inline: auto;
-  padding-block: var(--esp-5, 1.5rem);
-}
-
-.mapa-mental__titulo {
-  margin-top: 0;
-}
-
 .mapa-mental__ajuda {
   max-width: var(--largura-leitura, 68ch);
 }
@@ -150,7 +143,7 @@ function fecharAteAsFases(): void {
 /* Em tela estreita a árvore usa também a margem lateral da página: é onde
    cabe a coluna de texto dos níveis mais fundos. */
 @media (max-width: 639px) {
-  .mapa-mental {
+  .mapa-mental-lista {
     margin-inline: calc(-1 * var(--esp-5, 1.5rem));
   }
 }
@@ -178,7 +171,7 @@ function fecharAteAsFases(): void {
   }
 
   /* Todos os ramos saem no papel, mesmo os que estavam fechados na tela. */
-  .mapa-mental :deep([role='group']) {
+  .mapa-mental-lista :deep([role='group']) {
     display: block !important;
   }
 }

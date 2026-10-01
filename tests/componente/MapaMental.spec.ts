@@ -85,12 +85,6 @@ describe('MapaMental: estrutura e acessibilidade', () => {
     expect(link.attributes('href')).toBe('/p/p1/c/u1/fichamento#ficha-alfa');
     expect(link.attributes('tabindex')).toBe('-1');
   });
-
-  it('oferece a alternativa textual: aponta para a aba Fichamento', () => {
-    montar();
-    const link = wrapper!.find('a[href="/p/p1/c/u1/fichamento"]');
-    expect(link.exists()).toBe(true);
-  });
 });
 
 describe('MapaMental: teclado', () => {
@@ -152,25 +146,38 @@ describe('MapaMental: mouse e botões', () => {
     expect(item('mapa-pensador-alfa').attributes('aria-expanded')).toBe('true');
   });
 
-  it('"Abrir todos os ramos" abre tudo e "Fechar até as fases" volta ao começo', async () => {
+  it('um único botão alterna tudo: rótulo e aria-expanded mudam na hora', async () => {
     montar();
-    const botoes = wrapper!.findAll('button.mapa-mental__acao');
-    expect(botoes.map((b) => b.text())).toEqual(['Abrir todos os ramos', 'Fechar até as fases']);
-    await botoes[0]!.trigger('click');
+    const botao = () => wrapper!.find('button.mapa-mental__acao');
+    expect(wrapper!.findAll('button.mapa-mental__acao')).toHaveLength(1);
+    expect(botao().text()).toBe('Abrir todos os ramos');
+    expect(botao().attributes('aria-expanded')).toBe('false');
+    await botao().trigger('click');
+    expect(botao().text()).toBe('Recolher até as fases');
+    expect(botao().attributes('aria-expanded')).toBe('true');
     expect(item('mapa-pensador-alfa').attributes('aria-expanded')).toBe('true');
     expect(item('mapa-alfa-conceitos').attributes('aria-expanded')).toBe('true');
-    await botoes[1]!.trigger('click');
+    await botao().trigger('click');
+    expect(botao().text()).toBe('Abrir todos os ramos');
     expect(item('mapa-pensador-alfa').attributes('aria-expanded')).toBe('false');
     expect(item('mapa-fase-f1').attributes('aria-expanded')).toBe('true');
   });
 
+  it('abrir o último ramo fechado à mão também troca o rótulo do botão', async () => {
+    montar();
+    const botao = () => wrapper!.find('button.mapa-mental__acao');
+    await botao().trigger('click');
+    await item('mapa-pensador-alfa').find('.no-mapa__corpo').trigger('click');
+    expect(botao().text()).toBe('Abrir todos os ramos');
+  });
+
   it('ao fechar até as fases, o foco itinerante que estava num ramo fechado volta à raiz', async () => {
     montar();
-    await wrapper!.findAll('button.mapa-mental__acao')[0]!.trigger('click');
+    await wrapper!.find('button.mapa-mental__acao').trigger('click');
     await item('mapa-alfa-modo').trigger('click');
     await item('mapa-alfa-modo').trigger('keydown', { key: 'ArrowDown' });
     expect(wrapper!.findAll('[role="treeitem"][tabindex="0"]')).toHaveLength(1);
-    await wrapper!.findAll('button.mapa-mental__acao')[1]!.trigger('click');
+    await wrapper!.find('button.mapa-mental__acao').trigger('click');
     const comTab = wrapper!.findAll('[role="treeitem"][tabindex="0"]');
     expect(comTab).toHaveLength(1);
     expect(comTab[0]!.attributes('id')).toBe('mapa-raiz');
@@ -180,7 +187,7 @@ describe('MapaMental: mouse e botões', () => {
     montar();
     await item('mapa-fase-f1').trigger('keydown', { key: 'ArrowDown' });
     expect(document.activeElement?.id).toBe('mapa-pensador-alfa');
-    await wrapper!.findAll('button.mapa-mental__acao')[1]!.trigger('click');
+    await wrapper!.find('button.mapa-mental__acao').trigger('click');
     expect(item('mapa-pensador-alfa').attributes('tabindex')).toBe('0');
   });
 });

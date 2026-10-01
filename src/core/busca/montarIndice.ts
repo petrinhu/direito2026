@@ -1,5 +1,6 @@
 import type { ConteudoUnidade } from '../unidade/tipos';
 import { removerTags } from './removerTags';
+import { rotuloDaFase } from '../fichamento/filtrarFichas';
 import type { DocumentoBusca } from './tipos';
 
 export interface ParametrosUnidade {
@@ -75,5 +76,83 @@ export function montarDocumentosUnidade(params: ParametrosUnidade): DocumentoBus
     });
   }
 
+  documentos.push(...documentosDoMapaFichamento(base, conteudo));
+  documentos.push(...documentosDosMnemonicos(base, conteudo));
+
   return documentos;
+}
+
+function documentosDoMapaFichamento(base: string, conteudo: ConteudoUnidade): DocumentoBusca[] {
+  const dados = conteudo.mapaFichamento;
+  if (!dados) return [];
+  const [periodo, cadeira, unidade] = base.split('/') as [string, string, string];
+  const documentos: DocumentoBusca[] = [];
+
+  const nomes = [
+    ...dados.eras.map((era) => era.nome),
+    ...dados.eras.flatMap((era) => era.fases.map((fase) => fase.nome)),
+    ...dados.pensadores.map((ficha) => ficha.nome)
+  ].join(' ');
+  documentos.push({
+    id: `${base}/mapa`,
+    url: `/p/${base}/mapa`,
+    periodo,
+    cadeira,
+    unidade,
+    aba: 'mapa',
+    titulo: `Mapa mental: ${dados.titulo}`,
+    corpo: nomes,
+    trecho: trechoDe(nomes)
+  });
+
+  for (const ficha of dados.pensadores) {
+    const corpo = removerTags(
+      [
+        rotuloDaFase(dados, ficha.faseId),
+        ficha.datas ?? '',
+        ficha.obras.join(' '),
+        ficha.modoDePensar,
+        ficha.conceitos.join(' '),
+        ficha.citacao?.texto ?? '',
+        ficha.paraODireito,
+        ficha.ressalva ?? ''
+      ].join(' ')
+    );
+    documentos.push({
+      id: `${base}/fichamento#ficha-${ficha.id}`,
+      url: `/p/${base}/fichamento#ficha-${ficha.id}`,
+      periodo,
+      cadeira,
+      unidade,
+      aba: 'fichamento',
+      titulo: ficha.nome,
+      corpo,
+      trecho: trechoDe(corpo)
+    });
+  }
+  return documentos;
+}
+
+function documentosDosMnemonicos(base: string, conteudo: ConteudoUnidade): DocumentoBusca[] {
+  if (!conteudo.mnemonicos) return [];
+  const [periodo, cadeira, unidade] = base.split('/') as [string, string, string];
+  return conteudo.mnemonicos.map((mnemonico) => {
+    const corpo = removerTags(
+      [
+        mnemonico.dica,
+        mnemonico.guarda.map((item) => `${item.termo} ${item.explicacao}`).join(' ')
+      ].join(' ')
+    );
+    return {
+      id: `${base}/mnemonicos#${mnemonico.id}`,
+      url: `/p/${base}/mnemonicos#${mnemonico.id}`,
+      periodo,
+      cadeira,
+      unidade,
+      aba: 'mnemonicos' as const,
+      titulo: mnemonico.titulo,
+      corpo,
+      trecho: trechoDe(corpo)
+    };
+  });
 }

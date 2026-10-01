@@ -6,18 +6,18 @@ import type { PerguntaQuiz } from '../../../../tipos';
  * sofistas, Sócrates, Platão, Aristóteles, estoicos, direito romano e
  * Cícero). Ids 21 a 46 são de múltipla escolha; 47 a 58, de verdadeiro ou
  * falso. Onde as fontes trazem leituras diferentes (por exemplo, o ius
- * gentium), a explicação adota a leitura das aulas e sinaliza a outra.
+ * gentium), a explicação adota a leitura do material da disciplina e sinaliza a outra.
  */
 export const antiga: readonly PerguntaQuiz[] = [
-    { id: 21, categoria: 'antiga', enunciadoHtml: `Segundo a Aula 3 e o recorte de Wolkmer, em que manifestação da cultura helênica aparece a noção de "um Direito justo"?`, alternativasHtml: [
+    { id: 21, categoria: 'antiga', enunciadoHtml: `Segundo o recorte de Wolkmer, em que manifestação da cultura helênica aparece a noção de "um Direito justo"?`, alternativasHtml: [
         `Nos códigos escritos elaborados pelos legisladores das cidades gregas.`,
         `Nos tratados de lógica de Aristóteles sobre o raciocínio dedutivo.`,
         `Na dramaturgia clássica de Sófocles, Ésquilo e Eurípides.`,
         `Nos julgamentos populares realizados na praça pública.`,
         `Nos hinos religiosos dedicados às divindades do Olimpo.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A aula situa a noção de um Direito justo na cultura helênica, especificamente na dramaturgia clássica de Sófocles, Ésquilo e Eurípides. A resposta que fala dos códigos escritos é a mais tentadora, porque costumamos ligar o direito à lei escrita, mas a aula aponta o teatro como o lugar em que se pensa uma justiça anterior e superior ao decreto do governante. Em Antígona, essa justiça aparece em choque com a lei do Estado.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `A noção de um Direito justo situa-se na cultura helênica, especificamente na dramaturgia clássica de Sófocles, Ésquilo e Eurípides. A resposta que fala dos códigos escritos é a mais tentadora, porque costumamos ligar o direito à lei escrita, mas o teatro é o lugar em que se pensa uma justiça anterior e superior ao decreto do governante. Em Antígona, essa justiça aparece em choque com a lei do Estado.` },
 
-    { id: 22, categoria: 'antiga', enunciadoHtml: `Segundo o recorte de Wolkmer citado na Aula 3, o conflito dramatizado em Antígona opõe:`, alternativasHtml: [
+    { id: 22, categoria: 'antiga', enunciadoHtml: `Segundo o recorte de Wolkmer, o conflito dramatizado em Antígona opõe:`, alternativasHtml: [
         `a lei do Estado, expressão da força e do formalismo, e o direito familiar, símbolo do amor e da tradição.`,
         `duas leis positivas de cidades rivais, uma de Tebas e outra de Atenas, cada uma exigindo obediência.`,
         `o poder do rei e o poder dos sacerdotes, que disputam entre si a jurisdição sobre os tribunais da cidade.`,
@@ -39,9 +39,9 @@ export const antiga: readonly PerguntaQuiz[] = [
         `Se a escrita alfabética deve substituir por completo a tradição oral das cidades.`,
         `Se as virtudes podem ser ensinadas pelo método do diálogo, como na maiêutica.`,
         `Se o mundo se explica por um único elemento material primordial, como a água.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `Na Aula 3, os sofistas questionam a diferença entre a ordem natural (physis) e a ordem humana (nomos): as leis seriam convenção humana, e não expressão da natureza. A resposta sobre o elemento material primordial é a mais tentadora, porque fala de natureza, mas é a preocupação do naturalismo cósmico dos pré-socráticos, que os sofistas substituem por problemas sociais, políticos e morais. A resposta sobre ensinar virtudes pelo diálogo é de Sócrates.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `Os sofistas questionam a diferença entre a ordem natural (physis) e a ordem humana (nomos): as leis seriam convenção humana, e não expressão da natureza. A resposta sobre o elemento material primordial é a mais tentadora, porque fala de natureza, mas é a preocupação do naturalismo cósmico dos pré-socráticos, que os sofistas substituem por problemas sociais, políticos e morais. A resposta sobre ensinar virtudes pelo diálogo é de Sócrates.` },
 
-    { id: 25, categoria: 'antiga', enunciadoHtml: `Numa discussão, um aluno afirma: "não existe justiça em si; cada pessoa julga o que é justo a partir da sua circunstância". Essa posição está mais próxima de qual pensador das aulas?`, alternativasHtml: [
+    { id: 25, categoria: 'antiga', enunciadoHtml: `Numa discussão, um aluno afirma: "não existe justiça em si; cada pessoa julga o que é justo a partir da sua circunstância". Essa posição está mais próxima de qual pensador antigo?`, alternativasHtml: [
         `Sócrates, para quem a virtude já existe em cada um e cabe redescobri-la.`,
         `Platão, para quem a justiça é um arquétipo ideal e harmônico.`,
         `Aristóteles, para quem a justiça busca o justo meio entre os extremos.`,
@@ -49,7 +49,7 @@ export const antiga: readonly PerguntaQuiz[] = [
         `Cícero, para quem o direito se funda na natureza e não na opinião.`
       ], correta: 3, fonteExtra: false, explicacaoHtml: `A frase descreve o homo mensura de Protágoras: não há verdade ou justiça absoluta, e cada sujeito julga o mundo à sua maneira. A resposta que cita Sócrates é a mais tentadora, porque Sócrates também fala de algo que está "em cada um". Mas, para ele, as virtudes são universais e se redescobrem pelo diálogo, o que é bem diferente de relativismo. Platão, Aristóteles e Cícero pertencem ao campo idealista ou jusnaturalista, que busca verdades e justiça absolutas.` },
 
-    { id: 26, categoria: 'antiga', enunciadoHtml: `Diante da tese de Trasímaco de que a justiça é a conveniência do mais forte, qual é a resposta de Platão nas aulas?`, alternativasHtml: [
+    { id: 26, categoria: 'antiga', enunciadoHtml: `Diante da tese de Trasímaco de que a justiça é a conveniência do mais forte, qual é a resposta de Platão?`, alternativasHtml: [
         `A justiça é um arquétipo ideal, harmonia da alma e da pólis, e não o que os fortes decidem.`,
         `A justiça é apenas um pacto de não agressão feito entre os homens, para evitar o dano mútuo.`,
         `A justiça é medida por cada indivíduo, conforme as suas próprias circunstâncias e o seu ponto de vista.`,
@@ -57,15 +57,15 @@ export const antiga: readonly PerguntaQuiz[] = [
         `A justiça é o meio-termo entre o excesso e a falta, em cada situação concreta que se apresente.`
       ], correta: 0, fonteExtra: false, explicacaoHtml: `Platão usa os diálogos de Sócrates para desconstruir as definições utilitaristas dos sofistas: a justiça não é o que os homens fortes decidem, mas um arquétipo ideal, uma harmonia da alma e da pólis a ser buscada pela filosofia. O livro de apoio acrescenta que, no livro I de A República, Platão contesta Trasímaco e vê a justiça como natural, e não só convenção. A resposta de beneficiar os amigos e prejudicar os inimigos é a mais tentadora, porque é uma tese que aparece na discussão da justiça, mas é a moral pragmática do senso comum grego, que Platão também rejeita. A do pacto de não agressão é de Epicuro, e a da medida de cada indivíduo, de Protágoras.` },
 
-    { id: 27, categoria: 'antiga', enunciadoHtml: `Na aula de fixação, a <strong>maiêutica</strong> socrática é descrita como:`, alternativasHtml: [
+    { id: 27, categoria: 'antiga', enunciadoHtml: `A <strong>maiêutica</strong> socrática é descrita como:`, alternativasHtml: [
         `um conjunto de leis escritas que Sócrates propôs à cidade de Atenas, para uso dos magistrados.`,
         `a tese de que o homem é a medida de todas as coisas, defendida por um sofista famoso.`,
         `a "parteira das ideias": busca da verdade e da virtude pelo diálogo e pelo questionamento.`,
         `o critério que separa os governos bons dos ruins conforme a finalidade ética do governante.`,
         `a divisão da cidade em sábios, guerreiros e artífices, cada qual com sua função própria.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A aula descreve a maiêutica como a "parteira das ideias": o filósofo, pelo diálogo e pelo questionamento contínuo, ajuda o interlocutor a redescobrir virtudes que já existem nele. A resposta do homem como medida de todas as coisas é a mais tentadora, porque também é uma frase famosa de um filósofo do mesmo século, mas é o homo mensura de Protágoras. A do critério dos governos bons e ruins vem de Aristóteles, e a da divisão da cidade em sábios, guerreiros e artífices, de Platão.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `A maiêutica é a a "parteira das ideias": o filósofo, pelo diálogo e pelo questionamento contínuo, ajuda o interlocutor a redescobrir virtudes que já existem nele. A resposta do homem como medida de todas as coisas é a mais tentadora, porque também é uma frase famosa de um filósofo do mesmo século, mas é o homo mensura de Protágoras. A do critério dos governos bons e ruins vem de Aristóteles, e a da divisão da cidade em sábios, guerreiros e artífices, de Platão.` },
 
-    { id: 28, categoria: 'antiga', enunciadoHtml: `Segundo as aulas, o que a recusa de Sócrates à fuga proposta por Críton revela sobre sua concepção de lei?`, alternativasHtml: [
+    { id: 28, categoria: 'antiga', enunciadoHtml: `O que a recusa de Sócrates à fuga proposta por Críton revela sobre sua concepção de lei?`, alternativasHtml: [
         `Que a lei injusta perde a sua obrigatoriedade e, por isso, pode ser descumprida pelo cidadão.`,
         `Que a lei só tem valor enquanto os juízes que a aplicam forem reconhecidamente sábios e justos.`,
         `Que o cidadão só deve obedecer às leis que tenha aprovado pessoalmente, por voto ou por consenso.`,
@@ -73,13 +73,13 @@ export const antiga: readonly PerguntaQuiz[] = [
         `Que as leis expressam o interesse coletivo, e respeitá-las serve ao bem comum, mesmo se injustas.`
       ], correta: 4, fonteExtra: false, explicacaoHtml: `Para Sócrates, justiça é cumprir a lei da pólis, porque as leis expressam os interesses da coletividade e respeitá-las é condição do bem comum. Por isso o bom cidadão obedece até às leis injustas, para não enfraquecer a autoridade da lei. No livro de apoio (Críton), ele prefere morrer como cidadão julgado segundo as leis a renegar seus princípios. Wolkmer observa que essa obediência conduziu Sócrates à morte. A resposta de que a lei injusta pode ser descumprida é a mais tentadora, porque a condenação foi mesmo injusta, mas a injustiça não o autorizou a fugir.` },
 
-    { id: 29, categoria: 'antiga', enunciadoHtml: `Segundo a Aula 3, em que ponto Sócrates rompe com os sofistas?`, alternativasHtml: [
+    { id: 29, categoria: 'antiga', enunciadoHtml: `Em que ponto Sócrates rompe com os sofistas?`, alternativasHtml: [
         `Ao negar que exista qualquer justiça além da convenção, como fazem os defensores do relativismo.`,
         `Ao discutir justiça, bem e virtude a partir do caráter justo da lei, vista como forma de justiça.`,
         `Ao defender que cada cidadão julgue as leis conforme as circunstâncias em que se encontra.`,
         `Ao sustentar que as leis nascem da força arbitrária dos governantes e servem aos seus interesses.`,
         `Ao trocar a vida na pólis por uma vida isolada e contemplativa, longe das cidades.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `A aula diz que Sócrates rompeu com os sofistas e discutiu justiça, bem e virtude a partir da ideia do caráter justo da lei, encarada como uma forma de justiça e como um imperativo. A resposta sobre leis nascidas da força arbitrária dos governantes é a mais tentadora, porque é o que a aula atribui a sofistas como Trasímaco, Protágoras, Cálicles e Hípias: para eles as leis resultam da força arbitrária dos que controlam o poder. Sócrates faz o oposto. Além disso, seu pensamento é organicista: o indivíduo se realiza na pólis, e não isolado dela.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `Sócrates rompeu com os sofistas e discutiu justiça, bem e virtude a partir da ideia do caráter justo da lei, encarada como uma forma de justiça e como um imperativo. A resposta sobre leis nascidas da força arbitrária dos governantes é a mais tentadora, porque é o que se atribui a sofistas como Trasímaco, Protágoras, Cálicles e Hípias: para eles as leis resultam da força arbitrária dos que controlam o poder. Sócrates faz o oposto. Além disso, seu pensamento é organicista: o indivíduo se realiza na pólis, e não isolado dela.` },
 
     { id: 30, categoria: 'antiga', enunciadoHtml: `Na justiça orgânica de Platão, o que ocorre se um artífice abandona sua função para governar a cidade?`, alternativasHtml: [
         `Há justiça distributiva, pois o mérito individual do artífice foi finalmente reconhecido pela cidade.`,
@@ -89,13 +89,13 @@ export const antiga: readonly PerguntaQuiz[] = [
         `A pólis se torna mais livre, pois os direitos individuais passam a prevalecer sobre o Estado.`
       ], correta: 3, fonteExtra: false, explicacaoHtml: `Para Platão, a justiça é cada cidadão cumprir rigidamente seu papel social: sábios pensam e governam, guerreiros lutam e defendem, artífices trabalham e produzem. O desvio dessa ordem gera injustiça. A resposta da justiça distributiva por mérito é a mais tentadora, porque a ideia de mérito soa justa, mas a distribuição por mérito é aristotélica e Platão não admite trocar de função por iniciativa própria. A resposta da pólis mais livre contradiz o Estado forte platônico, no qual os direitos individuais ficam subordinados ao social e ao político.` },
 
-    { id: 31, categoria: 'antiga', enunciadoHtml: `Qual característica a aula atribui ao Estado defendido por Platão?`, alternativasHtml: [
+    { id: 31, categoria: 'antiga', enunciadoHtml: `Qual característica marca o Estado defendido por Platão?`, alternativasHtml: [
         `Poder limitado pelos direitos individuais, que existiriam antes e acima do próprio Estado.`,
         `Divisão do trabalho flexível, com livre mobilidade entre as classes conforme a vontade de cada um.`,
         `Divisão social do trabalho rígida e fixa, e direitos individuais subordinados ao político.`,
         `Governo exercido por muitos, voltado aos interesses egoístas de cada grupo social existente.`,
         `Ausência de qualquer função de governo reservada aos sábios, que apenas produziriam bens.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A Aula 4 descreve o Estado platônico como forte: divisão social do trabalho rígida e fixa, poder do Estado ilimitado sobre a atividade humana e direitos individuais subordinados ao social e ao político. A resposta do poder limitado pelos direitos individuais é a mais tentadora, porque muitos ligam a ideia de Estado de Direito a limites ao poder. Mas a aula só reconhece em As Leis uma noção primitiva de Estado de Direito, e o traço geral de Platão é o oposto do descrito em A.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `O Estado platônico é forte: divisão social do trabalho rígida e fixa, poder do Estado ilimitado sobre a atividade humana e direitos individuais subordinados ao social e ao político. A resposta do poder limitado pelos direitos individuais é a mais tentadora, porque muitos ligam a ideia de Estado de Direito a limites ao poder. Mas só se reconhece em As Leis uma noção primitiva de Estado de Direito, e o traço geral de Platão é o oposto do descrito em A.` },
 
     { id: 32, categoria: 'antiga', enunciadoHtml: `Segundo Wolkmer e o livro de apoio, o que distingue <em>A República</em> de <em>As Leis</em> quanto ao papel das leis?`, alternativasHtml: [
         `Na República governam os guardiães; nas Leis a legislação é reabilitada como instrumento ético.`,
@@ -103,7 +103,7 @@ export const antiga: readonly PerguntaQuiz[] = [
         `Nas duas obras Platão nega qualquer valor à lei, valorizando apenas o costume dos antepassados.`,
         `Nas Leis Platão adota a tese de Trasímaco sobre a lei, como instrumento do mais forte.`,
         `A República trata da lei humana, e As Leis, da lei eterna, tal como a expõe o cristianismo.`
-      ], correta: 0, fonteExtra: true, explicacaoHtml: `Wolkmer observa que em A República o valor das leis é ignorado, e que em As Leis, obra inacabada da velhice, Platão reabilita a função da legislação para a vida da cidade e a educação dos homens. O livro de Marcondes e Struchiner diz o mesmo de outro modo: nas Leis predominam as leis, ao contrário da República, em que governam os guardiães. A resposta que exalta a lei escrita na República é a mais tentadora, porque inverte a ordem correta das duas obras. A aula reforça que a lei escrita, em As Leis, é sinal de progresso.` },
+      ], correta: 0, fonteExtra: true, explicacaoHtml: `Wolkmer observa que em A República o valor das leis é ignorado, e que em As Leis, obra inacabada da velhice, Platão reabilita a função da legislação para a vida da cidade e a educação dos homens. O livro de Marcondes e Struchiner diz o mesmo de outro modo: nas Leis predominam as leis, ao contrário da República, em que governam os guardiães. A resposta que exalta a lei escrita na República é a mais tentadora, porque inverte a ordem correta das duas obras. Em As Leis, a lei escrita é sinal de progresso.` },
 
     { id: 33, categoria: 'antiga', enunciadoHtml: `No diálogo <em>Protágoras</em>, o mito de Prometeu conta que Zeus mandou Hermes distribuir a todos os homens:`, alternativasHtml: [
         `a arte do fogo e das técnicas, reservada aos artesãos.`,
@@ -119,7 +119,7 @@ export const antiga: readonly PerguntaQuiz[] = [
         `dispensa o Estado, porque a natureza regula sozinha, e de modo perfeito, as relações humanas.`,
         `deriva da vontade dos deuses, comunicada aos homens por oráculos e por sinais divinos.`,
         `é criação dos mais fortes, que a utilizam para manter o seu domínio sobre os mais fracos.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `Na Aula 4, ninguém existe de forma independente: a justiça resolve o problema da dependência mútua, e a disputa por recursos escassos (riquezas, alimentos, cargos) gera conflitos que ela equilibra. Para Aristóteles, o fim do homem é a vida na pólis. A resposta da justiça como criação dos mais fortes é a mais tentadora, porque é a tese de Trasímaco sobre a justiça como conveniência do mais forte, que Aristóteles não adota.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `Ninguém existe de forma independente: a justiça resolve o problema da dependência mútua, e a disputa por recursos escassos (riquezas, alimentos, cargos) gera conflitos que ela equilibra. Para Aristóteles, o fim do homem é a vida na pólis. A resposta da justiça como criação dos mais fortes é a mais tentadora, porque é a tese de Trasímaco sobre a justiça como conveniência do mais forte, que Aristóteles não adota.` },
 
     { id: 35, categoria: 'antiga', enunciadoHtml: `Em Aristóteles, a justiça ligada ao justo meio (<strong>mesótes</strong>) significa:`, alternativasHtml: [
         `obedecer sempre à opinião da maioria, evitando divergir do que pensam os demais cidadãos.`,
@@ -151,7 +151,7 @@ export const antiga: readonly PerguntaQuiz[] = [
         `se confunde com a justiça distributiva, aplicada pelo Estado aos cidadãos.`,
         `corrige a lei geral e abstrata quando ela é aplicada ao caso concreto.`,
         `é convencionado pelo legislador e, uma vez posto, obriga os cidadãos da pólis.`
-      ], correta: 4, fonteExtra: false, explicacaoHtml: `Na Aula 3, o justo legal é o que, ao ser convencionado pelo legislador, torna-se obrigatório na pólis. O justo natural, ao contrário, tem embasamento na natureza em si e não depende das opiniões humanas. A resposta que descreve base na natureza é a mais tentadora, porque é justamente a definição do justo natural. A que fala em corrigir a lei geral no caso concreto descreve a equidade.` },
+      ], correta: 4, fonteExtra: false, explicacaoHtml: `O justo legal é o que, ao ser convencionado pelo legislador, torna-se obrigatório na pólis. O justo natural, ao contrário, tem embasamento na natureza em si e não depende das opiniões humanas. A resposta que descreve base na natureza é a mais tentadora, porque é justamente a definição do justo natural. A que fala em corrigir a lei geral no caso concreto descreve a equidade.` },
 
     { id: 39, categoria: 'antiga', enunciadoHtml: `Uma lei geral, aplicada literalmente a um caso muito particular, geraria injustiça evidente. Para Aristóteles, o que permite chegar à justiça naquele caso?`, alternativasHtml: [
         `Abolir a lei, pois toda lei escrita é injusta por ser geral e abstrata.`,
@@ -177,15 +177,15 @@ export const antiga: readonly PerguntaQuiz[] = [
         `uma lei natural universal, emanada da razão, que inspira as leis positivas.`
       ], correta: 4, fonteExtra: true, explicacaoHtml: `Wolkmer descreve o estoicismo como a defesa de uma vida segundo a natureza e de uma lei natural universal e suprema, emanada da razão e inspiradora das leis humanas positivas; a ideia passa ao pensamento romano e chega à teologia moral cristã. A resposta do prazer como meta da existência é a mais tentadora, porque também é uma escola helenística do mesmo período: é o epicurismo, que vê a justiça como convenção útil e não admite direito natural ao lado do positivo.` },
 
-    { id: 42, categoria: 'antiga', enunciadoHtml: `Que traço as aulas destacam nos romanos em relação aos gregos?`, alternativasHtml: [
+    { id: 42, categoria: 'antiga', enunciadoHtml: `Que traço distingue os romanos em relação aos gregos?`, alternativasHtml: [
         `Uma especulação metafísica mais profunda do que a dos helenos, sobretudo sobre a natureza da justiça.`,
         `A recusa em aproveitar elementos culturais de outros povos, para preservar a pureza do direito.`,
         `A natureza prática: absorveram fontes de povos conquistados e criaram um direito sistematizado.`,
         `O desinteresse pelo direito, deixado quase todo aos costumes e à decisão dos magistrados.`,
         `A defesa do relativismo de Protágoras como base de todo o direito e de toda a justiça.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A Aula 3 diz que os romanos tinham natureza essencialmente prática, absorveram fontes de povos conquistados e as adaptaram, e criaram um direito sistematizado, funcional e amplo. A frase de Guido Fassò citada no slide resume: a ciência jurídica é criação romana. A resposta da especulação metafísica mais profunda é a mais tentadora, porque inverte o contraste: a especulação e a metafísica é que marcam os gregos.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Os romanos tinham natureza essencialmente prática, absorveram fontes de povos conquistados e as adaptaram, e criaram um direito sistematizado, funcional e amplo. A frase de Guido Fassò resume: a ciência jurídica é criação romana. A resposta da especulação metafísica mais profunda é a mais tentadora, porque inverte o contraste: a especulação e a metafísica é que marcam os gregos.` },
 
-    { id: 43, categoria: 'antiga', enunciadoHtml: `Em <em>Sobre as leis</em>, segundo o recorte de Wolkmer nas aulas, para que foram inventadas as leis positivas?`, alternativasHtml: [
+    { id: 43, categoria: 'antiga', enunciadoHtml: `Em <em>Sobre as leis</em>, segundo o recorte de Wolkmer, para que foram inventadas as leis positivas?`, alternativasHtml: [
         `Para a segurança dos cidadãos, a preservação dos Estados e a felicidade da vida humana.`,
         `Para comunicar aos mortais, por meio de decretos, a vontade dos deuses sobre a justiça.`,
         `Para camuflar o domínio dos mais fortes sobre os mais fracos, disfarçando-o de justiça.`,
@@ -193,13 +193,13 @@ export const antiga: readonly PerguntaQuiz[] = [
         `Para provar que o direito se baseia na opinião dos homens e na vontade da maioria.`
       ], correta: 0, fonteExtra: false, explicacaoHtml: `Cícero reconhece as leis postas pelos homens e diz que foram inventadas para a segurança dos cidadãos, a preservação dos Estados e a tranquilidade e felicidade da vida humana. A resposta de que o direito se baseia na opinião dos homens é a mais tentadora, porque a lei positiva é mesmo obra humana. Mas, para Cícero, o direito se baseia não nas opiniões dos homens, e sim na Natureza: a lei positiva cumpre uma função útil, sem ser o fundamento do direito.` },
 
-    { id: 44, categoria: 'antiga', enunciadoHtml: `Qual alternativa associa corretamente o direito romano e a sua característica, segundo as aulas?`, alternativasHtml: [
+    { id: 44, categoria: 'antiga', enunciadoHtml: `Qual alternativa associa corretamente o direito romano e a sua característica?`, alternativasHtml: [
         `Ius civile: fundado na razão universal, válido para todos os povos e sem limites de nenhuma espécie.`,
         `Ius civile: fundado na vontade do populus, com limites; ius naturale: fundado na razão universal.`,
         `Ius naturale: próprio de um povo determinado, como as leis positivas de Creonte em Antígona.`,
         `Ius naturale: fundado na vontade do populus e restrito aos limites da cidade de Roma.`,
         `Ius civile e ius naturale: equivalentes, pois ambos nascem da vontade do povo de Roma.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `Na Aula 4, o direito natural (ius naturale) funda-se na razão universal (naturalis ratio) e vale para todos os povos, sem limites; o direito positivo (ius civile) funda-se na vontade do povo (populus) e é próprio de um povo determinado, com limites. As leis positivas de Creonte servem de exemplo do segundo. As respostas que atribuem ao ius civile a razão universal, ou ao ius naturale a vontade do populus, são as mais tentadoras, porque trocam as características entre os dois. Sobre o ius gentium, a bibliografia registra leituras diferentes: uma o aproxima do direito natural, outra o trata como direito comum entre os povos, de natureza positiva. Em nenhuma delas o ius civile se equipara ao ius naturale.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `O direito natural (ius naturale) funda-se na razão universal (naturalis ratio) e vale para todos os povos, sem limites; o direito positivo (ius civile) funda-se na vontade do povo (populus) e é próprio de um povo determinado, com limites. As leis positivas de Creonte servem de exemplo do segundo. As respostas que atribuem ao ius civile a razão universal, ou ao ius naturale a vontade do populus, são as mais tentadoras, porque trocam as características entre os dois. Sobre o ius gentium, a bibliografia registra leituras diferentes: uma o aproxima do direito natural, outra o trata como direito comum entre os povos, de natureza positiva. Em nenhuma delas o ius civile se equipara ao ius naturale.` },
 
     { id: 45, categoria: 'antiga', enunciadoHtml: `Segundo Wolkmer, qual é a definição de justiça atribuída a Ulpiano no Digesto de Justiniano?`, alternativasHtml: [
         `A conveniência e o interesse do mais forte, que se impõe às leis da cidade.`,
@@ -209,7 +209,7 @@ export const antiga: readonly PerguntaQuiz[] = [
         `A participação da criatura racional na lei eterna, por meio da consciência.`
       ], correta: 3, fonteExtra: true, explicacaoHtml: `Wolkmer registra, no Digesto, a definição de Ulpiano: a justiça é a vontade constante e perpétua de dar a cada um o seu direito. O Digesto traz ainda os preceitos honeste vivere (viver honestamente), alterum non laedere (não lesar outrem) e suum cuique tribuere (dar a cada um o seu). A resposta do meio-termo entre o excesso e a falta é a mais tentadora, porque é a virtude aristotélica do justo meio, associada à justiça, mas não é a definição de Ulpiano. As demais respostas pertencem a Trasímaco, a Platão e à tradição cristã sobre a lei natural.` },
 
-    { id: 46, categoria: 'antiga', enunciadoHtml: `Segundo a Aula 2, o que marca a passagem do mito ao logos na Grécia?`, alternativasHtml: [
+    { id: 46, categoria: 'antiga', enunciadoHtml: `O que marca a passagem do mito ao logos na Grécia?`, alternativasHtml: [
         `A substituição da razão pela vontade arbitrária dos deuses, tida como fonte única de explicação.`,
         `O abandono da vida urbana e da escrita alfabética, em favor da tradição oral dos poetas.`,
         `A proibição do debate público sobre as leis, reservado apenas aos sacerdotes da cidade.`,
@@ -221,23 +221,23 @@ export const antiga: readonly PerguntaQuiz[] = [
 
     { id: 48, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Sócrates deixou extensa obra escrita, na qual expôs diretamente a maiêutica e a defesa das leis de Atenas.`, correta: false, fonteExtra: true, explicacaoHtml: `Segundo Wolkmer, Sócrates não deixou nada escrito. Suas ideias chegam por trabalhos de discípulos, como Xenofonte e Platão. O diálogo Críton, por exemplo, é de Platão, e é nele que Sócrates aparece dialogando com as próprias leis de Atenas.` },
 
-    { id: 49, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Sócrates, a virtude é um conteúdo que pode ser simplesmente transmitido do mestre ao aluno, como se transmite uma técnica.`, correta: false, fonteExtra: false, explicacaoHtml: `Nas aulas, as virtudes já existem em cada um e cabe redescobri-las pelo diálogo; a virtude não pode ser simplesmente ensinada. Por isso o método socrático é a maiêutica, a "parteira das ideias".` },
+    { id: 49, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Sócrates, a virtude é um conteúdo que pode ser simplesmente transmitido do mestre ao aluno, como se transmite uma técnica.`, correta: false, fonteExtra: false, explicacaoHtml: `Para Sócrates, as virtudes já existem em cada um e cabe redescobri-las pelo diálogo; a virtude não pode ser simplesmente ensinada. Por isso o método socrático é a maiêutica, a "parteira das ideias".` },
 
-    { id: 50, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Segundo o recorte de Wolkmer da Aula 3, para sofistas como Trasímaco, Protágoras, Cálicles e Hípias, a justiça legal pode servir para camuflar o domínio dos detentores do poder.`, correta: true, fonteExtra: false, explicacaoHtml: `O recorte diz que, para esses sofistas, as leis resultam da força arbitrária de quem exerce e controla o poder, e a justiça legal assume o sentido de camuflar o domínio dos detentores do poder, como convenção formalizada no interesse do mais forte. É o choque entre a justiça por natureza e a justiça por convenção. Vale lembrar que o grupo é heterogêneo, e que a fórmula da conveniência do mais forte é associada em especial a Trasímaco.` },
+    { id: 50, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Segundo o recorte de Wolkmer, para sofistas como Trasímaco, Protágoras, Cálicles e Hípias, a justiça legal pode servir para camuflar o domínio dos detentores do poder.`, correta: true, fonteExtra: false, explicacaoHtml: `O recorte diz que, para esses sofistas, as leis resultam da força arbitrária de quem exerce e controla o poder, e a justiça legal assume o sentido de camuflar o domínio dos detentores do poder, como convenção formalizada no interesse do mais forte. É o choque entre a justiça por natureza e a justiça por convenção. Vale lembrar que o grupo é heterogêneo, e que a fórmula da conveniência do mais forte é associada em especial a Trasímaco.` },
 
-    { id: 51, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Segundo Wolkmer, a concepção platônica identifica a justiça à sabedoria e à virtude da alma, e associa a injustiça à ignorância e ao vício.`, correta: true, fonteExtra: true, explicacaoHtml: `Wolkmer descreve assim a justiça em Platão: sabedoria e virtude da alma, com a injustiça ligada à ignorância e ao vício. Isso se conecta ao que as aulas destacam: como a justiça aperfeiçoa moralmente, ela jamais pode produzir o mal.` },
+    { id: 51, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Segundo Wolkmer, a concepção platônica identifica a justiça à sabedoria e à virtude da alma, e associa a injustiça à ignorância e ao vício.`, correta: true, fonteExtra: true, explicacaoHtml: `Wolkmer descreve assim a justiça em Platão: sabedoria e virtude da alma, com a injustiça ligada à ignorância e ao vício. Isso se conecta ao ponto de que, como a justiça aperfeiçoa moralmente, ela jamais pode produzir o mal.` },
 
-    { id: 52, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Na justiça orgânica de Platão, cada cidadão deve exercer a função que escolher livremente, sem vínculo com a sua classe social.`, correta: false, fonteExtra: false, explicacaoHtml: `Na Aula 4, a justiça é cada cidadão cumprir rigidamente o seu papel social, e o desvio dessa ordem gera injustiça. A divisão do trabalho é rígida e fixa, e não fica ao gosto de cada um.` },
+    { id: 52, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Na justiça orgânica de Platão, cada cidadão deve exercer a função que escolher livremente, sem vínculo com a sua classe social.`, correta: false, fonteExtra: false, explicacaoHtml: `A justiça é cada cidadão cumprir rigidamente o seu papel social, e o desvio dessa ordem gera injustiça. A divisão do trabalho é rígida e fixa, e não fica ao gosto de cada um.` },
 
-    { id: 53, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Aristóteles, o justo natural é aquele convencionado pelo legislador, e o justo legal é aquele cuja base está na natureza e independe das opiniões humanas.`, correta: false, fonteExtra: false, explicacaoHtml: `A afirmação troca os conceitos. Na Aula 3, o justo natural tem base na natureza e não depende das opiniões humanas, enquanto o justo legal é convencionado pelo legislador e, por isso, obrigatório na pólis.` },
+    { id: 53, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Aristóteles, o justo natural é aquele convencionado pelo legislador, e o justo legal é aquele cuja base está na natureza e independe das opiniões humanas.`, correta: false, fonteExtra: false, explicacaoHtml: `A afirmação troca os conceitos. O justo natural tem base na natureza e não depende das opiniões humanas, enquanto o justo legal é convencionado pelo legislador e, por isso, obrigatório na pólis.` },
 
-    { id: 54, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Aristóteles, ninguém existe de forma independente, e a disputa por recursos escassos, como riquezas, alimentos e cargos, gera conflitos que a justiça equilibra.`, correta: true, fonteExtra: false, explicacaoHtml: `É o raciocínio da Aula 4 a partir do homem como animal político: a justiça resolve o problema da dependência mútua e equilibra os conflitos que nascem da escassez de recursos.` },
+    { id: 54, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Para Aristóteles, ninguém existe de forma independente, e a disputa por recursos escassos, como riquezas, alimentos e cargos, gera conflitos que a justiça equilibra.`, correta: true, fonteExtra: false, explicacaoHtml: `É o raciocínio de Aristóteles a partir do homem como animal político: a justiça resolve o problema da dependência mútua e equilibra os conflitos que nascem da escassez de recursos.` },
 
-    { id: 55, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Cícero, que incorporou o platonismo, o aristotelismo e o estoicismo, é considerado o primeiro "autêntico" filósofo do Direito.`, correta: true, fonteExtra: false, explicacaoHtml: `É o que diz a Aula 3, com apoio em Wolkmer: Cícero foi um autor eclético, que incorporou platonismo, aristotelismo e estoicismo e adaptou-os ao espírito prático dos romanos, o que levou a considerá-lo o primeiro autêntico filósofo do Direito.` },
+    { id: 55, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Cícero, que incorporou o platonismo, o aristotelismo e o estoicismo, é considerado o primeiro "autêntico" filósofo do Direito.`, correta: true, fonteExtra: false, explicacaoHtml: `Com apoio em Wolkmer: Cícero foi um autor eclético, que incorporou platonismo, aristotelismo e estoicismo e adaptou-os ao espírito prático dos romanos, o que levou a considerá-lo o primeiro autêntico filósofo do Direito.` },
 
-    { id: 56, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Nas aulas, o ius civile é apresentado como o direito fundado na razão universal, válido para todos os povos e sem limites.`, correta: false, fonteExtra: false, explicacaoHtml: `Essa é a descrição do direito natural (ius naturale), fundado na naturalis ratio. O ius civile é o direito positivo, fundado na vontade do povo (populus), próprio de um povo determinado e com limites.` },
+    { id: 56, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `O ius civile é apresentado como o direito fundado na razão universal, válido para todos os povos e sem limites.`, correta: false, fonteExtra: false, explicacaoHtml: `Essa é a descrição do direito natural (ius naturale), fundado na naturalis ratio. O ius civile é o direito positivo, fundado na vontade do povo (populus), próprio de um povo determinado e com limites.` },
 
-    { id: 57, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `Segundo a Aula 2, a filosofia nasce na Grécia como continuação da explicação mítica, atribuindo a ordem das coisas à vontade arbitrária dos deuses.`, correta: false, fonteExtra: false, explicacaoHtml: `A filosofia nasce como ruptura com a explicação mítica e sobrenatural. Em vez da vontade arbitrária dos deuses, busca explicação na natureza e na razão, e surge a justiça dos homens, discutida e pactuada na pólis.` },
+    { id: 57, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `A filosofia nasce na Grécia como continuação da explicação mítica, atribuindo a ordem das coisas à vontade arbitrária dos deuses.`, correta: false, fonteExtra: false, explicacaoHtml: `A filosofia nasce como ruptura com a explicação mítica e sobrenatural. Em vez da vontade arbitrária dos deuses, busca explicação na natureza e na razão, e surge a justiça dos homens, discutida e pactuada na pólis.` },
 
-    { id: 58, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `A frase de Guido Fassò citada na Aula 3, "a ciência jurídica é criação romana", liga-se à vocação prática dos romanos, que os levou a um direito sistematizado, funcional e amplo.`, correta: true, fonteExtra: false, explicacaoHtml: `Segundo a aula, com apoio em Wolkmer, a vocação prática dos romanos despertou neles um interesse pelo direito que os gregos não tiveram na mesma medida, e produziu um direito sistematizado, funcional e amplo. Os gregos ficaram mais na especulação sobre os fundamentos da justiça.` }
+    { id: 58, tipo: 'verdadeiro-ou-falso', categoria: 'antiga', enunciadoHtml: `A frase de Guido Fassò citada por Wolkmer, "a ciência jurídica é criação romana", liga-se à vocação prática dos romanos, que os levou a um direito sistematizado, funcional e amplo.`, correta: true, fonteExtra: false, explicacaoHtml: `Com apoio em Wolkmer, a vocação prática dos romanos despertou neles um interesse pelo direito que os gregos não tiveram na mesma medida, e produziu um direito sistematizado, funcional e amplo. Os gregos ficaram mais na especulação sobre os fundamentos da justiça.` }
 ];

@@ -5,11 +5,11 @@ import type { PerguntaQuiz } from '../../../../tipos';
  * unidade: Marx (superestrutura, igualdade formal, dominação indireta),
  * Durkheim (fato social, solidariedade mecânica e orgânica, crime e
  * sanção) e Weber (ação social, poder e dominação, burocracia), a partir
- * dos slides de 02/09 e do artigo "Da luta à ordem" com suas versões de
+ * do material de aula e do artigo "Da luta à ordem" com suas versões de
  * estudo. Nenhuma delas cita dispositivo de lei.
  */
 export const classicos: readonly PerguntaQuiz[] = [
-    { id: 32, categoria: 'classicos', enunciadoHtml: `Na análise de Marx apresentada nos slides, o que compõe a <strong>infraestrutura</strong> de uma sociedade?`, alternativasHtml: [
+    { id: 32, categoria: 'classicos', enunciadoHtml: `Na análise de Marx o que compõe a <strong>infraestrutura</strong> de uma sociedade?`, alternativasHtml: [
         `As relações ideológicas, políticas e jurídicas.`,
         `As instituições jurídicas e o Estado.`,
         `As forças produtivas e as relações sociais de produção.`,
@@ -63,7 +63,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Lutar por direitos sociais pode reduzir desigualdades e exploração, embora a emancipação plena exigisse superar as formas de exploração de classe.`,
         `Direitos sociais são produtos naturais da divisão do trabalho, sem relação com conflito entre classes.`,
         `Direitos sociais só existem onde predomina a dominação tradicional.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `Os slides dizem que o direito pode contribuir para manter privilégios e desigualdades estruturais, mas que a luta por direitos sociais pode reduzir desigualdades e exploração, e que a perspectiva marxista aponta também para a superação das formas de exploração de classe. A resposta da eliminação definitiva da exploração é a mais tentadora, porque exagera o efeito dos direitos sociais: reduzir não é eliminar. A resposta da irrelevância dos direitos sociais vai ao extremo oposto e ignora que a conquista de direitos pode minorar desigualdades.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Para a perspectiva marxista, o direito pode contribuir para manter privilégios e desigualdades estruturais, mas a luta por direitos sociais pode reduzir desigualdades e exploração, e a superação das formas de exploração de classe também é apontada. A resposta da eliminação definitiva da exploração é a mais tentadora, porque exagera o efeito dos direitos sociais: reduzir não é eliminar. A resposta da irrelevância dos direitos sociais vai ao extremo oposto e ignora que a conquista de direitos pode minorar desigualdades.` },
 
     { id: 39, categoria: 'classicos', enunciadoHtml: `Segundo a leitura de Marx adotada no artigo, apoiada em Pachukanis, em que contexto o direito, como fenômeno específico, só se verifica plenamente?`, alternativasHtml: [
         `Em qualquer sociedade dividida em classes, pois em cada modo de produção o direito tem a mesma forma.`,
@@ -81,7 +81,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Como artifício jurídico de proteção de bens da classe dominante.`
       ], correta: 4, fonteExtra: false, explicacaoHtml: `As autoras observam que o crime pode ser lido, nessa tradição, como artifício jurídico de proteção de bens da classe dominante. A resposta do fato social normal é a mais tentadora, porque "crime como fato social normal" é uma tese conhecida, mas é de Durkheim, não de Marx. A resposta da reação passional da coletividade também descreve Durkheim (a pena como reação passional na solidariedade mecânica).` },
 
-    { id: 41, categoria: 'classicos', enunciadoHtml: `O que são "fatos sociais" para Durkheim, segundo os slides?`, alternativasHtml: [
+    { id: 41, categoria: 'classicos', enunciadoHtml: `O que são "fatos sociais" para Durkheim?`, alternativasHtml: [
         `Condutas dotadas de significado subjetivo e orientadas em relação a outros.`,
         `Relações ideológicas, políticas e jurídicas determinadas pela economia.`,
         `Crenças na validade de normas estabelecidas por regras racionais.`,
@@ -145,7 +145,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Durkheim explica o direito antigo pela luta de classes.`
       ], correta: 2, fonteExtra: false, explicacaoHtml: `O artigo aponta que Durkheim, ao contrário de Marx, reconhece direito anterior ao moderno e descreve a sucessão histórica do repressivo ao restitutivo em vários povos, ao passo que, na leitura marxista adotada, o direito como fenômeno específico só se verifica plenamente nas sociedades capitalistas. A resposta de que Durkheim nega direito antes do capitalismo é a mais tentadora, porque inverte os autores. A resposta de que Durkheim explica o direito antigo pela luta de classes atribui a Durkheim um vocabulário marxista.` },
 
-    { id: 49, categoria: 'classicos', enunciadoHtml: `Que conjunto de temas caracteriza a análise de Weber sobre a sociedade moderna, segundo os slides?`, alternativasHtml: [
+    { id: 49, categoria: 'classicos', enunciadoHtml: `Que conjunto de temas caracteriza a análise de Weber sobre a sociedade moderna?`, alternativasHtml: [
         `Divisão do trabalho, solidariedade orgânica e fatos sociais.`,
         `Capitalismo industrial, racionalização e desencantamento do mundo.`,
         `Modos de produção, luta de classes e superestrutura.`,
@@ -169,7 +169,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Nenhum deles, pois o direito só entrou na sociologia depois dos três.`
       ], correta: 0, fonteExtra: false, explicacaoHtml: `O artigo destaca Weber como o autor que mais se dedicou diretamente ao estudo do direito entre os três, e situa em <em>Economia e sociedade</em> a inauguração da sociologia compreensiva. A resposta de Marx é a mais tentadora, porque o direito é central na análise marxista, mas como parte da superestrutura, não como objeto principal de uma teoria própria. A resposta de Durkheim confunde o papel do direito em Durkheim, que o usa como indicador externo da solidariedade.` },
 
-    { id: 52, categoria: 'classicos', enunciadoHtml: `Qual é a definição de <strong>poder</strong> em Weber, segundo os slides?`, alternativasHtml: [
+    { id: 52, categoria: 'classicos', enunciadoHtml: `Qual é a definição de <strong>poder</strong> em Weber?`, alternativasHtml: [
         `A situação em que uma vontade manifesta influencia as ações dos dominados, produzindo obediência.`,
         `A crença na validade dos estatutos e na competência funcional definida por regras.`,
         `A probabilidade de impor a própria vontade numa ação social, mesmo diante de oposição.`,
@@ -183,7 +183,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Legal: consciência coletiva; tradicional: solidariedade mecânica; carismática: solidariedade orgânica.`,
         `Legal: burocracia; tradicional: economia; carismática: superestrutura.`,
         `Legal: crença nas tradições; tradicional: crença em estatutos racionais; carismática: crença na competência técnica.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `Os slides definem a dominação legal-racional como baseada na crença na validade das normas e na competência estabelecida por regras, a tradicional como vinculada à crença na legitimidade das tradições e a carismática como vinculada à crença nas qualidades extraordinárias de uma pessoa. A resposta que atribui à dominação legal a crença nas qualidades de uma pessoa é a mais tentadora, porque usa os três fundamentos corretos, mas embaralhados. A resposta da consciência coletiva e das solidariedades e a resposta da burocracia, da economia e da superestrutura trazem conceitos de Durkheim e de Marx.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `Para Weber, a dominação legal-racional é a baseada na crença na validade das normas e na competência estabelecida por regras, a tradicional é a vinculada à crença na legitimidade das tradições e a carismática é a vinculada à crença nas qualidades extraordinárias de uma pessoa. A resposta que atribui à dominação legal a crença nas qualidades de uma pessoa é a mais tentadora, porque usa os três fundamentos corretos, mas embaralhados. A resposta da consciência coletiva e das solidariedades e a resposta da burocracia, da economia e da superestrutura trazem conceitos de Durkheim e de Marx.` },
 
     { id: 54, categoria: 'classicos', enunciadoHtml: `Por que a burocracia é apresentada, em Weber, como a forma máxima de dominação legal nas sociedades modernas?`, alternativasHtml: [
         `Porque depende do carisma pessoal do servidor público.`,
@@ -193,7 +193,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Porque organiza a dominação por normas abstratas, competências especializadas, registros escritos e procedimentos previsíveis, reduzindo o peso do parentesco e dos costumes tradicionais.`
       ], correta: 4, fonteExtra: false, explicacaoHtml: `A burocracia organiza a dominação legal por meio de normas, competências, registros e procedimentos previsíveis, e reduz a importância do parentesco e dos costumes tradicionais. O material observa que as pessoas obedecem a uma decisão administrativa porque creem na legitimidade do procedimento legal, não porque o servidor seja carismático. A resposta do carisma do servidor público é a mais tentadora, porque mistura o tipo legal com o carismático. A resposta da reprodução direta da estrutura de classes é leitura marxista.` },
 
-    { id: 55, categoria: 'classicos', enunciadoHtml: `O que significa <strong>racionalizar</strong> no sentido weberiano apresentado nos slides?`, alternativasHtml: [
+    { id: 55, categoria: 'classicos', enunciadoHtml: `O que significa <strong>racionalizar</strong> no sentido weberiano?`, alternativasHtml: [
         `Tornar a sociedade mais solidária por meio da divisão do trabalho.`,
         `Ocultar relações de classe por trás da forma jurídica.`,
         `Atribuir sentido subjetivo a uma conduta social.`,
@@ -209,13 +209,13 @@ export const classicos: readonly PerguntaQuiz[] = [
         `É instituição que só restaura situações anteriores, sem aspecto de dominação.`
       ], correta: 0, fonteExtra: false, explicacaoHtml: `O artigo afirma que o Poder Judiciário pode ser lido como empresa de dominação e que os juízes detêm o monopólio de decidir, sendo agentes privilegiados da dominação legal. A resposta do órgão neutro é a mais tentadora, porque a imagem do juiz neutro é comum, mas o material liga a ordem jurídica à distribuição do poder na comunidade. A resposta do mero instrumento do modo de produção reduz a leitura a Marx e a resposta da instituição que só restaura confunde a sanção restitutiva de Durkheim com a análise weberiana.` },
 
-    { id: 57, categoria: 'classicos', enunciadoHtml: `Na aula inaugural, o direito pode ser visto como norma coletiva, instrumento de poder, sistema racional-legal e prática social viva. Qual é a associação correta com os autores, na ordem?`, alternativasHtml: [
+    { id: 57, categoria: 'classicos', enunciadoHtml: `O direito pode ser visto como norma coletiva, instrumento de poder, sistema racional-legal e prática social viva. Qual é a associação correta com os autores, na ordem?`, alternativasHtml: [
         `Marx, Durkheim, Weber e Ehrlich.`,
         `Durkheim, Marx, Weber e Ehrlich.`,
         `Durkheim, Weber, Marx e Ehrlich.`,
         `Durkheim, Marx, Ehrlich e Weber.`,
         `Weber, Marx, Durkheim e Kelsen.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `A aula associa norma coletiva a Durkheim (o direito como fato social e expressão da solidariedade), instrumento de poder a Marx, sistema racional-legal a Weber e prática social viva a Ehrlich. A resposta de Marx, Durkheim, Weber e Ehrlich é a mais tentadora, porque troca apenas os dois primeiros autores, e a resposta de Weber, Marx, Durkheim e Kelsen traz Kelsen, que a aula não associa a essa lista.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `Norma coletiva associa-se a Durkheim (o direito como fato social e expressão da solidariedade), instrumento de poder a Marx, sistema racional-legal a Weber e prática social viva a Ehrlich. A resposta de Marx, Durkheim, Weber e Ehrlich é a mais tentadora, porque troca apenas os dois primeiros autores, e a resposta de Weber, Marx, Durkheim e Kelsen traz Kelsen, que não se associa a essa lista.` },
 
     { id: 58, categoria: 'classicos', enunciadoHtml: `Um estudante quer observar como as pessoas realmente vivem as regras no dia a dia, para além do texto escrito da lei. Que autor do material se aproxima dessa preocupação?`, alternativasHtml: [
         `Kelsen, que defende a pureza normativa do direito.`,
@@ -223,7 +223,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Ehrlich, que analisa o direito vivo das práticas sociais.`,
         `Marx, que vê o direito como reflexo direto da economia, sem prática própria.`,
         `Durkheim, que vê o direito apenas como sanção estatal escrita.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A aula apresenta Ehrlich como o autor do direito visto como prática social viva, e a atividade de 02/09 o descreve como o que analisa o direito vivo das práticas sociais. A resposta de Weber é a mais tentadora, porque Weber também parte do comportamento social relacionado às normas, mas seu foco é o sistema racional-legal e a dominação legal. A resposta de Kelsen trata da pureza normativa, e não das práticas vividas.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Ehrlich é o autor do direito visto como prática social viva, que analisa o direito vivo das práticas sociais. A resposta de Weber é a mais tentadora, porque Weber também parte do comportamento social relacionado às normas, mas seu foco é o sistema racional-legal e a dominação legal. A resposta de Kelsen trata da pureza normativa, e não das práticas vividas.` },
 
     { id: 59, categoria: 'classicos', enunciadoHtml: `Qual contraste entre Ehrlich e Kelsen aparece no material da disciplina?`, alternativasHtml: [
         `Ehrlich defende a pureza normativa do direito; Kelsen analisa o direito vivo das práticas sociais.`,

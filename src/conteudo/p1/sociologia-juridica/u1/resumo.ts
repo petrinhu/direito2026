@@ -2,8 +2,8 @@ import type { BlocoResumo } from '../../../tipos';
 
 /**
  * Os blocos teóricos do resumo de Sociologia Jurídica, 1a unidade.
- * Fontes, todas no mesmo nível: os slides da aula inaugural e os da aula de
- * 02/09/2026 (Marx, Durkheim e Weber), a atividade dessa mesma data, o
+ * Fontes, todas no mesmo nível: o material de abertura da disciplina e o material sobre
+ * Marx, Durkheim e Weber, a atividade correspondente, o
  * artigo "Da luta à ordem" (com as versões de resumo, didática, crítica e
  * contradições que acompanham o material), o artigo sobre a relevância da
  * sociologia para a ciência jurídica e o artigo sobre narrativa e discurso
@@ -22,7 +22,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 1,
     titulo: 'O que é Sociologia e por que ela nasceu',
     fonte:
-      'Slides da aula inaugural de Sociologia Jurídica; TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, v. 29, n. 35, p. 3-18, 2022.',
+      'Material de aula da disciplina; TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, v. 29, n. 35, p. 3-18, 2022.',
     corpoHtml: `
       <p>A Sociologia é a ciência que estuda a sociedade: como as pessoas vivem juntas, como se organizam, se relacionam e constroem regras, valores, culturas e instituições. Ela analisa as relações sociais (família, escola, trabalho, religião, política), os comportamentos humanos em grupo, as desigualdades sociais (classe, raça, poder) e as transformações sociais ao longo do tempo. O artigo de apoio adota uma definição parecida: estudo da vida e do comportamento social, sobretudo dos sistemas sociais, de como funcionam, como mudam e das consequências que produzem.</p>
       <h3>O contexto histórico do século XIX</h3>
@@ -49,7 +49,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 2,
     titulo: 'O que é Sociologia Jurídica',
     fonte:
-      'Slides da aula inaugural; atividade de 02/09/2026; TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, v. 29, n. 35, p. 3-18, 2022.',
+      'Material de aula da disciplina; TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, v. 29, n. 35, p. 3-18, 2022.',
     corpoHtml: `
       <p>A Sociologia Jurídica (ou sociologia do direito) estuda o direito como <strong>fenômeno social</strong>: não se limita ao conteúdo das leis, procura compreender o direito para além das normas escritas, analisando as relações sociais que influenciam sua criação e aplicação. Em resumo, ela investiga como o direito se relaciona com a sociedade e com as transformações dela.</p>
       <p>O artigo de apoio recolhe algumas formulações da doutrina:</p>
@@ -76,7 +76,7 @@ export const resumo: readonly BlocoResumo[] = [
     id: 'bloco-2',
     numero: 3,
     titulo: 'A ementa em forma de conteúdo: o que esta disciplina estuda',
-    fonte: 'Slides da aula inaugural de Sociologia Jurídica (ementa, objetivos e metodologia).',
+    fonte: 'Material de aula da disciplina.',
     corpoHtml: `
       <p>A ementa da disciplina, escrita como conteúdo de estudo, reúne quatro grandes eixos.</p>
       <ol>
@@ -98,7 +98,7 @@ export const resumo: readonly BlocoResumo[] = [
         <li>estimular a reflexão ética e cidadã no exercício do Direito.</li>
       </ul>
       <h3>Como a disciplina é conduzida</h3>
-      <p>Metodologias ativas e dialógicas: aulas expositivas dialogadas; análise de músicas, textos e casos concretos; debates orientados e discussões em grupo; estudos de caso com enfoque sociológico-jurídico; seminários temáticos; produção de resenhas críticas e reflexões escritas. A primeira unidade cobre a introdução à Sociologia (contexto histórico, consolidação como ciência) e os clássicos.</p>
+      <p>Metodologias ativas e dialógicas: exposições dialogadas; análise de músicas, textos e casos concretos; debates orientados e discussões em grupo; estudos de caso com enfoque sociológico-jurídico; seminários temáticos; produção de resenhas críticas e reflexões escritas. A primeira unidade cobre a introdução à Sociologia (contexto histórico, consolidação como ciência) e os clássicos.</p>
     `,
     resumo: [
       'Quatro eixos: Sociologia como ciência social; Direito como fenômeno social (norma, poder, controle social, legitimação); os clássicos Durkheim, Weber, Marx e Ehrlich; Sociologia Jurídica (direito positivo, direito vivo, pluralismo, desigualdades na aplicação da lei).',
@@ -113,14 +113,14 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 4,
     titulo: 'Direito positivo, direito vivo e pluralismo jurídico',
     fonte:
-      'Slides da aula de 02/09/2026 (quadro comparativo) e da aula inaugural (ementa); TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, 2022.',
+      'Material de aula da disciplina; TOMAZINI, Volnei Celso. A relevância da sociologia para a ciência jurídica. Revista da ESMESC, 2022.',
     corpoHtml: `
       <p>Dois modos de olhar o mesmo fenômeno organizam o campo da Sociologia Jurídica.</p>
       <ul>
         <li><strong>Direito positivo</strong>: o direito posto, as normas escritas e vigentes, o que está "no código". É o objeto do jurista dogmático, que interpreta e aplica essas normas.</li>
         <li><strong>Direito vivo</strong>: as normas que surgem das práticas sociais, as regras que efetivamente regulam a vida em sociedade, mesmo sem estarem no código. É a noção associada a Eugen Ehrlich.</li>
       </ul>
-      <p>A ementa da disciplina trata os dois lado a lado, e junta a eles o <strong>pluralismo jurídico</strong>: a ideia de que o Estado não é a única fonte de regras que regulam a vida social. Ao lado do direito estatal existem regras sociais, costumes e ordens de grupos, que também organizam condutas. O conceito-chave de Ehrlich no quadro da aula é, justamente, o pluralismo jurídico.</p>
+      <p>A ementa da disciplina trata os dois lado a lado, e junta a eles o <strong>pluralismo jurídico</strong>: a ideia de que o Estado não é a única fonte de regras que regulam a vida social. Ao lado do direito estatal existem regras sociais, costumes e ordens de grupos, que também organizam condutas. O conceito-chave de Ehrlich é, justamente, o pluralismo jurídico.</p>
       <p>A distância entre o direito escrito e o direito vivido explica dois temas que o artigo de apoio também destaca: a <strong>eficácia</strong> das normas (uma lei pode existir e não se cumprir) e a <strong>legitimidade</strong> (uma norma sem sintonia com as peculiaridades da comunidade destinatária tem a vigência esvaziada de plena legitimidade). Também explica as <strong>desigualdades na aplicação da lei</strong>, tema da ementa: a mesma norma escrita pode ser aplicada de modos diferentes conforme o grupo social.</p>
       <p>O quadro do bloco 10 mostra Ehrlich ao lado de Marx, Durkheim e Weber; o bloco 9 aprofunda Ehrlich e o contraste com Kelsen.</p>
     `,
@@ -137,13 +137,13 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 5,
     titulo: 'Controle social, coerção e legitimação',
     fonte:
-      'Slides da aula inaugural (coerção social em Durkheim, mídia e controle social, legitimidade das ideias); slides de 02/09/2026; TOMAZINI, Volnei Celso, 2022.',
+      'Material de aula da disciplina; TOMAZINI, Volnei Celso, 2022.',
     corpoHtml: `
       <h3>Coerção social (Durkheim)</h3>
       <p>Coerção social é a força que a sociedade exerce sobre os indivíduos, influenciando comportamentos, pensamentos e escolhas. Para Durkheim, existem maneiras de agir, pensar e sentir que <strong>existem antes de nascermos</strong>, são <strong>exteriores ao indivíduo</strong> e <strong>exercem pressão</strong> sobre nós. Seguimos essas regras não porque as inventamos, mas porque a sociedade espera que as sigamos: cumprir horários, vestir-se de modo adequado a certos ambientes, respeitar leis, ficar em silêncio no tribunal, não furar fila. Quem decide não segui-las encontra punição, julgamento ou constrangimento: isso é a coerção social.</p>
       <p>No campo jurídico ela aparece com clareza: a lei impõe comportamentos e o Estado tem poder de punição. A norma jurídica é um exemplo clássico de <strong>fato social coercitivo</strong>; alguém pode não querer pagar impostos, mas paga porque existe uma sanção legal. Por isso o Direito pode ser considerado a <strong>forma mais organizada de coerção social</strong>: ele institucionaliza regras que já existem na sociedade e estabelece sanções formais para quem as descumpre, sistematizando a pressão social ao transformar normas coletivas em leis aplicáveis pelo Estado. A coerção não é, portanto, apenas negativa: é também o que sustenta a ordem.</p>
       <h3>Mídia, narrativas e criação de leis</h3>
-      <p>A aula mostra que o Direito não surge isolado. A mídia influencia o comportamento social ao construir narrativas que moldam percepções sobre segurança, consumo e moralidade. Quando certos temas são associados ao medo ou à ameaça, a sociedade pode pressionar o Estado por respostas legais, como o aumento de penas ou a criação de novas leis. É uma forma de alienação e controle social pela mídia, que chega até a criação e a aplicação das leis.</p>
+      <p>O Direito não surge isolado. A mídia influencia o comportamento social ao construir narrativas que moldam percepções sobre segurança, consumo e moralidade. Quando certos temas são associados ao medo ou à ameaça, a sociedade pode pressionar o Estado por respostas legais, como o aumento de penas ou a criação de novas leis. É uma forma de alienação e controle social pela mídia, que chega até a criação e a aplicação das leis.</p>
       <h3>Legitimação: quem define as ideias aceitáveis?</h3>
       <p>Em uma democracia, a legitimidade das ideias deveria ser garantida pelo pluralismo e pela proteção constitucional da liberdade de expressão. Sociologicamente, porém, a definição do que é aceitável pode ser influenciada por grupos que detêm poder, e há disputas sobre quais vozes serão ouvidas. O Direito atua como mediador dessas tensões: pode assegurar a diversidade de pensamento ou, em certos contextos, limitar ou controlar discursos por justificativas legais.</p>
       <h3>Quatro lentes sobre o Direito</h3>
@@ -163,7 +163,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 6,
     titulo: 'Marx: o direito na estrutura de classes',
     fonte:
-      'Slides da aula de 02/09/2026; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem: o direito nas teorias de Marx, Durkheim e Weber. Revista Aracê, São José dos Pinhais, v. 7, n. 11, p. 1-18, 2025. DOI 10.56238/arev7n11-129.',
+      'Material de aula da disciplina; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem: o direito nas teorias de Marx, Durkheim e Weber. Revista Aracê, São José dos Pinhais, v. 7, n. 11, p. 1-18, 2025. DOI 10.56238/arev7n11-129.',
     corpoHtml: `
       <p>Karl Marx (1818-1883) analisa a sociedade a partir das condições materiais de produção e das relações entre as classes. O modo como a produção material é organizada determina a organização política e as representações intelectuais de uma época: Estado e propriedade seriam reflexos de condições reais. A história aparece como história da luta de classes: em cada modo de produção há uma classe dominante e uma dominada (proprietários e escravos, senhores feudais e servos, burguesia e proletariado).</p>
       <h3>Infraestrutura e superestrutura</h3>
@@ -175,7 +175,7 @@ export const resumo: readonly BlocoResumo[] = [
       <h3>O direito e a aparência de autonomia</h3>
       <p>Na leitura apresentada no artigo, o direito, como fenômeno específico, só se verifica plenamente nas sociedades capitalistas. A produção legislativa aparece de forma <strong>abstrata e codificada</strong>, o que estimula a ilusão ideológica de que o direito seria autônomo em relação à estrutura econômica. A crítica marxista procura revelar as relações de poder e as desigualdades encobertas pela forma jurídica. O artigo articula isso com o <em>Manifesto do Partido Comunista</em>: o governo moderno seria "um comitê que administra os negócios comuns de toda a classe burguesa", e o direito burguês, um instrumento que organiza e reproduz o modo de produção capitalista.</p>
       <h3>Igualdade jurídica: igualdade real?</h3>
-      <p>No capitalismo, trabalhadores e capitalistas aparecem juridicamente como sujeitos livres e iguais. Essa <strong>igualdade formal</strong> torna possível o contrato, inclusive o contrato de trabalho, pelo qual a força de trabalho vira mercadoria. Na leitura do artigo, liberdade e igualdade jurídicas são um artifício necessário à exploração mediada pelo contrato, e não emancipação efetiva. Nas sociedades pré-capitalistas a dominação era direta e pessoal; no capitalismo a burguesia domina indiretamente, pelo Estado e pelo direito. A pergunta para debate nos slides: ser juridicamente igual significa possuir as mesmas condições materiais?</p>
+      <p>No capitalismo, trabalhadores e capitalistas aparecem juridicamente como sujeitos livres e iguais. Essa <strong>igualdade formal</strong> torna possível o contrato, inclusive o contrato de trabalho, pelo qual a força de trabalho vira mercadoria. Na leitura do artigo, liberdade e igualdade jurídicas são um artifício necessário à exploração mediada pelo contrato, e não emancipação efetiva. Nas sociedades pré-capitalistas a dominação era direta e pessoal; no capitalismo a burguesia domina indiretamente, pelo Estado e pelo direito. A pergunta para debate: ser juridicamente igual significa possuir as mesmas condições materiais?</p>
       <h3>Dominação e transformação</h3>
       <p>O direito pode contribuir para manter privilégios e desigualdades estruturais; a luta por direitos sociais, por sua vez, pode reduzir desigualdades e exploração, e a perspectiva marxista aponta também para a superação das formas de exploração de classe. A ideia-chave: o direito deve ser analisado dentro das relações sociais e de poder. O artigo observa ainda que o crime pode ser lido, nessa tradição, como artifício jurídico de proteção dos bens da classe dominante.</p>
       <h3>Leitura crítica desta seção</h3>
@@ -197,7 +197,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 7,
     titulo: 'Durkheim: fato social, solidariedade e sanção',
     fonte:
-      'Slides da aula de 02/09/2026 e da aula inaugural; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, v. 7, n. 11, p. 1-18, 2025.',
+      'Material de aula da disciplina; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, v. 7, n. 11, p. 1-18, 2025.',
     corpoHtml: `
       <p>Émile Durkheim (1858-1917) quer estabelecer a Sociologia como ciência, com método sistemático e observação empírica. O objeto central são os <strong>fatos sociais</strong>, que devem ser tratados "como coisa": estuda-se a sociedade em si, não o discurso sobre ela. Fatos sociais são maneiras de agir suscetíveis de exercer coerção exterior e com existência própria em relação às manifestações individuais. O Direito é uma expressão dos fatos sociais, e observá-lo ajuda a compreender o grau de integração e coesão de uma sociedade: é um ponto de partida externo e objetivo.</p>
       <h3>Solidariedade mecânica e orgânica</h3>
@@ -208,7 +208,7 @@ export const resumo: readonly BlocoResumo[] = [
       </ul>
       <p>Com a especialização das funções sociais, o artigo descreve a mudança de predominância do repressivo para o restitutivo. O direito funciona, assim, como indicador externo das formas de integração social. Diferente de Marx, Durkheim reconhece direito anterior ao moderno.</p>
       <h3>Crime e sanção</h3>
-      <p>Para Durkheim o <strong>crime é um fato social normal</strong>, presente em qualquer sociedade (geral, coercitivo, exterior); só se torna <strong>patológico</strong> quando deixa de apresentar o caráter regular esperado. A função da sanção é proteger a coesão social e satisfazer a consciência comum ferida pelo crime, não meramente corrigir ou intimidar o infrator. É o que a atividade da aula pede: a punição como reforço da consciência coletiva e da coesão social.</p>
+      <p>Para Durkheim o <strong>crime é um fato social normal</strong>, presente em qualquer sociedade (geral, coercitivo, exterior); só se torna <strong>patológico</strong> quando deixa de apresentar o caráter regular esperado. A função da sanção é proteger a coesão social e satisfazer a consciência comum ferida pelo crime, não meramente corrigir ou intimidar o infrator. É o ponto central: a punição como reforço da consciência coletiva e da coesão social.</p>
       <p>O artigo faz uma observação crítica: a vontade punitiva nos países modernos não diminuiu como o esquema durkheimiano sugeriria. O apetite repressivo continua forte, o que tensiona a previsão de que o direito penal perderia importância.</p>
       <h3>Leitura crítica desta seção</h3>
       <p>Uma leitura crítica que acompanha o estudo do artigo observa duas tensões: a sanção é apresentada como proteção da coesão e satisfação da consciência comum e, noutro trecho, a pena "não passa de" vingança de uma sociedade arbitrária e irracional; e o corpo do texto diz que o recuo do direito penal não se confirma, enquanto a conclusão volta a usar a distinção entre direito repressivo e restitutivo como chave de leitura. Uma objeção possível, de matriz jusnaturalista (Tomás de Aquino, Finnis), é que tratar o direito como símbolo da solidariedade colapsa o dever-ser no ser: a consciência coletiva pode exigir o injusto, e o jurista precisaria de outro critério para julgar a norma vigente. São contrapontos atribuídos.</p>
@@ -228,7 +228,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 8,
     titulo: 'Weber: ação social, dominação legal e burocracia',
     fonte:
-      'Slides da aula de 02/09/2026 e da aula inaugural; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, v. 7, n. 11, p. 1-18, 2025.',
+      'Material de aula da disciplina; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, v. 7, n. 11, p. 1-18, 2025.',
     corpoHtml: `
       <p>Max Weber (1864-1920) analisa a sociedade moderna marcada pelo capitalismo industrial, pela racionalização e pelo "desencantamento do mundo". Dialoga com Marx, mas desloca o centro: considera fatores econômicos, e também políticos, religiosos e culturais, e rejeita reduzir tudo à economia. Sua sociologia dá centralidade à <strong>ação e à interação dos indivíduos</strong>. O artigo destaca Weber como o autor que mais se dedicou diretamente ao estudo do direito entre os três.</p>
       <h3>Ação social e sociologia compreensiva</h3>
@@ -262,13 +262,13 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 9,
     titulo: 'Ehrlich e o direito vivo, e o contraste com Kelsen',
     fonte:
-      'Slides da aula de 02/09/2026 (quadro comparativo); ementa dos slides da aula inaugural; atividade de 02/09/2026; TOMAZINI, Volnei Celso, 2022 (distinção entre enfoque sociológico e dogmático).',
+      'Material de aula da disciplina; TOMAZINI, Volnei Celso, 2022 (distinção entre enfoque sociológico e dogmático).',
     corpoHtml: `
       <h3>Ehrlich</h3>
-      <p>Eugen Ehrlich (1862-1922) é o autor que a ementa acrescenta a Durkheim, Weber e Marx. No quadro da aula, sua leitura do direito é a do <strong>direito vivo</strong>: as normas que surgem das práticas sociais. O método é a <strong>observação sociológica da prática social</strong>; o conceito-chave é o <strong>pluralismo jurídico</strong>; e o exemplo aplicado ao Direito são as regras sociais que regulam a vida mesmo sem estarem no código. Na fórmula da aula, o Direito é visto como <strong>prática social viva</strong>.</p>
+      <p>Eugen Ehrlich (1862-1922) é o autor que a ementa acrescenta a Durkheim, Weber e Marx. Sua leitura do direito é a do <strong>direito vivo</strong>: as normas que surgem das práticas sociais. O método é a <strong>observação sociológica da prática social</strong>; o conceito-chave é o <strong>pluralismo jurídico</strong>; e o exemplo aplicado ao Direito são as regras sociais que regulam a vida mesmo sem estarem no código. Em síntese, o Direito é visto como <strong>prática social viva</strong>.</p>
       <p>A consequência é olhar para onde o direito de fato acontece: nas relações entre as pessoas, nos costumes, nas associações e nas regras que os grupos seguem, e não apenas na lei do Estado. O estudioso que segue Ehrlich pergunta como a sociedade regula a si mesma.</p>
       <h3>Kelsen, o contraponto</h3>
-      <p>A atividade da aula usa Kelsen como alternativa de comparação: "Kelsen, que defende a pureza normativa do direito". Ou seja, Hans Kelsen (1881-1973) e a sua Teoria Pura do Direito tratam o direito como um sistema de normas, estudado em sua pureza, separado dos fatos sociais e dos juízos de valor. É o olhar do <strong>jurista dogmático</strong>, que se coloca diante da norma para conhecê-la e aplicá-la (o "sacerdote da Lei", na expressão citada por Montoro no artigo de apoio).</p>
+      <p>Kelsen é a alternativa de comparação, o autor que defende a pureza normativa do direito: Hans Kelsen (1881-1973) e a sua Teoria Pura do Direito tratam o direito como um sistema de normas, estudado em sua pureza, separado dos fatos sociais e dos juízos de valor. É o olhar do <strong>jurista dogmático</strong>, que se coloca diante da norma para conhecê-la e aplicá-la (o "sacerdote da Lei", na expressão citada por Montoro no artigo de apoio).</p>
       <p>O contraste ajuda a fixar as fronteiras:</p>
       <ul>
         <li><strong>Ehrlich</strong> olha para o direito vivo, as práticas sociais e o pluralismo jurídico; seu método é a observação da prática social.</li>
@@ -278,7 +278,7 @@ export const resumo: readonly BlocoResumo[] = [
     `,
     resumo: [
       'Ehrlich: direito vivo, normas que surgem das práticas sociais; método de observação sociológica da prática social; conceito-chave, pluralismo jurídico.',
-      'Na fórmula da aula, o Direito para Ehrlich é prática social viva.',
+      'Para Ehrlich, o Direito é prática social viva.',
       'Kelsen: pureza normativa do direito, o olhar do jurista dogmático diante da norma.',
       'Punição e consciência coletiva é Durkheim; estrutura econômica é Marx; racionalização e dominação legal é Weber.'
     ],
@@ -289,9 +289,9 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 10,
     titulo: 'Quadro comparativo: Marx, Durkheim e Weber (e Ehrlich)',
     fonte:
-      'Slides da aula de 02/09/2026 (quadro "Objeto de pesquisa e método da Sociologia" e comparação dos três autores); TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, 2025.',
+      'Material de aula da disciplina; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, 2025.',
     corpoHtml: `
-      <p>O quadro reúne, para cada autor, como ele vê o direito, o conceito-chave, o método e um exemplo aplicado. Os campos de objeto, método, conceito-chave e exemplo seguem o quadro da aula; a coluna "Como vê o direito" resume a leitura do artigo. A última linha, de Ehrlich, vem do mesmo quadro da aula.</p>
+      <p>O quadro reúne, para cada autor, como ele vê o direito, o conceito-chave, o método e um exemplo aplicado. Os campos de objeto, método, conceito-chave e exemplo seguem o material da disciplina; a coluna "Como vê o direito" resume a leitura do artigo. A última linha, de Ehrlich, vem do mesmo material.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>
@@ -336,7 +336,7 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Weber</strong>: direito, racionalização, burocracia, dominação legal.</li>
       </ul>
       <h3>O que os três têm em comum</h3>
-      <p>Os caminhos são diferentes, mas todos tratam o Direito como fenômeno social central. O Direito não é apresentado como fenômeno isolado da sociedade; as normas jurídicas se relacionam a formas de organização social e a relações de poder; o Direito participa da estabilidade e da reprodução da ordem social e também pode assumir potencial de transformação, conforme o poder é distribuído e legitimado. Em resumo, para Marx o poder se manifesta na estrutura econômica, para Durkheim tem caráter moral e coletivo, para Weber se racionaliza na dominação legal-burocrática. É a convergência que a atividade da aula pede: <strong>o direito é um fenômeno social ligado às relações de poder e à organização coletiva</strong>.</p>
+      <p>Os caminhos são diferentes, mas todos tratam o Direito como fenômeno social central. O Direito não é apresentado como fenômeno isolado da sociedade; as normas jurídicas se relacionam a formas de organização social e a relações de poder; o Direito participa da estabilidade e da reprodução da ordem social e também pode assumir potencial de transformação, conforme o poder é distribuído e legitimado. Em resumo, para Marx o poder se manifesta na estrutura econômica, para Durkheim tem caráter moral e coletivo, para Weber se racionaliza na dominação legal-burocrática. É a convergência: <strong>o direito é um fenômeno social ligado às relações de poder e à organização coletiva</strong>.</p>
       <h3>Para pensar como futuros juristas</h3>
       <ul>
         <li>Se a lei é formalmente igual para todos, quais desigualdades podem permanecer?</li>
@@ -397,7 +397,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte:
       'TRINDADE, André Karam; KARAM, Henriete. Polifonia e verdade nas narrativas processuais. Seqüência: Estudos Jurídicos e Políticos, Florianópolis, n. 80, p. 51-74, 2018. DOI 10.5007/2177-7055.2018v39n80p51.',
     corpoHtml: `
-      <p>O artigo se insere no campo do <strong>Direito e Literatura</strong>, na vertente do "Direito como Literatura": olha o processo judicial em seu caráter narrativo e polifônico. Liga-se à aula porque o direito, como a mídia, também se faz por narrativas e discursos, e o poder decide qual delas vale.</p>
+      <p>O artigo se insere no campo do <strong>Direito e Literatura</strong>, na vertente do "Direito como Literatura": olha o processo judicial em seu caráter narrativo e polifônico. Liga-se ao tema porque o direito, como a mídia, também se faz por narrativas e discursos, e o poder decide qual delas vale.</p>
       <h3>Polifonia e dialogismo (Bakhtin)</h3>
       <p>"Polifonia" vem da música: a combinação de duas ou mais vozes que preservam a sua própria melodia, em contraste com o canto monofônico (uma só voz). Bakhtin leva a noção à literatura. Para ele a linguagem é <strong>dialógica</strong>: todo discurso parte de alguém e se dirige a alguém, está cheio de palavras dos outros e é apenas um elo numa cadeia de discursos; o sentido não é fixado de uma vez, nasce da interação. No <strong>romance polifônico</strong> (o de Dostoiévski, na leitura de Bakhtin) há uma multiplicidade de vozes independentes, que convivem em pé de igualdade com a do narrador. No romance monofônico, ainda que apareçam várias vozes, só uma se faz ouvir: as outras servem para assegurar a hegemonia da voz do narrador.</p>
       <h3>O processo como narrativa polifônica</h3>
@@ -407,7 +407,7 @@ export const resumo: readonly BlocoResumo[] = [
       <h3>A conclusão do artigo</h3>
       <p>O direito é uma prática social interpretativa. Como o processo serve à reconstrução narrativa dos fatos, é possível observar o estatuto ficcional do direito: na decisão há uma <strong>ficção assumida como verdade</strong>, e o grande problema é que, ao contrário da ficção literária, os efeitos da sentença se tornam imutáveis sob a coisa julgada e legitimam o exercício da violência estatal. No contexto brasileiro atual, a narrativa processual, embora formalmente polifônica, ainda se mostra <strong>materialmente monofônica</strong>.</p>
       <h3>Ponte com a Sociologia Jurídica</h3>
-      <p>A aula mostra que narrativas da mídia moldam a percepção de segurança e podem levar à criação de leis, e que a definição de quais discursos são aceitáveis pode refletir quem tem poder. O artigo leva a mesma pergunta ao tribunal: qual narrativa recebe o selo da coisa julgada, e quais vozes ficam de fora.</p>
+      <p>Narrativas da mídia moldam a percepção de segurança e podem levar à criação de leis, e a definição de quais discursos são aceitáveis pode refletir quem tem poder. O artigo leva a mesma pergunta ao tribunal: qual narrativa recebe o selo da coisa julgada, e quais vozes ficam de fora.</p>
     `,
     resumo: [
       'Polifonia (Bakhtin): várias vozes independentes e em pé de igualdade; dialogismo: todo discurso responde a outros discursos.',

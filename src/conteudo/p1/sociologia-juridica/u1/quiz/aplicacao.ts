@@ -4,7 +4,7 @@ import type { PerguntaQuiz } from '../../../../tipos';
  * Perguntas de categoria 'aplicacao' do quiz de Sociologia Jurídica, 1a
  * unidade: situações concretas em que o estudante precisa reconhecer qual
  * leitura sociológica se aplica (Marx, Durkheim ou Weber), no estilo das
- * questões da atividade de 02/09. Os exemplos brasileiros (contrato de
+ * questões da atividade da disciplina. Os exemplos brasileiros (contrato de
  * trabalho, aluguel, multa de trânsito, despejo, INSS, cartório) vêm da
  * versão didática do artigo "Da luta à ordem". Nenhuma delas cita
  * dispositivo de lei.
@@ -48,7 +48,7 @@ export const aplicacao: readonly PerguntaQuiz[] = [
         `A de Weber, a sociologia compreensiva, que busca compreender as condições que geram determinada ação social.`,
         `A de Kelsen, que defende a pureza normativa do direito.`,
         `A de Comte, que propõe uma sociologia positivista da ordem social.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `Os slides dizem que, para o jurista, compreender os sentidos atribuídos às normas ajuda a interpretar o funcionamento efetivo do ordenamento, e que a análise passa do texto normativo para o comportamento social relacionado às normas. É a sociologia compreensiva de Weber. A resposta de Durkheim é a mais tentadora, porque Durkheim também sai do texto da lei para a sociedade, mas seu método trata os fatos como coisas, sem a preocupação com o sentido subjetivo. A resposta de Kelsen fica no texto da norma, que é justamente o que o jurista do enunciado deixou de fazer.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Para o jurista, compreender os sentidos atribuídos às normas ajuda a interpretar o funcionamento efetivo do ordenamento, e que a análise passa do texto normativo para o comportamento social relacionado às normas. É a sociologia compreensiva de Weber. A resposta de Durkheim é a mais tentadora, porque Durkheim também sai do texto da lei para a sociedade, mas seu método trata os fatos como coisas, sem a preocupação com o sentido subjetivo. A resposta de Kelsen fica no texto da norma, que é justamente o que o jurista do enunciado deixou de fazer.` },
 
     { id: 65, categoria: 'aplicacao', enunciadoHtml: `Um juiz condena uma pessoa por crime contra o patrimônio sem considerar as configurações sociais e econômicas do conflito que a levou àquele ato. Qual leitura, apresentada no artigo, destaca que operadores do direito, formados dentro da lógica jurídica, reproduzem a dominação sem perceber?`, alternativasHtml: [
         `A de Durkheim, que vê nessa condenação a satisfação da consciência comum ferida.`,
@@ -80,7 +80,7 @@ export const aplicacao: readonly PerguntaQuiz[] = [
         `A igualdade perante a lei não equivale a possuir as mesmas condições materiais, e o artigo problematiza a distância entre a igualdade formal e as desigualdades vividas concretamente.`,
         `Está errado porque a igualdade jurídica não existe em nenhuma sociedade.`,
         `Está errado porque a lei só vale para a classe trabalhadora.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `Os slides propõem exatamente esse debate: ser juridicamente igual significa possuir as mesmas condições materiais? O artigo problematiza a distância entre a igualdade perante a lei e as desigualdades vividas concretamente, e a resposta do material é que uma coisa não implica a outra. A resposta de que a igualdade jurídica não existe é a mais tentadora para quem quer contestar a fala, mas o material não nega a igualdade formal: no capitalismo, trabalhadores e capitalistas de fato aparecem como sujeitos livres e iguais, e isso possibilita contratos.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `O debate é exatamente este: ser juridicamente igual significa possuir as mesmas condições materiais? O artigo problematiza a distância entre a igualdade perante a lei e as desigualdades vividas concretamente, e a resposta do material é que uma coisa não implica a outra. A resposta de que a igualdade jurídica não existe é a mais tentadora para quem quer contestar a fala, mas o material não nega a igualdade formal: no capitalismo, trabalhadores e capitalistas de fato aparecem como sujeitos livres e iguais, e isso possibilita contratos.` },
 
     { id: 69, categoria: 'aplicacao', enunciadoHtml: `Uma estudante pergunta por que os juízes detêm o monopólio de decidir qual versão dos fatos prevalece e por que sua decisão obtém obediência. Qual autor do material leria o Poder Judiciário como "empresa de dominação"?`, alternativasHtml: [
         `Durkheim, que vê o Judiciário como expressão da solidariedade orgânica.`,
@@ -96,7 +96,7 @@ export const aplicacao: readonly PerguntaQuiz[] = [
         `Mais carisma dos servidores e menos peso das normas.`,
         `Mais igualdade material entre os cidadãos e o fim das relações de poder.`,
         `Mais consciência coletiva e menos divisão do trabalho.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `Os slides afirmam que a formalização aumenta a previsibilidade e a estabilidade, mas também consolida estruturas de poder, e descrevem a burocracia como organização da dominação legal por normas, competências, registros e procedimentos previsíveis. A resposta de mais igualdade material é a mais tentadora, porque a formalização parece garantir tratamento igual, mas igualdade de procedimento não elimina relações de poder, nem produz igualdade material. A resposta de mais solidariedade orgânica e a resposta de mais consciência coletiva trazem vocabulário de Durkheim, alheio ao caso.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `A formalização aumenta a previsibilidade e a estabilidade, mas também consolida estruturas de poder, e a burocracia é a organização da dominação legal por normas, competências, registros e procedimentos previsíveis. A resposta de mais igualdade material é a mais tentadora, porque a formalização parece garantir tratamento igual, mas igualdade de procedimento não elimina relações de poder, nem produz igualdade material. A resposta de mais solidariedade orgânica e a resposta de mais consciência coletiva trazem vocabulário de Durkheim, alheio ao caso.` },
 
     { id: 71, categoria: 'aplicacao', enunciadoHtml: `Uma decisão judicial é cumprida por todos porque o procedimento é visto como legítimo. Um estudante diz que isso mostra a dominação legal de Weber; outro, que mostra a reprodução da ordem capitalista de Marx. O que o material permite dizer da relação entre as duas leituras?`, alternativasHtml: [
         `São incompatíveis, e só uma delas pode ser aplicada ao direito.`,
@@ -104,7 +104,7 @@ export const aplicacao: readonly PerguntaQuiz[] = [
         `Nenhuma se aplica, pois o direito é fenômeno isolado da sociedade.`,
         `São caminhos diferentes, com pontos de partida diferentes, que convergem em tratar o direito como fenômeno social central, ligado à organização social e às relações de poder.`,
         `Ambas são leituras de Durkheim, que já incluía a dominação legal e a economia.`
-      ], correta: 3, fonteExtra: false, explicacaoHtml: `Os slides resumem: os caminhos são diferentes (Marx liga o direito à estrutura econômica e às classes, Weber à racionalização, à burocracia e à dominação legal), mas todos tratam o direito como fenômeno social central na organização social e nas relações de poder. A resposta de que as leituras são idênticas é a mais tentadora, porque ambos tratam do capitalismo, mas Weber justamente rejeita reduzir tudo à economia e privilegia o indivíduo e a ação social. A resposta de que nenhuma se aplica nega o ponto comum entre os autores.` },
+      ], correta: 3, fonteExtra: false, explicacaoHtml: `Os caminhos são diferentes (Marx liga o direito à estrutura econômica e às classes, Weber à racionalização, à burocracia e à dominação legal), mas todos tratam o direito como fenômeno social central na organização social e nas relações de poder. A resposta de que as leituras são idênticas é a mais tentadora, porque ambos tratam do capitalismo, mas Weber justamente rejeita reduzir tudo à economia e privilegia o indivíduo e a ação social. A resposta de que nenhuma se aplica nega o ponto comum entre os autores.` },
 
     { id: 72, categoria: 'aplicacao', enunciadoHtml: `Uma pena é aplicada e a comunidade sente que seus valores foram reafirmados. Um observador sugere que a mesma pena pode ter reforçado relações de poder. Que autores fundamentam, respectivamente, essas duas leituras?`, alternativasHtml: [
         `Durkheim, para quem a sanção protege a coesão social e a consciência coletiva, e Marx, para quem o direito reproduz as relações de poder da estrutura econômica.`,
@@ -112,7 +112,7 @@ export const aplicacao: readonly PerguntaQuiz[] = [
         `Weber, para quem a sanção protege a coesão social, e Durkheim, para quem o direito é instrumento da burguesia.`,
         `Durkheim, para as duas leituras, pois ele já incluía a dominação de classe.`,
         `Weber, para as duas leituras, pois ele negava a influência da economia e da coesão.`
-      ], correta: 0, fonteExtra: false, explicacaoHtml: `Os slides propõem a pergunta "quando uma sanção protege a coesão social e quando pode reforçar relações de poder?". A primeira leitura é a de Durkheim: a sanção protege a coesão social e a consciência coletiva. A segunda é a de Marx, para quem o direito integra a superestrutura e tende a reproduzir as relações de poder. A resposta de Marx e Durkheim é a mais tentadora, porque inverte os autores, um erro comum. A resposta de Weber e Durkheim também atribui a Weber e a Durkheim ideias que não são suas.` },
+      ], correta: 0, fonteExtra: false, explicacaoHtml: `A pergunta é "quando uma sanção protege a coesão social e quando pode reforçar relações de poder?". A primeira leitura é a de Durkheim: a sanção protege a coesão social e a consciência coletiva. A segunda é a de Marx, para quem o direito integra a superestrutura e tende a reproduzir as relações de poder. A resposta de Marx e Durkheim é a mais tentadora, porque inverte os autores, um erro comum. A resposta de Weber e Durkheim também atribui a Weber e a Durkheim ideias que não são suas.` },
 
     { id: 73, categoria: 'aplicacao', enunciadoHtml: `Três estudantes explicam por que as pessoas obedecem às normas jurídicas: (1) porque a sanção protege valores compartilhados; (2) porque acreditam na validade das normas e na competência de quem as aplica; (3) porque a ordem jurídica organiza e reproduz a exploração econômica. Que autores estão por trás de cada resposta, na ordem?`, alternativasHtml: [
         `(1) Weber, (2) Marx, (3) Durkheim.`,

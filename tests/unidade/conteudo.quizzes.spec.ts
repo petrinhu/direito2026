@@ -3,6 +3,11 @@ import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
 import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/quiz';
+import { resumo as resumoIntr } from '@/conteudo/p1/intr-direito/u1/resumo';
+import { resumo as resumoRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/resumo';
+import { resumo as resumoSociologia } from '@/conteudo/p1/sociologia-juridica/u1/resumo';
+import { resumo as resumoFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/resumo';
+import { mnemonicos as mnemonicosFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/mnemonicos';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
 import type {
   PerguntaMultiplaEscolha,
@@ -165,5 +170,80 @@ describe('quiz de Filosofia Jurídica, conjunto', () => {
     expect(new Set(quizFilosofia.map((p) => p.categoria))).toEqual(
       new Set(['revisao', 'antiga', 'media'])
     );
+  });
+});
+
+/**
+ * Quem lê de fora não sabe o que é "a aula 3" nem "o slide": o texto diz o
+ * conteúdo ou atribui ao autor/obra. O enunciado das questões da professora
+ * ou do professor (origem 'professor' ou gabarito do caderno) é dele(a) e
+ * fica de fora; as explicações valem para todas.
+ */
+const CITA_AULA_OU_SLIDE =
+  /\b(?:aulas?|slides?)\b|\bquadro d[ao]s? aulas?|\bna atividade d[aeo]\b|\batividade de \d/i;
+
+function doProfessor(p: PerguntaQuiz): boolean {
+  return p.origem === 'professor' || ('gabaritoDoCaderno' in p && p.gabaritoDoCaderno === true);
+}
+
+function idsQueCitamAula(quiz: readonly PerguntaQuiz[]): number[] {
+  return quiz
+    .filter((p) => {
+      const alternativas = 'alternativasHtml' in p ? p.alternativasHtml : [];
+      const dele = doProfessor(p);
+      return (
+        CITA_AULA_OU_SLIDE.test(p.explicacaoHtml) ||
+        (!dele && CITA_AULA_OU_SLIDE.test(p.enunciadoHtml)) ||
+        (!dele && alternativas.some((a) => CITA_AULA_OU_SLIDE.test(a)))
+      );
+    })
+    .map((p) => p.id);
+}
+
+describe('quizzes das quatro cadeiras não citam aula nem slide', () => {
+  it.each([
+    ['Introdução ao Direito', quizIntr],
+    ['Redação Jurídica 1', quizRedacao],
+    ['Sociologia Jurídica', quizSociologia],
+    ['Filosofia Jurídica', quizFilosofia]
+  ] as const)('%s', (_nome, quiz) => {
+    expect(idsQueCitamAula(quiz)).toEqual([]);
+  });
+});
+
+/** Percorre todo texto de um valor, dizendo o caminho de cada string. */
+function textos(valor: unknown, caminho = ''): Array<[string, string]> {
+  if (typeof valor === 'string') return [[caminho, valor]];
+  if (Array.isArray(valor)) return valor.flatMap((v, i) => textos(v, `${caminho}[${i}]`));
+  if (valor && typeof valor === 'object')
+    return Object.entries(valor).flatMap(([k, v]) => textos(v, `${caminho}.${k}`));
+  return [];
+}
+
+const SEM_REFERENCIA_GENERICA = /Material de aula da disciplina/g;
+
+function caminhosQueCitamAula(valor: unknown): string[] {
+  return textos(valor)
+    .filter(([caminho, texto]) =>
+      caminho.endsWith('.fonte')
+        ? // A lista de referências só pode dizer "Material de aula da disciplina",
+          // sem número, data nem tipo de aula.
+          /\b(?:aulas?|slides?)\b|\b\d{1,2}\/\d{1,2}\b/i.test(
+            texto.replace(SEM_REFERENCIA_GENERICA, '')
+          )
+        : CITA_AULA_OU_SLIDE.test(texto)
+    )
+    .map(([caminho]) => caminho);
+}
+
+describe('resumos e mnemônicos não citam aula nem slide', () => {
+  it.each([
+    ['Introdução ao Direito', resumoIntr],
+    ['Redação Jurídica 1', resumoRedacao],
+    ['Sociologia Jurídica', resumoSociologia],
+    ['Filosofia Jurídica', resumoFilosofia],
+    ['mnemônicos de Filosofia Jurídica', mnemonicosFilosofia]
+  ] as const)('%s', (_nome, conteudo) => {
+    expect(caminhosQueCitamAula(conteudo)).toEqual([]);
   });
 });

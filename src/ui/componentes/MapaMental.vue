@@ -147,6 +147,14 @@ function fecharAteAsFases(): void {
   outline-offset: var(--foco-deslocamento, 2px);
 }
 
+/* Em tela estreita a árvore usa também a margem lateral da página: é onde
+   cabe a coluna de texto dos níveis mais fundos. */
+@media (max-width: 639px) {
+  .mapa-mental {
+    margin-inline: calc(-1 * var(--esp-3, 0.75rem));
+  }
+}
+
 /* A árvore pode rolar dentro do próprio contêiner; a página nunca rola de lado. */
 .mapa-mental__area {
   max-width: 100%;

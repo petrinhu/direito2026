@@ -117,7 +117,8 @@ function aoClicar(): void {
   border-radius: var(--raio-sm, 6px);
   background: var(--cor-fundo-sutil, #f2efe6);
   color: var(--cor-texto, #1c1c1c);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: manual;
   cursor: default;
 }
 
@@ -148,6 +149,7 @@ function aoClicar(): void {
 }
 
 .no-mapa--conceito > .no-mapa__corpo {
+  padding-inline: var(--esp-2, 0.5rem);
   background: transparent;
   border-style: dashed;
 }
@@ -198,8 +200,10 @@ function aoClicar(): void {
 /* Conectores: linha vertical por grupo e um traço horizontal por filho. */
 .no-mapa__grupo {
   position: relative;
-  margin: 0 0 0 var(--esp-3, 0.75rem);
-  padding: 0 0 0 var(--esp-3, 0.75rem);
+  /* Recuo mínimo na base: com seis níveis e texto de 24px, cada pixel de
+     recuo sai da coluna do texto (QA, IMPORTANTE 2). Cresce a partir de 640px. */
+  margin: 0 0 0 var(--esp-1, 0.25rem);
+  padding: 0 0 0 var(--esp-2, 0.5rem);
   border-inline-start: 2px solid var(--cor-mapa-linha, #5f7189);
   list-style: none;
 }
@@ -207,9 +211,9 @@ function aoClicar(): void {
 .no-mapa__grupo > .no-mapa::before {
   content: '';
   position: absolute;
-  inset-inline-start: calc(-1 * var(--esp-3, 0.75rem));
+  inset-inline-start: calc(-1 * var(--esp-2, 0.5rem));
   top: 1.1em;
-  width: var(--esp-3, 0.75rem);
+  width: var(--esp-2, 0.5rem);
   border-top: 2px solid var(--cor-mapa-linha, #5f7189);
 }
 
@@ -217,6 +221,10 @@ function aoClicar(): void {
   .no-mapa__grupo {
     margin-inline-start: var(--esp-4, 1rem);
     padding-inline-start: var(--esp-4, 1rem);
+  }
+
+  .no-mapa--conceito > .no-mapa__corpo {
+    padding-inline: var(--esp-3, 0.75rem);
   }
 
   .no-mapa__grupo > .no-mapa::before {

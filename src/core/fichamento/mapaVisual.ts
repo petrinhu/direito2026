@@ -2,7 +2,7 @@ import { construirArvoreMapa, idsExpansiveis, percorrer } from './arvoreMapa';
 import type { MapaFichamento, NoMapa } from './tipos';
 
 /** Raio de cada anel, do centro para fora: raiz, período, pensador, detalhe, conceito. */
-const RAIOS = [0, 190, 390, 560, 720, 880] as const;
+const RAIOS = [0, 180, 340, 520, 700, 880] as const;
 
 export interface NoPosicionado {
   readonly no: NoMapa;
@@ -105,7 +105,9 @@ export interface MedidaDoNo {
 export function dimensionar(
   no: NoMapa,
   profundidade: number,
-  medir: (texto: string, fonte: number, peso: number) => number
+  medir: (texto: string, fonte: number, peso: number) => number,
+  /** Largura total máxima da cápsula; com ela o texto quebra em quantas linhas precisar. */
+  larguraMaxima?: number
 ): MedidaDoNo {
   const e =
     profundidade === 0
@@ -114,7 +116,16 @@ export function dimensionar(
         ? { fonte: 16, peso: 800, maxTexto: 150, minAltura: 44, folga: 40 }
         : { fonte: 14, peso: 700, maxTexto: 160, minAltura: 32, folga: 30 };
   const texto = no.rotuloCurto ?? no.rotulo;
-  const linhas = quebrarRotulo(texto, e.maxTexto, (s) => medir(s, e.fonte, e.peso));
+  const maxTexto =
+    larguraMaxima === undefined
+      ? e.maxTexto
+      : Math.max(60, Math.min(e.maxTexto, larguraMaxima - e.folga));
+  const linhas = quebrarRotulo(
+    texto,
+    maxTexto,
+    (s) => medir(s, e.fonte, e.peso),
+    larguraMaxima === undefined ? 3 : 20
+  );
   const larguraTexto = Math.max(...linhas.map((l) => medir(l, e.fonte, e.peso)));
   const alturaLinha = e.fonte * 1.25;
   return {
@@ -132,6 +143,9 @@ export interface OpcoesLayout {
   /** Tamanho real da cápsula de cada nó; o anel e a fatia de ângulo reservam esse espaço. */
   readonly medida?: (no: NoMapa, profundidade: number) => { largura: number; altura: number };
 }
+
+/** Recuo de cada nível na lista indentada. */
+export const RECUO_INDENTADO = 56;
 
 const MEDIDA_PADRAO = { largura: 150, altura: 32 };
 
@@ -182,7 +196,7 @@ export function layoutRadial(
   const raios: number[] = [0];
   for (let d = 1; d < maiorLargura.length; d++) {
     const base = RAIOS[Math.min(d, RAIOS.length - 1)]!;
-    const folga = ((maiorLargura[d - 1] ?? 0) + (maiorLargura[d] ?? 0)) / 2 + 36;
+    const folga = ((maiorLargura[d - 1] ?? 0) + (maiorLargura[d] ?? 0)) / 2 + 16;
     raios[d] = Math.max(base, raios[d - 1]! + folga, d >= 2 ? raioMinimoDoAnel : 0);
   }
 
@@ -241,7 +255,7 @@ export function layoutIndentado(
   opcoes: { medida?: OpcoesLayout['medida']; recuo?: number; espaco?: number } = {}
 ): NoPosicionado[] {
   const medidaDe = opcoes.medida ?? (() => MEDIDA_PADRAO);
-  const recuo = opcoes.recuo ?? 56;
+  const recuo = opcoes.recuo ?? RECUO_INDENTADO;
   const espaco = opcoes.espaco ?? 14;
   const ramoDoPensador = new Map<string, number>();
   let proximo = 0;
@@ -408,4 +422,71 @@ export function quebrarRotulo(
     linhas.push(atual);
   }
   return linhas;
+}
+
+export type NoDesenhado = NoPosicionado & MedidaDoNo;
+
+export interface PlanoDoMapa {
+  readonly tipo: 'radial' | 'indentado';
+  readonly itens: readonly NoDesenhado[];
+  /** Vista que deixa todos os nós dentro do quadro. */
+  readonly vista: { x: number; y: number; k: number };
+  /** Altura do quadro: fixa no radial, crescendo com o conteúdo na lista indentada. */
+  readonly altura: number;
+}
+
+export interface EntradaDoPlano {
+  readonly largura: number;
+  /** Altura natural do quadro (usada pelo layout radial). */
+  readonly altura: number;
+  readonly medir: (texto: string, fonte: number, peso: number) => number;
+  readonly escalaMinima: number;
+  readonly larguraEstreita?: number;
+  readonly margem?: number;
+}
+
+/**
+ * Escolhe e monta o layout. Radial (dois hemisférios) quando cabe na janela
+ * com o texto legível; senão, lista indentada enquadrada pela LARGURA, com a
+ * altura do quadro crescendo até caber tudo. Todo nó fica sempre dentro do
+ * quadro, e nenhuma cápsula passa da borda: a largura de cada cápsula é a
+ * disponível menos o recuo do nível.
+ */
+export function montarPlano(
+  raiz: NoMapa,
+  abertos: ReadonlySet<string>,
+  entrada: EntradaDoPlano
+): PlanoDoMapa {
+  const margem = entrada.margem ?? 8;
+  const estreita = entrada.largura < (entrada.larguraEstreita ?? 640);
+
+  const planoIndentado = (): PlanoDoMapa => {
+    const medidas = new Map<string, MedidaDoNo>();
+    const medida = (no: NoMapa, profundidade: number): MedidaDoNo => {
+      const disponivel = entrada.largura - 2 * margem - profundidade * RECUO_INDENTADO;
+      const m = dimensionar(no, profundidade, entrada.medir, Math.max(90, disponivel));
+      medidas.set(no.id, m);
+      return m;
+    };
+    const pos = layoutIndentado(raiz, abertos, { medida });
+    const itens = pos.map((p) => ({ ...p, ...medidas.get(p.no.id)! }));
+    const v = vistaPorLargura(itens, entrada.largura, margem, entrada.escalaMinima);
+    return { tipo: 'indentado', itens, vista: { x: v.x, y: v.y, k: v.k }, altura: v.altura };
+  };
+
+  if (estreita) return planoIndentado();
+
+  const medidas = new Map<string, MedidaDoNo>();
+  const medida = (no: NoMapa, profundidade: number): MedidaDoNo => {
+    const m = dimensionar(no, profundidade, entrada.medir);
+    medidas.set(no.id, m);
+    return m;
+  };
+  const pos = layoutRadial(raiz, abertos, { orientacao: 'horizontal', medida });
+  const itens = pos.map((p) => ({ ...p, ...medidas.get(p.no.id)! }));
+  const v = ajustarVista(itens, entrada.largura, entrada.altura, margem);
+  if (v.k >= entrada.escalaMinima) {
+    return { tipo: 'radial', itens, vista: v, altura: entrada.altura };
+  }
+  return planoIndentado();
 }

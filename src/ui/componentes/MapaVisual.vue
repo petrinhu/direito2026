@@ -4,15 +4,11 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import type { NoMapa } from '@/core/fichamento/tipos';
 import {
   abertosIniciaisVisual,
-  abertosTodosVisual,
   alternarRamo,
   alternarTodosRamos,
+  abertosTodosVisual,
   caminhoLigacao,
-  dimensionar,
-  layoutIndentado,
-  layoutRadial,
-  vistaLegivel,
-  vistaPorLargura
+  montarPlano
 } from '@/app/fichamento';
 
 const props = defineProps<{
@@ -27,7 +23,6 @@ const props = defineProps<{
 const ZOOM_MINIMO = 0.1;
 const ZOOM_MAXIMO = 3;
 const NUMERO_DE_TONS = 6;
-const LARGURA_ESTREITA = 640;
 /** Texto nunca abaixo de ~12px na tela: 12 / fonte mínima das cápsulas (14px). */
 const ESCALA_MINIMA_LEGIVEL = 12 / 14;
 
@@ -43,36 +38,11 @@ interface Ponto {
 
 const abertos = ref<ReadonlySet<string>>(abertosIniciaisVisual(props.arvore));
 const selecionadoId = ref(props.arvore.id);
-const tamanho = ref({ largura: 1000, altura: 700 });
-const alturaSvg = ref<number | undefined>();
+const larguraDoQuadro = ref(1000);
+const alturaNatural = ref(680);
 const vista = ref<Vista>({ x: 0, y: 0, k: 1 });
 const svgRef = ref<SVGSVGElement>();
 const posicoes = shallowRef(new Map<string, Ponto>());
-
-const orientacao = computed(() =>
-  tamanho.value.largura < LARGURA_ESTREITA ? ('vertical' as const) : ('horizontal' as const)
-);
-const medidas = computed(() => {
-  const mapa = new Map<string, ReturnType<typeof dimensionar>>();
-  const medida = (no: NoMapa, profundidade: number) => {
-    const m = dimensionar(no, profundidade, medirTexto);
-    mapa.set(no.id, m);
-    return m;
-  };
-  const pos =
-    orientacao.value === 'vertical'
-      ? layoutIndentado(props.arvore, abertos.value, { medida })
-      : layoutRadial(props.arvore, abertos.value, { orientacao: 'horizontal', medida });
-  return { pos, mapa };
-});
-const layout = computed(() => medidas.value.pos);
-
-const tudoAberto = computed(() =>
-  [...abertosTodosVisual(props.arvore)].every((id) => abertos.value.has(id))
-);
-const rotuloTodos = computed(() =>
-  tudoAberto.value ? 'Recolher todos os ramos' : 'Abrir todos os ramos'
-);
 
 /* ---- medida do texto: largura real, não estimada por caractere ---- */
 // eslint-disable-next-line no-unused-vars
@@ -87,17 +57,31 @@ function medirTexto(texto: string, tamanhoFonte: number, peso: number): number {
   return contexto.measureText(texto).width;
 }
 
-const itens = computed(() =>
-  layout.value.map((p) => {
-    const m = medidas.value.mapa.get(p.no.id)!;
-    return {
-      ...p,
-      ...m,
-      tom: (p.ramo % NUMERO_DE_TONS) + 1,
-      aberto: abertos.value.has(p.no.id),
-      expansivel: p.no.filhos.length > 0
-    };
+/** Radial se couber legível; senão lista indentada enquadrada pela largura (a altura cresce). */
+const plano = computed(() =>
+  montarPlano(props.arvore, abertos.value, {
+    largura: larguraDoQuadro.value,
+    altura: alturaNatural.value,
+    medir: medirTexto,
+    escalaMinima: ESCALA_MINIMA_LEGIVEL
   })
+);
+const indentado = computed(() => plano.value.tipo === 'indentado');
+
+const tudoAberto = computed(() =>
+  [...abertosTodosVisual(props.arvore)].every((id) => abertos.value.has(id))
+);
+const rotuloTodos = computed(() =>
+  tudoAberto.value ? 'Recolher todos os ramos' : 'Abrir todos os ramos'
+);
+
+const itens = computed(() =>
+  plano.value.itens.map((p) => ({
+    ...p,
+    tom: (p.ramo % NUMERO_DE_TONS) + 1,
+    aberto: abertos.value.has(p.no.id),
+    expansivel: p.no.filhos.length > 0
+  }))
 );
 
 function espessura(profundidade: number): number {
@@ -140,67 +124,28 @@ const NOMES_DO_NIVEL: Record<string, string> = {
 
 const transformacao = computed(
   () =>
-    `translate(${tamanho.value.largura / 2 + vista.value.x} ${tamanho.value.altura / 2 + vista.value.y}) scale(${vista.value.k})`
+    `translate(${larguraDoQuadro.value / 2 + vista.value.x} ${plano.value.altura / 2 + vista.value.y}) scale(${vista.value.k})`
 );
 
-/* ---- enquadramento total e animação (posições e vista juntas) ---- */
-function caixaDe(i: (typeof itens.value)[number]) {
-  return { x: i.x, y: i.y, largura: i.largura, altura: i.altura };
-}
-
-/**
- * Mapa inteiro se o texto continuar legível; em tela estreita, o ramo em foco
- * (o nó escolhido, seus ancestrais e descendentes), com pan para o resto.
- */
-function vistaDeEnquadramento(): Vista {
-  const todos = itens.value;
-  if (orientacao.value === 'vertical') {
-    // Tela estreita: enquadra pela largura e deixa a altura crescer até caber tudo.
-    const v = vistaPorLargura(todos.map(caixaDe), tamanho.value.largura, 8, ESCALA_MINIMA_LEGIVEL);
-    alturaSvg.value = v.altura;
-    tamanho.value = { largura: tamanho.value.largura, altura: v.altura };
-    return { x: v.x, y: v.y, k: v.k };
-  }
-  alturaSvg.value = undefined;
-  const ids = new Set<string>();
-  let acima: string | undefined = selecionadoId.value;
-  while (acima) {
-    ids.add(acima);
-    acima = todos.find((i) => i.no.id === acima)?.paiId;
-  }
-  for (const i of todos) if (i.paiId && ids.has(i.paiId)) ids.add(i.no.id);
-  const escolhido = todos.find((i) => i.no.id === selecionadoId.value);
-  const foco = escolhido
-    ? [escolhido, ...todos.filter((i) => ids.has(i.no.id) && i !== escolhido)].map(caixaDe)
-    : [];
-  return vistaLegivel(
-    todos.map(caixaDe),
-    foco,
-    tamanho.value.largura,
-    tamanho.value.altura,
-    12,
-    ESCALA_MINIMA_LEGIVEL
-  );
-}
-
+/* ---- animação das posições (nasce do pai, desliza até o lugar) ---- */
 let quadro = 0;
-function animarPara(animar: boolean, nova: Vista): void {
+function acomodar(animar: boolean): void {
   cancelAnimationFrame(quadro);
-  const destino = new Map<string, Ponto>(layout.value.map((p) => [p.no.id, { x: p.x, y: p.y }]));
+  const alvo = plano.value;
+  const destino = new Map<string, Ponto>(alvo.itens.map((p) => [p.no.id, { x: p.x, y: p.y }]));
+  // O quadro muda de altura junto com o conteúdo: a vista vai direto ao destino.
+  vista.value = alvo.vista;
   if (!animar || props.reduzirMovimento || typeof requestAnimationFrame !== 'function') {
     posicoes.value = destino;
-    vista.value = nova;
     return;
   }
   const atual = posicoes.value;
   const origem = new Map<string, Ponto>();
-  for (const p of layout.value) {
+  for (const p of alvo.itens) {
     const proprio = atual.get(p.no.id);
     const doPai = p.paiId ? (atual.get(p.paiId) ?? destino.get(p.paiId)) : undefined;
     origem.set(p.no.id, proprio ?? doPai ?? destino.get(p.no.id)!);
   }
-  // Na lista indentada a altura do quadro muda junto: a vista vai direto ao destino.
-  const vistaOrigem = orientacao.value === 'vertical' ? nova : vista.value;
   const inicio = performance.now();
   const passo = (agora: number): void => {
     const t = Math.min(1, (agora - inicio) / 450);
@@ -211,11 +156,6 @@ function animarPara(animar: boolean, nova: Vista): void {
       proximo.set(id, { x: ini.x + (fim.x - ini.x) * e, y: ini.y + (fim.y - ini.y) * e });
     }
     posicoes.value = proximo;
-    vista.value = {
-      x: vistaOrigem.x + (nova.x - vistaOrigem.x) * e,
-      y: vistaOrigem.y + (nova.y - vistaOrigem.y) * e,
-      k: vistaOrigem.k + (nova.k - vistaOrigem.k) * e
-    };
     if (t < 1) quadro = requestAnimationFrame(passo);
   };
   quadro = requestAnimationFrame(passo);
@@ -223,8 +163,8 @@ function animarPara(animar: boolean, nova: Vista): void {
 
 function aplicarAbertos(novo: ReadonlySet<string>): void {
   abertos.value = novo;
-  // Depois de abrir ou fechar, o conjunto inteiro volta a caber na janela.
-  animarPara(true, vistaDeEnquadramento());
+  // Depois de abrir ou fechar, o conjunto inteiro volta a caber no quadro.
+  acomodar(true);
 }
 
 function alternarNo(id: string): void {
@@ -245,13 +185,9 @@ function alternarTodos(): void {
 }
 
 /* ---- zoom e arrastar ---- */
-function limitar(k: number): number {
-  return Math.min(ZOOM_MAXIMO, Math.max(ZOOM_MINIMO, k));
-}
-
 function zoomPara(novoK: number, ancoraX = 0, ancoraY = 0): void {
   cancelAnimationFrame(quadro);
-  const k = limitar(novoK);
+  const k = Math.min(ZOOM_MAXIMO, Math.max(ZOOM_MINIMO, novoK));
   const razao = k / vista.value.k;
   vista.value = {
     k,
@@ -268,13 +204,16 @@ function afastar(): void {
 }
 
 function centralizar(): void {
-  animarPara(true, vistaDeEnquadramento());
+  acomodar(true);
 }
 
 function aoRolar(evento: WheelEvent): void {
+  // Na lista indentada (alta) a roda continua rolando a página.
+  if (indentado.value) return;
+  evento.preventDefault();
   const caixa = svgRef.value?.getBoundingClientRect();
-  const ax = caixa ? evento.clientX - caixa.left - tamanho.value.largura / 2 : 0;
-  const ay = caixa ? evento.clientY - caixa.top - tamanho.value.altura / 2 : 0;
+  const ax = caixa ? evento.clientX - caixa.left - larguraDoQuadro.value / 2 : 0;
+  const ay = caixa ? evento.clientY - caixa.top - plano.value.altura / 2 : 0;
   zoomPara(vista.value.k * (evento.deltaY < 0 ? 1.12 : 1 / 1.12), ax, ay);
 }
 
@@ -282,6 +221,7 @@ const ponteiros = new Map<number, Ponto>();
 let distanciaAnterior = 0;
 
 function aoPressionar(evento: PointerEvent): void {
+  if (indentado.value) return;
   if ((evento.target as Element).closest?.('.mapa-visual__no')) return;
   cancelAnimationFrame(quadro);
   ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
@@ -298,7 +238,7 @@ function aoMover(evento: PointerEvent): void {
     vista.value = {
       ...vista.value,
       x: vista.value.x + atual.x - anterior.x,
-      y: orientacao.value === 'vertical' ? vista.value.y : vista.value.y + atual.y - anterior.y
+      y: vista.value.y + atual.y - anterior.y
     };
   } else if (ponteiros.size === 2) {
     const [a, b] = [...ponteiros.values()] as [Ponto, Ponto];
@@ -315,20 +255,16 @@ function aoSoltar(evento: PointerEvent): void {
 
 function medir(): void {
   const caixa = svgRef.value?.getBoundingClientRect();
-  if (caixa && caixa.width > 0 && caixa.height > 0) {
-    const estreita = caixa.width < LARGURA_ESTREITA;
-    // Na lista indentada a altura vem do conteúdo (vistaDeEnquadramento), não da medida.
-    tamanho.value = {
-      largura: caixa.width,
-      altura: estreita && alturaSvg.value ? alturaSvg.value : caixa.height
-    };
+  if (caixa && caixa.width > 0) larguraDoQuadro.value = caixa.width;
+  if (typeof window !== 'undefined' && window.innerHeight > 0) {
+    alturaNatural.value = Math.min(680, Math.max(380, window.innerHeight * 0.72));
   }
 }
 
 /** Ao montar e ao redimensionar: mede, reposiciona e enquadra tudo, sem animação. */
 function reenquadrarSemAnimar(): void {
   medir();
-  animarPara(false, vistaDeEnquadramento());
+  acomodar(false);
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -337,8 +273,7 @@ let observador: { observe(alvo: SVGSVGElement): void; disconnect(): void } | und
 onMounted(() => {
   reenquadrarSemAnimar();
   window.addEventListener('resize', reenquadrarSemAnimar);
-  // A aba pode montar escondida (largura 0) e só ganhar tamanho ao ser aberta:
-  // sem isto o layout vertical de tela estreita nunca entrava.
+  // A aba pode montar escondida (largura 0) e só ganhar tamanho ao ser aberta.
   if (typeof ResizeObserver !== 'undefined' && svgRef.value) {
     observador = new ResizeObserver(reenquadrarSemAnimar);
     observador.observe(svgRef.value);
@@ -397,15 +332,15 @@ function estiloDoNo(item: { profundidade: number; tom: number }): Record<string,
     <svg
       ref="svgRef"
       class="mapa-visual__svg"
-      :class="{ 'mapa-visual__svg--vertical': orientacao === 'vertical' }"
-      :style="alturaSvg && orientacao === 'vertical' ? { height: `${alturaSvg}px` } : undefined"
+      :class="{ 'mapa-visual__svg--vertical': indentado }"
+      :style="{ height: `${plano.altura}px` }"
       role="group"
       aria-label="Mapa mental visual de Filosofia Jurídica"
       @pointerdown="aoPressionar"
       @pointermove="aoMover"
       @pointerup="aoSoltar"
       @pointercancel="aoSoltar"
-      @wheel.prevent="aoRolar"
+      @wheel="aoRolar"
     >
       <g class="mapa-visual__mundo" :transform="transformacao">
         <path

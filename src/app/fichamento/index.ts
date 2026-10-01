@@ -16,6 +16,7 @@ export {
   ajustarVista,
   quebrarRotulo,
   layoutIndentado,
+  montarPlano,
   layoutRadial,
   vistaPorLargura,
   rotuloVisual,

@@ -167,7 +167,7 @@ function aoClicar(): void {
 .no-mapa__detalhe {
   flex-basis: 100%;
   margin: 0;
-  font-size: var(--escala-sm, 0.9375rem);
+  font-size: var(--escala-base, 1.0625rem);
   line-height: var(--altura-linha-texto, 1.7);
 }
 

@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
  * impede que a regra suma da folha.
  */
 function regraBase(css: string, seletor: string): string {
-  const inicio = css.indexOf(`${seletor} {`);
+  const inicio = css.indexOf(`\n${seletor} {`);
   expect(inicio, `regra ${seletor} ausente`).toBeGreaterThanOrEqual(0);
   return css.slice(inicio, css.indexOf('}', inicio));
 }
@@ -36,5 +36,23 @@ describe('texto do mapa mental usa a escala de corpo', () => {
     const regra = regraBase(fonte, '.no-mapa__detalhe');
     expect(regra).toContain('var(--escala-base');
     expect(regra).not.toContain('--escala-sm');
+  });
+});
+
+describe('texto do mapa mental em tela estreita', () => {
+  const fonte = readFileSync(
+    resolve(__dirname, '../../src/ui/componentes/NoMapaMental.vue'),
+    'utf-8'
+  );
+
+  it('quebra a linha só entre palavras: break-word, nunca anywhere (que parte palavra no meio)', () => {
+    expect(fonte).not.toContain('overflow-wrap: anywhere');
+    expect(regraBase(fonte, '.no-mapa__corpo')).toContain('overflow-wrap: break-word');
+  });
+
+  it('o recuo por nível é pequeno na base (tela estreita) e só cresce a partir de 640px', () => {
+    const grupo = regraBase(fonte, '.no-mapa__grupo');
+    expect(grupo).toContain('var(--esp-1, 0.25rem)');
+    expect(grupo).toContain('var(--esp-2, 0.5rem)');
   });
 });

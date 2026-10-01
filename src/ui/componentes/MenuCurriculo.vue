@@ -137,17 +137,6 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                   <EstadoEmBreve v-if="unidade.estado === 'em-breve'" :rotulo="unidade.rotulo" />
                   <template v-else>
                     <div class="menu-curriculo__linha">
-                      <a
-                        :href="hrefUnidade(periodo.id, cadeira.id, unidade.id)"
-                        class="menu-curriculo__link-unidade"
-                        :aria-current="
-                          ehAtual(`p/${periodo.id}/${cadeira.id}/${unidade.id}`, caminhoAtual)
-                            ? 'page'
-                            : undefined
-                        "
-                      >
-                        {{ unidade.rotulo }}
-                      </a>
                       <button
                         v-if="unidade.abas.length > 0"
                         type="button"
@@ -168,6 +157,17 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                       >
                         <span class="menu-curriculo__seta" aria-hidden="true" />
                       </button>
+                      <a
+                        :href="hrefUnidade(periodo.id, cadeira.id, unidade.id)"
+                        class="menu-curriculo__link-unidade"
+                        :aria-current="
+                          ehAtual(`p/${periodo.id}/${cadeira.id}/${unidade.id}`, caminhoAtual)
+                            ? 'page'
+                            : undefined
+                        "
+                      >
+                        {{ unidade.rotulo }}
+                      </a>
                     </div>
                     <ul
                       v-if="unidade.abas.length > 0"
@@ -340,6 +340,16 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   border-left: 1px solid rgba(184, 192, 204, 0.35);
 }
 
+/* Largura do botão do triângulo da unidade: 32px no modo normal; 44px no modo
+   adaptado, que exige alvo de 44x44 (docs/modo-adaptado.md, seção 2). */
+.menu-curriculo {
+  --menu-toggle: 32px;
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo {
+  --menu-toggle: 44px;
+}
+
 /* Seta/chevron: mesmo elemento de ligação usado em todos os níveis que
    abrem e fecham (ordem do líder, 22/09/2026, item 4). Gira 90 graus
    quando o nível está aberto; é puramente decorativa (aria-hidden), o
@@ -410,6 +420,21 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   background: var(--cor-sidebar-item-ativo-fundo, #1a3a5c);
 }
 
+/* Quiz é link direto (sem submenu, sem triângulo): reserva o espaço do
+   triângulo e usa o mesmo respiro dos botões irmãos, para o texto alinhar
+   com "Resumo" e "Petição comentada". */
+.menu-curriculo a.menu-curriculo__botao {
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+}
+
+.menu-curriculo a.menu-curriculo__botao::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  margin-right: var(--esp-2, 0.5rem);
+  flex-shrink: 0;
+}
+
 /* Modo de leitura adaptada: --cor-sidebar-item-ativo-fundo vira branco
    igual ao resto da lateral (docs/modo-adaptado.md, seção 3, "mesma
    régua" preto/branco), então o item atual perderia o destaque de fundo.
@@ -429,18 +454,24 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   align-items: stretch;
 }
 
-.menu-curriculo__link-unidade {
+.menu-curriculo a.menu-curriculo__link-unidade {
   flex: 1;
   min-width: 0;
+  /* O texto começa logo depois do botão do triângulo. */
+  padding-left: 0;
 }
 
 .menu-curriculo__toggle {
   flex-shrink: 0;
-  min-width: 44px;
+  width: var(--menu-toggle);
+  min-width: var(--menu-toggle);
   min-height: 44px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  /* Mesmo respiro à esquerda do botão dos outros níveis: o triângulo da
+     unidade alinha com os dos demais, todos do lado esquerdo. */
+  padding: 0 0 0 var(--esp-3, 0.75rem);
   background: none;
   border: none;
   color: inherit;
@@ -463,7 +494,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
    pouco mais de um sétimo dos 280px da lateral, para nunca espremer o
    texto nem estourar a largura (a quebra de linha natural do <a>/<button>
    cuida do resto, sem overflow horizontal). */
-.menu-curriculo__nivel-2 {
+.menu-curriculo ul.menu-curriculo__nivel-2 {
   margin-left: var(--esp-3, 0.75rem);
   padding-left: var(--esp-2, 0.5rem);
 }
@@ -472,7 +503,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   font-size: var(--escala-sm, 0.9375rem);
 }
 
-.menu-curriculo__nivel-3 {
+.menu-curriculo ul.menu-curriculo__nivel-3 {
   margin-left: var(--esp-3, 0.75rem);
   padding-left: var(--esp-2, 0.5rem);
 }
@@ -482,8 +513,11 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   font-size: 0.875rem;
 }
 
-.menu-curriculo__nivel-4 {
-  margin-left: var(--esp-2, 0.5rem);
+.menu-curriculo ul.menu-curriculo__nivel-4 {
+  /* Cada nível tem de começar o TEXTO pelo menos 12px à direita do texto do
+     pai. Na linha da unidade o texto vem depois do botão do triângulo (largura
+     --menu-toggle), então o recuo do nível 4 acompanha essa largura. */
+  margin-left: calc(var(--menu-toggle) - 20px);
   padding-left: var(--esp-2, 0.5rem);
 }
 
@@ -491,8 +525,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   font-size: 0.875rem;
 }
 
-.menu-curriculo__nivel-5 {
-  margin-left: var(--esp-2, 0.5rem);
+.menu-curriculo ul.menu-curriculo__nivel-5 {
+  margin-left: 22px;
   padding-left: var(--esp-1, 0.25rem);
 }
 

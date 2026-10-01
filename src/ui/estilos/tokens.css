@@ -189,6 +189,11 @@
   --cor-mapa-fase-fundo: #1a3a5c;
   --cor-mapa-fase-texto: #d9e6f5;
   --cor-mapa-linha: #5f7189;
+  /* Nó central do mapa: dourado com texto azul-marinho e contorno, destaque real
+     nos dois temas (o azul-marinho puro sumia no fundo escuro). */
+  --cor-mapa-centro-fundo: #e6d3a0;
+  --cor-mapa-centro-texto: #0d2440;
+  --cor-mapa-centro-contorno: #0d2440;
   /* Mapa visual: seis tons de ramo (um por pensador), cada um com par de texto.
      No claro, fundo escuro com texto claro; no escuro, o inverso. Todos >= 4,5:1
      o texto e >= 3:1 o fundo contra a página; no adaptado, branco com texto preto. */
@@ -292,6 +297,9 @@
     --cor-mapa-fase-fundo: #1a3a5c;
     --cor-mapa-fase-texto: #d9e6f5;
     --cor-mapa-linha: #7fa8d6;
+    --cor-mapa-centro-fundo: #d3b563;
+    --cor-mapa-centro-texto: #0b1a2c;
+    --cor-mapa-centro-contorno: #faf9f5;
     --cor-mapa-ramo-1-fundo: #7fa8d6;
     --cor-mapa-ramo-1-texto: #0b1a2c;
     --cor-mapa-ramo-2-fundo: #d3b563;
@@ -374,6 +382,9 @@
   --cor-mapa-fase-fundo: #1a3a5c;
   --cor-mapa-fase-texto: #d9e6f5;
   --cor-mapa-linha: #7fa8d6;
+  --cor-mapa-centro-fundo: #d3b563;
+  --cor-mapa-centro-texto: #0b1a2c;
+  --cor-mapa-centro-contorno: #faf9f5;
   --cor-mapa-ramo-1-fundo: #7fa8d6;
   --cor-mapa-ramo-1-texto: #0b1a2c;
   --cor-mapa-ramo-2-fundo: #d3b563;
@@ -498,6 +509,9 @@
   --cor-mapa-fase-fundo: #ffffff;
   --cor-mapa-fase-texto: #000000;
   --cor-mapa-linha: #000000;
+  --cor-mapa-centro-fundo: #ffffff;
+  --cor-mapa-centro-texto: #000000;
+  --cor-mapa-centro-contorno: #000000;
   --cor-mapa-ramo-1-fundo: #ffffff;
   --cor-mapa-ramo-1-texto: #000000;
   --cor-mapa-ramo-2-fundo: #ffffff;

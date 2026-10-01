@@ -75,14 +75,17 @@ describe('mapa e fichamento de Filosofia Jurídica: estrutura', () => {
 });
 
 describe('mapa e fichamento de Filosofia Jurídica: cada ficha', () => {
-  it.each(mapaFichamento.pensadores.map((p) => [p.id, p] as const))('%s está completa', (_id, p) => {
-    expect(p.nome.trim()).not.toBe('');
-    expect(p.modoDePensar.trim()).not.toBe('');
-    expect(p.paraODireito.trim()).not.toBe('');
-    expect(p.conceitos.length).toBeGreaterThan(0);
-    expect(p.referencias.length).toBeGreaterThan(0);
-    expect(idsDoResumo.has(p.blocoResumo), `${p.id}: ${p.blocoResumo}`).toBe(true);
-  });
+  it.each(mapaFichamento.pensadores.map((p) => [p.id, p] as const))(
+    '%s está completa',
+    (_id, p) => {
+      expect(p.nome.trim()).not.toBe('');
+      expect(p.modoDePensar.trim()).not.toBe('');
+      expect(p.paraODireito.trim()).not.toBe('');
+      expect(p.conceitos.length).toBeGreaterThan(0);
+      expect(p.referencias.length).toBeGreaterThan(0);
+      expect(idsDoResumo.has(p.blocoResumo), `${p.id}: ${p.blocoResumo}`).toBe(true);
+    }
+  );
 
   it('citação literal só existe com fonte', () => {
     const comCitacao = mapaFichamento.pensadores.filter((p) => p.citacao);
@@ -123,7 +126,10 @@ describe('mnemônicos de Filosofia Jurídica', () => {
   });
 
   it('todo id é slug ASCII, porque vira âncora de URL e id de elemento', () => {
-    for (const id of [...mnemonicos.map((m) => m.id), ...mapaFichamento.pensadores.map((p) => p.id)]) {
+    for (const id of [
+      ...mnemonicos.map((m) => m.id),
+      ...mapaFichamento.pensadores.map((p) => p.id)
+    ]) {
       expect(id, id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     }
   });
@@ -132,20 +138,26 @@ describe('mnemônicos de Filosofia Jurídica', () => {
     expect(new Set(mnemonicos.map((m) => m.tecnica)).size).toBeGreaterThanOrEqual(4);
   });
 
-  it.each(mnemonicos.map((m) => [m.id, m] as const))('%s está completo e remete ao resumo', (_id, m) => {
-    for (const campo of [m.titulo, m.dica, m.desafio, m.comoFunciona]) {
-      expect(campo.trim()).not.toBe('');
+  it.each(mnemonicos.map((m) => [m.id, m] as const))(
+    '%s está completo e remete ao resumo',
+    (_id, m) => {
+      for (const campo of [m.titulo, m.dica, m.desafio, m.comoFunciona]) {
+        expect(campo.trim()).not.toBe('');
+      }
+      expect(m.guarda.length).toBeGreaterThanOrEqual(2);
+      for (const item of m.guarda) {
+        expect(item.termo.trim()).not.toBe('');
+        expect(item.explicacao.trim()).not.toBe('');
+      }
+      expect(idsDoResumo.has(m.blocoResumo), `${m.id}: ${m.blocoResumo}`).toBe(true);
     }
-    expect(m.guarda.length).toBeGreaterThanOrEqual(2);
-    for (const item of m.guarda) {
-      expect(item.termo.trim()).not.toBe('');
-      expect(item.explicacao.trim()).not.toBe('');
-    }
-    expect(idsDoResumo.has(m.blocoResumo), `${m.id}: ${m.blocoResumo}`).toBe(true);
-  });
+  );
 
   it('cobre o que mais se confunde na unidade', () => {
-    const titulos = mnemonicos.map((m) => m.titulo).join(' | ').toLowerCase();
+    const titulos = mnemonicos
+      .map((m) => m.titulo)
+      .join(' | ')
+      .toLowerCase();
     for (const tema of [
       'tomás',
       'comutativa',

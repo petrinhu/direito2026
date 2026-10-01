@@ -37,13 +37,16 @@ export const CARREGADORES: RegistroDeCarregadores = {
     ]);
     return { meta, resumo, quiz };
   },
-  // Sem petição: esta cadeira só tem resumo e quiz.
+  // Sem petição. Além de resumo e quiz, tem mapa mental, fichamento e
+  // mnemônicos: mapa e fichamento leem a mesma fonte de dados.
   'p1/filosofia-juridica/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { quiz }] = await Promise.all([
+    const [{ meta }, { resumo }, { quiz }, { mapaFichamento }, { mnemonicos }] = await Promise.all([
       import('@/conteudo/p1/filosofia-juridica/u1/meta'),
       import('@/conteudo/p1/filosofia-juridica/u1/resumo'),
-      import('@/conteudo/p1/filosofia-juridica/u1/quiz')
+      import('@/conteudo/p1/filosofia-juridica/u1/quiz'),
+      import('@/conteudo/p1/filosofia-juridica/u1/mapaFichamento'),
+      import('@/conteudo/p1/filosofia-juridica/u1/mnemonicos')
     ]);
-    return { meta, resumo, quiz };
+    return { meta, resumo, quiz, mapaFichamento, mnemonicos };
   }
 };

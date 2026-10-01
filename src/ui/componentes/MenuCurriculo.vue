@@ -5,6 +5,8 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 
+const ABAS_DE_LINK_DIRETO = ['mapa', 'fichamento', 'mnemonicos'] as const;
+
 defineProps<{
   curriculo: Curriculo;
   /** Caminho da rota atual (sem barra inicial), para aria-current. */
@@ -290,6 +292,22 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                             </li>
                           </ul>
                         </li>
+                        <!--
+                          Abas novas de Filosofia Jurídica (ordem do líder,
+                          01/10/2026): link direto, sem submenu, como o do
+                          quiz. A ordem de `unidade.abas` manda: o menu só
+                          mostra as que a unidade declara.
+                        -->
+                        <template v-for="aba in ABAS_DE_LINK_DIRETO" :key="aba">
+                          <li v-if="unidade.abas.includes(aba)">
+                            <a
+                              :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/${aba}`"
+                              class="menu-curriculo__botao"
+                            >
+                              {{ ROTULOS_ABA[aba] }}
+                            </a>
+                          </li>
+                        </template>
                         <li v-if="unidade.abas.includes('quiz')">
                           <!--
                             Ordem do líder, 22/09/2026, verbatim: "quiz

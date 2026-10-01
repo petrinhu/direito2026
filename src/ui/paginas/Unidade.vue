@@ -7,12 +7,16 @@ import { CARREGADORES_DISPOSITIVOS } from '@/app/carregamento/carregadoresDispos
 import type { ChaveAba } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
+import { construirArvoreMapa } from '@/app/fichamento';
 import AbasUnidade from '../componentes/AbasUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
 import NaoEncontrado from './NaoEncontrado.vue';
 import VisorResumo from '../componentes/VisorResumo.vue';
 import PecaComentadaVisor from '../componentes/PecaComentadaVisor.vue';
 import MotorQuiz from '../componentes/MotorQuiz.vue';
+import MapaMental from '../componentes/MapaMental.vue';
+import FichamentoVisor from '../componentes/FichamentoVisor.vue';
+import MnemonicosVisor from '../componentes/MnemonicosVisor.vue';
 import IndicadorProgresso from '../componentes/IndicadorProgresso.vue';
 import BalaoDispositivo from '../componentes/BalaoDispositivo.vue';
 import ApendiceDispositivos from '../componentes/ApendiceDispositivos.vue';
@@ -40,6 +44,13 @@ const referenciaUnidade = computed(() =>
  * sem petição): mostrar "não encontrada" em vez de uma página em branco.
  */
 const abaExiste = computed(() => referenciaUnidade.value?.abas.includes(props.aba) ?? false);
+
+/** Endereço da unidade sem barra final: base dos links entre as abas. */
+const baseUnidade = computed(() => `/p/${props.periodo}/${props.cadeira}/${props.unidade}`);
+
+const arvoreMapa = computed(() =>
+  conteudo.value?.mapaFichamento ? construirArvoreMapa(conteudo.value.mapaFichamento) : undefined
+);
 
 const chaveUnidade = computed(() => `${props.periodo}/${props.cadeira}/${props.unidade}`);
 const storeProgresso = computed(() => criarStoreProgresso(repositorio, chaveUnidade.value));
@@ -128,6 +139,21 @@ const contagemBlocos = computed(() =>
             :itens-checklist-marcados="storeProgresso.registro.value.itensChecklistMarcados ?? []"
             @bloco-lido="storeProgresso.marcarLido($event)"
             @alternar-item-checklist="storeProgresso.alternarChecklist($event)"
+          />
+          <MapaMental
+            v-else-if="abaDoPainel === 'mapa' && arvoreMapa"
+            :arvore="arvoreMapa"
+            :base-unidade="baseUnidade"
+          />
+          <FichamentoVisor
+            v-else-if="abaDoPainel === 'fichamento' && conteudo.mapaFichamento"
+            :dados="conteudo.mapaFichamento"
+            :base-unidade="baseUnidade"
+          />
+          <MnemonicosVisor
+            v-else-if="abaDoPainel === 'mnemonicos' && conteudo.mnemonicos"
+            :mnemonicos="conteudo.mnemonicos"
+            :base-unidade="baseUnidade"
           />
           <PecaComentadaVisor
             v-else-if="abaDoPainel === 'peticao' && conteudo.peticao"

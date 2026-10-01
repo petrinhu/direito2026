@@ -87,7 +87,12 @@ function fecharAteAsFases(): void {
       </button>
     </div>
     <div class="mapa-mental__area">
-      <ul role="tree" aria-label="Mapa mental de Filosofia Jurídica" class="mapa-mental__arvore" @keydown="aoTeclar">
+      <ul
+        role="tree"
+        aria-label="Mapa mental de Filosofia Jurídica"
+        class="mapa-mental__arvore"
+        @keydown="aoTeclar"
+      >
         <NoMapaMental
           :no="arvore"
           :nivel="1"

@@ -131,13 +131,12 @@ const idResposta = computed(() => `mnemonico-${props.mnemonico.id}-resposta`);
 }
 
 .mnemonico__item {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--esp-2, 0.5rem);
-  margin-block: var(--esp-1, 0.25rem);
+  margin-block: var(--esp-2, 0.5rem);
 }
 
+/* Todo termo no mesmo estilo: termo em linha própria, explicação embaixo. */
 .mnemonico__item dt {
+  display: block;
   font-weight: 700;
 }
 

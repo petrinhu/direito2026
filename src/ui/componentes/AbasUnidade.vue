@@ -95,4 +95,10 @@ function moverFoco(indiceAtual: number, direcao: 1 | -1): void {
   outline: 2px solid var(--cor-primaria, #163a5f);
   outline-offset: 2px;
 }
+
+@media print {
+  .abas-unidade__lista {
+    display: none;
+  }
+}
 </style>

@@ -113,6 +113,10 @@ describe('mapa e fichamento de Filosofia Jurídica: cada ficha', () => {
     expect(textoDe(mapaFichamento)).not.toMatch(TRAVESSAO);
   });
 
+  it('usa só os termos que o resumo traz: "lex naturale" não consta do resumo', () => {
+    expect(textoDe(mapaFichamento).toLowerCase()).not.toContain('lex naturale');
+  });
+
   it('nenhum texto cita instituição ou pessoa da turma', () => {
     expect(textoDe(mapaFichamento).toLowerCase()).not.toMatch(/professor|professora|colega|unibra/);
   });

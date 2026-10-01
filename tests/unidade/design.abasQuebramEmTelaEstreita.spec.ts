@@ -56,3 +56,29 @@ describe('texto do mapa mental em tela estreita', () => {
     expect(grupo).toContain('var(--esp-2, 0.5rem)');
   });
 });
+
+describe('acabamento das abas novas (QA, cosméticos)', () => {
+  const ler = (arquivo: string) =>
+    readFileSync(resolve(__dirname, '../../src/ui/componentes', arquivo), 'utf-8');
+
+  it('resposta dos mnemônicos: todos os termos no mesmo estilo (cada item em bloco, termo e explicação em linhas próprias)', () => {
+    const fonte = ler('CartaoMnemonico.vue');
+    expect(regraBase(fonte, '.mnemonico__item')).not.toContain('display: flex');
+    expect(regraBase(fonte, '.mnemonico__item dt')).toContain('display: block');
+  });
+
+  it('impressão: a faixa de abas some', () => {
+    const fonte = ler('AbasUnidade.vue');
+    const impressao = fonte.slice(fonte.indexOf('@media print'));
+    expect(impressao).toContain('.abas-unidade__lista');
+    expect(impressao).toContain('display: none');
+  });
+
+  it('impressão: os triângulos de mapa e de ficha saem como abertos', () => {
+    for (const arquivo of ['NoMapaMental.vue', 'FichaPensadorCartao.vue']) {
+      const fonte = ler(arquivo);
+      const impressao = fonte.slice(fonte.indexOf('@media print'));
+      expect(impressao, arquivo).toContain('rotate(90deg)');
+    }
+  });
+});

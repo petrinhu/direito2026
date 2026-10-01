@@ -205,6 +205,10 @@ const idCorpo = computed(() => `ficha-${props.ficha.id}-corpo`);
 }
 
 @media print {
+  .ficha__seta {
+    transform: rotate(90deg);
+  }
+
   .ficha {
     break-inside: avoid;
     box-shadow: none;

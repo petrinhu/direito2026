@@ -69,16 +69,14 @@ function moverFoco(indiceAtual: number, direcao: 1 | -1): void {
 <style scoped>
 .abas-unidade__lista {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--esp-2, 0.5rem);
   border-bottom: 1px solid var(--cor-borda, #dcd7c8);
 }
 
-/* Modo de leitura adaptada: mesmo raciocínio de BarraTopo.vue, a fonte
-   maior não cabe mais numa linha só em tela estreita; quebra em vez de
+/* Cinco abas não cabem numa linha só em 320px nem em 360px, em nenhum modo
+   (e no adaptado a fonte maior piora): a lista quebra de linha em vez de
    estourar a largura da página. */
-:root[data-modo-adaptado='on'] .abas-unidade__lista {
-  flex-wrap: wrap;
-}
 
 .abas-unidade__tab {
   padding: var(--esp-3, 0.75rem) var(--esp-4, 1rem);

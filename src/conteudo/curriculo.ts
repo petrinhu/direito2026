@@ -65,15 +65,17 @@ const cadeiraSociologia: Cadeira = {
 };
 
 /**
- * Filosofia Jurídica (Idade Antiga e Idade Média) também não tem petição:
- * só resumo e quiz.
+ * Filosofia Jurídica (Idade Antiga e Idade Média) não tem petição. Além do
+ * resumo e do quiz, tem mapa mental, fichamento e mnemônicos, nessa ordem
+ * (ordem do líder, 01/10/2026); as três abas novas leem a mesma fonte de
+ * dados da unidade.
  */
 const unidade1Filosofia: ReferenciaUnidade = {
   id: 'u1',
   rotulo: 'Unidade 1',
-  titulo: 'Resumo de estudo e quiz',
+  titulo: 'Resumo, mapa mental, fichamento, mnemônicos e quiz',
   estado: 'publicado',
-  abas: ['resumo', 'quiz'],
+  abas: ['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz'],
 };
 
 const cadeiraFilosofia: Cadeira = {

@@ -1,3 +1,4 @@
+import type { ChaveAba } from '../curriculo/tipos';
 import type { IndiceAlternativa } from '../unidade/tipos';
 
 /** Chave completa de progresso de uma unidade, ex.: 'p1/intr-direito/u1'. */
@@ -8,7 +9,7 @@ export interface RegistroProgressoUnidade {
   readonly atualizadoEm: string;
   /** Ids de bloco do resumo já lidos. */
   readonly blocosLidos: readonly string[];
-  readonly ultimaAba: 'resumo' | 'peticao' | 'quiz';
+  readonly ultimaAba: ChaveAba;
   /** Semente do embaralhamento da rodada de quiz em curso ou concluída. */
   readonly quizSemente?: number;
   /** Mapa id da pergunta -> índice escolhido, na ordem embaralhada da semente acima. */

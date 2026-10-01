@@ -2,7 +2,7 @@
 export type EstadoPublicacao = 'publicado' | 'em-breve';
 
 /** Abas possíveis de uma unidade. Fechado de propósito: o layout depende disso. */
-export type ChaveAba = 'resumo' | 'peticao' | 'quiz';
+export type ChaveAba = 'resumo' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
 
 export interface ReferenciaUnidade {
   /** Slug estável usado na URL. Ex.: 'u1'. */

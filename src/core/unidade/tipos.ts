@@ -1,3 +1,6 @@
+import type { MapaFichamento } from '../fichamento/tipos';
+import type { Mnemonico } from '../mnemonicos/tipos';
+
 export interface MetaUnidade {
   readonly titulo: string;
   readonly subtitulo: string;
@@ -163,4 +166,8 @@ export interface ConteudoUnidade {
   readonly resumo: readonly BlocoResumo[];
   readonly peticao?: PecaComentada;
   readonly quiz?: readonly PerguntaQuiz[];
+  /** Alimenta as abas Mapa mental e Fichamento. */
+  readonly mapaFichamento?: MapaFichamento;
+  /** Alimenta a aba Mnemônicos. */
+  readonly mnemonicos?: readonly Mnemonico[];
 }

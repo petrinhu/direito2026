@@ -9,6 +9,9 @@ import type { ChaveAba } from './tipos';
  */
 export const ROTULOS_ABA: Record<ChaveAba, string> = {
   resumo: 'Resumo',
+  mapa: 'Mapa mental',
+  fichamento: 'Fichamento',
+  mnemonicos: 'Mnemônicos',
   peticao: 'Petição comentada',
   quiz: 'Quiz'
 };

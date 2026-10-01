@@ -35,3 +35,13 @@ export type {
 } from '../core/unidade/tipos';
 
 export type { DispositivoLegal, CatalogoDispositivos } from '../core/dispositivos/tipos';
+
+export type {
+  MapaFichamento,
+  EraHistorica,
+  FaseHistorica,
+  FichaPensador,
+  CitacaoFicha
+} from '../core/fichamento/tipos';
+
+export type { Mnemonico, ItemGuardado, TecnicaMnemonica } from '../core/mnemonicos/tipos';

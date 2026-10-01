@@ -14,9 +14,9 @@ describe('currículo: Filosofia Jurídica, 1a unidade', () => {
     expect(periodo1.cadeiras.filter((c) => c.estado === 'publicado')).toHaveLength(4);
   });
 
-  it('tem só duas abas, resumo e quiz, e o título não fala de petição', () => {
+  it('não tem petição: resumo, mapa, fichamento, mnemônicos e quiz, e o título não fala de petição', () => {
     const u1 = filosofia!.unidades.find((u) => u.id === 'u1')!;
-    expect([...u1.abas]).toEqual(['resumo', 'quiz']);
+    expect([...u1.abas]).toEqual(['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz']);
     expect(u1.titulo.toLowerCase()).not.toContain('peti');
   });
 

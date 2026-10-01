@@ -144,8 +144,8 @@ function documentosDosMnemonicos(base: string, conteudo: ConteudoUnidade): Docum
       ].join(' ')
     );
     return {
-      id: `${base}/mnemonicos#${mnemonico.id}`,
-      url: `/p/${base}/mnemonicos#${mnemonico.id}`,
+      id: `${base}/mnemonicos#mnemonico-${mnemonico.id}`,
+      url: `/p/${base}/mnemonicos#mnemonico-${mnemonico.id}`,
       periodo,
       cadeira,
       unidade,

@@ -7,6 +7,8 @@ export interface AcaoTecla {
   readonly abrir?: string;
   readonly fechar?: string;
   readonly alternar?: string;
+  /** Nó-atalho (a ficha completa): o componente aciona o link dele. */
+  readonly ativar?: string;
 }
 
 /** Estado inicial: raiz, eras e fases abertas; os pensadores começam fechados. */
@@ -72,7 +74,8 @@ export function interpretarTecla(
     }
     case 'Enter':
     case ' ':
-      return temFilhos ? { alternar: atual.id } : {};
+      if (temFilhos) return { alternar: atual.id };
+      return atual.tipo === 'ficha' ? { ativar: atual.id } : {};
     default:
       return undefined;
   }

@@ -68,7 +68,8 @@ export type TipoNoMapa =
   | 'conceitos'
   | 'conceito'
   | 'direito'
-  | 'ressalva';
+  | 'ressalva'
+  | 'ficha';
 
 /** Nó da árvore do mapa mental, derivada de MapaFichamento por construirArvoreMapa. */
 export interface NoMapa {
@@ -79,7 +80,7 @@ export interface NoMapa {
   readonly rotulo: string;
   /** Texto corrido do nó folha ("modo de pensar", "para o Direito hoje"). */
   readonly detalhe?: string;
-  /** Presente nos nós de pensador: id da ficha, para ligar ao fichamento. */
+  /** Presente nos nós de pensador e no atalho 'ficha': id da ficha, para ligar ao fichamento. */
   readonly fichaId?: string;
   readonly filhos: readonly NoMapa[];
 }

@@ -151,7 +151,7 @@ function fecharAteAsFases(): void {
    cabe a coluna de texto dos níveis mais fundos. */
 @media (max-width: 639px) {
   .mapa-mental {
-    margin-inline: calc(-1 * var(--esp-3, 0.75rem));
+    margin-inline: calc(-1 * var(--esp-5, 1.5rem));
   }
 }
 

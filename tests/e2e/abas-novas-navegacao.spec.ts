@@ -53,9 +53,9 @@ test('o menu lateral leva às abas novas', async ({ page }) => {
       .last()
       .getByRole('button', { name: /submenu de Unidade 1/ })
   );
-  await expect(page.locator(`a[href="${BASE}/mapa"]`)).toHaveCount(1);
-  await expect(page.locator(`a[href="${BASE}/fichamento"]`)).toHaveCount(1);
-  await expect(page.locator(`a[href="${BASE}/mnemonicos"]`)).toHaveCount(1);
+  await expect(menu.locator(`a[href="${BASE}/mapa"]`)).toHaveCount(1);
+  await expect(menu.locator(`a[href="${BASE}/fichamento"]`)).toHaveCount(1);
+  await expect(menu.locator(`a[href="${BASE}/mnemonicos"]`)).toHaveCount(1);
 });
 
 test('mapa: teclado completo (setas, Enter, Espaço, Home e End)', async ({ page }) => {

@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
+import { abrirSeFechado } from './apoio/elementos';
+import { filtrarFichas } from '../../src/core/fichamento/filtrarFichas';
+import { mapaFichamento } from '../../src/conteudo/p1/filosofia-juridica/u1/mapaFichamento';
 
 /**
  * Abas Mapa mental, Fichamento e Mnemônicos de Filosofia Jurídica (ordem do
@@ -40,6 +43,16 @@ for (const [rota, rotulo, seletor] of [
 
 test('o menu lateral leva às abas novas', async ({ page }) => {
   await page.goto(BASE);
+  // Os links só existem depois de abrir período, cadeira e unidade.
+  const menu = page.getByRole('navigation', { name: 'Currículo' });
+  await abrirSeFechado(menu.getByRole('button', { name: '1º período' }));
+  await abrirSeFechado(menu.getByRole('button', { name: 'Filosofia Jurídica' }));
+  await abrirSeFechado(
+    page
+      .locator(`li:has(a[href="${BASE}"])`)
+      .last()
+      .getByRole('button', { name: /submenu de Unidade 1/ })
+  );
   await expect(page.locator(`a[href="${BASE}/mapa"]`)).toHaveCount(1);
   await expect(page.locator(`a[href="${BASE}/fichamento"]`)).toHaveCount(1);
   await expect(page.locator(`a[href="${BASE}/mnemonicos"]`)).toHaveCount(1);
@@ -112,8 +125,15 @@ test('fichamento: filtra por período, por termo e anuncia o total', async ({ pa
   await page.getByLabel('Período ou fase').selectOption('era:media');
   await expect(page.locator('article.ficha')).toHaveCount(4);
   await expect(page.getByRole('status')).toHaveText('4 fichas');
+  await page.getByLabel('Período ou fase').selectOption('todos');
   await page.getByLabel('Buscar nas fichas').fill('ockham');
-  await expect(page.locator('article.ficha')).toHaveCount(1);
+  // A ficha de Escoto também cita Ockham: o esperado vem dos dados, não de um número fixo.
+  const esperadas = filtrarFichas(mapaFichamento, { termo: 'ockham' }).map((f) => f.id);
+  expect(esperadas).toContain('ockham');
+  expect(esperadas.length).toBeLessThan(mapaFichamento.pensadores.length);
+  await expect(page.locator('article.ficha')).toHaveCount(esperadas.length);
+  await expect(page.locator('#ficha-ockham')).toBeVisible();
+  await expect(page.locator('#ficha-platao')).toHaveCount(0);
   await page.getByLabel('Buscar nas fichas').fill('zzzz');
   await expect(page.getByRole('status')).toHaveText('Nenhuma ficha encontrada');
   await page.getByRole('button', { name: 'Limpar filtros' }).click();

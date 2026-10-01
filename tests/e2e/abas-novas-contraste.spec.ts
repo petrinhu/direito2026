@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { calcularContraste } from '../../src/core/design/contraste';
+import { mapaFichamento } from '../../src/conteudo/p1/filosofia-juridica/u1/mapaFichamento';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
 
 /**
@@ -59,11 +60,15 @@ const ELEMENTOS_DO_MAPA = [
   '#mapa-platao-conceito-0 > .no-mapa__corpo .no-mapa__rotulo'
 ];
 
+// A citação e a fonte só existem em algumas fichas: a escolhida vem dos dados.
+const FICHA_COM_CITACAO = mapaFichamento.pensadores.find((f) => f.citacao)!.id;
+
 const ELEMENTOS_DO_FICHAMENTO = [
-  '#ficha-platao .ficha__nome',
-  '#ficha-platao .ficha__campo dt',
-  '#ficha-platao .ficha__campo dd',
-  '#ficha-platao .ficha__fonte',
+  `#ficha-${FICHA_COM_CITACAO} .ficha__nome`,
+  `#ficha-${FICHA_COM_CITACAO} .ficha__campo dt`,
+  `#ficha-${FICHA_COM_CITACAO} .ficha__campo dd`,
+  `#ficha-${FICHA_COM_CITACAO} .ficha__citacao`,
+  `#ficha-${FICHA_COM_CITACAO} .ficha__fonte`,
   '.fichamento__grupo-titulo'
 ];
 

@@ -34,7 +34,7 @@ for (const adaptado of [true, false]) {
     const partidas = await page.evaluate(() => {
       const achadas: string[] = [];
       const raiz = document.querySelector('[role="tree"]')!;
-      const andador = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+      const andador = document.createTreeWalker(raiz, 4 /* NodeFilter.SHOW_TEXT */);
       for (let no = andador.nextNode(); no; no = andador.nextNode()) {
         const texto = no.textContent ?? '';
         for (const m of texto.matchAll(/\S+/g)) {

@@ -234,6 +234,11 @@ function aoClicar(): void {
 }
 
 @media print {
+  /* Todos os ramos saem abertos no papel: o triângulo também. */
+  .no-mapa__seta {
+    transform: rotate(90deg);
+  }
+
   .no-mapa__corpo {
     background: #fff !important;
     color: #000 !important;

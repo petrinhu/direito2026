@@ -281,7 +281,7 @@ const ockham: FichaPensador = {
     'Separa o racional do teológico (a verdade é alcançável pelo conhecimento racional), distingue a potência divina da multiplicidade dos indivíduos e critica o universalismo da lei natural.',
   conceitos: [
     'Separação entre razão e teologia',
-    'Crítica ao universalismo da lex naturale',
+    'Crítica ao universalismo da lei natural',
     'Fortalecimento do direito positivo',
     'Direito subjetivo: os direitos que o indivíduo tem por lhe terem sido conferidos'
   ],

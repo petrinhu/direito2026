@@ -27,7 +27,7 @@ export const resumo: readonly BlocoResumo[] = [
     {
       id: 'bloco-1', numero: 2,
       titulo: 'Linha do tempo histórica',
-      fonte: 'Slide "Aula 01: O que é Direito?".',
+      fonte: 'Material de aula da disciplina.',
       corpoHtml: `
         <p>Antes de entrar nas grandes correntes teóricas, vale situar no tempo os marcos históricos que formam o pano de fundo de toda a disciplina: da Babilônia antiga ao nascimento do Jusnaturalismo Contratualista moderno, que será aprofundado mais adiante.</p>
         <div class="linha-tempo-wrap">
@@ -109,7 +109,7 @@ export const resumo: readonly BlocoResumo[] = [
     {
       id: 'bloco-2', numero: 3,
       titulo: 'Sociedade e Direito',
-      fonte: 'Slide "Aula 02: Introdução ao Direito".',
+      fonte: 'Material de aula da disciplina.',
       corpoHtml: `
         <p>Ihering resume, numa frase célebre, a ideia de que direitos costumam ser conquistas históricas: "a paz é o fim do Direito, a luta é o meio". Ou seja, direitos raramente são simplesmente concedidos; eles nascem, na maior parte das vezes, de disputas de interesse. O objetivo dessa luta, porém, não é o conflito permanente, mas justamente alcançar uma ordem pacífica e estável, em que os interesses reconhecidos como direitos possam ser exercidos sem necessidade de disputa constante.</p>
         <p>Kelsen, na Teoria Pura do Direito, faz uma crítica importante: para ele, a ciência jurídica de sua época confundia-se demais com a psicologia, a sociologia, a ética e a política, perdendo a pureza de seu objeto próprio, a norma. Seu projeto era isolar a norma jurídica como objeto específico de uma ciência jurídica "pura", livre dessas misturas.</p>
@@ -157,7 +157,7 @@ export const resumo: readonly BlocoResumo[] = [
     {
       id: 'bloco-4', numero: 5,
       titulo: 'Zetética x Dogmática',
-      fonte: 'FERRAZ JÚNIOR, Tércio Sampaio. Introdução ao Estudo do Direito, itens 1.3 a 1.5. Slide "Aula 05".',
+      fonte: 'FERRAZ JÚNIOR, Tércio Sampaio. Introdução ao Estudo do Direito, itens 1.3 a 1.5. Material de aula da disciplina.',
       corpoHtml: `
         <p>Este é o bloco mais denso da disciplina, e por isso merece mais espaço aqui. Ferraz Jr. explica que zetética deriva do grego zetein (perquirir, buscar, questionar), enquanto dogmática deriva de dokein (ensinar, doutrinar). Essa raiz etimológica já antecipa a diferença de enfoque entre os dois: um voltado a manter a pergunta aberta, outro voltado a fixar respostas para orientar a ação.</p>
         <h3>A anedota de Sócrates e o soldado</h3>
@@ -236,7 +236,7 @@ export const resumo: readonly BlocoResumo[] = [
     {
       id: 'bloco-6', numero: 7,
       titulo: 'Jusnaturalismo x Juspositivismo',
-      fonte: 'BOBBIO, Norberto. O Positivismo Jurídico, Parte I. Slide "aula: direito positivo".',
+      fonte: 'BOBBIO, Norberto. O Positivismo Jurídico, Parte I. Material de aula da disciplina.',
       corpoHtml: `
         <p>A distinção entre direito natural e direito positivo remonta a Aristóteles, que separava o physikón díkaion (o justo por natureza, universal, válido em toda parte) do nomikón díkaion (o justo por convenção ou lei, variável conforme o povo). No Direito Romano, essa ideia aparece na tríade jus naturale (comum a todos os seres vivos), jus gentium (comum a todos os povos) e jus civile (próprio de cada cidade ou povo).</p>
         <p>São Tomás de Aquino organiza os tipos de lei numa estrutura hierárquica: a lex aeterna é a razão divina que governa o universo; a lex naturalis é a participação da criatura racional nessa lei eterna, captada pela razão humana; a lex humana são as leis positivas elaboradas pelos homens, que devem derivar racionalmente da lei natural (por conclusão direta ou por determinação de detalhes práticos); e a lex divina é o conteúdo revelado diretamente por Deus, como nas Escrituras.</p>

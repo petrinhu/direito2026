@@ -1,11 +1,11 @@
 import type { PerguntaQuiz } from '../../../../tipos';
 
 /**
- * As dez questões da atividade de 02/09/2026 de Sociologia Jurídica,
+ * As dez questões da atividade de Sociologia Jurídica,
  * com enunciado e alternativas exatamente como constam na atividade.
  * A atividade não traz gabarito: a alternativa marcada em cada uma é a
- * resposta do caderno de estudo, resolvida com base no material (slides
- * de 02/09, artigo "Da luta à ordem" e suas versões de estudo, artigo
+ * resposta do caderno de estudo, resolvida com base no material da disciplina (artigo
+ * "Da luta à ordem" e suas versões de estudo, artigo
  * sobre a relevância da sociologia para a ciência jurídica), e por isso
  * todas levam gabaritoDoCaderno: true. A explicação faz o papel da
  * justificativa curta que a atividade pede em cada questão.

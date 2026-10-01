@@ -2,7 +2,7 @@ import type { BlocoResumo } from '../../../tipos';
 
 /**
  * Os blocos teóricos do resumo de Filosofia Jurídica, 1a unidade (Idade
- * Antiga e Idade Média). Fontes, todas no mesmo nível: os slides das aulas
+ * Antiga e Idade Média). Fontes, todas no mesmo nível: o material de aula
  * da Idade Antiga (introdução e fixação) e da Idade Média, o simulado de
  * fixação e os livros de apoio (Wolkmer, Manual de Humanística, Marcondes e
  * Struchiner). Esta unidade não cita artigo de lei: nenhum botão de citação
@@ -21,14 +21,14 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 1,
     titulo: 'Do mito ao logos: a ideia de uma justiça dos homens',
     fonte:
-      'Slides da aula de noções preliminares em Filosofia; slides da aula de Filosofia Jurídica na Idade Antiga; WOLKMER, Antonio Carlos. Síntese de uma história das idéias jurídicas. Florianópolis, 2005, cap. 1.',
+      'Material de aula da disciplina; WOLKMER, Antonio Carlos. Síntese de uma história das idéias jurídicas. Florianópolis, 2005, cap. 1.',
     corpoHtml: `
       <p>A filosofia nasce na Grécia como ruptura com a explicação mítica. Em vez da vontade arbitrária dos deuses, busca-se explicar o mundo pela natureza e pela razão (o <strong>logos</strong>). Junto com essa mudança aparece a justiça "dos homens": uma ordem racional, discutida e pactuada em público, na praça da cidade (a <strong>pólis</strong>).</p>
-      <p>Os slides listam as condições históricas dessa passagem: viagens marítimas, calendário, vida urbana, escrita alfabética, invenção da política, ideia de lei, espaço público e estímulo ao debate.</p>
+      <p>As condições históricas dessa passagem são: viagens marítimas, calendário, vida urbana, escrita alfabética, invenção da política, ideia de lei, espaço público e estímulo ao debate.</p>
       <h3>A atitude filosófica</h3>
-      <p>Filosofar é interrogar: o que é, como é, por que é. É uma atitude crítica diante de causas e sentidos. Os slides distinguem também os tipos de conhecimento (popular, científico, filosófico e religioso), cada um com seus traços de método e de certeza.</p>
+      <p>Filosofar é interrogar: o que é, como é, por que é. É uma atitude crítica diante de causas e sentidos. Distinguem-se também os tipos de conhecimento (popular, científico, filosófico e religioso), cada um com seus traços de método e de certeza.</p>
       <h3>Por que isso importa ao Direito</h3>
-      <p>A noção de "um Direito justo" nasce dessa cultura, primeiro na dramaturgia (bloco 2) e depois na discussão entre sofistas, Sócrates, Platão e Aristóteles. Nos slides, Warat é lembrado para advertir que a faculdade tende a vestir o Direito de roupagem sagrada e neutra; para ele, o Direito é construção histórica e social, e por isso pode ser questionado.</p>
+      <p>A noção de "um Direito justo" nasce dessa cultura, primeiro na dramaturgia (bloco 2) e depois na discussão entre sofistas, Sócrates, Platão e Aristóteles. Warat é lembrado para advertir que a faculdade tende a vestir o Direito de roupagem sagrada e neutra; para ele, o Direito é construção histórica e social, e por isso pode ser questionado.</p>
     `,
     resumo: [
       'Mito e logos: da vontade arbitrária dos deuses à explicação pela natureza e pela razão.',
@@ -43,15 +43,15 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 2,
     titulo: 'Dramaturgia ática e a lei justa: Antígona',
     fonte:
-      'Slides da aula de Filosofia Jurídica na Idade Antiga; MARCONDES, Danilo; STRUCHINER, Noel. Textos básicos de filosofia do direito (Sófocles, Antígona); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1; NASCIMENTO, Filippe Augusto dos Santos. Manual de Humanística, cap. 2.',
+      'Material de aula da disciplina; MARCONDES, Danilo; STRUCHINER, Noel. Textos básicos de filosofia do direito (Sófocles, Antígona); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1; NASCIMENTO, Filippe Augusto dos Santos. Manual de Humanística, cap. 2.',
     corpoHtml: `
-      <p>Segundo as aulas, a noção de "um Direito justo" nasce na dramaturgia clássica de Sófocles, Ésquilo e Eurípides. No século V a.C. a tragédia era cerimônia cívica e espaço de discussão das crenças e valores da sociedade grega, como lembra o livro de Marcondes e Struchiner.</p>
+      <p>A noção de "um Direito justo" nasce na dramaturgia clássica de Sófocles, Ésquilo e Eurípides. No século V a.C. a tragédia era cerimônia cívica e espaço de discussão das crenças e valores da sociedade grega, como lembra o livro de Marcondes e Struchiner.</p>
       <h3>O conflito de Antígona</h3>
       <p>Em <em>Antígona</em>, Creonte decreta que o irmão da protagonista, Polinice, não seja sepultado. Antígona descumpre o decreto e o sepulta, invocando leis divinas não escritas. O choque é entre a lei do Estado, ligada à força, à razão e ao formalismo, e o direito familiar e divino, ligado ao amor, à piedade e à tradição.</p>
       <p>No livro de apoio, Antígona diz que essas normas divinas, não escritas e inevitáveis, vigem "não é de hoje, não é de ontem, é desde os tempos mais remotos" (v. 511 a 520, na tradução do livro). Por isso a peça é lida como uma das primeiras formulações do debate entre <strong>direito natural</strong> e <strong>direito positivo</strong>.</p>
       <p>Aristóteles, na <em>Retórica</em>, recorre a Antígona para distinguir a lei particular, escrita ou não, de uma comunidade, da lei universal, a da natureza (<em>kata physin</em>).</p>
       <h3>Uma leitura que não é unânime</h3>
-      <p>O livro de Marcondes e Struchiner registra que a maioria dos intérpretes vê Sófocles favorável à lei natural ou divina, mas nem Creonte nem Antígona teriam razão absoluta: ambos seriam vítimas da <em>hybris</em>, o excesso de orgulho. Para a prova, guarde a leitura das aulas, o choque entre a lei posta pelo governante e as leis não escritas de ordem sagrada e natural; a nuance da hybris serve como leitura complementar.</p>
+      <p>O livro de Marcondes e Struchiner registra que a maioria dos intérpretes vê Sófocles favorável à lei natural ou divina, mas nem Creonte nem Antígona teriam razão absoluta: ambos seriam vítimas da <em>hybris</em>, o excesso de orgulho. Para a prova, guarde a leitura central: o choque entre a lei posta pelo governante e as leis não escritas de ordem sagrada e natural; a nuance da hybris serve como leitura complementar.</p>
     `,
     resumo: [
       'Dramaturgia clássica (Sófocles, Ésquilo, Eurípides): berço da noção de um Direito justo.',
@@ -67,16 +67,16 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 3,
     titulo: 'Os sofistas: natureza (physis) e convenção (nomos)',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga (introdução e fixação); NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
     corpoHtml: `
       <p>No século V a.C. o pensamento grego troca o naturalismo cósmico dos pré-socráticos por problemas sociais, políticos e morais. Os sofistas questionam a diferença entre a ordem natural (<strong>physis</strong>) e a ordem humana (<strong>nomos</strong>): existe justiça por natureza ou só por convenção? O dever é para com a lei da cidade ou para com uma lei superior dos deuses?</p>
       <h3>Traços do grupo</h3>
-      <p>Os sofistas não formam uma corrente única. O traço comum apontado nas aulas é o ceticismo quanto a uma justiça em si: cada sujeito julga a partir da sua circunstância, e a justiça do caso concreto ganha peso. Nomes citados, com as datas dos slides: Górgias (485-380 a.C.), Protágoras (481-411), Pródico (465-395), Trasímaco (459-400) e Hípias (443-399). Por isso são vistos como precursores primitivos do relativismo e do positivismo jurídicos.</p>
+      <p>Os sofistas não formam uma corrente única. O traço comum é o ceticismo quanto a uma justiça em si: cada sujeito julga a partir da sua circunstância, e a justiça do caso concreto ganha peso. Nomes citados, com as datas: Górgias (485-380 a.C.), Protágoras (481-411), Pródico (465-395), Trasímaco (459-400) e Hípias (443-399). Por isso são vistos como precursores primitivos do relativismo e do positivismo jurídicos.</p>
       <h3>Não confundir os nomes</h3>
       <ul>
         <li><strong>Protágoras</strong>: <em>homo mensura</em>, "o homem é a medida de todas as coisas". Relativismo e individualismo.</li>
         <li><strong>Trasímaco</strong>: a justiça é a conveniência do mais forte. As leis resultam da força de quem controla o poder, e a justiça legal disfarça o domínio dos detentores do poder.</li>
-        <li><strong>Epicuro</strong> (tradição helenística), lembrado nas aulas ao lado dos sofistas como um contratualismo primitivo: a justiça não existe em si, nasce de pactos de não causar nem sofrer dano.</li>
+        <li><strong>Epicuro</strong> (tradição helenística), lembrado ao lado dos sofistas como um contratualismo primitivo: a justiça não existe em si, nasce de pactos de não causar nem sofrer dano.</li>
       </ul>
       <p>A confusão entre Protágoras e Trasímaco é das mais cobradas em questões de verdadeiro ou falso: a frase da "conveniência do mais forte" é de Trasímaco, e o <em>homo mensura</em> é de Protágoras.</p>
     `,
@@ -94,12 +94,12 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 4,
     titulo: 'Sócrates: virtude, cidade e obediência às leis',
     fonte:
-      'Slides da aula de fixação da Idade Antiga; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Platão, Críton); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Platão, Críton); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
     corpoHtml: `
       <p>Sócrates (469-399 a.C.) está entre os idealistas, que buscam por meio da razão uma verdade e uma justiça absolutas. Seu método é a <strong>maiêutica</strong> (a "parteira das ideias") aliada à dialética: as virtudes já existem em cada pessoa e cabe redescobri-las; a virtude não se ensina, descobre-se.</p>
       <p>Para Sócrates, a justiça é cumprir a lei da pólis. As leis expressam os interesses da coletividade, e respeitá-las é condição do bem comum.</p>
       <h3>O julgamento e a recusa da fuga</h3>
-      <p>Condenado por incitar a juventude a refletir criticamente, Sócrates recusou a fuga que Críton propôs. Nas aulas, a razão é que o bom cidadão deve obedecer também às leis más, para não encorajar o cidadão perverso a violar as boas. No <em>Críton</em>, lido no livro de apoio, ele imagina as próprias leis o interpelando e diz preferir morrer como cidadão de Atenas, julgado segundo as leis, para não renegar os princípios que defendera.</p>
+      <p>Condenado por incitar a juventude a refletir criticamente, Sócrates recusou a fuga que Críton propôs. A razão é que o bom cidadão deve obedecer também às leis más, para não encorajar o cidadão perverso a violar as boas. No <em>Críton</em>, lido no livro de apoio, ele imagina as próprias leis o interpelando e diz preferir morrer como cidadão de Atenas, julgado segundo as leis, para não renegar os princípios que defendera.</p>
       <p>Wolkmer descreve essa mesma obediência como levada até uma lei "errada ou até criminosa". Quem responde a uma questão sobre o tema deve reter o ponto central: <strong>a injustiça da condenação não autorizou Sócrates a fugir</strong>.</p>
     `,
     resumo: [
@@ -115,18 +115,18 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 5,
     titulo: 'Platão: a justiça como harmonia',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Platão); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Platão); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 1.',
     corpoHtml: `
-      <p>Platão (427-348 a.C., datas das aulas) usa os diálogos de Sócrates para desconstruir as definições utilitaristas dos sofistas, como a de Trasímaco. Para ele a justiça é um arquétipo ideal, harmonia da alma e da cidade. Wolkmer resume: justiça é sabedoria e virtude da alma; injustiça é ignorância e vício.</p>
+      <p>Platão (427-348 a.C.) usa os diálogos de Sócrates para desconstruir as definições utilitaristas dos sofistas, como a de Trasímaco. Para ele a justiça é um arquétipo ideal, harmonia da alma e da cidade. Wolkmer resume: justiça é sabedoria e virtude da alma; injustiça é ignorância e vício.</p>
       <h3>Justiça orgânica</h3>
       <p>Na cidade ideal, cada cidadão cumpre rigidamente o seu papel: os sábios pensam e governam, os guerreiros lutam e defendem, os artífices trabalham e produzem. O desvio dessa ordem gera injustiça. Daí um Estado forte, com divisão social do trabalho rígida e direitos individuais subordinados ao interesse social e político.</p>
       <h3>Justiça não é dar o mal</h3>
-      <p>Platão rejeita a moral pragmática segundo a qual se deve fazer bem aos amigos e mal aos inimigos. Prejudicar alguém piora o indivíduo e retira-lhe a perfeição; como a justiça é virtude que aperfeiçoa moralmente, ela jamais pode produzir o mal. Os slides marcam esse ponto como "questão de concurso".</p>
+      <p>Platão rejeita a moral pragmática segundo a qual se deve fazer bem aos amigos e mal aos inimigos. Prejudicar alguém piora o indivíduo e retira-lhe a perfeição; como a justiça é virtude que aperfeiçoa moralmente, ela jamais pode produzir o mal. É um ponto que costuma cair em concursos.</p>
       <h3>As Leis</h3>
       <p>Na obra da maturidade, <em>As Leis</em>, a lei escrita aparece como sinal de progresso e noção primitiva de Estado de Direito; ali predominam as leis, ao contrário da <em>República</em>, em que governam os guardiães.</p>
       <h3>Cuidado com quem fala</h3>
       <p>O livro de apoio adverte que nem tudo o que aparece nos diálogos é a posição de Platão. O mito de Giges (<em>República</em>, livro II) é uma exposição de Glauco dentro da dialética; o mito de Prometeu, no <em>Protágoras</em>, representa a posição de Protágoras. Na <em>República</em> I, Platão contesta Trasímaco e considera a justiça natural (<em>katà physin</em>), não mera convenção.</p>
-      <p>Sobre as datas, as aulas dão 427-348 a.C. e os livros de apoio trazem 428-347 e 427-347. Seguindo o critério das aulas, este resumo usa 427-348.</p>
+      <p>Sobre as datas, o material da disciplina dá 427-348 a.C. e os livros de apoio trazem 428-347 e 427-347. Seguindo o material da disciplina, este resumo usa 427-348.</p>
     `,
     resumo: [
       'Justiça como harmonia: sábios governam, guerreiros defendem, artífices produzem, sem desvio de funções.',
@@ -142,7 +142,7 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 6,
     titulo: 'Aristóteles: justo meio, tipos de justiça e equidade',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga (introdução e fixação); NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Aristóteles).',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Aristóteles).',
     corpoHtml: `
       <p>Aristóteles (384-322 a.C.) vê o homem como <strong>animal político</strong> (<em>zóon politikón</em>): ninguém existe de forma independente. A justiça resolve a dependência mútua e a escassez de recursos, como riquezas, alimentos e cargos. A virtude, inclusive a justiça, é o <strong>justo meio</strong> (<em>mesótes</em>), sem excesso nem falta; por buscar equilíbrio, a justiça liga-se à igualdade.</p>
       <h3>Dois sentidos de justiça</h3>
@@ -192,21 +192,21 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 7,
     titulo: 'Estoicismo, direito romano e Cícero',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, caps. 1 e 2.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, caps. 1 e 2.',
     corpoHtml: `
-      <p>Os romanos têm natureza prática: absorveram fontes dos povos conquistados e as adaptaram. Os slides citam Guido Fassò para dizer que a ciência jurídica é criação romana, num direito sistematizado, funcional e amplo.</p>
+      <p>Os romanos têm natureza prática: absorveram fontes dos povos conquistados e as adaptaram. Guido Fassò é citado para dizer que a ciência jurídica é criação romana, num direito sistematizado, funcional e amplo.</p>
       <h3>Estoicismo</h3>
       <p>Segundo Wolkmer, o estoicismo, fundado por Zenão, defende a vida segundo a natureza e uma lei natural universal e suprema, emanada da razão e inspiradora das leis positivas. A ideia passa ao pensamento romano e chega à teologia moral cristã.</p>
       <h3>Cícero (106-43 a.C.)</h3>
-      <p>Cícero incorporou platonismo, aristotelismo e estoicismo e é apresentado como o primeiro "autêntico" filósofo do Direito. Sua filosofia jurídica marca um momento inicial na construção da teoria do Direito Natural. Em <em>Sobre as Leis</em>, ele busca a origem do direito na própria natureza, não nas opiniões dos homens nem só nas leis escritas. A máxima que os slides lhe atribuem é <em>Natura juris ab homines repetenda est natura</em>: a essência do Direito deve ser buscada na essência humana.</p>
+      <p>Cícero incorporou platonismo, aristotelismo e estoicismo e é apresentado como o primeiro "autêntico" filósofo do Direito. Sua filosofia jurídica marca um momento inicial na construção da teoria do Direito Natural. Em <em>Sobre as Leis</em>, ele busca a origem do direito na própria natureza, não nas opiniões dos homens nem só nas leis escritas. A máxima que lhe é atribuída é <em>Natura juris ab homines repetenda est natura</em>: a essência do Direito deve ser buscada na essência humana.</p>
       <h3>Direito natural e direito positivo</h3>
       <ul>
         <li><strong>Direito natural</strong> (<em>ius naturale</em>): fundado na razão universal, vale para todos os povos, sem limites.</li>
         <li><strong>Direito positivo</strong> (<em>ius civile</em>): fundado na vontade do povo, próprio de um povo determinado, com limites. O exemplo dado é o das leis positivas de Creonte.</li>
       </ul>
       <h3>Ius civile, ius gentium e ius naturale</h3>
-      <p>A tripartição usada nas aulas e no relatório de sistematização é: <em>ius civile</em>, próprio do povo romano; <em>ius gentium</em>, comum a todos os povos; <em>ius naturale</em>, os princípios ditados pela razão natural. O Digesto de Justiniano registra essa diferenciação entre normas positivas locais, direito universal entre os povos e leis derivadas da natureza.</p>
-      <p><strong>Uma divergência de fontes e a escolha feita aqui.</strong> O Manual de Humanística registra que Bobbio aproxima o <em>ius gentium</em> do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo, e diz que é conceito romano, não grego. Como a classificação é discutida na doutrina, este resumo mantém a tripartição das aulas, que é a que as questões de fixação seguem, e retém o essencial: as três categorias não se equivalem. O direito da cidade de Roma não se confunde com a razão universal comum a todos os viventes.</p>
+      <p>A tripartição usada no material da disciplina e no relatório de sistematização é: <em>ius civile</em>, próprio do povo romano; <em>ius gentium</em>, comum a todos os povos; <em>ius naturale</em>, os princípios ditados pela razão natural. O Digesto de Justiniano registra essa diferenciação entre normas positivas locais, direito universal entre os povos e leis derivadas da natureza.</p>
+      <p><strong>Uma divergência de fontes e a escolha feita aqui.</strong> O Manual de Humanística registra que Bobbio aproxima o <em>ius gentium</em> do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo, e diz que é conceito romano, não grego. Como a classificação é discutida na doutrina, este resumo mantém a tripartição do material da disciplina, que é a que as questões de fixação seguem, e retém o essencial: as três categorias não se equivalem. O direito da cidade de Roma não se confunde com a razão universal comum a todos os viventes.</p>
       <p>Sobre o Digesto, Wolkmer lembra que reúne extratos de 39 jurisconsultos (entre eles Ulpiano, Paulo, Papiniano e Gaio) e traz a definição de justiça de Ulpiano, "vontade constante e perpétua de dar a cada um o seu direito", e os preceitos <em>honeste vivere</em>, <em>alterum non laedere</em> e <em>suum cuique tribuere</em>.</p>
     `,
     resumo: [
@@ -223,12 +223,12 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 8,
     titulo: 'Idade Média: organicismo cristão e Santo Agostinho',
     fonte:
-      'Slides da aula de Filosofia Jurídica na Idade Média; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
     corpoHtml: `
-      <p>A Idade Média (séculos IV a XIV, nas aulas) é marcada ideologicamente pelo cristianismo. O indivíduo é visto como membro de uma coletividade, uma grande comunidade cristã, perfeita por ser determinada por Deus, com papéis sociais definidos e imutáveis: o <strong>organicismo cristão</strong>. Prega-se o amor ao próximo, mas a finalidade última é o amor a Deus, e a sociedade é um "corpo místico". Wolkmer acrescenta que, ao contrário da Antiguidade, que valorizava o homem por posses e feitos e excluía pobres, mulheres e escravos, o cristianismo reconhece o homem como unidade de matéria e espírito.</p>
+      <p>A Idade Média (séculos IV a XIV) é marcada ideologicamente pelo cristianismo. O indivíduo é visto como membro de uma coletividade, uma grande comunidade cristã, perfeita por ser determinada por Deus, com papéis sociais definidos e imutáveis: o <strong>organicismo cristão</strong>. Prega-se o amor ao próximo, mas a finalidade última é o amor a Deus, e a sociedade é um "corpo místico". Wolkmer acrescenta que, ao contrário da Antiguidade, que valorizava o homem por posses e feitos e excluía pobres, mulheres e escravos, o cristianismo reconhece o homem como unidade de matéria e espírito.</p>
       <h3>Santo Agostinho (354-430)</h3>
       <p>Para Agostinho, a inserção do indivíduo no grupo é essencial: só na coletividade dos fiéis, a Igreja, está o caminho da salvação. Ele retoma o dualismo platônico e distingue duas leis: a de Deus, perfeita e acabada, e a dos homens, imperfeita e cheia de vícios. No choque, prevalece a lei de Deus, o que se chama de <strong>jusnaturalismo teológico</strong>. As obras lembradas são as <em>Confissões</em> e <em>A Cidade de Deus</em>, que opõe a Cidade de Deus (perfeita, de lei ideal e imutável) à Cidade dos Homens (imperfeita).</p>
-      <p>Wolkmer acrescenta que Agostinho harmoniza o cristianismo com as ideias de lei eterna, natural e humana: a lei eterna expressa a razão e a vontade de Deus e fundamenta as leis humanas, e a lei natural é a participação da criatura racional na ordem divina. Uma nota de fonte: o livro de Marcondes e Struchiner não traz texto de Agostinho, então aqui só se resume o que as aulas e Wolkmer dizem dele.</p>
+      <p>Wolkmer acrescenta que Agostinho harmoniza o cristianismo com as ideias de lei eterna, natural e humana: a lei eterna expressa a razão e a vontade de Deus e fundamenta as leis humanas, e a lei natural é a participação da criatura racional na ordem divina. Uma nota de fonte: o livro de Marcondes e Struchiner não traz texto de Agostinho, então aqui só se resume o que o material da disciplina e Wolkmer dizem dele.</p>
     `,
     resumo: [
       'Organicismo cristão: sociedade como corpo místico, papéis definidos, fim último em Deus.',
@@ -243,15 +243,15 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 9,
     titulo: 'Tomás de Aquino: a síntese entre Aristóteles e o cristianismo, e as leis',
     fonte:
-      'Slides da aula de Filosofia Jurídica na Idade Média; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Tomás de Aquino, Suma Teológica); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito (Tomás de Aquino, Suma Teológica); WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
     corpoHtml: `
-      <p>Tomás de Aquino (1225-1274, datas das aulas; o livro de Marcondes e Struchiner traz 1224 para o nascimento) é o autor da <em>Suma Teológica</em> e responsável pela grande síntese entre Aristóteles, "o Filósofo", e o cristianismo. Ele não rompe com a tipologia aristotélica de justiça: retoma a divisão em comutativa (trocas entre particulares, igualdade aritmética) e distributiva (honras, cargos e encargos, igualdade proporcional por mérito) e a integra à moral cristã do amor ao próximo e à virtude da caridade. Razão e fé: filosofia e intelecto a serviço da fé revelada.</p>
+      <p>Tomás de Aquino (1225-1274; o livro de Marcondes e Struchiner traz 1224 para o nascimento) é o autor da <em>Suma Teológica</em> e responsável pela grande síntese entre Aristóteles, "o Filósofo", e o cristianismo. Ele não rompe com a tipologia aristotélica de justiça: retoma a divisão em comutativa (trocas entre particulares, igualdade aritmética) e distributiva (honras, cargos e encargos, igualdade proporcional por mérito) e a integra à moral cristã do amor ao próximo e à virtude da caridade. Razão e fé: filosofia e intelecto a serviço da fé revelada.</p>
       <h3>As leis em Tomás</h3>
       <ul>
         <li><strong>Lei eterna</strong>: a lei de Deus, fundamento de todas as demais.</li>
         <li><strong>Lei natural</strong>: a participação da criatura racional na lei eterna, alcançável pela razão. Obriga, por exemplo, a conservar a vida, gerar e educar os filhos e buscar a verdade.</li>
         <li><strong>Lei humana</strong>: a lei posta, positiva, estabelecida pelos homens com base na lei natural e voltada à utilidade comum.</li>
-        <li><strong>Lei divina</strong>: a que vem das Escrituras. Os slides destacam as três primeiras; Wolkmer, ao expor as questões 90 a 97 da <em>Suma</em>, acrescenta a divina, completando as quatro.</li>
+        <li><strong>Lei divina</strong>: a que vem das Escrituras. O material da disciplina destaca as três primeiras; Wolkmer, ao expor as questões 90 a 97 da <em>Suma</em>, acrescenta a divina, completando as quatro.</li>
       </ul>
       <p>A lei natural não se confunde com os decretos do soberano temporal: estes pertencem à lei humana. E a lei natural é a mesma para todos nos princípios gerais; as conclusões de detalhe valem na maioria dos casos, com exceções (o exemplo da <em>Suma</em>, q. 94, art. 4, é devolver o que foi emprestado, que em um caso particular pode ser danoso).</p>
       <h3>Lei humana contra lei natural: duas leituras na bibliografia</h3>
@@ -276,34 +276,34 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 10,
     titulo: 'Estado e Igreja, e o contraponto de Escoto e Ockham',
     fonte:
-      'Slides da aula de Filosofia Jurídica na Idade Média; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; WOLKMER, Síntese de uma história das idéias jurídicas, cap. 2.',
     corpoHtml: `
       <h3>Estado e Igreja em Tomás</h3>
-      <p>Nos slides, há uma hierarquia dos fins: os fins últimos e superiores, ligados à transcendência, são ditados pela Igreja; os fins terrenos (subsistência, conforto) cabem ao Estado, que permanece subordinado à Igreja. O Manual de Humanística apresenta um quadro mais brando: Aquino via separação entre Igreja e Estado, com subordinação apenas entre a ordem natural e a sobrenatural.</p>
-      <p><strong>Escolha feita aqui:</strong> para estudo, guarde a versão dos slides, em que o Estado fica subordinado à Igreja quanto aos fins últimos; a nuance do Manual serve de leitura complementar, porque as duas descrições cabem se a "subordinação" for entendida como a dos fins terrenos aos fins últimos, e não como fusão dos poderes.</p>
+      <p>Há uma hierarquia dos fins: os fins últimos e superiores, ligados à transcendência, são ditados pela Igreja; os fins terrenos (subsistência, conforto) cabem ao Estado, que permanece subordinado à Igreja. O Manual de Humanística apresenta um quadro mais brando: Aquino via separação entre Igreja e Estado, com subordinação apenas entre a ordem natural e a sobrenatural.</p>
+      <p><strong>Escolha feita aqui:</strong> para estudo, guarde a versão da hierarquia dos fins, em que o Estado fica subordinado à Igreja quanto aos fins últimos; a nuance do Manual serve de leitura complementar, porque as duas descrições cabem se a "subordinação" for entendida como a dos fins terrenos aos fins últimos, e não como fusão dos poderes.</p>
       <h3>Duns Escoto (1266-1308)</h3>
       <p>Contra o organicismo dominante, Escoto afirma o primado do individual sobre o geral e da liberdade sobre a ordem: Deus se revela a cada pessoa em sua individualidade.</p>
       <h3>Guilherme de Ockham (1285-1327)</h3>
       <p>Ockham separa o racional do teológico (a verdade é alcançável pelo conhecimento racional), distingue a potência divina da multiplicidade dos indivíduos e critica o universalismo da lei natural. Com isso fortalece o direito positivo e a noção de direito subjetivo, os direitos que o indivíduo tem por lhe terem sido conferidos.</p>
-      <p>Síntese das aulas: do organicismo ao indivíduo. Escoto e Ockham preparam a passagem para a filosofia moderna e para a ideia de Estado.</p>
+      <p>Síntese: do organicismo ao indivíduo. Escoto e Ockham preparam a passagem para a filosofia moderna e para a ideia de Estado.</p>
     `,
     resumo: [
-      'Slides: fins últimos ditados pela Igreja; fins terrenos com o Estado, subordinado à Igreja.',
+      'Fins últimos ditados pela Igreja; fins terrenos com o Estado, subordinado à Igreja.',
       'Manual de Humanística: separação, com subordinação só entre ordem natural e sobrenatural.',
       'Escoto: primado do individual e da liberdade sobre a ordem.',
       'Ockham: separa razão e teologia, critica o universalismo, fortalece o direito positivo e o direito subjetivo.',
       'Passagem do organicismo ao indivíduo e à modernidade.'
     ],
-    exemploHtml: `A ideia moderna de que cada pessoa tem direitos próprios, e não apenas lugar numa ordem maior, tem raízes na crítica de Ockham ao universalismo. Ele é lembrado nas aulas como um dos pontos de partida da noção de direito subjetivo.`
+    exemploHtml: `A ideia moderna de que cada pessoa tem direitos próprios, e não apenas lugar numa ordem maior, tem raízes na crítica de Ockham ao universalismo. Ele é lembrado como um dos pontos de partida da noção de direito subjetivo.`
   },
   {
     id: 'bloco-10',
     numero: 11,
     titulo: 'Quadro comparativo: Platão, Aristóteles e Tomás de Aquino',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga e na Idade Média; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito.',
     corpoHtml: `
-      <p>O quadro reúne, para cada um dos três autores, o que é justiça e de onde vem a lei, no sentido em que as aulas os apresentam.</p>
+      <p>O quadro reúne, para cada um dos três autores, o que é justiça e de onde vem a lei, no sentido em que o material da disciplina os apresenta.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>
@@ -347,9 +347,9 @@ export const resumo: readonly BlocoResumo[] = [
     numero: 12,
     titulo: 'Linha do tempo',
     fonte:
-      'Slides das aulas de Filosofia Jurídica na Idade Antiga e na Idade Média; NASCIMENTO, Manual de Humanística, cap. 2. As datas seguem as aulas; onde os livros trazem valor diferente, o bloco do autor avisa.',
+      'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2. Onde os livros trazem valor diferente, o bloco do autor avisa.',
     corpoHtml: `
-      <p>Datas dos slides, na ordem cronológica, com a ideia central de cada autor ou corrente.</p>
+      <p>Datas, na ordem cronológica, com a ideia central de cada autor ou corrente.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>
@@ -373,7 +373,7 @@ export const resumo: readonly BlocoResumo[] = [
     resumo: [
       'Idade Antiga: dramaturgia, sofistas, Sócrates, Platão, Aristóteles, Cícero.',
       'Idade Média: Agostinho, Tomás, Escoto e Ockham.',
-      'Datas das aulas; onde os livros divergem (Platão, Aquino), o bloco do autor avisa.'
+      'Onde os livros divergem (Platão, Aquino), o bloco do autor avisa.'
     ],
     exemploHtml: `Uma leitura em ordem cronológica mostra o movimento da unidade: da lei natural nascida da razão (Antiguidade), à lei natural fundada em Deus (Idade Média), até o indivíduo e o direito subjetivo (fim da Idade Média).`
   }

@@ -7,7 +7,7 @@ import type { PerguntaQuiz } from '../../../tipos';
  * inicial, o método fato/fundamento/pedido e os casos práticos de Ana e
  * Carlos e de Marina e Ricardo) e 10 de 'fundamentos' (citação dos
  * dispositivos legais que sustentam o caso de Marina e Ricardo).
- * Extraídas do material da disciplina (slides de aula, guia de estudo
+ * Extraídas do material da disciplina (conteúdo das apresentações, guia de estudo
  * sobre a petição inicial, quadro de sala e caso-modelo), com as
  * citações de artigo marcadas para o balão (ver docs/arquitetura.md,
  * seção 12.1). fonteExtra não se aplica a este conjunto (não há um
@@ -15,61 +15,61 @@ import type { PerguntaQuiz } from '../../../tipos';
  * vem sempre false.
  */
 export const quiz: readonly PerguntaQuiz[] = [
-    { id: 1, categoria: 'teoria', enunciadoHtml: `Segundo a aula sobre comunicação jurídica, qual é a diferença entre o "erro comum" e o "sucesso" do advogado ao se dirigir ao juiz?`, alternativasHtml: [
+    { id: 1, categoria: 'teoria', enunciadoHtml: `Na comunicação jurídica, qual é a diferença entre o "erro comum" e o "sucesso" do advogado ao se dirigir ao juiz?`, alternativasHtml: [
         `O erro é usar linguagem inadequada, que deixa o juiz confuso; o sucesso é adaptar a mensagem, deixando o juiz convencido.`,
         `O erro é falar pouco; o sucesso é falar o máximo possível de tempo na audiência.`,
         `O erro é citar jurisprudência; o sucesso é evitar qualquer citação de lei.`,
         `O erro é ser educado com o juiz; o sucesso é ser o mais informal possível.`
-      ], correta: 0, fonteExtra: false, explicacaoHtml: `A aula mostra que, se o juiz não entende a tese do advogado, o problema é do advogado, não do juiz: linguagem inadequada leva a um "juiz confuso", enquanto mensagem adaptada ao receptor leva a um "juiz convencido". O advogado não fala apenas para ser ouvido, fala para ser compreendido e convencido.` },
+      ], correta: 0, fonteExtra: false, explicacaoHtml: `Se o juiz não entende a tese do advogado, o problema é do advogado, não do juiz: linguagem inadequada leva a um "juiz confuso", enquanto mensagem adaptada ao receptor leva a um "juiz convencido". O advogado não fala apenas para ser ouvido, fala para ser compreendido e convencido.` },
 
-    { id: 2, categoria: 'teoria', enunciadoHtml: `A aula apresenta três níveis de linguagem: coloquial, técnica e complicada. Qual deles é apontado como o ideal para a redação jurídica?`, alternativasHtml: [
+    { id: 2, categoria: 'teoria', enunciadoHtml: `Há três níveis de linguagem: coloquial, técnica e complicada. Qual deles é apontado como o ideal para a redação jurídica?`, alternativasHtml: [
         `A linguagem coloquial, porque é a mais parecida com a fala do dia a dia do cliente.`,
         `A linguagem técnica, que usa termos próprios com precisão, sem cair no excesso da linguagem complicada.`,
         `A linguagem complicada, porque impressiona mais o juiz com seu vocabulário raro.`,
         `Não há um nível ideal: o advogado deve alternar aleatoriamente entre os três.`
       ], correta: 1, fonteExtra: false, explicacaoHtml: `O espectro apresentado vai do coloquial ("a empresa mandou o funcionário embora") até a linguagem complicada e cheia de rodeios ("a situação fática subjacente poderá ensejar responsabilização patrimonial..."). O ideal fica no meio: a linguagem técnica, com termos próprios ("a empresa rescindiu o contrato de trabalho"), pois linguagem técnica não é sinônimo de linguagem complicada. Ela usa precisão, não enfeite.` },
 
-    { id: 3, categoria: 'teoria', enunciadoHtml: `Qual é a diferença entre oratória e retórica, segundo os "dois motores da persuasão" apresentados na aula?`, alternativasHtml: [
+    { id: 3, categoria: 'teoria', enunciadoHtml: `Qual é a diferença entre oratória e retórica, segundo os "dois motores da persuasão" ?`, alternativasHtml: [
         `Oratória é a arte de construir o argumento (a mente); retórica é a arte de falar bem (o corpo e a voz).`,
         `Oratória e retórica são exatamente a mesma coisa, apenas nomes diferentes para o mesmo conceito.`,
         `Oratória é a arte de falar bem, com foco em como o advogado fala (voz, dicção, postura); retórica é a arte de construir o argumento, com foco em como organizar a ideia para convencer.`,
         `Oratória se aplica só a audiências; retórica se aplica só a petições escritas.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A aula separa os dois motores da persuasão: a oratória cuida do COMO o advogado fala (voz, dicção, ritmo, pausas, postura, contato visual), enquanto a retórica cuida do COMO a ideia é organizada para convencer a mente do receptor. Uma afirmação fraca como "meu cliente não fez nada de errado" ganha força quando reconstruída retoricamente, apontando os elementos exigidos e por que não foram comprovados.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Os dois motores da persuasão são distintos: a oratória cuida do COMO o advogado fala (voz, dicção, ritmo, pausas, postura, contato visual), enquanto a retórica cuida do COMO a ideia é organizada para convencer a mente do receptor. Uma afirmação fraca como "meu cliente não fez nada de errado" ganha força quando reconstruída retoricamente, apontando os elementos exigidos e por que não foram comprovados.` },
 
-    { id: 4, categoria: 'teoria', enunciadoHtml: `Segundo o "gatilho da prova", apontado na aula como o mais poderoso dos gatilhos mentais da comunicação jurídica, qual é a "regra de ouro" do advogado persuasivo?`, alternativasHtml: [
+    { id: 4, categoria: 'teoria', enunciadoHtml: `Segundo o "gatilho da prova", apontado como o mais poderoso dos gatilhos mentais da comunicação jurídica, qual é a "regra de ouro" do advogado persuasivo?`, alternativasHtml: [
         `Ele diz "confie em mim", reforçando sua autoridade pessoal perante o juiz.`,
         `Ele evita qualquer menção a documentos, para não sobrecarregar a petição de detalhes.`,
         `Ele repete a mesma alegação várias vezes, para fixá-la na memória do juiz.`,
         `Ele diz "veja a prova": sai da mera afirmação e vai para a demonstração material dos fatos.`
       ], correta: 3, fonteExtra: false, explicacaoHtml: `O gatilho da prova consiste em sair da afirmação genérica para a demonstração material. Em vez de escrever apenas "a empresa sempre pagou corretamente", o advogado persuasivo escreve "os comprovantes de pagamento juntados às fls. X demonstram o pagamento integral". A regra de ouro ensinada é: o advogado persuasivo não diz "confie em mim", ele diz "veja a prova".` },
 
-    { id: 5, categoria: 'teoria', enunciadoHtml: `Um advogado está redigindo a fundamentação de uma petição e escreve apenas: "O réu não cumpriu suas obrigações." Segundo o gatilho da prova estudado em aula, o que falta a essa frase para se tornar persuasiva?`, alternativasHtml: [
+    { id: 5, categoria: 'teoria', enunciadoHtml: `Um advogado está redigindo a fundamentação de uma petição e escreve apenas: "O réu não cumpriu suas obrigações." Segundo o gatilho da prova o que falta a essa frase para se tornar persuasiva?`, alternativasHtml: [
         `Falta indicar a demonstração material do descumprimento, como o documento ou a prova concreta que sustenta a alegação.`,
         `Nada falta: a frase já está completa e pronta para convencer o juiz.`,
         `Falta trocar a palavra "réu" por um adjetivo mais forte, como "irresponsável".`,
         `Falta repetir a frase três vezes ao longo da petição, para reforçar o argumento.`
       ], correta: 0, fonteExtra: false, explicacaoHtml: `A frase apresentada é uma afirmação solta, sem apoio em prova concreta, exatamente o erro que o gatilho da prova busca corrigir. Segundo a regra de ouro estudada, o advogado persuasivo não deixa a alegação flutuando: ele a ancora em um documento, comprovante ou registro específico, transformando "o réu não cumpriu" em algo como "conforme os documentos juntados às fls. X, o réu deixou de cumprir a obrigação Y".` },
 
-    { id: 6, categoria: 'teoria', enunciadoHtml: `Segundo a "evolução de um argumento" apresentada na aula (nível coloquial, nível técnico e nível persuasivo), qual das frases abaixo representa o nível persuasivo, a "arma do advogado"?`, alternativasHtml: [
+    { id: 6, categoria: 'teoria', enunciadoHtml: `Segundo a "evolução de um argumento" (nível coloquial, nível técnico e nível persuasivo), qual das frases abaixo representa o nível persuasivo, a "arma do advogado"?`, alternativasHtml: [
         `"A empresa não fez nada que justificasse essa cobrança."`,
         `"A responsabilização da empresa não pode decorrer de mera presunção: é indispensável a demonstração dos pressupostos jurídicos que a sustentam, e, neste caso, eles não foram comprovados."`,
         `"Não estão presentes os pressupostos necessários à responsabilização da empresa."`,
         `Nenhuma das três frases anteriores atinge o nível persuasivo, pois todas são igualmente fracas.`
       ], correta: 1, fonteExtra: false, explicacaoHtml: `A frase "a empresa não fez nada que justificasse essa cobrança" é o nível coloquial, fraco por falta de técnica. A frase "não estão presentes os pressupostos necessários" é o nível técnico, correto mas passivo, sem força de convencimento. A frase que combina precisão técnica com uma explicação ativa de por que a tese deve prevalecer é o nível persuasivo. Essa é a diferença entre apenas falar Direito e efetivamente comunicar o Direito.` },
 
-    { id: 7, categoria: 'teoria', enunciadoHtml: `Na aula sobre a arquitetura da petição inicial, o princípio "fato não é desabafo" ensina que o cliente costuma contar o problema de forma emocional. Quais perguntas o advogado usa para transformar esse relato em informação juridicamente relevante?`, alternativasHtml: [
+    { id: 7, categoria: 'teoria', enunciadoHtml: `Na arquitetura da petição inicial, o princípio "fato não é desabafo" ensina que o cliente costuma contar o problema de forma emocional. Quais perguntas o advogado usa para transformar esse relato em informação juridicamente relevante?`, alternativasHtml: [
         `Apenas "quem tem razão?" e "quem deve ser punido?"`,
         `Apenas o valor que o cliente deseja receber ao final do processo.`,
         `O quê aconteceu, quando, onde, quem esteve envolvido, como e qual foi a consequência.`,
         `Nenhuma pergunta é necessária: o relato do cliente já deve ser copiado literalmente na petição.`
-      ], correta: 2, fonteExtra: false, explicacaoHtml: `A aula usa o exemplo de um cliente que diz "a empresa me humilhou, acabou com minha vida, foi completamente injusta". Para transformar esse desabafo emocional em informação juridicamente relevante, o advogado precisa perguntar o quê aconteceu, quando, onde, quem estava envolvido, como e qual foi a consequência (o dano). É esse filtro que separa a narrativa emocional dos fatos verificáveis que sustentam a petição.` },
+      ], correta: 2, fonteExtra: false, explicacaoHtml: `Um exemplo é o de um cliente que diz "a empresa me humilhou, acabou com minha vida, foi completamente injusta". Para transformar esse desabafo emocional em informação juridicamente relevante, o advogado precisa perguntar o quê aconteceu, quando, onde, quem estava envolvido, como e qual foi a consequência (o dano). É esse filtro que separa a narrativa emocional dos fatos verificáveis que sustentam a petição.` },
 
-    { id: 8, categoria: 'teoria', enunciadoHtml: `A "equação da fundamentação" apresentada em aula é [NORMA] + [FATO] + [CONEXÃO] = [ARGUMENTO JURÍDICO]. Por que apenas citar a lei ("nos termos do art. X da lei Y") não é considerado fundamentação suficiente?`, alternativasHtml: [
+    { id: 8, categoria: 'teoria', enunciadoHtml: `A "equação da fundamentação" é [NORMA] + [FATO] + [CONEXÃO] = [ARGUMENTO JURÍDICO]. Por que apenas citar a lei ("nos termos do art. X da lei Y") não é considerado fundamentação suficiente?`, alternativasHtml: [
         `Porque citar a lei é proibido em petições, devendo o advogado se basear só em doutrina.`,
         `Porque toda lei citada precisa vir acompanhada de pelo menos três julgados do mesmo tribunal.`,
         `Porque a lei muda com frequência, então citá-la é sempre um risco desnecessário.`,
         `Porque fato sem direito é apenas narrativa, e a fundamentação exige explicar por que aquele dispositivo se aplica ao caso concreto e qual é a consequência.`
-      ], correta: 3, fonteExtra: false, explicacaoHtml: `O erro comum apontado na aula é achar que apenas citar o dispositivo legal já constitui fundamentação. Na verdade, a norma sozinha, sem conexão com o fato do caso concreto, não sustenta o argumento. A solução ensinada é o advogado explicar por que aquele dispositivo se aplica àquela situação específica e qual consequência jurídica isso gera, unindo norma, fato e conexão entre eles.` },
+      ], correta: 3, fonteExtra: false, explicacaoHtml: `O erro comum é achar que apenas citar o dispositivo legal já constitui fundamentação. Na verdade, a norma sozinha, sem conexão com o fato do caso concreto, não sustenta o argumento. A solução ensinada é o advogado explicar por que aquele dispositivo se aplica àquela situação específica e qual consequência jurídica isso gera, unindo norma, fato e conexão entre eles.` },
 
     { id: 9, categoria: 'teoria', enunciadoHtml: `No caso dos exploradores de cavernas, o que Roger Whetmore propôs ao grupo preso, e o que aconteceu quando ele tentou desistir do acordo?`, alternativasHtml: [
         `Ele propôs que um deles fosse sacrificado e servisse de alimento aos demais, sugerindo um sorteio; quando tentou desistir antes do sorteio, os demais não aceitaram, pois consideravam o acordo já estabelecido.`,

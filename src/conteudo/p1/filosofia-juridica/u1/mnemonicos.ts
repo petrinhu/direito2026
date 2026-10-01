@@ -32,7 +32,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'A hierarquia vira posição no espaço (alto, meio, baixo), e a lei que não está na cadeia de derivação vira um objeto separado.',
     ressalva:
-      'Os slides destacam três leis (eterna, natural e humana); a divina entra pela exposição de Wolkmer, que completa as quatro. A escada e o livro são só apoio de memória: não constam do material.',
+      'O material da disciplina destaca três leis (eterna, natural e humana); a divina entra pela exposição de Wolkmer, que completa as quatro. A escada e o livro são só apoio de memória: não constam do material.',
     blocoResumo: 'bloco-8'
   },
   {
@@ -75,7 +75,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Cada nome em latim tem uma palavra do português dentro dele (cidade, gente, natureza), que já diz a abrangência.',
     ressalva:
-      'A classificação do ius gentium é discutida: Bobbio o aproxima do direito natural, e Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O mnemônico segue a tripartição das aulas e só ajuda a lembrar que as três categorias não se equivalem.',
+      'A classificação do ius gentium é discutida: Bobbio o aproxima do direito natural, e Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O mnemônico segue a tripartição do material da disciplina e só ajuda a lembrar que as três categorias não se equivalem.',
     blocoResumo: 'bloco-6'
   },
   {
@@ -114,7 +114,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Cada pensador fica preso a um lugar e a uma imagem, o percurso fixa a ordem, e a imagem de cada parada lembra a ideia central, não só o nome.',
     ressalva:
-      'Datas das aulas; Sófocles e os sofistas são do mesmo século. As imagens são só apoio de memória: o conteúdo vem do resumo.',
+      'Datas do material da disciplina; Sófocles e os sofistas são do mesmo século. As imagens são só apoio de memória: o conteúdo vem do resumo.',
     blocoResumo: 'bloco-11'
   },
   {
@@ -177,7 +177,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Uma frase curta com a mesma estrutura nos dois lados pesa os dois polos do conflito de uma vez, sem favorecer nenhum.',
     ressalva:
-      'É a leitura das aulas. O livro de apoio lembra que nem Creonte nem Antígona teriam razão absoluta (hybris).',
+      'É a leitura adotada pelo material da disciplina. O livro de apoio lembra que nem Creonte nem Antígona teriam razão absoluta (hybris).',
     blocoResumo: 'bloco-1'
   },
   {
@@ -222,7 +222,7 @@ export const mnemonicos: readonly Mnemonico[] = [
       }
     ],
     comoFunciona:
-      'A sigla fixa a ordem do lado bom, e a ordem do lado ruim segue a mesma sequência de letras da lista dos slides.',
+      'A sigla fixa a ordem do lado bom, e a ordem do lado ruim segue a mesma sequência de letras da lista do material da disciplina.',
     ressalva:
       'Siglas de primeira letra têm evidência de eficácia mais fraca que as imagens: use a sigla junto com o desafio de recordar, nunca no lugar dele.',
     blocoResumo: 'bloco-5'
@@ -249,7 +249,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     ],
     comoFunciona:
       'Três blocos de uma palavra cabem na memória de trabalho de uma vez, e cada bloco abre os detalhes por trás dele.',
-    ressalva: 'A síntese das aulas é a passagem do organicismo ao indivíduo.',
+    ressalva: 'A síntese é a passagem do organicismo ao indivíduo.',
     blocoResumo: 'bloco-11'
   }
 ];

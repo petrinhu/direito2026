@@ -157,3 +157,51 @@ test('360px: o layout vertical entra e o texto das cápsulas fica com pelo menos
     expect(Math.min(...tamanhos), acao).toBeGreaterThanOrEqual(11);
   }
 });
+
+test('1280px com "Abrir todos os ramos": todo nó dentro do quadro, texto >= 12px, a página rola', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  await page.locator('button.mapa-visual__todos').click();
+  await page.waitForTimeout(700);
+  await expectTodosDentro(page);
+});
+
+test('360px com os conceitos abertos: nenhuma cápsula passa da borda', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  await page.locator('button.mapa-visual__todos').click();
+  await page.locator('[data-no="mapa-platao-conceitos"]').click();
+  await page.waitForTimeout(700);
+  await expectTodosDentro(page);
+});
+
+async function expectTodosDentro(page: import('@playwright/test').Page): Promise<void> {
+  const svg = (await page.locator('.mapa-visual__svg').boundingBox())!;
+  const caixas = await page.locator('.mapa-visual__no .mapa-visual__capsula').evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { esq: r.left, dir: r.right, topo: r.top, base: r.bottom };
+    })
+  );
+  expect(caixas.length).toBeGreaterThan(10);
+  for (const c of caixas) {
+    expect(c.esq).toBeGreaterThanOrEqual(svg.x - 1);
+    expect(c.dir).toBeLessThanOrEqual(svg.x + svg.width + 1);
+    expect(c.topo).toBeGreaterThanOrEqual(svg.y - 1);
+    expect(c.base).toBeLessThanOrEqual(svg.y + svg.height + 1);
+  }
+  const texto = await page
+    .locator('.mapa-visual__no .mapa-visual__texto')
+    .evaluateAll((els) =>
+      els.map(
+        (el) =>
+          parseFloat(getComputedStyle(el).fontSize) *
+          (el.getBoundingClientRect().height / el.getBBox().height)
+      )
+    );
+  expect(Math.min(...texto)).toBeGreaterThanOrEqual(11.5);
+}

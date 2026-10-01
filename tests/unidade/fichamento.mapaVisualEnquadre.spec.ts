@@ -312,3 +312,78 @@ describe('1280px com "Abrir todos os ramos": texto nunca abaixo de 12px', () => 
     expect(v.k * 14).toBeGreaterThanOrEqual(12 - 1e-6);
   });
 });
+
+/* ---- rodada 4: todo nó dentro do quadro, sempre ---- */
+import { montarPlano } from '@/core/fichamento/mapaVisual';
+
+function dentroDoQuadro(plano: ReturnType<typeof montarPlano>, largura: number): string[] {
+  const { vista: v, itens, altura } = plano;
+  const fora: string[] = [];
+  for (const c of itens) {
+    const esq = largura / 2 + v.x + (c.x - c.largura / 2) * v.k;
+    const dir = largura / 2 + v.x + (c.x + c.largura / 2) * v.k;
+    const topo = altura / 2 + v.y + (c.y - c.altura / 2) * v.k;
+    const base = altura / 2 + v.y + (c.y + c.altura / 2) * v.k;
+    if (esq < -0.5 || dir > largura + 0.5 || topo < -0.5 || base > altura + 0.5) fora.push(c.no.id);
+  }
+  return fora;
+}
+
+const entrada = (largura: number, altura: number) => ({
+  largura,
+  altura,
+  medir: medirTexto,
+  escalaMinima: 12 / 14
+});
+
+function comConceitos(): Set<string> {
+  const a = new Set(abertosTodosVisual(raiz));
+  for (const id of todosAbertos(raiz)) a.add(id);
+  return a;
+}
+
+describe('montarPlano: nenhum nó fora do quadro', () => {
+  it('360px com os conceitos abertos: nenhuma cápsula passa da borda, sem pan horizontal', () => {
+    const plano = montarPlano(raiz, comConceitos(), entrada(360, 520));
+    expect(plano.tipo).toBe('indentado');
+    expect(dentroDoQuadro(plano, 360)).toEqual([]);
+    expect(plano.vista.k * 14).toBeGreaterThanOrEqual(12 - 1e-6);
+  });
+
+  it('360px: texto dos conceitos quebra em linhas, sem reticências', () => {
+    const plano = montarPlano(raiz, comConceitos(), entrada(360, 520));
+    for (const i of plano.itens) {
+      expect(i.linhas.join(' ').endsWith('…'), i.no.id).toBe(false);
+    }
+  });
+
+  it('1280px com "Abrir todos os ramos": todo nó dentro do quadro e texto >= 12px', () => {
+    const plano = montarPlano(raiz, abertosTodosVisual(raiz), entrada(1280, 680));
+    expect(dentroDoQuadro(plano, 1280)).toEqual([]);
+    expect(plano.vista.k * 14).toBeGreaterThanOrEqual(12 - 1e-6);
+    expect(plano.itens).toHaveLength(1 + 2 + 12 + itensDetalhe());
+  });
+
+  it('1280px com tudo aberto, conceitos incluídos: também tudo dentro', () => {
+    const plano = montarPlano(raiz, comConceitos(), entrada(1280, 680));
+    expect(dentroDoQuadro(plano, 1280)).toEqual([]);
+  });
+
+  it('1280px no estado inicial continua radial, em dois hemisférios', () => {
+    const plano = montarPlano(raiz, abertosIniciaisVisual(raiz), entrada(1280, 680));
+    expect(plano.tipo).toBe('radial');
+    expect(dentroDoQuadro(plano, 1280)).toEqual([]);
+  });
+
+  it('as cápsulas da lista indentada não se sobrepõem', () => {
+    const plano = montarPlano(raiz, comConceitos(), entrada(360, 520));
+    const itens = plano.itens.map((p) => ({ p, m: p }));
+    expect(sobrepostos(itens as unknown as ReturnType<typeof itensReais>)).toEqual([]);
+  });
+});
+
+function itensDetalhe(): number {
+  return abertosTodosVisual(raiz).size > 0
+    ? raiz.filhos.flatMap((e) => e.filhos).reduce((s, p) => s + p.filhos.length, 0)
+    : 0;
+}

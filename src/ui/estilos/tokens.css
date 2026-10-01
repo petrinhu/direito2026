@@ -189,6 +189,21 @@
   --cor-mapa-fase-fundo: #1a3a5c;
   --cor-mapa-fase-texto: #d9e6f5;
   --cor-mapa-linha: #5f7189;
+  /* Mapa visual: seis tons de ramo (um por pensador), cada um com par de texto.
+     No claro, fundo escuro com texto claro; no escuro, o inverso. Todos >= 4,5:1
+     o texto e >= 3:1 o fundo contra a página; no adaptado, branco com texto preto. */
+  --cor-mapa-ramo-1-fundo: #163a5f;
+  --cor-mapa-ramo-1-texto: #faf9f5;
+  --cor-mapa-ramo-2-fundo: #7c621c;
+  --cor-mapa-ramo-2-texto: #ffffff;
+  --cor-mapa-ramo-3-fundo: #7a2331;
+  --cor-mapa-ramo-3-texto: #ffffff;
+  --cor-mapa-ramo-4-fundo: #3d5a80;
+  --cor-mapa-ramo-4-texto: #ffffff;
+  --cor-mapa-ramo-5-fundo: #1f5f6b;
+  --cor-mapa-ramo-5-texto: #ffffff;
+  --cor-mapa-ramo-6-fundo: #5a5442;
+  --cor-mapa-ramo-6-texto: #ffffff;
 
   /* Fio de progresso de leitura, dourado, preso na base do cabeçalho
      (ordem do líder, 22/09/2026). Mesma classe de cuidado da lateral: o
@@ -277,6 +292,18 @@
     --cor-mapa-fase-fundo: #1a3a5c;
     --cor-mapa-fase-texto: #d9e6f5;
     --cor-mapa-linha: #7fa8d6;
+    --cor-mapa-ramo-1-fundo: #7fa8d6;
+    --cor-mapa-ramo-1-texto: #0b1a2c;
+    --cor-mapa-ramo-2-fundo: #d3b563;
+    --cor-mapa-ramo-2-texto: #12161c;
+    --cor-mapa-ramo-3-fundo: #e29a9a;
+    --cor-mapa-ramo-3-texto: #12161c;
+    --cor-mapa-ramo-4-fundo: #a9c8ea;
+    --cor-mapa-ramo-4-texto: #0b1a2c;
+    --cor-mapa-ramo-5-fundo: #8fd0d6;
+    --cor-mapa-ramo-5-texto: #0b1a2c;
+    --cor-mapa-ramo-6-fundo: #c3cfdd;
+    --cor-mapa-ramo-6-texto: #12161c;
     --cor-cabecalho-progresso: #d3b563;
     --cor-hero-texto: #faf9f5;
 
@@ -347,6 +374,18 @@
   --cor-mapa-fase-fundo: #1a3a5c;
   --cor-mapa-fase-texto: #d9e6f5;
   --cor-mapa-linha: #7fa8d6;
+  --cor-mapa-ramo-1-fundo: #7fa8d6;
+  --cor-mapa-ramo-1-texto: #0b1a2c;
+  --cor-mapa-ramo-2-fundo: #d3b563;
+  --cor-mapa-ramo-2-texto: #12161c;
+  --cor-mapa-ramo-3-fundo: #e29a9a;
+  --cor-mapa-ramo-3-texto: #12161c;
+  --cor-mapa-ramo-4-fundo: #a9c8ea;
+  --cor-mapa-ramo-4-texto: #0b1a2c;
+  --cor-mapa-ramo-5-fundo: #8fd0d6;
+  --cor-mapa-ramo-5-texto: #0b1a2c;
+  --cor-mapa-ramo-6-fundo: #c3cfdd;
+  --cor-mapa-ramo-6-texto: #12161c;
   --cor-cabecalho-progresso: #d3b563;
   --cor-hero-texto: #faf9f5;
 
@@ -459,6 +498,18 @@
   --cor-mapa-fase-fundo: #ffffff;
   --cor-mapa-fase-texto: #000000;
   --cor-mapa-linha: #000000;
+  --cor-mapa-ramo-1-fundo: #ffffff;
+  --cor-mapa-ramo-1-texto: #000000;
+  --cor-mapa-ramo-2-fundo: #ffffff;
+  --cor-mapa-ramo-2-texto: #000000;
+  --cor-mapa-ramo-3-fundo: #ffffff;
+  --cor-mapa-ramo-3-texto: #000000;
+  --cor-mapa-ramo-4-fundo: #ffffff;
+  --cor-mapa-ramo-4-texto: #000000;
+  --cor-mapa-ramo-5-fundo: #ffffff;
+  --cor-mapa-ramo-5-texto: #000000;
+  --cor-mapa-ramo-6-fundo: #ffffff;
+  --cor-mapa-ramo-6-texto: #000000;
 
   --cor-cabecalho-progresso: #0d2440;
   /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:

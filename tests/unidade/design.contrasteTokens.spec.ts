@@ -246,9 +246,9 @@ describe('mapa mental, linhas e blocos duplicados', () => {
     '--cor-mapa-fase-texto',
     '--cor-mapa-linha'
   ])('%s: o escuro automático repete o escuro escolhido', (variavel) => {
-    const valores = [
-      ...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
-    ].map((m) => (m[1] as string).toLowerCase());
+    const valores = [...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))].map(
+      (m) => (m[1] as string).toLowerCase()
+    );
     // claro, escuro automático, escuro escolhido, modo adaptado.
     expect(valores, variavel).toHaveLength(4);
     expect(valores[1], variavel).toBe(valores[2]);

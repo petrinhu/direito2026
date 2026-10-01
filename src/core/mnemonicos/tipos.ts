@@ -2,13 +2,7 @@
  * Mnemônicos de uma unidade. O conteúdo factual vem sempre do resumo; o
  * mnemônico é só o apoio de memória, e a técnica usada vem declarada.
  */
-export type TecnicaMnemonica =
-  | 'associacao'
-  | 'imagem'
-  | 'frase'
-  | 'acronimo'
-  | 'loci'
-  | 'chunking';
+export type TecnicaMnemonica = 'associacao' | 'imagem' | 'frase' | 'acronimo' | 'loci' | 'chunking';
 
 export interface ItemGuardado {
   /** O que a dica faz lembrar. Ex.: 'Lei natural'. */

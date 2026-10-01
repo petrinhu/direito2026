@@ -19,16 +19,16 @@ describe('filtrarFichas', () => {
   });
 
   it('filtra por termo, sem diferenciar maiúscula nem acento', () => {
-    expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'ACUCAR' }).map((f) => f.id)).toEqual([
-      'alfa'
-    ]);
+    expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'ACUCAR' }).map((f) => f.id)).toEqual(['alfa']);
     expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'direito penal' }).map((f) => f.id)).toEqual([
       'beta'
     ]);
   });
 
   it('o termo procura também em conceitos e obras', () => {
-    expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'salgado' }).map((f) => f.id)).toEqual(['beta']);
+    expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'salgado' }).map((f) => f.id)).toEqual([
+      'beta'
+    ]);
     expect(filtrarFichas(DADOS_SINTETICOS, { termo: 'obra g' }).map((f) => f.id)).toEqual(['gama']);
   });
 

@@ -73,9 +73,9 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', abrirFichaDaAncor
   <section class="fichamento" aria-labelledby="fichamento-titulo">
     <h2 id="fichamento-titulo" class="fichamento__titulo">Fichamento</h2>
     <p class="fichamento__ajuda">
-      Uma ficha por pensador, na ordem do período histórico: ideia central, conceitos-chave,
-      citação (quando o material traz), comentário para o Direito hoje e referências. Abra uma ficha
-      pelo nome dela.
+      Uma ficha por pensador, na ordem do período histórico: ideia central, conceitos-chave, citação
+      (quando o material traz), comentário para o Direito hoje e referências. Abra uma ficha pelo
+      nome dela.
     </p>
 
     <div class="fichamento__filtros">
@@ -111,14 +111,23 @@ onBeforeUnmount(() => window.removeEventListener('hashchange', abrirFichaDaAncor
       <button type="button" class="fichamento__acao" @click="fecharTodas">
         Fechar todas as fichas
       </button>
-      <button v-if="filtroAtivo" type="button" class="fichamento__acao fichamento__limpar" @click="limparFiltros">
+      <button
+        v-if="filtroAtivo"
+        type="button"
+        class="fichamento__acao fichamento__limpar"
+        @click="limparFiltros"
+      >
         Limpar filtros
       </button>
     </div>
 
     <p role="status" class="fichamento__status">{{ resumoDoFiltro }}</p>
 
-    <nav v-if="fichasFiltradas.length > 0" aria-label="Índice das fichas" class="fichamento__indice">
+    <nav
+      v-if="fichasFiltradas.length > 0"
+      aria-label="Índice das fichas"
+      class="fichamento__indice"
+    >
       <ol>
         <li v-for="ficha in fichasFiltradas" :key="ficha.id">
           <a :href="`#ficha-${ficha.id}`">{{ ficha.nome }}</a>

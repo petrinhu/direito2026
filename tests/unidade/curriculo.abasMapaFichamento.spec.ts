@@ -20,11 +20,14 @@ describe('abas Mapa mental, Fichamento e Mnemônicos', () => {
     expect([...u1.abas]).toEqual(['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz']);
   });
 
-  it.each(['mapa', 'fichamento', 'mnemonicos'] as const)('a rota /%s resolve como encontrada', (aba) => {
-    const r = resolverRota(curriculo, `${base}/${aba}`);
-    expect(r.tipo).toBe('encontrado');
-    if (r.tipo === 'encontrado') expect(r.aba).toBe(aba);
-  });
+  it.each(['mapa', 'fichamento', 'mnemonicos'] as const)(
+    'a rota /%s resolve como encontrada',
+    (aba) => {
+      const r = resolverRota(curriculo, `${base}/${aba}`);
+      expect(r.tipo).toBe('encontrado');
+      if (r.tipo === 'encontrado') expect(r.aba).toBe(aba);
+    }
+  );
 
   it.each(['mapa', 'fichamento', 'mnemonicos'] as const)(
     'as outras cadeiras não ganham a aba %s',

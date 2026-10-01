@@ -1,6 +1,13 @@
 import type { Cadeira, ChaveAba, Curriculo, Periodo, ResolucaoRota } from './tipos';
 
-const ABAS_VALIDAS: readonly ChaveAba[] = ['resumo', 'mapa', 'fichamento', 'mnemonicos', 'peticao', 'quiz'];
+const ABAS_VALIDAS: readonly ChaveAba[] = [
+  'resumo',
+  'mapa',
+  'fichamento',
+  'mnemonicos',
+  'peticao',
+  'quiz'
+];
 
 function ehChaveAba(valor: string | undefined): valor is ChaveAba {
   return valor !== undefined && (ABAS_VALIDAS as readonly string[]).includes(valor);

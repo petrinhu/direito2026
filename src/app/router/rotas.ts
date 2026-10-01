@@ -1,7 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 /**
- * As sete rotas da seção 5 da arquitetura, separadas de `criarRouter` para
+ * As rotas da seção 5 da arquitetura (e as três abas novas de Filosofia), separadas de `criarRouter` para
  * poderem ser importadas em Node puro (scripts/verificar-colisao-rotas.sh),
  * sem precisar de `window`/`document` que `createWebHistory()` exige.
  */
@@ -32,6 +32,12 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Unidade.vue'),
     props: (route) => ({ ...route.params, aba: 'peticao' })
   },
+  ...(['mapa', 'fichamento', 'mnemonicos'] as const).map((aba): RouteRecordRaw => ({
+    path: `/p/:periodo/:cadeira/:unidade/${aba}`,
+    name: `unidade-${aba}`,
+    component: () => import('@/ui/paginas/Unidade.vue'),
+    props: (route) => ({ ...route.params, aba })
+  })),
   {
     path: '/p/:periodo/:cadeira/:unidade/quiz',
     name: 'unidade-quiz',

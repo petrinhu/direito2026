@@ -35,7 +35,11 @@ describe('FichamentoVisor: estrutura', () => {
   it('agrupa por período e fase, na ordem, com título de cada grupo', () => {
     montar();
     const titulos = wrapper!.findAll('.fichamento__grupo-titulo').map((h) => h.text());
-    expect(titulos).toEqual(['Idade Antiga, Fase um', 'Idade Antiga, Fase dois', 'Idade Média, Fase três']);
+    expect(titulos).toEqual([
+      'Idade Antiga, Fase um',
+      'Idade Antiga, Fase dois',
+      'Idade Média, Fase três'
+    ]);
   });
 
   it('o índice lista as fichas com link para a âncora', () => {
@@ -131,14 +135,18 @@ describe('FichamentoVisor: filtro', () => {
   it('filtra por fase', async () => {
     montar();
     await wrapper!.find('select.fichamento__periodo').setValue('fase:f3');
-    expect(wrapper!.findAll('article.ficha').map((a) => a.attributes('id'))).toEqual(['ficha-gama']);
+    expect(wrapper!.findAll('article.ficha').map((a) => a.attributes('id'))).toEqual([
+      'ficha-gama'
+    ]);
     expect(wrapper!.find('[role="status"]').text()).toBe('1 ficha');
   });
 
   it('filtra por termo, sem diferenciar acento e maiúscula', async () => {
     montar();
     await wrapper!.find('input.fichamento__busca').setValue('ACUCAR');
-    expect(wrapper!.findAll('article.ficha').map((a) => a.attributes('id'))).toEqual(['ficha-alfa']);
+    expect(wrapper!.findAll('article.ficha').map((a) => a.attributes('id'))).toEqual([
+      'ficha-alfa'
+    ]);
   });
 
   it('o índice acompanha o filtro', async () => {

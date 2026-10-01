@@ -12,7 +12,7 @@ test('segunda visita às abas novas, com a rede desligada, ainda abre', async ({
 }) => {
   const base = '/p/p1/filosofia-juridica/u1';
   await page.goto(`${base}/mapa`);
-  await expect(page.locator('[role="tree"]')).toBeVisible();
+  await expect(page.locator('.mapa-visual')).toBeVisible();
   await page.waitForFunction(
     async () => Boolean((await navigator.serviceWorker?.getRegistration())?.active),
     { timeout: 15_000 }
@@ -36,7 +36,7 @@ test('segunda visita às abas novas, com a rede desligada, ainda abre', async ({
   await context.setOffline(true);
   try {
     for (const [aba, seletor] of [
-      ['mapa', '[role="tree"]'],
+      ['mapa', '.mapa-visual'],
       ['fichamento', 'article.ficha'],
       ['mnemonicos', 'article.mnemonico']
     ] as const) {

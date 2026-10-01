@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { calcularContraste } from '../../src/core/design/contraste';
 import { mapaFichamento } from '../../src/conteudo/p1/filosofia-juridica/u1/mapaFichamento';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
+import { abrirMapaEmLista } from './apoio/elementos';
 
 /**
  * Contraste MEDIDO NA PÁGINA RENDERIZADA (cor computada do texto contra o
@@ -86,7 +87,7 @@ for (const [nome, tema, adaptado] of [
 ] as const) {
   test(`mapa mental, ${nome}: texto contra o fundo real`, async ({ page }) => {
     await prepararEstadoInicial(page, { tema, modoAdaptado: adaptado });
-    await page.goto(`${BASE}/mapa`);
+    await abrirMapaEmLista(page, BASE);
     await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
     for (const seletor of ELEMENTOS_DO_MAPA) {
       const { texto, fundo } = await medir(page, seletor);
@@ -105,7 +106,7 @@ for (const [nome, tema, adaptado] of [
     page
   }) => {
     await prepararEstadoInicial(page, { tema, modoAdaptado: adaptado });
-    await page.goto(`${BASE}/mapa`);
+    await abrirMapaEmLista(page, BASE);
     const linha = await page
       .locator('#mapa-era-antiga > .no-mapa__grupo')
       .evaluate((el) => getComputedStyle(el).borderInlineStartColor);

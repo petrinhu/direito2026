@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
-import { abrirSeFechado } from './apoio/elementos';
+import { abrirMapaEmLista, abrirSeFechado } from './apoio/elementos';
 import { filtrarFichas } from '../../src/core/fichamento/filtrarFichas';
 import { mapaFichamento } from '../../src/conteudo/p1/filosofia-juridica/u1/mapaFichamento';
 
@@ -30,7 +30,7 @@ test('as abas aparecem na ordem Resumo, Mapa mental, Fichamento, Mnemônicos, Qu
 });
 
 for (const [rota, rotulo, seletor] of [
-  ['mapa', 'Mapa mental', '[role="tree"]'],
+  ['mapa', 'Mapa mental', '.mapa-visual'],
   ['fichamento', 'Fichamento', '.fichamento'],
   ['mnemonicos', 'Mnemônicos', '.mnemonicos']
 ] as const) {
@@ -58,8 +58,32 @@ test('o menu lateral leva às abas novas', async ({ page }) => {
   await expect(menu.locator(`a[href="${BASE}/mnemonicos"]`)).toHaveCount(1);
 });
 
+test('mnemônicos: "Ver o tema no Resumo" leva ao bloco certo, visível abaixo do cabeçalho', async ({
+  page
+}) => {
+  await page.goto(`${BASE}/mnemonicos`);
+  const cartao = page.locator('#mnemonico-leis-de-tomas');
+  await cartao.locator('button.mnemonico__botao').click();
+  await cartao.locator('a', { hasText: 'Ver o tema no Resumo' }).click();
+  await expect(page).toHaveURL(new RegExp(`${BASE}#bloco-8$`));
+  const bloco = page.locator('#bloco-8');
+  await expect(bloco).toBeVisible();
+  await expect
+    .poll(async () => (await bloco.boundingBox())!.y, { timeout: 10_000 })
+    .toBeGreaterThanOrEqual(0);
+  const cabecalho = await page.locator('header').first().boundingBox();
+  const topo = (await bloco.boundingBox())!.y;
+  const viewport = page.viewportSize()!.height;
+  expect(topo, 'bloco não pode ficar sob o cabeçalho fixo').toBeGreaterThanOrEqual(
+    cabecalho!.y + cabecalho!.height - 2
+  );
+  expect(topo, 'bloco tem de estar na primeira tela, não no topo da página').toBeLessThan(
+    viewport / 2
+  );
+});
+
 test('mapa: teclado completo (setas, Enter, Espaço, Home e End)', async ({ page }) => {
-  await page.goto(`${BASE}/mapa`);
+  await abrirMapaEmLista(page, BASE);
   const raiz = page.locator('#mapa-raiz');
   await raiz.focus();
   await page.keyboard.press('ArrowDown');
@@ -87,7 +111,7 @@ test('mapa: teclado completo (setas, Enter, Espaço, Home e End)', async ({ page
 });
 
 test('mapa: um só item no ciclo de Tab e o foco tem contorno visível', async ({ page }) => {
-  await page.goto(`${BASE}/mapa`);
+  await abrirMapaEmLista(page, BASE);
   await expect(page.locator('[role="treeitem"][tabindex="0"]')).toHaveCount(1);
   await page.locator('#mapa-raiz').focus();
   await page.keyboard.press('ArrowDown');
@@ -100,16 +124,16 @@ test('mapa: um só item no ciclo de Tab e o foco tem contorno visível', async (
 });
 
 test('mapa: abrir todos os ramos e fechar até as fases', async ({ page }) => {
-  await page.goto(`${BASE}/mapa`);
+  await abrirMapaEmLista(page, BASE);
   await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
   await expect(page.locator('#mapa-pensador-platao')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#mapa-platao-modo')).toBeVisible();
-  await page.getByRole('button', { name: 'Fechar até as fases' }).click();
+  await page.getByRole('button', { name: 'Recolher até as fases' }).click();
   await expect(page.locator('#mapa-platao-modo')).toBeHidden();
 });
 
 test('mapa: o atalho da ficha leva ao fichamento e abre a ficha', async ({ page }) => {
-  await page.goto(`${BASE}/mapa`);
+  await abrirMapaEmLista(page, BASE);
   await page.locator('#mapa-pensador-platao .no-mapa__corpo').first().click();
   await page.locator('#mapa-platao-ficha a').click();
   await expect(page).toHaveURL(new RegExp(`${BASE}/fichamento#ficha-platao$`));
@@ -180,7 +204,7 @@ test('mnemônicos: a resposta começa escondida e se revela pelo botão, por tec
 test('impressão: o mapa sai com todos os ramos e as fichas e respostas abertas', async ({
   page
 }) => {
-  await page.goto(`${BASE}/mapa`);
+  await abrirMapaEmLista(page, BASE);
   await page.emulateMedia({ media: 'print' });
   await expect(page.locator('#mapa-platao-modo')).toBeVisible();
   await page.goto(`${BASE}/fichamento`);

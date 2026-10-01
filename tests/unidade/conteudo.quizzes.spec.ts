@@ -29,6 +29,30 @@ const TODOS: ReadonlyArray<{
   { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 }
 ];
 
+/**
+ * O motor embaralha as alternativas a cada rodada: a explicação não pode
+ * apontar letra nem posição ("alternativa B", "a D", "acima"), só o
+ * conteúdo da resposta. Vale para as quatro cadeiras.
+ */
+// Letras de alternativa em maiúscula, por isso sem a flag i (com ela, "de a" ou
+// "o e a" seriam lidos como letras).
+const CITA_LETRA =
+  /\b(?:[Aa]lternativa|[Ll]etra|[Oo]p[çc][ãa]o)s?\s*\(?[A-E]\)?\b|\([A-E]\)|\b[Aa]s? [B-D]\b|\b[Ee] a [A-E]\b|\b[B-D] e [A-E]\b|\b[A-E] e [B-D]\b|\b(?:[Pp]rimeira|[Ss]egunda|[Tt]erceira|[Qq]uarta|[Qq]uinta|[Úú]ltima) (?:alternativa|op[çc][ãa]o)/;
+// "acima"/"abaixo" só importam na explicação, onde apontariam para a ordem das
+// respostas; no enunciado ("qual das frases abaixo") não dependem do sorteio.
+const CITA_POSICAO = /\b(acima|abaixo)\b(?! do)/i;
+
+function idsQueCitamLetra(quiz: readonly PerguntaQuiz[]): number[] {
+  return quiz
+    .filter(
+      (p) =>
+        CITA_LETRA.test(p.explicacaoHtml) ||
+        CITA_POSICAO.test(p.explicacaoHtml.replace(/acima do homem/g, '')) ||
+        CITA_LETRA.test(p.enunciadoHtml)
+    )
+    .map((p) => p.id);
+}
+
 describe.each(TODOS)('quiz de $nome', ({ quiz, alternativas }) => {
   it('ids únicos', () => {
     const ids = quiz.map((p) => p.id);
@@ -49,6 +73,10 @@ describe.each(TODOS)('quiz de $nome', ({ quiz, alternativas }) => {
       expect(p.explicacaoHtml.trim(), `id ${p.id}`).not.toBe('');
       expect(ROTULOS_CATEGORIA_QUIZ[p.categoria], `id ${p.id}`).toBeTruthy();
     }
+  });
+
+  it('nenhuma explicação ou enunciado cita letra ou posição de alternativa', () => {
+    expect(idsQueCitamLetra(quiz)).toEqual([]);
   });
 
   it('gabaritoDoCaderno, quando existe, é true (nunca false)', () => {
@@ -123,23 +151,10 @@ describe('quiz de Filosofia Jurídica, conjunto', () => {
     expect(quizFilosofia.filter((p) => 'gabaritoDoCaderno' in p)).toEqual([]);
   });
 
-  /**
-   * O motor embaralha as alternativas a cada rodada: a explicação não pode
-   * apontar letra nem posição ("alternativa B", "a D", "acima"), só o
-   * conteúdo da resposta. Sociologia Jurídica tem o mesmo padrão e ficou
-   * fora deste teste por ordem do líder.
-   */
   it('nenhuma explicação ou enunciado cita letra ou posição de alternativa', () => {
-    const letra =
-      /(alternativa|letra|op[çc][ãa]o)s?\s*\(?[A-E]\)?\b|\([A-E]\)|\b[Aa]s? [B-D]\b|\be a [A-E]\b|\b(primeira|segunda|terceira|quarta|quinta|última) (alternativa|op[çc][ãa]o)|\b(acima|abaixo)\b(?! do)/i;
-    const citam = quizFilosofia
-      .filter((p) => p.tipo !== 'verdadeiro-ou-falso')
-      .filter(
-        (p) =>
-          letra.test(p.explicacaoHtml.replace(/acima do homem/g, '')) || letra.test(p.enunciadoHtml)
-      )
-      .map((p) => p.id);
-    expect(citam).toEqual([]);
+    expect(idsQueCitamLetra(quizFilosofia.filter((p) => p.tipo !== 'verdadeiro-ou-falso'))).toEqual(
+      []
+    );
   });
 
   it('explicação preenchida e categoria com rótulo em todas', () => {

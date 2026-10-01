@@ -18,6 +18,8 @@ export interface FichaPensador {
   readonly id: string;
   /** Nome do pensador ou da corrente. Ex.: 'Platão', 'Os sofistas'. */
   readonly nome: string;
+  /** Nome curto, para a cápsula do mapa visual. Ausente: usa o nome. */
+  readonly nomeCurto?: string;
   /** Datas conforme as aulas. Ausente quando o material não as traz. */
   readonly datas?: string;
   /** Id da fase histórica a que pertence. */
@@ -78,6 +80,8 @@ export interface NoMapa {
   readonly tipo: TipoNoMapa;
   /** Rótulo curto, sempre visível. */
   readonly rotulo: string;
+  /** Versão ainda mais curta, para a cápsula do mapa visual. */
+  readonly rotuloCurto?: string;
   /** Texto corrido do nó folha ("modo de pensar", "para o Direito hoje"). */
   readonly detalhe?: string;
   /** Presente nos nós de pensador e no atalho 'ficha': id da ficha, para ligar ao fichamento. */

@@ -4,11 +4,11 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import type { NoMapa } from '@/core/fichamento/tipos';
 import {
   abertosIniciaisVisual,
+  ajustarVista,
   alternarTodosRamos,
   caminhoLigacao,
-  enquadrar,
   layoutRadial,
-  rotuloVisual,
+  quebrarRotulo,
   todosAbertos
 } from '@/app/fichamento';
 
@@ -21,32 +21,79 @@ const props = defineProps<{
   reduzirMovimento: boolean;
 }>();
 
-const ZOOM_MINIMO = 0.3;
+const ZOOM_MINIMO = 0.1;
 const ZOOM_MAXIMO = 3;
-const MAXIMO_DE_CARACTERES = 24;
 const NUMERO_DE_TONS = 6;
+const LARGURA_ESTREITA = 640;
+
+interface Vista {
+  x: number;
+  y: number;
+  k: number;
+}
+interface Ponto {
+  x: number;
+  y: number;
+}
 
 const abertos = ref<ReadonlySet<string>>(abertosIniciaisVisual(props.arvore));
 const selecionadoId = ref(props.arvore.id);
 const tamanho = ref({ largura: 1000, altura: 700 });
-const vista = ref({ x: 0, y: 0, k: 1 });
+const vista = ref<Vista>({ x: 0, y: 0, k: 1 });
 const svgRef = ref<SVGSVGElement>();
+const posicoes = shallowRef(new Map<string, Ponto>());
 
-const layout = computed(() => layoutRadial(props.arvore, abertos.value));
-const posicoes = shallowRef(new Map<string, { x: number; y: number }>());
+const orientacao = computed(() =>
+  tamanho.value.largura < LARGURA_ESTREITA ? ('vertical' as const) : ('horizontal' as const)
+);
+const layout = computed(() =>
+  layoutRadial(props.arvore, abertos.value, { orientacao: orientacao.value })
+);
 
 const tudoAberto = computed(() => todosAbertos(props.arvore).every((id) => abertos.value.has(id)));
 const rotuloTodos = computed(() =>
-  tudoAberto.value ? 'Recolher os ramos' : 'Abrir todos os ramos'
+  tudoAberto.value ? 'Recolher todos os ramos' : 'Abrir todos os ramos'
 );
+
+/* ---- medida do texto: largura real, não estimada por caractere ---- */
+// eslint-disable-next-line no-unused-vars
+let contexto: { font: string; measureText(s: string): { width: number } } | null | undefined;
+function medirTexto(texto: string, tamanhoFonte: number, peso: number): number {
+  if (contexto === undefined) {
+    const ehJsdom = typeof navigator !== 'undefined' && navigator.userAgent.includes('jsdom');
+    contexto = ehJsdom ? null : (document.createElement('canvas').getContext('2d') ?? null);
+  }
+  if (!contexto) return texto.length * tamanhoFonte * 0.56;
+  contexto.font = `${peso} ${tamanhoFonte}px Inter, "Inter Fallback", sans-serif`;
+  return contexto.measureText(texto).width;
+}
+
+/** Tamanho da cápsula por nível: o centro é maior, os períodos são hubs. */
+function estiloDoNivel(profundidade: number): {
+  fonte: number;
+  peso: number;
+  maxTexto: number;
+  minAltura: number;
+} {
+  if (profundidade === 0) return { fonte: 18, peso: 800, maxTexto: 170, minAltura: 60 };
+  if (profundidade === 1) return { fonte: 16, peso: 800, maxTexto: 150, minAltura: 44 };
+  return { fonte: 14, peso: 700, maxTexto: 160, minAltura: 32 };
+}
 
 const itens = computed(() =>
   layout.value.map((p) => {
-    const rotulo = rotuloVisual(p.no, MAXIMO_DE_CARACTERES);
+    const e = estiloDoNivel(p.profundidade);
+    const texto = p.no.rotuloCurto ?? p.no.rotulo;
+    const linhas = quebrarRotulo(texto, e.maxTexto, (s) => medirTexto(s, e.fonte, e.peso));
+    const larguraTexto = Math.max(...linhas.map((l) => medirTexto(l, e.fonte, e.peso)));
+    const alturaLinha = e.fonte * 1.25;
     return {
       ...p,
-      rotulo,
-      largura: Math.round(rotulo.length * 7.6 + 30),
+      linhas,
+      fonte: e.fonte,
+      alturaLinha,
+      largura: Math.ceil(larguraTexto + (p.profundidade <= 1 ? 40 : 30)),
+      altura: Math.max(e.minAltura, Math.ceil(linhas.length * alturaLinha + 16)),
       tom: (p.ramo % NUMERO_DE_TONS) + 1,
       aberto: abertos.value.has(p.no.id),
       expansivel: p.no.filhos.length > 0
@@ -54,13 +101,22 @@ const itens = computed(() =>
   })
 );
 
+function espessura(profundidade: number): number {
+  return profundidade <= 1 ? 9 : profundidade === 2 ? 6 : profundidade === 3 ? 3.5 : 2.5;
+}
+
 const ligacoes = computed(() =>
   itens.value
     .filter((i) => i.paiId)
     .map((i) => {
       const pai = posicoes.value.get(i.paiId!) ?? { x: 0, y: 0 };
       const filho = posicoes.value.get(i.no.id) ?? { x: i.x, y: i.y };
-      return { id: i.no.id, tom: i.tom, raiz: i.profundidade === 1, d: caminhoLigacao(pai, filho) };
+      return {
+        id: i.no.id,
+        tom: i.tom,
+        grossura: espessura(i.profundidade),
+        d: caminhoLigacao(pai, filho)
+      };
     })
 );
 
@@ -88,43 +144,52 @@ const transformacao = computed(
     `translate(${tamanho.value.largura / 2 + vista.value.x} ${tamanho.value.altura / 2 + vista.value.y}) scale(${vista.value.k})`
 );
 
-/* ---- animação das posições (nasce do pai, desliza até o lugar) ---- */
+/* ---- enquadramento total e animação (posições e vista juntas) ---- */
+function vistaDeEnquadramento(): Vista {
+  return ajustarVista(itens.value, tamanho.value.largura, tamanho.value.altura, 12);
+}
+
 let quadro = 0;
-function animarPara(alvos: typeof layout.value): void {
+function animarPara(animar: boolean, nova: Vista): void {
   cancelAnimationFrame(quadro);
-  const destino = new Map(alvos.map((p) => [p.no.id, { x: p.x, y: p.y }]));
-  const atual = posicoes.value;
-  if (props.reduzirMovimento || typeof requestAnimationFrame !== 'function') {
+  const destino = new Map<string, Ponto>(layout.value.map((p) => [p.no.id, { x: p.x, y: p.y }]));
+  if (!animar || props.reduzirMovimento || typeof requestAnimationFrame !== 'function') {
     posicoes.value = destino;
+    vista.value = nova;
     return;
   }
-  const origem = new Map<string, { x: number; y: number }>();
-  for (const p of alvos) {
-    origem.set(
-      p.no.id,
-      atual.get(p.no.id) ??
-        (p.paiId ? (atual.get(p.paiId) ?? destino.get(p.paiId)!) : destino.get(p.no.id)!)
-    );
+  const atual = posicoes.value;
+  const origem = new Map<string, Ponto>();
+  for (const p of layout.value) {
+    const proprio = atual.get(p.no.id);
+    const doPai = p.paiId ? (atual.get(p.paiId) ?? destino.get(p.paiId)) : undefined;
+    origem.set(p.no.id, proprio ?? doPai ?? destino.get(p.no.id)!);
   }
+  const vistaOrigem = vista.value;
   const inicio = performance.now();
   const passo = (agora: number): void => {
-    const t = Math.min(1, (agora - inicio) / 420);
+    const t = Math.min(1, (agora - inicio) / 450);
     const e = 1 - (1 - t) ** 3;
-    const proximo = new Map<string, { x: number; y: number }>();
+    const proximo = new Map<string, Ponto>();
     for (const [id, fim] of destino) {
       const ini = origem.get(id)!;
       proximo.set(id, { x: ini.x + (fim.x - ini.x) * e, y: ini.y + (fim.y - ini.y) * e });
     }
     posicoes.value = proximo;
+    vista.value = {
+      x: vistaOrigem.x + (nova.x - vistaOrigem.x) * e,
+      y: vistaOrigem.y + (nova.y - vistaOrigem.y) * e,
+      k: vistaOrigem.k + (nova.k - vistaOrigem.k) * e
+    };
     if (t < 1) quadro = requestAnimationFrame(passo);
   };
   quadro = requestAnimationFrame(passo);
 }
 
-function aplicarAbertos(novo: ReadonlySet<string>, reenquadrar = false): void {
+function aplicarAbertos(novo: ReadonlySet<string>): void {
   abertos.value = novo;
-  animarPara(layout.value);
-  if (reenquadrar) centralizar();
+  // Depois de abrir ou fechar, o conjunto inteiro volta a caber na janela.
+  animarPara(true, vistaDeEnquadramento());
 }
 
 function alternarNo(id: string): void {
@@ -144,7 +209,7 @@ function aoTeclar(evento: KeyboardEvent, id: string): void {
 }
 
 function alternarTodos(): void {
-  aplicarAbertos(alternarTodosRamos(props.arvore, abertos.value), true);
+  aplicarAbertos(alternarTodosRamos(props.arvore, abertos.value));
 }
 
 /* ---- zoom e arrastar ---- */
@@ -153,6 +218,7 @@ function limitar(k: number): number {
 }
 
 function zoomPara(novoK: number, ancoraX = 0, ancoraY = 0): void {
+  cancelAnimationFrame(quadro);
   const k = limitar(novoK);
   const razao = k / vista.value.k;
   vista.value = {
@@ -169,12 +235,8 @@ function afastar(): void {
   zoomPara(vista.value.k / 1.25);
 }
 
-function kInicial(): number {
-  return Math.max(enquadrar(layout.value, tamanho.value.largura, tamanho.value.altura), 0.6);
-}
-
 function centralizar(): void {
-  vista.value = { x: 0, y: 0, k: Math.min(kInicial(), 1.2) };
+  animarPara(true, vistaDeEnquadramento());
 }
 
 function aoRolar(evento: WheelEvent): void {
@@ -184,11 +246,12 @@ function aoRolar(evento: WheelEvent): void {
   zoomPara(vista.value.k * (evento.deltaY < 0 ? 1.12 : 1 / 1.12), ax, ay);
 }
 
-const ponteiros = new Map<number, { x: number; y: number }>();
+const ponteiros = new Map<number, Ponto>();
 let distanciaAnterior = 0;
 
 function aoPressionar(evento: PointerEvent): void {
   if ((evento.target as Element).closest?.('.mapa-visual__no')) return;
+  cancelAnimationFrame(quadro);
   ponteiros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
   svgRef.value?.setPointerCapture?.(evento.pointerId);
   distanciaAnterior = 0;
@@ -206,7 +269,7 @@ function aoMover(evento: PointerEvent): void {
       y: vista.value.y + atual.y - anterior.y
     };
   } else if (ponteiros.size === 2) {
-    const [a, b] = [...ponteiros.values()] as [{ x: number; y: number }, { x: number; y: number }];
+    const [a, b] = [...ponteiros.values()] as [Ponto, Ponto];
     const distancia = Math.hypot(a.x - b.x, a.y - b.y);
     if (distanciaAnterior > 0) zoomPara(vista.value.k * (distancia / distanciaAnterior));
     distanciaAnterior = distancia;
@@ -225,24 +288,39 @@ function medir(): void {
   }
 }
 
-function aoRedimensionar(): void {
+/** Ao montar e ao redimensionar: mede, reposiciona e enquadra tudo, sem animação. */
+function reenquadrarSemAnimar(): void {
   medir();
+  animarPara(false, vistaDeEnquadramento());
 }
 
 onMounted(() => {
-  medir();
-  posicoes.value = new Map(layout.value.map((p) => [p.no.id, { x: p.x, y: p.y }]));
-  centralizar();
-  window.addEventListener('resize', aoRedimensionar);
+  reenquadrarSemAnimar();
+  window.addEventListener('resize', reenquadrarSemAnimar);
 });
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(quadro);
-  window.removeEventListener('resize', aoRedimensionar);
+  window.removeEventListener('resize', reenquadrarSemAnimar);
 });
 
-function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y: number } {
+function posicaoDe(id: string, padrao: Ponto): Ponto {
   return posicoes.value.get(id) ?? padrao;
+}
+
+function estiloDoNo(item: { profundidade: number; tom: number }): Record<string, string> {
+  if (item.profundidade === 0) {
+    return {
+      '--fundo': 'var(--cor-mapa-centro-fundo)',
+      '--texto': 'var(--cor-mapa-centro-texto)',
+      '--contorno': 'var(--cor-mapa-centro-contorno)'
+    };
+  }
+  return {
+    '--fundo': `var(--cor-mapa-ramo-${item.tom}-fundo)`,
+    '--texto': `var(--cor-mapa-ramo-${item.tom}-texto)`,
+    '--contorno': 'var(--cor-fundo-elevado)'
+  };
 }
 </script>
 
@@ -286,7 +364,10 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
           :key="ligacao.id"
           class="mapa-visual__ligacao"
           :d="ligacao.d"
-          :style="{ '--tom': `var(--cor-mapa-ramo-${ligacao.tom}-fundo)` }"
+          :style="{
+            '--tom': `var(--cor-mapa-ramo-${ligacao.tom}-fundo)`,
+            '--grossura': ligacao.grossura
+          }"
         />
         <g
           v-for="item in itens"
@@ -302,26 +383,33 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
           :aria-expanded="item.expansivel ? (item.aberto ? 'true' : 'false') : undefined"
           :aria-label="`${NOMES_DO_NIVEL[item.no.tipo] ?? ''}: ${item.no.rotuloCurto ?? item.no.rotulo}`"
           :transform="`translate(${posicaoDe(item.no.id, item).x} ${posicaoDe(item.no.id, item).y})`"
-          :style="
-            item.profundidade === 0
-              ? { '--fundo': 'var(--cor-mapa-era-fundo)', '--texto': 'var(--cor-mapa-era-texto)' }
-              : {
-                  '--fundo': `var(--cor-mapa-ramo-${item.tom}-fundo)`,
-                  '--texto': `var(--cor-mapa-ramo-${item.tom}-texto)`
-                }
-          "
+          :style="estiloDoNo(item)"
           @click.stop="alternarNo(item.no.id)"
           @keydown="aoTeclar($event, item.no.id)"
         >
           <rect
             class="mapa-visual__capsula"
             :x="-item.largura / 2"
-            y="-15"
+            :y="-item.altura / 2"
             :width="item.largura"
-            height="30"
-            rx="15"
+            :height="item.altura"
+            :rx="Math.min(item.altura / 2, 28)"
           />
-          <text class="mapa-visual__texto" text-anchor="middle" dy="0.35em">{{ item.rotulo }}</text>
+          <text
+            class="mapa-visual__texto"
+            text-anchor="middle"
+            :style="{ fontSize: `${item.fonte}px` }"
+          >
+            <tspan
+              v-for="(linha, indice) in item.linhas"
+              :key="indice"
+              x="0"
+              :y="(indice - (item.linhas.length - 1) / 2) * item.alturaLinha"
+              dy="0.35em"
+            >
+              {{ linha }}
+            </tspan>
+          </text>
           <circle
             v-if="item.expansivel"
             class="mapa-visual__marca"
@@ -405,7 +493,7 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
 .mapa-visual__ligacao {
   fill: none;
   stroke: var(--tom);
-  stroke-width: 3.5;
+  stroke-width: calc(var(--grossura) * 1px);
   stroke-linecap: round;
   opacity: 0.85;
 }
@@ -417,7 +505,7 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
 
 .mapa-visual__capsula {
   fill: var(--fundo);
-  stroke: var(--cor-fundo-elevado, #fff);
+  stroke: var(--contorno);
   stroke-width: 2;
   filter: drop-shadow(0 2px 3px rgba(13, 36, 64, 0.25));
   transition: stroke-width var(--transicao-rapida, 150ms ease);
@@ -426,13 +514,12 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
 .mapa-visual__texto {
   fill: var(--texto);
   font-family: var(--fonte-texto, sans-serif);
-  font-size: 14px;
   font-weight: 700;
   pointer-events: none;
 }
 
-.mapa-visual__no--raiz .mapa-visual__texto {
-  font-size: 16px;
+.mapa-visual__no--raiz .mapa-visual__capsula {
+  stroke-width: 3.5;
 }
 
 .mapa-visual__marca {
@@ -507,5 +594,22 @@ function posicaoDe(id: string, padrao: { x: number; y: number }): { x: number; y
   .mapa-visual__svg {
     height: 640px;
   }
+}
+
+:root[data-modo-adaptado='on'] .mapa-visual__botao,
+:root[data-modo-adaptado='on'] .mapa-visual__titulo,
+:root[data-modo-adaptado='on'] .mapa-visual__nivel,
+:root[data-modo-adaptado='on'] .mapa-visual__ajuda {
+  color: #000000;
+}
+
+:root[data-modo-adaptado='on'] .mapa-visual__detalhe,
+:root[data-modo-adaptado='on'] .mapa-visual__no--selecionado .mapa-visual__capsula {
+  border-color: #000000;
+  stroke: #000000;
+}
+
+:root[data-modo-adaptado='on'] .mapa-visual__svg {
+  background: #ffffff;
 }
 </style>

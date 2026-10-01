@@ -101,4 +101,8 @@ function alternarModo(): void {
   outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
   outline-offset: var(--foco-deslocamento, 2px);
 }
+
+:root[data-modo-adaptado='on'] .mapa-mental__modo {
+  color: #000000;
+}
 </style>

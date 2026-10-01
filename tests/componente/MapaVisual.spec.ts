@@ -88,7 +88,7 @@ describe('MapaVisual', () => {
     expect(alternar().text()).toBe('Abrir todos os ramos');
     expect(alternar().attributes('aria-expanded')).toBe('false');
     await alternar().trigger('click');
-    expect(alternar().text()).toBe('Recolher os ramos');
+    expect(alternar().text()).toBe('Recolher todos os ramos');
     expect(alternar().attributes('aria-expanded')).toBe('true');
     expect(no('mapa-alfa-conceito-0').exists()).toBe(true);
     await alternar().trigger('click');
@@ -121,7 +121,7 @@ describe('MapaVisual', () => {
     for (let i = 0; i < 30; i++) await botao(/Aproximar/).trigger('click');
     expect(escala()).toBeLessThanOrEqual(3);
     for (let i = 0; i < 60; i++) await botao(/Afastar/).trigger('click');
-    expect(escala()).toBeGreaterThanOrEqual(0.3);
+    expect(escala()).toBeGreaterThanOrEqual(0.1);
   });
 
   it('a roda do mouse aproxima', async () => {

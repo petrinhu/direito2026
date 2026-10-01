@@ -85,7 +85,7 @@ function alternarTodos(): void {
         :aria-expanded="tudoAberto ? 'true' : 'false'"
         @click="alternarTodos"
       >
-        {{ tudoAberto ? 'Recolher até as fases' : 'Abrir todos os ramos' }}
+        {{ tudoAberto ? 'Recolher todos os ramos' : 'Abrir todos os ramos' }}
       </button>
     </div>
     <div class="mapa-mental__area">
@@ -174,5 +174,9 @@ function alternarTodos(): void {
   .mapa-mental-lista :deep([role='group']) {
     display: block !important;
   }
+}
+
+:root[data-modo-adaptado='on'] .mapa-mental__acao {
+  color: #000000;
 }
 </style>

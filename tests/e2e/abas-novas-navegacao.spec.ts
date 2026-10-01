@@ -128,7 +128,7 @@ test('mapa: abrir todos os ramos e fechar até as fases', async ({ page }) => {
   await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
   await expect(page.locator('#mapa-pensador-platao')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#mapa-platao-modo')).toBeVisible();
-  await page.getByRole('button', { name: 'Recolher até as fases' }).click();
+  await page.getByRole('button', { name: 'Recolher todos os ramos' }).click();
   await expect(page.locator('#mapa-platao-modo')).toBeHidden();
 });
 

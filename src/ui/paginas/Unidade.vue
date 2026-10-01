@@ -207,4 +207,12 @@ const contagemBlocos = computed(() =>
   margin-inline: auto;
   padding: var(--esp-6, 2rem);
 }
+
+/* Título longo ("fichamento", "mnemônicos") não pode ser partido no meio da
+   palavra em 360px, nem no modo adaptado: o tamanho cede, a palavra fica inteira. */
+.pagina-unidade h1 {
+  overflow-wrap: break-word;
+  hyphens: manual;
+  font-size: min(var(--escala-xl, 2.5rem), 9vw);
+}
 </style>

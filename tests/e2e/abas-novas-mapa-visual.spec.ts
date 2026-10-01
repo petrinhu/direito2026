@@ -194,14 +194,12 @@ async function expectTodosDentro(page: import('@playwright/test').Page): Promise
     expect(c.topo).toBeGreaterThanOrEqual(svg.y - 1);
     expect(c.base).toBeLessThanOrEqual(svg.y + svg.height + 1);
   }
-  const texto = await page
+  const escala = await page
+    .locator('.mapa-visual__mundo')
+    .evaluate((el) => Number(/scale\(([\d.]+)\)/.exec(el.getAttribute('transform') ?? '')![1]));
+  const fontes = await page
     .locator('.mapa-visual__no .mapa-visual__texto')
-    .evaluateAll((els) =>
-      els.map(
-        (el) =>
-          parseFloat(getComputedStyle(el).fontSize) *
-          (el.getBoundingClientRect().height / el.getBBox().height)
-      )
-    );
+    .evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
+  const texto = fontes.map((f) => f * escala);
   expect(Math.min(...texto)).toBeGreaterThanOrEqual(11.5);
 }

@@ -225,3 +225,90 @@ describe('texto legível em tela estreita (360px)', () => {
     expect(v.k).toBeCloseTo(Math.max(inteira.k, MINIMA), 6);
   });
 });
+
+/* ---- rodada 3: lista indentada em tela estreita e escala mínima em qualquer largura ---- */
+import { layoutIndentado, vistaPorLargura } from '@/core/fichamento/mapaVisual';
+
+function itensIndentados(abertos: ReadonlySet<string>) {
+  const medidas = new Map<string, ReturnType<typeof dimensionar>>();
+  const medida = (no: (typeof raiz)['filhos'][number], profundidade: number) => {
+    const m = dimensionar(no, profundidade, medirTexto);
+    medidas.set(no.id, m);
+    return m;
+  };
+  return layoutIndentado(raiz, abertos, { medida }).map((p) => ({ p, m: medidas.get(p.no.id)! }));
+}
+
+describe('layout indentado (tela estreita)', () => {
+  it('a raiz em cima, os períodos depois, cada nível recuado, sem sobreposição', () => {
+    const itens = itensIndentados(abertosTodosVisual(raiz));
+    expect(itens[0]!.p.no.id).toBe('mapa-raiz');
+    const x = (id: string) =>
+      itens.find((i) => i.p.no.id === id)!.p.x - itens.find((i) => i.p.no.id === id)!.m.largura / 2;
+    expect(x('mapa-era-antiga')).toBeGreaterThan(x('mapa-raiz'));
+    expect(x('mapa-pensador-platao')).toBeGreaterThan(x('mapa-era-antiga'));
+    const y = (id: string) => itens.find((i) => i.p.no.id === id)!.p.y;
+    expect(y('mapa-era-antiga')).toBeLessThan(y('mapa-pensador-sofocles'));
+    expect(y('mapa-pensador-ockham')).toBeGreaterThan(y('mapa-era-media'));
+    expect(sobrepostos(itens)).toEqual([]);
+  });
+
+  it('os nós têm o pai indicado e o mesmo tom por pensador', () => {
+    const itens = itensIndentados(todos());
+    const get = (id: string) => itens.find((i) => i.p.no.id === id)!.p;
+    expect(get('mapa-pensador-platao').paiId).toBe('mapa-era-antiga');
+    expect(get('mapa-platao-modo').ramo).toBe(get('mapa-pensador-platao').ramo);
+  });
+});
+
+function todos() {
+  return new Set(todosAbertos(raiz));
+}
+
+describe('360px, estado inicial: todos os pensadores dentro do quadro e legíveis', () => {
+  it('enquadra pela largura, a altura cresce, e nenhum nó fica fora', () => {
+    const itens = itensIndentados(abertosIniciaisVisual(raiz));
+    const caixas = itens.map(({ p, m }) => ({
+      x: p.x,
+      y: p.y,
+      largura: m.largura,
+      altura: m.altura
+    }));
+    const v = vistaPorLargura(caixas, 360, 8, 12 / 14);
+    expect(v.k * 14).toBeGreaterThanOrEqual(12 - 1e-6);
+    for (const c of caixas) {
+      const esq = 360 / 2 + v.x + (c.x - c.largura / 2) * v.k;
+      const dir = 360 / 2 + v.x + (c.x + c.largura / 2) * v.k;
+      const topo = v.altura / 2 + v.y + (c.y - c.altura / 2) * v.k;
+      const base = v.altura / 2 + v.y + (c.y + c.altura / 2) * v.k;
+      expect(esq).toBeGreaterThanOrEqual(-0.5);
+      expect(dir).toBeLessThanOrEqual(360.5);
+      expect(topo).toBeGreaterThanOrEqual(-0.5);
+      expect(base).toBeLessThanOrEqual(v.altura + 0.5);
+    }
+    expect(itens.filter((i) => i.p.profundidade === 2)).toHaveLength(12);
+  });
+
+  it('se a largura não couber na escala mínima, mantém 12px e alinha à esquerda (pan para o resto)', () => {
+    const caixas = [
+      { x: 0, y: 0, largura: 900, altura: 30 },
+      { x: 0, y: 60, largura: 900, altura: 30 }
+    ];
+    const v = vistaPorLargura(caixas, 360, 8, 12 / 14);
+    expect(v.k).toBeCloseTo(12 / 14, 6);
+  });
+});
+
+describe('1280px com "Abrir todos os ramos": texto nunca abaixo de 12px', () => {
+  it('a escala de enquadramento respeita o mínimo e centra no nó escolhido', () => {
+    const itens = itensReais(abertosTodosVisual(raiz), 'horizontal');
+    const caixas = itens.map(({ p, m }) => ({
+      x: p.x,
+      y: p.y,
+      largura: m.largura,
+      altura: m.altura
+    }));
+    const v = vistaLegivel(caixas, caixas.slice(0, 1), 1280, 680, 8, 12 / 14);
+    expect(v.k * 14).toBeGreaterThanOrEqual(12 - 1e-6);
+  });
+});

@@ -9,8 +9,10 @@ import {
   alternarTodosRamos,
   caminhoLigacao,
   dimensionar,
+  layoutIndentado,
   layoutRadial,
-  vistaLegivel
+  vistaLegivel,
+  vistaPorLargura
 } from '@/app/fichamento';
 
 const props = defineProps<{
@@ -42,6 +44,7 @@ interface Ponto {
 const abertos = ref<ReadonlySet<string>>(abertosIniciaisVisual(props.arvore));
 const selecionadoId = ref(props.arvore.id);
 const tamanho = ref({ largura: 1000, altura: 700 });
+const alturaSvg = ref<number | undefined>();
 const vista = ref<Vista>({ x: 0, y: 0, k: 1 });
 const svgRef = ref<SVGSVGElement>();
 const posicoes = shallowRef(new Map<string, Ponto>());
@@ -56,7 +59,10 @@ const medidas = computed(() => {
     mapa.set(no.id, m);
     return m;
   };
-  const pos = layoutRadial(props.arvore, abertos.value, { orientacao: orientacao.value, medida });
+  const pos =
+    orientacao.value === 'vertical'
+      ? layoutIndentado(props.arvore, abertos.value, { medida })
+      : layoutRadial(props.arvore, abertos.value, { orientacao: 'horizontal', medida });
   return { pos, mapa };
 });
 const layout = computed(() => medidas.value.pos);
@@ -148,6 +154,14 @@ function caixaDe(i: (typeof itens.value)[number]) {
  */
 function vistaDeEnquadramento(): Vista {
   const todos = itens.value;
+  if (orientacao.value === 'vertical') {
+    // Tela estreita: enquadra pela largura e deixa a altura crescer até caber tudo.
+    const v = vistaPorLargura(todos.map(caixaDe), tamanho.value.largura, 8, ESCALA_MINIMA_LEGIVEL);
+    alturaSvg.value = v.altura;
+    tamanho.value = { largura: tamanho.value.largura, altura: v.altura };
+    return { x: v.x, y: v.y, k: v.k };
+  }
+  alturaSvg.value = undefined;
   const ids = new Set<string>();
   let acima: string | undefined = selecionadoId.value;
   while (acima) {
@@ -165,7 +179,7 @@ function vistaDeEnquadramento(): Vista {
     tamanho.value.largura,
     tamanho.value.altura,
     12,
-    orientacao.value === 'vertical' ? ESCALA_MINIMA_LEGIVEL : 0
+    ESCALA_MINIMA_LEGIVEL
   );
 }
 
@@ -185,7 +199,8 @@ function animarPara(animar: boolean, nova: Vista): void {
     const doPai = p.paiId ? (atual.get(p.paiId) ?? destino.get(p.paiId)) : undefined;
     origem.set(p.no.id, proprio ?? doPai ?? destino.get(p.no.id)!);
   }
-  const vistaOrigem = vista.value;
+  // Na lista indentada a altura do quadro muda junto: a vista vai direto ao destino.
+  const vistaOrigem = orientacao.value === 'vertical' ? nova : vista.value;
   const inicio = performance.now();
   const passo = (agora: number): void => {
     const t = Math.min(1, (agora - inicio) / 450);
@@ -283,7 +298,7 @@ function aoMover(evento: PointerEvent): void {
     vista.value = {
       ...vista.value,
       x: vista.value.x + atual.x - anterior.x,
-      y: vista.value.y + atual.y - anterior.y
+      y: orientacao.value === 'vertical' ? vista.value.y : vista.value.y + atual.y - anterior.y
     };
   } else if (ponteiros.size === 2) {
     const [a, b] = [...ponteiros.values()] as [Ponto, Ponto];
@@ -301,7 +316,12 @@ function aoSoltar(evento: PointerEvent): void {
 function medir(): void {
   const caixa = svgRef.value?.getBoundingClientRect();
   if (caixa && caixa.width > 0 && caixa.height > 0) {
-    tamanho.value = { largura: caixa.width, altura: caixa.height };
+    const estreita = caixa.width < LARGURA_ESTREITA;
+    // Na lista indentada a altura vem do conteúdo (vistaDeEnquadramento), não da medida.
+    tamanho.value = {
+      largura: caixa.width,
+      altura: estreita && alturaSvg.value ? alturaSvg.value : caixa.height
+    };
   }
 }
 
@@ -377,6 +397,8 @@ function estiloDoNo(item: { profundidade: number; tom: number }): Record<string,
     <svg
       ref="svgRef"
       class="mapa-visual__svg"
+      :class="{ 'mapa-visual__svg--vertical': orientacao === 'vertical' }"
+      :style="alturaSvg && orientacao === 'vertical' ? { height: `${alturaSvg}px` } : undefined"
       role="group"
       aria-label="Mapa mental visual de Filosofia Jurídica"
       @pointerdown="aoPressionar"
@@ -511,6 +533,11 @@ function estiloDoNo(item: { profundidade: number; tom: number }): Record<string,
   touch-action: none;
   cursor: grab;
   user-select: none;
+}
+
+.mapa-visual__svg--vertical {
+  /* A página rola com o dedo sobre o mapa; o mapa só se mexe na horizontal e no zoom. */
+  touch-action: pan-y pinch-zoom;
 }
 
 .mapa-visual__svg:active {

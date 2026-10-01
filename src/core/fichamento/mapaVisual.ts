@@ -1,4 +1,4 @@
-import { construirArvoreMapa, idsExpansiveis } from './arvoreMapa';
+import { construirArvoreMapa, idsExpansiveis, percorrer } from './arvoreMapa';
 import type { MapaFichamento, NoMapa } from './tipos';
 
 /** Raio de cada anel, do centro para fora: raiz, período, pensador, detalhe, conceito. */
@@ -52,37 +52,143 @@ export function todosAbertos(raiz: NoMapa): string[] {
   return idsExpansiveis(raiz);
 }
 
+/**
+ * "Abrir todos os ramos": a raiz, os períodos e todos os pensadores abertos
+ * (aparece o modo de pensar de cada um), mas os conceitos continuam fechados,
+ * senão as cápsulas não cabem.
+ */
+export function abertosTodosVisual(raiz: NoMapa): Set<string> {
+  const abertos = abertosIniciaisVisual(raiz);
+  for (const era of raiz.filhos)
+    for (const p of era.filhos) if (p.filhos.length > 0) abertos.add(p.id);
+  return abertos;
+}
+
 /** Um só botão: abre tudo se algo está fechado; recolhe ao começo se tudo está aberto. */
 export function alternarTodosRamos(raiz: NoMapa, abertos: ReadonlySet<string>): Set<string> {
-  const tudoAberto = todosAbertos(raiz).every((id) => abertos.has(id));
-  return tudoAberto ? abertosIniciaisVisual(raiz) : new Set(todosAbertos(raiz));
+  const todos = abertosTodosVisual(raiz);
+  const tudoAberto = [...todos].every((id) => abertos.has(id));
+  return tudoAberto ? abertosIniciaisVisual(raiz) : todos;
 }
 
 /**
- * Disposição radial: a raiz no centro, cada nível num anel, e cada nó com a
- * fatia de ângulo proporcional ao número de folhas visíveis dele.
+ * Abre ou fecha um ramo. Acordeão: abrir um pensador fecha os outros do mesmo
+ * período (hemisfério), para o mapa não se amontoar.
  */
+export function alternarRamo(raiz: NoMapa, abertos: ReadonlySet<string>, id: string): Set<string> {
+  const novo = new Set(abertos);
+  if (novo.has(id)) {
+    novo.delete(id);
+    return novo;
+  }
+  novo.add(id);
+  const era = raiz.filhos.find((e) => e.filhos.some((p) => p.id === id));
+  if (era) {
+    for (const irmao of era.filhos) {
+      if (irmao.id === id) continue;
+      novo.delete(irmao.id);
+      for (const neto of percorrer(irmao)) novo.delete(neto.id);
+    }
+  }
+  return novo;
+}
+
+export interface MedidaDoNo {
+  readonly linhas: readonly string[];
+  readonly fonte: number;
+  readonly alturaLinha: number;
+  readonly largura: number;
+  readonly altura: number;
+}
+
+/** Tamanho da cápsula por nível: o centro é maior, os períodos são hubs. */
+export function dimensionar(
+  no: NoMapa,
+  profundidade: number,
+  medir: (texto: string, fonte: number, peso: number) => number
+): MedidaDoNo {
+  const e =
+    profundidade === 0
+      ? { fonte: 18, peso: 800, maxTexto: 170, minAltura: 60, folga: 40 }
+      : profundidade === 1
+        ? { fonte: 16, peso: 800, maxTexto: 150, minAltura: 44, folga: 40 }
+        : { fonte: 14, peso: 700, maxTexto: 160, minAltura: 32, folga: 30 };
+  const texto = no.rotuloCurto ?? no.rotulo;
+  const linhas = quebrarRotulo(texto, e.maxTexto, (s) => medir(s, e.fonte, e.peso));
+  const larguraTexto = Math.max(...linhas.map((l) => medir(l, e.fonte, e.peso)));
+  const alturaLinha = e.fonte * 1.25;
+  return {
+    linhas,
+    fonte: e.fonte,
+    alturaLinha,
+    largura: Math.ceil(larguraTexto + e.folga),
+    altura: Math.max(e.minAltura, Math.ceil(linhas.length * alturaLinha + 16))
+  };
+}
+
 export interface OpcoesLayout {
   /** Horizontal: Antiguidade à esquerda e Idade Média à direita. Vertical: em cima e embaixo. */
   readonly orientacao?: 'horizontal' | 'vertical';
+  /** Tamanho real da cápsula de cada nó; o anel e a fatia de ângulo reservam esse espaço. */
+  readonly medida?: (no: NoMapa, profundidade: number) => { largura: number; altura: number };
 }
 
+const MEDIDA_PADRAO = { largura: 150, altura: 32 };
+
+/**
+ * Disposição radial em dois hemisférios: a raiz no centro, um período por
+ * hemisfério, e cada nó com uma fatia de ângulo proporcional ao ESPAÇO real
+ * que a subárvore dele ocupa (tamanho das cápsulas), e anéis tão largos
+ * quanto preciso para nenhuma cápsula cobrir outra.
+ */
 export function layoutRadial(
   raiz: NoMapa,
   abertos: ReadonlySet<string>,
   opcoes: OpcoesLayout = {}
 ): NoPosicionado[] {
   const saida: NoPosicionado[] = [];
-  let proximoRamo = 0;
-
+  const medidaDe = opcoes.medida ?? (() => MEDIDA_PADRAO);
   const filhosVisiveis = (no: NoMapa): readonly NoMapa[] => (abertos.has(no.id) ? no.filhos : []);
-  const peso = (no: NoMapa): number => {
-    const filhos = filhosVisiveis(no);
-    return filhos.length === 0 ? 1 : filhos.reduce((soma, f) => soma + peso(f), 0);
+
+  const arco = (no: NoMapa, profundidade: number): number => {
+    const m = medidaDe(no, profundidade);
+    return Math.hypot(m.largura, m.altura) * 1.1 + 8;
   };
+  const pesos = new Map<string, number>();
+  const somaDosFilhos = new Map<string, number>();
+  const maiorLargura: number[] = [];
+  const calcular = (no: NoMapa, profundidade: number): number => {
+    const filhos = filhosVisiveis(no);
+    const soma = filhos.reduce((s, f) => s + calcular(f, profundidade + 1), 0);
+    somaDosFilhos.set(no.id, soma);
+    const peso = Math.max(arco(no, profundidade), soma);
+    pesos.set(no.id, peso);
+    maiorLargura[profundidade] = Math.max(
+      maiorLargura[profundidade] ?? 0,
+      medidaDe(no, profundidade).largura
+    );
+    return peso;
+  };
+  calcular(raiz, 0);
+
+  // Raio mínimo para a fatia de cada período comportar os pensadores dele.
+  const eras = filhosVisiveis(raiz);
+  const anguloDaEra = eras.length > 0 ? (2 * Math.PI) / eras.length : 2 * Math.PI;
+  const raioMinimoDoAnel = Math.max(
+    0,
+    ...eras.map((e) => (somaDosFilhos.get(e.id) ?? 0) / anguloDaEra)
+  );
+
+  const raios: number[] = [0];
+  for (let d = 1; d < maiorLargura.length; d++) {
+    const base = RAIOS[Math.min(d, RAIOS.length - 1)]!;
+    const folga = ((maiorLargura[d - 1] ?? 0) + (maiorLargura[d] ?? 0)) / 2 + 36;
+    raios[d] = Math.max(base, raios[d - 1]! + folga, d >= 2 ? raioMinimoDoAnel : 0);
+  }
 
   // O tom de cada pensador vem da ordem na árvore COMPLETA, para não mudar ao abrir e fechar.
   const ramoDoPensador = new Map<string, number>();
+  let proximoRamo = 0;
   for (const era of raiz.filhos)
     for (const p of era.filhos) ramoDoPensador.set(p.id, proximoRamo++);
 
@@ -95,7 +201,7 @@ export function layoutRadial(
     paiId?: string
   ): void => {
     const angulo = (inicio + fim) / 2;
-    const raio = RAIOS[Math.min(profundidade, RAIOS.length - 1)]!;
+    const raio = raios[profundidade] ?? 0;
     saida.push({
       no,
       x: Math.round(raio * Math.cos(angulo) * 10) / 10 + 0,
@@ -105,14 +211,14 @@ export function layoutRadial(
       paiId
     });
     const filhos = filhosVisiveis(no);
-    const total = peso(no);
+    const total = somaDosFilhos.get(no.id) ?? 0;
     let cursor = inicio;
     filhos.forEach((filho, indice) => {
       // Cada período recebe um hemisfério inteiro, qualquer que seja o número de pensadores.
       const fatia =
         profundidade === 0
           ? (fim - inicio) / filhos.length
-          : ((fim - inicio) * peso(filho)) / total;
+          : ((fim - inicio) * (pesos.get(filho.id) ?? 0)) / total;
       const ramoFilho = profundidade === 0 ? indice : (ramoDoPensador.get(filho.id) ?? ramo);
       posicionar(filho, cursor, cursor + fatia, profundidade + 1, ramoFilho, no.id);
       cursor += fatia;
@@ -171,6 +277,31 @@ export function ajustarVista(
     1.2
   );
   return { k, x: -((esq + dir) / 2) * k, y: -((topo + base) / 2) * k };
+}
+
+/**
+ * Vista legível: tenta o mapa inteiro; se a escala ficar abaixo do mínimo que
+ * mantém o texto legível (tela estreita), enquadra só o ramo em foco e, se
+ * ainda assim não couber, usa a escala mínima centrada no nó escolhido, com
+ * pan para o resto. `foco[0]` é o nó escolhido.
+ */
+export function vistaLegivel(
+  todas: readonly CaixaDoNo[],
+  foco: readonly CaixaDoNo[],
+  largura: number,
+  altura: number,
+  margem: number,
+  escalaMinima: number
+): { x: number; y: number; k: number } {
+  const inteira = ajustarVista(todas, largura, altura, margem);
+  if (inteira.k >= escalaMinima) return inteira;
+  if (foco.length > 0) {
+    const emFoco = ajustarVista(foco, largura, altura, margem);
+    if (emFoco.k >= escalaMinima) return emFoco;
+    const alvo = foco[0]!;
+    return { k: escalaMinima, x: -alvo.x * escalaMinima, y: -alvo.y * escalaMinima };
+  }
+  return { k: escalaMinima, x: 0, y: 0 };
 }
 
 /**

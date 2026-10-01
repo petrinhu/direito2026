@@ -96,3 +96,57 @@ test('modo adaptado: abre direto a lista, e o mapa visual é opcional', async ({
   await page.getByRole('button', { name: 'Ver mapa visual' }).click();
   await expect(page.locator('.mapa-visual__svg')).toBeVisible();
 });
+
+test('modo adaptado: nenhum elemento da aba do mapa usa o azul-marinho da marca', async ({
+  page
+}) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+  await page.goto(`${BASE}/mapa`);
+  await page.locator('[role="tree"]').waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
+  const comAzul = async () =>
+    page.locator('#painel-mapa').evaluate((raiz) => {
+      const marca = 'rgb(13, 36, 64)';
+      return [raiz, ...raiz.querySelectorAll('*')]
+        .filter((el) => {
+          const e = getComputedStyle(el);
+          return [
+            e.color,
+            e.backgroundColor,
+            e.borderTopColor,
+            e.borderLeftColor,
+            e.fill,
+            e.stroke
+          ].includes(marca);
+        })
+        .map((el) => `${el.tagName}.${(el as HTMLElement).className}`);
+    });
+  expect(await comAzul(), 'lista').toEqual([]);
+  await page.getByRole('button', { name: 'Ver mapa visual' }).click();
+  await page.locator('.mapa-visual__svg').waitFor({ state: 'visible' });
+  expect(await comAzul(), 'mapa visual').toEqual([]);
+});
+
+test('360px: o layout vertical entra e o texto das cápsulas fica com pelo menos 12px', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  const antiga = page.locator('[data-no="mapa-era-antiga"]');
+  const media = page.locator('[data-no="mapa-era-media"]');
+  await expect(antiga).toBeVisible();
+  const ya = (await antiga.boundingBox())!.y;
+  const ym = (await media.boundingBox())!.y;
+  expect(ya, 'Antiguidade em cima da Idade Média').toBeLessThan(ym);
+  for (const acao of ['inicial', 'aberto']) {
+    if (acao === 'aberto') await page.locator('button.mapa-visual__todos').click();
+    await page.waitForTimeout(700);
+    const tamanhos = await page
+      .locator('.mapa-visual__no .mapa-visual__texto')
+      .evaluateAll((els) =>
+        els.map((el) => el.getBoundingClientRect().height / el.querySelectorAll('tspan').length)
+      );
+    expect(Math.min(...tamanhos), acao).toBeGreaterThanOrEqual(11);
+  }
+});

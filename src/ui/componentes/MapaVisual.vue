@@ -1,15 +1,16 @@
 <script setup lang="ts">
-/* global SVGSVGElement, WheelEvent, Element, performance */
+/* global SVGSVGElement, WheelEvent, Element, performance, ResizeObserver */
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import type { NoMapa } from '@/core/fichamento/tipos';
 import {
   abertosIniciaisVisual,
-  ajustarVista,
+  abertosTodosVisual,
+  alternarRamo,
   alternarTodosRamos,
   caminhoLigacao,
+  dimensionar,
   layoutRadial,
-  quebrarRotulo,
-  todosAbertos
+  vistaLegivel
 } from '@/app/fichamento';
 
 const props = defineProps<{
@@ -25,6 +26,8 @@ const ZOOM_MINIMO = 0.1;
 const ZOOM_MAXIMO = 3;
 const NUMERO_DE_TONS = 6;
 const LARGURA_ESTREITA = 640;
+/** Texto nunca abaixo de ~12px na tela: 12 / fonte mínima das cápsulas (14px). */
+const ESCALA_MINIMA_LEGIVEL = 12 / 14;
 
 interface Vista {
   x: number;
@@ -46,11 +49,21 @@ const posicoes = shallowRef(new Map<string, Ponto>());
 const orientacao = computed(() =>
   tamanho.value.largura < LARGURA_ESTREITA ? ('vertical' as const) : ('horizontal' as const)
 );
-const layout = computed(() =>
-  layoutRadial(props.arvore, abertos.value, { orientacao: orientacao.value })
-);
+const medidas = computed(() => {
+  const mapa = new Map<string, ReturnType<typeof dimensionar>>();
+  const medida = (no: NoMapa, profundidade: number) => {
+    const m = dimensionar(no, profundidade, medirTexto);
+    mapa.set(no.id, m);
+    return m;
+  };
+  const pos = layoutRadial(props.arvore, abertos.value, { orientacao: orientacao.value, medida });
+  return { pos, mapa };
+});
+const layout = computed(() => medidas.value.pos);
 
-const tudoAberto = computed(() => todosAbertos(props.arvore).every((id) => abertos.value.has(id)));
+const tudoAberto = computed(() =>
+  [...abertosTodosVisual(props.arvore)].every((id) => abertos.value.has(id))
+);
 const rotuloTodos = computed(() =>
   tudoAberto.value ? 'Recolher todos os ramos' : 'Abrir todos os ramos'
 );
@@ -68,32 +81,12 @@ function medirTexto(texto: string, tamanhoFonte: number, peso: number): number {
   return contexto.measureText(texto).width;
 }
 
-/** Tamanho da cápsula por nível: o centro é maior, os períodos são hubs. */
-function estiloDoNivel(profundidade: number): {
-  fonte: number;
-  peso: number;
-  maxTexto: number;
-  minAltura: number;
-} {
-  if (profundidade === 0) return { fonte: 18, peso: 800, maxTexto: 170, minAltura: 60 };
-  if (profundidade === 1) return { fonte: 16, peso: 800, maxTexto: 150, minAltura: 44 };
-  return { fonte: 14, peso: 700, maxTexto: 160, minAltura: 32 };
-}
-
 const itens = computed(() =>
   layout.value.map((p) => {
-    const e = estiloDoNivel(p.profundidade);
-    const texto = p.no.rotuloCurto ?? p.no.rotulo;
-    const linhas = quebrarRotulo(texto, e.maxTexto, (s) => medirTexto(s, e.fonte, e.peso));
-    const larguraTexto = Math.max(...linhas.map((l) => medirTexto(l, e.fonte, e.peso)));
-    const alturaLinha = e.fonte * 1.25;
+    const m = medidas.value.mapa.get(p.no.id)!;
     return {
       ...p,
-      linhas,
-      fonte: e.fonte,
-      alturaLinha,
-      largura: Math.ceil(larguraTexto + (p.profundidade <= 1 ? 40 : 30)),
-      altura: Math.max(e.minAltura, Math.ceil(linhas.length * alturaLinha + 16)),
+      ...m,
       tom: (p.ramo % NUMERO_DE_TONS) + 1,
       aberto: abertos.value.has(p.no.id),
       expansivel: p.no.filhos.length > 0
@@ -145,8 +138,35 @@ const transformacao = computed(
 );
 
 /* ---- enquadramento total e animação (posições e vista juntas) ---- */
+function caixaDe(i: (typeof itens.value)[number]) {
+  return { x: i.x, y: i.y, largura: i.largura, altura: i.altura };
+}
+
+/**
+ * Mapa inteiro se o texto continuar legível; em tela estreita, o ramo em foco
+ * (o nó escolhido, seus ancestrais e descendentes), com pan para o resto.
+ */
 function vistaDeEnquadramento(): Vista {
-  return ajustarVista(itens.value, tamanho.value.largura, tamanho.value.altura, 12);
+  const todos = itens.value;
+  const ids = new Set<string>();
+  let acima: string | undefined = selecionadoId.value;
+  while (acima) {
+    ids.add(acima);
+    acima = todos.find((i) => i.no.id === acima)?.paiId;
+  }
+  for (const i of todos) if (i.paiId && ids.has(i.paiId)) ids.add(i.no.id);
+  const escolhido = todos.find((i) => i.no.id === selecionadoId.value);
+  const foco = escolhido
+    ? [escolhido, ...todos.filter((i) => ids.has(i.no.id) && i !== escolhido)].map(caixaDe)
+    : [];
+  return vistaLegivel(
+    todos.map(caixaDe),
+    foco,
+    tamanho.value.largura,
+    tamanho.value.altura,
+    12,
+    orientacao.value === 'vertical' ? ESCALA_MINIMA_LEGIVEL : 0
+  );
 }
 
 let quadro = 0;
@@ -196,10 +216,7 @@ function alternarNo(id: string): void {
   selecionadoId.value = id;
   const no = itens.value.find((i) => i.no.id === id);
   if (!no?.expansivel) return;
-  const novo = new Set(abertos.value);
-  if (novo.has(id)) novo.delete(id);
-  else novo.add(id);
-  aplicarAbertos(novo);
+  aplicarAbertos(alternarRamo(props.arvore, abertos.value, id));
 }
 
 function aoTeclar(evento: KeyboardEvent, id: string): void {
@@ -294,13 +311,23 @@ function reenquadrarSemAnimar(): void {
   animarPara(false, vistaDeEnquadramento());
 }
 
+// eslint-disable-next-line no-unused-vars
+let observador: { observe(alvo: SVGSVGElement): void; disconnect(): void } | undefined;
+
 onMounted(() => {
   reenquadrarSemAnimar();
   window.addEventListener('resize', reenquadrarSemAnimar);
+  // A aba pode montar escondida (largura 0) e só ganhar tamanho ao ser aberta:
+  // sem isto o layout vertical de tela estreita nunca entrava.
+  if (typeof ResizeObserver !== 'undefined' && svgRef.value) {
+    observador = new ResizeObserver(reenquadrarSemAnimar);
+    observador.observe(svgRef.value);
+  }
 });
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(quadro);
+  observador?.disconnect();
   window.removeEventListener('resize', reenquadrarSemAnimar);
 });
 

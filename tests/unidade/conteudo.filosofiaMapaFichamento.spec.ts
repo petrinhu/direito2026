@@ -226,7 +226,7 @@ describe('nome curto para a cápsula do mapa visual', () => {
 });
 
 describe('texto compreensível para quem lê de fora', () => {
-  const PROIBIDO = /\b(na|nas|da|das|pela|pelas) aulas?\b|\baula [0-9]|\bslides?\b/i;
+  const PROIBIDO = /\b(na|nas|da|das|pela|pelas) aulas?\b|\baula [0-9]|\bslides?\b|material de aula/i;
   const semReferencias = mapaFichamento.pensadores.map((p) => ({ ...p, referencias: [] }));
 
   it('mapa e fichas não citam "na aula", "aula N" nem "slide"', () => {

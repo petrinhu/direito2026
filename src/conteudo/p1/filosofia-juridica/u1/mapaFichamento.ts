@@ -3,7 +3,7 @@ import type { FichaPensador, MapaFichamento } from '../../../tipos';
 /**
  * Fonte única do Mapa mental e do Fichamento de Filosofia Jurídica, 1a
  * unidade. Tudo vem do resumo da própria unidade (resumo.ts) e das fontes
- * que ele cita: nada é acrescentado ao material. Datas seguem o material de aula;
+ * que ele cita: nada é acrescentado ao material. Datas seguem a cronologia adotada no resumo;
  * onde os livros divergem, a ressalva da ficha atribui a cada autor. Citação
  * literal só aparece quando o texto consta do material, com a fonte.
  */
@@ -63,7 +63,7 @@ const sofistas: FichaPensador = {
   ],
   citacao: {
     texto: 'o homem é a medida de todas as coisas',
-    fonte: 'Protágoras (homo mensura), tal como registrado no material de aula.'
+    fonte: 'Protágoras (homo mensura), como a frase é atribuída a ele.'
   },
   paraODireito:
     'Quem diz que "a lei é o que o poder estabelece" está repetindo Trasímaco; quem diz que "cada caso é um caso e cada um julga por si" está mais perto de Protágoras.',
@@ -91,7 +91,7 @@ const socrates: FichaPensador = {
   paraODireito:
     'Caso clássico de tensão entre consciência e ordem jurídica: obedecer à sentença mesmo a considerando injusta, para preservar a autoridade das leis. A injustiça da condenação não autorizou a fuga.',
   ressalva:
-    'Segundo o material de aula, a razão da recusa é que o bom cidadão deve obedecer também às leis más. Wolkmer descreve essa mesma obediência como levada até uma lei "errada ou até criminosa".',
+    'A razão da recusa é que o bom cidadão deve obedecer também às leis más. Wolkmer descreve essa mesma obediência como levada até uma lei "errada ou até criminosa".',
   referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
   blocoResumo: 'bloco-3'
 };
@@ -115,7 +115,7 @@ const platao: FichaPensador = {
   paraODireito:
     'Uma pena pensada apenas como vingança contra o infrator esbarra na objeção de Platão: causar mal degrada quem o pratica. A discussão sobre a finalidade da pena começa por aí.',
   ressalva:
-    'Nem tudo o que aparece nos diálogos é a posição de Platão: o mito de Giges (República II) é exposição de Glauco, e o mito de Prometeu (Protágoras) representa a posição de Protágoras. Sobre as datas, o material de aula dá 427-348 a.C., e os livros de apoio trazem 428-347 e 427-347; o resumo segue o primeiro.',
+    'Nem tudo o que aparece nos diálogos é a posição de Platão: o mito de Giges (República II) é exposição de Glauco, e o mito de Prometeu (Protágoras) representa a posição de Protágoras. Sobre as datas, o resumo adota 427-348 a.C., e os livros de apoio trazem 428-347 e 427-347.',
   referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
   blocoResumo: 'bloco-4'
 };
@@ -230,7 +230,7 @@ const agostinho: FichaPensador = {
   paraODireito:
     'Quando se diz que uma lei humana não pode contrariar uma ordem superior, reaparece a estrutura de Agostinho: um plano de valores acima da norma posta, agora com fundamento religioso, e não mais apenas na razão como em Cícero.',
   ressalva:
-    'O livro de Marcondes e Struchiner não traz texto de Agostinho; o resumo só registra o que o material de aula e Wolkmer dizem dele.',
+    'O livro de Marcondes e Struchiner não traz texto de Agostinho; o resumo só registra o que Wolkmer e a exposição geral dizem dele.',
   referencias: [MATERIAL_DE_AULA, NASCIMENTO, WOLKMER_CAP2],
   blocoResumo: 'bloco-7'
 };
@@ -248,7 +248,7 @@ const tomas: FichaPensador = {
     'Lei eterna: a lei de Deus, fundamento de todas as demais',
     'Lei natural: participação da criatura racional na lei eterna, alcançável pela razão',
     'Lei humana: a lei posta, com base na lei natural e voltada à utilidade comum',
-    'Lei divina: a que vem das Escrituras (o material de aula destaca as três primeiras; Wolkmer completa as quatro)',
+    'Lei divina: a que vem das Escrituras (a exposição geral destaca as três primeiras; Wolkmer completa as quatro)',
     'Justiça comutativa e distributiva, integradas à caridade',
     'Hierarquia dos fins: os últimos, da Igreja; os terrenos, do Estado'
   ],
@@ -260,7 +260,7 @@ const tomas: FichaPensador = {
   paraODireito:
     'Ao discutir se uma norma legal muito injusta ainda obriga, as duas leituras da bibliografia dão respostas diferentes: em uma, a lei que se afasta da natural deixa de ser lei em sentido pleno; na outra, a lei humana deve ser respeitada mesmo quando se mostre contrária ao bem comum.',
   ressalva:
-    'Lei humana contra lei natural: para Wolkmer, a que se afasta da natural "não será lei, senão a corrupção da lei"; para o Manual de Humanística, deve prevalecer a humana. No conflito com a lei eterna, prevalece a eterna nas duas leituras. Estado e Igreja: o material de aula mantém o Estado subordinado à Igreja quanto aos fins últimos, e o Manual fala em separação, com subordinação só entre a ordem natural e a sobrenatural. Datas: 1225-1274 no material de aula, e 1224 para o nascimento no livro de apoio.',
+    'Lei humana contra lei natural: para Wolkmer, a que se afasta da natural "não será lei, senão a corrupção da lei"; para o Manual de Humanística, deve prevalecer a humana. No conflito com a lei eterna, prevalece a eterna nas duas leituras. Estado e Igreja: a exposição geral mantém o Estado subordinado à Igreja quanto aos fins últimos, e o Manual fala em separação, com subordinação só entre a ordem natural e a sobrenatural. Datas: 1225-1274 no resumo, e 1224 para o nascimento no livro de apoio.',
   referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP2],
   blocoResumo: 'bloco-8'
 };
@@ -276,7 +276,7 @@ const escoto: FichaPensador = {
     'Contra o organicismo dominante, afirma o primado do individual sobre o geral e da liberdade sobre a ordem: Deus se revela a cada pessoa em sua individualidade.',
   conceitos: ['Primado do individual sobre o geral', 'Primado da liberdade sobre a ordem'],
   paraODireito:
-    'Com Ockham, prepara a passagem do organicismo ao indivíduo e à modernidade, segundo a síntese do material de aula.',
+    'Com Ockham, prepara a passagem do organicismo ao indivíduo e à modernidade, na síntese do período.',
   referencias: [MATERIAL_DE_AULA, NASCIMENTO],
   blocoResumo: 'bloco-9'
 };

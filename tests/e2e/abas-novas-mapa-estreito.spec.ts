@@ -38,11 +38,17 @@ for (const adaptado of [true, false]) {
       for (let no = andador.nextNode(); no; no = andador.nextNode()) {
         const texto = no.textContent ?? '';
         for (const m of texto.matchAll(/\S+/g)) {
-          const faixa = document.createRange();
-          faixa.setStart(no, m.index!);
-          faixa.setEnd(no, m.index! + m[0].length);
-          const topos = new Set([...faixa.getClientRects()].map((r) => Math.round(r.top)));
-          if (topos.size > 1) achadas.push(m[0]);
+          // Quebra logo depois de hífen (427-348, palavras compostas) é legítima:
+          // só conta quebra entre duas letras.
+          const letra = document.createRange();
+          for (let i = 0; i < m[0].length - 1; i++) {
+            letra.setStart(no, m.index! + i);
+            letra.setEnd(no, m.index! + i + 2);
+            const rs = [...letra.getClientRects()];
+            const caracteres = m[0].slice(i, i + 2);
+            const quebrou = new Set(rs.map((r) => Math.round(r.top))).size > 1;
+            if (quebrou && !caracteres.includes('-')) achadas.push(m[0]);
+          }
         }
       }
       return achadas;

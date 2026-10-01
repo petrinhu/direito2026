@@ -217,6 +217,27 @@ function aoClicar(): void {
   border-top: 2px solid var(--cor-mapa-linha, #5f7189);
 }
 
+/* Os dois níveis mais fundos (conceitos e seus itens) cedem mais coluna ao
+   texto em tela estreita: QA rodada 2 mediu 230px (adaptado) e 218px
+   (Firefox) contra o piso de 240px. */
+@media (max-width: 639px) {
+  .no-mapa--pensador > .no-mapa__grupo,
+  .no-mapa--conceitos > .no-mapa__grupo {
+    margin-inline-start: 0;
+    padding-inline-start: var(--esp-1, 0.25rem);
+  }
+
+  .no-mapa--pensador > .no-mapa__grupo > .no-mapa::before,
+  .no-mapa--conceitos > .no-mapa__grupo > .no-mapa::before {
+    inset-inline-start: calc(-1 * var(--esp-1, 0.25rem));
+    width: var(--esp-1, 0.25rem);
+  }
+
+  .no-mapa--conceito > .no-mapa__corpo {
+    padding-inline: var(--esp-1, 0.25rem);
+  }
+}
+
 @media (min-width: 640px) {
   .no-mapa__grupo {
     margin-inline-start: var(--esp-4, 1rem);

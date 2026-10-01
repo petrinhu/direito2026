@@ -103,6 +103,7 @@ export function construirArvoreMapa(dados: MapaFichamento): NoMapa {
             id: `mapa-pensador-${ficha.id}`,
             tipo: 'pensador' as const,
             rotulo: rotuloPensador(ficha),
+            ...(ficha.nomeCurto ? { rotuloCurto: ficha.nomeCurto } : {}),
             fichaId: ficha.id,
             filhos: nosDoPensador(ficha)
           }))

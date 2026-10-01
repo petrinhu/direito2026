@@ -4,3 +4,13 @@
 export { construirArvoreMapa, idsExpansiveis } from '@/core/fichamento/arvoreMapa';
 export { abertosIniciais, interpretarTecla, nosVisiveis } from '@/core/fichamento/navegacaoArvore';
 export { filtrarFichas, ordenarFichas, rotuloDaFase } from '@/core/fichamento/filtrarFichas';
+export {
+  abertosIniciaisVisual,
+  alternarTodosRamos,
+  arvoreVisual,
+  caminhoLigacao,
+  enquadrar,
+  layoutRadial,
+  rotuloVisual,
+  todosAbertos
+} from '@/core/fichamento/mapaVisual';

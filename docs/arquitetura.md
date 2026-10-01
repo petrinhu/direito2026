@@ -1300,3 +1300,40 @@ Filosofia Jurídica traz quiz de 80 perguntas: 40 de cinco alternativas e 40 de 
 **Categorias novas:** `antiga` (Idade Antiga), `media` (Idade Média), `revisao` (Revisão do professor), em `src/core/quiz/rotulosCategoria.ts`.
 
 **Verificação no navegador:** `tests/e2e/quiz-verdadeiro-ou-falso-selo.spec.ts` varre a rodada e se declara ignorado nas unidades sem V/F nem selo (hoje todas), passando a rodar quando Filosofia for publicada.
+
+## Abas Mapa mental, Fichamento e Mnemônicos (01/10/2026)
+
+Ordem do líder (verbatim): "faça um mapa mental e um fichamento, na ordem: periodo historico > pensadores > modo de pensar", "Mantenha o padra de cores" e "crie mnemonicos também, em nova aba". Escopo: Filosofia Jurídica, 1a unidade. As abas ficam entre Resumo e Quiz, na ordem Resumo, Mapa mental, Fichamento, Mnemônicos, Quiz, com rotas `/mapa`, `/fichamento` e `/mnemonicos`.
+
+### Decisão de stack: componente próprio, sem dependência nova
+
+Pesquisa feita antes do desenho (L-22). Fontes:
+
+- [WAI-ARIA APG, padrão Tree View](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/): `role="tree"`, `treeitem`, `group`, `aria-expanded` só nos ramos, um único item no ciclo de Tab (foco itinerante), setas, Home, End e Enter.
+- [markmap-view](https://markmap.js.org/docs/packages--markmap-view): desenha em SVG sobre o d3 e a documentação não trata teclado nem leitor de tela.
+- [Mermaid, issue 5632](https://github.com/mermaid-js/mermaid/issues/5632): o suporte de acessibilidade do Mermaid se limita a título e descrição; o conteúdo do diagrama fica inacessível a leitor de tela.
+- [Mnemônicos na educação](https://www.researchgate.net/publication/281426153_Mnemonics_in_education_Current_research_and_applications) e [Dunlosky e outros, via revisão](https://psycnet.apa.org/manuscript/2015-26723-002.pdf): imagem e método dos lugares têm evidência melhor que siglas de primeira letra, e todo mnemônico rende mais combinado com recordação ativa.
+- [Fichamento, tipos e estrutura (ABNT)](https://universoensina.com.br/fichamento-tipos-modelos-abnt/): fichamento de resumo, de citação e de comentário, sempre com referência.
+
+| Critério | Árvore HTML própria | markmap | Mermaid mindmap |
+|---|---|---|---|
+| Teclado e leitor de tela | padrão APG completo, no DOM | não documentado, SVG | inacessível |
+| Offline | chunk do build, precacheado | exige d3 empacotado | exige a biblioteca inteira |
+| Bundle | alguns KB, carregado só na aba | d3 mais markmap | o maior dos três |
+| Cor por token | CSS puro, 4 blocos de token | estilo por opções JS | tema próprio do Mermaid |
+| 360px e modo adaptado | texto real, escala o corpo, quebra de linha | SVG com texto fixo | SVG com texto fixo |
+| Licença e custo de manutenção | nenhuma dependência | dependência nova | dependência nova |
+
+Escolha: árvore HTML própria (`role="tree"`), conectores em CSS, sem biblioteca. Nenhum pacote foi instalado (a autorização do líder para instalar não foi necessária, e o desempate vai para "sem dependência"; `npm audit` não se aplica, porque `package.json` não mudou). Tradeoff assumido: não há zoom nem arrastar, porque a árvore é vertical e de texto real, que reflui em 320px; o equivalente é abrir e fechar ramos, e a aba Fichamento é a alternativa textual sempre disponível.
+
+### Desenho
+
+- Uma fonte de dados por unidade, `src/conteudo/p1/filosofia-juridica/u1/mapaFichamento.ts`, tipada em `src/core/fichamento/tipos.ts` (Era > Fase > Pensador). O mapa e o fichamento leem os mesmos dados; os mnemônicos têm `mnemonicos.ts` e `src/core/mnemonicos/tipos.ts`.
+- Core puro: `construirArvoreMapa`, `abertosIniciais`, `nosVisiveis`, `interpretarTecla` (tabela do APG), `filtrarFichas`, `ordenarFichas`. `src/app/fichamento` e `src/app/mnemonicos` repassam para a UI (gate `ui-nao-pula-app`).
+- UI: `MapaMental.vue` e `NoMapaMental.vue` (recursivo), `FichamentoVisor.vue` e `FichaPensadorCartao.vue`, `MnemonicosVisor.vue` e `CartaoMnemonico.vue`.
+- Cartão que revela: o de Redação (`CartoesCincoPerguntas.vue`) tem texto fixo no componente e vira em botão `aria-pressed`; o dos mnemônicos precisa de dados e de região `aria-expanded`. É a segunda ocorrência, então a regra de 3 manda não extrair ainda.
+- Busca: um documento por ficha (`/fichamento#ficha-<id>`), um por mnemônico (`/mnemonicos#mnemonico-<id>`) e um do mapa.
+- Cores: tokens `--cor-mapa-era-*`, `--cor-mapa-fase-*` e `--cor-mapa-linha` nos quatro blocos de `tokens.css` (claro, escuro automático, escuro escolhido e modo adaptado); era e fase herdam a família da lateral (azul-marinho e dourado pálido), pensador usa o cartão da página com filete dourado, folha usa o fundo sutil. Pares no portão de contraste (4,5:1 texto, 3:1 linha, 7:1 e 20:1 no modo adaptado). O nível de cada nó vem escrito (Período, Fase, Pensador); a cor só reforça.
+- Modo adaptado: preto sobre branco pelos tokens, bordas de 2px, texto no tamanho de corpo (24px), alvos de 44px, sem transição.
+- Impressão: todos os ramos, fichas e respostas saem abertos.
+- Responsivo: a lista de abas quebra de linha em qualquer modo (cinco abas não cabem em 360px numa linha); a árvore rola dentro do próprio contêiner se precisar.

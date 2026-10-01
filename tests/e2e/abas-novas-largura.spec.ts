@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { esperarLayoutAssentar, prepararEstadoInicial } from './apoio/estadoInicial';
+import { todosOsPresentes } from './apoio/elementos';
 
 /**
  * Critério do líder: sem rolagem lateral da PÁGINA em 320px e 360px, nos
@@ -28,7 +29,7 @@ for (const largura of LARGURAS) {
           await page.getByRole('button', { name: 'Abrir todas as fichas' }).click();
         }
         if (aba === 'mnemonicos') {
-          for (const botao of await page.locator('button.mnemonico__botao').all()) {
+          for (const botao of await todosOsPresentes(page, 'button.mnemonico__botao')) {
             await botao.click();
           }
         }
@@ -69,7 +70,7 @@ test('modo adaptado: texto do mapa em 24px e alvos de 44px nos botões e nas aba
   expect(fonte).toBeGreaterThanOrEqual(24);
 
   for (const seletor of ['button.mapa-mental__acao', '#mapa-era-antiga .no-mapa__corpo']) {
-    for (const el of await page.locator(seletor).all()) {
+    for (const el of await todosOsPresentes(page, seletor)) {
       const caixa = await el.boundingBox();
       expect(caixa!.height, seletor).toBeGreaterThanOrEqual(44);
     }
@@ -82,13 +83,13 @@ test('modo adaptado: texto do mapa em 24px e alvos de 44px nos botões e nas aba
     'select.fichamento__periodo',
     'input.fichamento__busca'
   ]) {
-    for (const el of await page.locator(seletor).all()) {
+    for (const el of await todosOsPresentes(page, seletor)) {
       const caixa = await el.boundingBox();
       expect(caixa!.height, seletor).toBeGreaterThanOrEqual(44);
     }
   }
   await page.goto(`${BASE}/mnemonicos`);
-  for (const el of await page.locator('button.mnemonico__botao').all()) {
+  for (const el of await todosOsPresentes(page, 'button.mnemonico__botao')) {
     const caixa = await el.boundingBox();
     expect(caixa!.height).toBeGreaterThanOrEqual(44);
   }

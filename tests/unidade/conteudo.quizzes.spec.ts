@@ -123,6 +123,25 @@ describe('quiz de Filosofia Jurídica, conjunto', () => {
     expect(quizFilosofia.filter((p) => 'gabaritoDoCaderno' in p)).toEqual([]);
   });
 
+  /**
+   * O motor embaralha as alternativas a cada rodada: a explicação não pode
+   * apontar letra nem posição ("alternativa B", "a D", "acima"), só o
+   * conteúdo da resposta. Sociologia Jurídica tem o mesmo padrão e ficou
+   * fora deste teste por ordem do líder.
+   */
+  it('nenhuma explicação ou enunciado cita letra ou posição de alternativa', () => {
+    const letra =
+      /(alternativa|letra|op[çc][ãa]o)s?\s*\(?[A-E]\)?\b|\([A-E]\)|\b[Aa]s? [B-D]\b|\be a [A-E]\b|\b(primeira|segunda|terceira|quarta|quinta|última) (alternativa|op[çc][ãa]o)|\b(acima|abaixo)\b(?! do)/i;
+    const citam = quizFilosofia
+      .filter((p) => p.tipo !== 'verdadeiro-ou-falso')
+      .filter(
+        (p) =>
+          letra.test(p.explicacaoHtml.replace(/acima do homem/g, '')) || letra.test(p.enunciadoHtml)
+      )
+      .map((p) => p.id);
+    expect(citam).toEqual([]);
+  });
+
   it('explicação preenchida e categoria com rótulo em todas', () => {
     for (const p of quizFilosofia) {
       expect(p.explicacaoHtml.trim(), `id ${p.id}`).not.toBe('');

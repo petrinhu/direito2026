@@ -15,7 +15,9 @@ export {
   caminhoLigacao,
   ajustarVista,
   quebrarRotulo,
+  layoutIndentado,
   layoutRadial,
+  vistaPorLargura,
   rotuloVisual,
   todosAbertos
 } from '@/core/fichamento/mapaVisual';

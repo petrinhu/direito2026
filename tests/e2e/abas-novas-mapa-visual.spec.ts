@@ -59,7 +59,8 @@ test('zoom pelos botões muda a escala e Centralizar volta', async ({ page }) =>
   await page.getByRole('button', { name: 'Aproximar' }).click();
   expect(await escala()).toBeGreaterThan(inicial);
   await page.getByRole('button', { name: 'Centralizar' }).click();
-  expect(await escala()).toBeCloseTo(inicial, 3);
+  // Centralizar anima: espera a escala assentar antes de comparar.
+  await expect.poll(escala, { timeout: 5000 }).toBeCloseTo(inicial, 3);
 });
 
 test('arrastar o fundo move o mapa', async ({ page }) => {
@@ -97,35 +98,41 @@ test('modo adaptado: abre direto a lista, e o mapa visual é opcional', async ({
   await expect(page.locator('.mapa-visual__svg')).toBeVisible();
 });
 
-test('modo adaptado: nenhum elemento da aba do mapa usa o azul-marinho da marca', async ({
-  page
-}) => {
-  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
-  await page.goto(`${BASE}/mapa`);
-  await page.locator('[role="tree"]').waitFor({ state: 'visible' });
-  await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
-  const comAzul = async () =>
-    page.locator('#painel-mapa').evaluate((raiz) => {
-      const marca = 'rgb(13, 36, 64)';
-      return [raiz, ...raiz.querySelectorAll('*')]
-        .filter((el) => {
-          const e = getComputedStyle(el);
-          return [
-            e.color,
-            e.backgroundColor,
-            e.borderTopColor,
-            e.borderLeftColor,
-            e.fill,
-            e.stroke
-          ].includes(marca);
-        })
-        .map((el) => `${el.tagName}.${(el as HTMLElement).className}`);
-    });
-  expect(await comAzul(), 'lista').toEqual([]);
-  await page.getByRole('button', { name: 'Ver mapa visual' }).click();
-  await page.locator('.mapa-visual__svg').waitFor({ state: 'visible' });
-  expect(await comAzul(), 'mapa visual').toEqual([]);
-});
+for (const aba of ['', '/mapa', '/fichamento', '/mnemonicos', '/quiz']) {
+  test(`modo adaptado, página inteira${aba || ' /resumo'}: nenhum elemento usa o azul-marinho da marca`, async ({
+    page
+  }) => {
+    await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+    await page.goto(`${BASE}${aba}`);
+    await page.locator('h1').waitFor({ state: 'visible' });
+    if (aba === '/mapa') await page.locator('[role="tree"]').waitFor({ state: 'visible' });
+    const comAzul = async () =>
+      page.evaluate(() => {
+        const marca = 'rgb(13, 36, 64)';
+        return [...document.querySelectorAll('body, body *')]
+          .filter((el) => {
+            const e = getComputedStyle(el);
+            return [
+              e.color,
+              e.backgroundColor,
+              e.borderTopColor,
+              e.borderLeftColor,
+              e.borderBottomColor,
+              e.fill,
+              e.stroke,
+              e.outlineColor
+            ].includes(marca);
+          })
+          .map((el) => `${el.tagName}.${String((el as HTMLElement).className)}`);
+      });
+    expect(await comAzul()).toEqual([]);
+    if (aba === '/mapa') {
+      await page.getByRole('button', { name: 'Ver mapa visual' }).click();
+      await page.locator('.mapa-visual__svg').waitFor({ state: 'visible' });
+      expect(await comAzul(), 'mapa visual').toEqual([]);
+    }
+  });
+}
 
 test('360px: o layout vertical entra e o texto das cápsulas fica com pelo menos 12px', async ({
   page

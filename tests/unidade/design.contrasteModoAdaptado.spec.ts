@@ -159,3 +159,11 @@ describe('menu lateral no modo adaptado: sem cor por nível', () => {
     }
   );
 });
+
+describe('modo adaptado sem azul-marinho da marca', () => {
+  it('nenhum token do bloco adaptado vale #0d2440 (preto e branco puro)', () => {
+    const tokens = carregarBlocoModoAdaptado();
+    const azuis = Object.entries(tokens).filter(([, v]) => v === '#0d2440');
+    expect(azuis).toEqual([]);
+  });
+});

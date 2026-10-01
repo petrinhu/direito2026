@@ -230,6 +230,76 @@ export function layoutRadial(
   return saida;
 }
 
+/**
+ * Layout de tela estreita: lista indentada de cápsulas, de cima para baixo (a
+ * raiz, os períodos, os pensadores...), cada nível recuado. Cabe na largura de
+ * um celular e a altura cresce com o conteúdo.
+ */
+export function layoutIndentado(
+  raiz: NoMapa,
+  abertos: ReadonlySet<string>,
+  opcoes: { medida?: OpcoesLayout['medida']; recuo?: number; espaco?: number } = {}
+): NoPosicionado[] {
+  const medidaDe = opcoes.medida ?? (() => MEDIDA_PADRAO);
+  const recuo = opcoes.recuo ?? 56;
+  const espaco = opcoes.espaco ?? 14;
+  const ramoDoPensador = new Map<string, number>();
+  let proximo = 0;
+  for (const era of raiz.filhos) for (const p of era.filhos) ramoDoPensador.set(p.id, proximo++);
+
+  const saida: NoPosicionado[] = [];
+  let y = 0;
+  const visitar = (
+    no: NoMapa,
+    profundidade: number,
+    ramo: number,
+    paiId?: string,
+    indiceEra = 0
+  ): void => {
+    const m = medidaDe(no, profundidade);
+    y += m.altura / 2;
+    saida.push({
+      no,
+      x: profundidade * recuo + m.largura / 2,
+      y,
+      profundidade,
+      ramo: profundidade === 1 ? indiceEra : ramo,
+      paiId
+    });
+    y += m.altura / 2 + espaco;
+    if (!abertos.has(no.id)) return;
+    no.filhos.forEach((filho, indice) => {
+      const ramoFilho = ramoDoPensador.get(filho.id) ?? ramo;
+      visitar(filho, profundidade + 1, ramoFilho, no.id, profundidade === 0 ? indice : indiceEra);
+    });
+  };
+  visitar(raiz, 0, 0);
+  return saida;
+}
+
+/**
+ * Vista para tela estreita: enquadra pela LARGURA (nunca abaixo da escala
+ * mínima legível); a altura do contêiner cresce até o conteúdo caber. Se nem a
+ * largura couber na escala mínima, alinha à esquerda e deixa o pan para o resto.
+ */
+export function vistaPorLargura(
+  caixas: readonly CaixaDoNo[],
+  largura: number,
+  margem: number,
+  escalaMinima: number
+): { x: number; y: number; k: number; altura: number } {
+  const esq = Math.min(...caixas.map((c) => c.x - c.largura / 2));
+  const dir = Math.max(...caixas.map((c) => c.x + c.largura / 2));
+  const topo = Math.min(...caixas.map((c) => c.y - c.altura / 2));
+  const base = Math.max(...caixas.map((c) => c.y + c.altura / 2));
+  const cabe = (largura - 2 * margem) / (dir - esq);
+  const k = Math.min(1.2, Math.max(cabe, escalaMinima));
+  const altura = Math.ceil((base - topo) * k + 2 * margem);
+  const x = cabe >= escalaMinima ? -((esq + dir) / 2) * k : margem - largura / 2 - esq * k;
+  const y = margem - altura / 2 - topo * k;
+  return { k, x, y, altura };
+}
+
 function numero(n: number): string {
   return String(Math.round(n * 10) / 10 + 0);
 }

@@ -462,12 +462,12 @@
   --cor-texto-suave: #000000; /* sem segundo tom de cinza: ou é texto, ou não aparece */
   --cor-texto-invertido: #ffffff;
 
-  --cor-primaria: #0d2440;        /* 14,84:1 contra #ffffff */
-  --cor-primaria-escura: #0d2440;
+  --cor-primaria: #000000;        /* preto puro, 21:1 contra #ffffff (ordem do líder, 01/10/2026: nada de azul-marinho no modo) */
+  --cor-primaria-escura: #000000;
   --cor-primaria-clara: #ffffff;
-  --cor-titulo-texto: #0d2440;
+  --cor-titulo-texto: #000000;
 
-  --cor-acento: #0d2440;       /* nenhum dourado sobrevive no modo */
+  --cor-acento: #000000;       /* nenhum dourado sobrevive no modo */
   --cor-acento-claro: #ffffff;
 
   --cor-bordo: #7a2331; /* link visitado, 9,44:1 contra #ffffff */
@@ -525,7 +525,7 @@
   --cor-mapa-ramo-6-fundo: #ffffff;
   --cor-mapa-ramo-6-texto: #000000;
 
-  --cor-cabecalho-progresso: #0d2440;
+  --cor-cabecalho-progresso: #000000;
   /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:
      texto preto do cabeçalho mede 21:1 contra ele, rolado ou não. */
   --cor-cabecalho-rolado-fundo: #ffffff;

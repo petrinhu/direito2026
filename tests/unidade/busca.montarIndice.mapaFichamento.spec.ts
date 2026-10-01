@@ -46,7 +46,7 @@ describe('índice de busca com mapa, fichamento e mnemônicos', () => {
   it('gera um documento por mnemônico', () => {
     const mn = docs.filter((d) => d.aba === 'mnemonicos');
     expect(mn).toHaveLength(1);
-    expect(mn[0]!.url).toBe('/p/p1/c/u1/mnemonicos#m1');
+    expect(mn[0]!.url).toBe('/p/p1/c/u1/mnemonicos#mnemonico-m1');
     expect(mn[0]!.corpo).toContain('Alfa adoça');
   });
 

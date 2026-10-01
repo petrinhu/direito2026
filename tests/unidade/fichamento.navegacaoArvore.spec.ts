@@ -84,6 +84,16 @@ describe('interpretarTecla (padrão APG de árvore)', () => {
     });
   });
 
+  it('Enter no atalho da ficha manda ativar o link, e Espaço também', () => {
+    const todos = new Set(idsExpansiveis(raiz));
+    expect(interpretarTecla(raiz, todos, 'mapa-alfa-ficha', 'Enter')).toEqual({
+      ativar: 'mapa-alfa-ficha'
+    });
+    expect(interpretarTecla(raiz, todos, 'mapa-alfa-ficha', ' ')).toEqual({
+      ativar: 'mapa-alfa-ficha'
+    });
+  });
+
   it('Enter e Espaço alternam o nó que tem filhos e não fazem nada na folha', () => {
     expect(interpretarTecla(raiz, abertos, 'mapa-pensador-alfa', 'Enter')).toEqual({
       alternar: 'mapa-pensador-alfa'

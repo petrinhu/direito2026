@@ -62,6 +62,13 @@ function nosDoPensador(ficha: FichaPensador): NoMapa[] {
       filhos: []
     });
   }
+  nos.push({
+    id: `${base}-ficha`,
+    tipo: 'ficha',
+    rotulo: 'Ler a ficha completa',
+    fichaId: ficha.id,
+    filhos: []
+  });
   return nos;
 }
 

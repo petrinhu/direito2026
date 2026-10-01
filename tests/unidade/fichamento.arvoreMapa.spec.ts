@@ -24,9 +24,16 @@ describe('construirArvoreMapa', () => {
     expect(alfa.fichaId).toBe('alfa');
   });
 
-  it('o pensador tem modo de pensar, conceitos-chave, para o Direito hoje e ressalva, nessa ordem', () => {
+  it('o pensador tem modo de pensar, conceitos-chave, para o Direito hoje, ressalva e o atalho da ficha, nessa ordem', () => {
     const alfa = raiz.filhos[0]!.filhos[0]!.filhos[0]!;
-    expect(alfa.filhos.map((n) => n.tipo)).toEqual(['modo', 'conceitos', 'direito', 'ressalva']);
+    expect(alfa.filhos.map((n) => n.tipo)).toEqual([
+      'modo',
+      'conceitos',
+      'direito',
+      'ressalva',
+      'ficha'
+    ]);
+    expect(alfa.filhos[4]).toMatchObject({ rotulo: 'Ler a ficha completa', fichaId: 'alfa' });
     expect(alfa.filhos[0]!.rotulo).toBe('Modo de pensar');
     expect(alfa.filhos[0]!.detalhe).toBe('Pensa em açúcar.');
     expect(alfa.filhos[1]!.filhos.map((c) => c.rotulo)).toEqual(['Doce', 'Amargo']);
@@ -35,7 +42,7 @@ describe('construirArvoreMapa', () => {
 
   it('omite os ramos vazios: sem conceitos e sem ressalva não nasce nó oco', () => {
     const gama = raiz.filhos[1]!.filhos[0]!.filhos[0]!;
-    expect(gama.filhos.map((n) => n.tipo)).toEqual(['modo', 'direito']);
+    expect(gama.filhos.map((n) => n.tipo)).toEqual(['modo', 'direito', 'ficha']);
   });
 
   it('todo id é único na árvore inteira', () => {

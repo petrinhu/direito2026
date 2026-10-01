@@ -1337,3 +1337,14 @@ Escolha: árvore HTML própria (`role="tree"`), conectores em CSS, sem bibliotec
 - Modo adaptado: preto sobre branco pelos tokens, bordas de 2px, texto no tamanho de corpo (24px), alvos de 44px, sem transição.
 - Impressão: todos os ramos, fichas e respostas saem abertos.
 - Responsivo: a lista de abas quebra de linha em qualquer modo (cinco abas não cabem em 360px numa linha); a árvore rola dentro do próprio contêiner se precisar.
+
+### Mapa visual radial (01/10/2026, reprovação do líder da primeira versão)
+
+O líder reprovou o mapa em árvore ("horrível, não é divertido, parece apenas uma árvore"). O mapa passou a ser visual e radial: nó central, ramos curvos coloridos (um tom por pensador, seis tons nos tokens `--cor-mapa-ramo-N-*`), cápsulas, clique abre e fecha o ramo com animação, zoom (roda, pinça, botões) e arrastar, painel de detalhe.
+
+**Escolha: SVG próprio, sem biblioteca (markmap não foi instalado).** Motivo: markmap é uma árvore horizontal sobre d3, sem cápsulas, difícil de tematizar nos quatro blocos de token (claro, escuro, adaptado) e sem teclado; o SVG próprio dá controle total de cor, teclado e movimento reduzido. `package.json` não mudou: não há dependência nova, nem licença nova a registrar. `npm audit --omit=dev`: 0 vulnerabilidades. Sem CDN: tudo é código do próprio build.
+
+- Mesma fonte de dados: `arvoreVisual` (core) deriva do mesmo `mapaFichamento.ts`, sem o nível de fase; `layoutRadial` dá a cada nó uma fatia de ângulo proporcional às folhas visíveis.
+- A lista em árvore (`role="tree"`) continua como "Ver em lista". Com `prefers-reduced-motion` ou modo adaptado, a aba abre direto na lista; o mapa visual fica opcional e sem animação.
+- Um único botão alterna todos os ramos, na lista e no mapa; o rótulo e `aria-expanded` mudam na hora e também refletem ramos abertos à mão.
+- Âncoras: `Unidade.vue` rola até o id da URL depois que o conteúdo chega (o roteador rolava antes de o resumo existir).

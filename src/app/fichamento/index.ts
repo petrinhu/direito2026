@@ -6,6 +6,10 @@ export { abertosIniciais, interpretarTecla, nosVisiveis } from '@/core/fichament
 export { filtrarFichas, ordenarFichas, rotuloDaFase } from '@/core/fichamento/filtrarFichas';
 export {
   abertosIniciaisVisual,
+  abertosTodosVisual,
+  alternarRamo,
+  dimensionar,
+  vistaLegivel,
   alternarTodosRamos,
   arvoreVisual,
   caminhoLigacao,

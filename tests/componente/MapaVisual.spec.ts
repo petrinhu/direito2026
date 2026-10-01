@@ -90,7 +90,9 @@ describe('MapaVisual', () => {
     await alternar().trigger('click');
     expect(alternar().text()).toBe('Recolher todos os ramos');
     expect(alternar().attributes('aria-expanded')).toBe('true');
-    expect(no('mapa-alfa-conceito-0').exists()).toBe(true);
+    expect(no('mapa-alfa-modo').exists()).toBe(true);
+    // Abrir todos não abre os conceitos: as cápsulas não caberiam.
+    expect(no('mapa-alfa-conceito-0').exists()).toBe(false);
     await alternar().trigger('click');
     expect(alternar().text()).toBe('Abrir todos os ramos');
     expect(no('mapa-alfa-modo').exists()).toBe(false);
@@ -101,6 +103,15 @@ describe('MapaVisual', () => {
     await wrapper!.find('button.mapa-visual__todos').trigger('click');
     await no('mapa-pensador-alfa').trigger('click');
     expect(wrapper!.find('button.mapa-visual__todos').text()).toBe('Abrir todos os ramos');
+  });
+
+  it('acordeão: abrir um pensador fecha o outro do mesmo período', async () => {
+    montar();
+    await no('mapa-pensador-alfa').trigger('click');
+    await no('mapa-pensador-beta').trigger('click');
+    expect(no('mapa-pensador-alfa').attributes('aria-expanded')).toBe('false');
+    expect(no('mapa-pensador-beta').attributes('aria-expanded')).toBe('true');
+    expect(no('mapa-alfa-modo').exists()).toBe(false);
   });
 
   it('+ e − mudam o zoom, e Centralizar volta ao enquadramento inicial', async () => {

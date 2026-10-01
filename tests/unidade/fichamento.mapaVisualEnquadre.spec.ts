@@ -98,3 +98,130 @@ describe('ajustarVista: todo nó cabe na janela', () => {
     expect(v.k).toBeLessThanOrEqual(1.2);
   });
 });
+
+/* ---- rodada 2: sem sobreposição, acordeão, texto legível em tela estreita ---- */
+import {
+  abertosTodosVisual,
+  alternarRamo,
+  dimensionar,
+  vistaLegivel
+} from '@/core/fichamento/mapaVisual';
+
+const medirTexto = (s: string, fonte: number) => s.length * fonte * 0.56;
+
+function itensReais(abertos: ReadonlySet<string>, orientacao: 'horizontal' | 'vertical') {
+  const medidas = new Map<string, ReturnType<typeof dimensionar>>();
+  const medida = (no: (typeof raiz)['filhos'][number], profundidade: number) => {
+    const m = dimensionar(no, profundidade, medirTexto);
+    medidas.set(no.id, m);
+    return m;
+  };
+  const pos = layoutRadial(raiz, abertos, { orientacao, medida });
+  return pos.map((p) => ({ p, m: medidas.get(p.no.id)! }));
+}
+
+function sobrepostos(itens: ReturnType<typeof itensReais>): string[] {
+  const achados: string[] = [];
+  for (let i = 0; i < itens.length; i++) {
+    for (let j = i + 1; j < itens.length; j++) {
+      const a = itens[i]!;
+      const b = itens[j]!;
+      const dx = Math.abs(a.p.x - b.p.x) - (a.m.largura + b.m.largura) / 2;
+      const dy = Math.abs(a.p.y - b.p.y) - (a.m.altura + b.m.altura) / 2;
+      if (dx < 2 && dy < 2) achados.push(`${a.p.no.id} x ${b.p.no.id}`);
+    }
+  }
+  return achados;
+}
+
+describe('nenhuma cápsula cobre outra (1280px)', () => {
+  it('com "Abrir todos os ramos"', () => {
+    expect(sobrepostos(itensReais(abertosTodosVisual(raiz), 'horizontal'))).toEqual([]);
+  });
+
+  it('com um pensador aberto, conceitos incluídos', () => {
+    for (const id of ['mapa-pensador-platao', 'mapa-pensador-tomas-de-aquino']) {
+      const abertos = new Set([
+        ...abertosIniciaisVisual(raiz),
+        id,
+        `${id.replace('pensador-', '')}-conceitos`
+      ]);
+      expect(sobrepostos(itensReais(abertos, 'horizontal')), id).toEqual([]);
+    }
+  });
+
+  it('também na vertical (tela estreita)', () => {
+    expect(sobrepostos(itensReais(abertosTodosVisual(raiz), 'vertical'))).toEqual([]);
+  });
+});
+
+describe('acordeão', () => {
+  it('abrir um pensador fecha os outros do mesmo período, não os do outro', () => {
+    let a = alternarRamo(raiz, abertosIniciaisVisual(raiz), 'mapa-pensador-platao');
+    a = alternarRamo(raiz, a, 'mapa-pensador-tomas-de-aquino');
+    a = alternarRamo(raiz, a, 'mapa-pensador-socrates');
+    expect(a.has('mapa-pensador-socrates')).toBe(true);
+    expect(a.has('mapa-pensador-platao')).toBe(false);
+    expect(a.has('mapa-pensador-tomas-de-aquino')).toBe(true);
+  });
+
+  it('fechar o ramo aberto o fecha; e os conceitos do irmão fechado também somem', () => {
+    let a = alternarRamo(raiz, abertosIniciaisVisual(raiz), 'mapa-pensador-platao');
+    a = alternarRamo(raiz, a, 'mapa-platao-conceitos');
+    a = alternarRamo(raiz, a, 'mapa-pensador-socrates');
+    expect(a.has('mapa-platao-conceitos')).toBe(false);
+    a = alternarRamo(raiz, a, 'mapa-pensador-socrates');
+    expect(a.has('mapa-pensador-socrates')).toBe(false);
+  });
+});
+
+describe('texto legível em tela estreita (360px)', () => {
+  const MINIMA = 12 / 14;
+
+  function efetivo(abertos: ReadonlySet<string>, focoId: string): number {
+    const itens = itensReais(abertos, 'vertical');
+    const caixa = ({ p, m }: (typeof itens)[number]) => ({
+      x: p.x,
+      y: p.y,
+      largura: m.largura,
+      altura: m.altura
+    });
+    const sel = itens.find((i) => i.p.no.id === focoId)!;
+    const ids = new Set<string>();
+    const sobe = (id: string | undefined): void => {
+      if (!id) return;
+      ids.add(id);
+      sobe(itens.find((i) => i.p.no.id === id)?.p.paiId);
+    };
+    sobe(focoId);
+    const descende = (id: string): void => {
+      for (const i of itens.filter((x) => x.p.paiId === id)) {
+        ids.add(i.p.no.id);
+        descende(i.p.no.id);
+      }
+    };
+    descende(focoId);
+    const foco = [sel, ...itens.filter((i) => ids.has(i.p.no.id) && i !== sel)].map(caixa);
+    const v = vistaLegivel(itens.map(caixa), foco, 360, 520, 8, MINIMA);
+    return v.k * 14;
+  }
+
+  it('nunca abaixo de 12px, com tudo aberto e com um pensador aberto', () => {
+    expect(efetivo(abertosTodosVisual(raiz), 'mapa-era-antiga')).toBeGreaterThanOrEqual(12 - 1e-6);
+    const um = new Set([...abertosIniciaisVisual(raiz), 'mapa-pensador-platao']);
+    expect(efetivo(um, 'mapa-pensador-platao')).toBeGreaterThanOrEqual(12 - 1e-6);
+  });
+
+  it('em tela larga o mapa inteiro continua cabendo, sem trocar para o foco', () => {
+    const itens = itensReais(abertosTodosVisual(raiz), 'horizontal');
+    const caixas = itens.map(({ p, m }) => ({
+      x: p.x,
+      y: p.y,
+      largura: m.largura,
+      altura: m.altura
+    }));
+    const v = vistaLegivel(caixas, [], 1280, 680, 8, MINIMA);
+    const inteira = ajustarVista(caixas, 1280, 680, 8);
+    expect(v.k).toBeCloseTo(Math.max(inteira.k, MINIMA), 6);
+  });
+});

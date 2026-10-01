@@ -82,3 +82,36 @@ describe('acabamento das abas novas (QA, cosméticos)', () => {
     }
   });
 });
+
+describe('modo adaptado na aba do mapa: preto e branco puro', () => {
+  const ler = (arquivo: string) =>
+    readFileSync(resolve(__dirname, '../../src/ui/componentes', arquivo), 'utf-8');
+
+  it('o contêiner da aba troca os tokens de marca (#0d2440) por preto', () => {
+    const fonte = ler('MapaMentalVisor.vue');
+    const bloco = fonte.slice(fonte.indexOf(":root[data-modo-adaptado='on'] .mapa-mental {"));
+    for (const variavel of [
+      '--cor-primaria',
+      '--cor-titulo-texto',
+      '--cor-acento',
+      '--cor-bordo'
+    ]) {
+      expect(bloco, variavel).toMatch(new RegExp(`${variavel}:\\s*#000000`));
+    }
+  });
+
+  it('nenhum componente do mapa escreve #0d2440 à mão', () => {
+    for (const arquivo of [
+      'MapaVisual.vue',
+      'MapaMentalVisor.vue',
+      'MapaMental.vue',
+      'NoMapaMental.vue'
+    ]) {
+      // Valor reserva dentro de var(--token, #hex) não conta: o token é que vale.
+      const semReservas = ler(arquivo)
+        .replace(/var\([^)]*\)/g, '')
+        .toLowerCase();
+      expect(semReservas, arquivo).not.toContain('#0d2440');
+    }
+  });
+});

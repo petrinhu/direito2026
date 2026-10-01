@@ -1348,3 +1348,9 @@ O líder reprovou o mapa em árvore ("horrível, não é divertido, parece apena
 - A lista em árvore (`role="tree"`) continua como "Ver em lista". Com `prefers-reduced-motion` ou modo adaptado, a aba abre direto na lista; o mapa visual fica opcional e sem animação.
 - Um único botão alterna todos os ramos, na lista e no mapa; o rótulo e `aria-expanded` mudam na hora e também refletem ramos abertos à mão.
 - Âncoras: `Unidade.vue` rola até o id da URL depois que o conteúdo chega (o roteador rolava antes de o resumo existir).
+
+### Mapa visual em tela estreita e densidade (rodada 2, 01/10/2026)
+
+Pesquisa feita antes (L-22) sobre como mind maps web tratam tela estreita e densidade. Fontes: [Miro, ramos recolhíveis em mind maps](https://community.miro.com/ideas/collapsible-branches-on-the-mind-maps-171/index2.html) (recolher ramos para limitar o que aparece), [MindNode, vista em tópicos](https://www.mindnode.com/support/guides/outlining) (a lista linear como alternativa ao mapa) e [Better Mind Map, layout vertical ou horizontal](https://www.obsidianstats.com/plugins/better-mindmap) (orientação e espaçamento ajustáveis).
+
+Decisões: (1) em menos de 640px o layout é vertical (Antiguidade em cima) e o texto nunca fica abaixo de 12px: se o mapa inteiro não couber nessa escala, enquadra-se o ramo em foco, com pan para o resto (`vistaLegivel`); a largura passou a ser observada com `ResizeObserver`, porque a aba monta escondida e a medição única na montagem nunca via a largura real. (2) Acordeão: abrir um pensador fecha os outros do mesmo período; "Abrir todos os ramos" abre até os pensadores, não os conceitos. (3) O layout reserva o espaço real das cápsulas (fatia de ângulo e raio do anel proporcionais ao tamanho), e um teste garante que nenhum par de retângulos se sobrepõe. (4) Modo adaptado: os tokens de marca são trocados por preto no contêiner da aba.

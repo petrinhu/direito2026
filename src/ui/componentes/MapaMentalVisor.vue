@@ -105,4 +105,14 @@ function alternarModo(): void {
 :root[data-modo-adaptado='on'] .mapa-mental__modo {
   color: #000000;
 }
+
+/* Modo adaptado: preto e branco puro em toda a aba do mapa. Os tokens de marca
+   (azul-marinho) valem no resto do site, mas aqui entram em títulos,
+   links e filetes; trocá-los no contêiner cobre a lista e o mapa de uma vez. */
+:root[data-modo-adaptado='on'] .mapa-mental {
+  --cor-primaria: #000000;
+  --cor-titulo-texto: #000000;
+  --cor-acento: #000000;
+  --cor-bordo: #000000;
+}
 </style>

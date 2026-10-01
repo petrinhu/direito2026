@@ -7,7 +7,8 @@ import {
   caminhoLigacao,
   layoutRadial,
   rotuloVisual,
-  todosAbertos
+  todosAbertos,
+  abertosTodosVisual
 } from '@/core/fichamento/mapaVisual';
 import { percorrer } from '@/core/fichamento/arvoreMapa';
 import { DADOS_SINTETICOS } from './apoio/dadosFichamento';
@@ -118,8 +119,11 @@ describe('abrir e fechar tudo', () => {
 
   it('alternarTodosRamos abre se algo está fechado e recolhe se tudo está aberto', () => {
     const inicial = abertosIniciaisVisual(raiz);
-    expect(alternarTodosRamos(raiz, inicial)).toEqual(new Set(todosAbertos(raiz)));
-    expect(alternarTodosRamos(raiz, new Set(todosAbertos(raiz)))).toEqual(inicial);
+    expect(alternarTodosRamos(raiz, inicial)).toEqual(abertosTodosVisual(raiz));
+    expect(alternarTodosRamos(raiz, abertosTodosVisual(raiz))).toEqual(inicial);
+    // "Abrir todos" não abre os conceitos.
+    expect(abertosTodosVisual(raiz).has('mapa-alfa-conceitos')).toBe(false);
+    expect(abertosTodosVisual(raiz).has('mapa-pensador-alfa')).toBe(true);
   });
 });
 

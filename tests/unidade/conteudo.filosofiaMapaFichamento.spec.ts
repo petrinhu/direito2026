@@ -215,3 +215,34 @@ describe('mnemônicos de Filosofia Jurídica', () => {
     expect(textoDe(mnemonicos)).not.toMatch(TRAVESSAO);
   });
 });
+
+describe('nome curto para a cápsula do mapa visual', () => {
+  it('toda ficha tem nome curto, de até 16 caracteres', () => {
+    for (const p of mapaFichamento.pensadores) {
+      expect(p.nomeCurto, p.id).toBeDefined();
+      expect(p.nomeCurto!.length, p.id).toBeLessThanOrEqual(16);
+    }
+  });
+});
+
+describe('texto compreensível para quem lê de fora', () => {
+  const PROIBIDO = /\b(na|nas|da|das|pela|pelas) aulas?\b|\baula [0-9]|\bslides?\b/i;
+  const semReferencias = mapaFichamento.pensadores.map((p) => ({ ...p, referencias: [] }));
+
+  it('mapa e fichas não citam "na aula", "aula N" nem "slide"', () => {
+    const achados = JSON.stringify([
+      mapaFichamento.titulo,
+      mapaFichamento.eras,
+      semReferencias
+    ]).match(new RegExp(PROIBIDO, 'gi'));
+    expect(achados ?? []).toEqual([]);
+  });
+
+  it('referência de aula é só "Material de aula da disciplina.", sem número nem data', () => {
+    for (const p of mapaFichamento.pensadores) {
+      for (const ref of p.referencias.filter((r) => /aula|slide/i.test(r))) {
+        expect(ref, p.id).toBe('Material de aula da disciplina.');
+      }
+    }
+  });
+});

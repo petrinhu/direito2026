@@ -3,13 +3,12 @@ import type { FichaPensador, MapaFichamento } from '../../../tipos';
 /**
  * Fonte única do Mapa mental e do Fichamento de Filosofia Jurídica, 1a
  * unidade. Tudo vem do resumo da própria unidade (resumo.ts) e das fontes
- * que ele cita: nada é acrescentado ao material. Datas seguem as aulas;
+ * que ele cita: nada é acrescentado ao material. Datas seguem o material de aula;
  * onde os livros divergem, a ressalva da ficha atribui a cada autor. Citação
  * literal só aparece quando o texto consta do material, com a fonte.
  */
 
-const AULAS_ANTIGA = 'Slides das aulas de Filosofia Jurídica na Idade Antiga.';
-const AULAS_MEDIA = 'Slides da aula de Filosofia Jurídica na Idade Média.';
+const MATERIAL_DE_AULA = 'Material de aula da disciplina.';
 const NASCIMENTO =
   'NASCIMENTO, Filippe Augusto dos Santos. Manual de Humanística, cap. 2.';
 const MARCONDES = 'MARCONDES, Danilo; STRUCHINER, Noel. Textos básicos de filosofia do direito.';
@@ -20,6 +19,7 @@ const WOLKMER_CAP2 =
 
 const sofocles: FichaPensador = {
   id: 'sofocles',
+  nomeCurto: 'Sófocles',
   nome: 'Sófocles e a tragédia ática (Antígona)',
   datas: 'século V a.C.',
   faseId: 'grecia-classica',
@@ -40,13 +40,14 @@ const sofocles: FichaPensador = {
   paraODireito:
     'Toda vez que alguém alega que uma ordem legal é injusta demais para ser cumprida, reaparece o argumento de Antígona: existe uma medida de justiça acima do decreto.',
   ressalva:
-    'O livro de apoio registra que a leitura não é unânime: a maioria dos intérpretes vê Sófocles favorável à lei natural ou divina, mas nem Creonte nem Antígona teriam razão absoluta. Para a prova, vale a leitura das aulas.',
-  referencias: [AULAS_ANTIGA, MARCONDES, WOLKMER_CAP1, NASCIMENTO],
+    'O livro de apoio registra que a leitura não é unânime: a maioria dos intérpretes vê Sófocles favorável à lei natural ou divina, mas nem Creonte nem Antígona teriam razão absoluta. Para estudo, vale a leitura do choque entre a lei posta pelo governante e as leis não escritas de ordem sagrada e natural.',
+  referencias: [MATERIAL_DE_AULA, MARCONDES, WOLKMER_CAP1, NASCIMENTO],
   blocoResumo: 'bloco-1'
 };
 
 const sofistas: FichaPensador = {
   id: 'sofistas',
+  nomeCurto: 'Sofistas',
   nome: 'Os sofistas',
   datas: 'século V a.C.',
   faseId: 'grecia-classica',
@@ -57,23 +58,24 @@ const sofistas: FichaPensador = {
     'Physis x nomos',
     'Protágoras (481-411 a.C.): homo mensura, relativismo e individualismo',
     'Trasímaco (459-400 a.C.): a justiça é a conveniência do mais forte',
-    'Outros nomes citados nas aulas: Górgias (485-380), Pródico (465-395), Hípias (443-399)',
+    'Outros nomes do grupo: Górgias (485-380), Pródico (465-395), Hípias (443-399)',
     'Precursores primitivos do relativismo e do positivismo jurídicos'
   ],
   citacao: {
     texto: 'o homem é a medida de todas as coisas',
-    fonte: 'Protágoras (homo mensura), conforme os slides da aula de fixação da Idade Antiga.'
+    fonte: 'Protágoras (homo mensura), tal como registrado no material de aula.'
   },
   paraODireito:
     'Quem diz que "a lei é o que o poder estabelece" está repetindo Trasímaco; quem diz que "cada caso é um caso e cada um julga por si" está mais perto de Protágoras.',
   ressalva:
     'É das confusões mais cobradas em verdadeiro ou falso: a "conveniência do mais forte" é de Trasímaco, e o homo mensura é de Protágoras. Os sofistas não formam uma corrente única.',
-  referencias: [AULAS_ANTIGA, NASCIMENTO, WOLKMER_CAP1],
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, WOLKMER_CAP1],
   blocoResumo: 'bloco-2'
 };
 
 const socrates: FichaPensador = {
   id: 'socrates',
+  nomeCurto: 'Sócrates',
   nome: 'Sócrates',
   datas: '469-399 a.C.',
   faseId: 'grecia-classica',
@@ -89,13 +91,14 @@ const socrates: FichaPensador = {
   paraODireito:
     'Caso clássico de tensão entre consciência e ordem jurídica: obedecer à sentença mesmo a considerando injusta, para preservar a autoridade das leis. A injustiça da condenação não autorizou a fuga.',
   ressalva:
-    'Nas aulas, a razão da recusa é que o bom cidadão deve obedecer também às leis más. Wolkmer descreve essa mesma obediência como levada até uma lei "errada ou até criminosa".',
-  referencias: [AULAS_ANTIGA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
+    'Segundo o material de aula, a razão da recusa é que o bom cidadão deve obedecer também às leis más. Wolkmer descreve essa mesma obediência como levada até uma lei "errada ou até criminosa".',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
   blocoResumo: 'bloco-3'
 };
 
 const platao: FichaPensador = {
   id: 'platao',
+  nomeCurto: 'Platão',
   nome: 'Platão',
   datas: '427-348 a.C.',
   faseId: 'grecia-classica',
@@ -112,13 +115,14 @@ const platao: FichaPensador = {
   paraODireito:
     'Uma pena pensada apenas como vingança contra o infrator esbarra na objeção de Platão: causar mal degrada quem o pratica. A discussão sobre a finalidade da pena começa por aí.',
   ressalva:
-    'Nem tudo o que aparece nos diálogos é a posição de Platão: o mito de Giges (República II) é exposição de Glauco, e o mito de Prometeu (Protágoras) representa a posição de Protágoras. Sobre as datas, as aulas dão 427-348 a.C., e os livros de apoio trazem 428-347 e 427-347; o resumo segue as aulas.',
-  referencias: [AULAS_ANTIGA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
+    'Nem tudo o que aparece nos diálogos é a posição de Platão: o mito de Giges (República II) é exposição de Glauco, e o mito de Prometeu (Protágoras) representa a posição de Protágoras. Sobre as datas, o material de aula dá 427-348 a.C., e os livros de apoio trazem 428-347 e 427-347; o resumo segue o primeiro.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP1],
   blocoResumo: 'bloco-4'
 };
 
 const aristoteles: FichaPensador = {
   id: 'aristoteles',
+  nomeCurto: 'Aristóteles',
   nome: 'Aristóteles',
   datas: '384-322 a.C.',
   faseId: 'grecia-classica',
@@ -140,12 +144,13 @@ const aristoteles: FichaPensador = {
   },
   paraODireito:
     'Um concurso que reserva vagas por necessidade aplica a lógica distributiva; um contrato em que cada parte devolve o equivalente ao que recebeu aplica a comutativa; o juiz que abranda a regra geral por causa de um caso peculiar aplica a equidade.',
-  referencias: [AULAS_ANTIGA, NASCIMENTO, MARCONDES],
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES],
   blocoResumo: 'bloco-5'
 };
 
 const epicuro: FichaPensador = {
   id: 'epicuro',
+  nomeCurto: 'Epicuro',
   nome: 'Epicuro',
   faseId: 'helenismo-roma',
   obras: [],
@@ -155,13 +160,14 @@ const epicuro: FichaPensador = {
   paraODireito:
     'A ideia de que o justo nasce de um acordo entre as pessoas, e não de algo que existe em si, aparece aqui em forma primitiva.',
   ressalva:
-    'Epicuro (tradição helenística) é lembrado nas aulas ao lado dos sofistas, e por isso o resumo o trata junto deles.',
-  referencias: [AULAS_ANTIGA, NASCIMENTO],
+    'Epicuro (tradição helenística) costuma ser lembrado ao lado dos sofistas, e por isso o resumo o trata junto deles.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO],
   blocoResumo: 'bloco-2'
 };
 
 const estoicos: FichaPensador = {
   id: 'estoicos',
+  nomeCurto: 'Estoicos',
   nome: 'Os estoicos',
   faseId: 'helenismo-roma',
   obras: [],
@@ -174,17 +180,18 @@ const estoicos: FichaPensador = {
   ],
   paraODireito:
     'A ideia de que certos direitos valem para qualquer pessoa, mesmo onde a lei local silencia, é herança estoica e ciceroniana.',
-  referencias: [AULAS_ANTIGA, WOLKMER_CAP1],
+  referencias: [MATERIAL_DE_AULA, WOLKMER_CAP1],
   blocoResumo: 'bloco-6'
 };
 
 const cicero: FichaPensador = {
   id: 'cicero',
+  nomeCurto: 'Cícero e Roma',
   nome: 'Cícero (106-43 a.C.) e os juristas romanos',
   faseId: 'helenismo-roma',
   obras: ['Sobre as Leis (De legibus)', 'Digesto de Justiniano'],
   modoDePensar:
-    'O direito se funda na natureza, não nas opiniões dos homens nem só nas leis escritas. A máxima que os slides lhe atribuem, Natura juris ab homines repetenda est natura, diz que a essência do Direito deve ser buscada na essência humana.',
+    'O direito se funda na natureza, não nas opiniões dos homens nem só nas leis escritas. A máxima que lhe é atribuída, Natura juris ab homines repetenda est natura, diz que a essência do Direito deve ser buscada na essência humana.',
   conceitos: [
     'Primeiro "autêntico" filósofo do Direito; incorporou platonismo, aristotelismo e estoicismo',
     'Ius naturale: fundado na razão universal, vale para todos os povos',
@@ -201,13 +208,14 @@ const cicero: FichaPensador = {
   paraODireito:
     'A ideia de que a lei de cada país vale para os seus cidadãos é o ius civile em sua forma moderna.',
   ressalva:
-    'A classificação do ius gentium é discutida: o Manual de Humanística registra que Bobbio o aproxima do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O resumo mantém a tripartição das aulas e retém o essencial: as três categorias não se equivalem.',
-  referencias: [AULAS_ANTIGA, NASCIMENTO, WOLKMER_CAP1, WOLKMER_CAP2],
+    'A classificação do ius gentium é discutida: o Manual de Humanística registra que Bobbio o aproxima do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O resumo mantém a tripartição clássica e retém o essencial: as três categorias não se equivalem.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, WOLKMER_CAP1, WOLKMER_CAP2],
   blocoResumo: 'bloco-6'
 };
 
 const agostinho: FichaPensador = {
   id: 'agostinho',
+  nomeCurto: 'Agostinho',
   nome: 'Santo Agostinho',
   datas: '354-430',
   faseId: 'patristica',
@@ -222,13 +230,14 @@ const agostinho: FichaPensador = {
   paraODireito:
     'Quando se diz que uma lei humana não pode contrariar uma ordem superior, reaparece a estrutura de Agostinho: um plano de valores acima da norma posta, agora com fundamento religioso, e não mais apenas na razão como em Cícero.',
   ressalva:
-    'O livro de Marcondes e Struchiner não traz texto de Agostinho; o resumo só registra o que as aulas e Wolkmer dizem dele.',
-  referencias: [AULAS_MEDIA, NASCIMENTO, WOLKMER_CAP2],
+    'O livro de Marcondes e Struchiner não traz texto de Agostinho; o resumo só registra o que o material de aula e Wolkmer dizem dele.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, WOLKMER_CAP2],
   blocoResumo: 'bloco-7'
 };
 
 const tomas: FichaPensador = {
   id: 'tomas-de-aquino',
+  nomeCurto: 'Tomás de Aquino',
   nome: 'Tomás de Aquino',
   datas: '1225-1274',
   faseId: 'escolastica',
@@ -239,7 +248,7 @@ const tomas: FichaPensador = {
     'Lei eterna: a lei de Deus, fundamento de todas as demais',
     'Lei natural: participação da criatura racional na lei eterna, alcançável pela razão',
     'Lei humana: a lei posta, com base na lei natural e voltada à utilidade comum',
-    'Lei divina: a que vem das Escrituras (os slides destacam as três primeiras; Wolkmer completa as quatro)',
+    'Lei divina: a que vem das Escrituras (o material de aula destaca as três primeiras; Wolkmer completa as quatro)',
     'Justiça comutativa e distributiva, integradas à caridade',
     'Hierarquia dos fins: os últimos, da Igreja; os terrenos, do Estado'
   ],
@@ -251,13 +260,14 @@ const tomas: FichaPensador = {
   paraODireito:
     'Ao discutir se uma norma legal muito injusta ainda obriga, as duas leituras da bibliografia dão respostas diferentes: em uma, a lei que se afasta da natural deixa de ser lei em sentido pleno; na outra, a lei humana deve ser respeitada mesmo quando se mostre contrária ao bem comum.',
   ressalva:
-    'Lei humana contra lei natural: para Wolkmer, a que se afasta da natural "não será lei, senão a corrupção da lei"; para o Manual de Humanística, deve prevalecer a humana. No conflito com a lei eterna, prevalece a eterna nas duas leituras. Estado e Igreja: os slides mantêm o Estado subordinado à Igreja quanto aos fins últimos, e o Manual fala em separação, com subordinação só entre a ordem natural e a sobrenatural. Datas: 1225-1274 nas aulas, e 1224 para o nascimento no livro de apoio.',
-  referencias: [AULAS_MEDIA, NASCIMENTO, MARCONDES, WOLKMER_CAP2],
+    'Lei humana contra lei natural: para Wolkmer, a que se afasta da natural "não será lei, senão a corrupção da lei"; para o Manual de Humanística, deve prevalecer a humana. No conflito com a lei eterna, prevalece a eterna nas duas leituras. Estado e Igreja: o material de aula mantém o Estado subordinado à Igreja quanto aos fins últimos, e o Manual fala em separação, com subordinação só entre a ordem natural e a sobrenatural. Datas: 1225-1274 no material de aula, e 1224 para o nascimento no livro de apoio.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO, MARCONDES, WOLKMER_CAP2],
   blocoResumo: 'bloco-8'
 };
 
 const escoto: FichaPensador = {
   id: 'escoto',
+  nomeCurto: 'Duns Escoto',
   nome: 'Duns Escoto',
   datas: '1266-1308',
   faseId: 'contraponto',
@@ -266,13 +276,14 @@ const escoto: FichaPensador = {
     'Contra o organicismo dominante, afirma o primado do individual sobre o geral e da liberdade sobre a ordem: Deus se revela a cada pessoa em sua individualidade.',
   conceitos: ['Primado do individual sobre o geral', 'Primado da liberdade sobre a ordem'],
   paraODireito:
-    'Com Ockham, prepara a passagem do organicismo ao indivíduo e à modernidade, segundo a síntese das aulas.',
-  referencias: [AULAS_MEDIA, NASCIMENTO],
+    'Com Ockham, prepara a passagem do organicismo ao indivíduo e à modernidade, segundo a síntese do material de aula.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO],
   blocoResumo: 'bloco-9'
 };
 
 const ockham: FichaPensador = {
   id: 'ockham',
+  nomeCurto: 'Ockham',
   nome: 'Guilherme de Ockham',
   datas: '1285-1327',
   faseId: 'contraponto',
@@ -286,8 +297,8 @@ const ockham: FichaPensador = {
     'Direito subjetivo: os direitos que o indivíduo tem por lhe terem sido conferidos'
   ],
   paraODireito:
-    'A ideia moderna de que cada pessoa tem direitos próprios, e não apenas lugar numa ordem maior, tem raízes na crítica de Ockham ao universalismo. Ele é lembrado nas aulas como um dos pontos de partida da noção de direito subjetivo.',
-  referencias: [AULAS_MEDIA, NASCIMENTO],
+    'A ideia moderna de que cada pessoa tem direitos próprios, e não apenas lugar numa ordem maior, tem raízes na crítica de Ockham ao universalismo. Ele é lembrado como um dos pontos de partida da noção de direito subjetivo.',
+  referencias: [MATERIAL_DE_AULA, NASCIMENTO],
   blocoResumo: 'bloco-9'
 };
 

@@ -177,6 +177,19 @@
   --cor-menu-aba: #c3cfdd;
   --cor-menu-item: #a7b4c6;
 
+  /* Mapa mental (ordem do líder, 01/10/2026: "mantenha o padrão de cores"):
+     era e fase usam a mesma família da lateral (azul-marinho com dourado
+     pálido e azul claro), pensador usa o cartão da página, e a folha usa o
+     fundo sutil. Os blocos de era e fase têm fundo escuro nos DOIS temas,
+     por desenho, como a lateral, então carregam o próprio par de texto.
+     Contraste medido (WCAG 2.2): era 10,56:1; fase 9,20:1; linha de
+     ligação 4,73:1 contra a página no claro e 7,32:1 no escuro (piso 3:1). */
+  --cor-mapa-era-fundo: #0d2440;
+  --cor-mapa-era-texto: #e6d3a0;
+  --cor-mapa-fase-fundo: #1a3a5c;
+  --cor-mapa-fase-texto: #d9e6f5;
+  --cor-mapa-linha: #5f7189;
+
   /* Fio de progresso de leitura, dourado, preso na base do cabeçalho
      (ordem do líder, 22/09/2026). Mesma classe de cuidado da lateral: o
      cabeçalho é sempre escuro nos dois temas, então este dourado NÃO usa
@@ -259,6 +272,11 @@
     --cor-menu-unidade: #a9c8ea;
     --cor-menu-aba: #c3cfdd;
     --cor-menu-item: #a7b4c6;
+    --cor-mapa-era-fundo: #0d2440;
+    --cor-mapa-era-texto: #e6d3a0;
+    --cor-mapa-fase-fundo: #1a3a5c;
+    --cor-mapa-fase-texto: #d9e6f5;
+    --cor-mapa-linha: #7fa8d6;
     --cor-cabecalho-progresso: #d3b563;
     --cor-hero-texto: #faf9f5;
 
@@ -324,6 +342,11 @@
   --cor-menu-unidade: #a9c8ea;
   --cor-menu-aba: #c3cfdd;
   --cor-menu-item: #a7b4c6;
+  --cor-mapa-era-fundo: #0d2440;
+  --cor-mapa-era-texto: #e6d3a0;
+  --cor-mapa-fase-fundo: #1a3a5c;
+  --cor-mapa-fase-texto: #d9e6f5;
+  --cor-mapa-linha: #7fa8d6;
   --cor-cabecalho-progresso: #d3b563;
   --cor-hero-texto: #faf9f5;
 
@@ -428,6 +451,14 @@
   --cor-menu-unidade: #000000;
   --cor-menu-aba: #000000;
   --cor-menu-item: #000000;
+
+  /* Mapa mental no modo adaptado: sem matiz, o nível é dito pelo rótulo de
+     texto e pela borda estrutural de 2px, nunca pela cor. */
+  --cor-mapa-era-fundo: #ffffff;
+  --cor-mapa-era-texto: #000000;
+  --cor-mapa-fase-fundo: #ffffff;
+  --cor-mapa-fase-texto: #000000;
+  --cor-mapa-linha: #000000;
 
   --cor-cabecalho-progresso: #0d2440;
   /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:

@@ -131,7 +131,12 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
     nome: 'selo Revisão do professor',
     texto: '--cor-selo-professor-texto',
     fundo: '--cor-selo-professor-bg'
-  }
+  },
+  // Mapa mental (ordem do líder, 01/10/2026): cada nível da árvore tem par
+  // próprio, na mesma família do menu lateral (azul-marinho e dourado).
+  { nome: 'mapa mental, era', texto: '--cor-mapa-era-texto', fundo: '--cor-mapa-era-fundo' },
+  { nome: 'mapa mental, fase', texto: '--cor-mapa-fase-texto', fundo: '--cor-mapa-fase-fundo' },
+  { nome: 'mapa mental, folha e ficha', texto: '--cor-texto', fundo: '--cor-fundo-sutil' }
 ];
 
 describe('contraste dos tokens de design', () => {
@@ -213,5 +218,39 @@ describe('cores por nível do menu lateral, blocos duplicados', () => {
     const claro = carregarTemas().claro;
     const cores = ['cadeira', 'unidade', 'aba', 'item'].map((n) => claro[`--cor-menu-${n}`]);
     expect(new Set(cores).size).toBe(4);
+  });
+});
+
+describe('mapa mental, linhas e blocos duplicados', () => {
+  const temas = carregarTemas();
+  const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s, a linha de ligação contra a página, o cartão e a folha, no mínimo 3:1',
+    (tema) => {
+      const linha = temas[tema]['--cor-mapa-linha'];
+      expect(linha, 'variável --cor-mapa-linha ausente').toBeDefined();
+      for (const fundo of ['--cor-fundo', '--cor-fundo-elevado', '--cor-fundo-sutil']) {
+        expect(
+          calcularContraste(linha as string, temas[tema][fundo] as string),
+          `${linha} sobre ${fundo}`
+        ).toBeGreaterThanOrEqual(PISO_CONTRASTE_NAO_TEXTO);
+      }
+    }
+  );
+
+  it.each([
+    '--cor-mapa-era-fundo',
+    '--cor-mapa-era-texto',
+    '--cor-mapa-fase-fundo',
+    '--cor-mapa-fase-texto',
+    '--cor-mapa-linha'
+  ])('%s: o escuro automático repete o escuro escolhido', (variavel) => {
+    const valores = [
+      ...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
+    ].map((m) => (m[1] as string).toLowerCase());
+    // claro, escuro automático, escuro escolhido, modo adaptado.
+    expect(valores, variavel).toHaveLength(4);
+    expect(valores[1], variavel).toBe(valores[2]);
   });
 });

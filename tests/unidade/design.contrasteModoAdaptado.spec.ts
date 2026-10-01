@@ -61,6 +61,24 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string; piso: n
     piso: PISO_CONTRASTE_AAA
   },
   {
+    nome: 'mapa mental, era',
+    texto: '--cor-mapa-era-texto',
+    fundo: '--cor-mapa-era-fundo',
+    piso: PISO_CONTRASTE_PAR_PRINCIPAL
+  },
+  {
+    nome: 'mapa mental, fase',
+    texto: '--cor-mapa-fase-texto',
+    fundo: '--cor-mapa-fase-fundo',
+    piso: PISO_CONTRASTE_PAR_PRINCIPAL
+  },
+  {
+    nome: 'mapa mental, linha de ligação sobre a página',
+    texto: '--cor-mapa-linha',
+    fundo: '--cor-fundo',
+    piso: PISO_CONTRASTE_PAR_PRINCIPAL
+  },
+  {
     nome: 'trilha do cabeçalho rolado',
     texto: '--cor-sidebar-texto-suave',
     fundo: '--cor-cabecalho-rolado-fundo',

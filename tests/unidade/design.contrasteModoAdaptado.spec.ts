@@ -112,3 +112,20 @@ describe('selo Revisão do professor no modo adaptado', () => {
     expect(css.match(/--selo-professor-borda\s*:/g)).toHaveLength(1);
   });
 });
+
+describe('menu lateral no modo adaptado: sem cor por nível', () => {
+  const tokens = carregarBlocoModoAdaptado();
+
+  it.each(['cadeira', 'unidade', 'aba', 'item'])(
+    'o nível %s é preto sobre o fundo branco da lateral (a hierarquia vem só do recuo)',
+    (nivel) => {
+      expect(tokens[`--cor-menu-${nivel}`]).toBe('#000000');
+      expect(
+        calcularContraste(
+          tokens[`--cor-menu-${nivel}`] as string,
+          tokens['--cor-sidebar-fundo'] as string
+        )
+      ).toBeGreaterThanOrEqual(PISO_CONTRASTE_PAR_PRINCIPAL);
+    }
+  );
+});

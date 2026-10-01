@@ -168,6 +168,15 @@
   --cor-sidebar-selo-texto: #d8d2ba; /* 10,31:1 contra --cor-sidebar-fundo */
   --cor-sidebar-selo-bg: #1a3a5c;
 
+  /* Cor de texto por nível do menu lateral (ordem do líder, 30/09/2026):
+     período usa --cor-sidebar-texto; cadeira, unidade, aba e item descem do
+     dourado pálido ao cinza azulado, sempre >= 4,5:1 contra --cor-sidebar-fundo
+     (medido pelo portão: 10,56 / 9,03 / 9,89 / 7,43). */
+  --cor-menu-cadeira: #e6d3a0;
+  --cor-menu-unidade: #a9c8ea;
+  --cor-menu-aba: #c3cfdd;
+  --cor-menu-item: #a7b4c6;
+
   /* Fio de progresso de leitura, dourado, preso na base do cabeçalho
      (ordem do líder, 22/09/2026). Mesma classe de cuidado da lateral: o
      cabeçalho é sempre escuro nos dois temas, então este dourado NÃO usa
@@ -246,6 +255,10 @@
     --cor-sidebar-item-ativo-texto: #faf9f5;
     --cor-sidebar-selo-texto: #d8d2ba;
     --cor-sidebar-selo-bg: #1a3a5c;
+    --cor-menu-cadeira: #e6d3a0;
+    --cor-menu-unidade: #a9c8ea;
+    --cor-menu-aba: #c3cfdd;
+    --cor-menu-item: #a7b4c6;
     --cor-cabecalho-progresso: #d3b563;
     --cor-hero-texto: #faf9f5;
 
@@ -307,6 +320,10 @@
   --cor-sidebar-item-ativo-texto: #faf9f5;
   --cor-sidebar-selo-texto: #d8d2ba;
   --cor-sidebar-selo-bg: #1a3a5c;
+  --cor-menu-cadeira: #e6d3a0;
+  --cor-menu-unidade: #a9c8ea;
+  --cor-menu-aba: #c3cfdd;
+  --cor-menu-item: #a7b4c6;
   --cor-cabecalho-progresso: #d3b563;
   --cor-hero-texto: #faf9f5;
 
@@ -407,6 +424,10 @@
   --cor-sidebar-item-ativo-texto: #000000;
   --cor-sidebar-selo-texto: #000000;
   --cor-sidebar-selo-bg: #ffffff;
+  --cor-menu-cadeira: #000000;
+  --cor-menu-unidade: #000000;
+  --cor-menu-aba: #000000;
+  --cor-menu-item: #000000;
 
   --cor-cabecalho-progresso: #0d2440;
   /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:

@@ -106,6 +106,27 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   { nome: 'selo de acento (bloco teórico)', texto: '--cor-acento', fundo: '--cor-acento-claro' },
   // Selo "Revisão do professor" do cartão de pergunta (ordem do líder,
   // 29/09/2026): letra em destaque sobre fundo em destaque.
+  // Cor própria por nível do menu lateral (ordem do líder, 30/09/2026):
+  {
+    nome: 'menu lateral, cadeira',
+    texto: '--cor-menu-cadeira',
+    fundo: '--cor-sidebar-fundo'
+  },
+  {
+    nome: 'menu lateral, unidade',
+    texto: '--cor-menu-unidade',
+    fundo: '--cor-sidebar-fundo'
+  },
+  {
+    nome: 'menu lateral, aba (Resumo, Petição, Quiz)',
+    texto: '--cor-menu-aba',
+    fundo: '--cor-sidebar-fundo'
+  },
+  {
+    nome: 'menu lateral, item do Resumo e da Petição',
+    texto: '--cor-menu-item',
+    fundo: '--cor-sidebar-fundo'
+  },
   {
     nome: 'selo Revisão do professor',
     texto: '--cor-selo-professor-texto',
@@ -170,5 +191,27 @@ describe('selo Revisão do professor contra o cartão', () => {
       expect(valores, variavel).toHaveLength(4);
       expect(valores[1], variavel).toBe(valores[2]);
     }
+  });
+});
+
+describe('cores por nível do menu lateral, blocos duplicados', () => {
+  const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+
+  it.each(['cadeira', 'unidade', 'aba', 'item'])(
+    '--cor-menu-%s existe nos quatro blocos e o escuro automático repete o escuro escolhido',
+    (nivel) => {
+      const valores = [
+        ...css.matchAll(new RegExp(`--cor-menu-${nivel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
+      ].map((m) => (m[1] as string).toLowerCase());
+      // claro, escuro automático, escuro escolhido, modo adaptado.
+      expect(valores).toHaveLength(4);
+      expect(valores[1]).toBe(valores[2]);
+    }
+  );
+
+  it('a hierarquia é legível: os quatro níveis têm cores diferentes entre si no tema claro', () => {
+    const claro = carregarTemas().claro;
+    const cores = ['cadeira', 'unidade', 'aba', 'item'].map((n) => claro[`--cor-menu-${n}`]);
+    expect(new Set(cores).size).toBe(4);
   });
 });

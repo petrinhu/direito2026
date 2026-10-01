@@ -382,7 +382,9 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   text-align: left;
   background: none;
   border: none;
-  color: inherit;
+  /* Cor por nível: --menu-cor vem da lista do nível (--cor-menu-* em
+     tokens.css); o período, sem lista própria, herda a cor da lateral. */
+  color: var(--menu-cor, inherit);
   font: inherit;
   cursor: pointer;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
@@ -410,7 +412,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
      fundo da lateral, só que no texto do link. --cor-texto no tema claro
      é quase preto sobre um fundo de lateral que é sempre escuro nos dois
      temas: contraste medido 1,09:1 antes da correção. */
-  color: var(--cor-sidebar-texto, #faf9f5);
+  color: var(--menu-cor, var(--cor-sidebar-texto, #faf9f5));
   text-decoration: none;
 }
 
@@ -474,7 +476,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   padding: 0 0 0 var(--esp-3, 0.75rem);
   background: none;
   border: none;
-  color: inherit;
+  color: var(--menu-cor, inherit);
   cursor: pointer;
 }
 
@@ -495,6 +497,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
    texto nem estourar a largura (a quebra de linha natural do <a>/<button>
    cuida do resto, sem overflow horizontal). */
 .menu-curriculo ul.menu-curriculo__nivel-2 {
+  --menu-cor: var(--cor-menu-cadeira, #faf9f5);
   margin-left: var(--esp-3, 0.75rem);
   padding-left: var(--esp-2, 0.5rem);
 }
@@ -504,6 +507,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-3 {
+  --menu-cor: var(--cor-menu-unidade, #faf9f5);
   margin-left: var(--esp-3, 0.75rem);
   padding-left: var(--esp-2, 0.5rem);
 }
@@ -514,6 +518,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-4 {
+  --menu-cor: var(--cor-menu-aba, #faf9f5);
   /* Cada nível tem de começar o TEXTO pelo menos 12px à direita do texto do
      pai. Na linha da unidade o texto vem depois do botão do triângulo (largura
      --menu-toggle), então o recuo do nível 4 acompanha essa largura. */
@@ -526,6 +531,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-5 {
+  --menu-cor: var(--cor-menu-item, #faf9f5);
   margin-left: 22px;
   padding-left: var(--esp-1, 0.25rem);
 }

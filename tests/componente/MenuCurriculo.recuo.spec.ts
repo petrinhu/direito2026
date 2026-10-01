@@ -69,3 +69,25 @@ describe('MenuCurriculo, indicador de abrir e fechar do lado esquerdo', () => {
     expect(link).toBe(1);
   });
 });
+
+describe('MenuCurriculo, cor própria por nível', () => {
+  it.each([
+    [2, 'cadeira'],
+    [3, 'unidade'],
+    [4, 'aba'],
+    [5, 'item']
+  ])('a lista do nível %i define --menu-cor com o token --cor-menu-%s', (nivel, token) => {
+    const regra = new RegExp(
+      `\\.menu-curriculo ul\\.menu-curriculo__nivel-${nivel}\\s*\\{[^}]*--menu-cor:\\s*var\\(--cor-menu-${token}`
+    );
+    expect(fonte).toMatch(regra);
+  });
+
+  it('botões e links leem --menu-cor, e o item atual segue com a cor de destaque', () => {
+    expect(fonte).toMatch(/\.menu-curriculo__botao\s*\{[^}]*color:\s*var\(--menu-cor/);
+    expect(fonte).toMatch(/\.menu-curriculo a\s*\{[^}]*color:\s*var\(--menu-cor/);
+    expect(fonte).toMatch(
+      /a\[aria-current='page'\]\s*\{[^}]*color:\s*var\(--cor-sidebar-item-ativo-texto/
+    );
+  });
+});

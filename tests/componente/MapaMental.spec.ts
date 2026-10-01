@@ -153,7 +153,7 @@ describe('MapaMental: mouse e botões', () => {
     expect(botao().text()).toBe('Abrir todos os ramos');
     expect(botao().attributes('aria-expanded')).toBe('false');
     await botao().trigger('click');
-    expect(botao().text()).toBe('Recolher até as fases');
+    expect(botao().text()).toBe('Recolher todos os ramos');
     expect(botao().attributes('aria-expanded')).toBe('true');
     expect(item('mapa-pensador-alfa').attributes('aria-expanded')).toBe('true');
     expect(item('mapa-alfa-conceitos').attributes('aria-expanded')).toBe('true');

@@ -266,4 +266,8 @@ function aoClicar(): void {
     border: 1px solid #000 !important;
   }
 }
+
+:root[data-modo-adaptado='on'] .no-mapa--pensador > .no-mapa__corpo {
+  border-inline-start-color: #000000;
+}
 </style>

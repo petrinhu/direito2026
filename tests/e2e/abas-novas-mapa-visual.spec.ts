@@ -38,7 +38,7 @@ test('o botão único alterna todos os ramos e o rótulo muda na hora', async ({
   await expect(botao).toHaveText('Abrir todos os ramos');
   await expect(botao).toHaveAttribute('aria-expanded', 'false');
   await botao.click();
-  await expect(botao).toHaveText('Recolher os ramos');
+  await expect(botao).toHaveText('Recolher todos os ramos');
   await expect(botao).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('[data-no="mapa-platao-modo"]')).toBeVisible();
   await botao.click();
@@ -83,7 +83,7 @@ test('"Ver em lista" mostra a árvore acessível e "Ver mapa visual" volta', asy
   const botao = page.locator('button.mapa-mental__acao');
   await expect(botao).toHaveText('Abrir todos os ramos');
   await botao.click();
-  await expect(botao).toHaveText('Recolher até as fases');
+  await expect(botao).toHaveText('Recolher todos os ramos');
   await page.getByRole('button', { name: 'Ver mapa visual' }).click();
   await expect(page.locator('.mapa-visual__svg')).toBeVisible();
 });

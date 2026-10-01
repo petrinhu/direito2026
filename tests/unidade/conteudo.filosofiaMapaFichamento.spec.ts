@@ -6,7 +6,7 @@ import { construirArvoreMapa } from '@/core/fichamento/arvoreMapa';
 import { ROTULOS_TECNICA } from '@/core/mnemonicos/rotulosTecnica';
 
 const idsDoResumo = new Set(resumo.map((b) => b.id));
-const TRAVESSAO = /[–—]/;
+const TRAVESSAO = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
 
 function textoDe(valor: unknown): string {
   return JSON.stringify(valor);

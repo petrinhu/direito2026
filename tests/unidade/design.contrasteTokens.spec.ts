@@ -254,3 +254,54 @@ describe('mapa mental, linhas e blocos duplicados', () => {
     expect(valores[1], variavel).toBe(valores[2]);
   });
 });
+
+describe('mapa visual, seis tons de ramo', () => {
+  const temas = carregarTemas();
+  const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
+  const tons = [1, 2, 3, 4, 5, 6];
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s: texto de cada tom contra o fundo dele, no mínimo 4,5:1',
+    (tema) => {
+      for (const n of tons) {
+        const f = temas[tema][`--cor-mapa-ramo-${n}-fundo`];
+        const t = temas[tema][`--cor-mapa-ramo-${n}-texto`];
+        expect(f, `ramo ${n} fundo`).toBeDefined();
+        expect(calcularContraste(t as string, f as string), `ramo ${n}`).toBeGreaterThanOrEqual(
+          4.5
+        );
+      }
+    }
+  );
+
+  it.each(['claro', 'escuro'] as const)(
+    '%s: o fundo de cada tom contra a página, no mínimo 3:1',
+    (tema) => {
+      for (const n of tons) {
+        const f = temas[tema][`--cor-mapa-ramo-${n}-fundo`] as string;
+        expect(
+          calcularContraste(f, temas[tema]['--cor-fundo'] as string),
+          `ramo ${n}`
+        ).toBeGreaterThanOrEqual(3);
+      }
+    }
+  );
+
+  it('os seis tons são distintos entre si em cada tema', () => {
+    for (const tema of ['claro', 'escuro'] as const) {
+      const fundos = tons.map((n) => temas[tema][`--cor-mapa-ramo-${n}-fundo`]);
+      expect(new Set(fundos).size).toBe(6);
+    }
+  });
+
+  it.each(tons)('ramo %i: o escuro automático repete o escuro escolhido (4 blocos)', (n) => {
+    for (const parte of ['fundo', 'texto']) {
+      const variavel = `--cor-mapa-ramo-${n}-${parte}`;
+      const valores = [
+        ...css.matchAll(new RegExp(`${variavel}\\s*:\\s*(#[0-9a-fA-F]{6})`, 'g'))
+      ].map((m) => (m[1] as string).toLowerCase());
+      expect(valores, variavel).toHaveLength(4);
+      expect(valores[1], variavel).toBe(valores[2]);
+    }
+  });
+});

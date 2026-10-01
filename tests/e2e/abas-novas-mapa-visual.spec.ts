@@ -1,0 +1,98 @@
+import { expect, test } from '@playwright/test';
+import { prepararEstadoInicial } from './apoio/estadoInicial';
+
+/**
+ * Mapa mental visual (pedido do líder: "horrível, não é divertido"):
+ * o mapa aparece, clicar abre o ramo, o botão único alterna e troca de
+ * rótulo, a lista continua disponível, e no modo adaptado a lista vem
+ * primeiro. Layout e interação reais exigem navegador.
+ */
+const BASE = '/p/p1/filosofia-juridica/u1';
+
+test('o mapa visual aparece com o nó central, os períodos e os pensadores', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  await expect(page.locator('.mapa-visual__svg')).toBeVisible();
+  await expect(page.locator('[data-no="mapa-raiz"]')).toBeVisible();
+  await expect(page.locator('[data-no="mapa-era-antiga"]')).toBeVisible();
+  await expect(page.locator('[data-no="mapa-pensador-platao"]')).toBeVisible();
+  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+});
+
+test('clicar num pensador abre o ramo e mostra o detalhe', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  const platao = page.locator('[data-no="mapa-pensador-platao"]');
+  await platao.click();
+  await expect(platao).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('[data-no="mapa-platao-modo"]')).toBeVisible();
+  await expect(page.locator('.mapa-visual__detalhe')).toContainText('Platão');
+  await platao.click();
+  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+});
+
+test('o botão único alterna todos os ramos e o rótulo muda na hora', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  const botao = page.locator('button.mapa-visual__todos');
+  await expect(botao).toHaveText('Abrir todos os ramos');
+  await expect(botao).toHaveAttribute('aria-expanded', 'false');
+  await botao.click();
+  await expect(botao).toHaveText('Recolher os ramos');
+  await expect(botao).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('[data-no="mapa-platao-modo"]')).toBeVisible();
+  await botao.click();
+  await expect(botao).toHaveText('Abrir todos os ramos');
+  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+});
+
+test('zoom pelos botões muda a escala e Centralizar volta', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  const escala = async () =>
+    Number(
+      /scale\(([\d.]+)\)/.exec(
+        (await page.locator('.mapa-visual__mundo').getAttribute('transform')) ?? ''
+      )![1]
+    );
+  const inicial = await escala();
+  await page.getByRole('button', { name: 'Aproximar' }).click();
+  expect(await escala()).toBeGreaterThan(inicial);
+  await page.getByRole('button', { name: 'Centralizar' }).click();
+  expect(await escala()).toBeCloseTo(inicial, 3);
+});
+
+test('arrastar o fundo move o mapa', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  const antes = await page.locator('.mapa-visual__mundo').getAttribute('transform');
+  const caixa = (await page.locator('.mapa-visual__svg').boundingBox())!;
+  await page.mouse.move(caixa.x + 20, caixa.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(caixa.x + 120, caixa.y + 90, { steps: 5 });
+  await page.mouse.up();
+  expect(await page.locator('.mapa-visual__mundo').getAttribute('transform')).not.toBe(antes);
+});
+
+test('"Ver em lista" mostra a árvore acessível e "Ver mapa visual" volta', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
+  await page.goto(`${BASE}/mapa`);
+  await page.getByRole('button', { name: 'Ver em lista' }).click();
+  await expect(page.locator('[role="tree"]')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ver mapa visual' })).toBeVisible();
+  const botao = page.locator('button.mapa-mental__acao');
+  await expect(botao).toHaveText('Abrir todos os ramos');
+  await botao.click();
+  await expect(botao).toHaveText('Recolher até as fases');
+  await page.getByRole('button', { name: 'Ver mapa visual' }).click();
+  await expect(page.locator('.mapa-visual__svg')).toBeVisible();
+});
+
+test('modo adaptado: abre direto a lista, e o mapa visual é opcional', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+  await page.goto(`${BASE}/mapa`);
+  await expect(page.locator('[role="tree"]')).toBeVisible();
+  await expect(page.locator('.mapa-visual__svg')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ver mapa visual' }).click();
+  await expect(page.locator('.mapa-visual__svg')).toBeVisible();
+});

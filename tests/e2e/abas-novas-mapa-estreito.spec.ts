@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { esperarLayoutAssentar, prepararEstadoInicial } from './apoio/estadoInicial';
-import { todosOsPresentes } from './apoio/elementos';
+import { abrirMapaEmLista, todosOsPresentes } from './apoio/elementos';
 
 /**
  * QA, IMPORTANTE 2: no modo adaptado a 360px, seis níveis de aninhamento com
@@ -17,7 +17,7 @@ for (const adaptado of [true, false]) {
   }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: adaptado });
-    await page.goto(`${BASE}/mapa`);
+    await abrirMapaEmLista(page, BASE);
     await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
     await esperarLayoutAssentar(page);
 

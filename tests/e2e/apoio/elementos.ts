@@ -18,3 +18,14 @@ export async function abrirSeFechado(botao: Locator): Promise<void> {
   await botao.waitFor({ state: 'visible' });
   if ((await botao.getAttribute('aria-expanded')) !== 'true') await botao.click();
 }
+
+/**
+ * Abre a aba do mapa já na versão em lista (a árvore acessível). Fora do modo
+ * adaptado o mapa nasce visual; no adaptado já nasce em lista.
+ */
+export async function abrirMapaEmLista(page: Page, base: string): Promise<void> {
+  await page.goto(`${base}/mapa`);
+  const verLista = page.getByRole('button', { name: 'Ver em lista' });
+  if (await verLista.count()) await verLista.click();
+  await page.locator('[role="tree"]').waitFor({ state: 'visible' });
+}

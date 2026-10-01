@@ -26,7 +26,13 @@ export function arvoreVisual(dados: MapaFichamento): NoMapa {
     ...completa,
     filhos: completa.filhos.map((era) => ({
       ...era,
-      filhos: era.filhos.flatMap((fase) => fase.filhos)
+      filhos: era.filhos
+        .flatMap((fase) => fase.filhos)
+        // O atalho "Ler a ficha completa" vira link no painel de detalhe.
+        .map((pensador) => ({
+          ...pensador,
+          filhos: pensador.filhos.filter((no) => no.tipo !== 'ficha')
+        }))
     }))
   };
 }
@@ -68,7 +74,8 @@ export function layoutRadial(raiz: NoMapa, abertos: ReadonlySet<string>): NoPosi
 
   // O tom de cada pensador vem da ordem na árvore COMPLETA, para não mudar ao abrir e fechar.
   const ramoDoPensador = new Map<string, number>();
-  for (const era of raiz.filhos) for (const p of era.filhos) ramoDoPensador.set(p.id, proximoRamo++);
+  for (const era of raiz.filhos)
+    for (const p of era.filhos) ramoDoPensador.set(p.id, proximoRamo++);
 
   const posicionar = (
     no: NoMapa,
@@ -93,10 +100,7 @@ export function layoutRadial(raiz: NoMapa, abertos: ReadonlySet<string>): NoPosi
     let cursor = inicio;
     filhos.forEach((filho, indice) => {
       const fatia = ((fim - inicio) * peso(filho)) / total;
-      const ramoFilho =
-        profundidade === 0
-          ? indice
-          : (ramoDoPensador.get(filho.id) ?? ramo);
+      const ramoFilho = profundidade === 0 ? indice : (ramoDoPensador.get(filho.id) ?? ramo);
       posicionar(filho, cursor, cursor + fatia, profundidade + 1, ramoFilho, no.id);
       cursor += fatia;
     });
@@ -126,7 +130,11 @@ export function caminhoLigacao(
 }
 
 /** Escala que faz o mapa inteiro caber na janela (no máximo 1,2). */
-export function enquadrar(posicionados: readonly NoPosicionado[], largura: number, altura: number): number {
+export function enquadrar(
+  posicionados: readonly NoPosicionado[],
+  largura: number,
+  altura: number
+): number {
   const meiaLargura = Math.max(...posicionados.map((p) => Math.abs(p.x))) + 120;
   const meiaAltura = Math.max(...posicionados.map((p) => Math.abs(p.y))) + 30;
   return Math.min(largura / 2 / meiaLargura, altura / 2 / meiaAltura, 1.2);

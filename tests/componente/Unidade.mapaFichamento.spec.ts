@@ -81,7 +81,7 @@ describe('Unidade com mapa, fichamento e mnemônicos', () => {
 
   it('cada painel mostra só o conteúdo da própria aba', async () => {
     const wrapper = await montar('mapa');
-    expect(wrapper.find('#painel-mapa [role="tree"]').exists()).toBe(true);
+    expect(wrapper.find('#painel-mapa .mapa-visual').exists()).toBe(true);
     expect(wrapper.find('#painel-fichamento .fichamento').exists()).toBe(true);
     expect(wrapper.find('#painel-mnemonicos .mnemonicos').exists()).toBe(true);
     expect(wrapper.find('#painel-mapa .fichamento').exists()).toBe(false);
@@ -97,6 +97,7 @@ describe('Unidade com mapa, fichamento e mnemônicos', () => {
 
   it('os links do mapa e das fichas usam o endereço da unidade', async () => {
     const wrapper = await montar('mapa');
+    await wrapper.find('#painel-mapa button.mapa-mental__modo').trigger('click');
     expect(wrapper.find('a[href="/p/p1/cadeira/u1/fichamento#ficha-alfa"]').exists()).toBe(true);
     expect(wrapper.find('a[href="/p/p1/cadeira/u1#bloco-0"]').exists()).toBe(true);
   });

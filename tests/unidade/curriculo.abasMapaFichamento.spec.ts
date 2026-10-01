@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { curriculo } from '@/conteudo/curriculo';
 import { resolverRota } from '@/core/curriculo/resolverRota';
 import { ROTULOS_ABA } from '@/core/curriculo/rotulosAba';
+import { meta } from '@/conteudo/p1/filosofia-juridica/u1/meta';
 
 const base = '/p/p1/filosofia-juridica/u1';
 const filosofia = curriculo
@@ -38,4 +39,12 @@ describe('abas Mapa mental, Fichamento e Mnemônicos', () => {
       }
     }
   );
+
+  it('os metadados da unidade (título e descrição) acompanham as abas novas', () => {
+    expect(meta.titulo).toBe(u1.titulo);
+    const descricao = meta.descricao.toLowerCase();
+    for (const termo of ['mapa mental', 'fichamento', 'mnemônicos', 'quiz']) {
+      expect(descricao, termo).toContain(termo);
+    }
+  });
 });

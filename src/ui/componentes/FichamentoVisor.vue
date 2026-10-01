@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { MapaFichamento } from '@/core/fichamento/tipos';
 import { filtrarFichas, ordenarFichas, rotuloDaFase } from '@/app/fichamento';
 import FichaPensadorCartao from './FichaPensadorCartao.vue';
@@ -54,12 +54,15 @@ function limparFiltros(): void {
 }
 
 /** Âncora de ficha na URL (vinda do mapa ou da busca): abre aquela ficha. */
-function abrirFichaDaAncora(): void {
-  const alvo = window.location.hash.replace(/^#ficha-/, '');
+async function abrirFichaDaAncora(): Promise<void> {
   if (!window.location.hash.startsWith('#ficha-')) return;
-  if (props.dados.pensadores.some((f) => f.id === alvo)) {
-    abertas.value = new Set(abertas.value).add(alvo);
-  }
+  const alvo = window.location.hash.replace(/^#ficha-/, '');
+  if (!props.dados.pensadores.some((f) => f.id === alvo)) return;
+  abertas.value = new Set(abertas.value).add(alvo);
+  // A ficha só existe aberta depois deste quadro; rola sem animação (o modo
+  // adaptado não admite movimento) até o cabeçalho dela.
+  await nextTick();
+  document.getElementById(`ficha-${alvo}`)?.scrollIntoView?.({ block: 'start' });
 }
 
 onMounted(() => {

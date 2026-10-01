@@ -152,7 +152,7 @@ export const mnemonicos: readonly Mnemonico[] = [
       }
     ],
     comoFunciona:
-      'A primeira sílaba de cada nome puxa uma palavra do português (protagonista, trono) cuja imagem já carrega a tese.',
+      'O começo de cada nome lembra uma palavra do português (protagonista, trono) cuja imagem já carrega a tese.',
     ressalva:
       'É das confusões mais cobradas em verdadeiro ou falso. A palavra "trono" é só apoio de memória: não consta do material.',
     blocoResumo: 'bloco-2'

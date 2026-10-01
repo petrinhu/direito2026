@@ -76,12 +76,13 @@ test('mapa: teclado completo (setas, Enter, Espaço, Home e End)', async ({ page
 test('mapa: um só item no ciclo de Tab e o foco tem contorno visível', async ({ page }) => {
   await page.goto(`${BASE}/mapa`);
   await expect(page.locator('[role="treeitem"][tabindex="0"]')).toHaveCount(1);
-  await page.locator('#mapa-era-antiga').focus();
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Shift+Tab');
-  const contorno = await page
-    .locator('#mapa-era-antiga')
-    .evaluate((el) => getComputedStyle(el.querySelector('.no-mapa__corpo')!).outlineStyle);
+  await page.locator('#mapa-raiz').focus();
+  await page.keyboard.press('ArrowDown');
+  const era = page.locator('#mapa-era-antiga');
+  await expect(era).toBeFocused();
+  const contorno = await era.evaluate(
+    (el) => getComputedStyle(el.querySelector('.no-mapa__corpo')!).outlineStyle
+  );
   expect(contorno).not.toBe('none');
 });
 
@@ -133,8 +134,12 @@ test('fichamento: a ficha abre pelo botão, por teclado, e mostra os campos', as
 
 test('busca: uma ficha do fichamento aparece como resultado', async ({ page }) => {
   await page.goto('/busca');
-  await page.getByRole('searchbox').fill('Ockham');
-  await expect(page.locator(`a[href^="${BASE}/fichamento#ficha-ockham"]`).first()).toBeVisible();
+  const campo = page.getByRole('searchbox', { name: 'Buscar no conteúdo' });
+  await campo.click();
+  await campo.fill('ockham');
+  await expect(
+    page.locator(`.painel-resultados-busca a[href^="${BASE}/fichamento#ficha-ockham"]`)
+  ).toBeVisible();
 });
 
 test('mnemônicos: a resposta começa escondida e se revela pelo botão, por teclado', async ({

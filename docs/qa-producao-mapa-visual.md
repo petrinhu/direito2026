@@ -1,0 +1,65 @@
+# QA de produção: mapa visual (Filosofia Jurídica)
+
+Alvo: https://direito2026.drpetrus.top (HEAD c20508c). Sem edição de código. Navegador sem janela dentro de bwrap (environ provado: só TMPDIR e XDG_RUNTIME_DIR próprios; /dev sem nvidia*). Chromium e Brave com mouse real (Playwright); Firefox 156 por BiDi (clique, roda e arrasto sintéticos). Capturas em mockups/capturas/mapa-visual/.
+
+## Veredito por item
+1. Visual: funciona, mas é um grafo radial modesto, não um mapa mental "divertido" (ver avaliação abaixo).
+2. Interação: passa nos 3 navegadores. Rótulo e aria-expanded mudam na hora: "Abrir todos os ramos" (false) para "Recolher os ramos" (true), 15 para 110 nós, e volta. Clique abre/fecha ramo (Platão: 4 filhos, depois 0). Zoom por botões 0,88 para 1,10; roda 0,88 para 0,99; afastar 0,70; Centralizar volta a 0,88; arrastar move translate (468,324) para (593,399) sem abrir ramo. "Ler a ficha completa" leva a /fichamento#ficha-socrates, ficha no topo (y=71). Alternador "Ver em lista"/"Ver mapa visual" ok; a lista tem botão que muda ("Abrir todos os ramos" para "Recolher até as fases", aria-expanded certo). Arrasto por mouse real não aferido no Firefox; pinça (toque) não testada.
+3. Links "Ver o tema no Resumo": 3 por navegador (bloco 9, 3 e 12): abrem no bloco certo, topo do bloco em y=71 (abaixo do cabeçalho de 71), nos 3 navegadores.
+4. Adaptado a 360: abre na lista, SVG oculto, sem rolagem lateral (Chromium/Brave 360/360, Firefox 348/348). Preto e branco: visual sim, mas há tons não cinza em computed style (navy rgb(13,36,64), bege 220,215,200). Título h1 quebra palavra no meio ("fichament/o", "mnemônic/os").
+5. Grep aula/slide: Sociologia limpa. Filosofia: quiz, resumo, mnemônicos e mapa só com "Material de aula da disciplina"; fichamento tem 5 ocorrências fora da exceção (ver D2).
+6. Console: zero erro nas 5 abas nos 3 navegadores. axe (Chromium e Brave): 0 critical/serious no mapa, visual e lista, claro, escuro e adaptado, 1280 e 360.
+
+## Defeitos
+- D1 (alta, visual) a 360 o mapa abre sem enquadrar: 9 de 15 nós fora do SVG de 296x576 (Duns Escoto, Sofistas, Sócrates, Platão, Cícero, Aristóteles cortados). Com ramos abertos, 12 de 19 fora. Causa provável: MapaVisual.vue:173, piso `Math.max(enquadrar(...), 0.6)` impede reduzir o bastante.
+- D2 (média, regra do líder) texto com "material de aula" fora da exceção, em src/conteudo/p1/filosofia-juridica/u1/mapaFichamento.ts linhas 66, 94, 233, 251, 279; a linha 251 também vira aria-label ("Conceito: Lei divina ... o material de aula destaca ...").
+- D3 (média, visual) rótulos truncados com reticências nos nós centrais: "Filosofia Jurídica: Ida..." e "Idade Média (séculos IV...". Largura estimada por caractere (MapaVisual.vue:49, 7,6 px por caractere) e MAXIMO_DE_CARACTERES.
+- D4 (média, visual) tema escuro: o nó raiz (#0d2440, tokens.css:290) some no fundo escuro, sem contraste de contorno; só o texto dourado aparece.
+- D5 (baixa) ao abrir um ramo, o layout é recalculado e os nós se movem; ramos abertos saem do quadro ("Ressalva da...", "Para o Direito hoje" cortados), sem reenquadrar nem rolar até o ramo. Em 1280, 6 de 22 nós fora do SVG.
+- D6 (baixa) dois ramos ("Idade Média" com Tomás de Aquino, Agostinho) têm curvas cruzando o nó da era; rótulos "Recolher os ramos" (mapa) e "Recolher até as fases" (lista) divergem.
+- D7 (baixa, adaptado) h1 a 360 quebra palavra no meio.
+- Observação: Firefox reportou 3 "downloadable font failed" numa rodada, status de aborto de rede, que não repetiu na rodada seguinte (provável artefato da navegação do teste).
+
+## Avaliação visual franca
+Parece mapa mental de verdade: centro, ramos curvos coloridos, cápsulas, cores do site (azul-marinho, dourado, vinho, petróleo), texto legível a 1280 em claro e escuro. Mas ainda é sóbrio: 12 pensadores soltos em círculo ao redor de duas eras, sem ícones, formas ou hierarquia visual que dê diversão; abrir ramos faz o desenho crescer para fora do quadro. A 360 o estado inicial está cortado (D1), e no escuro o centro quase some (D4). Um aluno esperaria um mapa inteiro visível de cara, com o centro em destaque; hoje é correto e bonito o bastante, não encantador.
+
+## Rodada 2 (HEAD fe59a25)
+Capturas: mockups/capturas/mapa-visual/r2-*. Chromium (claro e escuro 1280, claro 360) e Firefox (1280 e 360).
+- Nós fora do SVG: 0/15 no início e 0/110 após "Abrir todos" em 1280 e 360 (Chromium e Firefox). Rótulo "Recolher todos os ramos" após abrir. Sem rolagem lateral.
+- Estado inicial 1280, claro e escuro: limpo, centro dourado com texto azul-marinho legível, hemisférios Antiga (esquerda) e Média (direita), ramos grossos perto do centro, nenhuma cápsula sobreposta ou cortada, curvas sem cruzar nós. Bonito e mais mapa mental que antes.
+- Tudo aberto em 1280: cabe no quadro, mas cápsulas de conceitos se empilham e sobrepõem muito (Estoicos, Aristóteles, Platão, Sócrates, Sofistas, Sófocles, Cícero), textos cortados por cápsulas vizinhas e curvas passam por cima de nós. Legível só com zoom.
+- 360 inicial: enquadrado, mas o mapa ocupa cerca de um terço do quadro de 296x576 (sobra muito vazio em cima e embaixo) e o texto fica minúsculo (aprox. 5 a 6 px), ilegível sem zoom. Não ficou vertical como descrito. 360 tudo aberto: bolha de aprox. 220 px com texto ilegível (aprox. 2 a 3 px).
+- Adaptado 360: lista abre, h1 inteiro (5 linhas, 0 palavras partidas), sem rolagem lateral. Cores computadas NÃO são só preto e branco: rgb(13, 36, 64) (azul-marinho) em 12 elementos, na lista e no mapa. Contraria "preto puro".
+- "material de aula" no fichamento: 12 ocorrências, todas "Material de aula da disciplina" (referências); fora da exceção, 0. Nenhum aria-label/title com aula ou slide.
+- Console: 0 erro nas abas (Chromium e Firefox). Firefox repetiu 3 "downloadable font failed" (status de aborto) só na primeira navegação, padrão de artefato do teste.
+- Avaliação: estado inicial agora é divertido e claro em 1280; falha em densidade (tudo aberto) e em 360 (pequeno e vazio ao redor).
+
+## Rodada 3 (HEAD a686a95)
+Capturas: mockups/capturas/mapa-visual/r3-*. Chromium (1280 claro e escuro, 360 claro) e Firefox (360).
+- Inicial 1280 claro e escuro: limpo, sem sobreposição, curvas sem cruzar nós, divertido. Pensador aberto (Platão): ramo à esquerda com 4 filhos legíveis, sem sobreposição; escuro bom.
+- "Abrir todos" 1280: 59 nós visíveis, 0 sobreposição (melhorou muito), mas fonte efetiva de apenas 2,3 a 2,9 px: ilegível sem zoom. Fica um anel elegante e vazio de leitura.
+- 360 (Chromium e Firefox): layout vertical entrou (Idade Antiga acima, centro, Idade Média abaixo); fonte efetiva mínima 12 px e máxima 15,4 px (legível sem zoom); 0 sobreposição. Custo: 12 de 15 nós ficam fora do quadro no início (só as eras e o centro aparecem; pensadores só por arrasto). Aluno abre vendo 3 cápsulas e curvas saindo do quadro. Firefox: acordeão ok (abrir Aristóteles fecha Platão; enquadrou o ramo em foco, bonito). Chromium: clique real em pensador a 360 não aferido (pensadores fora do quadro); acordeão aferido só por clique sintético no Firefox.
+- Adaptado 360, varredura de cores computadas (lista e visual): ainda rgb(13, 36, 64) em 3 elementos fora do mapa em si: "Pular para o conteúdo" (.layout-base__pular), h1 da página e a aba ativa "Mapa mental" (.abas-unidade__tab). Dentro do mapa/lista, zero. Contraria "zero rgb(13,36,64)" se a varredura incluir a aba inteira.
+- e2e novos contra produção (Chromium e Brave): "modo adaptado: nenhum elemento da aba do mapa usa o azul-marinho da marca" e "360px: layout vertical e texto >= 12px" passaram. Arquivo inteiro: 16 passaram, 2 falharam: "zoom pelos botões muda a escala e Centralizar volta" (esperado 0,5747, recebido 0,7184 em ambos). Não é regressão funcional: com espera de 1,5 s, Centralizar volta a 0,5747; o teste lê a escala sem esperar e Centralizar agora anima. Teste com corrida.
+- Console: 0 erro (abas mapa, resumo, fichamento, mnemônicos, quiz, Chromium). Firefox: 3 falhas de fonte (aborto de rede) só na primeira carga, padrão já visto, provável artefato.
+- Defeitos: (1) média: e2e de adaptado não cobre h1, aba ativa nem link de pular, que seguem azul-marinho; (2) média: 360 inicial esconde os pensadores; (3) baixa: "Abrir todos" a 1280 com texto de 2,3 px; (4) baixa: e2e de zoom/Centralizar sem espera.
+
+## Rodada 4 (HEAD 5dbbcb6)
+Capturas: mockups/capturas/mapa-visual/r4-* (as de 360 são página inteira; a barra fixa que aparece no meio delas é artefato da captura longa).
+- 360 inicial (Chromium e Firefox): os 12 pensadores aparecem, em coluna indentada sob "Idade Antiga" e "Idade Média"; fonte efetiva 15 a 19 px (Firefox 14,4 a 18,5); 0 cortado, 0 sobreposição, sem rolagem lateral da página. SVG vertical (296x862). Observação visual: as ligações curvas passam por trás das cápsulas da coluna (feixes de curvas atravessando os nós). Parece lista colorida, menos mapa mental e menos divertido que a versão de 1280.
+- Pensador aberto (Platão): 4 filhos, fonte 12 a 15,4 px, 0 sobreposição; Chromium sem corte; Firefox 2 cápsulas encostando na borda direita ("Ressalva das fontes"). Acordeão ok (Platão fecha ao abrir Aristóteles).
+- Conceitos abertos a 360: 5 cápsulas (Chromium) e 7 (Firefox) passam da borda direita do SVG, texto cortado ("Justiça orga...", "A justiça jama...", "Contesta Tras..."); a página não rola (sw 360/360), então só com pan horizontal dentro do mapa. Defeito.
+- 1280 "Abrir todos" (Chromium): fonte 12 a 15,4 px (legível), 0 sobreposição, mas 48 de 59 nós fora do quadro; o quadro mostra só o centro e as curvas, vazio ao redor; precisa pan para ver qualquer pensador. Defeito de enquadramento.
+- e2e contra produção (Chromium e Brave): arquivo inteiro 26 passaram (inclui varredura de azul por aba e 360 vertical/12px; Centralizar passou). Uma primeira execução com 2 workers deu 6 falhas (mapa aparece, botão único, zoom/Centralizar, nos dois navegadores) e 2 min de duração; repetidas sozinhas e depois o arquivo inteiro passaram: instabilidade sob carga/lentidão, não reproduzida.
+- Adaptado 360, varredura de rgb(13, 36, 64) em todos os elementos: 0 em filosofia (resumo, mapa em lista e visual, fichamento, mnemônicos, quiz) e 0 no resumo de intr-direito.
+- Console: 0 erro nas 5 abas (Chromium); Firefox, 3 falhas de fonte por aborto na primeira carga (padrão repetido).
+- Defeitos: média, conceitos abertos a 360 cortam texto na borda direita; média, "Abrir todos" a 1280 sem enquadrar (48/59 fora); baixa, curvas atrás das cápsulas a 360; baixa, e2e do mapa instável sob carga.
+
+## Rodada 5 (HEAD a402203)
+Capturas: mockups/capturas/mapa-visual/r5-* (as de 360 e a de página inteira são full page; a barra fixa no meio é artefato).
+- REGRESSÃO: o inicial a 1280 NÃO é mais radial. Em 1280x720, 1280x900, 1440x900 e 1920x1080 o SVG sai com a classe mapa-visual__svg--vertical (lista indentada), 936x962. O desenho é uma coluna estreita (cerca de 250 px) no meio de um quadro de 936 px, com o resto vazio; as curvas grossas passam por trás das cápsulas (feixes atravessando Sófocles a Cícero). Perdeu o ar de mapa mental divertido da rodada 2 e 3. Com Platão aberto a 1280 também é lista (936x1192), curvas cruzam por cima de "Modo de pensar", "Conceitos-chave" e outras.
+- 1280 "Abrir todos": lista indentada de 59 nós, fonte 16,8 a 21,6 px, 0 fora, 0 sobreposição, 0 texto maior que cápsula, mas altura 936x3496 (cerca de 5 telas de rolagem), longe de um mapa. Legível.
+- 360 inicial (Chromium e Firefox): 12 pensadores visíveis, fonte 14,4 a 19,3 px, 0 fora, 0 sobreposição, 0 corte; página sem rolagem lateral. Platão aberto: ok. Conceitos abertos: texto agora quebra sem reticências e 0 texto maior que cápsula, mas as cápsulas viram colunas muito estreitas e altas (uma palavra por linha: "Justiça / orgânica / e Estado / forte, ..."), legível porém feio; 1 cápsula (Chromium) e 4 (Firefox) ainda passam da borda direita do SVG; curvas atravessam o texto das cápsulas vizinhas na coluna.
+- e2e contra produção (Chromium e Brave, 1 worker): 26 passaram, 4 falharam (as mesmas 2 nos dois): "arrastar o fundo move o mapa" (transform "translate(311.4 8) scale(1.2)" não muda, esperado com a lista ativa e arrasto desligado, e a classe de lista aparece até em 1920x1080; o teste ficou obsoleto ou o radial regrediu) e "360px com os conceitos abertos: nenhuma cápsula passa da borda" (dir 340,1 > limite 329, reprova de verdade).
+- Console: Chromium 0 erro nas 5 abas e nas varreduras de 360. Firefox: 1 vez "Couldn't resolve component default at /:pathMatch(.*)*" na carga a 360; não repetiu em 3 recargas seguidas (provável chunk abortado pela navegação do teste).
+- Defeitos: alta, inicial a 1280 não é mais radial (lista em qualquer tamanho de desktop); média, conceitos abertos a 360 ainda passam 11 px da borda (e2e do engenheiro falha em produção); média, "Abrir todos" vira lista de 3496 px; baixa, e2e de arrastar contradiz o novo comportamento.

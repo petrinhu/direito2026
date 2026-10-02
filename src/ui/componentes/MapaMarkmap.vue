@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Markmap } from 'markmap-view';
 import type { MapaFichamento } from '@/core/fichamento/tipos';
 import {
+  calcularEnquadre,
   definirTodosRamos,
   paraArvoreMarkmap,
   todosRamosAbertos,
@@ -23,14 +24,28 @@ const FONTE_PX = 16;
 /** Texto nunca abaixo de 12px efetivos no celular. */
 const ESCALA_MINIMA = 12 / FONTE_PX;
 const LARGURA_CELULAR = 640;
+const ESCALA_MAXIMA = 1.2;
+type NoVista = Parameters<Markmap['toggleNode']>[0];
 
 const hospedeiro = ref<HTMLElement>();
 const svgRef = ref<SVGSVGElement>();
 const tudoAberto = ref(false);
 const falhou = ref(false);
+/** Só depois do primeiro render o botão age: antes, o clique era sobrescrito pela montagem. */
+const pronto = ref(false);
 const rotuloTodos = computed(() =>
   tudoAberto.value ? 'Recolher todos os ramos' : 'Abrir todos os ramos'
 );
+
+interface ZoomAtual {
+  k: number;
+  x: number;
+  y: number;
+  // eslint-disable-next-line no-unused-vars
+  translate(deslocX: number, deslocY: number): ZoomAtual;
+  // eslint-disable-next-line no-unused-vars
+  scale(fator: number): ZoomAtual;
+}
 
 let mapa: Markmap | undefined;
 let raiz: NoMarkmap;
@@ -62,11 +77,11 @@ function corDoRamo(ramo: number | undefined): string {
 function opcoes(): Partial<import('markmap-view').IMarkmapOptions> {
   const estreito = celular();
   return {
-    autoFit: true,
+    autoFit: false,
     duration: props.reduzirMovimento || modoAdaptado() ? 0 : 250,
     initialExpandLevel: -1,
-    maxWidth: estreito ? 200 : 260,
-    maxInitialScale: 1.2,
+    maxWidth: estreito ? 150 : 260,
+    maxInitialScale: ESCALA_MAXIMA,
     paddingX: 8,
     spacingHorizontal: estreito ? 50 : 80,
     spacingVertical: 8,
@@ -80,31 +95,56 @@ function atualizarRotulo(): void {
     : false;
 }
 
-function escalaAtual(): number {
-  const transformacao = mapa?.g.attr('transform') ?? '';
-  const m = /scale\(([\d.]+)\)/.exec(transformacao);
-  return m ? Number(m[1]) : 1;
-}
-
-/** fit() não tem escala mínima: no celular o texto não pode ficar abaixo de 12px, o resto é pan. */
-async function garantirLegibilidade(): Promise<void> {
-  if (!mapa || !celular()) return;
-  const k = escalaAtual();
-  if (k > 0 && k < ESCALA_MINIMA) {
-    await mapa.rescale(ESCALA_MINIMA / k);
-    if (mapa.state.data) await mapa.ensureVisible(mapa.state.data, { left: 8, top: 8 });
-  }
+/**
+ * Enquadre próprio no lugar do fit(): o texto nunca fica abaixo de 12px
+ * efetivos, em nenhuma largura. Se o mapa inteiro não cabe nessa escala,
+ * centraliza no nó clicado (ou alinha a raiz à borda) e o resto é arrastar.
+ */
+async function enquadrar(foco?: NoVista): Promise<void> {
+  const raizVista = mapa?.state.data;
+  const svg = svgRef.value;
+  if (!mapa || !raizVista || !svg) return;
+  const quadro = svg.getBoundingClientRect();
+  if (quadro.width === 0 || quadro.height === 0) return;
+  const { x1, y1, x2, y2 } = mapa.state.rect;
+  const centro = (no: NoVista) => ({
+    x: no.state.rect.x + no.state.rect.width / 2,
+    y: no.state.rect.y + no.state.rect.height / 2
+  });
+  const vista = calcularEnquadre({
+    conteudo: { x1, y1, x2, y2 },
+    quadro: { largura: quadro.width, altura: quadro.height },
+    escalaMinima: ESCALA_MINIMA,
+    escalaMaxima: ESCALA_MAXIMA,
+    razao: 0.95,
+    margem: 12,
+    raiz: { y: centro(raizVista).y },
+    ...(foco ? { foco: centro(foco) } : {})
+  });
+  // Transformação absoluta a partir da atual, sem importar o d3: identidade = atual desfeita.
+  const atual = (svg as unknown as { __zoom: ZoomAtual }).__zoom;
+  const alvo = atual
+    .translate(-atual.x / atual.k, -atual.y / atual.k)
+    .scale(1 / atual.k)
+    .translate(vista.x, vista.y)
+    .scale(vista.k);
+  await mapa
+    .transition(mapa.svg)
+    .call(mapa.zoom.transform as never, alvo as never)
+    .end()
+    .catch(() => {});
 }
 
 async function centralizar(): Promise<void> {
-  await mapa?.fit();
+  await enquadrar();
 }
 
 async function alternarTodos(): Promise<void> {
-  if (!mapa?.state.data) return;
+  if (!pronto.value || !mapa?.state.data) return;
   definirTodosRamos(mapa.state.data as unknown as NoMarkmap, !tudoAberto.value);
   await mapa.renderData();
   atualizarRotulo();
+  await enquadrar();
 }
 
 /** O círculo já abre e fecha (nativo); o toque no texto do pensador faz o mesmo, sem pegar o link. */
@@ -122,19 +162,18 @@ async function criar(): Promise<void> {
     const { Markmap } = await import('markmap-view');
     if (destruido) return;
     raiz = paraArvoreMarkmap(props.dados, props.baseUnidade);
-    mapa = Markmap.create(svgRef.value, opcoes(), raiz);
+    mapa = Markmap.create(svgRef.value, opcoes());
+    await mapa.setData(raiz);
 
     const alternarOriginal = mapa.toggleNode.bind(mapa);
     mapa.toggleNode = async (no, recursivo) => {
       await alternarOriginal(no, recursivo);
       atualizarRotulo();
-    };
-    const ajustarOriginal = mapa.fit.bind(mapa);
-    mapa.fit = async (max) => {
-      await ajustarOriginal(max);
-      await garantirLegibilidade();
+      await enquadrar(no);
     };
     atualizarRotulo();
+    await enquadrar();
+    pronto.value = true;
   } catch {
     falhou.value = true;
   }
@@ -153,7 +192,7 @@ onMounted(() => {
       const largura = hospedeiro.value?.clientWidth ?? 0;
       if (largura === 0) return;
       if (!mapa) void criar();
-      else if (Math.abs(largura - larguraAnterior) > 1) void mapa.fit();
+      else if (Math.abs(largura - larguraAnterior) > 1) void enquadrar();
       larguraAnterior = largura;
     });
     if (hospedeiro.value) observadorTamanho.observe(hospedeiro.value);
@@ -189,6 +228,7 @@ onBeforeUnmount(() => {
         type="button"
         class="mapa-visual__botao mapa-visual__todos"
         :aria-expanded="tudoAberto ? 'true' : 'false'"
+        :disabled="!pronto"
         @click="alternarTodos"
       >
         {{ rotuloTodos }}

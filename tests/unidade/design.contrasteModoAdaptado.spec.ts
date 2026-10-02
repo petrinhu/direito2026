@@ -167,3 +167,12 @@ describe('modo adaptado sem azul-marinho da marca', () => {
     expect(azuis).toEqual([]);
   });
 });
+
+describe('modo adaptado: tokens de borda', () => {
+  it('todo token de borda do bloco adaptado é preto (WCAG 1.4.11)', () => {
+    const tokens = carregarBlocoModoAdaptado();
+    const bordas = Object.entries(tokens).filter(([nome]) => nome.startsWith('--cor-borda'));
+    expect(bordas.map(([nome]) => nome).sort()).toEqual(['--cor-borda', '--cor-borda-forte']);
+    for (const [nome, valor] of bordas) expect(valor.toLowerCase(), nome).toBe('#000000');
+  });
+});

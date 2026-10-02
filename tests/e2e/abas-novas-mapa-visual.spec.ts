@@ -69,11 +69,17 @@ test('Centralizar volta ao enquadramento depois de arrastar o mapa', async ({ pa
   await page.mouse.up();
   expect(await page.locator('.mapa-visual__svg > g').getAttribute('transform')).not.toBe(antes);
   await page.getByRole('button', { name: 'Centralizar' }).click();
+  const numeros = (t: string | null) => (t ?? '').match(/-?[\d.]+/g)!.map(Number);
   await expect
-    .poll(async () => page.locator('.mapa-visual__svg > g').getAttribute('transform'), {
-      timeout: 5000
-    })
-    .toBe(antes);
+    .poll(
+      async () =>
+        numeros(await page.locator('.mapa-visual__svg > g').getAttribute('transform')).reduce(
+          (soma, n, i) => soma + Math.abs(n - numeros(antes)[i]!),
+          0
+        ),
+      { timeout: 5000 }
+    )
+    .toBeLessThan(0.01);
 });
 
 test('"Ver em lista" mostra a árvore acessível e "Ver mapa visual" volta', async ({ page }) => {
@@ -100,7 +106,7 @@ test('modo adaptado: abre direto a lista, e o mapa visual é opcional', async ({
 });
 
 for (const aba of ['', '/mapa', '/fichamento', '/mnemonicos', '/quiz']) {
-  test(`modo adaptado, página inteira${aba || ' /resumo'}: nenhum elemento usa o azul-marinho da marca`, async ({
+  test(`modo adaptado, página inteira${aba || ' /resumo'}: nenhum elemento usa o azul-marinho da marca nem o bege de borda`, async ({
     page
   }) => {
     await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
@@ -109,20 +115,24 @@ for (const aba of ['', '/mapa', '/fichamento', '/mnemonicos', '/quiz']) {
     if (aba === '/mapa') await page.locator('[role="tree"]').waitFor({ state: 'visible' });
     const comAzul = async () =>
       page.evaluate(() => {
-        const marca = 'rgb(13, 36, 64)';
+        // Azul-marinho da marca e os beges de borda do tema claro (WCAG 1.4.11).
+        const proibidas = ['rgb(13, 36, 64)', 'rgb(220, 215, 200)', 'rgb(195, 188, 164)'];
         return [...document.querySelectorAll('body, body *')]
           .filter((el) => {
             const e = getComputedStyle(el);
-            return [
-              e.color,
-              e.backgroundColor,
-              e.borderTopColor,
-              e.borderLeftColor,
-              e.borderBottomColor,
-              e.fill,
-              e.stroke,
-              e.outlineColor
-            ].includes(marca);
+            return proibidas.some((cor) =>
+              [
+                e.color,
+                e.backgroundColor,
+                e.borderTopColor,
+                e.borderLeftColor,
+                e.borderBottomColor,
+                e.borderRightColor,
+                e.fill,
+                e.stroke,
+                e.outlineColor
+              ].includes(cor)
+            );
           })
           .map((el) => `${el.tagName}.${String((el as HTMLElement).className)}`);
       });

@@ -2,9 +2,9 @@
 import { computed, inject, ref, watch } from 'vue';
 import type { MapaFichamento } from '@/core/fichamento/tipos';
 import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
-import { arvoreVisual, construirArvoreMapa } from '@/app/fichamento';
+import { construirArvoreMapa } from '@/app/fichamento';
 import MapaMental from './MapaMental.vue';
-import MapaVisual from './MapaVisual.vue';
+import MapaMarkmap from './MapaMarkmap.vue';
 
 const props = defineProps<{
   dados: MapaFichamento;
@@ -35,7 +35,6 @@ if (storeAdaptado) {
 }
 
 const arvoreCompleta = computed(() => construirArvoreMapa(props.dados));
-const arvoreDoMapa = computed(() => arvoreVisual(props.dados));
 
 function alternarModo(): void {
   modo.value = modo.value === 'visual' ? 'lista' : 'visual';
@@ -59,9 +58,9 @@ function alternarModo(): void {
       {{ modo === 'visual' ? 'Ver em lista' : 'Ver mapa visual' }}
     </button>
     <div id="mapa-mental-conteudo">
-      <MapaVisual
+      <MapaMarkmap
         v-if="modo === 'visual'"
-        :arvore="arvoreDoMapa"
+        :dados="dados"
         :base-unidade="baseUnidade"
         :reduzir-movimento="semMovimento"
       />

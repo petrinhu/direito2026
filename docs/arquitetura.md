@@ -1305,7 +1305,7 @@ Filosofia Jurídica traz quiz de 80 perguntas: 40 de cinco alternativas e 40 de 
 
 Ordem do líder (verbatim): "faça um mapa mental e um fichamento, na ordem: periodo historico > pensadores > modo de pensar", "Mantenha o padra de cores" e "crie mnemonicos também, em nova aba". Escopo: Filosofia Jurídica, 1a unidade. As abas ficam entre Resumo e Quiz, na ordem Resumo, Mapa mental, Fichamento, Mnemônicos, Quiz, com rotas `/mapa`, `/fichamento` e `/mnemonicos`.
 
-### Decisão de stack: componente próprio, sem dependência nova
+### Decisão de stack da lista: componente próprio (o mapa visual usa markmap, ver abaixo)
 
 Pesquisa feita antes do desenho (L-22). Fontes:
 
@@ -1338,19 +1338,18 @@ Escolha: árvore HTML própria (`role="tree"`), conectores em CSS, sem bibliotec
 - Impressão: todos os ramos, fichas e respostas saem abertos.
 - Responsivo: a lista de abas quebra de linha em qualquer modo (cinco abas não cabem em 360px numa linha); a árvore rola dentro do próprio contêiner se precisar.
 
-### Mapa visual radial (01/10/2026, reprovação do líder da primeira versão)
+### Mapa visual em markmap (01/10/2026, ordem do líder: "Trocar por biblioteca pronta")
 
-O líder reprovou o mapa em árvore ("horrível, não é divertido, parece apenas uma árvore"). O mapa passou a ser visual e radial: nó central, ramos curvos coloridos (um tom por pensador, seis tons nos tokens `--cor-mapa-ramo-N-*`), cápsulas, clique abre e fecha o ramo com animação, zoom (roda, pinça, botões) e arrastar, painel de detalhe.
+Depois de cinco rodadas de conserto do mapa radial em SVG próprio (enquadramento e densidade, ver `docs/qa-producao-mapa-visual.md`), o líder mandou trocar por biblioteca pronta e manter todo o resto ("mantenha todo o stack usado até agora"). O mapa visual padrão passou a ser o **markmap**; a lista acessível (`role="tree"`), o fichamento, os mnemônicos, os tokens e a fonte única de dados (`mapaFichamento.ts`) ficam como estavam. A escolha de "sem biblioteca" acima vale só para a lista.
 
-**Escolha: SVG próprio, sem biblioteca (markmap não foi instalado).** Motivo: markmap é uma árvore horizontal sobre d3, sem cápsulas, difícil de tematizar nos quatro blocos de token (claro, escuro, adaptado) e sem teclado; o SVG próprio dá controle total de cor, teclado e movimento reduzido. `package.json` não mudou: não há dependência nova, nem licença nova a registrar. `npm audit --omit=dev`: 0 vulnerabilidades. Sem CDN: tudo é código do próprio build.
+- Dependência: `markmap-view` 0.18.12, licença MIT (puxa `markmap-common` 0.18.9, MIT, e `d3` 7.9.0, ISC). `markmap-lib` NÃO foi instalada: ela converte Markdown em árvore e traz plugins que apontam para CDN; a árvore é montada direto dos dados (`src/core/fichamento/arvoreMarkmap.ts`). `npm audit --omit=dev`: 0 vulnerabilidades. Sem CDN.
+- Carga: `import('markmap-view')` dinâmico dentro de `MapaMarkmap.vue`, só quando a aba do mapa monta e o quadro tem largura (a aba monta escondida, por isso o `ResizeObserver`). O chunk entra no precache do service worker pelo `globPatterns` existente. Tamanho medido no build: cerca de 77 kB, 26 kB gzip.
+- Comportamento: começa mostrando raiz, períodos e pensadores (pensadores recolhidos, `payload.fold`); clique no círculo ou no texto do pensador abre e fecha; zoom e arrastar são nativos; `autoFit` ao abrir e fechar. Botões "Abrir todos os ramos"/"Recolher todos os ramos" (rótulo e `aria-expanded` seguem também os cliques nos nós) e "Centralizar". O link "Ler a ficha completa" é uma folha dentro de cada pensador.
+- Cor: cada pensador usa um dos seis `--cor-mapa-ramo-N-fundo`, lidos com `getComputedStyle` na criação e a cada troca de tema (claro, escuro, preferência do sistema); texto com `--cor-texto` e fonte do site. No modo adaptado as linhas são pretas e a animação é zero.
+- Celular (< 640px): `maxWidth` menor e, depois de cada enquadramento, se a escala deixar o texto abaixo de 12px efetivos, o mapa é ampliado até 12px e o resto fica para o arrastar.
+- Movimento reduzido ou modo adaptado: a aba abre direto na lista; o mapa visual é opcional, com `duration` 0.
+- Radial removido: `MapaVisual.vue`, `core/fichamento/mapaVisual.ts` (layout radial, plano, vista) e os três testes dele foram apagados por ficarem sem uso. Ficam `arvoreMapa.ts`, `navegacaoArvore.ts`, `filtrarFichas.ts` e a lista.
 
-- Mesma fonte de dados: `arvoreVisual` (core) deriva do mesmo `mapaFichamento.ts`, sem o nível de fase; `layoutRadial` dá a cada nó uma fatia de ângulo proporcional às folhas visíveis.
-- A lista em árvore (`role="tree"`) continua como "Ver em lista". Com `prefers-reduced-motion` ou modo adaptado, a aba abre direto na lista; o mapa visual fica opcional e sem animação.
-- Um único botão alterna todos os ramos, na lista e no mapa; o rótulo e `aria-expanded` mudam na hora e também refletem ramos abertos à mão.
-- Âncoras: `Unidade.vue` rola até o id da URL depois que o conteúdo chega (o roteador rolava antes de o resumo existir).
+### Padrão de abas para as próximas cadeiras
 
-### Mapa visual em tela estreita e densidade (rodada 2, 01/10/2026)
-
-Pesquisa feita antes (L-22) sobre como mind maps web tratam tela estreita e densidade. Fontes: [Miro, ramos recolhíveis em mind maps](https://community.miro.com/ideas/collapsible-branches-on-the-mind-maps-171/index2.html) (recolher ramos para limitar o que aparece), [MindNode, vista em tópicos](https://www.mindnode.com/support/guides/outlining) (a lista linear como alternativa ao mapa) e [Better Mind Map, layout vertical ou horizontal](https://www.obsidianstats.com/plugins/better-mindmap) (orientação e espaçamento ajustáveis).
-
-Decisões: (1) em menos de 640px o layout é vertical (Antiguidade em cima) e o texto nunca fica abaixo de 12px: se o mapa inteiro não couber nessa escala, enquadra-se o ramo em foco, com pan para o resto (`vistaLegivel`); a largura passou a ser observada com `ResizeObserver`, porque a aba monta escondida e a medição única na montagem nunca via a largura real. (2) Acordeão: abrir um pensador fecha os outros do mesmo período; "Abrir todos os ramos" abre até os pensadores, não os conceitos. (3) O layout reserva o espaço real das cápsulas (fatia de ângulo e raio do anel proporcionais ao tamanho), e um teste garante que nenhum par de retângulos se sobrepõe. (4) Modo adaptado: os tokens de marca são trocados por preto no contêiner da aba.
+A estrutura de abas de Filosofia Jurídica u1 é o modelo das próximas cadeiras: Resumo, Mapa mental (markmap e lista, alternados por "Ver em lista"/"Ver mapa visual"), Fichamento, Mnemônicos e Quiz, todas alimentadas por um só `mapaFichamento.ts` por unidade.

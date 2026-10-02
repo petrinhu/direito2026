@@ -1,10 +1,29 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import MapaMentalVisor from '@/ui/componentes/MapaMentalVisor.vue';
 import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
 import { ref } from 'vue';
 import { DADOS_SINTETICOS } from '../unidade/apoio/dadosFichamento';
+
+const criar = vi.fn();
+vi.mock('markmap-view', () => ({
+  Markmap: {
+    create: (...args: unknown[]) => {
+      criar(...args);
+      const g = { attr: () => '' };
+      return {
+        state: { data: args[2] },
+        g,
+        toggleNode: async () => {},
+        fit: async () => {},
+        renderData: async () => {},
+        setOptions: () => {},
+        destroy: () => {}
+      };
+    }
+  }
+}));
 
 let wrapper: VueWrapper | undefined;
 
@@ -32,6 +51,30 @@ describe('MapaMentalVisor', () => {
     expect(wrapper!.find('.mapa-visual').exists()).toBe(true);
     expect(wrapper!.find('[role="tree"]').exists()).toBe(false);
     expect(wrapper!.find('button.mapa-mental__modo').text()).toBe('Ver em lista');
+  });
+
+  it('o mapa visual abre com o markmap, a árvore de pensadores e o botão Abrir todos os ramos', async () => {
+    criar.mockClear();
+    montar();
+    await vi.waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const arvore = criar.mock.calls[0]![2] as { children: { children: unknown[] }[] };
+    expect(arvore.children).toHaveLength(2);
+    const botao = wrapper!.find('button.mapa-visual__todos');
+    expect(botao.text()).toBe('Abrir todos os ramos');
+    expect(botao.attributes('aria-expanded')).toBe('false');
+    await botao.trigger('click');
+    await vi.waitFor(() => expect(botao.text()).toBe('Recolher todos os ramos'));
+    expect(botao.attributes('aria-expanded')).toBe('true');
+    await botao.trigger('click');
+    await vi.waitFor(() => expect(botao.text()).toBe('Abrir todos os ramos'));
+    expect(wrapper!.find('button.mapa-visual__centralizar').text()).toBe('Centralizar');
+  });
+
+  it('no modo adaptado o markmap só é criado quando o leitor pede o mapa visual', async () => {
+    criar.mockClear();
+    montar(true);
+    await Promise.resolve();
+    expect(criar).not.toHaveBeenCalled();
   });
 
   it('o botão alterna para a lista (árvore acessível) e de volta, trocando o rótulo na hora', async () => {

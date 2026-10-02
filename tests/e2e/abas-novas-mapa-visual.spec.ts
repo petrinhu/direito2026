@@ -1,37 +1,44 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
 
 /**
- * Mapa mental visual (pedido do líder: "horrível, não é divertido"):
- * o mapa aparece, clicar abre o ramo, o botão único alterna e troca de
- * rótulo, a lista continua disponível, e no modo adaptado a lista vem
- * primeiro. Layout e interação reais exigem navegador.
+ * Mapa mental visual em markmap (ordem do líder, 01/10/2026: biblioteca
+ * pronta no lugar do SVG próprio): o mapa aparece com os pensadores, clicar
+ * abre o ramo, os botões alternam todos os ramos e centralizam, a lista
+ * continua disponível, e no modo adaptado a lista vem primeiro.
  */
 const BASE = '/p/p1/filosofia-juridica/u1';
 
-test('o mapa visual aparece com o nó central, os períodos e os pensadores', async ({ page }) => {
+const no = (page: Page, texto: string) => page.locator('.markmap-node', { hasText: texto }).first();
+
+async function escala(page: Page): Promise<number> {
+  const t = (await page.locator('.mapa-visual__svg > g').getAttribute('transform')) ?? '';
+  return Number(/scale\(([\d.]+)\)/.exec(t)![1]);
+}
+
+test('o mapa visual aparece com a raiz, os períodos e os pensadores', async ({ page }) => {
   await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
   await page.goto(`${BASE}/mapa`);
   await expect(page.locator('.mapa-visual__svg')).toBeVisible();
-  await expect(page.locator('[data-no="mapa-raiz"]')).toBeVisible();
-  await expect(page.locator('[data-no="mapa-era-antiga"]')).toBeVisible();
-  await expect(page.locator('[data-no="mapa-pensador-platao"]')).toBeVisible();
-  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+  await expect(no(page, 'Filosofia Jurídica')).toBeVisible();
+  await expect(no(page, 'Idade Antiga')).toBeVisible();
+  await expect(no(page, 'Platão')).toBeVisible();
+  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
 });
 
-test('clicar num pensador abre o ramo e mostra o detalhe', async ({ page }) => {
+test('clicar num pensador abre o ramo e mostra o modo de pensar; clicar de novo fecha', async ({
+  page
+}) => {
   await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
   await page.goto(`${BASE}/mapa`);
-  const platao = page.locator('[data-no="mapa-pensador-platao"]');
-  await platao.click();
-  await expect(platao).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('[data-no="mapa-platao-modo"]')).toBeVisible();
-  await expect(page.locator('.mapa-visual__detalhe')).toContainText('Platão');
-  await platao.click();
-  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+  const platao = no(page, 'Platão (');
+  await platao.locator('circle').click();
+  await expect(page.getByText('Modo de pensar').first()).toBeVisible();
+  await platao.locator('circle').click();
+  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
 });
 
-test('o botão único alterna todos os ramos e o rótulo muda na hora', async ({ page }) => {
+test('o botão alterna todos os ramos e o rótulo muda na hora', async ({ page }) => {
   await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
   await page.goto(`${BASE}/mapa`);
   const botao = page.locator('button.mapa-visual__todos');
@@ -40,39 +47,30 @@ test('o botão único alterna todos os ramos e o rótulo muda na hora', async ({
   await botao.click();
   await expect(botao).toHaveText('Recolher todos os ramos');
   await expect(botao).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('[data-no="mapa-platao-modo"]')).toBeVisible();
+  await expect(page.getByText('Modo de pensar').first()).toBeVisible();
   await botao.click();
   await expect(botao).toHaveText('Abrir todos os ramos');
-  await expect(page.locator('[data-no="mapa-platao-modo"]')).toHaveCount(0);
+  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
 });
 
-test('zoom pelos botões muda a escala e Centralizar volta', async ({ page }) => {
+test('Centralizar volta ao enquadramento depois de arrastar o mapa', async ({ page }) => {
   await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
   await page.goto(`${BASE}/mapa`);
-  const escala = async () =>
-    Number(
-      /scale\(([\d.]+)\)/.exec(
-        (await page.locator('.mapa-visual__mundo').getAttribute('transform')) ?? ''
-      )![1]
-    );
-  const inicial = await escala();
-  await page.getByRole('button', { name: 'Aproximar' }).click();
-  expect(await escala()).toBeGreaterThan(inicial);
-  await page.getByRole('button', { name: 'Centralizar' }).click();
-  // Centralizar anima: espera a escala assentar antes de comparar.
-  await expect.poll(escala, { timeout: 5000 }).toBeCloseTo(inicial, 3);
-});
-
-test('arrastar o fundo move o mapa', async ({ page }) => {
-  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
-  await page.goto(`${BASE}/mapa`);
-  const antes = await page.locator('.mapa-visual__mundo').getAttribute('transform');
+  await expect(no(page, 'Platão')).toBeVisible();
+  await page.waitForTimeout(500);
+  const antes = await page.locator('.mapa-visual__svg > g').getAttribute('transform');
   const caixa = (await page.locator('.mapa-visual__svg').boundingBox())!;
   await page.mouse.move(caixa.x + 20, caixa.y + 20);
   await page.mouse.down();
   await page.mouse.move(caixa.x + 120, caixa.y + 90, { steps: 5 });
   await page.mouse.up();
-  expect(await page.locator('.mapa-visual__mundo').getAttribute('transform')).not.toBe(antes);
+  expect(await page.locator('.mapa-visual__svg > g').getAttribute('transform')).not.toBe(antes);
+  await page.getByRole('button', { name: 'Centralizar' }).click();
+  await expect
+    .poll(async () => page.locator('.mapa-visual__svg > g').getAttribute('transform'), {
+      timeout: 5000
+    })
+    .toBe(antes);
 });
 
 test('"Ver em lista" mostra a árvore acessível e "Ver mapa visual" volta', async ({ page }) => {
@@ -134,72 +132,23 @@ for (const aba of ['', '/mapa', '/fichamento', '/mnemonicos', '/quiz']) {
   });
 }
 
-test('360px: o layout vertical entra e o texto das cápsulas fica com pelo menos 12px', async ({
-  page
-}) => {
+test('360px: sem rolagem lateral e texto com pelo menos 12px efetivos', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
   await page.goto(`${BASE}/mapa`);
-  const antiga = page.locator('[data-no="mapa-era-antiga"]');
-  const media = page.locator('[data-no="mapa-era-media"]');
-  await expect(antiga).toBeVisible();
-  const ya = (await antiga.boundingBox())!.y;
-  const ym = (await media.boundingBox())!.y;
-  expect(ya, 'Antiguidade em cima da Idade Média').toBeLessThan(ym);
+  await expect(no(page, 'Platão')).toBeVisible();
   for (const acao of ['inicial', 'aberto']) {
     if (acao === 'aberto') await page.locator('button.mapa-visual__todos').click();
     await page.waitForTimeout(700);
-    const tamanhos = await page
-      .locator('.mapa-visual__no .mapa-visual__texto')
-      .evaluateAll((els) =>
-        els.map((el) => el.getBoundingClientRect().height / el.querySelectorAll('tspan').length)
-      );
-    expect(Math.min(...tamanhos), acao).toBeGreaterThanOrEqual(11);
+    const k = await escala(page);
+    const fonte = await page
+      .locator('.mapa-visual__svg .markmap-foreign')
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(fonte * k, acao).toBeGreaterThanOrEqual(11.5);
+    const sobra = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(sobra, `rolagem lateral (${acao})`).toBeLessThanOrEqual(0);
   }
 });
-
-test('1280px com "Abrir todos os ramos": todo nó dentro do quadro, texto >= 12px, a página rola', async ({
-  page
-}) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
-  await page.goto(`${BASE}/mapa`);
-  await page.locator('button.mapa-visual__todos').click();
-  await page.waitForTimeout(700);
-  await expectTodosDentro(page);
-});
-
-test('360px com os conceitos abertos: nenhuma cápsula passa da borda', async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 800 });
-  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: false });
-  await page.goto(`${BASE}/mapa`);
-  await page.locator('button.mapa-visual__todos').click();
-  await page.locator('[data-no="mapa-platao-conceitos"]').click();
-  await page.waitForTimeout(700);
-  await expectTodosDentro(page);
-});
-
-async function expectTodosDentro(page: import('@playwright/test').Page): Promise<void> {
-  const svg = (await page.locator('.mapa-visual__svg').boundingBox())!;
-  const caixas = await page.locator('.mapa-visual__no .mapa-visual__capsula').evaluateAll((els) =>
-    els.map((el) => {
-      const r = el.getBoundingClientRect();
-      return { esq: r.left, dir: r.right, topo: r.top, base: r.bottom };
-    })
-  );
-  expect(caixas.length).toBeGreaterThan(10);
-  for (const c of caixas) {
-    expect(c.esq).toBeGreaterThanOrEqual(svg.x - 1);
-    expect(c.dir).toBeLessThanOrEqual(svg.x + svg.width + 1);
-    expect(c.topo).toBeGreaterThanOrEqual(svg.y - 1);
-    expect(c.base).toBeLessThanOrEqual(svg.y + svg.height + 1);
-  }
-  const escala = await page
-    .locator('.mapa-visual__mundo')
-    .evaluate((el) => Number(/scale\(([\d.]+)\)/.exec(el.getAttribute('transform') ?? '')![1]));
-  const fontes = await page
-    .locator('.mapa-visual__no .mapa-visual__texto')
-    .evaluateAll((els) => els.map((el) => parseFloat(getComputedStyle(el).fontSize)));
-  const texto = fontes.map((f) => f * escala);
-  expect(Math.min(...texto)).toBeGreaterThanOrEqual(11.5);
-}

@@ -102,7 +102,7 @@ describe('modo adaptado na aba do mapa: preto e branco puro', () => {
 
   it('nenhum componente do mapa escreve #0d2440 à mão', () => {
     for (const arquivo of [
-      'MapaVisual.vue',
+      'MapaMarkmap.vue',
       'MapaMentalVisor.vue',
       'MapaMental.vue',
       'NoMapaMental.vue'

@@ -502,6 +502,11 @@
   --cor-menu-aba: #000000;
   --cor-menu-item: #000000;
 
+  /* Contorno de campo, botão, cartão e célula: preto, para o site inteiro
+     (WCAG 1.4.11 pede 3:1; o bege do tema claro dá cerca de 1,4:1 no branco). */
+  --cor-borda: #000000;
+  --cor-borda-forte: #000000;
+
   /* Mapa mental no modo adaptado: sem matiz, o nível é dito pelo rótulo de
      texto e pela borda estrutural de 2px, nunca pela cor. */
   --cor-mapa-era-fundo: #ffffff;

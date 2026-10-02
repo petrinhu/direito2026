@@ -113,5 +113,7 @@ function alternarModo(): void {
   --cor-titulo-texto: #000000;
   --cor-acento: #000000;
   --cor-bordo: #000000;
+  --cor-borda: #000000;
+  --cor-borda-forte: #000000;
 }
 </style>

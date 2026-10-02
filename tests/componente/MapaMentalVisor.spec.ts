@@ -9,14 +9,15 @@ import { DADOS_SINTETICOS } from '../unidade/apoio/dadosFichamento';
 const criar = vi.fn();
 vi.mock('markmap-view', () => ({
   Markmap: {
-    create: (...args: unknown[]) => {
-      criar(...args);
-      const g = { attr: () => '' };
+    create: () => {
+      const estado: { data?: unknown } = {};
       return {
-        state: { data: args[2] },
-        g,
+        state: estado,
         toggleNode: async () => {},
-        fit: async () => {},
+        setData: async (dados: unknown) => {
+          estado.data = dados;
+          criar(dados);
+        },
         renderData: async () => {},
         setOptions: () => {},
         destroy: () => {}
@@ -57,7 +58,7 @@ describe('MapaMentalVisor', () => {
     criar.mockClear();
     montar();
     await vi.waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
-    const arvore = criar.mock.calls[0]![2] as { children: { children: unknown[] }[] };
+    const arvore = criar.mock.calls[0]![0] as { children: { children: unknown[] }[] };
     expect(arvore.children).toHaveLength(2);
     const botao = wrapper!.find('button.mapa-visual__todos');
     expect(botao.text()).toBe('Abrir todos os ramos');

@@ -11,6 +11,9 @@ const BASE = '/p/p1/filosofia-juridica/u1';
 
 const no = (page: Page, texto: string) => page.locator('.markmap-node', { hasText: texto }).first();
 
+const modoDePensar = (page: Page) =>
+  page.locator('.mapa-visual__svg').getByText('Modo de pensar:', { exact: true });
+
 async function escala(page: Page): Promise<number> {
   const t = (await page.locator('.mapa-visual__svg > g').getAttribute('transform')) ?? '';
   return Number(/scale\(([\d.]+)\)/.exec(t)![1]);
@@ -23,7 +26,7 @@ test('o mapa visual aparece com a raiz, os períodos e os pensadores', async ({ 
   await expect(no(page, 'Filosofia Jurídica')).toBeVisible();
   await expect(no(page, 'Idade Antiga')).toBeVisible();
   await expect(no(page, 'Platão')).toBeVisible();
-  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
+  await expect(modoDePensar(page)).toHaveCount(0);
 });
 
 test('clicar num pensador abre o ramo e mostra o modo de pensar; clicar de novo fecha', async ({
@@ -33,9 +36,9 @@ test('clicar num pensador abre o ramo e mostra o modo de pensar; clicar de novo 
   await page.goto(`${BASE}/mapa`);
   const platao = no(page, 'Platão (');
   await platao.locator('circle').click();
-  await expect(page.getByText('Modo de pensar').first()).toBeVisible();
+  await expect(modoDePensar(page).first()).toBeVisible();
   await platao.locator('circle').click();
-  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
+  await expect(modoDePensar(page)).toHaveCount(0);
 });
 
 test('o botão alterna todos os ramos e o rótulo muda na hora', async ({ page }) => {
@@ -47,10 +50,10 @@ test('o botão alterna todos os ramos e o rótulo muda na hora', async ({ page }
   await botao.click();
   await expect(botao).toHaveText('Recolher todos os ramos');
   await expect(botao).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByText('Modo de pensar').first()).toBeVisible();
+  await expect(modoDePensar(page).first()).toBeVisible();
   await botao.click();
   await expect(botao).toHaveText('Abrir todos os ramos');
-  await expect(page.getByText('Modo de pensar')).toHaveCount(0);
+  await expect(modoDePensar(page)).toHaveCount(0);
 });
 
 test('Centralizar volta ao enquadramento depois de arrastar o mapa', async ({ page }) => {

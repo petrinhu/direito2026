@@ -11,3 +11,4 @@ export {
   todosRamosAbertos
 } from '@/core/fichamento/arvoreMarkmap';
 export type { NoMarkmap } from '@/core/fichamento/arvoreMarkmap';
+export { calcularEnquadre } from '@/core/fichamento/enquadreMapa';

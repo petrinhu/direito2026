@@ -5,20 +5,9 @@ export { construirArvoreMapa, idsExpansiveis } from '@/core/fichamento/arvoreMap
 export { abertosIniciais, interpretarTecla, nosVisiveis } from '@/core/fichamento/navegacaoArvore';
 export { filtrarFichas, ordenarFichas, rotuloDaFase } from '@/core/fichamento/filtrarFichas';
 export {
-  abertosIniciaisVisual,
-  abertosTodosVisual,
-  alternarRamo,
-  dimensionar,
-  vistaLegivel,
-  alternarTodosRamos,
-  arvoreVisual,
-  caminhoLigacao,
-  ajustarVista,
-  quebrarRotulo,
-  layoutIndentado,
-  montarPlano,
-  layoutRadial,
-  vistaPorLargura,
-  rotuloVisual,
-  todosAbertos
-} from '@/core/fichamento/mapaVisual';
+  definirTodosRamos,
+  escaparHtml,
+  paraArvoreMarkmap,
+  todosRamosAbertos
+} from '@/core/fichamento/arvoreMarkmap';
+export type { NoMarkmap } from '@/core/fichamento/arvoreMarkmap';

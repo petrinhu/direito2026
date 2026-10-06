@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import FundoAnimado from '@/ui/componentes/FundoAnimado.vue';
 import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
@@ -28,7 +28,15 @@ function stubContexto2D(): void {
 }
 
 function criarStoreFalso(inicial: boolean): StoreModoAdaptado {
-  return { ativo: ref(inicial), alternar: vi.fn() };
+  const ativo = ref(inicial);
+  const suspenso = ref(false);
+  return {
+    ativo,
+    suspenso,
+    efetivo: computed(() => ativo.value && !suspenso.value),
+    alternar: vi.fn(),
+    suspender: vi.fn()
+  };
 }
 
 describe('FundoAnimado, reatividade ao modo adaptado', () => {

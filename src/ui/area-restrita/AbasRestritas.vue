@@ -105,16 +105,4 @@ function aoTeclar(evento: KeyboardEvent, indice: number): void {
 .ar-abas__painel {
   padding-top: var(--esp-4, 1rem);
 }
-
-:root[data-modo-adaptado='on'] .ar-abas__aba {
-  border: 2px solid #000000;
-  background: #ffffff;
-  color: #000000;
-  box-shadow: none;
-}
-
-:root[data-modo-adaptado='on'] .ar-abas__aba[aria-selected='true'] {
-  background: #000000;
-  color: #ffffff;
-}
 </style>

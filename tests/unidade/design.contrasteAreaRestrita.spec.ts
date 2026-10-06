@@ -7,14 +7,13 @@ import { extrairVariaveisHex, recortarBlocoDeSeletorTopoDeArquivo } from '@/core
 /**
  * Portão de contraste da identidade visual do grupo (área restrita). Lê o
  * CSS de verdade, nunca duplica valor à mão. Texto >= 4,5:1 contra o fundo
- * REAL onde ele é usado (L-42), componentes de interface e linhas >= 3:1;
- * no modo adaptado, preto sobre branco (21:1).
+ * REAL onde ele é usado (L-42), componentes de interface e linhas >= 3:1.
+ * A área não tem modo adaptado (ordem do líder, 05/10/2026).
  */
 const CAMINHO =
   process.env.IDENTIDADE_CSS_PATH ??
   resolve(__dirname, '../../src/ui/area-restrita/identidade-tokens.css');
-const SELETOR_NORMAL = ":root:not([data-modo-adaptado='on']) .area-restrita";
-const SELETOR_ADAPTADO = ":root[data-modo-adaptado='on'] .area-restrita";
+const SELETOR_NORMAL = '.area-restrita';
 
 function bloco(seletor: string): Record<string, string> {
   const css = readFileSync(CAMINHO, 'utf-8');
@@ -40,7 +39,7 @@ const TEXTOS_SOBRE_TODOS_OS_FUNDOS = [
   '--ar-ambar'
 ] as const;
 
-describe('identidade visual da área restrita: modo normal', () => {
+describe('identidade visual da área restrita', () => {
   const t = bloco(SELETOR_NORMAL);
 
   for (const texto of TEXTOS_SOBRE_TODOS_OS_FUNDOS) {
@@ -84,15 +83,4 @@ describe('identidade visual da área restrita: modo normal', () => {
       expect(calcularContraste(cor!, t['--cor-fundo']!)).toBeGreaterThanOrEqual(3);
     });
   }
-});
-
-describe('identidade visual da área restrita: modo adaptado', () => {
-  const t = bloco(SELETOR_ADAPTADO);
-  it('fundos brancos e textos pretos, 21:1', () => {
-    for (const fundo of FUNDOS) expect(t[fundo]).toBe('#ffffff');
-    for (const texto of TEXTOS_SOBRE_TODOS_OS_FUNDOS) {
-      expect(t[texto], `${texto} ausente`).toBe('#000000');
-    }
-    expect(calcularContraste(t['--cor-texto']!, t['--cor-fundo']!)).toBe(21);
-  });
 });

@@ -42,7 +42,7 @@ function prefereMovimentoReduzido(): boolean {
  * para a decisão inicial em onMounted; o caminho reativo é o watcher.
  */
 function prefereModoAdaptado(): boolean {
-  return Boolean(storeModoAdaptado?.ativo.value);
+  return Boolean(storeModoAdaptado?.efetivo.value);
 }
 
 function desenharQuadroEstatico(
@@ -130,7 +130,7 @@ onMounted(() => {
  * é anulado pelo desligamento do modo).
  */
 watch(
-  () => storeModoAdaptado?.ativo.value,
+  () => storeModoAdaptado?.efetivo.value,
   (ligado) => {
     if (!ctxSalvo) return;
     if (ligado) {

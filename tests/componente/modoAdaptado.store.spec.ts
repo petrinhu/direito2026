@@ -31,4 +31,39 @@ describe('criarStoreModoAdaptado', () => {
     const store = criarStoreModoAdaptado(repo);
     expect(store.ativo.value).toBe(true);
   });
+
+  it('suspender() tira o atributo do <html> sem apagar a preferência salva, e voltar religa', () => {
+    const repo = new RepositorioMemoria();
+    const espiao = vi.spyOn(repo, 'salvarModoAdaptado');
+    const store = criarStoreModoAdaptado(repo);
+    store.alternar();
+    espiao.mockClear();
+    expect(document.documentElement.getAttribute('data-modo-adaptado')).toBe('on');
+
+    store.suspender(true);
+
+    expect(store.suspenso.value).toBe(true);
+    expect(store.ativo.value).toBe(true);
+    expect(store.efetivo.value).toBe(false);
+    expect(document.documentElement.hasAttribute('data-modo-adaptado')).toBe(false);
+    expect(repo.lerModoAdaptado()).toBe(true);
+    expect(espiao).not.toHaveBeenCalled();
+
+    store.suspender(false);
+
+    expect(store.efetivo.value).toBe(true);
+    expect(document.documentElement.getAttribute('data-modo-adaptado')).toBe('on');
+    expect(repo.lerModoAdaptado()).toBe(true);
+  });
+
+  it('alternar() enquanto suspenso muda a preferência, mas o atributo continua fora', () => {
+    const repo = new RepositorioMemoria();
+    const store = criarStoreModoAdaptado(repo);
+    store.suspender(true);
+    store.alternar();
+    expect(store.ativo.value).toBe(true);
+    expect(document.documentElement.hasAttribute('data-modo-adaptado')).toBe(false);
+    store.suspender(false);
+    expect(document.documentElement.getAttribute('data-modo-adaptado')).toBe('on');
+  });
 });

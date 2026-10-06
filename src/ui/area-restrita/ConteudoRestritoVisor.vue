@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
-import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
+import { computed, ref } from 'vue';
 import { usarSemMovimento, type Administrar } from '@/app/restrito';
 import type { IndiceAlternativa } from '@/core/unidade/tipos';
 import type { ConteudoRestritoValidado } from '@/core/restrito/tipos';
@@ -18,7 +17,7 @@ const props = defineProps<{
   administrar: Administrar;
 }>();
 
-const semMovimento = usarSemMovimento(inject(CHAVE_STORE_MODO_ADAPTADO, undefined));
+const semMovimento = usarSemMovimento();
 
 const abas = computed(() => [
   { id: 'resumo', rotulo: 'Resumo' },
@@ -144,9 +143,5 @@ function reiniciarQuiz(): void {
   padding: var(--esp-1, 0.25rem) var(--esp-3, 0.75rem);
   border: 1px solid var(--cor-borda-forte);
   border-radius: 999px;
-}
-
-:root[data-modo-adaptado='on'] .ar-visor__integrantes li {
-  border: 2px solid #000000;
 }
 </style>

@@ -7,10 +7,11 @@
    (--cor-*) são remapeados AQUI, no escopo, para os componentes reaproveitados
    (resumo, quiz, mapa) herdarem a identidade sem mudar nada no resto do site.
    Contraste medido pelo portão tests/unidade/design.contrasteAreaRestrita.spec.ts.
-   Modo adaptado: preto sobre branco, sem nenhuma cor de matiz.
+   Sem modo adaptado nesta área (ordem do líder): a splash, o login, as abas e
+   os slides não mudam com ele; o botão não aparece nas rotas da área.
    ========================================================================== */
 
-:root:not([data-modo-adaptado='on']) .area-restrita {
+.area-restrita {
   --ar-ouro: #c29564;
   --ar-ouro-claro: #d9b280;
   --ar-bronze: #976744;
@@ -62,34 +63,4 @@
   --cor-mapa-ramo-4-fundo: #f0abfc;
   --cor-mapa-ramo-5-fundo: #6ee7b7;
   --cor-mapa-ramo-6-fundo: #ff8a80;
-}
-
-:root[data-modo-adaptado='on'] .area-restrita {
-  --ar-ouro: #000000;
-  --ar-ouro-claro: #000000;
-  --ar-bronze: #000000;
-  --ar-azul-aco: #000000;
-  --ar-neon: #000000;
-  --ar-ciano: #000000;
-  --ar-turquesa: #000000;
-  --ar-violeta: #000000;
-  --ar-magenta: #000000;
-  --ar-menta: #000000;
-  --ar-coral: #000000;
-  --ar-ambar: #000000;
-  --ar-botao-fundo: #000000;
-  --ar-botao-texto: #ffffff;
-  --ar-campo-fundo: #ffffff;
-  --ar-campo-borda: #000000;
-  --ar-aviso-fundo: #ffffff;
-  --ar-aviso-texto: #000000;
-
-  --cor-fundo: #ffffff;
-  --cor-fundo-elevado: #ffffff;
-  --cor-fundo-sutil: #ffffff;
-  --cor-texto: #000000;
-  --cor-texto-suave: #000000;
-  --cor-primaria: #000000;
-  --cor-acento: #000000;
-  --cor-titulo-texto: #000000;
 }

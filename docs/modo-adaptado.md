@@ -138,3 +138,7 @@ Lista que o `qa-engineer` mede para aprovar, antes de qualquer implementação e
 ## Atualização de 01/10/2026: nada de azul-marinho
 
 Ordem do líder: o modo adaptado é preto e branco puro. Os tokens `--cor-primaria`, `--cor-primaria-escura`, `--cor-titulo-texto`, `--cor-acento` e `--cor-cabecalho-progresso` passaram de `#0d2440` para `#000000` no bloco do modo (links, títulos, "Pular para o conteúdo", aba ativa, fio de progresso). Isso substitui a linha "Link não visitado" da tabela da seção 3. O link visitado segue `#7a2331`, para distinguir visitado de não visitado. Um teste garante que nenhum token do bloco vale `#0d2440`.
+
+## Exceção de 05/10/2026: a área restrita do Interdisciplinar
+
+Ordem do líder, verbatim: "sem modo adaptado para a pagina do interdisciplinar". Nas rotas da cadeira restrita (splash, login, troca de senha, abas e slides) o modo não se aplica: o botão "Leitura ampliada" não aparece, o atributo `data-modo-adaptado` é retirado do `<html>` enquanto a rota for da área e nada do modo altera a página. A preferência salva continua intacta e volta a valer assim que o leitor sai da área. Isto abre exceção ao requisito "botão visível em toda página" da seção 1. O requisito de botão em toda página segue valendo para o resto do site.

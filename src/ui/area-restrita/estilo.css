@@ -48,7 +48,7 @@
 }
 
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  :root:not([data-modo-adaptado='on']) .ar-hero h1 {
+  .ar-hero h1 {
     background: linear-gradient(95deg, #d9b280 0%, #e8dcc6 50%, #3dd5f3 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -78,16 +78,16 @@
 }
 
 /* Entrada escalonada da splash: um momento só, orquestrado. */
-:root:not([data-modo-adaptado='on']) .ar-hero > * {
+.ar-hero > * {
   animation: ar-aparecer 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
-:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(2) {
+.ar-hero > :nth-child(2) {
   animation-delay: 90ms;
 }
-:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(3) {
+.ar-hero > :nth-child(3) {
   animation-delay: 180ms;
 }
-:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(4) {
+.ar-hero > :nth-child(4) {
   animation-delay: 270ms;
 }
 
@@ -327,45 +327,4 @@
 .ar-tabela thead th {
   color: var(--cor-texto-suave);
   font-size: var(--escala-sm, 0.9375rem);
-}
-
-/* Modo adaptado: preto sobre branco, bordas de 2px, sem brilho e sem movimento. */
-:root[data-modo-adaptado='on'] .area-restrita {
-  background: #ffffff;
-  color: #000000;
-  border: 2px solid #000000;
-}
-
-:root[data-modo-adaptado='on'] .ar-cartao,
-:root[data-modo-adaptado='on'] .ar-campo input,
-:root[data-modo-adaptado='on'] .ar-botao,
-:root[data-modo-adaptado='on'] .ar-alerta,
-:root[data-modo-adaptado='on'] .ar-tabela-rolavel {
-  border: 2px solid #000000;
-  box-shadow: none;
-  background: #ffffff;
-  color: #000000;
-}
-
-:root[data-modo-adaptado='on'] .ar-botao--primario {
-  background: #000000;
-  color: #ffffff;
-}
-
-:root[data-modo-adaptado='on'] .ar-hero__olho,
-:root[data-modo-adaptado='on'] .ar-hero h1,
-:root[data-modo-adaptado='on'] .ar-hero__lead {
-  background: none;
-  -webkit-text-fill-color: #000000;
-  color: #000000;
-}
-
-:root[data-modo-adaptado='on'] .ar-hero .ar-emblema img {
-  box-shadow: none;
-  border: 2px solid #000000;
-}
-
-:root[data-modo-adaptado='on'] .ar-botao[aria-disabled='true'] {
-  opacity: 1;
-  text-decoration: line-through;
 }

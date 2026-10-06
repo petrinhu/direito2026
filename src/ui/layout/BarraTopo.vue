@@ -52,7 +52,7 @@ function aoRolar(): void {
   // para eliminar (docs/modo-adaptado.md, seção 6). Exceção registrada em
   // docs/modo-adaptado.md, seção 4.1: até 880px o cabeçalho do modo não é
   // fixo, então o botão fica no topo de cada página, não em toda rolagem.
-  if (!prefereMenosMovimento && !props.storeModoAdaptado.ativo.value) {
+  if (!prefereMenosMovimento && !props.storeModoAdaptado.efetivo.value) {
     // Limiar de 80px antes de recolher: evita esconder o cabeçalho por
     // um tremor mínimo de rolagem logo no topo da página.
     if (atual > ultimoScrollY && atual > 80) oculta.value = true;
@@ -93,7 +93,7 @@ function publicarAlturaReservada(): void {
   );
 }
 
-watch(() => props.storeModoAdaptado.ativo.value, publicarAlturaReservada, { flush: 'post' });
+watch(() => props.storeModoAdaptado.efetivo.value, publicarAlturaReservada, { flush: 'post' });
 
 onMounted(() => {
   window.addEventListener('scroll', aoRolar, { passive: true });
@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
     :class="{
       'barra-topo--oculta': oculta,
       'barra-topo--rolado': rolado,
-      'barra-topo--fixa': prefereMenosMovimento || props.storeModoAdaptado.ativo.value
+      'barra-topo--fixa': prefereMenosMovimento || props.storeModoAdaptado.efetivo.value
     }"
     @focusin="aoReceberFoco"
   >
@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
         class="barra-topo__trilha"
       />
       <CampoBusca :store="storeBusca" @enviar="(termo) => emit('buscar', termo)" />
-      <BotaoModoAdaptado :store="storeModoAdaptado" />
+      <BotaoModoAdaptado v-if="!storeModoAdaptado.suspenso.value" :store="storeModoAdaptado" />
       <AlternadorTema :store="storeTema" />
     </div>
 

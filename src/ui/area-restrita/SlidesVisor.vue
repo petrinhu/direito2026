@@ -7,7 +7,7 @@ const props = defineProps<{
   slides: readonly Slide[];
   /** A capa mostra a equipe; o slide em si não repete nomes. */
   equipe: EquipeRestrita;
-  /** Sem transição nem brilho animado: modo adaptado ou preferência do sistema. */
+  /** Sem transição nem brilho animado: preferência do sistema (prefers-reduced-motion). */
   reduzirMovimento: boolean;
 }>();
 
@@ -650,71 +650,6 @@ const corDaColuna = (i: number): string => CORES_COLUNA[i % CORES_COLUNA.length]
 }
 .ar-slides__deck--sem-movimento .ar-slides__progresso span {
   transition: none;
-}
-
-/* Modo adaptado: preto sobre branco, sem brilho, sem gradiente, bordas de 2px. */
-:root[data-modo-adaptado='on'] .ar-slide {
-  background: #ffffff;
-  color: #000000;
-  border: 2px solid #000000;
-  box-shadow: none;
-}
-:root[data-modo-adaptado='on'] .ar-slide::before,
-:root[data-modo-adaptado='on'] .ar-slide__trilho {
-  display: none;
-}
-:root[data-modo-adaptado='on'] .ar-slide__titulo,
-:root[data-modo-adaptado='on'] .ar-slide__titulo--olho {
-  background: none;
-  -webkit-text-fill-color: #000000;
-  color: #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slide__subtitulo,
-:root[data-modo-adaptado='on'] .ar-slide__equipe-instituicao,
-:root[data-modo-adaptado='on'] .ar-slide__itens-simples,
-:root[data-modo-adaptado='on'] .ar-slide__destaque,
-:root[data-modo-adaptado='on'] .ar-slide__coluna h4 {
-  color: #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slide__item,
-:root[data-modo-adaptado='on'] .ar-slide__coluna,
-:root[data-modo-adaptado='on'] .ar-slide__equipe li {
-  background: #ffffff;
-  color: #000000;
-  border: 2px solid #000000;
-  backdrop-filter: none;
-}
-:root[data-modo-adaptado='on'] .ar-slide__item::before {
-  color: #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slide__destaque::before {
-  background: #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slide__fim {
-  box-shadow: none;
-}
-:root[data-modo-adaptado='on'] .ar-slide__capa-corpo :deep(.ar-emblema img) {
-  box-shadow: none;
-  border: 2px solid #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slides__progresso span {
-  background: #000000;
-}
-:root[data-modo-adaptado='on'] .ar-slide {
-  font-size: 1.5rem;
-}
-:root[data-modo-adaptado='on'] .ar-slide__titulo {
-  font-size: 2rem;
-}
-:root[data-modo-adaptado='on'] .ar-slide__item,
-:root[data-modo-adaptado='on'] .ar-slide__coluna ul,
-:root[data-modo-adaptado='on'] .ar-slide__subtitulo,
-:root[data-modo-adaptado='on'] .ar-slide__itens-simples,
-:root[data-modo-adaptado='on'] .ar-slide__equipe {
-  font-size: 1.5rem;
-}
-:root[data-modo-adaptado='on'] .ar-slide__destaque {
-  font-size: 2rem;
 }
 
 @media print {

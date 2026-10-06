@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue';
-import { CHAVE_STORE_MODO_ADAPTADO } from '@/app/chaves';
+import { computed, ref } from 'vue';
 import { paraArvoreLista, paraArvoreMarkmapRestrita, usarSemMovimento } from '@/app/restrito';
 import type { NoMapa } from '@/core/restrito/tipos';
 import MapaMarkmap from '../componentes/MapaMarkmap.vue';
@@ -8,15 +7,9 @@ import MapaMental from '../componentes/MapaMental.vue';
 
 const props = defineProps<{ mapa: NoMapa }>();
 
-const storeAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO, undefined);
-const semMovimento = usarSemMovimento(storeAdaptado);
-/** Com movimento reduzido ou modo adaptado abre direto a lista; o mapa visual fica opcional. */
+const semMovimento = usarSemMovimento();
+/** Com movimento reduzido abre direto a lista; o mapa visual fica opcional. */
 const modo = ref<'visual' | 'lista'>(semMovimento.value ? 'lista' : 'visual');
-if (storeAdaptado) {
-  watch(storeAdaptado.ativo, (ligado) => {
-    if (ligado) modo.value = 'lista';
-  });
-}
 
 // Mesma fonte para o mapa visual e para a lista acessível.
 const arvoreVisual = computed(() => paraArvoreMarkmapRestrita(props.mapa));

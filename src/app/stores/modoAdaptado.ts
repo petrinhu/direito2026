@@ -1,9 +1,16 @@
-import { ref, watch, type Ref } from 'vue';
+import { computed, ref, watch, type ComputedRef, type Ref } from 'vue';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
 
 export interface StoreModoAdaptado {
+  /** Preferência do leitor, a que fica salva. */
   readonly ativo: Ref<boolean>;
+  /** Verdadeiro nas rotas em que o modo não se aplica (área restrita). */
+  readonly suspenso: Ref<boolean>;
+  /** O que de fato vale agora: preferência ligada e rota que aceita o modo. */
+  readonly efetivo: ComputedRef<boolean>;
   alternar(): void;
+  /** Suspende só o efeito (atributo no <html>); a preferência salva não é tocada. */
+  suspender(valor: boolean): void;
 }
 
 /**
@@ -29,11 +36,20 @@ function aplicarAtributoModoAdaptado(ativo: boolean): void {
  */
 export function criarStoreModoAdaptado(repositorio: RepositorioProgresso): StoreModoAdaptado {
   const ativo = ref<boolean>(repositorio.lerModoAdaptado());
+  const suspenso = ref(false);
+  const efetivo = computed(() => ativo.value && !suspenso.value);
 
   watch(
     ativo,
     (valor) => {
       repositorio.salvarModoAdaptado(valor);
+    },
+    { immediate: true, flush: 'sync' }
+  );
+
+  watch(
+    efetivo,
+    (valor) => {
       aplicarAtributoModoAdaptado(valor);
     },
     // síncrono de propósito, mesma razão de criarStoreTema: o atributo no
@@ -46,5 +62,9 @@ export function criarStoreModoAdaptado(repositorio: RepositorioProgresso): Store
     ativo.value = !ativo.value;
   }
 
-  return { ativo, alternar };
+  function suspender(valor: boolean): void {
+    suspenso.value = valor;
+  }
+
+  return { ativo, suspenso, efetivo, alternar, suspender };
 }

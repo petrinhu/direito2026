@@ -12,75 +12,156 @@ if (!defined('D26_API')) {
  * vê arquivo pela metade (escrita em temporário + rename atômico).
  */
 
+/**
+ * Falha de armazenamento (I/O, JSON, trava, estado inconsistente). Quem decide
+ * é o preâmbulo (inicio.php): vira 503 `indisponivel`, nunca um 500 genérico.
+ * Fail-closed: quem não consegue ler o estado não autoriza nada.
+ */
+final class D26Indisponivel extends RuntimeException
+{
+}
+
 /** @param array<mixed> $padrao devolvido só quando o arquivo não existe */
 function d26_ler_json(string $arquivo, array $padrao): array
 {
     if (!is_file($arquivo)) {
         return $padrao;
     }
-    $texto = file_get_contents($arquivo);
+    $texto = @file_get_contents($arquivo);
     if ($texto === false) {
-        throw new RuntimeException('falha ao ler ' . basename($arquivo));
+        throw new D26Indisponivel('falha ao ler ' . basename($arquivo));
     }
-    $dados = json_decode($texto, true, 64, JSON_THROW_ON_ERROR);
+    try {
+        $dados = json_decode($texto, true, 64, JSON_THROW_ON_ERROR);
+    } catch (JsonException $e) {
+        throw new D26Indisponivel('JSON inválido em ' . basename($arquivo), 0, $e);
+    }
     if (!is_array($dados)) {
-        throw new RuntimeException('conteúdo inesperado em ' . basename($arquivo));
+        throw new D26Indisponivel('conteúdo inesperado em ' . basename($arquivo));
     }
     return $dados;
 }
 
 /**
+ * Trava exclusiva do arquivo (num .lock próprio) SEM espera infinita: tenta
+ * LOCK_NB em laço até D26_LOCK_TETO_MS e então levanta D26Indisponivel. Um lock
+ * preso por um processo travado não pode pendurar todos os workers do servidor.
+ * Devolve o handle; quem chamou o libera com d26_destravar.
+ *
+ * @return resource
+ */
+function d26_travar(string $arquivo)
+{
+    $trava = $arquivo . '.lock';
+    $h = @fopen($trava, 'c');
+    if ($h === false) {
+        throw new D26Indisponivel('falha ao abrir trava de ' . basename($arquivo));
+    }
+    @chmod($trava, 0600);
+    $limite = microtime(true) + D26_LOCK_TETO_MS / 1000;
+    while (true) {
+        $bloqueado = 0;
+        if (flock($h, LOCK_EX | LOCK_NB, $bloqueado)) {
+            return $h;
+        }
+        if ($bloqueado !== 1 || microtime(true) >= $limite) {
+            fclose($h);
+            throw new D26Indisponivel('trava ocupada de ' . basename($arquivo));
+        }
+        usleep(10000);
+    }
+}
+
+/** @param resource $h */
+function d26_destravar($h): void
+{
+    flock($h, LOCK_UN);
+    fclose($h);
+}
+
+/**
+ * Lê o arquivo SOB o lock (instantâneo consistente, nunca no meio de uma
+ * gravação). Não cria nada: arquivo ausente devolve $padrao.
+ *
+ * @param array<mixed> $padrao
+ * @return array<mixed>
+ */
+function d26_ler_json_travado(string $arquivo, array $padrao): array
+{
+    $h = d26_travar($arquivo);
+    try {
+        return d26_ler_json($arquivo, $padrao);
+    } finally {
+        d26_destravar($h);
+    }
+}
+
+/**
  * Lê, deixa $fn alterar por referência, e grava só se mudou, tudo sob lock.
  * Devolve o que $fn devolver. JSON corrompido levanta erro (não zera dados).
+ * $exigirExistente: arquivo já provisionado; ausente é D26Indisponivel (não
+ * recomeça do padrão, o que apagaria limites sem ninguém perceber).
+ * $criarAusente=false: só ler/alterar; arquivo ausente continua ausente (não
+ * "provisiona" contas por acidente).
  *
  * @param array<mixed> $padrao
  * @param callable(array<mixed>&): mixed $fn
  */
-function d26_atualizar_json(string $arquivo, array $padrao, callable $fn): mixed
+function d26_atualizar_json(string $arquivo, array $padrao, callable $fn, bool $exigirExistente = false, bool $criarAusente = true): mixed
 {
-    $trava = $arquivo . '.lock';
-    $h = fopen($trava, 'c');
-    if ($h === false) {
-        throw new RuntimeException('falha ao abrir trava de ' . basename($arquivo));
-    }
-    @chmod($trava, 0600);
+    $h = d26_travar($arquivo);
     try {
-        if (!flock($h, LOCK_EX)) {
-            throw new RuntimeException('falha ao obter trava de ' . basename($arquivo));
+        if ($exigirExistente && !is_file($arquivo)) {
+            throw new D26Indisponivel('arquivo provisionado ausente: ' . basename($arquivo));
         }
         $dados = d26_ler_json($arquivo, $padrao);
         $original = $dados;
         $resultado = $fn($dados);
-        if ($dados !== $original || !is_file($arquivo)) {
+        if ($dados !== $original || ($criarAusente && !is_file($arquivo))) {
             d26_gravar_atomico($arquivo, $dados);
         }
         return $resultado;
     } finally {
-        flock($h, LOCK_UN);
-        fclose($h);
+        d26_destravar($h);
     }
 }
 
 /** @param array<mixed> $dados */
 function d26_gravar_atomico(string $arquivo, array $dados): void
 {
-    $json = json_encode($dados, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    $tmp = tempnam(dirname($arquivo), '.tmp-');
-    if ($tmp === false) {
-        throw new RuntimeException('falha ao criar temporário para ' . basename($arquivo));
+    try {
+        $json = json_encode($dados, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (JsonException $e) {
+        throw new D26Indisponivel('JSON não serializável para ' . basename($arquivo), 0, $e);
+    }
+    d26_escrever_atomico($arquivo, $json);
+}
+
+/**
+ * Escreve $conteudo num temporário de nome próprio NO MESMO diretório (fopen 'x':
+ * nunca cai no TMPDIR do sistema nem reaproveita nome) e renomeia por cima.
+ */
+function d26_escrever_atomico(string $arquivo, string $conteudo): void
+{
+    $tmp = dirname($arquivo) . '/.tmp-' . bin2hex(random_bytes(8));
+    $h = @fopen($tmp, 'xb');
+    if ($h === false) {
+        throw new D26Indisponivel('falha ao criar temporário para ' . basename($arquivo));
     }
     try {
-        $h = fopen($tmp, 'wb');
-        if ($h === false || fwrite($h, $json) !== strlen($json) || !fflush($h)) {
-            throw new RuntimeException('falha ao gravar ' . basename($arquivo));
+        if (fwrite($h, $conteudo) !== strlen($conteudo) || !fflush($h)) {
+            throw new D26Indisponivel('falha ao gravar ' . basename($arquivo));
         }
-        fsync($h);
+        @fsync($h);
         fclose($h);
-        chmod($tmp, 0600);
-        if (!rename($tmp, $arquivo)) {
-            throw new RuntimeException('falha ao renomear ' . basename($arquivo));
+        $h = null;
+        if (!@chmod($tmp, 0600) || !@rename($tmp, $arquivo)) {
+            throw new D26Indisponivel('falha ao renomear ' . basename($arquivo));
         }
     } catch (Throwable $e) {
+        if (is_resource($h)) {
+            fclose($h);
+        }
         @unlink($tmp);
         throw $e;
     }
@@ -100,7 +181,7 @@ function d26_segredo(string $priv): string
         }
         $t = trim((string) file_get_contents($arquivo));
         if (preg_match('/^[0-9a-f]{64}$/D', $t) !== 1) {
-            throw new RuntimeException('segredo.key inválido');
+            throw new D26Indisponivel('segredo.key inválido');
         }
         return $t;
     };
@@ -108,27 +189,16 @@ function d26_segredo(string $priv): string
     if ($s !== null) {
         return $s;
     }
-    $h = fopen($arquivo . '.lock', 'c');
-    if ($h === false) {
-        throw new RuntimeException('falha ao abrir trava de segredo.key');
-    }
-    @chmod($arquivo . '.lock', 0600);
+    $h = d26_travar($arquivo);
     try {
-        if (!flock($h, LOCK_EX)) {
-            throw new RuntimeException('falha ao obter trava de segredo.key');
-        }
         $s = $ler();
         if ($s === null) {
             $s = bin2hex(random_bytes(32));
-            $tmp = tempnam(dirname($arquivo), '.tmp-');
-            if ($tmp === false || file_put_contents($tmp, $s . "\n") === false || !chmod($tmp, 0600) || !rename($tmp, $arquivo)) {
-                throw new RuntimeException('falha ao gravar segredo.key');
-            }
+            d26_escrever_atomico($arquivo, $s . "\n");
         }
         return $s;
     } finally {
-        flock($h, LOCK_UN);
-        fclose($h);
+        d26_destravar($h);
     }
 }
 

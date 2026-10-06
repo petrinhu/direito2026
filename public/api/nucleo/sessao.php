@@ -64,7 +64,7 @@ function d26_sessao_iniciar(string $priv): ?array
     }
     d26_sessao_configurar($priv);
     if (!d26_sessao_abrir()) {
-        throw new RuntimeException('session_start falhou');
+        throw new D26Indisponivel('session_start falhou');
     }
     $agora = time();
     $conta = isset($_SESSION['usuario']) && is_string($_SESSION['usuario'])
@@ -97,7 +97,7 @@ function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $
     } else {
         d26_sessao_configurar($priv);
         if (!d26_sessao_abrir()) {
-            throw new RuntimeException('session_start falhou');
+            throw new D26Indisponivel('session_start falhou');
         }
         d26_sessao_faxina($priv . '/sessoes', $agora);
     }
@@ -140,7 +140,7 @@ function d26_exigir_conta(?array $conta, bool $liberarTrocaPendente = false): ar
     if ($conta === null) {
         d26_erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
     }
-    if (!$liberarTrocaPendente && $conta['deveTrocarSenha'] === true) {
+    if (!$liberarTrocaPendente && $conta['deveTrocarSenha'] !== false) { // tipos já validados; só false estrito libera
         d26_erro(403, 'troca-obrigatoria', 'É preciso trocar a senha antes de continuar.');
     }
     return $conta;

@@ -44,12 +44,28 @@ $provisoria = static function () use ($corpo): string {
     return $informada;
 };
 
+/**
+ * Toda ação roda em d26_admin_agir: UMA mutação sob lock que revalida o ator
+ * (admin, ativo, uid/versão da sessão) e recusa deixar o sistema sem admin ativo.
+ */
+$agir = static function (string $acao, string $alvo, ?string $hash) use ($priv, $conta): string {
+    d26_teste_pausar('usuarios-antes-agir', (string) $conta['usuario']); // fora de lock; no-op em produção
+    $r = d26_admin_agir($priv, $conta, $acao, $alvo, $hash);
+    if ($r === 'ator-invalido') {
+        d26_erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
+    }
+    if ($r === 'ultimo-admin') {
+        d26_erro(409, 'ultimo-admin', 'Esta ação deixaria o sistema sem nenhum administrador ativo.');
+    }
+    return $r;
+};
+
 if ($acao === 'criar') {
     if (!d26_login_valido($alvo)) {
         d26_erro(400, 'login-invalido', 'Use de 3 a 32 caracteres: letras, números, ponto, hífen ou sublinhado.');
     }
     $senha = $provisoria();
-    if (d26_contas_criar($priv, $alvo, d26_hash_senha($senha), false) === 'existe') {
+    if ($agir('criar', $alvo, d26_hash_senha($senha)) === 'existe') {
         d26_erro(409, 'existe', 'Já existe um usuário com esse nome.');
     }
     d26_responder(200, ['ok' => true, 'senhaProvisoria' => $senha]);
@@ -61,20 +77,13 @@ if (!d26_login_valido($alvo)) {
 
 if ($acao === 'redefinir') {
     $senha = $provisoria();
-    $r = d26_contas_redefinir($priv, $alvo, d26_hash_senha($senha));
-    if ($r !== 'ok') {
+    if ($agir('redefinir', $alvo, d26_hash_senha($senha)) !== 'ok') {
         d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
     }
     d26_responder(200, ['ok' => true, 'senhaProvisoria' => $senha]);
 }
 
-$r = match ($acao) {
-    'revogar-aparelhos' => d26_dispositivo_revogar_todos($priv, $alvo),
-    'ativar' => d26_contas_definir_ativo($priv, $alvo, true),
-    'desativar' => d26_contas_definir_ativo($priv, $alvo, false),
-    default => d26_contas_excluir($priv, $alvo),
-};
-if ($r !== 'ok' && $r !== 'excluida') {
+if ($agir($acao, $alvo, null) !== 'ok') {
     d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
 }
 d26_responder(200, ['ok' => true]);

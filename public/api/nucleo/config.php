@@ -16,6 +16,15 @@ const D26_SESSAO_VALIDADE = 43200;
 const D26_CORPO_MAX = 8192;
 
 /**
+ * Teto de espera por uma trava de arquivo (armazenamento.php). Nunca infinito:
+ * lock preso viraria 503 `indisponivel`, não worker pendurado. Os testes de
+ * unidade podem definir antes um valor menor.
+ */
+if (!defined('D26_LOCK_TETO_MS')) {
+    define('D26_LOCK_TETO_MS', 2000);
+}
+
+/**
  * Diretório privado (fora do webroot, irmão de public_html). A partir de
  * .../public_html/<site>/api/nucleo sobe 4 níveis até a raiz do domínio.
  * Sem caminho absoluto no código. D26_PRIVADO só vale sob php -S (testes).

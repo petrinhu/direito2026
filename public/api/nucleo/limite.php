@@ -29,6 +29,14 @@ if (!defined('D26_API')) {
  * só a própria reserva (usuário+IP some; IP e conta perdem uma tentativa) e NÃO
  * zera o que outros IPs acumularam contra a conta.
  * O tempo entra por parâmetro ($agora) para os testes não dormirem.
+ *
+ * ORDEM FIXA DE LOCKS no núcleo: tentativas.json ANTES de usuarios.json, nunca o
+ * inverso. O estado "aparelho confiável" é reavaliado DENTRO do lock de tentativas
+ * (callback abaixo), que então toma o lock de usuarios para ler a conta; nenhuma
+ * seção sob o lock de usuarios chama este módulo, então não há ciclo. Login sem
+ * formato válido só toca a chave de IP (não há conta a proteger e a entrada não
+ * pode ser usada para inflar o arquivo). tentativas.json já provisionado (existe
+ * usuarios.json) que SUMIU é D26Indisponivel (503), nunca limites zerados.
  */
 const D26_LIMITE_LIVRES = 5;
 const D26_LIMITE_TETO = 900;
@@ -41,6 +49,12 @@ const D26_LIMITE_PADRAO = ['u' => [], 'ip' => [], 'c' => []];
 function d26_limite_arquivo(string $priv): string
 {
     return $priv . '/tentativas.json';
+}
+
+/** Provisionado = o CLI já criou as contas; daí em diante tentativas.json tem de existir. */
+function d26_limite_provisionado(string $priv): bool
+{
+    return is_file($priv . '/usuarios.json');
 }
 
 /** IPv4 inteiro; IPv6 agrupado no prefixo /64 (IPv4-mapeado vale como o IPv4). */
@@ -91,18 +105,36 @@ function d26_limite_podar(array $marcas, int $agora): array
 
 /**
  * Reserva atômica da tentativa. Devolve 0 (reservada, pode verificar a senha) ou
- * os segundos que faltam esperar (nada é gravado nesse caso).
+ * os segundos que faltam esperar (nada é gravado nesse caso). Veja
+ * d26_limite_reservar_detalhado para o que foi inserido.
+ *
+ * @param bool|callable(): bool $dispositivoConfiavel
  */
-function d26_limite_reservar(string $priv, string $login, string $ip, int $agora, bool $dispositivoConfiavel = false): int
+function d26_limite_reservar(string $priv, string $login, string $ip, int $agora, bool|callable $dispositivoConfiavel = false): int
+{
+    return d26_limite_reservar_detalhado($priv, $login, $ip, $agora, $dispositivoConfiavel)['espera'];
+}
+
+/**
+ * Como d26_limite_reservar, mas devolve também se o aparelho é confiável (avaliado
+ * DENTRO do lock quando vier callable) e o que a reserva inseriu, para o sucesso
+ * devolver SÓ isso (login confiável não pode apagar falha alheia da chave de conta).
+ *
+ * @param bool|callable(): bool $dispositivoConfiavel
+ * @return array{espera: int, confiavel: bool, inseriu: array{u: bool, ip: bool, c: bool}}
+ */
+function d26_limite_reservar_detalhado(string $priv, string $login, string $ip, int $agora, bool|callable $dispositivoConfiavel = false): array
 {
     $grupo = d26_limite_ip_agrupado($ip);
-    return (int) d26_atualizar_json(
+    return d26_atualizar_json(
         d26_limite_arquivo($priv),
         D26_LIMITE_PADRAO,
-        static function (array &$d) use ($priv, $login, $grupo, $agora, $dispositivoConfiavel): int {
+        static function (array &$d) use ($priv, $login, $grupo, $agora, $dispositivoConfiavel): array {
             $d['u'] = $d['u'] ?? [];
             $d['ip'] = $d['ip'] ?? [];
             $d['c'] = $d['c'] ?? [];
+            $loginValido = d26_login_valido($login);
+            $confiavel = $loginValido && (is_callable($dispositivoConfiavel) ? (bool) $dispositivoConfiavel() : $dispositivoConfiavel);
             $ku = d26_limite_chave_usuario($login, $grupo);
             $ki = d26_limite_chave_ip($grupo);
             $kc = d26_limite_chave_conta($login);
@@ -112,34 +144,40 @@ function d26_limite_reservar(string $priv, string $login, string $ip, int $agora
             $fc = d26_limite_podar((array) ($d['c'][$kc]['f'] ?? []), $agora);
 
             $n = (int) $u['n'];
-            $esperaU = $n >= D26_LIMITE_LIVRES
+            $esperaU = $loginValido && $n >= D26_LIMITE_LIVRES
                 ? (int) $u['ult'] + min(D26_LIMITE_TETO, 1 << min(10, $n - D26_LIMITE_LIVRES + 1)) - $agora
                 : 0;
             $esperaIp = count($fi) >= D26_LIMITE_FALHAS_IP ? max($fi) + D26_LIMITE_JANELA - $agora : 0;
             $k = count($fc);
-            $esperaConta = !$dispositivoConfiavel && $k >= D26_LIMITE_FALHAS_CONTA
+            $esperaConta = $loginValido && !$confiavel && $k >= D26_LIMITE_FALHAS_CONTA
                 ? max($fc) + min(D26_LIMITE_TETO_CONTA, 1 << min(10, $k - D26_LIMITE_FALHAS_CONTA + 1)) - $agora
                 : 0;
             $espera = max($esperaU, $esperaIp, $esperaConta);
+            $inseriu = ['u' => false, 'ip' => false, 'c' => false];
             if ($espera > 0) {
-                return $espera;
+                return ['espera' => $espera, 'confiavel' => $confiavel, 'inseriu' => $inseriu];
             }
 
-            // 'l' liga a entrada à conta (hash do login) para o CLI desbloquear achá-la sem saber o IP.
-            $d['u'][$ku] = ['n' => $n + 1, 'ult' => $agora, 'l' => $kc];
+            if ($loginValido) {
+                // 'l' liga a entrada à conta (hash do login) para o CLI desbloquear achá-la sem saber o IP.
+                $d['u'][$ku] = ['n' => $n + 1, 'ult' => $agora, 'l' => $kc];
+                $inseriu['u'] = true;
+            }
             $fi[] = $agora;
             $d['ip'][$ki] = ['f' => array_slice($fi, -200)];
-            if (!$dispositivoConfiavel) {
+            $inseriu['ip'] = true;
+            if ($loginValido && !$confiavel) {
                 $fc[] = $agora;
                 $d['c'][$kc] = ['f' => array_slice($fc, -200)];
-            }
-            if (!$dispositivoConfiavel && count($fc) === D26_LIMITE_FALHAS_CONTA) {
-                $nome = d26_login_valido($login) ? $login : '(login inválido)';
-                d26_log_erro_em($priv, 'limite-conta', "conta=$nome tentativas=" . count($fc) . ' janela=' . D26_LIMITE_JANELA . 's');
+                $inseriu['c'] = true;
+                if (count($fc) === D26_LIMITE_FALHAS_CONTA) {
+                    d26_log_erro_em($priv, 'limite-conta', "conta=$login tentativas=" . count($fc) . ' janela=' . D26_LIMITE_JANELA . 's');
+                }
             }
             d26_limite_faxina($d, $agora);
-            return 0;
-        }
+            return ['espera' => 0, 'confiavel' => $confiavel, 'inseriu' => $inseriu];
+        },
+        d26_limite_provisionado($priv)
     );
 }
 
@@ -162,21 +200,26 @@ function d26_limite_faxina(array &$d, int $agora): void
 
 /**
  * Login correto: zera a chave usuário+IP do próprio IP e devolve a reserva
- * ($agora é o instante da reserva) às chaves de IP e de conta. As falhas que
- * outros IPs acumularam contra a conta continuam valendo.
+ * ($agora é o instante da reserva) às chaves de IP e, só se a reserva a inseriu
+ * ($devolverConta), de conta. As falhas que outros IPs acumularam contra a conta
+ * continuam valendo.
  */
-function d26_limite_sucesso(string $priv, string $login, string $ip, int $agora): void
+function d26_limite_sucesso(string $priv, string $login, string $ip, int $agora, bool $devolverConta = true): void
 {
     $grupo = d26_limite_ip_agrupado($ip);
     d26_atualizar_json(
         d26_limite_arquivo($priv),
         D26_LIMITE_PADRAO,
-        static function (array &$d) use ($login, $grupo, $agora): void {
+        static function (array &$d) use ($login, $grupo, $agora, $devolverConta): void {
             $d['u'] = $d['u'] ?? [];
             $d['ip'] = $d['ip'] ?? [];
             $d['c'] = $d['c'] ?? [];
             unset($d['u'][d26_limite_chave_usuario($login, $grupo)]);
-            foreach ([['ip', d26_limite_chave_ip($grupo)], ['c', d26_limite_chave_conta($login)]] as [$g, $k]) {
+            $devolver = [['ip', d26_limite_chave_ip($grupo)]];
+            if ($devolverConta) {
+                $devolver[] = ['c', d26_limite_chave_conta($login)];
+            }
+            foreach ($devolver as [$g, $k]) {
                 $f = array_values(array_map('intval', (array) ($d[$g][$k]['f'] ?? [])));
                 $i = array_search($agora, $f, true);
                 if ($i !== false) {
@@ -185,7 +228,8 @@ function d26_limite_sucesso(string $priv, string $login, string $ip, int $agora)
                 }
             }
             d26_limite_faxina($d, $agora);
-        }
+        },
+        d26_limite_provisionado($priv)
     );
 }
 
@@ -213,6 +257,7 @@ function d26_limite_desbloquear_conta(string $priv, string $login): int
                 }
             }
             return $removidas;
-        }
+        },
+        d26_limite_provisionado($priv)
     );
 }

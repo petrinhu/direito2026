@@ -26,6 +26,9 @@ set_error_handler(static function (int $nivel, string $mensagem, string $arquivo
 
 set_exception_handler(static function (Throwable $e): void {
     d26_log_erro('excecao', get_class($e) . ': ' . $e->getMessage() . ' em ' . basename($e->getFile()) . ':' . $e->getLine());
+    if ($e instanceof D26Indisponivel) {
+        d26_erro(503, 'indisponivel', 'Serviço indisponível no momento. Tente de novo em instantes.');
+    }
     d26_erro(500, 'interno', 'Erro interno. Tente de novo em instantes.');
 });
 

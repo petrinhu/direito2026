@@ -67,7 +67,6 @@
   color: var(--cor-texto-suave);
 }
 
-.ar-hero :deep(.ar-emblema img),
 .ar-hero .ar-emblema img {
   display: block;
   width: min(60vw, 15rem);

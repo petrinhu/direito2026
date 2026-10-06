@@ -108,6 +108,16 @@ O limite de tentativas tem uma chave por conta (10 falhas em 15 min, espera de a
 
 O CLI remove a chave de conta e as chaves usuário+IP daquele login em `tentativas.json`; não mexe nas outras contas, não cria nada e não imprime IP. Entre logo depois: se o ataque continuar, os contadores sobem de novo.
 
+**Senha esquecida (redefinir UMA conta)**
+
+`criar-admin.php --substituir` apaga todas as contas; para uma só, use o CLI de redefinição, que também não vai no pacote:
+
+1. `ssh hostinger 'mkdir -p ~/d26_cli_tmp'` e `scp servidor/cli/redefinir-senha.php hostinger:~/d26_cli_tmp/`;
+2. `ssh -t hostinger 'D26_NUCLEO=$HOME/domains/drpetrus.top/public_html/direito2026/api/nucleo php ~/d26_cli_tmp/redefinir-senha.php $HOME/domains/drpetrus.top/direito2026_privado <login>'` (a senha provisória é digitada, sem eco; pode ser curta);
+3. `ssh hostinger 'rm -rf ~/d26_cli_tmp'`.
+
+O CLI exige que a conta exista (login com maiúsculas e minúsculas exatas), grava o hash novo, marca a troca obrigatória no próximo acesso, derruba as sessões abertas (`versaoSessao`), revoga os aparelhos confiáveis e zera os contadores de tentativa daquele login. Não muda ativo nem admin, não toca nas outras contas e não imprime senha nem hash.
+
 **Estado provisionado, travas e administração (regras de operação)**
 
 - `tentativas.json` é criado pelo CLI junto com o primeiro admin. Depois de provisionado (existe `usuarios.json`), se `tentativas.json` sumir a API responde 503 `indisponivel` em vez de recomeçar com os limites zerados; para recuperar, recrie-o com o conteúdo `{"u":[],"ip":[],"c":[]}` (modo 600) ou rode o CLI de criação de estrutura.

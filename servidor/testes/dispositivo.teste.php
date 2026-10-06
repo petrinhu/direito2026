@@ -110,7 +110,7 @@ teste('dispositivo: troca de senha, redefinição e desativação invalidam todo
         $_COOKIE[COOKIE_DISPOSITIVO] = $a;
         verdadeiro(d26_dispositivo_confiavel($priv, 'chefe'), "$caso: antes valia");
         match ($caso) {
-            'troca' => d26_contas_trocar_senha($priv, 'chefe', 'hash-novo'),
+            'troca' => d26_contas_trocar_senha($priv, 'chefe', 'hash-novo', d26_contas_buscar($priv, 'chefe')),
             'redefinicao' => d26_contas_redefinir($priv, 'chefe', 'hash-novo'),
             default => d26_contas_definir_ativo($priv, 'chefe', false),
         };
@@ -331,12 +331,13 @@ teste('admin revoga os aparelhos de um usuário: o cookie deixa de valer e o adm
     $c = $a->clienteComSessao();
     $c->cookies[COOKIE_DISPOSITIVO] = $disp;
     igual(429, $c->post('/api/entrar.php', ['usuario' => 'ana', 'senha' => 'Provisoria-Ana1'])->status, 'revogado: não isenta mais');
-    igual(true, $sessaoAna->get('/api/sessao.php')->json()['autenticado'] ?? null, 'a sessão em andamento da Ana não cai: só os aparelhos');
+    igual(false, $sessaoAna->get('/api/sessao.php')->json()['autenticado'] ?? null, 'revogar incrementa a versaoSessao: a sessão da Ana cai (decisão do CTO)');
     $r = $admin->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => Ambiente::LOGIN_ADMIN]);
     igual(409, $r->status, 'sobre si mesmo: recusa');
     igual('si-mesmo', $r->json()['erro'] ?? null);
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'fantasma'])->status, 'usuário inexistente');
-    igual(403, $sessaoAna->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'ana'])->status, 'não admin não revoga');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'senhaProvisoria' => 'Provisoria-Bia1'])->status);
+    igual(403, $a->entrar('bia', 'Provisoria-Bia1')->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'ana'])->status, 'não admin não revoga');
 });
 
 teste('listar usuários não expõe hash de aparelho nem token, só a contagem', function (): void {
@@ -370,3 +371,26 @@ teste('API criar grava uid hex de 32 e aparelhos vazio', function (): void {
     $ana = $a->lerUsuarios()['usuarios'][1];
     verdadeiro(preg_match('/^[0-9a-f]{32}$/D', (string) ($ana['uid'] ?? '')) === 1, 'uid gravado pela API');
 });
+
+teste('dispositivo (mata a mutação M2): conta com ativo=false editada à mão, sem mexer em aparelhos nem versão, não tem aparelho confiável', function (): void {
+    [$dir, $priv] = privComConta();
+    $_COOKIE[COOKIE_DISPOSITIVO] = d26_dispositivo_novo($priv, 'chefe');
+    verdadeiro(d26_dispositivo_confiavel($priv, 'chefe'), 'controle: ativa, o cookie vale');
+    $d = json_decode(lerArquivoContas($priv), true);
+    $d['usuarios'][0]['ativo'] = false;
+    file_put_contents($priv . '/usuarios.json', json_encode($d));
+    verdadeiro(count(d26_contas_buscar($priv, 'chefe')['aparelhos']) === 1, 'o aparelho continua listado');
+    verdadeiro(!d26_dispositivo_confiavel($priv, 'chefe'), 'desativada: o aparelho não vale');
+    unset($_COOKIE[COOKIE_DISPOSITIVO]);
+    apagarArvore($dir);
+}, false);
+
+teste('dispositivo: d26_dispositivo_novo com versão/uid esperados só emite se a conta é a vista (conferido sob lock)', function (): void {
+    [$dir, $priv] = privComConta();
+    $c = d26_contas_buscar($priv, 'chefe');
+    igual('', d26_dispositivo_novo($priv, 'chefe', null, $c['versaoSessao'] + 1, $c['uid']), 'versão errada');
+    igual('', d26_dispositivo_novo($priv, 'chefe', null, $c['versaoSessao'], str_repeat('0', 32)), 'uid errado');
+    igual([], d26_contas_buscar($priv, 'chefe')['aparelhos'], 'nada foi gravado');
+    verdadeiro(d26_dispositivo_novo($priv, 'chefe', null, $c['versaoSessao'], $c['uid']) !== '', 'versão e uid certos emitem');
+    apagarArvore($dir);
+}, false);

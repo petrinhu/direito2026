@@ -41,25 +41,27 @@ teste('I-2: conta criada ganha uid aleatório (32 hex) e versaoSessao inicial al
     apagarArvore($dir);
 }, false);
 
-teste('C-4: rehash só grava se hash e versão da conta não mudaram desde a leitura (dentro do lock)', function (): void {
+teste('C-4: o login só grava (ultimoLogin, rehash) se a conta é a mesma que foi lida (uid, versão, hash e ativo, dentro do lock)', function (): void {
     $dir = dirTemporario();
     $priv = $dir . '/privado';
     mkdir($priv, 0700, true);
     d26_contas_criar($priv, 'ana', 'hash-velho', false);
     $lida = d26_contas_buscar($priv, 'ana');
-    d26_contas_registrar_login($priv, 'ana', 'hash-rehash', $lida);
-    igual('hash-rehash', d26_contas_buscar($priv, 'ana')['hash'], 'conta intacta desde a leitura: o rehash é gravado');
+    $v = d26_contas_efetivar_login($priv, 'ana', $lida, 'hash-rehash', null);
+    igual($lida['versaoSessao'], $v, 'conta intacta desde a leitura: devolve a versão vigente');
+    igual('hash-rehash', d26_contas_buscar($priv, 'ana')['hash'], 'o rehash é gravado');
 
     $lida = d26_contas_buscar($priv, 'ana');
+    $ultimo = $lida['ultimoLogin'];
     d26_contas_redefinir($priv, 'ana', 'hash-do-admin'); // o admin redefine entre a leitura e a gravação
-    d26_contas_registrar_login($priv, 'ana', 'hash-rehash-2', $lida);
+    igual(null, d26_contas_efetivar_login($priv, 'ana', $lida, 'hash-rehash-2', null), 'conta mudou: nada é efetivado');
     $depois = d26_contas_buscar($priv, 'ana');
     igual('hash-do-admin', $depois['hash'], 'o rehash velho não sobrescreve a senha redefinida');
-    verdadeiro(is_string($depois['ultimoLogin']), 'o ultimoLogin continua sendo registrado');
+    igual($ultimo, $depois['ultimoLogin'], 'e o login divergente nem registra ultimoLogin');
 
     $lida = d26_contas_buscar($priv, 'ana');
-    d26_contas_trocar_senha($priv, 'ana', 'hash-da-troca');
-    d26_contas_registrar_login($priv, 'ana', 'hash-rehash-3', $lida);
-    igual('hash-da-troca', d26_contas_buscar($priv, 'ana')['hash'], 'nem a senha trocada pelo próprio usuário');
+    igual(true, d26_contas_trocar_senha($priv, 'ana', 'hash-da-troca', $lida) > 0);
+    igual(null, d26_contas_efetivar_login($priv, 'ana', $lida, 'hash-rehash-3', null), 'nem depois da troca de senha pelo próprio usuário');
+    igual('hash-da-troca', d26_contas_buscar($priv, 'ana')['hash']);
     apagarArvore($dir);
 }, false);

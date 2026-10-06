@@ -284,6 +284,7 @@ final class Ambiente
             file_put_contents($a->docroot . '/index.html', '<!doctype html><title>spa</title>');
             file_put_contents($a->docroot . '/arquivo.txt', 'estatico');
         }
+        $a->zerarTentativas(); // como o CLI: tentativas.json existe desde o provisionamento
         if ($opcoes['admin'] ?? true) {
             $a->semearUsuario(self::LOGIN_ADMIN, self::SENHA_ADMIN, true, $opcoes['deveTrocar'] ?? false);
         }
@@ -339,9 +340,8 @@ final class Ambiente
     public function zerarTentativas(): void
     {
         $arq = $this->priv . '/tentativas.json';
-        if (is_file($arq)) {
-            unlink($arq);
-        }
+        file_put_contents($arq, '{"u":[],"ip":[],"c":[]}');
+        chmod($arq, 0600);
     }
 
     public function cliente(): Cliente

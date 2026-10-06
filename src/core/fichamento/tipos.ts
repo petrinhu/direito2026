@@ -71,7 +71,11 @@ export type TipoNoMapa =
   | 'conceito'
   | 'direito'
   | 'ressalva'
-  | 'ficha';
+  | 'ficha'
+  /** Mapa genérico (conteúdo restrito): filho direto da raiz, aberto no início. */
+  | 'ramo'
+  /** Mapa genérico: níveis abaixo do ramo, fechados no início. */
+  | 'galho';
 
 /** Nó da árvore do mapa mental, derivada de MapaFichamento por construirArvoreMapa. */
 export interface NoMapa {

@@ -15,7 +15,8 @@ export interface AcaoTecla {
 export function abertosIniciais(raiz: NoMapa): Set<string> {
   const abertos = new Set<string>();
   for (const no of percorrer(raiz)) {
-    const abreNoInicio = no.tipo === 'raiz' || no.tipo === 'era' || no.tipo === 'fase';
+    const abreNoInicio =
+      no.tipo === 'raiz' || no.tipo === 'era' || no.tipo === 'fase' || no.tipo === 'ramo';
     if (abreNoInicio && no.filhos.length > 0) abertos.add(no.id);
   }
   return abertos;

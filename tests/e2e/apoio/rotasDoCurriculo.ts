@@ -1,4 +1,5 @@
 import type { ChaveAba, Curriculo } from '../../../src/core/curriculo/tipos';
+import { TITULO_AREA_RESTRITA } from '../../../src/core/restrito/titulo';
 
 /**
  * Rotas dos testes de ponta a ponta, montadas a partir do currículo (dado
@@ -14,6 +15,8 @@ export interface RotaDoCurriculo {
   /** Nome legível para o relatório do teste. */
   readonly nome: string;
   readonly tipo: 'periodo' | 'cadeira' | 'unidade';
+  /** Cadeira de acesso restrito: o h1 é o da splash de login, e o conteúdo exige sessão. */
+  readonly restrita?: true;
 }
 
 /** Período com material, cada cadeira publicada e cada aba que a unidade tem. */
@@ -31,9 +34,10 @@ export function rotasDoCurriculo(curriculo: Curriculo): RotaDoCurriculo[] {
       if (cadeira.estado !== 'publicado') continue;
       rotas.push({
         caminho: `/p/${periodo.id}/${cadeira.id}`,
-        h1: cadeira.nome,
+        h1: cadeira.restrita ? TITULO_AREA_RESTRITA : cadeira.nome,
         nome: cadeira.nome,
-        tipo: 'cadeira'
+        tipo: 'cadeira',
+        ...(cadeira.restrita ? { restrita: true as const } : {})
       });
       for (const unidade of cadeira.unidades) {
         if (unidade.estado !== 'publicado') continue;

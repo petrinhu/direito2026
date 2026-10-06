@@ -20,5 +20,4 @@ export type { ProblemaSenha } from '@/core/restrito/senha';
 export { loginValido } from '@/core/restrito/login';
 export { paraArvoreLista, paraArvoreMarkmapRestrita } from '@/core/restrito/arvoreRestrita';
 
-/** Título público e fixo da área restrita (o nome do grupo não é segredo). */
-export const TITULO_AREA_RESTRITA = 'Área restrita ao grupo Fronteiras da Inteligência Artificial';
+export { TITULO_AREA_RESTRITA } from '@/core/restrito/titulo';

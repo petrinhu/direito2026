@@ -3,6 +3,7 @@ import { inject } from 'vue';
 import { CHAVE_CURRICULO } from '@/app/chaves';
 import FundoAnimado from '../componentes/FundoAnimado.vue';
 import CartaoUnidade from '../componentes/CartaoUnidade.vue';
+import CartaoCadeiraRestrita from '../componentes/CartaoCadeiraRestrita.vue';
 
 const curriculo = inject(CHAVE_CURRICULO)!;
 const periodosComMaterial = curriculo.filter((p) => p.cadeiras.length > 0);
@@ -18,6 +19,12 @@ const periodosComMaterial = curriculo.filter((p) => p.cadeiras.length > 0);
     <section aria-label="Unidades disponíveis" class="pagina-home__lista">
       <template v-for="periodo in periodosComMaterial" :key="periodo.id">
         <template v-for="cadeira in periodo.cadeiras" :key="cadeira.id">
+          <CartaoCadeiraRestrita
+            v-if="cadeira.restrita && cadeira.estado === 'publicado'"
+            :periodo="periodo"
+            :cadeira="cadeira"
+            :href="`/p/${periodo.id}/${cadeira.id}`"
+          />
           <CartaoUnidade
             v-for="unidade in cadeira.unidades"
             :key="unidade.id"

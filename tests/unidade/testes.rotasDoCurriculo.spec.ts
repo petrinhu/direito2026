@@ -5,6 +5,7 @@ import {
   rotasDeAbaAusente
 } from '../e2e/apoio/rotasDoCurriculo';
 import { curriculo } from '@/conteudo/curriculo';
+import { TITULO_AREA_RESTRITA } from '@/core/restrito/titulo';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
 const sintetico: Curriculo = [
@@ -89,6 +90,36 @@ describe('rotasDoCurriculo', () => {
     expect(caminhos).toContain('/p/p1/sociologia-juridica/u1/quiz');
     expect(caminhos).not.toContain('/p/p1/sociologia-juridica/u1/peticao');
     expect(caminhos).toContain('/p/p1/intr-direito/u1/peticao');
+  });
+});
+
+describe('rotasDoCurriculo e a cadeira restrita', () => {
+  const comRestrita: Curriculo = [
+    {
+      id: 'p1',
+      numero: 1,
+      rotulo: '1º período',
+      cadeiras: [
+        { id: 'secreta', nome: 'Secreta', estado: 'publicado', restrita: true, unidades: [] }
+      ]
+    }
+  ];
+
+  it('a cadeira restrita entra com o h1 da área restrita (não o nome da cadeira) e marcada', () => {
+    const rota = rotasDoCurriculo(comRestrita).find((r) => r.caminho === '/p/p1/secreta')!;
+    expect(rota.h1).toBe(TITULO_AREA_RESTRITA);
+    expect(rota.restrita).toBe(true);
+  });
+
+  it('no currículo real, o Interdisciplinar está nas rotas, marcado como restrito', () => {
+    const rota = rotasDoCurriculo(curriculo).find((r) => r.caminho === '/p/p1/interdisciplinar')!;
+    expect(rota.h1).toBe(TITULO_AREA_RESTRITA);
+    expect(rota.restrita).toBe(true);
+  });
+
+  it('rotas comuns não levam a marca de restrita', () => {
+    const marcadas = rotasDoCurriculo(curriculo).filter((r) => r.restrita);
+    expect(marcadas.map((r) => r.caminho)).toEqual(['/p/p1/interdisciplinar']);
   });
 });
 

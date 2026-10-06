@@ -67,6 +67,35 @@ A seção acima documenta a primeira versão, estática (`site/`), publicada hoj
 
 **Colisão de rota com pasta do pacote (achado do líder, 22/09/2026, medido no site publicado):** o destino original do índice de busca, `public/busca/indice.json`, virava a pasta `dist/busca/` no pacote. Enquanto essa pasta existiu no servidor (de um envio anterior a esta correção), ela tinha o MESMO nome do primeiro segmento da rota `/busca` da SPA, e o módulo de diretório do Apache redireciona para a barra final (301) sempre que o caminho pedido bate um diretório físico — com listagem proibida, a requisição seguinte podia devolver 403. Corrigido: o índice agora fica em `dist/assets/busca-indice.json` (a mesma pasta dos chunks JS/CSS com hash, nome de arquivo único, nunca nome de rota), e a publicação seguinte já removeu a pasta antiga do servidor (ver aviso acima). Portão automático, `scripts/verificar-colisao-rotas.ts`, compara o primeiro segmento de cada rota da aplicação (`src/app/router/rotas.ts`) com os nomes de pasta de primeiro nível de `dist/`, e reprova a construção em qualquer interseção, para nenhum build futuro reabrir esse risco.
 
-**Reforço, mesmo sem sobra confirmada:** `.htaccess` também troca a condição genérica de diretório (`RewriteCond %{REQUEST_FILENAME} -d`, "qualquer pasta que exista no servidor") por uma lista explícita das pastas que o pacote realmente tem (`assets` e `icones`), e desliga `DirectorySlash` (mod_dir), que é quem gera o redirecionamento de barra final por causa de diretório. As duas coisas juntas: nenhum caminho de rota pode ser redirecionado por colidir com nome de pasta, mesmo que uma pasta homônima volte a existir por engano num envio futuro. `scripts/verificar-htaccess-pastas.ts` confere, a cada build, que a lista bate com as pastas reais de `dist/`.
+**Reforço, mesmo sem sobra confirmada:** `.htaccess` também troca a condição genérica de diretório (`RewriteCond %{REQUEST_FILENAME} -d`, "qualquer pasta que exista no servidor") por uma lista explícita das pastas que o pacote realmente tem (`assets`, `icones` e `api`), e desliga `DirectorySlash` (mod_dir), que é quem gera o redirecionamento de barra final por causa de diretório. As duas coisas juntas: nenhum caminho de rota pode ser redirecionado por colidir com nome de pasta, mesmo que uma pasta homônima volte a existir por engano num envio futuro. `scripts/verificar-htaccess-pastas.ts` confere, a cada build, que a lista bate com as pastas reais de `dist/`.
 
 **Endereço inexistente devolve 200 com a página "não encontrada" desenhada pela aplicação: decisão consciente, não descuido.** A regra do `.htaccess` manda toda requisição que não bate em arquivo real para `index.html` (history mode do roteador, seção 5 de `docs/arquitetura.md`), e é o Vue Router, já carregado, quem decide que a rota não existe e desenha `NaoEncontrado.vue`. Isso é o comportamento padrão de uma aplicação de página única com roteamento no cliente: o servidor não sabe, no momento da requisição HTTP, se aquele caminho existe ou não dentro do currículo, então não pode devolver um 404 de verdade sem duplicar a lógica de rotas no servidor. O líder aceitou essa troca em 22/09/2026. Consequência registrada: uma ferramenta que só olha o código HTTP (sem rodar JavaScript) não distingue uma unidade real de uma inexistente, e é exatamente essa consequência que gerou a primeira leitura errada deste documento (200 interpretado como arquivo antigo sobrando, quando era a página de não encontrado); só a marcação `noindex` evita que isso vire problema de indexação, e a própria página "não encontrada" é redigida para deixar claro ao leitor que o endereço não existe.
+
+## Área restrita (servidor)
+
+Só a página da cadeira restrita usa servidor: PHP 8.3 do Hostinger, mais um diretório privado fora do webroot. O que o repositório público guarda é só o código (`public/api/`, que entra no `dist/` e no zip); nenhum login, senha, hash nem conteúdo restrito.
+
+**Peças e onde ficam**
+
+- Código PHP: `public/api/*.php` e `public/api/nucleo/` (biblioteca, negada ao acesso direto). Segue no zip como o resto do `dist/`; o zip continua igual (arquivos na raiz, destino substituído inteiro a cada publicação).
+- Diretório privado: `~/domains/drpetrus.top/direito2026_privado/`, irmão de `public_html`, modo 700. Guarda `usuarios.json`, `tentativas.json`, `sessoes/`, `conteudo/` e `erros.log`. Não é tocado pela publicação do zip.
+- Conteúdo restrito: `conteudo/interdisciplinar.json`, gerado fora do repositório e enviado só por `scp`.
+
+**Passos (primeira vez; nas seguintes, só o zip e, se o conteúdo mudou, o JSON)**
+
+1. Publicar o zip normalmente. A publicação traz `api/` junto.
+2. Criar a estrutura privada e o primeiro admin pelo CLI, que não vai no pacote. Envie o arquivo para uma pasta temporária, rode com o terminal interativo (a senha provisória é digitada, sem eco) e apague a pasta:
+   `scp servidor/cli/criar-admin.php hostinger:~/d26_cli_tmp/` (crie a pasta antes com `ssh hostinger 'mkdir -p ~/d26_cli_tmp'`);
+   `ssh -t hostinger 'D26_NUCLEO=$HOME/domains/drpetrus.top/public_html/direito2026/api/nucleo php ~/d26_cli_tmp/criar-admin.php $HOME/domains/drpetrus.top/direito2026_privado <login>'`;
+   `ssh hostinger 'rm -rf ~/d26_cli_tmp'`.
+   O CLI cria as pastas (700) e os arquivos (600), grava o admin com troca de senha obrigatória no primeiro acesso e recusa se `usuarios.json` já existir (use `--substituir` só de propósito: ele troca todos os usuários).
+3. Enviar o JSON restrito (a porta já vem do alias `hostinger`):
+   `scp interdisciplinar.json hostinger:~/domains/drpetrus.top/direito2026_privado/conteudo/` e `ssh hostinger 'chmod 600 ~/domains/drpetrus.top/direito2026_privado/conteudo/interdisciplinar.json'`.
+4. Conferir por `curl` (o servidor é a única prova de que o `.htaccess` e o PHP se comportam; teste local não vale por ele):
+   - `curl -s https://direito2026.drpetrus.top/api/saude.php` devolve exatamente `{"ok":true}`, e não o código-fonte (se aparecer `<?php`, o PHP não está executando neste caminho: parar).
+   - `curl -s -o /dev/null -w '%{http_code}' https://direito2026.drpetrus.top/api/conteudo.php` devolve 401 sem sessão.
+   - `curl -s -o /dev/null -w '%{http_code}' https://direito2026.drpetrus.top/api/nucleo/contas.php` devolve 403 ou 404, nunca 200.
+   - `curl -s -o /dev/null -w '%{http_code}' https://direito2026.drpetrus.top/api/nao-existe.php` devolve 404 e não a página da SPA.
+   - `curl -sI https://direito2026.drpetrus.top/api/saude.php` mostra `Cache-Control: no-store` e `X-Content-Type-Options: nosniff`.
+
+**Testes antes de publicar:** `php servidor/testes/rodar.php` (suíte PHP, sem phpunit; sobe `php -S` local contra `servidor/dev/roteador.php`). No servidor, `php -S` sobe mas não aceita conexão em 127.0.0.1, então lá só roda a parte sem servidor: `php servidor/testes/rodar.php --sem-servidor` (copiando `public/api` e `servidor` para uma pasta temporária fora de `public_html`, e apagando-a depois).

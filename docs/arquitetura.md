@@ -1353,3 +1353,45 @@ Depois de cinco rodadas de conserto do mapa radial em SVG próprio (enquadrament
 ### Padrão de abas para as próximas cadeiras
 
 A estrutura de abas de Filosofia Jurídica u1 é o modelo das próximas cadeiras: Resumo, Mapa mental (markmap e lista, alternados por "Ver em lista"/"Ver mapa visual"), Fichamento, Mnemônicos e Quiz, todas alimentadas por um só `mapaFichamento.ts` por unidade.
+
+## Área restrita (05/10/2026)
+
+Ordem do líder: a cadeira Interdisciplinar, e só ela, tem login e senha. O conteúdo (resumo, mapa mental, quiz, slides, equipe e instituição) é um JSON que mora **fora do repositório público**, no servidor, e só chega ao navegador pela API PHP depois do login. Esta seção descreve o lado do site (front); o servidor está em `docs/publicacao.md`. Sem nomes e sem conteúdo aqui, de propósito.
+
+### Fluxo
+
+1. `/p/p1/interdisciplinar` cai na rota de cadeira que já existe; `Cadeira.vue` vê `cadeira.restrita` (marca em `src/core/curriculo/tipos.ts`, entrada em `src/conteudo/curriculo.ts`, sem unidade inventada) e carrega `AreaRestrita.vue` em chunk à parte.
+2. A página pergunta `GET /api/sessao.php`. Sem sessão: splash (título público e fixo, emblema opcional) e formulário. Com sessão: segue.
+3. Senha provisória (`deveTrocarSenha`): tela de troca obrigatória (10 a 128 caracteres, sem regra de composição). O conteúdo só é pedido depois dela.
+4. `GET /api/conteudo.php` devolve o JSON; `validarConteudoRestrito` o aprova ou rejeita **inteiro**. Só então aparecem as abas Resumo, Mapa mental, Quiz, Slides e, para administrador, Admin.
+5. Sair, sessão vencida (401) ou deixar a página apagam tudo da memória. O quiz (semente, respostas) também vive só em memória: nada de `localStorage`, IndexedDB nem Cache API.
+
+### Onde mora cada peça
+
+| Camada | Peça |
+|---|---|
+| `src/core/restrito/` | `tipos.ts`, `validar.ts` (allowlist), `arvoreRestrita.ts` (mapa para markmap e para a lista), `senha.ts`, `login.ts`, `termosVazamento.ts` e `regrasConteudo.ts` (portões) |
+| `src/app/restrito/` | `clienteApi.ts` (fetch na mesma origem, `X-CSRF-Token`, tempo limite), `sessaoRestrita.ts` (estado, 401, 403, 429 com contagem regressiva), `semMovimento.ts`, `index.ts` (repasse para a UI) |
+| `src/ui/paginas/AreaRestrita.vue` e `src/ui/area-restrita/` | splash, formulários, abas, slides, administração, `identidade-tokens.css` e `estilo.css` |
+| Reaproveitados | `VisorResumo`/`BlocoTeorico`, `MotorQuiz`/`CartaoPergunta` (letras A a D por opção), `MapaMarkmap` (aceita `arvore` pronta) e `MapaMental` (lista `role="tree"`) |
+
+### Por que o conteúdo não entra no bundle
+
+Nada do conteúdo restrito é importado em `src/`: o `import()` que existe é só da **página** (formulários e visores). O JSON só passa pela rede, em `GET` autenticado, com `Cache-Control: no-store`. Para o service worker não guardar nada disso, `vite.config.ts` tem `navigateFallbackDenylist: [/^\/api\//]` e uma regra `NetworkOnly` para `/api/` como **primeira** de `runtimeCaching` (o Workbox usa a primeira que casa); nenhum `.php` entra no precache. A busca só conhece o título navegável da cadeira (`montarDocumentosCadeirasRestritas`).
+
+### Validação antes do `v-html`
+
+O resumo e o quiz usam `v-html` (os mesmos componentes das outras cadeiras). A regra "`v-html` só de `src/conteudo`" (seção 4.4) vira, para esta cadeira: **só depois de `validarConteudoRestrito` aprovar**. O validador tira cada tag permitida (`p strong em ul ol li br blockquote table thead tbody tr th td h3 h4`, minúscula, sem nenhum atributo) e exige que o resto não tenha `<` nem `>`, e que todo `&` seja uma das seis entidades (`&amp; &lt; &gt; &quot; &#39; &nbsp;`). Comentário, CDATA, maiúscula, atributo, link e tag pela metade reprovam o payload inteiro (não há "limpar e seguir"). O tipo `ConteudoRestritoValidado` só é produzido por essa função, e o resultado é um objeto novo, só com campos conhecidos, congelado. Slides, rótulos do mapa e demais textos são texto puro (qualquer `<` reprova) e entram na tela por interpolação, nunca por `v-html`. Erros do validador levam só código e caminho (`quiz[3].correta`), nunca o valor. Não foi preciso DOMPurify: um allowlist por remoção, sem atributo, já impede script.
+
+### Portões (todos provados vermelhos, L-36)
+
+- `scripts/verificar-v-html.sh`: `v-html` só nos componentes da allowlist nominal do próprio script, só com expressão terminada em `Html`, e nenhum `innerHTML`, `outerHTML`, `insertAdjacentHTML` ou `document.write` em `src/`.
+- `scripts/validar-conteudo-restrito.ts <json>`: roda o mesmo validador do navegador no JSON privado; imprime contagens, códigos e caminhos, nunca texto, e avisa as regras de conteúdo do líder (letra de alternativa, aula ou slide, travessão).
+- `scripts/verificar-conteudo-restrito.ts`: procura integrantes, instituição e trechos distintivos (40 caracteres ou mais, sem caixa nem acento) em `dist/`, em todos os arquivos rastreados e em `git log --all -p`. Caminho do JSON em `CADERNO_RESTRITO` (padrão relativo ao repositório); falha fechada sem ele; imprime só contagens.
+- `scripts/verificar-sw-api.ts` (dentro de `npm run build`): lê o `dist/sw.js` gerado e confere denylist, `NetworkOnly` antes das outras regras e zero `.php`.
+- `tests/unidade/design.contrasteAreaRestrita.spec.ts`: contraste da identidade do grupo lido do CSS (4,5:1 texto, 3:1 componentes; 21:1 no modo adaptado).
+- `preci.sh`: `verificar-proibicoes.sh dist` e o portão de vazamento, depois do build.
+
+### Identidade, slides e modo adaptado
+
+Os tokens do site são remapeados **só** dentro de `.area-restrita` (fundo `#0d1118`, ouro, creme, azul neon e cores de apoio), então os componentes reaproveitados herdam a identidade sem mexer no resto do site. No modo adaptado o escopo volta a preto sobre branco, sem brilho, gradiente nem animação; o markmap lê as cores do próprio quadro, não da raiz. Os slides são um componente Vue com CSS nativo (container queries, gradientes em camadas, `Transition` desligável), teclado (setas, PageUp, PageDown, Home, End, N para notas, F para tela cheia), arrastar no celular, notas do apresentador e anúncio por região `aria-live`; sem som. Pesquisa (L-22): reveal.js e similares trazem runtime e temas próprios que brigam com os tokens e com o modo adaptado, e `scroll-snap` sozinho não tem teclado; por isso ficou nativo, sem dependência nova.

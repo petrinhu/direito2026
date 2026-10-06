@@ -335,3 +335,30 @@
     display: none !important;
   }
 }
+
+/* Celular em pé: o palco lógico (1600 px) nunca impõe largura ao container. */
+.area-restrita,
+.area-restrita .ar-abas__painel,
+.area-restrita .ar-slides {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.area-restrita .ar-slides__deck,
+.area-restrita .ar-slides__palco,
+.area-restrita .ar-slides__area {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.area-restrita .ar-slides__gire {
+  box-sizing: border-box;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Quiz na área: o botão não define cor no quiz comum (texto preto herdado); aqui vem do token. */
+html .area-restrita .motor-quiz__navegacao button {
+  color: var(--cor-texto);
+}

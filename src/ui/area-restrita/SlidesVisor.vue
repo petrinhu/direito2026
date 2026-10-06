@@ -415,6 +415,7 @@ onBeforeUnmount(() => {
 /* O espaço do palco: na janela, a largura do deck (16:9, no máximo ~80% da altura
    da janela); em tela cheia, tudo que sobra acima dos controles. A escala sai daqui. */
 .ar-slides__area {
+  min-width: 0;
   width: 100%;
   aspect-ratio: 16 / 9;
   max-height: 80dvh;

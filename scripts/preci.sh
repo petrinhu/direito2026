@@ -32,6 +32,7 @@ passo "testes unitários e de componente" npx vitest run tests/unidade tests/com
 passo "construção completa (inclui o portão de pacote publicável)" npm run build
 passo "termos proibidos (R3), dist" bash scripts/verificar-proibicoes.sh dist
 passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --import tsx scripts/verificar-conteudo-restrito.ts
+passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
 
 if [ "$falhou" -ne 0 ]; then
   echo "preci: um ou mais passos falharam" >&2

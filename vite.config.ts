@@ -3,6 +3,42 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * Exportado para o teste tests/unidade/sw.areaRestrita.spec.ts conferir a
+ * regra da API da área restrita sem rodar o build.
+ */
+export const opcoesWorkbox = {
+  // Nunca mapa de código no service worker gerado: mesma razão do
+  // build.sourcemap abaixo, e o Workbox tem opção própria, separada
+  // da do Vite (achado real, 22/09/2026: sw.js.map e workbox-*.js.map
+  // vazavam caminho absoluto da máquina mesmo com sourcemap:false no
+  // Vite, porque o Workbox gera o dele por conta própria).
+  sourcemap: false,
+  globPatterns: ['**/*.{js,css,html,woff2,svg,png,json}'],
+  navigateFallback: '/index.html',
+  // A API PHP da área restrita nunca vira index.html: uma navegação direta
+  // a /api/... vai à rede (e o servidor responde 404/405 em JSON).
+  navigateFallbackDenylist: [/^\/api\//],
+  runtimeCaching: [
+    // PRIMEIRA, de propósito: o Workbox usa a primeira regra que casa. Conteúdo
+    // restrito e sessão nunca passam por cache do service worker.
+    {
+      urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
+      handler: 'NetworkOnly' as const
+    },
+    {
+      urlPattern: /\/assets\/conteudo-.*\.js$/,
+      handler: 'CacheFirst' as const,
+      options: { cacheName: 'conteudo-unidades' }
+    },
+    {
+      urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+      handler: 'NetworkFirst' as const,
+      options: { cacheName: 'navegacao' }
+    }
+  ]
+};
+
 // Onda 2 ligou o service worker de verdade (seção 9 da arquitetura). Onda
 // seguinte (23/09/2026, pedido do líder) trocou 'prompt' por 'autoUpdate':
 // o service worker novo assume sozinho (skipWaiting + clientsClaim, que o
@@ -18,28 +54,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: null,
       manifest: false, // manifest.webmanifest é escrito à mão em public/, não gerado
-      workbox: {
-        // Nunca mapa de código no service worker gerado: mesma razão do
-        // build.sourcemap abaixo, e o Workbox tem opção própria, separada
-        // da do Vite (achado real, 22/09/2026: sw.js.map e workbox-*.js.map
-        // vazavam caminho absoluto da máquina mesmo com sourcemap:false no
-        // Vite, porque o Workbox gera o dele por conta própria).
-        sourcemap: false,
-        globPatterns: ['**/*.{js,css,html,woff2,svg,png,json}'],
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: /\/assets\/conteudo-.*\.js$/,
-            handler: 'CacheFirst',
-            options: { cacheName: 'conteudo-unidades' }
-          },
-          {
-            urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
-            options: { cacheName: 'navegacao' }
-          }
-        ]
-      }
+      workbox: opcoesWorkbox
     })
   ],
   resolve: {

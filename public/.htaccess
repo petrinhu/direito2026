@@ -1,4 +1,5 @@
-Options -MultiViews
+# -Indexes: nenhuma pasta (api/, assets/...) lista seus arquivos.
+Options -MultiViews -Indexes
 
 # Achado do líder, 22/09/2026: mod_dir do Apache acrescenta barra final por
 # redirecionamento (301) sempre que o caminho pedido bate um diretório
@@ -13,12 +14,17 @@ Options -MultiViews
 RewriteEngine On
 RewriteBase /
 # Lista explícita das pastas que este pacote realmente serve direto (hoje
-# assets/ e icones/), mais robusta que a condição genérica de diretório
+# assets/, icones/ e api/), mais robusta que a condição genérica de diretório
 # ("-d", qualquer pasta que exista no disco do servidor):
 # scripts/verificar-htaccess-pastas.ts confere que esta lista bate com as
 # pastas reais de todo build, e reprova se divergir.
+# api/ é uma pasta do pacote (endpoints PHP da área restrita): arquivo que
+# existe é executado e o que não existe é 404 do servidor, nunca o index da
+# SPA. A biblioteca interna api/nucleo/ é negada aqui e também por um
+# .htaccess próprio e pela guarda D26_API em cada arquivo (3 camadas).
+RewriteRule ^api/nucleo(/|$) - [F,L]
 RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_URI} ^/(assets|icones)(/|$)
+RewriteCond %{REQUEST_URI} ^/(assets|icones|api)(/|$)
 RewriteRule ^ - [L]
 RewriteRule ^ index.html [L]
 

@@ -328,3 +328,10 @@
   color: var(--cor-texto-suave);
   font-size: var(--escala-sm, 0.9375rem);
 }
+
+/* Impressão dos slides: as páginas vão para o <body> (Teleport) e o resto do site some. */
+@media print {
+  html.ar-imprimindo body > *:not(.ar-impresso) {
+    display: none !important;
+  }
+}

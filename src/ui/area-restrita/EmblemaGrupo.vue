@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-defineProps<{ tamanho?: 'pequeno' | 'grande' }>();
+const props = defineProps<{
+  tamanho?: 'pequeno' | 'grande';
+  /** Só para teste: mapa de arquivos no lugar do que o Vite encontrou na pasta. */
+  arquivos?: Readonly<Record<string, string>>;
+}>();
 
 /**
  * O emblema é opcional: as seis imagens (AVIF, WebP e JPEG em 320 e 640 px,
@@ -9,14 +13,14 @@ defineProps<{ tamanho?: 'pequeno' | 'grande' }>();
  * código. Sem elas, o componente não desenha nada e a splash segue só com
  * o texto.
  */
-const arquivos = import.meta.glob<string>('./emblema/*.{avif,webp,jpg}', {
+const encontrados = import.meta.glob<string>('./emblema/*.{avif,webp,jpg}', {
   eager: true,
   query: '?url',
   import: 'default'
 });
 
 function achar(nome: string): string | undefined {
-  return arquivos[`./emblema/${nome}`];
+  return (props.arquivos ?? encontrados)[`./emblema/${nome}`];
 }
 
 const jpg320 = computed(() => achar('emblema-320.jpg'));

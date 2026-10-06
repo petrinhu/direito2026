@@ -38,8 +38,8 @@ $provisoria = static function () use ($corpo): string {
     if ($informada === null) {
         return d26_gerar_senha_provisoria();
     }
-    if (!is_string($informada) || !d26_senha_provisoria_valida($informada)) {
-        d26_erro(400, 'senha-invalida', 'A senha provisória deve ter de 1 a 128 caracteres.');
+    if (!is_string($informada) || !d26_senha_provisoria_valida($informada, D26_PROVISORIA_MINIMA_API)) {
+        d26_erro(400, 'senha-invalida', 'A senha provisória deve ter de 8 a 128 caracteres.');
     }
     return $informada;
 };

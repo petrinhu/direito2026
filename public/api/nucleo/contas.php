@@ -46,14 +46,19 @@ function d26_validar_senha_nova(string $nova, string $login, string $atual): ?st
     return null;
 }
 
-/** Senha provisória escolhida por quem administra: 1 a 128 caracteres. */
-function d26_senha_provisoria_valida(string $senha): bool
+/**
+ * Senha provisória escolhida por quem administra: de $minimo a 128 caracteres.
+ * O CLI do líder aceita 1 (padrão); a API do admin exige 8 (D26_PROVISORIA_MINIMA_API).
+ */
+const D26_PROVISORIA_MINIMA_API = 8;
+
+function d26_senha_provisoria_valida(string $senha, int $minimo = 1): bool
 {
     if (!mb_check_encoding($senha, 'UTF-8')) {
         return false;
     }
     $n = mb_strlen($senha, 'UTF-8');
-    return $n >= 1 && $n <= 128;
+    return $n >= $minimo && $n <= 128;
 }
 
 function d26_gerar_senha_provisoria(): string

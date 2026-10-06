@@ -373,11 +373,11 @@ onBeforeUnmount(() => {
 @keyframes ar-slide-entra {
   from {
     opacity: 0;
-    clip-path: inset(-60px 100% -60px -60px);
+    clip-path: inset(-120px 100% -120px -120px);
   }
   to {
     opacity: 1;
-    clip-path: inset(-60px -60px -60px -60px);
+    clip-path: inset(-120px -120px -120px -120px);
   }
 }
 
@@ -593,7 +593,7 @@ onBeforeUnmount(() => {
 }
 .ar-slide__rotulo {
   font-family: var(--fonte-mono, monospace);
-  font-size: 0.78em;
+  font-size: max(23px, 0.78em);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;

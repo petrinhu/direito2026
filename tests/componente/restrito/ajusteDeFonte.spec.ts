@@ -32,6 +32,7 @@ describe('ajustarFonteAoPalco', () => {
     const f = ajustarFonteAoPalco(slide, corpo);
     expect(f).toBeLessThan(1);
     expect(1000 * f).toBeLessThanOrEqual(750 + 1);
+    expect(1000 * f).toBeGreaterThan(750 * 0.97);
   });
 
   it('não desce do piso legível', () => {

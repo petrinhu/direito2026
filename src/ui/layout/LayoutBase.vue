@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
+import { caminhoEmAreaRestrita } from '@/app/curriculo/areaRestrita';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import type { StoreTema } from '@/app/stores/tema';
@@ -10,7 +11,7 @@ import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
 import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
 
-defineProps<{
+const props = defineProps<{
   curriculo: Curriculo;
   caminhoAtual: string;
   repositorio: RepositorioProgresso;
@@ -18,6 +19,10 @@ defineProps<{
   storeBusca: StoreBusca;
   storeModoAdaptado: StoreModoAdaptado;
 }>();
+
+// O aviso diz que o site não usa cookies nem servidor: na área restrita isso é falso
+// (há cookie de sessão e API), e ele cobriria o login. Lá ele não aparece.
+const emAreaRestrita = computed(() => caminhoEmAreaRestrita(props.curriculo, props.caminhoAtual));
 
 const emit = defineEmits<{ buscar: [string] }>();
 
@@ -101,7 +106,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     </main>
   </div>
   <Rodape :repositorio="repositorio" />
-  <AvisoArmazenamento :repositorio="repositorio" />
+  <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
 </template>
 
 <style scoped>

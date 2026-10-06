@@ -11,13 +11,27 @@ import {
   type NoMarkmap
 } from '@/app/fichamento';
 
-const props = defineProps<{
-  dados: MapaFichamento;
-  /** Endereço da unidade sem barra final. */
-  baseUnidade: string;
-  /** Sem animação: modo adaptado ou preferência do sistema. */
-  reduzirMovimento: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** Dados de Filosofia (convertidos aqui). Ou, no lugar deles, `arvore` já pronta. */
+    dados?: MapaFichamento;
+    /** Árvore markmap pronta (conteúdo restrito); tem prioridade sobre `dados`. */
+    arvore?: NoMarkmap;
+    /** Endereço da unidade sem barra final. */
+    baseUnidade?: string;
+    /** Sem animação: modo adaptado ou preferência do sistema. */
+    reduzirMovimento: boolean;
+    /** Texto de ajuda sob os botões. */
+    ajuda?: string;
+  }>(),
+  {
+    dados: undefined,
+    arvore: undefined,
+    baseUnidade: '',
+    ajuda:
+      'Toque num pensador para abrir o ramo. Arraste para mover e use a roda ou a pinça para o zoom.'
+  }
+);
 
 const NUMERO_DE_TONS = 6;
 const FONTE_PX = 16;
@@ -161,7 +175,10 @@ async function criar(): Promise<void> {
   try {
     const { Markmap } = await import('markmap-view');
     if (destruido) return;
-    raiz = paraArvoreMarkmap(props.dados, props.baseUnidade);
+    // Cópia: a biblioteca e os botões mutam a árvore (fold), nunca a prop.
+    raiz = props.arvore
+      ? (JSON.parse(JSON.stringify(props.arvore)) as NoMarkmap)
+      : paraArvoreMarkmap(props.dados as MapaFichamento, props.baseUnidade);
     mapa = Markmap.create(svgRef.value, opcoes());
     await mapa.setData(raiz);
 
@@ -241,9 +258,7 @@ onBeforeUnmount(() => {
         Centralizar
       </button>
     </div>
-    <p class="mapa-visual__ajuda">
-      Toque num pensador para abrir o ramo. Arraste para mover e use a roda ou a pinça para o zoom.
-    </p>
+    <p class="mapa-visual__ajuda">{{ ajuda }}</p>
     <p v-if="falhou" role="alert">Não foi possível carregar o mapa visual. Use "Ver em lista".</p>
     <div ref="hospedeiro" class="mapa-visual__quadro">
       <svg

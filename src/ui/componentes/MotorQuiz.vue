@@ -13,6 +13,8 @@ const props = defineProps<{
   semente: number | undefined;
   respostasSalvas: Readonly<Record<number, IndiceAlternativa>>;
   finalizada: boolean;
+  /** Letras A a D nas alternativas de quatro (área restrita). */
+  letras?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -83,6 +85,7 @@ function anterior(): void {
         v-if="rodada.perguntas[indiceAtual]"
         :pergunta="rodada.perguntas[indiceAtual]!"
         :resposta-escolhida="respostasSalvas[rodada.perguntas[indiceAtual]!.id]"
+        :letras="letras"
         @responder="(indice) => emit('responder', rodada.perguntas[indiceAtual]!.id, indice)"
       />
       <div class="motor-quiz__navegacao">

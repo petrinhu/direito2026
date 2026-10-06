@@ -53,7 +53,7 @@ onBeforeUnmount(() => observador?.disconnect());
     <CartoesCincoPerguntas v-else-if="bloco.componenteExtra === 'cartoes-cinco-perguntas'" />
     <DicasFormaProfessora v-else-if="bloco.componenteExtra === 'dicas-forma-professora'" />
     <QuadroResumo :itens="bloco.resumo" />
-    <p class="bloco-teorico__exemplo">
+    <p v-if="bloco.exemploHtml.length > 0" class="bloco-teorico__exemplo">
       <strong>Na prática do operador do direito:</strong>{{ ' '
       }}<span v-html="bloco.exemploHtml" />
     </p>

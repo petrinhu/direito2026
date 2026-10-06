@@ -4,11 +4,16 @@ import type { NoMapa } from '@/core/fichamento/tipos';
 import { abertosIniciais, idsExpansiveis, interpretarTecla, nosVisiveis } from '@/app/fichamento';
 import NoMapaMental from './NoMapaMental.vue';
 
-const props = defineProps<{
-  arvore: NoMapa;
-  /** Endereço da unidade sem barra final. Ex.: '/p/p1/filosofia-juridica/u1'. */
-  baseUnidade: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    arvore: NoMapa;
+    /** Endereço da unidade sem barra final. Ex.: '/p/p1/filosofia-juridica/u1'. */
+    baseUnidade: string;
+    /** Nome acessível da árvore. */
+    rotuloArvore?: string;
+  }>(),
+  { rotuloArvore: 'Mapa mental de Filosofia Jurídica' }
+);
 
 const abertos = ref<ReadonlySet<string>>(abertosIniciais(props.arvore));
 const focoId = ref(props.arvore.id);
@@ -92,7 +97,7 @@ function alternarTodos(): void {
       <ul
         id="mapa-mental-arvore"
         role="tree"
-        aria-label="Mapa mental de Filosofia Jurídica"
+        :aria-label="rotuloArvore"
         class="mapa-mental__arvore"
         @keydown="aoTeclar"
       >

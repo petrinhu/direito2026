@@ -6,6 +6,8 @@ import { rotuloAlternativa, mostrarLetras } from '@/app/quiz/rotuloAlternativa';
 const props = defineProps<{
   pergunta: PerguntaEmbaralhada;
   respostaEscolhida: IndiceAlternativa | undefined;
+  /** Força as letras A, B, C... mesmo com quatro alternativas (área restrita). */
+  letras?: boolean;
 }>();
 
 const emit = defineEmits<{ responder: [IndiceAlternativa] }>();
@@ -15,7 +17,9 @@ const idEnunciado = computed(() => `enunciado-${props.pergunta.id}`);
 
 const ehVerdadeiroOuFalso = computed(() => props.pergunta.tipo === 'verdadeiro-ou-falso');
 
-const comLetras = computed(() => mostrarLetras(props.pergunta.alternativasHtml.length));
+const comLetras = computed(
+  () => props.letras === true || mostrarLetras(props.pergunta.alternativasHtml.length)
+);
 
 const resultadoRef = ref<HTMLElement | undefined>();
 // Só a resposta dada AGORA move o foco; abrir uma pergunta já respondida não.

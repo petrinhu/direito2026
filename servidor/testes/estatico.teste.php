@@ -70,13 +70,14 @@ teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_
     $dentro = preg_match('#<IfModule mod_headers\.c>(.*?)</IfModule>#s', $t, $m) === 1 ? $m[1] : '';
     verdadeiro($dentro !== '', 'bloco mod_headers presente');
     foreach ([
-        'Header set X-Content-Type-Options "nosniff"',
-        'Header set X-Frame-Options "DENY"',
-        'Header set Referrer-Policy "same-origin"',
-        'Header set Strict-Transport-Security "max-age=31536000"',
+        'Header always set X-Content-Type-Options "nosniff"',
+        'Header always set X-Frame-Options "DENY"',
+        'Header always set Referrer-Policy "same-origin"',
+        'Header always set Strict-Transport-Security "max-age=31536000"',
     ] as $linha) {
         contem($linha, $dentro, 'cabeçalho global');
     }
+    naoContem('Header set X-Content-Type-Options ', $dentro, 'sem "Header set" simples: não valeria em resposta de erro');
     naoContem('includeSubDomains', $t, 'HSTS sem includeSubDomains');
     naoContem('preload', $t, 'HSTS sem preload');
     $csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";

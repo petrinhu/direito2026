@@ -54,14 +54,15 @@ RewriteRule ^ index.html [L]
   </FilesMatch>
   Header set X-Robots-Tag "noindex, nofollow"
 
-  # Cabeçalhos de segurança de TODA resposta (incluindo as da API, que já os
-  # enviam com os mesmos valores: "set" substitui, não duplica). HSTS só
+  # Cabeçalhos de segurança de TODA resposta, inclusive as de erro do próprio
+  # servidor (403, 404, 500), que "Header set" não alcança: por isso "always".
+  # A API já os envia com os mesmos valores ("set" substitui, não duplica). HSTS só
   # para este host (sem estender a subdomínios nem à lista de pré-carga): o
   # domínio-pai hospeda outro produto.
-  Header set X-Content-Type-Options "nosniff"
-  Header set X-Frame-Options "DENY"
-  Header set Referrer-Policy "same-origin"
-  Header set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "same-origin"
+  Header always set Strict-Transport-Security "max-age=31536000"
   # CSP das PÁGINAS (e do service worker). Escopada por nome de arquivo: a API
   # (PHP) emite a sua, mais restrita ("default-src 'none'"), e esta NÃO pode
   # sobrescrevê-la. Fica de fora tudo que não é página. O dist não tem script

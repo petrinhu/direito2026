@@ -80,7 +80,8 @@ function celular(): boolean {
 /** Lê os tokens em tempo de execução: vale para tema claro, escuro e adaptado. */
 function corDoRamo(ramo: number | undefined): string {
   if (modoAdaptado()) return '#000000';
-  const estilo = getComputedStyle(document.documentElement);
+  // Do próprio quadro, não da raiz: a área restrita remapeia os tokens no escopo dela.
+  const estilo = getComputedStyle(hospedeiro.value ?? document.documentElement);
   const nome =
     ramo === undefined
       ? '--cor-mapa-linha'

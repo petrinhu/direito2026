@@ -20,6 +20,11 @@ const FONTE_TEMPO_REAL: FonteTempo = {
 export type ResultadoAdministracao<T> =
   { readonly ok: true; readonly valor: T } | { readonly ok: false; readonly mensagem: string };
 
+/** Chamada autenticada de administração: trata 401 e 403 como o resto da sessão. */
+export type Administrar = <T>(
+  chamada: (c: ClienteApi) => Promise<T>
+) => Promise<ResultadoAdministracao<T>>;
+
 const MENSAGEM_SESSAO_ACABOU = 'Sua sessão terminou. Entre de novo.';
 const MENSAGEM_CONTEUDO_INVALIDO =
   'Não foi possível exibir o conteúdo restrito: o arquivo veio num formato inesperado. Avise quem administra o grupo.';

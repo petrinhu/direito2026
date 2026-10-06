@@ -4,6 +4,7 @@ import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import type { StoreTema } from './stores/tema';
 import type { StoreBusca } from './stores/busca';
 import type { StoreModoAdaptado } from './stores/modoAdaptado';
+import type { ClienteApi } from './restrito/clienteApi';
 
 /** Chaves de injeção do composition root (main.ts). Ver App.vue. */
 export const CHAVE_CURRICULO: InjectionKey<Curriculo> = Symbol('curriculo');
@@ -12,3 +13,6 @@ export const CHAVE_STORE_TEMA: InjectionKey<StoreTema> = Symbol('storeTema');
 export const CHAVE_STORE_BUSCA: InjectionKey<StoreBusca> = Symbol('storeBusca');
 export const CHAVE_STORE_MODO_ADAPTADO: InjectionKey<StoreModoAdaptado> =
   Symbol('storeModoAdaptado');
+
+/** Opcional: testes injetam um cliente falso; em produção a página cria o real. */
+export const CHAVE_CLIENTE_RESTRITO: InjectionKey<ClienteApi> = Symbol('clienteRestrito');

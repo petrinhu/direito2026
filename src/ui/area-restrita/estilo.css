@@ -1,0 +1,372 @@
+/* Estilo compartilhado da área restrita (classes ar-*). Cores só por token:
+   identidade-tokens.css redefine os tokens dentro de .area-restrita. */
+
+.area-restrita {
+  position: relative;
+  max-width: var(--largura-conteudo, 1180px);
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-lg, 16px);
+  background:
+    radial-gradient(60% 40% at 90% 0%, rgb(61 213 243 / 0.12), transparent 70%),
+    radial-gradient(50% 40% at 0% 100%, rgb(167 139 250 / 0.12), transparent 70%), var(--cor-fundo);
+  color: var(--cor-texto);
+  overflow: hidden;
+}
+
+.area-restrita :focus-visible {
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco);
+  outline-offset: var(--foco-deslocamento, 2px);
+}
+
+.ar-hero {
+  display: grid;
+  gap: var(--esp-3, 0.75rem);
+  justify-items: center;
+  margin-bottom: var(--esp-5, 1.5rem);
+  text-align: center;
+}
+
+.ar-hero__olho {
+  margin: 0;
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ar-ciano, var(--cor-texto-suave));
+}
+
+.ar-hero h1 {
+  max-width: 22ch;
+  margin: 0;
+  font-family: var(--fonte-titulo, serif);
+  font-size: clamp(1.7rem, 5.4vw, 3rem);
+  line-height: 1.12;
+  color: var(--cor-titulo-texto);
+  text-wrap: balance;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  :root:not([data-modo-adaptado='on']) .ar-hero h1 {
+    background: linear-gradient(95deg, #d9b280 0%, #e8dcc6 50%, #3dd5f3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+.ar-hero h1:focus {
+  outline: none;
+}
+
+.ar-hero__lead {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--cor-texto-suave);
+}
+
+.ar-hero :deep(.ar-emblema img),
+.ar-hero .ar-emblema img {
+  display: block;
+  width: min(60vw, 15rem);
+  height: auto;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgb(194 149 100 / 0.8),
+    0 0 56px rgb(61 213 243 / 0.35);
+}
+
+/* Entrada escalonada da splash: um momento só, orquestrado. */
+:root:not([data-modo-adaptado='on']) .ar-hero > * {
+  animation: ar-aparecer 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(2) {
+  animation-delay: 90ms;
+}
+:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(3) {
+  animation-delay: 180ms;
+}
+:root:not([data-modo-adaptado='on']) .ar-hero > :nth-child(4) {
+  animation-delay: 270ms;
+}
+
+@keyframes ar-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-hero > * {
+    animation: none !important;
+  }
+}
+
+.ar-cartao {
+  padding: var(--esp-5, 1.5rem);
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: var(--raio-md, 10px);
+  background: var(--cor-fundo-elevado);
+  box-shadow: 0 18px 50px -28px rgb(0 0 0 / 0.9);
+}
+
+.ar-formulario {
+  display: grid;
+  gap: var(--esp-4, 1rem);
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.ar-formulario__titulo {
+  margin: 0;
+  font-size: var(--escala-lg, 1.75rem);
+  color: var(--cor-titulo-texto);
+}
+
+.ar-formulario__ajuda,
+.ar-formulario__regra {
+  margin: 0;
+  color: var(--cor-texto-suave);
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+.ar-campo {
+  display: grid;
+  gap: var(--esp-1, 0.25rem);
+}
+
+.ar-campo label {
+  font-weight: 600;
+}
+
+.ar-campo input {
+  min-height: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  border: 1px solid var(--ar-campo-borda, var(--cor-borda-forte));
+  border-radius: var(--raio-sm, 6px);
+  background: var(--ar-campo-fundo, var(--cor-fundo));
+  color: var(--cor-texto);
+  font: inherit;
+}
+
+.ar-campo input[aria-invalid='true'] {
+  border-color: var(--cor-erro-borda);
+  border-width: 2px;
+}
+
+.ar-marcador {
+  display: inline-flex;
+  gap: var(--esp-2, 0.5rem);
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.ar-marcador input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--ar-ciano, currentColor);
+}
+
+.ar-botao {
+  min-height: max(var(--alvo-toque-minimo, 24px), 44px);
+  min-width: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: 999px;
+  background: var(--cor-fundo-sutil);
+  color: var(--cor-texto);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ar-botao:hover {
+  border-color: var(--ar-ouro, var(--cor-primaria));
+}
+
+.ar-botao--primario {
+  border-color: transparent;
+  background: var(--ar-botao-fundo, var(--cor-primaria));
+  color: var(--ar-botao-texto, var(--cor-texto-invertido));
+}
+
+.ar-botao--perigo {
+  border-color: var(--cor-erro-borda);
+  color: var(--cor-erro-texto);
+}
+
+.ar-botao[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ar-alerta {
+  margin: 0;
+  padding: var(--esp-3, 0.75rem) var(--esp-4, 1rem);
+  border: 1px solid;
+  border-radius: var(--raio-sm, 6px);
+}
+
+.ar-alerta--erro {
+  border-color: var(--cor-erro-borda);
+  background: var(--cor-erro-bg);
+  color: var(--cor-erro-texto);
+}
+
+.ar-alerta--aviso {
+  border-color: var(--ar-ambar, var(--cor-borda-forte));
+  background: var(--ar-aviso-fundo, var(--cor-fundo-sutil));
+  color: var(--ar-aviso-texto, var(--cor-texto));
+}
+
+.ar-alerta p {
+  margin: 0 0 var(--esp-2, 0.5rem);
+}
+
+.ar-visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ar-sessao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-3, 0.75rem);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--esp-4, 1rem);
+  padding-bottom: var(--esp-3, 0.75rem);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.ar-sessao p {
+  margin: 0;
+}
+
+/* Administração */
+.ar-admin {
+  display: grid;
+  gap: var(--esp-4, 1rem);
+}
+
+.ar-admin h2,
+.ar-admin h3 {
+  margin: 0;
+}
+
+.ar-admin__criar {
+  display: grid;
+  gap: var(--esp-3, 0.75rem);
+  max-width: 30rem;
+}
+
+.ar-admin__senha {
+  padding: 0.1rem 0.5rem;
+  border-radius: 6px;
+  background: var(--cor-fundo);
+  font-family: var(--fonte-mono, monospace);
+  font-size: 1.15em;
+  letter-spacing: 0.06em;
+  user-select: all;
+}
+
+.ar-admin__acoes,
+.ar-admin__acoes-aviso,
+.ar-admin__confirmar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2, 0.5rem);
+  align-items: center;
+}
+
+.ar-admin__confirmar p {
+  margin: 0;
+  flex-basis: 100%;
+}
+
+.ar-tabela-rolavel {
+  overflow-x: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md, 10px);
+}
+
+.ar-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 36rem;
+}
+
+.ar-tabela caption {
+  padding: var(--esp-3, 0.75rem);
+  text-align: start;
+  font-weight: 700;
+}
+
+.ar-tabela th,
+.ar-tabela td {
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  border-top: 1px solid var(--cor-borda);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.ar-tabela thead th {
+  color: var(--cor-texto-suave);
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+/* Modo adaptado: preto sobre branco, bordas de 2px, sem brilho e sem movimento. */
+:root[data-modo-adaptado='on'] .area-restrita {
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+:root[data-modo-adaptado='on'] .ar-cartao,
+:root[data-modo-adaptado='on'] .ar-campo input,
+:root[data-modo-adaptado='on'] .ar-botao,
+:root[data-modo-adaptado='on'] .ar-alerta,
+:root[data-modo-adaptado='on'] .ar-tabela-rolavel {
+  border: 2px solid #000000;
+  box-shadow: none;
+  background: #ffffff;
+  color: #000000;
+}
+
+:root[data-modo-adaptado='on'] .ar-botao--primario {
+  background: #000000;
+  color: #ffffff;
+}
+
+:root[data-modo-adaptado='on'] .ar-hero__olho,
+:root[data-modo-adaptado='on'] .ar-hero h1,
+:root[data-modo-adaptado='on'] .ar-hero__lead {
+  background: none;
+  -webkit-text-fill-color: #000000;
+  color: #000000;
+}
+
+:root[data-modo-adaptado='on'] .ar-hero .ar-emblema img {
+  box-shadow: none;
+  border: 2px solid #000000;
+}
+
+:root[data-modo-adaptado='on'] .ar-botao[aria-disabled='true'] {
+  opacity: 1;
+  text-decoration: line-through;
+}

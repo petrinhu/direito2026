@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, defineAsyncComponent, inject } from 'vue';
 import { CHAVE_CURRICULO } from '@/app/chaves';
 import CartaoUnidade from '../componentes/CartaoUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
+
+// Só a cadeira restrita carrega esta página (e o CSS dela), em chunk à parte.
+const AreaRestrita = defineAsyncComponent(() => import('./AreaRestrita.vue'));
 
 const props = defineProps<{ periodo: string; cadeira: string }>();
 const curriculo = inject(CHAVE_CURRICULO)!;
@@ -12,7 +15,8 @@ const cadeira = computed(() => periodo.value?.cadeiras.find((c) => c.id === prop
 </script>
 
 <template>
-  <div v-if="cadeira" class="pagina-cadeira">
+  <AreaRestrita v-if="cadeira?.restrita" />
+  <div v-else-if="cadeira" class="pagina-cadeira">
     <h1>{{ cadeira.nome }}</h1>
     <section class="pagina-cadeira__lista">
       <CartaoUnidade

@@ -33,6 +33,9 @@ const GLOBAIS_NAVEGADOR = {
   fetch: 'readonly',
   Request: 'readonly',
   Response: 'readonly',
+  RequestInit: 'readonly',
+  RequestCredentials: 'readonly',
+  AbortController: 'readonly',
   getComputedStyle: 'readonly',
   navigator: 'readonly'
 };
@@ -40,7 +43,9 @@ const GLOBAIS_NAVEGADOR = {
 const GLOBAIS_COMUNS = {
   console: 'readonly',
   setTimeout: 'readonly',
-  clearTimeout: 'readonly'
+  clearTimeout: 'readonly',
+  setInterval: 'readonly',
+  clearInterval: 'readonly'
 };
 
 const GLOBAIS_NODE = {

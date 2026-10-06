@@ -53,7 +53,7 @@ function postSemEsperar(Cliente $c, string $caminho, array $corpo): array
 }
 
 /** Espera $n processos chegarem a $ponto (teto 15 s: sem isso é código sem o gancho). */
-function pausaEsperarChegada(array $req, Ambiente $a, string $ponto, int $n = 1): void
+function pausaEsperarChegada(array $req, Ambiente $a, string $ponto, int $n = 1, array $outros = []): void
 {
     [$m] = $req;
     $arq = $a->priv . '/pausado-' . $ponto;
@@ -66,7 +66,11 @@ function pausaEsperarChegada(array $req, Ambiente $a, string $ponto, int $n = 1)
         }
         usleep(20000);
     }
-    falhar("ninguém chegou ao ponto de pausa '$ponto' (o gancho não existe no código?)");
+    $diag = [];
+    foreach ([$req, ...$outros] as $r) {
+        $diag[] = curl_getinfo($r[1], CURLINFO_RESPONSE_CODE) . ':' . substr((string) curl_multi_getcontent($r[1]), 0, 120);
+    }
+    falhar("ninguém chegou ao ponto de pausa '$ponto' (o gancho não existe no código?) [" . implode(' | ', $diag) . ']');
 }
 
 /** @param array{resource, \CurlHandle} $req @return array{int, array<string, mixed>} */
@@ -244,8 +248,9 @@ teste('item 4: dois admins que se desativam ao mesmo tempo: só um consegue e so
     $dois = $a->entrar('segundo', 'SenhaSegundo123');
     pausaLigar($a, 'usuarios-antes-agir');
     $r1 = postSemEsperar($um, '/api/usuarios.php', ['acao' => 'desativar', 'usuario' => 'segundo']);
+    pausaEsperarChegada($r1, $a, 'usuarios-antes-agir', 1); // um de cada vez: duas conexões simultâneas no php -S eram intermitentes
     $r2 = postSemEsperar($dois, '/api/usuarios.php', ['acao' => 'desativar', 'usuario' => Ambiente::LOGIN_ADMIN]);
-    pausaEsperarChegada($r1, $a, 'usuarios-antes-agir', 2);
+    pausaEsperarChegada($r1, $a, 'usuarios-antes-agir', 2, [$r2]);
     pausaSoltar($a, 'usuarios-antes-agir');
     $s = [postConcluir($r1)[0], postConcluir($r2)[0]];
     sort($s);

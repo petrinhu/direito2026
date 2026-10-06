@@ -31,8 +31,9 @@ teste('cabeçalhos de segurança em sucesso e em erro, em todos os endpoints', f
 
 teste('cookie de sessão: nome __Host-d26, Secure, HttpOnly, SameSite=Strict, path=/, sem Domain nem Expires', function (): void {
     $a = Ambiente::novo();
-    $c = $a->cliente();
-    $c->get('/api/sessao.php');
+    $c = $a->clienteComSessao();
+    $r = $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
+    igual(200, $r->status, 'o cookie de sessão só nasce no login (anônimo usa __Host-d26pre)');
     igual(1, count($c->ultimoSetCookie), 'um Set-Cookie');
     $sc = $c->ultimoSetCookie[0];
     verdadeiro(str_starts_with($sc, '__Host-d26='), 'nome do cookie');
@@ -44,7 +45,7 @@ teste('cookie de sessão: nome __Host-d26, Secure, HttpOnly, SameSite=Strict, pa
     }
 });
 
-teste('sessão mantém o mesmo csrf enquanto o cookie vier; sem cookie nasce outra', function (): void {
+teste('sessão anônima mantém o mesmo csrf enquanto o cookie pré vier; sem cookie nasce outro', function (): void {
     $a = Ambiente::novo();
     $c = $a->cliente();
     $c->get('/api/sessao.php');

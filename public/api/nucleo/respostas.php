@@ -71,9 +71,15 @@ function d26_corpo_json(): array
 /** Registra no erros.log privado (nunca devolve o detalhe ao cliente). */
 function d26_log_erro(string $contexto, string $detalhe): void
 {
+    d26_log_erro_em(d26_priv(), $contexto, $detalhe);
+}
+
+/** Mesmo registro, com o diretório privado explícito (módulos que já o conhecem e testes). */
+function d26_log_erro_em(string $priv, string $contexto, string $detalhe): void
+{
     $linha = gmdate('c') . ' ' . $contexto . ' ' . str_replace(["\r", "\n"], ' ', $detalhe) . "\n";
     try {
-        $arq = d26_priv() . '/erros.log';
+        $arq = $priv . '/erros.log';
         $novo = !file_exists($arq);
         if (@file_put_contents($arq, $linha, FILE_APPEND | LOCK_EX) === false) {
             throw new RuntimeException('log indisponível');

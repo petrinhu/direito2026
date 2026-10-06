@@ -90,3 +90,16 @@ teste('20 logins errados em paralelo (8 workers): a reserva atômica limita quan
     igual(count($verificacoes), $n401, 'cada 401 corresponde a uma verificação que rodou');
     igual(20 - count($verificacoes), $n429, 'o resto recebeu 429');
 }, true);
+
+teste('20 logins errados em paralelo com o MESMO cookie pré-login (sem trava de sessão): no máximo 6 verificações', function (): void {
+    $a = Ambiente::novo(['workers' => 8]);
+    $c = $a->clienteComSessao();
+    $respostas = postarEmParalelo(array_fill(0, 20, $c), '/api/entrar.php', array_fill(0, 20, ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => 'errada-errada']));
+    $verificacoes = $a->verificacoes();
+    $n429 = count(array_filter($respostas, static fn (array $r): bool => $r[0] === 429));
+    fwrite(STDERR, sprintf("      [paralelo, cookie único] verify=%d 429=%d simultâneos=%d\n", count($verificacoes), $n429, maxSimultaneos($verificacoes)));
+    verdadeiro(maxSimultaneos($verificacoes) >= 2, 'paralelismo real');
+    verdadeiro(count($verificacoes) <= 6, 'no máximo 6 verificações, vieram ' . count($verificacoes));
+    igual(20 - count($verificacoes), $n429, 'o resto é 429');
+    igual([], glob($a->priv . '/sessoes/*') ?: [], 'nenhuma sessão em disco');
+});

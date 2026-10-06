@@ -48,55 +48,54 @@ teste('login: regex exata, case-sensitive e sem quebra de linha final', function
 teste('limite: espera 2^(n-5) s depois de 5 falhas livres, com teto de 900 s', function (): void {
     $p = dirTemporario();
     $t = 1000;
-    for ($i = 1; $i <= 5; $i++) {
-        d26_limite_falha($p, 'ana', '10.0.0.1', $t);
-        igual(0, d26_limite_pre($p, 'ana', '10.0.0.1', $t), "após a falha $i");
+    for ($i = 1; $i <= 6; $i++) {
+        igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), "tentativa $i passa (5 livres + a que arma a espera)");
     }
     $esperado = [2, 4, 8, 16, 32, 64, 128, 256, 512, 900, 900];
     foreach ($esperado as $k => $espera) {
-        d26_limite_falha($p, 'ana', '10.0.0.1', $t);
-        igual($espera, d26_limite_pre($p, 'ana', '10.0.0.1', $t), 'espera após a falha ' . (6 + $k));
-        igual(0, d26_limite_pre($p, 'ana', '10.0.0.1', $t + $espera), 'liberado ao fim da espera');
+        igual($espera, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), 'espera após a tentativa ' . (6 + $k));
         $t += $espera;
+        igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), 'liberado ao fim da espera');
     }
-    igual(0, d26_limite_pre($p, 'bia', '10.0.0.1', 1000), 'outro usuário não é afetado pelo bloqueio usuário+IP');
-    igual(0, d26_limite_pre($p, 'ana', '10.0.0.2', 1000), 'outro IP não é afetado');
+    igual(0, d26_limite_reservar($p, 'bia', '10.0.0.1', $t), 'outro usuário não é afetado pelo bloqueio usuário+IP');
+    igual(0, d26_limite_reservar($p, 'ana', '10.0.0.2', $t), 'outro IP não é afetado');
     apagarArvore($p);
 }, false);
 
 teste('limite: sucesso zera o contador do usuário+IP', function (): void {
     $p = dirTemporario();
     for ($i = 0; $i < 3; $i++) {
-        d26_limite_falha($p, 'ana', '10.0.0.1', 1000);
+        d26_limite_reservar($p, 'ana', '10.0.0.1', 1000);
     }
-    d26_limite_sucesso($p, 'ana', '10.0.0.1');
+    d26_limite_reservar($p, 'ana', '10.0.0.1', 1000);
+    d26_limite_sucesso($p, 'ana', '10.0.0.1', 1000);
     for ($i = 0; $i < 5; $i++) {
-        d26_limite_falha($p, 'ana', '10.0.0.1', 1000);
+        igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', 1000), "tentativa $i depois do sucesso");
     }
-    igual(0, d26_limite_pre($p, 'ana', '10.0.0.1', 1000), 'sem o zeramento já estaria bloqueada');
+    igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', 1000), 'sem o zeramento já estaria bloqueada');
+    verdadeiro(d26_limite_reservar($p, 'ana', '10.0.0.1', 1000) > 0, 'e a seguinte espera (controle)');
     apagarArvore($p);
 }, false);
 
-teste('limite: 30 falhas do mesmo IP em 15 min bloqueiam o IP por 15 min (qualquer usuário)', function (): void {
+teste('limite: 30 tentativas do mesmo IP em 15 min bloqueiam o IP por 15 min (qualquer usuário)', function (): void {
     $p = dirTemporario();
     for ($i = 0; $i < 29; $i++) {
-        d26_limite_falha($p, "u$i", '10.0.0.9', 1000);
+        igual(0, d26_limite_reservar($p, "u$i", '10.0.0.9', 1000), "tentativa $i");
     }
-    igual(0, d26_limite_pre($p, 'novo', '10.0.0.9', 1000), '29 falhas ainda não bloqueiam');
-    d26_limite_falha($p, 'u29', '10.0.0.9', 1000);
-    igual(900, d26_limite_pre($p, 'novo', '10.0.0.9', 1000), 'a 30ª bloqueia o IP');
-    igual(0, d26_limite_pre($p, 'novo', '10.0.0.8', 1000), 'outro IP livre');
-    igual(0, d26_limite_pre($p, 'novo', '10.0.0.9', 1900), 'libera depois de 15 min');
+    igual(0, d26_limite_reservar($p, 'novo', '10.0.0.9', 1000), 'a 30ª ainda passa');
+    igual(900, d26_limite_reservar($p, 'outro', '10.0.0.9', 1000), 'depois dela o IP está bloqueado');
+    igual(0, d26_limite_reservar($p, 'novo', '10.0.0.8', 1000), 'outro IP livre');
+    igual(0, d26_limite_reservar($p, 'novo', '10.0.0.9', 1900), 'libera depois de 15 min');
     apagarArvore($p);
 }, false);
 
-teste('limite: falhas fora da janela de 15 min não somam', function (): void {
+teste('limite: tentativas fora da janela de 15 min não somam', function (): void {
     $p = dirTemporario();
     for ($i = 0; $i < 29; $i++) {
-        d26_limite_falha($p, "u$i", '10.0.0.7', 1000);
+        d26_limite_reservar($p, "u$i", '10.0.0.7', 1000);
     }
-    d26_limite_falha($p, 'u30', '10.0.0.7', 2000);
-    igual(0, d26_limite_pre($p, 'x', '10.0.0.7', 2000), '29 velhas + 1 nova não bloqueia');
+    d26_limite_reservar($p, 'u30', '10.0.0.7', 2000);
+    igual(0, d26_limite_reservar($p, 'x', '10.0.0.7', 2000), '29 velhas + 1 nova não bloqueia');
     apagarArvore($p);
 }, false);
 

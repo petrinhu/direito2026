@@ -10,6 +10,7 @@ if (!defined('D26_API')) {
 const D26_ARGON = ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 1];
 
 const D26_SESSAO_NOME = '__Host-d26';
+const D26_PRE_NOME = '__Host-d26pre';
 const D26_SESSAO_OCIOSIDADE = 7200;
 const D26_SESSAO_VALIDADE = 43200;
 const D26_CORPO_MAX = 8192;

@@ -5,9 +5,11 @@ define('D26_API', true);
 require __DIR__ . '/nucleo/inicio.php';
 
 d26_metodo(['GET']);
-$conta = d26_sessao_iniciar(d26_priv());
+$priv = d26_priv();
+$conta = d26_sessao_iniciar($priv);
+$csrf = d26_csrf_token($priv);
 if ($conta === null) {
-    d26_responder(200, ['ok' => true, 'autenticado' => false, 'csrf' => $_SESSION['csrf']]);
+    d26_responder(200, ['ok' => true, 'autenticado' => false, 'csrf' => $csrf]);
 }
 d26_responder(200, [
     'ok' => true,
@@ -15,5 +17,5 @@ d26_responder(200, [
     'usuario' => $conta['usuario'],
     'admin' => $conta['admin'],
     'deveTrocarSenha' => $conta['deveTrocarSenha'],
-    'csrf' => $_SESSION['csrf'],
+    'csrf' => $csrf,
 ]);

@@ -53,4 +53,21 @@ RewriteRule ^ index.html [L]
     Header set Cache-Control "public, max-age=86400, must-revalidate"
   </FilesMatch>
   Header set X-Robots-Tag "noindex, nofollow"
+
+  # Cabeçalhos de segurança de TODA resposta (incluindo as da API, que já os
+  # enviam com os mesmos valores: "set" substitui, não duplica). HSTS só
+  # para este host (sem estender a subdomínios nem à lista de pré-carga): o
+  # domínio-pai hospeda outro produto.
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "DENY"
+  Header set Referrer-Policy "same-origin"
+  Header set Strict-Transport-Security "max-age=31536000"
+  # CSP das PÁGINAS (e do service worker). Escopada por nome de arquivo: a API
+  # (PHP) emite a sua, mais restrita ("default-src 'none'"), e esta NÃO pode
+  # sobrescrevê-la. Fica de fora tudo que não é página. O dist não tem script
+  # inline nem eval: script-src 'self' basta; style-src precisa de 'unsafe-inline'
+  # por causa dos atributos style que o Vue gera.
+  <FilesMatch "^(index\.html|404\.html|sw\.js)$">
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  </FilesMatch>
 </IfModule>

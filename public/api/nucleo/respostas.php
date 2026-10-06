@@ -9,6 +9,7 @@ if (!defined('D26_API')) {
 /** Cabeçalhos de toda resposta da API (sucesso ou erro). */
 function d26_cabecalhos(): void
 {
+    header_remove('X-Powered-By');
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');

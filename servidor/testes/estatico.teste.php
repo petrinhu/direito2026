@@ -64,3 +64,30 @@ teste('nenhum login, senha, hash ou termo reservado fixo no código do servidor'
         igual(0, preg_match('#/home/[a-z0-9_-]+/#i', $txt), basename($a) . ': caminho absoluto');
     }
 }, false);
+
+teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_headers.c>, CSP só nas páginas', function (): void {
+    $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
+    $dentro = preg_match('#<IfModule mod_headers\.c>(.*?)</IfModule>#s', $t, $m) === 1 ? $m[1] : '';
+    verdadeiro($dentro !== '', 'bloco mod_headers presente');
+    foreach ([
+        'Header set X-Content-Type-Options "nosniff"',
+        'Header set X-Frame-Options "DENY"',
+        'Header set Referrer-Policy "same-origin"',
+        'Header set Strict-Transport-Security "max-age=31536000"',
+    ] as $linha) {
+        contem($linha, $dentro, 'cabeçalho global');
+    }
+    naoContem('includeSubDomains', $t, 'HSTS sem includeSubDomains');
+    naoContem('preload', $t, 'HSTS sem preload');
+    $csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+    contem('Header set Content-Security-Policy "' . $csp . '"', $dentro, 'CSP exata');
+    // A CSP das páginas só pode valer para as páginas, nunca para a API (que tem a sua, mais restrita).
+    verdadeiro(preg_match('#<FilesMatch "([^"]+)">\s*Header set Content-Security-Policy#', $dentro, $f) === 1, 'CSP dentro de um FilesMatch');
+    $re = '#' . str_replace('#', '\#', $f[1]) . '#';
+    foreach (['index.html', '404.html', 'sw.js'] as $pagina) {
+        verdadeiro(preg_match($re, $pagina) === 1, "$pagina recebe a CSP das páginas");
+    }
+    foreach (['saude.php', 'entrar.php', 'sessao.php', 'conteudo.php'] as $api) {
+        verdadeiro(preg_match($re, $api) !== 1, "$api (API) não recebe a CSP das páginas");
+    }
+}, false);

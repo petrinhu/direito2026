@@ -285,8 +285,8 @@ final class Ambiente
         if ($opcoes['admin'] ?? true) {
             $a->semearUsuario(self::LOGIN_ADMIN, self::SENHA_ADMIN, true, $opcoes['deveTrocar'] ?? false);
         }
+        self::$vivos[] = $a; // antes de iniciar: se o php -S falhar, ainda assim é limpo
         $a->iniciar((bool) ($opcoes['semRoteador'] ?? false));
-        self::$vivos[] = $a;
         return $a;
     }
 
@@ -378,7 +378,6 @@ final class Ambiente
         }
         $env = getenv();
         $env['D26_PRIVADO'] = $this->priv;
-        $env['PHP_CLI_SERVER_WORKERS'] = '4';
         $saida = $this->raiz . '/servidor.log';
         $this->processo = proc_open(
             $cmd,

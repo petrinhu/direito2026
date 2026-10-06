@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Paleta do slide (autossuficiente: a impressão tira o slide de dentro de
+   .area-restrita, então ele não pode depender dos tokens daquela classe).
+   Cada cor tem intenção: ciano e turquesa = tecnologia; violeta e magenta =
+   gradientes e destaque; menta = ponto positivo; ambar e coral = alerta.
+   Contraste de texto >= 4,5:1 contra os três fundos do slide, medido por
+   tests/unidade/design.contrasteSlides.spec.ts.
+   ========================================================================== */
+
+.ar-slide {
+  --s-fundo: #0d1118;
+  --s-fundo-2: #101a2c;
+  --s-cartao: #151c27;
+  --s-texto: #e8dcc6;
+  --s-texto-suave: #bfb29a;
+  --s-ouro: #d9b280;
+  --s-ciano: #3dd5f3;
+  --s-turquesa: #2dd4bf;
+  --s-violeta: #a78bfa;
+  --s-magenta: #f0abfc;
+  --s-menta: #6ee7b7;
+  --s-coral: #ff8a80;
+  --s-ambar: #fbbf24;
+}

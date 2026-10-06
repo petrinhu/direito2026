@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 const props = defineProps<{
-  tamanho?: 'pequeno' | 'grande';
+  tamanho?: 'pequeno' | 'grande' | 'capa';
   /** Só para teste: mapa de arquivos no lugar do que o Vite encontrou na pasta. */
   arquivos?: Readonly<Record<string, string>>;
 }>();
@@ -31,22 +31,26 @@ const srcset = (ext: 'avif' | 'webp'): string | undefined => {
   return a && b ? `${a} 320w, ${b} 640w` : undefined;
 };
 const avif = computed(() => srcset('avif'));
+// Na capa do slide a imagem ocupa 500 px lógicos: pede o arquivo de 640.
+const tamanhos = computed(() =>
+  props.tamanho === 'capa' ? '500px' : '(min-width: 720px) 320px, 60vw'
+);
 const webp = computed(() => srcset('webp'));
 </script>
 
 <template>
   <picture v-if="jpg320 && jpg640" class="ar-emblema">
-    <source v-if="avif" type="image/avif" :srcset="avif" sizes="(min-width: 720px) 320px, 60vw" />
-    <source v-if="webp" type="image/webp" :srcset="webp" sizes="(min-width: 720px) 320px, 60vw" />
+    <source v-if="avif" type="image/avif" :srcset="avif" :sizes="tamanhos" />
+    <source v-if="webp" type="image/webp" :srcset="webp" :sizes="tamanhos" />
     <img
       :src="jpg320"
       :srcset="`${jpg320} 320w, ${jpg640} 640w`"
-      sizes="(min-width: 720px) 320px, 60vw"
+      :sizes="tamanhos"
       width="320"
       height="320"
       alt="Emblema do grupo: círculo escuro com moldura dourada, uma figura de inteligência artificial com o selo AI à esquerda, um homem de terno saindo de um escritório com uma caixa de pertences à direita, a balança da justiça e dois livros de Direito do Trabalho e Constituição Federal, sob o nome Fronteiras da Inteligência Artificial."
       decoding="async"
-      :fetchpriority="tamanho === 'pequeno' ? 'low' : 'high'"
+      :fetchpriority="tamanho === 'grande' || tamanho === undefined ? 'high' : 'low'"
     />
   </picture>
 </template>

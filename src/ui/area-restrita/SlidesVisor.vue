@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { calcularEscala, milimetrosParaPixels } from '@/app/restrito/palco';
 import type { EquipeRestrita, Slide } from '@/core/restrito/tipos';
+import PalcoSlide from './PalcoSlide.vue';
 import SlideConteudo from './SlideConteudo.vue';
 
 const props = defineProps<{
@@ -16,12 +18,25 @@ const DURACAO_CRONOMETRO = 600;
 /** Arrastar mínimo, em pixels, para contar como troca de slide por toque. */
 const DISTANCIA_MINIMA_TOQUE = 60;
 const CLASSE_IMPRIMINDO = 'ar-imprimindo';
+/** Área útil da A4 paisagem (297 x 210 mm com margem de 10 mm), com folga de 7 mm. */
+const IMPRESSAO_LARGURA_MM = 270;
+/** Altura que o quadro pode ocupar na página: com notas sobra espaço para o texto delas. */
+const IMPRESSAO_ALTURA_COM_NOTAS_MM = 120;
+const IMPRESSAO_ALTURA_SEM_NOTAS_MM = 185;
 
 const indice = ref(0);
 const mostrarNotas = ref(false);
 const telaCheia = ref(false);
 const anuncio = ref('');
 const deck = ref<HTMLElement>();
+const area = ref<HTMLElement>();
+const escala = ref(1);
+
+/** Mede o espaço disponível do palco (janela, tela cheia, celular) e recalcula a escala. */
+function medirArea(): void {
+  const el = area.value;
+  if (el) escala.value = calcularEscala(el.clientWidth, el.clientHeight);
+}
 
 const total = computed(() => props.slides.length);
 const slide = computed(() => props.slides[indice.value]!);
@@ -54,6 +69,8 @@ async function alternarTelaCheia(): Promise<void> {
 function aoMudarTelaCheia(): void {
   telaCheia.value = document.fullscreenElement === deck.value;
 }
+
+watch(telaCheia, () => void nextTick(medirArea));
 
 const alternarNotas = (): void => {
   mostrarNotas.value = !mostrarNotas.value;
@@ -149,6 +166,17 @@ function zerarCronometro(): void {
 // só existem no DOM durante a impressão e saem do <body> para o CSS esconder o resto do site.
 const imprimindo = ref<'nenhuma' | 'com-notas' | 'sem-notas'>('nenhuma');
 
+const escalaImpressao = computed(() =>
+  calcularEscala(
+    milimetrosParaPixels(IMPRESSAO_LARGURA_MM),
+    milimetrosParaPixels(
+      imprimindo.value === 'com-notas'
+        ? IMPRESSAO_ALTURA_COM_NOTAS_MM
+        : IMPRESSAO_ALTURA_SEM_NOTAS_MM
+    )
+  )
+);
+
 async function imprimir(comNotas: boolean): Promise<void> {
   imprimindo.value = comNotas ? 'com-notas' : 'sem-notas';
   document.documentElement.classList.add(CLASSE_IMPRIMINDO);
@@ -161,11 +189,22 @@ function aoTerminarImpressao(): void {
   document.documentElement.classList.remove(CLASSE_IMPRIMINDO);
 }
 
+let observador: InstanceType<typeof window.ResizeObserver> | undefined;
+
 onMounted(() => {
   document.addEventListener('fullscreenchange', aoMudarTelaCheia);
   window.addEventListener('afterprint', aoTerminarImpressao);
+  medirArea();
+  if (typeof window.ResizeObserver === 'function' && area.value) {
+    observador = new window.ResizeObserver(medirArea);
+    observador.observe(area.value);
+  } else {
+    window.addEventListener('resize', medirArea);
+  }
 });
 onBeforeUnmount(() => {
+  observador?.disconnect();
+  window.removeEventListener('resize', medirArea);
   document.removeEventListener('fullscreenchange', aoMudarTelaCheia);
   window.removeEventListener('afterprint', aoTerminarImpressao);
   pararRelogio();
@@ -200,14 +239,18 @@ onBeforeUnmount(() => {
         @pointerup="aoSoltar"
         @pointercancel="aoCancelarToque"
       >
-        <Transition name="ar-slide" mode="out-in" :css="!reduzirMovimento">
-          <SlideConteudo
-            :key="slide.id"
-            :slide="slide"
-            :equipe="equipe"
-            :rotulo="rotuloDoSlide(indice)"
-          />
-        </Transition>
+        <div ref="area" class="ar-slides__area">
+          <PalcoSlide :escala="escala">
+            <Transition name="ar-slide" mode="out-in" :css="!reduzirMovimento">
+              <SlideConteudo
+                :key="slide.id"
+                :slide="slide"
+                :equipe="equipe"
+                :rotulo="rotuloDoSlide(indice)"
+              />
+            </Transition>
+          </PalcoSlide>
+        </div>
       </div>
 
       <div class="ar-slides__barra">
@@ -304,9 +347,9 @@ onBeforeUnmount(() => {
     <Teleport v-if="imprimindo !== 'nenhuma'" to="body">
       <div class="ar-impresso" aria-hidden="true">
         <section v-for="(item, i) in slides" :key="item.id" class="ar-impresso__pagina">
-          <div class="ar-impresso__quadro">
+          <PalcoSlide class="ar-impresso__quadro" :escala="escalaImpressao">
             <SlideConteudo :slide="item" :equipe="equipe" :rotulo="rotuloDoSlide(i)" />
-          </div>
+          </PalcoSlide>
           <div v-if="imprimindo === 'com-notas'" class="ar-impresso__notas">
             <h3>Notas do slide {{ i + 1 }}</h3>
             <p>{{ item.notas }}</p>
@@ -337,22 +380,46 @@ onBeforeUnmount(() => {
   position: fixed;
   inset: 0;
   z-index: 200;
-  align-content: center;
+  grid-template-rows: minmax(0, 1fr) auto;
   border-radius: 0;
   overflow: auto;
 }
 
 .ar-slides__deck:fullscreen {
-  align-content: center;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr) auto;
   border-radius: 0;
   overflow: auto;
 }
 
 .ar-slides__palco {
-  container-type: inline-size;
+  min-height: 0;
   touch-action: pan-y;
   border-radius: var(--raio-md, 10px);
   outline: none;
+}
+
+/* O espaço do palco: na janela, a largura do deck (16:9, no máximo ~80% da altura
+   da janela); em tela cheia, tudo que sobra acima dos controles. A escala sai daqui. */
+.ar-slides__area {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 80dvh;
+}
+
+.ar-slides__deck--cheia .ar-slides__palco,
+.ar-slides__deck:fullscreen .ar-slides__palco {
+  height: 100%;
+}
+
+.ar-slides__deck--cheia .ar-slides__area,
+.ar-slides__deck:fullscreen .ar-slides__area {
+  aspect-ratio: auto;
+  max-height: none;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  align-items: center;
 }
 
 .ar-slides__palco:focus-visible {
@@ -451,9 +518,14 @@ onBeforeUnmount(() => {
   color: var(--ar-coral, var(--cor-erro-texto));
 }
 
-/* Páginas de impressão: só existem durante a impressão (v-if) e ficam fora da tela. */
+/* Páginas de impressão: só existem durante a impressão (v-if). Na tela ficam fora de vista
+   mas COM layout (visibility), para o ajuste de fonte de cada slide medir de verdade. */
 .ar-impresso {
-  display: none;
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media print {
@@ -468,7 +540,8 @@ onBeforeUnmount(() => {
   }
 
   .ar-impresso {
-    display: block;
+    position: static;
+    visibility: visible;
   }
 
   .ar-impresso__pagina {
@@ -481,30 +554,24 @@ onBeforeUnmount(() => {
     break-after: auto;
   }
 
-  /* Fora da área restrita as variáveis da identidade não existem: repõe as que o slide usa. */
+  /* O quadro é o mesmo palco 1600x900 da tela, escalado para a página (o slide
+     traz a própria paleta, então não depende de estar dentro da área restrita). */
   .ar-impresso__quadro {
-    --cor-texto: #e8dcc6;
-    --cor-texto-suave: #bfb29a;
-    --ar-ouro-claro: #d9b280;
-    --ar-ciano: #3dd5f3;
-    container-type: inline-size;
-    width: 200mm;
-    margin-inline: auto;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .ar-impresso__notas {
-    width: 200mm;
+    width: 270mm;
     margin: 4mm auto 0;
     color: #111111;
-    font-size: 10pt;
+    font-size: 11pt;
     line-height: 1.45;
   }
 
   .ar-impresso__notas h3 {
     margin: 0 0 1mm;
-    font-size: 10pt;
+    font-size: 11pt;
   }
 
   .ar-impresso__notas p {

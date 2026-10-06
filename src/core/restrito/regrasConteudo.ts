@@ -55,6 +55,21 @@ export function avisosDeRegrasDeConteudo(conteudo: ConteudoRestrito): AvisoDeCon
       base
     );
   });
+  conteudo.slides.forEach((slide, i) => {
+    const textos = [
+      slide.titulo,
+      slide.subtitulo,
+      slide.destaque,
+      slide.notas,
+      ...(slide.itens ?? [])
+    ];
+    for (const coluna of slide.colunas ?? []) textos.push(coluna.titulo, ...coluna.itens);
+    checar(
+      'travessao',
+      textos.some((t) => t !== undefined && TRAVESSAO.test(t)),
+      `slides[${i}]`
+    );
+  });
   conteudo.mapa.filhos?.forEach((filho, i) => {
     checar('travessao', TRAVESSAO.test(filho.rotulo), `mapa.filhos[${i}].rotulo`);
   });

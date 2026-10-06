@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validarConteudoRestrito } from '@/core/restrito/validar';
-import { conteudoRestritoFalso } from './apoio/conteudoRestritoFalso';
+import { conteudoRestritoFalso, notasFalsas, slideFalso } from './apoio/conteudoRestritoFalso';
 
 type Json = Record<string, any>;
 
@@ -178,5 +178,94 @@ describe('validarConteudoRestrito: limites e forma', () => {
     const r = validarConteudoRestrito(c);
     expect(r.ok).toBe(true);
     if (r.ok) expect('extra' in r.conteudo.quiz[0]!).toBe(false);
+  });
+});
+
+describe('validarConteudoRestrito: slides (texto puro)', () => {
+  it('aceita 10 a 14 slides e devolve os campos conhecidos', () => {
+    const r = validarConteudoRestrito(conteudoRestritoFalso());
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.conteudo.slides).toHaveLength(10);
+      expect(r.conteudo.slides[4]!.colunas).toHaveLength(2);
+    }
+    expect(
+      codigos(com((x) => x.slides.push(...[11, 12, 13, 14].map((i) => slideFalso(i, 'topicos')))))
+    ).toEqual([]);
+  });
+
+  it('exige de 10 a 14 slides', () => {
+    expect(codigos(com((x) => x.slides.pop()))).toContain('quantidade');
+    expect(
+      codigos(
+        com((x) => x.slides.push(...[11, 12, 13, 14, 15].map((i) => slideFalso(i, 'topicos'))))
+      )
+    ).toContain('quantidade');
+    expect(codigos(com((x) => delete x.slides))).not.toEqual([]);
+  });
+
+  it('ids sequenciais e a capa é o primeiro slide', () => {
+    expect(codigos(com((x) => (x.slides[3].id = 9)))).toContain('id-invalido');
+    expect(codigos(com((x) => (x.slides[0].layout = 'topicos')))).toContain('layout');
+    expect(codigos(com((x) => (x.slides[2].layout = 'galaxia')))).toContain('layout');
+  });
+
+  it('nenhum HTML em slide, nem tag nem entidade', () => {
+    expect(codigos(com((x) => (x.slides[1].titulo = '<b>x</b>')))).toContain('texto-com-marcacao');
+    expect(codigos(com((x) => (x.slides[1].itens[0] = '<i>x</i>')))).toContain(
+      'texto-com-marcacao'
+    );
+    expect(codigos(com((x) => (x.slides[3].destaque = '<p>x</p>')))).toContain(
+      'texto-com-marcacao'
+    );
+    expect(codigos(com((x) => (x.slides[1].notas = notasFalsas(70) + ' <script>')))).toContain(
+      'texto-com-marcacao'
+    );
+    expect(codigos(com((x) => (x.slides[4].colunas[0].titulo = '<b>c</b>')))).toContain(
+      'texto-com-marcacao'
+    );
+    expect(codigos(com((x) => (x.slides[4].colunas[0].itens[0] = '<b>c</b>')))).toContain(
+      'texto-com-marcacao'
+    );
+  });
+
+  it('limites de tamanho: título 90, subtítulo 140, item 120, destaque 200, até 5 itens', () => {
+    expect(codigos(com((x) => (x.slides[1].titulo = 'a'.repeat(90))))).toEqual([]);
+    expect(codigos(com((x) => (x.slides[1].titulo = 'a'.repeat(91))))).toContain('campo-longo');
+    expect(codigos(com((x) => (x.slides[0].subtitulo = 'a'.repeat(141))))).toContain('campo-longo');
+    expect(codigos(com((x) => (x.slides[1].itens[0] = 'a'.repeat(121))))).toContain('campo-longo');
+    expect(codigos(com((x) => (x.slides[3].destaque = 'a'.repeat(201))))).toContain('campo-longo');
+    expect(
+      codigos(com((x) => (x.slides[1].itens = Array.from({ length: 6 }, () => 'i'))))
+    ).toContain('quantidade');
+  });
+
+  it('notas com 60 a 160 palavras', () => {
+    expect(codigos(com((x) => (x.slides[1].notas = notasFalsas(59))))).toContain('palavras');
+    expect(codigos(com((x) => (x.slides[1].notas = notasFalsas(161))))).toContain('palavras');
+    expect(codigos(com((x) => (x.slides[1].notas = notasFalsas(60))))).toEqual([]);
+    expect(codigos(com((x) => (x.slides[1].notas = notasFalsas(160))))).toEqual([]);
+  });
+
+  it('colunas só no comparativo, com 2 ou 3 colunas de até 4 itens', () => {
+    expect(codigos(com((x) => (x.slides[1].colunas = [])))).toContain('colunas');
+    expect(codigos(com((x) => x.slides[4].colunas.pop()))).toContain('colunas');
+    expect(
+      codigos(
+        com(
+          (x) =>
+            (x.slides[4].colunas = Array.from({ length: 4 }, () => ({ titulo: 't', itens: ['i'] })))
+        )
+      )
+    ).toContain('colunas');
+    expect(
+      codigos(com((x) => (x.slides[4].colunas[0].itens = ['1', '2', '3', '4', '5'])))
+    ).toContain('quantidade');
+    expect(codigos(com((x) => delete x.slides[4].colunas))).toContain('campo-ausente');
+  });
+
+  it('cada layout exige o campo que o desenha', () => {
+    expect(codigos(com((x) => delete x.slides[1].itens))).toContain('campo-ausente');
+    expect(codigos(com((x) => delete x.slides[3].destaque))).toContain('campo-ausente');
   });
 });

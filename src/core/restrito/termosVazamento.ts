@@ -78,6 +78,21 @@ export function extrairTermosDeVazamento(json: unknown): TermosDeVazamento {
     camposHtml.push(...listaDe(pergunta.alternativasHtml).flatMap(textosDe));
   }
 
+  for (const slide of listaDe(raiz.slides)) {
+    if (!ehObjeto(slide)) continue;
+    camposHtml.push(
+      ...textosDe(slide.titulo),
+      ...textosDe(slide.subtitulo),
+      ...textosDe(slide.destaque),
+      ...textosDe(slide.notas),
+      ...listaDe(slide.itens).flatMap(textosDe)
+    );
+    for (const coluna of listaDe(slide.colunas)) {
+      if (ehObjeto(coluna))
+        camposHtml.push(...textosDe(coluna.titulo), ...listaDe(coluna.itens).flatMap(textosDe));
+    }
+  }
+
   return {
     integrantes: normalizados(listaDe(equipe.integrantes).flatMap(textosDe)),
     instituicao: normalizados(textosDe(equipe.instituicao)),

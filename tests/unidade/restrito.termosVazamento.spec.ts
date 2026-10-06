@@ -38,6 +38,17 @@ describe('extrairTermosDeVazamento', () => {
     }
   });
 
+  it('inclui trechos longos de slides e notas', () => {
+    const c = conteudoRestritoFalso() as { slides: Record<string, unknown>[] };
+    c.slides[3]!.destaque =
+      'Frase de impacto fictícia suficientemente longa para ser uma impressão digital.';
+    const t = extrairTermosDeVazamento(c);
+    expect(t.trechos.some((x) => x.startsWith('frase de impacto ficticia suficientemente'))).toBe(
+      true
+    );
+    expect(t.trechos.some((x) => x.startsWith('palavra0 palavra1'))).toBe(true);
+  });
+
   it('não inclui o título do grupo nem metadados públicos', () => {
     const c = conteudoRestritoFalso() as { meta: { titulo: string } };
     c.meta.titulo = 'Título público do grupo para a página restrita';

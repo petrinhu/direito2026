@@ -17,6 +17,27 @@ export interface EquipeRestrita {
   readonly integrantes: readonly string[];
 }
 
+export type LayoutSlide = 'capa' | 'topicos' | 'destaque' | 'comparativo' | 'encerramento';
+
+export interface ColunaSlide {
+  readonly titulo: string;
+  readonly itens: readonly string[];
+}
+
+/** Slide em texto puro (nenhum HTML). A capa recebe a equipe injetada pelo front. */
+export interface Slide {
+  readonly id: number;
+  readonly layout: LayoutSlide;
+  readonly titulo: string;
+  readonly subtitulo?: string;
+  readonly itens?: readonly string[];
+  readonly destaque?: string;
+  /** Só no layout comparativo. */
+  readonly colunas?: readonly ColunaSlide[];
+  /** Notas do apresentador, cerca de um minuto falado. */
+  readonly notas: string;
+}
+
 /** Forma do JSON restrito entregue pela API depois do login (versão 1). */
 export interface ConteudoRestrito {
   readonly versao: 1;
@@ -24,6 +45,7 @@ export interface ConteudoRestrito {
   readonly equipe: EquipeRestrita;
   readonly resumo: readonly BlocoResumo[];
   readonly mapa: NoMapa;
+  readonly slides: readonly Slide[];
   readonly quiz: readonly PerguntaMultiplaEscolha[];
 }
 
@@ -50,6 +72,10 @@ export type CodigoErroRestrito =
   | 'categoria'
   | 'campo-proibido'
   | 'rotulo-longo'
+  | 'campo-longo'
+  | 'layout'
+  | 'colunas'
+  | 'palavras'
   | 'profundidade'
   | 'limite';
 

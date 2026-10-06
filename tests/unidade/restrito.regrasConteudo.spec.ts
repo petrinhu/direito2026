@@ -3,7 +3,11 @@ import { avisosDeRegrasDeConteudo } from '@/core/restrito/regrasConteudo';
 import { validarConteudoRestrito } from '@/core/restrito/validar';
 import { conteudoRestritoFalso } from './apoio/conteudoRestritoFalso';
 
-type Json = { resumo: Record<string, unknown>[]; quiz: Record<string, unknown>[] };
+type Json = {
+  resumo: Record<string, unknown>[];
+  quiz: Record<string, unknown>[];
+  slides: Record<string, unknown>[];
+};
 
 function avisos(mutar: (c: Json) => void): string[] {
   const c = conteudoRestritoFalso() as Json;
@@ -34,6 +38,14 @@ describe('avisosDeRegrasDeConteudo', () => {
     expect(avisos((c) => (c.quiz[2]!.enunciadoHtml = '<p>No slide dois.</p>'))).toContain(
       'cita-aula-ou-slide'
     );
+  });
+
+  it('travessão em slide', () => {
+    expect(avisos((c) => (c.slides[3]!.destaque = 'a \u2014 b'))).toContain('travessao');
+  });
+
+  it('a palavra slide dentro de um slide não é citação de aula', () => {
+    expect(avisos((c) => (c.slides[1]!.titulo = 'Próximos slides do grupo'))).toEqual([]);
   });
 
   it('travessão e meia-risca', () => {

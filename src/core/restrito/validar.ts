@@ -1,7 +1,10 @@
 import type { BlocoResumo, CategoriaQuiz, PerguntaMultiplaEscolha } from '../unidade/tipos';
 import type {
   CodigoErroRestrito,
+  ColunaSlide,
   ConteudoRestrito,
+  LayoutSlide,
+  Slide,
   ConteudoRestritoValidado,
   ErroValidacao,
   NoMapa,
@@ -13,6 +16,23 @@ export const QUANTIDADE_ALTERNATIVAS = 4;
 /** Raiz no nível 0; o último nível aceito é o 4. */
 export const PROFUNDIDADE_MAXIMA_MAPA = 4;
 export const TAMANHO_MAXIMO_ROTULO = 90;
+export const SLIDES_MINIMO = 10;
+export const SLIDES_MAXIMO = 14;
+export const NOTAS_PALAVRAS_MINIMO = 60;
+export const NOTAS_PALAVRAS_MAXIMO = 160;
+const LAYOUTS: readonly LayoutSlide[] = [
+  'capa',
+  'topicos',
+  'destaque',
+  'comparativo',
+  'encerramento'
+];
+const MAXIMO_TITULO_SLIDE = 90;
+const MAXIMO_SUBTITULO_SLIDE = 140;
+const MAXIMO_ITEM_SLIDE = 120;
+const MAXIMO_DESTAQUE_SLIDE = 200;
+const MAXIMO_ITENS_SLIDE = 5;
+const MAXIMO_ITENS_COLUNA = 4;
 const MAXIMO_NOS_MAPA = 500;
 const MAXIMO_BLOCOS = 60;
 const MAXIMO_INTEGRANTES = 30;
@@ -199,6 +219,100 @@ function lerMapa(c: Coletor, bruto: unknown): NoMapa {
   return raiz;
 }
 
+function textoLimitado(c: Coletor, valor: unknown, onde: string, limite: number): string {
+  if (typeof valor !== 'string') {
+    c.erro(valor === undefined ? 'campo-ausente' : 'tipo-invalido', onde);
+    return '';
+  }
+  validarTexto(c, valor, onde, 'puro');
+  if ([...valor].length > limite) c.erro('campo-longo', onde);
+  return valor;
+}
+
+function listaDeTextos(
+  c: Coletor,
+  valor: unknown,
+  onde: string,
+  maximoItens: number,
+  maximoCaracteres: number
+): string[] {
+  if (!Array.isArray(valor)) {
+    c.erro(valor === undefined ? 'campo-ausente' : 'tipo-invalido', onde);
+    return [];
+  }
+  if (valor.length === 0 || valor.length > maximoItens) c.erro('quantidade', onde);
+  return valor.map((item, i) => textoLimitado(c, item, `${onde}[${i}]`, maximoCaracteres));
+}
+
+function lerColuna(c: Coletor, bruta: unknown, onde: string): ColunaSlide {
+  if (!ehObjeto(bruta)) {
+    c.erro('tipo-invalido', onde);
+    return { titulo: '', itens: [] };
+  }
+  return {
+    titulo: textoLimitado(c, bruta.titulo, `${onde}.titulo`, MAXIMO_TITULO_SLIDE),
+    itens: listaDeTextos(c, bruta.itens, `${onde}.itens`, MAXIMO_ITENS_COLUNA, MAXIMO_ITEM_SLIDE)
+  };
+}
+
+function lerSlide(c: Coletor, bruto: unknown, indice: number): Slide {
+  const onde = `slides[${indice}]`;
+  const vazio: Slide = { id: 0, layout: 'topicos', titulo: '', notas: '' };
+  if (!ehObjeto(bruto)) {
+    c.erro('tipo-invalido', onde);
+    return vazio;
+  }
+  if (bruto.id !== indice + 1) c.erro('id-invalido', `${onde}.id`);
+  const layout = LAYOUTS.find((l) => l === bruto.layout);
+  if (!layout || (indice === 0 && layout !== 'capa')) c.erro('layout', `${onde}.layout`);
+
+  const notas = textoLimitado(c, bruto.notas, `${onde}.notas`, MAXIMO_CARACTERES_CAMPO);
+  const palavras = notas.split(/\s+/).filter((p) => p.length > 0).length;
+  if (palavras < NOTAS_PALAVRAS_MINIMO || palavras > NOTAS_PALAVRAS_MAXIMO) {
+    c.erro('palavras', `${onde}.notas`);
+  }
+
+  const slide: Slide = {
+    id: indice + 1,
+    layout: layout ?? 'topicos',
+    titulo: textoLimitado(c, bruto.titulo, `${onde}.titulo`, MAXIMO_TITULO_SLIDE),
+    ...(bruto.subtitulo !== undefined
+      ? {
+          subtitulo: textoLimitado(c, bruto.subtitulo, `${onde}.subtitulo`, MAXIMO_SUBTITULO_SLIDE)
+        }
+      : {}),
+    ...(bruto.itens !== undefined || layout === 'topicos'
+      ? {
+          itens: listaDeTextos(
+            c,
+            bruto.itens,
+            `${onde}.itens`,
+            MAXIMO_ITENS_SLIDE,
+            MAXIMO_ITEM_SLIDE
+          )
+        }
+      : {}),
+    ...(bruto.destaque !== undefined || layout === 'destaque'
+      ? { destaque: textoLimitado(c, bruto.destaque, `${onde}.destaque`, MAXIMO_DESTAQUE_SLIDE) }
+      : {}),
+    notas
+  };
+
+  if (layout === 'comparativo') {
+    const colunas = bruto.colunas;
+    if (colunas === undefined) c.erro('campo-ausente', `${onde}.colunas`);
+    else if (!Array.isArray(colunas) || colunas.length < 2 || colunas.length > 3) {
+      c.erro('colunas', `${onde}.colunas`);
+    }
+    const lidas = Array.isArray(colunas)
+      ? colunas.map((col, i) => lerColuna(c, col, `${onde}.colunas[${i}]`))
+      : [];
+    return { ...slide, colunas: lidas };
+  }
+  if (bruto.colunas !== undefined) c.erro('colunas', `${onde}.colunas`);
+  return slide;
+}
+
 function congelar<T>(valor: T): T {
   if (typeof valor === 'object' && valor !== null && !Object.isFrozen(valor)) {
     Object.values(valor).forEach(congelar);
@@ -232,6 +346,12 @@ export function validarConteudoRestrito(json: unknown): ResultadoValidacaoRestri
   if (!blocos) c.erro('tipo-invalido', 'resumo');
   else if (blocos.length === 0 || blocos.length > MAXIMO_BLOCOS) c.erro('quantidade', 'resumo');
 
+  const slides = Array.isArray(json.slides) ? json.slides : undefined;
+  if (!slides) c.erro(json.slides === undefined ? 'campo-ausente' : 'tipo-invalido', 'slides');
+  else if (slides.length < SLIDES_MINIMO || slides.length > SLIDES_MAXIMO) {
+    c.erro('quantidade', 'slides');
+  }
+
   const perguntas = Array.isArray(json.quiz) ? json.quiz : undefined;
   if (!perguntas) c.erro('tipo-invalido', 'quiz');
   else if (perguntas.length !== QUANTIDADE_PERGUNTAS) c.erro('quantidade', 'quiz');
@@ -253,6 +373,7 @@ export function validarConteudoRestrito(json: unknown): ResultadoValidacaoRestri
     },
     resumo: (blocos ?? []).map((b, i) => lerBloco(c, b, `resumo[${i}]`)),
     mapa: lerMapa(c, json.mapa),
+    slides: (slides ?? []).map((sl, i) => lerSlide(c, sl, i)),
     quiz: (perguntas ?? []).map((p, i) => lerPergunta(c, p, i))
   };
 

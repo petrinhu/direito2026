@@ -31,6 +31,46 @@ export function blocoFalso(n: number): Record<string, unknown> {
   };
 }
 
+export function notasFalsas(palavras = 70): string {
+  return Array.from({ length: palavras }, (_, i) => `palavra${i}`).join(' ');
+}
+
+export function slideFalso(id: number, layout: string): Record<string, unknown> {
+  const base = { id, layout, titulo: `Slide fictício ${id}`, notas: notasFalsas() };
+  switch (layout) {
+    case 'topicos':
+      return { ...base, itens: ['Item fictício um', 'Item fictício dois'] };
+    case 'destaque':
+      return { ...base, destaque: 'Frase de impacto fictícia.' };
+    case 'comparativo':
+      return {
+        ...base,
+        colunas: [
+          { titulo: 'Coluna um', itens: ['a', 'b'] },
+          { titulo: 'Coluna dois', itens: ['c'] }
+        ]
+      };
+    default:
+      return { ...base, subtitulo: 'Subtítulo fictício' };
+  }
+}
+
+export function slidesFalsos(): Record<string, unknown>[] {
+  const layouts = [
+    'capa',
+    'topicos',
+    'topicos',
+    'destaque',
+    'comparativo',
+    'topicos',
+    'topicos',
+    'destaque',
+    'topicos',
+    'encerramento'
+  ];
+  return layouts.map((layout, i) => slideFalso(i + 1, layout));
+}
+
 export function conteudoRestritoFalso(): Record<string, unknown> {
   return {
     versao: 1,
@@ -54,6 +94,7 @@ export function conteudoRestritoFalso(): Record<string, unknown> {
         { rotulo: 'Ramo dois' }
       ]
     },
+    slides: slidesFalsos(),
     quiz: Array.from({ length: 40 }, (_, i) => perguntaFalsa(i + 1))
   };
 }

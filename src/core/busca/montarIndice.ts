@@ -1,3 +1,4 @@
+import type { Curriculo } from '../curriculo/tipos';
 import type { ConteudoUnidade } from '../unidade/tipos';
 import { removerTags } from './removerTags';
 import { rotuloDaFase } from '../fichamento/filtrarFichas';
@@ -80,6 +81,29 @@ export function montarDocumentosUnidade(params: ParametrosUnidade): DocumentoBus
   documentos.push(...documentosDosMnemonicos(base, conteudo));
 
   return documentos;
+}
+
+/**
+ * Cadeira restrita: a busca só conhece o TÍTULO navegável (o texto da
+ * cadeira nunca está no repositório). `unidade` vai vazio e `aba` é só
+ * preenchimento do tipo: nenhum dos dois aparece como conteúdo.
+ */
+export function montarDocumentosCadeirasRestritas(curriculo: Curriculo): DocumentoBusca[] {
+  return curriculo.flatMap((periodo) =>
+    periodo.cadeiras
+      .filter((cadeira) => cadeira.restrita && cadeira.estado === 'publicado')
+      .map((cadeira) => ({
+        id: `${periodo.id}/${cadeira.id}`,
+        url: `/p/${periodo.id}/${cadeira.id}`,
+        periodo: periodo.id,
+        cadeira: cadeira.id,
+        unidade: '',
+        aba: 'resumo' as const,
+        titulo: cadeira.nome,
+        corpo: cadeira.nome,
+        trecho: 'Área restrita: é preciso entrar com usuário e senha.'
+      }))
+  );
 }
 
 function documentosDoMapaFichamento(base: string, conteudo: ConteudoUnidade): DocumentoBusca[] {

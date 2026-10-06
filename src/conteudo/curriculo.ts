@@ -85,11 +85,31 @@ const cadeiraFilosofia: Cadeira = {
   unidades: [unidade1Filosofia],
 };
 
+/**
+ * Interdisciplinar é a única cadeira de acesso restrito (ordem do líder,
+ * 05/10/2026): sem unidade aqui de propósito, o conteúdo mora fora do
+ * repositório e só chega pela API depois do login (docs/arquitetura.md,
+ * seção "Área restrita").
+ */
+const cadeiraInterdisciplinar: Cadeira = {
+  id: 'interdisciplinar',
+  nome: 'Interdisciplinar',
+  estado: 'publicado',
+  restrita: true,
+  unidades: [],
+};
+
 const periodo1: Periodo = {
   id: 'p1',
   numero: 1,
   rotulo: '1º período',
-  cadeiras: [cadeiraIntrDireito, cadeiraRedacaoJuridica, cadeiraSociologia, cadeiraFilosofia],
+  cadeiras: [
+    cadeiraIntrDireito,
+    cadeiraRedacaoJuridica,
+    cadeiraSociologia,
+    cadeiraFilosofia,
+    cadeiraInterdisciplinar,
+  ],
 };
 
 function periodoEmBreve(numero: number): Periodo {

@@ -22,7 +22,10 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import MiniSearch from 'minisearch';
-import { montarDocumentosUnidade } from '../src/core/busca/montarIndice';
+import {
+  montarDocumentosCadeirasRestritas,
+  montarDocumentosUnidade
+} from '../src/core/busca/montarIndice';
 import { TETO_INDICE_BUSCA_BYTES, type DocumentoBusca } from '../src/core/busca/tipos';
 import { normalizarTermo } from '../src/core/busca/normalizar';
 import { validarIndiceGerado } from '../src/core/busca/validarIndice';
@@ -62,6 +65,8 @@ async function principal(): Promise<void> {
       }
     }
   }
+
+  documentos.push(...montarDocumentosCadeirasRestritas(curriculo));
 
   const mini = new MiniSearch<DocumentoBusca>({
     fields: ['titulo', 'corpo'],

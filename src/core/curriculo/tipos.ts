@@ -27,6 +27,12 @@ export interface Cadeira {
   readonly id: string;
   readonly nome: string;
   readonly estado: EstadoPublicacao;
+  /**
+   * Cadeira de acesso restrito (login no servidor). O conteúdo NÃO existe
+   * no repositório nem no pacote: `unidades` fica vazio, a página própria
+   * pede tudo à API depois do login e a busca só conhece o título.
+   */
+  readonly restrita?: true;
   readonly unidades: readonly ReferenciaUnidade[];
 }
 

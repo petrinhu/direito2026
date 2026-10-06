@@ -9,7 +9,9 @@ describe('currículo: Sociologia Jurídica, 1a unidade', () => {
   it('a cadeira entra no 1º período com o nome dela, entre as publicadas', () => {
     expect(sociologia?.nome).toBe('Sociologia Jurídica');
     expect(sociologia?.estado).toBe('publicado');
-    expect(periodo1.cadeiras.filter((c) => c.estado === 'publicado')).toHaveLength(4);
+    expect(periodo1.cadeiras.filter((c) => c.estado === 'publicado' && !c.restrita)).toHaveLength(
+      4
+    );
   });
 
   it('tem só duas abas, resumo e quiz, e o título não fala de petição', () => {

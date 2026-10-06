@@ -2,6 +2,13 @@
 import type { DocumentoBusca } from '@/core/busca/tipos';
 
 defineProps<{ resultados: readonly DocumentoBusca[]; termo: string }>();
+
+/** Cadeira restrita não tem unidade: sem separador solto. */
+function trilha(resultado: DocumentoBusca): string {
+  return [resultado.periodo, resultado.cadeira, resultado.unidade]
+    .filter((parte) => parte.length > 0)
+    .join(' · ');
+}
 </script>
 
 <template>
@@ -17,7 +24,7 @@ defineProps<{ resultados: readonly DocumentoBusca[]; termo: string }>();
         <a :href="resultado.url">
           <strong>{{ resultado.titulo }}</strong>
           <span class="painel-resultados-busca__trilha">
-            {{ resultado.periodo }} · {{ resultado.cadeira }} · {{ resultado.unidade }}
+            {{ trilha(resultado) }}
           </span>
           <span class="painel-resultados-busca__trecho">{{ resultado.trecho }}</span>
         </a>

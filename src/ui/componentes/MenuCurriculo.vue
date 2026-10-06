@@ -118,6 +118,16 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
             <template v-if="cadeira.estado === 'em-breve'">
               <EstadoEmBreve :rotulo="cadeira.nome" />
             </template>
+            <a
+              v-else-if="cadeira.restrita"
+              :href="`/p/${periodo.id}/${cadeira.id}`"
+              class="menu-curriculo__link-unidade menu-curriculo__link-restrita"
+              :aria-current="
+                ehAtual(`p/${periodo.id}/${cadeira.id}`, caminhoAtual) ? 'page' : undefined
+              "
+            >
+              {{ cadeira.nome }}
+            </a>
             <template v-else>
               <button
                 type="button"

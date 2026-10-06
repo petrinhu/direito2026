@@ -26,7 +26,10 @@ function saturarContaEm(string $priv, string $login, int $t): int
 {
     $admitidas = 0;
     $ip = 0;
-    while ($admitidas < 14) {
+    for ($voltas = 0; $admitidas < 14; $voltas++) {
+        if ($voltas > 200) {
+            falhar('a chave de conta não admite mais tentativas: a espera deixou de passar com o tempo');
+        }
         $e = d26_limite_reservar($priv, $login, '203.0.113.' . (++$ip), $t);
         if ($e > 0) {
             $t += $e;
@@ -168,7 +171,7 @@ teste('I-1(a): tentativa recusada durante a espera não conta nem renova a esper
     for ($i = 0; $i < 50; $i++) {
         verdadeiro(d26_limite_reservar($priv, 'chefe', "198.51.100.$i", $t + 1 + $i % 3) > 0, "rajada $i recusada");
     }
-    igual($antes, (string) file_get_contents($arq), 'recusas não gravam nada: nenhum contador sobe');
+    verdadeiro($antes === (string) file_get_contents($arq), 'recusas não gravam nada: nenhum contador sobe nem espera é renovada');
     igual($espera - 1, d26_limite_reservar($priv, 'chefe', '192.0.2.1', $t + 2), 'a espera só diminui com o tempo, nunca é renovada');
     limparPrivadoDeLimite($priv);
 }, false);

@@ -98,4 +98,14 @@ Só a página da cadeira restrita usa servidor: PHP 8.3 do Hostinger, mais um di
    - `curl -s -o /dev/null -w '%{http_code}' https://direito2026.drpetrus.top/api/nao-existe.php` devolve 404 e não a página da SPA.
    - `curl -sI https://direito2026.drpetrus.top/api/saude.php` mostra `Cache-Control: no-store` e `X-Content-Type-Options: nosniff`.
 
+**Admin trancado por tentativas de outra pessoa (socorro)**
+
+O limite de tentativas tem uma chave por conta (10 falhas em 15 min, espera de até 60 s). Para um atacante distribuído não trancar o admin, quem já entrou antes recebe o cookie `__Host-d26disp` (180 dias, HMAC do login com `segredo.key`) e não é barrado por essa chave; ele continua sujeito às chaves usuário+IP e IP. Se mesmo assim o admin ficar sem conseguir entrar (navegador novo, cookie apagado), zere os contadores daquela conta pelo CLI, que não vai no pacote:
+
+1. `ssh hostinger 'mkdir -p ~/d26_cli_tmp'` e `scp servidor/cli/desbloquear.php hostinger:~/d26_cli_tmp/`;
+2. `ssh hostinger 'D26_NUCLEO=$HOME/domains/drpetrus.top/public_html/direito2026/api/nucleo php ~/d26_cli_tmp/desbloquear.php $HOME/domains/drpetrus.top/direito2026_privado <login>'`;
+3. `ssh hostinger 'rm -rf ~/d26_cli_tmp'`.
+
+O CLI remove a chave de conta e as chaves usuário+IP daquele login em `tentativas.json`; não mexe nas outras contas, não cria nada e não imprime IP. Entre logo depois: se o ataque continuar, os contadores sobem de novo.
+
 **Testes antes de publicar:** `php servidor/testes/rodar.php` (suíte PHP, sem phpunit; sobe `php -S` local contra `servidor/dev/roteador.php`). No servidor, `php -S` sobe mas não aceita conexão em 127.0.0.1, então lá só roda a parte sem servidor: `php servidor/testes/rodar.php --sem-servidor` (copiando `public/api` e `servidor` para uma pasta temporária fora de `public_html`, e apagando-a depois).

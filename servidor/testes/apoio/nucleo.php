@@ -5,7 +5,7 @@ declare(strict_types=1);
 if (!defined('D26_API')) {
     define('D26_API', true);
 }
-foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'csrf'] as $modulo) {
+foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'dispositivo', 'csrf'] as $modulo) {
     require_once RAIZ_REPO . "/public/api/nucleo/$modulo.php";
 }
 

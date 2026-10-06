@@ -34,8 +34,10 @@ teste('cookie de sessão: nome __Host-d26, Secure, HttpOnly, SameSite=Strict, pa
     $c = $a->clienteComSessao();
     $r = $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
     igual(200, $r->status, 'o cookie de sessão só nasce no login (anônimo usa __Host-d26pre)');
-    igual(1, count($c->ultimoSetCookie), 'um Set-Cookie');
-    $sc = $c->ultimoSetCookie[0];
+    igual(2, count($c->ultimoSetCookie), 'Set-Cookie da sessão e do dispositivo confiável');
+    $propios = array_values(array_filter($c->ultimoSetCookie, static fn (string $s): bool => str_starts_with($s, '__Host-d26=')));
+    igual(1, count($propios), 'um único cookie de sessão');
+    $sc = $propios[0];
     verdadeiro(str_starts_with($sc, '__Host-d26='), 'nome do cookie');
     foreach (['Secure', 'HttpOnly', 'SameSite=Strict', 'path=/'] as $attr) {
         verdadeiro(stripos($sc, $attr) !== false, "atributo $attr em: $sc");
@@ -61,7 +63,7 @@ teste('id de sessão forjado pelo cliente é descartado (strict mode)', function
     $c = $a->cliente();
     $c->cookies['__Host-d26'] = 'idforjadoporatacante0123456789abcdef';
     $c->get('/api/sessao.php');
-    verdadeiro($c->cookies['__Host-d26'] !== 'idforjadoporatacante0123456789abcdef', 'servidor emitiu id próprio');
+    verdadeiro(($c->cookies['__Host-d26'] ?? '') !== 'idforjadoporatacante0123456789abcdef', 'o id forjado não é aceito nem devolvido');
     verdadeiro(!is_file($a->priv . '/sessoes/sess_idforjadoporatacante0123456789abcdef'), 'não criou arquivo com o id forjado');
 });
 

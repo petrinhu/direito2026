@@ -18,6 +18,25 @@ function limparPrivadoDeLimite(string $priv): void
     apagarArvore(dirname($priv));
 }
 
+/**
+ * Leva a chave de conta de $login a 14 tentativas admitidas de IPs diferentes (respeitando as
+ * esperas, que sobem 2, 4, 8, 16 s). Devolve o instante da última; dali a conta espera ~32 s.
+ */
+function saturarContaEm(string $priv, string $login, int $t): int
+{
+    $admitidas = 0;
+    $ip = 0;
+    while ($admitidas < 14) {
+        $e = d26_limite_reservar($priv, $login, '203.0.113.' . (++$ip), $t);
+        if ($e > 0) {
+            $t += $e;
+        } else {
+            $admitidas++;
+        }
+    }
+    return $t;
+}
+
 teste('conta: rajada de IPs diferentes contra o mesmo login leva a 429, com teto curto', function (): void {
     $priv = privadoDeLimite();
     $t = 1_000_000;
@@ -117,8 +136,9 @@ teste('IP agrupado: IPv4 inteiro, IPv6 em /64, IPv4-mapeado como IPv4, lixo pres
     igual('nao-e-ip', d26_limite_ip_agrupado('nao-e-ip'));
 }, false);
 
-teste('reserva atômica: 16 processos disputando a mesma chave deixam passar no máximo 6', function (): void {
+teste('reserva atômica: 16 processos disputando a mesma chave deixam passar no máximo 5 (mais 1 por segundo decorrido)', function (): void {
     $priv = privadoDeLimite();
+    $inicio = microtime(true);
     $ps = [];
     for ($i = 0; $i < 16; $i++) {
         $ps[] = proc_open(
@@ -132,7 +152,69 @@ teste('reserva atômica: 16 processos disputando a mesma chave deixam passar no 
         $passaram += (int) stream_get_contents($pipes[$i][1]);
         proc_close($p);
     }
-    verdadeiro($passaram <= 6, "no máximo 5 livres + 1 passam, vieram $passaram");
+    $permitidas = 5 + (int) ceil(microtime(true) - $inicio); // cada espera vencida libera mais uma
+    verdadeiro($passaram <= $permitidas, "no máximo $permitidas passam, vieram $passaram");
     verdadeiro($passaram >= 1, 'varredura não-vazia: alguma passou');
+    limparPrivadoDeLimite($priv);
+}, false);
+
+teste('I-1(a): tentativa recusada durante a espera não conta nem renova a espera da conta', function (): void {
+    $priv = privadoDeLimite();
+    $t = saturarContaEm($priv, 'chefe', 8_000_000);
+    $arq = $priv . '/tentativas.json';
+    $antes = (string) file_get_contents($arq);
+    $espera = d26_limite_reservar($priv, 'chefe', '192.0.2.1', $t + 1);
+    verdadeiro($espera > 1, "em espera (veio $espera)");
+    for ($i = 0; $i < 50; $i++) {
+        verdadeiro(d26_limite_reservar($priv, 'chefe', "198.51.100.$i", $t + 1 + $i % 3) > 0, "rajada $i recusada");
+    }
+    igual($antes, (string) file_get_contents($arq), 'recusas não gravam nada: nenhum contador sobe');
+    igual($espera - 1, d26_limite_reservar($priv, 'chefe', '192.0.2.1', $t + 2), 'a espera só diminui com o tempo, nunca é renovada');
+    limparPrivadoDeLimite($priv);
+}, false);
+
+teste('I-1(b): dispositivo confiável passa pela chave de conta, mas não pelas de usuário+IP e de IP', function (): void {
+    $priv = privadoDeLimite();
+    $t = saturarContaEm($priv, 'chefe', 9_000_000);
+    verdadeiro(d26_limite_reservar($priv, 'chefe', '192.0.2.9', $t + 1) > 0, 'sem dispositivo: barrado pela conta');
+    igual(0, d26_limite_reservar($priv, 'chefe', '192.0.2.9', $t + 1, true), 'com dispositivo confiável: entra');
+    // Não vale como passe livre: as falhas dele contam na chave usuário+IP (5 livres).
+    for ($i = 0; $i < 4; $i++) {
+        igual(0, d26_limite_reservar($priv, 'chefe', '192.0.2.9', $t + 1, true), "falha $i do dispositivo");
+    }
+    verdadeiro(d26_limite_reservar($priv, 'chefe', '192.0.2.9', $t + 1, true) > 0, 'usuário+IP ainda freia o dispositivo');
+    for ($i = 1; $i <= 30; $i++) {
+        d26_limite_reservar($priv, "alvo$i", '192.0.2.77', $t, true);
+    }
+    verdadeiro(d26_limite_reservar($priv, 'chefe', '192.0.2.77', $t, true) > 800, 'a chave de IP ainda freia o dispositivo');
+    limparPrivadoDeLimite($priv);
+}, false);
+
+teste('I-1: atacante distribuído; sem dispositivo o admin entra depois de uma espera curta (teto 60 s)', function (): void {
+    $priv = privadoDeLimite();
+    $t = 10_000_000;
+    for ($i = 1; $i <= 40; $i++) {
+        d26_limite_reservar($priv, 'chefe', "203.0.113.$i", $t + $i); // atacante insistente
+    }
+    $fim = $t + 40;
+    $espera = d26_limite_reservar($priv, 'chefe', '192.0.2.5', $fim);
+    verdadeiro($espera >= 1 && $espera <= 60, "espera curta (veio $espera)");
+    igual(0, d26_limite_reservar($priv, 'chefe', '192.0.2.5', $fim + $espera), 'passada a espera, o admin entra');
+    limparPrivadoDeLimite($priv);
+}, false);
+
+teste('C-5: toda gravação de tentativas.json faz a faxina das entradas expiradas (reserva e sucesso)', function (): void {
+    $priv = privadoDeLimite();
+    $t = 11_000_000;
+    d26_limite_reservar($priv, 'velho', '203.0.113.1', $t);
+    d26_limite_reservar($priv, 'velho', '203.0.113.1', $t);
+    $arq = $priv . '/tentativas.json';
+    $conta = static fn (): int => count(json_decode((string) file_get_contents($arq), true, 16, JSON_THROW_ON_ERROR)['c'] ?? []);
+    igual(1, $conta(), 'uma conta registrada');
+    d26_limite_sucesso($priv, 'outro', '203.0.113.2', $t + 100_000);
+    igual(0, $conta(), 'o sucesso também varre: a conta velha (fora da janela) sumiu');
+    $d = json_decode((string) file_get_contents($arq), true, 16, JSON_THROW_ON_ERROR);
+    igual([], $d['u'], 'usuário+IP de mais de um dia some');
+    igual([], $d['ip'], 'IP expirado some');
     limparPrivadoDeLimite($priv);
 }, false);

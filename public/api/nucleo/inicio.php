@@ -13,7 +13,7 @@ if (!defined('D26_API')) {
 umask(0077);
 ob_start();
 
-foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'csrf', 'sessao'] as $modulo) {
+foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'dispositivo', 'csrf', 'sessao'] as $modulo) {
     require_once __DIR__ . '/' . $modulo . '.php';
 }
 

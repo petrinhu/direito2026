@@ -21,10 +21,11 @@ teste('login certo: 200, sessão autenticada e csrf novo', function (): void {
 
 teste('login regenera o id de sessão e o id antigo deixa de valer (fixação)', function (): void {
     $a = Ambiente::novo();
-    $c = $a->clienteComSessao();
-    $antigo = $c->cookies['__Host-d26'];
-    $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
-    verdadeiro($c->cookies['__Host-d26'] !== $antigo, 'id mudou');
+    $c = $a->entrar();
+    $antigo = $c->cookies['__Host-d26'] ?? '';
+    verdadeiro(preg_match('/^[A-Za-z0-9,-]{22,128}$/D', $antigo) === 1, 'o login criou a sessão');
+    igual(200, $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN])->status, 'novo login com sessão ativa');
+    verdadeiro(($c->cookies['__Host-d26'] ?? '') !== $antigo, 'id mudou');
     $atacante = $a->cliente();
     $atacante->cookies['__Host-d26'] = $antigo;
     igual(false, $atacante->get('/api/sessao.php')->json()['autenticado'], 'id antigo não autentica');

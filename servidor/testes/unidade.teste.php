@@ -45,15 +45,15 @@ teste('login: regex exata, case-sensitive e sem quebra de linha final', function
     igual(false, d26_login_valido('açb'));
 }, false);
 
-teste('limite: espera 2^(n-5) s depois de 5 falhas livres, com teto de 900 s', function (): void {
+teste('limite: espera 2^(n-4) s depois de 5 falhas livres, com teto de 900 s', function (): void {
     $p = dirTemporario();
     $t = 1000;
-    for ($i = 1; $i <= 6; $i++) {
-        igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), "tentativa $i passa (5 livres + a que arma a espera)");
+    for ($i = 1; $i <= 5; $i++) {
+        igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), "tentativa $i passa (5 falhas livres)");
     }
     $esperado = [2, 4, 8, 16, 32, 64, 128, 256, 512, 900, 900];
     foreach ($esperado as $k => $espera) {
-        igual($espera, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), 'espera após a tentativa ' . (6 + $k));
+        igual($espera, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), 'espera após a tentativa ' . (5 + $k));
         $t += $espera;
         igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', $t), 'liberado ao fim da espera');
     }
@@ -69,10 +69,10 @@ teste('limite: sucesso zera o contador do usuário+IP', function (): void {
     }
     d26_limite_reservar($p, 'ana', '10.0.0.1', 1000);
     d26_limite_sucesso($p, 'ana', '10.0.0.1', 1000);
-    for ($i = 0; $i < 5; $i++) {
+    for ($i = 0; $i < 4; $i++) {
         igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', 1000), "tentativa $i depois do sucesso");
     }
-    igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', 1000), 'sem o zeramento já estaria bloqueada');
+    igual(0, d26_limite_reservar($p, 'ana', '10.0.0.1', 1000), 'a 5ª falha livre; sem o zeramento já estaria bloqueada');
     verdadeiro(d26_limite_reservar($p, 'ana', '10.0.0.1', 1000) > 0, 'e a seguinte espera (controle)');
     apagarArvore($p);
 }, false);

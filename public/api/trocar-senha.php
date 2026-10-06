@@ -20,7 +20,7 @@ if (!is_string($atual) || !is_string($nova)) {
 $login = (string) $conta['usuario'];
 $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 $reserva = time();
-$espera = d26_limite_reservar($priv, $login, $ip, $reserva);
+$espera = d26_limite_reservar($priv, $login, $ip, $reserva, d26_dispositivo_confiavel($priv, $login));
 if ($espera > 0) {
     d26_erro(429, 'aguarde', "Muitas tentativas. Aguarde {$espera} segundos e tente de novo.", ['segundos' => $espera]);
 }

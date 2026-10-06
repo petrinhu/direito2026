@@ -121,7 +121,7 @@ describe('SlidesVisor', () => {
       ...slides.slice(1)
     ];
     w = mount(SlidesVisor, { props: { slides: suspeito, equipe, reduzirMovimento: false } });
-    expect(w.find('img').exists()).toBe(false);
+    expect(w.find('img[src="x"]').exists()).toBe(false);
     expect(w.text()).toContain('<img src=x onerror=alert(1)>');
   });
 

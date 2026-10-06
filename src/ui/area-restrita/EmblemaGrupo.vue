@@ -48,7 +48,7 @@ const webp = computed(() => srcset('webp'));
       :sizes="tamanhos"
       width="320"
       height="320"
-      alt="Emblema do grupo: círculo escuro com moldura dourada, uma figura de inteligência artificial com o selo AI à esquerda, um homem de terno saindo de um escritório com uma caixa de pertences à direita, a balança da justiça e dois livros de Direito do Trabalho e Constituição Federal, sob o nome Fronteiras da Inteligência Artificial."
+      alt="Emblema do grupo Fronteiras da Inteligência Artificial: círculo escuro com moldura dourada, uma figura de inteligência artificial com o selo AI à esquerda, um homem de terno saindo de um escritório com uma caixa de pertences à direita, a balança da justiça e dois livros de Direito do Trabalho e Constituição Federal, sob o nome do grupo."
       decoding="async"
       :fetchpriority="tamanho === 'grande' || tamanho === undefined ? 'high' : 'low'"
     />

@@ -239,6 +239,18 @@ onBeforeUnmount(() => {
         @pointerup="aoSoltar"
         @pointercancel="aoCancelarToque"
       >
+        <p class="ar-slides__gire" role="status">
+          <svg
+            class="ar-slides__gire-icone"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <rect x="15" y="4" width="18" height="30" rx="3" />
+            <path d="M8 40h32m0 0-5-5m5 5-5 5" />
+          </svg>
+          Gire o aparelho para ver os slides
+        </p>
         <div ref="area" class="ar-slides__area">
           <PalcoSlide :escala="escala">
             <Transition name="ar-slide" mode="out-in" :css="!reduzirMovimento">
@@ -393,6 +405,7 @@ onBeforeUnmount(() => {
 }
 
 .ar-slides__palco {
+  position: relative;
   min-height: 0;
   touch-action: pan-y;
   border-radius: var(--raio-md, 10px);
@@ -420,6 +433,46 @@ onBeforeUnmount(() => {
   min-height: 0;
   display: grid;
   align-items: center;
+}
+
+/* Aviso "gire o aparelho": só celular em pé. Sem JS; o deck segue no DOM para o leitor de tela. */
+.ar-slides__gire {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  padding: var(--esp-4, 1rem);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-3, 0.75rem);
+  text-align: center;
+  font-weight: 600;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+  border: 1px solid var(--ar-ouro, var(--cor-borda-forte));
+  border-radius: var(--raio-md, 10px);
+}
+
+.ar-slides__gire-icone {
+  width: 3.5rem;
+  height: 3.5rem;
+  fill: none;
+  stroke: var(--ar-ciano, var(--cor-acento));
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (orientation: portrait) and (max-width: 700px) {
+  .ar-slides__gire {
+    display: flex;
+    min-height: 14rem;
+  }
+  .ar-slides__area {
+    min-height: 14rem;
+  }
 }
 
 .ar-slides__palco:focus-visible {

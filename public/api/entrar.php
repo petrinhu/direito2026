@@ -33,8 +33,8 @@ if (!$confere || $conta === null || $conta['ativo'] !== true) {
 
 d26_limite_sucesso($priv, $usuario, $ip, $reserva);
 $novoHash = password_needs_rehash((string) $conta['hash'], PASSWORD_ARGON2ID, D26_ARGON) ? d26_hash_senha($senha) : null;
-d26_contas_registrar_login($priv, $usuario, $novoHash);
-d26_sessao_autenticar($priv, $usuario, (int) $conta['versaoSessao'], true);
+d26_contas_registrar_login($priv, $usuario, $novoHash, $conta);
+d26_sessao_autenticar($priv, $usuario, (string) ($conta['uid'] ?? ''), (int) $conta['versaoSessao'], true);
 d26_dispositivo_emitir($priv, $usuario);
 
 d26_responder(200, [

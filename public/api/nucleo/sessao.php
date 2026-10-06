@@ -12,7 +12,7 @@ if (!defined('D26_API')) {
  * que o servidor restringe). Invariantes: (1) só existe sessão em disco para
  * quem entrou: visita anônima nunca chama session_start (o CSRF dela vive no
  * cookie __Host-d26pre, ver csrf.php); (2) sessão autenticada só vale enquanto
- * a conta existe, está ativa e a versaoSessao confere.
+ * a conta existe, está ativa e uid e versaoSessao conferem.
  */
 function d26_sessao_configurar(string $priv): void
 {
@@ -72,6 +72,7 @@ function d26_sessao_iniciar(string $priv): ?array
         : null;
     $valida = $conta !== null
         && $conta['ativo'] === true
+        && hash_equals((string) ($conta['uid'] ?? ''), is_string($_SESSION['uid'] ?? null) ? $_SESSION['uid'] : "\0")
         && (int) $conta['versaoSessao'] === (int) ($_SESSION['versao'] ?? -1)
         && $agora - (int) ($_SESSION['atividade'] ?? 0) <= D26_SESSAO_OCIOSIDADE
         && $agora - (int) ($_SESSION['criada'] ?? 0) <= D26_SESSAO_VALIDADE;
@@ -87,7 +88,7 @@ function d26_sessao_iniciar(string $priv): ?array
  * Login ou troca de senha: id novo (anti-fixação), csrf novo, versão da conta.
  * No login ainda não há sessão: é aqui que ela passa a existir em disco.
  */
-function d26_sessao_autenticar(string $priv, string $usuario, int $versao, bool $novaValidade): void
+function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $versao, bool $novaValidade): void
 {
     $agora = time();
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -100,6 +101,7 @@ function d26_sessao_autenticar(string $priv, string $usuario, int $versao, bool 
         d26_sessao_faxina($priv . '/sessoes', $agora);
     }
     $_SESSION['usuario'] = $usuario;
+    $_SESSION['uid'] = $uid;
     $_SESSION['versao'] = $versao;
     if ($novaValidade || !isset($_SESSION['criada'])) {
         $_SESSION['criada'] = $agora;

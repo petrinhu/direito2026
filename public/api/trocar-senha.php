@@ -34,5 +34,5 @@ if ($motivo !== null) {
 }
 
 $versao = d26_contas_trocar_senha($priv, $login, d26_hash_senha($nova));
-d26_sessao_autenticar($priv, $login, $versao, false);
+d26_sessao_autenticar($priv, $login, (string) ($conta['uid'] ?? ''), $versao, false);
 d26_responder(200, ['ok' => true, 'csrf' => $_SESSION['csrf']]);

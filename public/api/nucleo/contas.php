@@ -7,8 +7,11 @@ if (!defined('D26_API')) {
 }
 
 /**
- * Contas de usuário (usuarios.json): {"versao":1,"usuarios":[{usuario, hash,
+ * Contas de usuário (usuarios.json): {"versao":1,"usuarios":[{usuario, uid, hash,
  * admin, ativo, deveTrocarSenha, versaoSessao, criadoEm, ultimoLogin}]}.
+ * uid (16 bytes aleatórios, hex) identifica a ENCARNAÇÃO da conta e versaoSessao
+ * nasce aleatória: a sessão guarda os dois, então excluir e recriar o mesmo login
+ * nunca ressuscita a sessão da conta antiga.
  * O papel de admin vem só do arquivo. Comparação de login é EXATA.
  */
 const D26_CONTAS_PADRAO = ['versao' => 1, 'usuarios' => []];
@@ -187,11 +190,12 @@ function d26_contas_criar(string $priv, string $login, string $hash, bool $admin
             }
             $d['usuarios'][] = [
                 'usuario' => $login,
+                'uid' => bin2hex(random_bytes(16)),
                 'hash' => $hash,
                 'admin' => $admin,
                 'ativo' => true,
                 'deveTrocarSenha' => true,
-                'versaoSessao' => 1,
+                'versaoSessao' => random_int(1 << 20, 1 << 40),
                 'criadoEm' => gmdate('c'),
                 'ultimoLogin' => null,
             ];
@@ -240,12 +244,22 @@ function d26_contas_trocar_senha(string $priv, string $login, string $hash): int
     return $versao;
 }
 
-/** Registra o login; se $novoHash vier (rehash por parâmetros novos), troca o hash. */
-function d26_contas_registrar_login(string $priv, string $login, ?string $novoHash): void
+/**
+ * Registra o login; se $novoHash vier (rehash por parâmetros novos), troca o hash
+ * SÓ se a conta ainda é a que foi lida ($lida: mesmo hash, versaoSessao e uid),
+ * conferido dentro do lock. Senão uma redefinição ou troca de senha feita durante
+ * o Argon2id lento seria desfeita pelo rehash da senha antiga.
+ *
+ * @param array<string, mixed> $lida
+ */
+function d26_contas_registrar_login(string $priv, string $login, ?string $novoHash, array $lida): void
 {
-    d26_contas_mutar($priv, $login, static function (array &$c) use ($novoHash): string {
+    d26_contas_mutar($priv, $login, static function (array &$c) use ($novoHash, $lida): string {
         $c['ultimoLogin'] = gmdate('c');
-        if ($novoHash !== null) {
+        $intacta = hash_equals((string) $lida['hash'], (string) $c['hash'])
+            && (int) $lida['versaoSessao'] === (int) $c['versaoSessao']
+            && (string) ($lida['uid'] ?? '') === (string) ($c['uid'] ?? '');
+        if ($novoHash !== null && $intacta) {
             $c['hash'] = $novoHash;
         }
         return 'ok';

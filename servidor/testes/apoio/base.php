@@ -314,7 +314,8 @@ final class Ambiente
             'admin' => $admin,
             'ativo' => $ativo,
             'deveTrocarSenha' => $deveTrocar,
-            'versaoSessao' => 1,
+            'uid' => bin2hex(random_bytes(16)),
+            'versaoSessao' => random_int(1 << 20, 1 << 40),
             'criadoEm' => gmdate('c'),
             'ultimoLogin' => null,
         ];

@@ -117,8 +117,9 @@ describe('mapa e fichamento de Filosofia Jurídica: cada ficha', () => {
     expect(textoDe(mapaFichamento).toLowerCase()).not.toContain('lex naturale');
   });
 
-  it('nenhum texto cita instituição ou pessoa da turma', () => {
-    expect(textoDe(mapaFichamento).toLowerCase()).not.toMatch(/professor|professora|colega|instituicao/);
+  it('nenhum texto cita pessoa da turma', () => {
+    expect(textoDe(mapaFichamento).toLowerCase()).not.toMatch(/professor|professora|colega/);
+    // O nome da instituição é checado por scripts/verificar-proibicoes.sh (lista privada), não aqui.
   });
 });
 

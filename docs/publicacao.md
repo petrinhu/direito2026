@@ -78,7 +78,7 @@ Só a página da cadeira restrita usa servidor: PHP 8.3 do Hostinger, mais um di
 **Peças e onde ficam**
 
 - Código PHP: `public/api/*.php` e `public/api/nucleo/` (biblioteca, negada ao acesso direto). Segue no zip como o resto do `dist/`; o zip continua igual (arquivos na raiz, destino substituído inteiro a cada publicação).
-- Diretório privado: `~/domains/drpetrus.top/direito2026_privado/`, irmão de `public_html`, modo 700. Guarda `usuarios.json`, `tentativas.json`, `sessoes/`, `conteudo/` e `erros.log`. Não é tocado pela publicação do zip.
+- Diretório privado: `~/domains/drpetrus.top/direito2026_privado/`, irmão de `public_html`, modo 700. Guarda `usuarios.json`, `tentativas.json`, `segredo.key`, `sessoes/`, `conteudo/` e `erros.log`. Não é tocado pela publicação do zip.
 - Conteúdo restrito: `conteudo/interdisciplinar.json`, gerado fora do repositório e enviado só por `scp`.
 
 **Passos (primeira vez; nas seguintes, só o zip e, se o conteúdo mudou, o JSON)**
@@ -88,7 +88,7 @@ Só a página da cadeira restrita usa servidor: PHP 8.3 do Hostinger, mais um di
    `scp servidor/cli/criar-admin.php hostinger:~/d26_cli_tmp/` (crie a pasta antes com `ssh hostinger 'mkdir -p ~/d26_cli_tmp'`);
    `ssh -t hostinger 'D26_NUCLEO=$HOME/domains/drpetrus.top/public_html/direito2026/api/nucleo php ~/d26_cli_tmp/criar-admin.php $HOME/domains/drpetrus.top/direito2026_privado <login>'`;
    `ssh hostinger 'rm -rf ~/d26_cli_tmp'`.
-   O CLI cria as pastas (700) e os arquivos (600), grava o admin com troca de senha obrigatória no primeiro acesso e recusa se `usuarios.json` já existir (use `--substituir` só de propósito: ele troca todos os usuários).
+   O CLI cria as pastas (700) e os arquivos (600, inclusive `segredo.key`, o segredo do token anti-CSRF de quem ainda não entrou; se faltar, o PHP o cria sozinho na primeira necessidade; não o apague nem o troque com gente logada), grava o admin com troca de senha obrigatória no primeiro acesso e recusa se `usuarios.json` já existir (use `--substituir` só de propósito: ele troca todos os usuários).
 3. Enviar o JSON restrito (a porta já vem do alias `hostinger`):
    `scp interdisciplinar.json hostinger:~/domains/drpetrus.top/direito2026_privado/conteudo/` e `ssh hostinger 'chmod 600 ~/domains/drpetrus.top/direito2026_privado/conteudo/interdisciplinar.json'`.
 4. Conferir por `curl` (o servidor é a única prova de que o `.htaccess` e o PHP se comportam; teste local não vale por ele):

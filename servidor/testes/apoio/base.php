@@ -265,7 +265,9 @@ final class Ambiente
     /** @var resource|null */
     private $processo = null;
 
-    /** @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool} $opcoes */
+    private int $workers = 0;
+
+    /** @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes */
     public static function novo(array $opcoes = []): self
     {
         $a = new self();
@@ -285,6 +287,7 @@ final class Ambiente
         if ($opcoes['admin'] ?? true) {
             $a->semearUsuario(self::LOGIN_ADMIN, self::SENHA_ADMIN, true, $opcoes['deveTrocar'] ?? false);
         }
+        $a->workers = (int) ($opcoes['workers'] ?? 0);
         self::$vivos[] = $a; // antes de iniciar: se o php -S falhar, ainda assim é limpo
         $a->iniciar((bool) ($opcoes['semRoteador'] ?? false));
         return $a;
@@ -378,6 +381,9 @@ final class Ambiente
         }
         $env = getenv();
         $env['D26_PRIVADO'] = $this->priv;
+        if ($this->workers > 1) {
+            $env['PHP_CLI_SERVER_WORKERS'] = (string) $this->workers;
+        }
         $saida = $this->raiz . '/servidor.log';
         $this->processo = proc_open(
             $cmd,
@@ -403,11 +409,68 @@ final class Ambiente
     public function parar(): void
     {
         if ($this->processo !== null) {
+            $pid = (int) (proc_get_status($this->processo)['pid'] ?? 0);
+            // Com workers, o pai morre e os filhos ficam órfãos: coleta antes.
+            $filhos = $pid > 0 ? self::descendentes($pid) : [];
             proc_terminate($this->processo);
             proc_close($this->processo);
             $this->processo = null;
+            self::matar($filhos);
         }
         apagarArvore($this->raiz);
+    }
+
+    /** @return list<int> pids descendentes de $pid (varre /proc, sem posix). */
+    public static function descendentes(int $pid): array
+    {
+        $pais = [];
+        foreach (glob('/proc/[0-9]*/stat') ?: [] as $arq) {
+            $txt = @file_get_contents($arq);
+            if ($txt !== false && preg_match('/^(\d+) \(.*\) \S (\d+) /s', $txt, $m) === 1) {
+                $pais[(int) $m[2]][] = (int) $m[1];
+            }
+        }
+        $achados = [];
+        $fila = [$pid];
+        while ($fila !== []) {
+            $p = array_shift($fila);
+            foreach ($pais[$p] ?? [] as $f) {
+                $achados[] = $f;
+                $fila[] = $f;
+            }
+        }
+        return $achados;
+    }
+
+    /** @param list<int> $pids */
+    private static function matar(array $pids): void
+    {
+        foreach ($pids as $p) {
+            $k = proc_open(['kill', '-TERM', (string) $p], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $x);
+            if (is_resource($k)) {
+                proc_close($k);
+            }
+        }
+        for ($i = 0; $i < 40 && array_filter($pids, static fn (int $p): bool => is_dir("/proc/$p")) !== []; $i++) {
+            usleep(50000);
+        }
+    }
+
+    /** Intervalos [início, fim] de cada password_verify que rodou (só php -S). @return list<array{float, float}> */
+    public function verificacoes(): array
+    {
+        $arq = $this->priv . '/verificacoes.log';
+        $abertas = [];
+        $feitas = [];
+        foreach (is_file($arq) ? (file($arq, FILE_IGNORE_NEW_LINES) ?: []) : [] as $linha) {
+            [$fase, $t] = explode(' ', $linha) + ['', '0'];
+            if ($fase === 'i') {
+                $abertas[] = (float) $t;
+            } elseif ($fase === 'f' && $abertas !== []) {
+                $feitas[] = [array_shift($abertas), (float) $t];
+            }
+        }
+        return $feitas;
     }
 
     public static function limparTudo(): void

@@ -67,9 +67,12 @@ teste('criar: login duplicado 409; login inválido 400; "Chefe" é diferente de 
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'Chefe'])->status, 'caixa diferente é outro login');
 });
 
-teste('criar: senha provisória vazia ou acima de 128 é 400', function (): void {
+teste('criar: senha provisória abaixo de 8 ou acima de 128 caracteres é 400; com 8 passa', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
+    igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => 'abcdefg'])->status, '7 caracteres');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'edu', 'senhaProvisoria' => 'abcdefgh'])->status, '8 caracteres');
+    igual(400, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'edu', 'senhaProvisoria' => 'curta'])->status, 'redefinir também exige 8');
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => ''])->status);
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => str_repeat('x', 129)])->status);
 });

@@ -78,11 +78,33 @@ function d26_hash_senha(string $senha): string
  */
 function d26_senha_confere(?array $conta, string $senha): bool
 {
-    if ($conta === null) {
-        d26_hash_senha($senha);
-        return false;
+    d26_teste_marcar('i');
+    try {
+        if ($conta === null) {
+            d26_hash_senha($senha);
+            return false;
+        }
+        return password_verify($senha, (string) $conta['hash']);
+    } finally {
+        d26_teste_marcar('f');
     }
-    return password_verify($senha, (string) $conta['hash']);
+}
+
+/**
+ * Gancho de teste: registra início e fim de cada verificação de senha em
+ * PRIV/verificacoes.log. Só age sob php -S com D26_PRIVADO definido; em
+ * produção (LiteSpeed) PHP_SAPI nunca é cli-server e a função não faz nada.
+ */
+function d26_teste_marcar(string $fase): void
+{
+    if (PHP_SAPI !== 'cli-server') {
+        return;
+    }
+    $dir = getenv('D26_PRIVADO');
+    if (!is_string($dir) || $dir === '') {
+        return;
+    }
+    @file_put_contents($dir . '/verificacoes.log', $fase . ' ' . sprintf('%.6f', microtime(true)) . "\n", FILE_APPEND | LOCK_EX);
 }
 
 /** @return list<array<string, mixed>> */

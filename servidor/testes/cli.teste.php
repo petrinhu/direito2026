@@ -30,7 +30,7 @@ teste('cli criar-admin: cria estrutura 700/600, admin=true, deveTrocarSenha=true
         verdadeiro(is_dir("$dir/$sub"), "$sub/ existe");
         igual(0700, fileperms("$dir/$sub") & 0777, "$sub/ 700");
     }
-    foreach (['tentativas.json', 'erros.log'] as $f) {
+    foreach (['tentativas.json', 'erros.log', 'segredo.key'] as $f) {
         verdadeiro(is_file("$dir/$f"), "$f existe");
         igual(0600, fileperms("$dir/$f") & 0777, "$f 600");
     }
@@ -91,3 +91,10 @@ function dirTemporarioCli(): string
     mkdir($dir, 0700, true);
     return $dir;
 }
+
+teste('cli criar-admin: continua aceitando provisória curta do líder (a API exige 8, o CLI não)', function (): void {
+    $dir = dirTemporarioCli() . '/privado';
+    [$rc, $out, $err] = rodarCli([$dir, 'adm.curto'], "Admin\n");
+    igual(0, $rc, "saída: $out $err");
+    apagarArvore(dirname($dir));
+}, false);

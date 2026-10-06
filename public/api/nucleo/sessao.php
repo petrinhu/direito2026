@@ -71,6 +71,7 @@ function d26_sessao_iniciar(string $priv): ?array
         ? d26_contas_buscar($priv, $_SESSION['usuario'])
         : null;
     $valida = $conta !== null
+        && is_string($conta['uid'] ?? null) && $conta['uid'] !== ''
         && $conta['ativo'] === true
         && hash_equals((string) ($conta['uid'] ?? ''), is_string($_SESSION['uid'] ?? null) ? $_SESSION['uid'] : "\0")
         && (int) $conta['versaoSessao'] === (int) ($_SESSION['versao'] ?? -1)

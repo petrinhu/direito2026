@@ -25,7 +25,7 @@ teste('usuarios.php: admin lista sem NUNCA expor o hash', function (): void {
     naoContem('hash', $r->corpo);
     $lista = $r->json()['usuarios'];
     igual(2, count($lista));
-    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin'], array_keys($lista[0]), 'campos exatos');
+    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos'], array_keys($lista[0]), 'campos exatos');
 });
 
 teste('admin cria usuário com senha informada: nasce com troca obrigatória', function (): void {

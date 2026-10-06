@@ -27,15 +27,17 @@ if ($espera > 0) {
 
 $conta = d26_login_valido($usuario) ? d26_contas_buscar($priv, $usuario) : null;
 $confere = d26_senha_confere($conta, $senha);
-if (!$confere || $conta === null || $conta['ativo'] !== true) {
+if (!$confere || $conta === null || $conta['ativo'] !== true || !is_string($conta['uid'] ?? null) || $conta['uid'] === '') {
     d26_erro(401, 'credenciais', 'Usuário ou senha inválidos.');
 }
 
 d26_limite_sucesso($priv, $usuario, $ip, $reserva);
 $novoHash = password_needs_rehash((string) $conta['hash'], PASSWORD_ARGON2ID, D26_ARGON) ? d26_hash_senha($senha) : null;
 d26_contas_registrar_login($priv, $usuario, $novoHash, $conta);
-d26_sessao_autenticar($priv, $usuario, (string) ($conta['uid'] ?? ''), (int) $conta['versaoSessao'], true);
-d26_dispositivo_emitir($priv, $usuario);
+d26_sessao_autenticar($priv, $usuario, (string) $conta['uid'], (int) $conta['versaoSessao'], true);
+if (!$confiavel) {
+    d26_dispositivo_emitir($priv, $usuario); // o aparelho que já é confiável não ocupa outra vaga
+}
 
 d26_responder(200, [
     'ok' => true,

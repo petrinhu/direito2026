@@ -100,7 +100,7 @@ Só a página da cadeira restrita usa servidor: PHP 8.3 do Hostinger, mais um di
 
 **Admin trancado por tentativas de outra pessoa (socorro)**
 
-O limite de tentativas tem uma chave por conta (10 falhas em 15 min, espera de até 60 s). Para um atacante distribuído não trancar o admin, quem já entrou antes recebe o cookie `__Host-d26disp` (180 dias, HMAC do login com `segredo.key`) e não é barrado por essa chave; ele continua sujeito às chaves usuário+IP e IP. Se mesmo assim o admin ficar sem conseguir entrar (navegador novo, cookie apagado), zere os contadores daquela conta pelo CLI, que não vai no pacote:
+O limite de tentativas tem uma chave por conta (10 falhas em 15 min, espera de até 60 s). Para um atacante distribuído não trancar o admin, quem já entrou antes recebe o cookie `__Host-d26disp` (30 dias, token aleatório por aparelho; o servidor guarda só o sha256, no máximo 5 por conta) e não é barrado por essa chave; ele continua sujeito às chaves usuário+IP e IP. Troca de senha, redefinição, desativação e exclusão invalidam todos os aparelhos da conta; o admin também pode derrubá-los pela ação `revogar-aparelhos` (aba Admin da API, `POST /api/usuarios.php`; não vale para a própria conta, que se resolve trocando a senha). Se mesmo assim o admin ficar sem conseguir entrar (navegador novo, cookie apagado), zere os contadores daquela conta pelo CLI, que não vai no pacote:
 
 1. `ssh hostinger 'mkdir -p ~/d26_cli_tmp'` e `scp servidor/cli/desbloquear.php hostinger:~/d26_cli_tmp/`;
 2. `ssh hostinger 'D26_NUCLEO=$HOME/domains/drpetrus.top/public_html/direito2026/api/nucleo php ~/d26_cli_tmp/desbloquear.php $HOME/domains/drpetrus.top/direito2026_privado <login>'`;

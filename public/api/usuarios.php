@@ -25,7 +25,7 @@ $alvo = $corpo['usuario'] ?? null;
 if (!is_string($acao) || !is_string($alvo)) {
     d26_erro(400, 'invalido', 'Informe a ação e o usuário.');
 }
-if (!in_array($acao, ['criar', 'redefinir', 'ativar', 'desativar', 'excluir'], true)) {
+if (!in_array($acao, ['criar', 'redefinir', 'ativar', 'desativar', 'excluir', 'revogar-aparelhos'], true)) {
     d26_erro(400, 'acao-invalida', 'Ação desconhecida.');
 }
 if ($acao !== 'criar' && $alvo === $conta['usuario']) {
@@ -69,6 +69,7 @@ if ($acao === 'redefinir') {
 }
 
 $r = match ($acao) {
+    'revogar-aparelhos' => d26_dispositivo_revogar_todos($priv, $alvo),
     'ativar' => d26_contas_definir_ativo($priv, $alvo, true),
     'desativar' => d26_contas_definir_ativo($priv, $alvo, false),
     default => d26_contas_excluir($priv, $alvo),

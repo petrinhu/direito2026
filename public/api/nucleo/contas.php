@@ -12,6 +12,8 @@ if (!defined('D26_API')) {
  * uid (16 bytes aleatórios, hex) identifica a ENCARNAÇÃO da conta e versaoSessao
  * nasce aleatória: a sessão guarda os dois, então excluir e recriar o mesmo login
  * nunca ressuscita a sessão da conta antiga.
+ * aparelhos: dispositivos confiáveis (só sha256, ver dispositivo.php); esvaziado
+ * em toda troca de versaoSessao. Conta sem uid não é aceita (sessão nem login).
  * O papel de admin vem só do arquivo. Comparação de login é EXATA.
  */
 const D26_CONTAS_PADRAO = ['versao' => 1, 'usuarios' => []];
@@ -142,6 +144,7 @@ function d26_conta_publica(array $c): array
         'deveTrocarSenha' => (bool) $c['deveTrocarSenha'],
         'criadoEm' => $c['criadoEm'],
         'ultimoLogin' => $c['ultimoLogin'],
+        'aparelhos' => is_array($c['aparelhos'] ?? null) ? count($c['aparelhos']) : 0,
     ];
 }
 
@@ -198,6 +201,7 @@ function d26_contas_criar(string $priv, string $login, string $hash, bool $admin
                 'versaoSessao' => random_int(1 << 20, 1 << 40),
                 'criadoEm' => gmdate('c'),
                 'ultimoLogin' => null,
+                'aparelhos' => [],
             ];
             return 'ok';
         }
@@ -210,6 +214,7 @@ function d26_contas_redefinir(string $priv, string $login, string $hash): string
         $c['hash'] = $hash;
         $c['deveTrocarSenha'] = true;
         $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+        $c['aparelhos'] = [];
         return 'ok';
     });
 }
@@ -219,6 +224,7 @@ function d26_contas_definir_ativo(string $priv, string $login, bool $ativo): str
     return d26_contas_mutar($priv, $login, static function (array &$c) use ($ativo): string {
         if ($c['ativo'] !== $ativo && !$ativo) {
             $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+            $c['aparelhos'] = [];
         }
         $c['ativo'] = $ativo;
         return 'ok';
@@ -238,6 +244,7 @@ function d26_contas_trocar_senha(string $priv, string $login, string $hash): int
         $c['hash'] = $hash;
         $c['deveTrocarSenha'] = false;
         $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+        $c['aparelhos'] = [];
         $versao = (int) $c['versaoSessao'];
         return 'ok';
     });

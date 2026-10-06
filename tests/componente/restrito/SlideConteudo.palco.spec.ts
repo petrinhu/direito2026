@@ -105,3 +105,20 @@ describe('ajuste de fonte ao palco', () => {
     expect(ajustarFonteAoPalco(raiz, corpo)).toBe(1);
   });
 });
+
+describe('lista longa', () => {
+  it('mais de 4 itens usa cartões compactos; até 4 não', () => {
+    const itens = (n: number) => Array.from({ length: n }, (_, i) => `Item fictício ${i + 1}`);
+    expect(
+      montar(slide({ layout: 'topicos', itens: itens(5) }))
+        .get('.ar-slide__itens')
+        .classes()
+    ).toContain('ar-slide__itens--compacto');
+    w?.unmount();
+    expect(
+      montar(slide({ layout: 'topicos', itens: itens(4) }))
+        .get('.ar-slide__itens')
+        .classes()
+    ).not.toContain('ar-slide__itens--compacto');
+  });
+});

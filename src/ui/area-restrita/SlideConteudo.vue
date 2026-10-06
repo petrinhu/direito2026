@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* global ResizeObserver */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { compor } from '@/app/restrito/palco';
 import type { EquipeRestrita, Slide } from '@/core/restrito/tipos';
@@ -29,15 +30,33 @@ function ajustar(): void {
   if (raiz.value && corpo.value) ajustarFonteAoPalco(raiz.value, corpo.value);
 }
 
+let observador: ResizeObserver | undefined;
+let medidaAnterior = '';
+
 onMounted(() => {
   ajustar();
-  // A fonte web chega depois do primeiro layout e muda as medidas.
+  // A fonte web chega depois do primeiro layout (e depois de fonts.ready, que pode
+  // resolver antes de a fonte ser pedida): refaz o encaixe a cada mudança de tamanho
+  // do conteúdo. Mesmo resultado, mesma medida: não entra em laço.
+  const conteudo = corpo.value?.querySelector<HTMLElement>('.ar-slide__conteudo');
+  if (conteudo && typeof ResizeObserver !== 'undefined') {
+    observador = new ResizeObserver(() => {
+      const medida = `${conteudo.offsetWidth}x${conteudo.offsetHeight}`;
+      if (cancelado || medida === medidaAnterior) return;
+      ajustar();
+      medidaAnterior = `${conteudo.offsetWidth}x${conteudo.offsetHeight}`;
+    });
+    observador.observe(conteudo);
+  }
   void document.fonts?.ready.then(() => {
     if (!cancelado) ajustar();
   });
+  document.fonts?.addEventListener?.('loadingdone', ajustar);
 });
 onBeforeUnmount(() => {
   cancelado = true;
+  observador?.disconnect();
+  document.fonts?.removeEventListener?.('loadingdone', ajustar);
 });
 </script>
 
@@ -100,7 +119,10 @@ onBeforeUnmount(() => {
           </p>
           <ol
             class="ar-slide__itens"
-            :class="`ar-slide__itens--${composicao.tipo}`"
+            :class="[
+              `ar-slide__itens--${composicao.tipo}`,
+              { 'ar-slide__itens--compacto': composicao.itens.length > 4 }
+            ]"
             :data-n="composicao.itens.length"
             :style="{ '--s-colunas': quantidadeNumericos }"
           >
@@ -342,6 +364,7 @@ onBeforeUnmount(() => {
 .ar-slide__conteudo {
   display: grid;
   gap: calc(26px * var(--s-aj));
+  min-height: 0;
   margin-block: auto;
 }
 
@@ -582,6 +605,15 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   background: color-mix(in srgb, var(--s-cor) 12%, transparent);
   text-align: center;
+}
+
+/* Mais de 4 itens: cartões compactos (a lista cresce, o palco não). */
+.ar-slide__itens--compacto {
+  gap: calc(12px * var(--s-aj));
+}
+.ar-slide__itens--compacto .ar-slide__item {
+  padding: calc(11px * var(--s-aj)) calc(22px * var(--s-aj));
+  line-height: 1.2;
 }
 
 /* mosaico: cartões em grade, rótulo como cabeça. */

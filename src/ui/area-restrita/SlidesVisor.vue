@@ -18,11 +18,14 @@ const DURACAO_CRONOMETRO = 600;
 /** Arrastar mínimo, em pixels, para contar como troca de slide por toque. */
 const DISTANCIA_MINIMA_TOQUE = 60;
 const CLASSE_IMPRIMINDO = 'ar-imprimindo';
+const CLASSE_IMPRIMINDO_SEM_NOTAS = 'ar-imprimindo--sem-notas';
 /** Área útil da A4 paisagem (297 x 210 mm com margem de 10 mm), com folga de 7 mm. */
 const IMPRESSAO_LARGURA_MM = 270;
 /** Altura que o quadro pode ocupar na página: com notas sobra espaço para o texto delas. */
 const IMPRESSAO_ALTURA_COM_NOTAS_MM = 120;
-const IMPRESSAO_ALTURA_SEM_NOTAS_MM = 185;
+/** Sem notas: página 16:9 inteira (13,333 x 7,5 in), sem margem; o quadro ocupa tudo. */
+const IMPRESSAO_LARGURA_SEM_NOTAS_MM = 338.67;
+const IMPRESSAO_ALTURA_SEM_NOTAS_MM = 190.5;
 
 const indice = ref(0);
 const mostrarNotas = ref(false);
@@ -167,26 +170,28 @@ function zerarCronometro(): void {
 const imprimindo = ref<'nenhuma' | 'com-notas' | 'sem-notas'>('nenhuma');
 
 const escalaImpressao = computed(() =>
-  calcularEscala(
-    milimetrosParaPixels(IMPRESSAO_LARGURA_MM),
-    milimetrosParaPixels(
-      imprimindo.value === 'com-notas'
-        ? IMPRESSAO_ALTURA_COM_NOTAS_MM
-        : IMPRESSAO_ALTURA_SEM_NOTAS_MM
-    )
-  )
+  imprimindo.value === 'sem-notas'
+    ? calcularEscala(
+        milimetrosParaPixels(IMPRESSAO_LARGURA_SEM_NOTAS_MM),
+        milimetrosParaPixels(IMPRESSAO_ALTURA_SEM_NOTAS_MM)
+      )
+    : calcularEscala(
+        milimetrosParaPixels(IMPRESSAO_LARGURA_MM),
+        milimetrosParaPixels(IMPRESSAO_ALTURA_COM_NOTAS_MM)
+      )
 );
 
 async function imprimir(comNotas: boolean): Promise<void> {
   imprimindo.value = comNotas ? 'com-notas' : 'sem-notas';
   document.documentElement.classList.add(CLASSE_IMPRIMINDO);
+  if (!comNotas) document.documentElement.classList.add(CLASSE_IMPRIMINDO_SEM_NOTAS);
   await nextTick();
   window.print();
 }
 
 function aoTerminarImpressao(): void {
   imprimindo.value = 'nenhuma';
-  document.documentElement.classList.remove(CLASSE_IMPRIMINDO);
+  document.documentElement.classList.remove(CLASSE_IMPRIMINDO, CLASSE_IMPRIMINDO_SEM_NOTAS);
 }
 
 let observador: InstanceType<typeof window.ResizeObserver> | undefined;
@@ -208,7 +213,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', aoMudarTelaCheia);
   window.removeEventListener('afterprint', aoTerminarImpressao);
   pararRelogio();
-  document.documentElement.classList.remove(CLASSE_IMPRIMINDO);
+  document.documentElement.classList.remove(CLASSE_IMPRIMINDO, CLASSE_IMPRIMINDO_SEM_NOTAS);
 });
 </script>
 
@@ -357,7 +362,11 @@ onBeforeUnmount(() => {
     <p class="ar-visualmente-oculto" role="status" aria-live="polite">{{ anuncio }}</p>
 
     <Teleport v-if="imprimindo !== 'nenhuma'" to="body">
-      <div class="ar-impresso" aria-hidden="true">
+      <div
+        class="ar-impresso"
+        :class="{ 'ar-impresso--sem-notas': imprimindo === 'sem-notas' }"
+        aria-hidden="true"
+      >
         <section v-for="(item, i) in slides" :key="item.id" class="ar-impresso__pagina">
           <PalcoSlide class="ar-impresso__quadro" :escala="escalaImpressao">
             <SlideConteudo :slide="item" :equipe="equipe" :rotulo="rotuloDoSlide(i)" />
@@ -630,6 +639,40 @@ onBeforeUnmount(() => {
 
   .ar-impresso__notas p {
     margin: 0;
+  }
+}
+</style>
+
+<style>
+/* Regras globais de impressão (fora do escopo do Vue: @page só vale fora de seletor com atributo). */
+@media print {
+  /* Sem notas: só os slides, um por página 16:9 sem margem. Tudo do site some. */
+  html.ar-imprimindo--sem-notas body > *:not(.ar-impresso) {
+    display: none !important;
+  }
+
+  @page slide {
+    size: 338.67mm 190.5mm;
+    margin: 0;
+  }
+
+  .ar-impresso--sem-notas .ar-impresso__pagina {
+    page: slide;
+    width: 338.67mm;
+    height: 190.5mm;
+    overflow: hidden;
+    break-after: page;
+  }
+
+  .ar-impresso--sem-notas .ar-impresso__pagina:last-child {
+    break-after: auto;
+  }
+
+  .ar-impresso--sem-notas .ar-impresso__quadro {
+    width: 100% !important;
+    height: 100% !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 </style>

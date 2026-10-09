@@ -445,6 +445,19 @@ onBeforeUnmount(() => {
   }
 }
 
+/* Impressão: o gradiente recortado em texto vira uma borda de 1 px no PDF do Chromium.
+   Título em cor sólida (primeiro tom do gradiente); a tela não muda. Vem depois do
+   @supports acima, senão a cascata da tela venceria na mesma especificidade. */
+@media print {
+  .ar-slide__titulo {
+    background: none !important;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+    color: var(--s-ouro);
+  }
+}
+
 .ar-slide__titulo--olho {
   font-family: var(--fonte-texto, sans-serif);
   font-size: calc(28px * var(--s-aj));

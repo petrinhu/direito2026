@@ -32,6 +32,7 @@ const mostrarNotas = ref(false);
 const telaCheia = ref(false);
 const anuncio = ref('');
 const deck = ref<HTMLElement>();
+const palco = ref<HTMLElement>();
 const area = ref<HTMLElement>();
 const escala = ref(1);
 
@@ -59,8 +60,12 @@ const anterior = (): void => irPara(indice.value - 1);
 async function alternarTelaCheia(): Promise<void> {
   if (document.fullscreenEnabled === true && deck.value) {
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await deck.value.requestFullscreen();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await deck.value.requestFullscreen();
+        palco.value?.focus();
+      }
       return;
     } catch {
       // Sem permissão da API: cai no modo de tela cheia por CSS abaixo.
@@ -79,7 +84,24 @@ const alternarNotas = (): void => {
   mostrarNotas.value = !mostrarNotas.value;
 };
 
+// Teclado global (document): as setas valem em qualquer foco da página, mas nunca
+// roubam a digitação de campos nem a ativação nativa de botões e links.
+const SELETOR_CAMPO_DE_TEXTO =
+  'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+const SELETOR_BOTAO_OU_LINK = 'button, a[href]';
+
+function alvoEhCampoDeTexto(alvo: EventTarget | null): boolean {
+  return alvo instanceof window.Element && alvo.closest(SELETOR_CAMPO_DE_TEXTO) !== null;
+}
+
+function alvoEhBotaoOuLink(alvo: EventTarget | null): boolean {
+  return alvo instanceof window.Element && alvo.closest(SELETOR_BOTAO_OU_LINK) !== null;
+}
+
 function aoTeclar(evento: KeyboardEvent): void {
+  if (evento.defaultPrevented) return;
+  if (alvoEhCampoDeTexto(evento.target)) return;
+  if (evento.key === ' ' && alvoEhBotaoOuLink(evento.target)) return;
   if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
   // Esc sai da tela cheia por CSS (a nativa o navegador já trata): nunca uma armadilha de teclado.
   if (evento.key === 'Escape' && telaCheia.value && !document.fullscreenElement) {
@@ -198,6 +220,7 @@ let observador: InstanceType<typeof window.ResizeObserver> | undefined;
 
 onMounted(() => {
   document.addEventListener('fullscreenchange', aoMudarTelaCheia);
+  document.addEventListener('keydown', aoTeclar);
   window.addEventListener('afterprint', aoTerminarImpressao);
   medirArea();
   if (typeof window.ResizeObserver === 'function' && area.value) {
@@ -211,6 +234,7 @@ onBeforeUnmount(() => {
   observador?.disconnect();
   window.removeEventListener('resize', medirArea);
   document.removeEventListener('fullscreenchange', aoMudarTelaCheia);
+  document.removeEventListener('keydown', aoTeclar);
   window.removeEventListener('afterprint', aoTerminarImpressao);
   pararRelogio();
   document.documentElement.classList.remove(CLASSE_IMPRIMINDO, CLASSE_IMPRIMINDO_SEM_NOTAS);
@@ -234,12 +258,12 @@ onBeforeUnmount(() => {
       }"
     >
       <div
+        ref="palco"
         class="ar-slides__palco"
         tabindex="0"
         role="group"
         aria-roledescription="apresentação de slides"
         aria-label="Slides. Use as setas do teclado para trocar de slide."
-        @keydown="aoTeclar"
         @pointerdown="aoPressionar"
         @pointerup="aoSoltar"
         @pointercancel="aoCancelarToque"

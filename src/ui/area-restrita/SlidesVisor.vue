@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from 'vue';
 import { calcularEscala, milimetrosParaPixels } from '@/app/restrito/palco';
 import type { EquipeRestrita, Slide } from '@/core/restrito/tipos';
 import PalcoSlide from './PalcoSlide.vue';
 import SlideConteudo from './SlideConteudo.vue';
+import SlideSimples from './SlideSimples.vue';
 
 const props = defineProps<{
   slides: readonly Slide[];
@@ -45,6 +46,22 @@ function medirArea(): void {
 const total = computed(() => props.slides.length);
 const slide = computed(() => props.slides[indice.value]!);
 const rotuloDoSlide = (i: number): string => `Slide ${i + 1} de ${total.value}`;
+
+/**
+ * Id do slide cuja renderização falhou. Um erro num slide nunca deixa a tela vazia:
+ * esse slide cai para a versão simples (título e itens) e os demais seguem normais.
+ */
+const slideComFalha = ref<number | undefined>(undefined);
+onErrorCaptured(() => {
+  slideComFalha.value = slide.value.id;
+  return false;
+});
+watch(
+  () => slide.value.id,
+  () => {
+    slideComFalha.value = undefined;
+  }
+);
 
 function irPara(destino: number): void {
   const novo = Math.min(Math.max(destino, 0), total.value - 1);
@@ -283,7 +300,13 @@ onBeforeUnmount(() => {
         <div ref="area" class="ar-slides__area">
           <PalcoSlide :escala="escala">
             <Transition name="ar-slide" mode="out-in" :css="!reduzirMovimento">
+              <SlideSimples
+                v-if="slideComFalha === slide.id"
+                :key="`simples-${slide.id}`"
+                :slide="slide"
+              />
               <SlideConteudo
+                v-else
                 :key="slide.id"
                 :slide="slide"
                 :equipe="equipe"

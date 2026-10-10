@@ -402,20 +402,12 @@ onBeforeUnmount(() => {
   }
 }
 
-.ar-slide__titulo,
-.ar-slide__subtitulo,
-.ar-slide__item,
-.ar-slide__coluna,
-.ar-slide__destaque,
-.ar-slide__equipe-instituicao,
-.ar-slide__equipe,
-.ar-slide__foto,
-.ar-slide__itens-fim li {
-  animation: ar-slide-entra 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  animation-delay: calc(var(--i, 0) * 90ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
+/* Entrada: o conteúdo já nasce visível (o estado base não tem opacity 0). A
+   animação só enfeita e roda apenas quando o sistema pede movimento. Sem
+   animação (navegador antigo, GPU desligada, movimento reduzido) o slide
+   aparece inteiro. backwards aplica o estado inicial só durante o atraso e
+   não prende o final. */
+@media (prefers-reduced-motion: no-preference) {
   .ar-slide__titulo,
   .ar-slide__subtitulo,
   .ar-slide__item,
@@ -425,7 +417,8 @@ onBeforeUnmount(() => {
   .ar-slide__equipe,
   .ar-slide__foto,
   .ar-slide__itens-fim li {
-    animation: none;
+    animation: ar-slide-entra 640ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 90ms);
   }
 }
 
@@ -603,6 +596,8 @@ onBeforeUnmount(() => {
   align-content: start;
   border-inline-start-width: 1px;
   border-block-start: 6px solid var(--s-cor);
+  /* Fallback: navegador sem color-mix ignora a linha de baixo e mantém este fundo. */
+  background: rgba(21, 28, 39, 0.85);
   background:
     radial-gradient(
       90% 70% at 50% 0%,
@@ -640,6 +635,7 @@ onBeforeUnmount(() => {
   padding: 8px 16px;
   border: 2px solid var(--s-cor);
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
   background: color-mix(in srgb, var(--s-cor) 12%, transparent);
   text-align: center;
 }
@@ -729,6 +725,7 @@ onBeforeUnmount(() => {
 .ar-slide__itens--grade .ar-slide__item:first-child {
   grid-column: 1 / -1;
   font-size: calc(38px * var(--s-aj));
+  background: rgba(21, 28, 39, 0.85);
   background:
     linear-gradient(100deg, color-mix(in srgb, var(--s-cor) 20%, transparent), transparent 60%),
     rgb(21 28 39 / 0.85);
@@ -785,6 +782,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgb(255 255 255 / 0.12);
   border-block-start: 6px solid var(--s-cor);
   border-radius: 16px;
+  background: rgba(21, 28, 39, 0.85);
   background:
     radial-gradient(
       80% 50% at 50% 0%,

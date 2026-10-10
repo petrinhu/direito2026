@@ -221,6 +221,15 @@ function aoClicar(): void {
    texto em tela estreita: QA rodada 2 mediu 230px (adaptado) e 218px
    (Firefox) contra o piso de 240px. */
 @media (max-width: 639px) {
+  /* Era e fase também cedem recuo: antes cada grupo custava 12px (margem 4 +
+     padding 8) na coluna do texto; o corte tira 8px por grupo, dois grupos
+     somam 16px sobre os 227px medidos no nível 6 (piso de 240px, QA). */
+  .no-mapa--era > .no-mapa__grupo,
+  .no-mapa--fase > .no-mapa__grupo {
+    margin-inline-start: 0;
+    padding-inline-start: var(--esp-1, 0.25rem);
+  }
+
   .no-mapa--pensador > .no-mapa__grupo,
   .no-mapa--conceitos > .no-mapa__grupo {
     margin-inline-start: 0;

@@ -299,7 +299,7 @@ onBeforeUnmount(() => {
         </p>
         <div ref="area" class="ar-slides__area">
           <PalcoSlide :escala="escala">
-            <Transition name="ar-slide" mode="out-in" :css="!reduzirMovimento">
+            <Transition name="ar-slide" mode="out-in">
               <SlideSimples
                 v-if="slideComFalha === slide.id"
                 :key="`simples-${slide.id}`"
@@ -594,6 +594,13 @@ onBeforeUnmount(() => {
   transition:
     opacity 260ms ease,
     transform 260ms ease;
+}
+/* Movimento reduzido: troca instantânea, com a mesma árvore. Transition com css
+   ligado e duração zero resolve sem esperar transitionend; css desligado com
+   mode="out-in" perdia o palco (achado do QA, "Mostrar animações" desligado). */
+.ar-slides__deck--sem-movimento .ar-slide-enter-active,
+.ar-slides__deck--sem-movimento .ar-slide-leave-active {
+  transition: none;
 }
 .ar-slide-enter-from {
   opacity: 0;

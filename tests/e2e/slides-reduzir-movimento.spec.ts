@@ -25,6 +25,8 @@ test.describe('Slides com movimento reduzido', () => {
     const total = Number(/de (\d+)$/.exec(rotulo ?? '')?.[1]);
     expect(total).toBeGreaterThan(0);
 
+    // Depois do clique na aba o foco fica no tablist; as setas só avançam o slide com o foco no palco.
+    await page.locator('.ar-slides__palco').focus();
     for (let n = 1; n <= total; n++) {
       await expect(slide).toHaveAttribute('aria-label', `Slide ${n} de ${total}`);
       await expect(page.locator('.ar-palco-slide__escala > *')).toHaveCount(1);

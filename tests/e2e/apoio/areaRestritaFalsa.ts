@@ -13,6 +13,7 @@ export async function prepararAreaRestritaFalsa(page: Page): Promise<void> {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
+        ok: true,
         autenticado: true,
         usuario: 'usuario-falso',
         admin: false,
@@ -25,7 +26,7 @@ export async function prepararAreaRestritaFalsa(page: Page): Promise<void> {
     rota.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ conteudo: conteudoRestritoFalso() })
+      body: JSON.stringify({ ok: true, conteudo: conteudoRestritoFalso() })
     })
   );
 }

@@ -5,14 +5,14 @@ import { abrirMapaEmLista, todosOsPresentes } from './apoio/elementos';
 /**
  * QA, IMPORTANTE 2: no modo adaptado a 360px, seis níveis de aninhamento com
  * texto de 24px deixavam colunas de cerca de 190px e partiam palavras no
- * meio. Piso fixado antes do conserto: o texto do nó mais profundo tem pelo
- * menos 240px de largura e nenhuma palavra do mapa inteiro é partida.
+ * meio. Piso fixado antes do conserto: o espaço útil do texto do nó mais profundo
+ * tem pelo menos 240px e nenhuma palavra do mapa inteiro é partida.
  */
 const BASE = '/p/p1/filosofia-juridica/u1';
 const LARGURA_MINIMA_DO_TEXTO = 240;
 
 for (const adaptado of [true, false]) {
-  test(`360px, ${adaptado ? 'modo adaptado' : 'modo normal'}: texto do nó mais profundo com no mínimo ${LARGURA_MINIMA_DO_TEXTO}px e nenhuma palavra partida`, async ({
+  test(`360px, ${adaptado ? 'modo adaptado' : 'modo normal'}: espaço útil do nó mais profundo com no mínimo ${LARGURA_MINIMA_DO_TEXTO}px e nenhuma palavra partida`, async ({
     page
   }) => {
     await page.setViewportSize({ width: 360, height: 800 });
@@ -21,14 +21,25 @@ for (const adaptado of [true, false]) {
     await page.getByRole('button', { name: 'Abrir todos os ramos' }).click();
     await esperarLayoutAssentar(page);
 
-    const profundos = await todosOsPresentes(
-      page,
-      '[aria-level="6"] > .no-mapa__corpo .no-mapa__rotulo'
+    // Espaço útil do texto: largura interna do .no-mapa__corpo do nó mais fundo
+    // (clientWidth já exclui a borda; tira-se o padding computado). Não é a
+    // largura do rótulo, que é filho de um flex e encolhe até o próprio texto.
+    await todosOsPresentes(page, '[aria-level="6"] > .no-mapa__corpo');
+    const uteis = await page.$$eval('[aria-level="6"] > .no-mapa__corpo', (corpos) =>
+      corpos.map((corpo) => {
+        const estilo = getComputedStyle(corpo);
+        return {
+          texto: (corpo.querySelector('.no-mapa__rotulo')?.textContent ?? '').trim(),
+          util:
+            corpo.clientWidth -
+            Number.parseFloat(estilo.paddingLeft) -
+            Number.parseFloat(estilo.paddingRight)
+        };
+      })
     );
-    for (const rotulo of profundos) {
-      const caixa = await rotulo.boundingBox();
-      const texto = await rotulo.innerText();
-      expect(caixa!.width, `"${texto}"`).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_TEXTO);
+    expect(uteis.length).toBeGreaterThan(0);
+    for (const { texto, util } of uteis) {
+      expect(util, `"${texto}"`).toBeGreaterThanOrEqual(LARGURA_MINIMA_DO_TEXTO);
     }
 
     const partidas = await page.evaluate(() => {

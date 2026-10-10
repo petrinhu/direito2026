@@ -62,3 +62,15 @@ describe('escala do palco 16:9', () => {
     expect(ALTURA_LOGICA * s).toBeLessThanOrEqual(milimetrosParaPixels(185) + 1e-9);
   });
 });
+
+describe('escala com medida inválida nunca esconde o palco', () => {
+  it.each([
+    [0, 800],
+    [800, 0],
+    [-1, 900],
+    [Number.NaN, 800],
+    [800, Number.POSITIVE_INFINITY]
+  ])('medida (%s, %s) devolve escala 1, não 0 nem NaN', (w, h) => {
+    expect(calcularEscala(w, h)).toBe(1);
+  });
+});

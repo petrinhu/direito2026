@@ -12,6 +12,7 @@ export type TipoComposicao =
   | 'grade'
   | 'destaque'
   | 'comparativo'
+  | 'fotos'
   | 'encerramento';
 
 export interface ItemComposto {

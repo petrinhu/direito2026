@@ -269,3 +269,112 @@ describe('validarConteudoRestrito: slides (texto puro)', () => {
     expect(codigos(com((x) => delete x.slides[3].destaque))).toContain('campo-ausente');
   });
 });
+
+describe('validarConteudoRestrito: slide de fotos (imagens embutidas)', () => {
+  // Imagens sintéticas mínimas: só o formato do data URI é validado, nunca o pixel.
+  const JPEG = 'data:image/jpeg;base64,QUJDRA==';
+  const WEBP = 'data:image/webp;base64,QUJDRA==';
+  const ALT = 'Imagem sintética de teste';
+  // Notas curtas: o slide de fotos dispensa o mínimo de palavras (ver validar.ts).
+  const NOTAS_CURTAS = 'Registro fictício.';
+
+  function comFotos(imagens: unknown, notas: string = NOTAS_CURTAS): Json {
+    return com((x) => {
+      x.slides[8] = { id: 9, layout: 'fotos', titulo: 'Fotos fictícias', notas, imagens };
+    });
+  }
+
+  it('aceita uma ou duas imagens webp ou jpeg, com legenda opcional', () => {
+    expect(codigos(comFotos([{ src: JPEG, alt: ALT }]))).toEqual([]);
+    expect(
+      codigos(
+        comFotos([
+          { src: WEBP, alt: ALT, legenda: 'Legenda sintética' },
+          { src: JPEG, alt: ALT }
+        ])
+      )
+    ).toEqual([]);
+  });
+
+  it('aceita notas curtas no slide de fotos, mas não notas vazias nem longas demais', () => {
+    expect(codigos(comFotos([{ src: JPEG, alt: ALT }], ''))).toEqual(['campo-ausente']);
+    expect(codigos(comFotos([{ src: JPEG, alt: ALT }], notasFalsas(161)))).toEqual(['palavras']);
+  });
+
+  it('o mínimo de 60 palavras continua valendo para os demais layouts', () => {
+    expect(codigos(com((x) => (x.slides[1].notas = NOTAS_CURTAS)))).toContain('palavras');
+  });
+
+  it('recusa URL externa, http ou https, no lugar do data URI', () => {
+    expect(codigos(comFotos([{ src: 'https://exemplo.invalido/f.jpg', alt: ALT }]))).toContain(
+      'imagem'
+    );
+    expect(codigos(comFotos([{ src: 'http://exemplo.invalido/f.jpg', alt: ALT }]))).toContain(
+      'imagem'
+    );
+  });
+
+  it('recusa SVG, mesmo em data URI', () => {
+    expect(codigos(comFotos([{ src: 'data:image/svg+xml;base64,QUJDRA==', alt: ALT }]))).toContain(
+      'imagem'
+    );
+  });
+
+  it('recusa mime que não seja webp ou jpeg', () => {
+    expect(codigos(comFotos([{ src: 'data:image/png;base64,QUJDRA==', alt: ALT }]))).toContain(
+      'imagem'
+    );
+    expect(codigos(comFotos([{ src: 'data:text/html;base64,QUJDRA==', alt: ALT }]))).toContain(
+      'imagem'
+    );
+  });
+
+  it('recusa base64 malformado (caractere fora do alfabeto ou comprimento que não fecha)', () => {
+    expect(codigos(comFotos([{ src: 'data:image/jpeg;base64,QU#D', alt: ALT }]))).toContain(
+      'imagem'
+    );
+    expect(codigos(comFotos([{ src: 'data:image/jpeg;base64,QUJDR', alt: ALT }]))).toContain(
+      'imagem'
+    );
+  });
+
+  it('recusa alt vazio ou só com espaço', () => {
+    expect(codigos(comFotos([{ src: JPEG, alt: '' }]))).toContain('campo-ausente');
+    expect(codigos(comFotos([{ src: JPEG, alt: '   ' }]))).toContain('campo-ausente');
+  });
+
+  it('limite de 400 KB decodificados por imagem: 409600 bytes passam, um byte a mais não', () => {
+    const noLimite = 'A'.repeat(546132); // 546132 * 3 / 4 = 409599 bytes
+    const acima = 'A'.repeat(546136); // 409602 bytes
+    expect(codigos(comFotos([{ src: `data:image/jpeg;base64,${noLimite}`, alt: ALT }]))).toEqual(
+      []
+    );
+    expect(codigos(comFotos([{ src: `data:image/jpeg;base64,${acima}`, alt: ALT }]))).toContain(
+      'imagem-grande'
+    );
+  });
+
+  it('exige de 1 a 2 imagens', () => {
+    expect(codigos(comFotos([]))).toContain('quantidade');
+    const tres = [1, 2, 3].map(() => ({ src: JPEG, alt: ALT }));
+    expect(codigos(comFotos(tres))).toContain('quantidade');
+  });
+
+  it('imagens só no layout fotos, e o layout fotos exige imagens', () => {
+    expect(codigos(com((x) => (x.slides[1].imagens = [{ src: JPEG, alt: ALT }])))).toContain(
+      'campo-proibido'
+    );
+    expect(codigos(comFotos(undefined))).toContain('campo-ausente');
+  });
+
+  it('o erro não carrega o src nem o alt, só código e caminho', () => {
+    const r = validarConteudoRestrito(
+      comFotos([{ src: 'https://segredo.invalido/x.jpg', alt: ALT }])
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(JSON.stringify(r.erros)).not.toContain('segredo.invalido');
+      expect(r.erros[0]!.caminho).toMatch(/^slides\[8\]\.imagens\[0\]/);
+    }
+  });
+});

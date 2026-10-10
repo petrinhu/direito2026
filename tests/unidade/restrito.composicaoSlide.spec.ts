@@ -77,7 +77,7 @@ describe('composição do slide a partir dos dados', () => {
   });
 
   it('capa, destaque e encerramento mantêm o próprio tipo', () => {
-    for (const layout of ['capa', 'destaque', 'encerramento'] as const) {
+    for (const layout of ['capa', 'destaque', 'fotos', 'encerramento'] as const) {
       expect(compor({ id: 1, layout, titulo: 't', notas }).tipo).toBe(layout);
     }
   });

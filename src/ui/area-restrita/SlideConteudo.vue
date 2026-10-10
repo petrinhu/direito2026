@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const composicao = computed(() => compor(props.slide));
 const numeroDoSlide = computed(() => String(props.slide.id).padStart(2, '0'));
+const imagens = computed(() => props.slide.imagens ?? []);
 const quantidadeNumericos = computed(
   () => composicao.value.itens.filter((i) => i.numero !== undefined).length
 );
@@ -181,6 +182,26 @@ onBeforeUnmount(() => {
               VS
             </span>
           </div>
+        </template>
+
+        <template v-else-if="slide.layout === 'fotos'">
+          <h3 class="ar-slide__titulo" style="--i: 0">{{ slide.titulo }}</h3>
+          <p v-if="slide.subtitulo" class="ar-slide__subtitulo" style="--i: 1">
+            {{ slide.subtitulo }}
+          </p>
+          <ul class="ar-slide__fotos" :data-n="imagens.length">
+            <li
+              v-for="(imagem, i) in imagens"
+              :key="i"
+              class="ar-slide__foto"
+              :style="{ '--i': i + 2 }"
+            >
+              <figure>
+                <img :src="imagem.src" :alt="imagem.alt" decoding="async" />
+                <figcaption v-if="imagem.legenda">{{ imagem.legenda }}</figcaption>
+              </figure>
+            </li>
+          </ul>
         </template>
 
         <template v-else>
@@ -388,6 +409,7 @@ onBeforeUnmount(() => {
 .ar-slide__destaque,
 .ar-slide__equipe-instituicao,
 .ar-slide__equipe,
+.ar-slide__foto,
 .ar-slide__itens-fim li {
   animation: ar-slide-entra 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 90ms);
@@ -401,6 +423,7 @@ onBeforeUnmount(() => {
   .ar-slide__destaque,
   .ar-slide__equipe-instituicao,
   .ar-slide__equipe,
+  .ar-slide__foto,
   .ar-slide__itens-fim li {
     animation: none;
   }
@@ -413,6 +436,7 @@ onBeforeUnmount(() => {
 .ar-slides__deck--sem-movimento .ar-slide__destaque,
 .ar-slides__deck--sem-movimento .ar-slide__equipe-instituicao,
 .ar-slides__deck--sem-movimento .ar-slide__equipe,
+.ar-slides__deck--sem-movimento .ar-slide__foto,
 .ar-slides__deck--sem-movimento .ar-slide__itens-fim li {
   animation: none;
 }
@@ -806,6 +830,46 @@ onBeforeUnmount(() => {
   font-weight: 700;
   color: var(--s-ouro);
   box-shadow: 0 0 36px rgb(217 178 128 / 0.5);
+}
+
+/* fotos: 1 ou 2 imagens 4:3 lado a lado. Mesmo formato e mesma coluna dão a mesma
+   altura; max-height limita o bloco ao palco mesmo com título de duas linhas. */
+.ar-slide__fotos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(28px * var(--s-aj));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ar-slide__fotos[data-n='1'] {
+  grid-template-columns: minmax(0, 680px);
+  justify-content: center;
+}
+.ar-slide__foto {
+  min-width: 0;
+}
+.ar-slide__foto figure {
+  display: grid;
+  gap: calc(10px * var(--s-aj));
+  margin: 0;
+}
+.ar-slide__foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 2px solid var(--s-acento);
+  border-radius: 16px;
+  background: rgb(21 28 39 / 0.85);
+}
+.ar-slide__foto figcaption {
+  font-size: calc(22px * var(--s-aj));
+  line-height: 1.3;
+  text-align: center;
+  color: var(--s-texto-suave);
 }
 
 /* encerramento: texto grande, alto contraste. */

@@ -64,6 +64,7 @@ export function avisosDeRegrasDeConteudo(conteudo: ConteudoRestrito): AvisoDeCon
       ...(slide.itens ?? [])
     ];
     for (const coluna of slide.colunas ?? []) textos.push(coluna.titulo, ...coluna.itens);
+    for (const imagem of slide.imagens ?? []) textos.push(imagem.alt, imagem.legenda ?? '');
     checar(
       'travessao',
       textos.some((t) => t !== undefined && TRAVESSAO.test(t)),

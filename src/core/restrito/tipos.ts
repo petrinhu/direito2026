@@ -17,7 +17,15 @@ export interface EquipeRestrita {
   readonly integrantes: readonly string[];
 }
 
-export type LayoutSlide = 'capa' | 'topicos' | 'destaque' | 'comparativo' | 'encerramento';
+export type LayoutSlide =
+  'capa' | 'topicos' | 'destaque' | 'comparativo' | 'fotos' | 'encerramento';
+
+/** Foto embutida em data URI (webp ou jpeg). Nunca URL externa. */
+export interface ImagemSlide {
+  readonly src: string;
+  readonly alt: string;
+  readonly legenda?: string;
+}
 
 export interface ColunaSlide {
   readonly titulo: string;
@@ -34,6 +42,8 @@ export interface Slide {
   readonly destaque?: string;
   /** Só no layout comparativo. */
   readonly colunas?: readonly ColunaSlide[];
+  /** Só no layout fotos: de 1 a 2 imagens. */
+  readonly imagens?: readonly ImagemSlide[];
   /** Notas do apresentador, cerca de um minuto falado. */
   readonly notas: string;
 }
@@ -77,7 +87,9 @@ export type CodigoErroRestrito =
   | 'colunas'
   | 'palavras'
   | 'profundidade'
-  | 'limite';
+  | 'limite'
+  | 'imagem'
+  | 'imagem-grande';
 
 /** Erro de validação: nunca carrega o valor, só onde e por quê. */
 export interface ErroValidacao {

@@ -3,6 +3,7 @@ import type {
   CodigoErroRestrito,
   ColunaSlide,
   ConteudoRestrito,
+  ImagemSlide,
   LayoutSlide,
   Slide,
   ConteudoRestritoValidado,
@@ -25,8 +26,16 @@ const LAYOUTS: readonly LayoutSlide[] = [
   'topicos',
   'destaque',
   'comparativo',
+  'fotos',
   'encerramento'
 ];
+/** Imagens embutidas: 400 KB decodificados por imagem, de 1 a 2 por slide. */
+export const IMAGEM_TAMANHO_MAXIMO_BYTES = 400 * 1024;
+const MAXIMO_IMAGENS_SLIDE = 2;
+const MAXIMO_ALT_IMAGEM = 240;
+const MAXIMO_LEGENDA_IMAGEM = 200;
+/** Só data URI de webp ou jpeg, base64 estrito. Nenhuma URL, nenhum svg. */
+const DATA_URI_IMAGEM = /^data:image\/(?:webp|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/;
 const MAXIMO_TITULO_SLIDE = 90;
 const MAXIMO_SUBTITULO_SLIDE = 140;
 const MAXIMO_ITEM_SLIDE = 120;
@@ -70,6 +79,63 @@ function htmlRejeitado(texto: string): CodigoErroRestrito | undefined {
   if (semTags.includes('<') || semTags.includes('>')) return 'html-proibido';
   if (semTags.replace(ENTIDADE_PERMITIDA, '').includes('&')) return 'entidade-proibida';
   return undefined;
+}
+
+/**
+ * Confere o data URI de uma imagem sem decodificar nada: o alfabeto e o
+ * comprimento fecham (base64 válido) e o tamanho decodificado sai da
+ * aritmética, sem `Buffer`, porque este módulo roda no navegador.
+ */
+function avaliarDataUriImagem(src: string): CodigoErroRestrito | undefined {
+  const casa = DATA_URI_IMAGEM.exec(src);
+  if (!casa) return 'imagem';
+  const base64 = casa[1]!;
+  if (base64.length % 4 !== 0) return 'imagem';
+  const preenchimento = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+  const bytes = (base64.length / 4) * 3 - preenchimento;
+  return bytes > IMAGEM_TAMANHO_MAXIMO_BYTES ? 'imagem-grande' : undefined;
+}
+
+function lerImagem(c: Coletor, bruta: unknown, onde: string): ImagemSlide {
+  const vazia: ImagemSlide = { src: '', alt: '' };
+  if (!ehObjeto(bruta)) {
+    c.erro('tipo-invalido', onde);
+    return vazia;
+  }
+  const src = bruta.src;
+  let srcLido = '';
+  if (typeof src !== 'string') {
+    c.erro(src === undefined ? 'campo-ausente' : 'tipo-invalido', `${onde}.src`);
+  } else {
+    const codigo = avaliarDataUriImagem(src);
+    if (codigo) c.erro(codigo, `${onde}.src`);
+    srcLido = src;
+  }
+  const alt = bruta.alt;
+  let altLido = '';
+  if (typeof alt !== 'string') {
+    c.erro(alt === undefined ? 'campo-ausente' : 'tipo-invalido', `${onde}.alt`);
+  } else if (alt.trim().length === 0) {
+    c.erro('campo-ausente', `${onde}.alt`);
+  } else {
+    altLido = textoLimitado(c, alt, `${onde}.alt`, MAXIMO_ALT_IMAGEM);
+  }
+  return {
+    src: srcLido,
+    alt: altLido,
+    ...(bruta.legenda !== undefined
+      ? { legenda: textoLimitado(c, bruta.legenda, `${onde}.legenda`, MAXIMO_LEGENDA_IMAGEM) }
+      : {})
+  };
+}
+
+function lerImagens(c: Coletor, bruto: unknown, onde: string): ImagemSlide[] {
+  if (!Array.isArray(bruto)) {
+    c.erro(bruto === undefined ? 'campo-ausente' : 'tipo-invalido', onde);
+    return [];
+  }
+  if (bruto.length < 1 || bruto.length > MAXIMO_IMAGENS_SLIDE) c.erro('quantidade', onde);
+  return bruto.map((img, i) => lerImagem(c, img, `${onde}[${i}]`));
 }
 
 function lerTexto(
@@ -268,7 +334,9 @@ function lerSlide(c: Coletor, bruto: unknown, indice: number): Slide {
 
   const notas = textoLimitado(c, bruto.notas, `${onde}.notas`, MAXIMO_CARACTERES_CAMPO);
   const palavras = notas.split(/\s+/).filter((p) => p.length > 0).length;
-  if (palavras < NOTAS_PALAVRAS_MINIMO || palavras > NOTAS_PALAVRAS_MAXIMO) {
+  // Slide de fotos dispensa o mínimo: a foto fala por si e a nota pode ser uma frase.
+  const minimo = layout === 'fotos' ? 0 : NOTAS_PALAVRAS_MINIMO;
+  if (palavras < minimo || palavras > NOTAS_PALAVRAS_MAXIMO) {
     c.erro('palavras', `${onde}.notas`);
   }
 
@@ -310,6 +378,10 @@ function lerSlide(c: Coletor, bruto: unknown, indice: number): Slide {
     return { ...slide, colunas: lidas };
   }
   if (bruto.colunas !== undefined) c.erro('colunas', `${onde}.colunas`);
+  if (layout === 'fotos') {
+    return { ...slide, imagens: lerImagens(c, bruto.imagens, `${onde}.imagens`) };
+  }
+  if (bruto.imagens !== undefined) c.erro('campo-proibido', `${onde}.imagens`);
   return slide;
 }
 

@@ -63,7 +63,10 @@ export default defineConfig({
     }
   },
   build: {
-    target: 'esnext',
+    // Alvo explícito, o mesmo do CSS (css.lightningcss.targets abaixo). Com
+    // 'esnext' o JS saía sem rebaixar e o Edge 109 (último para Windows 7/8.1)
+    // recebia sintaxe que não entende (achado do líder, 10/10/2026).
+    target: ['chrome109', 'edge109', 'firefox115', 'safari15'],
     // Nunca mapa de código no pacote de produção (achado do líder,
     // 22/09/2026): o mapa carrega o caminho absoluto de disco de quem
     // construiu, e publicar isso expõe a estrutura de pastas pessoal.
@@ -71,6 +74,15 @@ export default defineConfig({
     sourcemap: process.env.CADERNO_SOURCEMAP === 'true'
   },
   css: {
-    transformer: 'lightningcss'
+    transformer: 'lightningcss',
+    // Versões em formato lightningcss (major << 16). Mesmos alvos do build.target.
+    lightningcss: {
+      targets: {
+        chrome: 109 << 16,
+        edge: 109 << 16,
+        firefox: 115 << 16,
+        safari: 15 << 16
+      }
+    }
   }
 });

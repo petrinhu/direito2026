@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { abrirAbaSlides, prepararAreaRestritaFalsa } from './apoio/areaRestritaFalsa';
 
 // "Mostrar animações" desligado no Windows = prefers-reduced-motion: reduce.
 // Nesse modo o palco não pode ficar vazio em nenhum slide. Escrito, não executado
 // nesta máquina (L-50): o QA roda no ambiente isolado.
-// Exige a área restrita servida com o conteúdo de teste (mesmo apoio de slides-gire-aparelho).
+// Sessão e conteúdo são interceptados (apoio/areaRestritaFalsa): sem conta real.
 test.describe('Slides com movimento reduzido', () => {
   test('percorre todos os slides mostrando conteúdo em cada um, sem erro no console', async ({
     page
@@ -15,7 +16,9 @@ test.describe('Slides com movimento reduzido', () => {
     });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 1024, height: 768 });
+    await prepararAreaRestritaFalsa(page);
     await page.goto('/p/p1/interdisciplinar');
+    await abrirAbaSlides(page);
 
     const slide = page.locator('[aria-roledescription="slide"]');
     const rotulo = await slide.getAttribute('aria-label');

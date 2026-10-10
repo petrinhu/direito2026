@@ -25,7 +25,10 @@ export async function abrirSeFechado(botao: Locator): Promise<void> {
  */
 export async function abrirMapaEmLista(page: Page, base: string): Promise<void> {
   await page.goto(`${base}/mapa`);
-  const verLista = page.getByRole('button', { name: 'Ver em lista' });
-  if (await verLista.count()) await verLista.click();
+  // O alternador só existe depois que o chunk da rota e os dados chegam; ler
+  // count() antes disso devolve zero e o clique é pulado (corrida, não defeito).
+  const alternador = page.getByRole('button', { name: /^(Ver em lista|Ver mapa visual)$/ });
+  await alternador.waitFor({ state: 'visible' });
+  if ((await alternador.textContent())?.trim() === 'Ver em lista') await alternador.click();
   await page.locator('[role="tree"]').waitFor({ state: 'visible' });
 }

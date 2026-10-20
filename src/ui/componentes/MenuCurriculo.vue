@@ -146,200 +146,205 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 class="menu-curriculo__nivel-3 menu-curriculo__lista--guia"
               >
                 <template v-for="unidade in cadeira.unidades" :key="unidade.id">
-                <li>
-                  <EstadoEmBreve v-if="unidade.estado === 'em-breve'" :rotulo="unidade.rotulo" />
-                  <template v-else>
-                    <div class="menu-curriculo__linha">
-                      <button
-                        v-if="unidade.abas.length > 0"
-                        type="button"
-                        class="menu-curriculo__toggle"
-                        :aria-expanded="
-                          estaAberto(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`)
-                            ? 'true'
-                            : 'false'
-                        "
-                        :aria-controls="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                        :aria-label="`Mostrar submenu de ${unidade.rotulo}`"
-                        @click="
-                          alternarUnidade(chaveUnidade(periodo.id, cadeira.id, unidade.id), unidade)
-                        "
-                        @keydown.esc="
-                          fechar(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`, $event)
-                        "
-                      >
-                        <span class="menu-curriculo__seta" aria-hidden="true" />
-                      </button>
-                      <a
-                        :href="hrefUnidade(periodo.id, cadeira.id, unidade.id)"
-                        class="menu-curriculo__link-unidade"
-                        :aria-current="
-                          ehAtual(`p/${periodo.id}/${cadeira.id}/${unidade.id}`, caminhoAtual)
-                            ? 'page'
-                            : undefined
-                        "
-                      >
-                        {{ unidade.rotulo }}
-                      </a>
-                    </div>
-                    <ul
-                      v-if="unidade.abas.length > 0"
-                      v-show="estaAberto(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`)"
-                      :id="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                      class="menu-curriculo__nivel-4 menu-curriculo__lista--guia"
-                    >
-                      <li
-                        v-if="carregandoDetalhe(chaveUnidade(periodo.id, cadeira.id, unidade.id))"
-                        class="menu-curriculo__carregando"
-                      >
-                        Carregando…
-                      </li>
-                      <template
-                        v-else-if="conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))"
-                      >
-                        <li v-if="unidade.abas.includes('resumo')">
-                          <button
-                            type="button"
-                            class="menu-curriculo__botao"
-                            :aria-expanded="
-                              estaAberto(
-                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                                ? 'true'
-                                : 'false'
-                            "
-                            :aria-controls="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                            @click="
-                              alternar(
-                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                            "
-                            @keydown.esc="
-                              fechar(
-                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
-                                $event
-                              )
-                            "
-                          >
-                            <span class="menu-curriculo__seta" aria-hidden="true" />
-                            {{ ROTULOS_ABA.resumo }}
-                          </button>
-                          <ul
-                            v-show="
-                              estaAberto(
-                                `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                            "
-                            :id="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                            class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
-                          >
-                            <li
-                              v-for="bloco in conteudoPronto(
-                                chaveUnidade(periodo.id, cadeira.id, unidade.id)
-                              )!.resumo"
-                              :key="bloco.id"
-                            >
-                              <a
-                                :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}#${bloco.id}`"
-                              >
-                                {{ bloco.titulo }}
-                              </a>
-                            </li>
-                          </ul>
-                        </li>
-                        <li
-                          v-if="
-                            unidade.abas.includes('peticao') &&
-                            conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))
-                              ?.peticao
+                  <li>
+                    <EstadoEmBreve v-if="unidade.estado === 'em-breve'" :rotulo="unidade.rotulo" />
+                    <template v-else>
+                      <div class="menu-curriculo__linha">
+                        <button
+                          v-if="unidade.abas.length > 0"
+                          type="button"
+                          class="menu-curriculo__toggle"
+                          :aria-expanded="
+                            estaAberto(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`)
+                              ? 'true'
+                              : 'false'
+                          "
+                          :aria-controls="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                          :aria-label="`Mostrar submenu de ${unidade.rotulo}`"
+                          @click="
+                            alternarUnidade(
+                              chaveUnidade(periodo.id, cadeira.id, unidade.id),
+                              unidade
+                            )
+                          "
+                          @keydown.esc="
+                            fechar(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`, $event)
                           "
                         >
-                          <button
-                            type="button"
-                            class="menu-curriculo__botao"
-                            :aria-expanded="
-                              estaAberto(
-                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                                ? 'true'
-                                : 'false'
-                            "
-                            :aria-controls="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                            @click="
-                              alternar(
-                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                            "
-                            @keydown.esc="
-                              fechar(
-                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
-                                $event
-                              )
-                            "
-                          >
-                            <span class="menu-curriculo__seta" aria-hidden="true" />
-                            {{ ROTULOS_ABA.peticao }}
-                          </button>
-                          <ul
-                            v-show="
-                              estaAberto(
-                                `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                              )
-                            "
-                            :id="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                            class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
-                          >
-                            <li
-                              v-for="secao in conteudoPronto(
-                                chaveUnidade(periodo.id, cadeira.id, unidade.id)
-                              )!.peticao!.secoes"
-                              :key="secao.id"
-                            >
-                              <a
-                                :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/peticao#${secao.id}`"
-                              >
-                                {{ secao.titulo }}
-                              </a>
-                            </li>
-                          </ul>
+                          <span class="menu-curriculo__seta" aria-hidden="true" />
+                        </button>
+                        <a
+                          :href="hrefUnidade(periodo.id, cadeira.id, unidade.id)"
+                          class="menu-curriculo__link-unidade"
+                          :aria-current="
+                            ehAtual(`p/${periodo.id}/${cadeira.id}/${unidade.id}`, caminhoAtual)
+                              ? 'page'
+                              : undefined
+                          "
+                        >
+                          {{ unidade.rotulo }}
+                        </a>
+                      </div>
+                      <ul
+                        v-if="unidade.abas.length > 0"
+                        v-show="estaAberto(`u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`)"
+                        :id="`lista-u-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                        class="menu-curriculo__nivel-4 menu-curriculo__lista--guia"
+                      >
+                        <li
+                          v-if="carregandoDetalhe(chaveUnidade(periodo.id, cadeira.id, unidade.id))"
+                          class="menu-curriculo__carregando"
+                        >
+                          Carregando…
                         </li>
-                        <!--
+                        <template
+                          v-else-if="
+                            conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))
+                          "
+                        >
+                          <li v-if="unidade.abas.includes('resumo')">
+                            <button
+                              type="button"
+                              class="menu-curriculo__botao"
+                              :aria-expanded="
+                                estaAberto(
+                                  `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                                  ? 'true'
+                                  : 'false'
+                              "
+                              :aria-controls="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                              @click="
+                                alternar(
+                                  `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                              "
+                              @keydown.esc="
+                                fechar(
+                                  `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                  $event
+                                )
+                              "
+                            >
+                              <span class="menu-curriculo__seta" aria-hidden="true" />
+                              {{ ROTULOS_ABA.resumo }}
+                            </button>
+                            <ul
+                              v-show="
+                                estaAberto(
+                                  `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                              "
+                              :id="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                              class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
+                            >
+                              <li
+                                v-for="bloco in conteudoPronto(
+                                  chaveUnidade(periodo.id, cadeira.id, unidade.id)
+                                )!.resumo"
+                                :key="bloco.id"
+                              >
+                                <a
+                                  :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}#${bloco.id}`"
+                                >
+                                  {{ bloco.titulo }}
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                          <li
+                            v-if="
+                              unidade.abas.includes('peticao') &&
+                              conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))
+                                ?.peticao
+                            "
+                          >
+                            <button
+                              type="button"
+                              class="menu-curriculo__botao"
+                              :aria-expanded="
+                                estaAberto(
+                                  `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                                  ? 'true'
+                                  : 'false'
+                              "
+                              :aria-controls="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                              @click="
+                                alternar(
+                                  `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                              "
+                              @keydown.esc="
+                                fechar(
+                                  `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                  $event
+                                )
+                              "
+                            >
+                              <span class="menu-curriculo__seta" aria-hidden="true" />
+                              {{ ROTULOS_ABA.peticao }}
+                            </button>
+                            <ul
+                              v-show="
+                                estaAberto(
+                                  `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                )
+                              "
+                              :id="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                              class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
+                            >
+                              <li
+                                v-for="secao in conteudoPronto(
+                                  chaveUnidade(periodo.id, cadeira.id, unidade.id)
+                                )!.peticao!.secoes"
+                                :key="secao.id"
+                              >
+                                <a
+                                  :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/peticao#${secao.id}`"
+                                >
+                                  {{ secao.titulo }}
+                                </a>
+                              </li>
+                            </ul>
+                          </li>
+                          <!--
                           Abas novas de Filosofia Jurídica (ordem do líder,
                           01/10/2026): link direto, sem submenu, como o do
                           quiz. A ordem de `unidade.abas` manda: o menu só
                           mostra as que a unidade declara.
                         -->
-                        <template v-for="aba in ABAS_DE_LINK_DIRETO" :key="aba">
-                          <li v-if="unidade.abas.includes(aba)">
-                            <a
-                              :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/${aba}`"
-                              class="menu-curriculo__botao"
-                            >
-                              {{ ROTULOS_ABA[aba] }}
-                            </a>
-                          </li>
-                        </template>
-                        <li v-if="unidade.abas.includes('quiz')">
-                          <!--
+                          <template v-for="aba in ABAS_DE_LINK_DIRETO" :key="aba">
+                            <li v-if="unidade.abas.includes(aba)">
+                              <a
+                                :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/${aba}`"
+                                class="menu-curriculo__botao"
+                              >
+                                {{ ROTULOS_ABA[aba] }}
+                              </a>
+                            </li>
+                          </template>
+                          <li v-if="unidade.abas.includes('quiz')">
+                            <!--
                             Ordem do líder, 22/09/2026, verbatim: "quiz
                             nao precisa de submenu". Item final, link
                             direto para a aba, sem seta (não abre nada) e
                             sem nível 5: era agrupado por categoria com
                             contagem, removido por esta mesma ordem.
                           -->
-                          <a
-                            :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/quiz`"
-                            class="menu-curriculo__botao"
-                          >
-                            {{ ROTULOS_ABA.quiz }}
-                          </a>
-                        </li>
-                      </template>
-                    </ul>
-                  </template>
-                </li>
-                <li v-if="cadeira.atalhoUnidade?.apos === unidade.id">
-                  <!--
+                            <a
+                              :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/quiz`"
+                              class="menu-curriculo__botao"
+                            >
+                              {{ ROTULOS_ABA.quiz }}
+                            </a>
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                  </li>
+                  <li v-if="cadeira.atalhoUnidade?.apos === unidade.id">
+                    <!--
                     Atalho para a cadeira restrita (ordem do líder, 20/10/2026):
                     fica entre a Unidade 1 e a unidade seguinte, sem triângulo e
                     sem submenu. O espaçador reserva a largura do triângulo, para
@@ -347,25 +352,25 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                     diz que é atalho, para o leitor de tela não confundir com o
                     item próprio Interdisciplinar da mesma lista de cadeiras.
                   -->
-                  <div class="menu-curriculo__linha">
-                    <span class="menu-curriculo__recuo" aria-hidden="true" />
-                    <a
-                      :href="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
-                      class="menu-curriculo__link-unidade"
-                      :aria-label="`${cadeira.atalhoUnidade.rotulo}, atalho para a área restrita`"
-                      :aria-current="
-                        ehAtual(
-                          `p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`,
-                          caminhoAtual
-                        )
-                          ? 'page'
-                          : undefined
-                      "
-                    >
-                      {{ cadeira.atalhoUnidade.rotulo }}
-                    </a>
-                  </div>
-                </li>
+                    <div class="menu-curriculo__linha">
+                      <span class="menu-curriculo__recuo" aria-hidden="true" />
+                      <a
+                        :href="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
+                        class="menu-curriculo__link-unidade"
+                        :aria-label="`${cadeira.atalhoUnidade.rotulo}, atalho para a área restrita`"
+                        :aria-current="
+                          ehAtual(
+                            `p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`,
+                            caminhoAtual
+                          )
+                            ? 'page'
+                            : undefined
+                        "
+                      >
+                        {{ cadeira.atalhoUnidade.rotulo }}
+                      </a>
+                    </div>
+                  </li>
                 </template>
               </ul>
             </template>

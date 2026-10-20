@@ -37,7 +37,11 @@ const TODOS: ReadonlyArray<{
   { nome: 'Introdução ao Direito', quiz: soMultiplaEscolha(quizIntr), alternativas: 4 },
   { nome: 'Redação Jurídica 1', quiz: soMultiplaEscolha(quizRedacao), alternativas: 4 },
   { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 },
-  { nome: 'Filosofia Jurídica, unidade 3', quiz: soMultiplaEscolha(quizFilosofiaU3), alternativas: 4 }
+  {
+    nome: 'Filosofia Jurídica, unidade 3',
+    quiz: soMultiplaEscolha(quizFilosofiaU3),
+    alternativas: 4
+  }
 ];
 
 /**
@@ -285,8 +289,7 @@ describe('quiz de Filosofia Jurídica, unidade 3', () => {
  * ("Segundo o material", "Fora do material", "vale conferir"). Com \b, "o
  * materialista" e "Aguardando material do professor" não casam.
  */
-const APONTA_PARA_MATERIAL =
-  /\b(?:segundo o|fora do|o|no|do) material\b|\b(?:a|vale) conferir\b/i;
+const APONTA_PARA_MATERIAL = /\b(?:segundo o|fora do|o|no|do) material\b|\b(?:a|vale) conferir\b/i;
 
 function caminhosQueApontamParaMaterial(valor: unknown): string[] {
   return textos(valor)
@@ -312,7 +315,10 @@ describe('unidade 3 de Filosofia Jurídica não aponta para o material nem manda
  * nos dois lugares fica visível duas vezes na mesma tela.
  */
 function textoVisivelDoCorpo(corpoHtml: string): string {
-  return corpoHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return corpoHtml
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 describe('blocos do resumo da unidade 3 de Filosofia Jurídica', () => {

@@ -72,7 +72,13 @@ function curriculoFilosofia(): Curriculo {
           nome: 'Filosofia Jurídica',
           estado: 'publicado',
           unidades: [
-            { id: 'u1', rotulo: 'Unidade 1', titulo: 'Idade Antiga', estado: 'publicado', abas: [] },
+            {
+              id: 'u1',
+              rotulo: 'Unidade 1',
+              titulo: 'Idade Antiga',
+              estado: 'publicado',
+              abas: []
+            },
             { id: 'u3', rotulo: 'Unidade 3', titulo: 'Moderna', estado: 'publicado', abas: [] }
           ],
           atalhoUnidade: { apos: 'u1', rotulo: RotuloAtalho, cadeiraId: 'interdisciplinar' }

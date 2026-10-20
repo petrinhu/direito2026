@@ -15,6 +15,7 @@ export type {
   EstadoPublicacao,
   ChaveAba,
   ReferenciaUnidade,
+  AtalhoUnidade,
   Cadeira,
   Periodo,
   Curriculo,

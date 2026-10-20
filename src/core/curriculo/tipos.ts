@@ -22,6 +22,21 @@ export interface ReferenciaUnidade {
   readonly carregar?: () => Promise<import('../unidade/tipos').ConteudoUnidade>;
 }
 
+/**
+ * Atalho do menu lateral para a cadeira restrita Interdisciplinar (ordem do
+ * líder: "a segunda unidade é o interdisciplinar, link para ele"). Não é
+ * unidade: não tem abas, carregador nem página própria, e por isso mora fora
+ * de `Cadeira.unidades`. Busca, home, trilha e roteador nunca o enxergam.
+ */
+export interface AtalhoUnidade {
+  /** Rótulo exibido no menu. Ex.: 'Unidade 2: Interdisciplinar'. */
+  readonly rotulo: string;
+  /** Id da unidade da própria cadeira após a qual o atalho aparece. Ex.: 'u1'. */
+  readonly apos: string;
+  /** Id da cadeira restrita de destino, no mesmo período. Ex.: 'interdisciplinar'. */
+  readonly cadeiraId: string;
+}
+
 export interface Cadeira {
   /** Slug usado na URL. Ex.: 'intr-direito'. */
   readonly id: string;
@@ -34,6 +49,8 @@ export interface Cadeira {
    */
   readonly restrita?: true;
   readonly unidades: readonly ReferenciaUnidade[];
+  /** Atalho opcional no menu lateral para outra cadeira (só o menu o lê). */
+  readonly atalhoUnidade?: AtalhoUnidade;
 }
 
 export interface Periodo {

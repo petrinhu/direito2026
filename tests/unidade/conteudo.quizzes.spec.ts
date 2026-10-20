@@ -8,6 +8,11 @@ import { resumo as resumoRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/res
 import { resumo as resumoSociologia } from '@/conteudo/p1/sociologia-juridica/u1/resumo';
 import { resumo as resumoFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/resumo';
 import { mnemonicos as mnemonicosFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/mnemonicos';
+import { quiz as quizFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/quiz';
+import { resumo as resumoFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/resumo';
+import { mnemonicos as mnemonicosFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mnemonicos';
+import { mapaFichamento as mapaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mapaFichamento';
+import { meta as metaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/meta';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
 import type {
   PerguntaMultiplaEscolha,
@@ -31,7 +36,8 @@ const TODOS: ReadonlyArray<{
 }> = [
   { nome: 'Introdução ao Direito', quiz: soMultiplaEscolha(quizIntr), alternativas: 4 },
   { nome: 'Redação Jurídica 1', quiz: soMultiplaEscolha(quizRedacao), alternativas: 4 },
-  { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 }
+  { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 },
+  { nome: 'Filosofia Jurídica, unidade 3', quiz: soMultiplaEscolha(quizFilosofiaU3), alternativas: 4 }
 ];
 
 /**
@@ -205,7 +211,8 @@ describe('quizzes das quatro cadeiras não citam aula nem slide', () => {
     ['Introdução ao Direito', quizIntr],
     ['Redação Jurídica 1', quizRedacao],
     ['Sociologia Jurídica', quizSociologia],
-    ['Filosofia Jurídica', quizFilosofia]
+    ['Filosofia Jurídica', quizFilosofia],
+    ['Filosofia Jurídica, unidade 3', quizFilosofiaU3]
   ] as const)('%s', (_nome, quiz) => {
     expect(idsQueCitamAula(quiz)).toEqual([]);
   });
@@ -242,8 +249,59 @@ describe('resumos e mnemônicos não citam aula nem slide', () => {
     ['Redação Jurídica 1', resumoRedacao],
     ['Sociologia Jurídica', resumoSociologia],
     ['Filosofia Jurídica', resumoFilosofia],
-    ['mnemônicos de Filosofia Jurídica', mnemonicosFilosofia]
+    ['mnemônicos de Filosofia Jurídica', mnemonicosFilosofia],
+    ['Filosofia Jurídica, unidade 3', resumoFilosofiaU3],
+    ['mnemônicos de Filosofia Jurídica, unidade 3', mnemonicosFilosofiaU3]
   ] as const)('%s', (_nome, conteudo) => {
     expect(caminhosQueCitamAula(conteudo)).toEqual([]);
+  });
+});
+
+describe('quiz de Filosofia Jurídica, unidade 3', () => {
+  it('tem 20 perguntas, ids de 1 a 20, cada uma com exatamente 4 alternativas', () => {
+    expect(quizFilosofiaU3).toHaveLength(20);
+    expect(quizFilosofiaU3.map((p) => p.id).sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 20 }, (_, i) => i + 1)
+    );
+    for (const p of quizFilosofiaU3) {
+      expect('alternativasHtml' in p && p.alternativasHtml, `id ${p.id}`).toHaveLength(4);
+    }
+  });
+
+  it('ids 1 a 16 são Filosofia Moderna e 17 a 20 são Filosofia Social, com rótulos próprios', () => {
+    const moderna = quizFilosofiaU3.filter((p) => p.id <= 16);
+    const social = quizFilosofiaU3.filter((p) => p.id >= 17);
+    expect(moderna).toHaveLength(16);
+    expect(social).toHaveLength(4);
+    expect(moderna.every((p) => p.categoria === 'filosofia-moderna')).toBe(true);
+    expect(social.every((p) => p.categoria === 'filosofia-social')).toBe(true);
+    expect(ROTULOS_CATEGORIA_QUIZ['filosofia-moderna']).toBe('Filosofia Moderna');
+    expect(ROTULOS_CATEGORIA_QUIZ['filosofia-social']).toBe('Filosofia Social');
+  });
+});
+
+/**
+ * Expressões que apontam para o material de aula ou o referenciam de fora
+ * ("Segundo o material", "Fora do material", "vale conferir"). Com \b, "o
+ * materialista" e "Aguardando material do professor" não casam.
+ */
+const APONTA_PARA_MATERIAL =
+  /\b(?:segundo o|fora do|o|no|do) material\b|\b(?:a|vale) conferir\b/i;
+
+function caminhosQueApontamParaMaterial(valor: unknown): string[] {
+  return textos(valor)
+    .filter(([, texto]) => APONTA_PARA_MATERIAL.test(texto))
+    .map(([caminho]) => caminho);
+}
+
+describe('unidade 3 de Filosofia Jurídica não aponta para o material nem manda conferir', () => {
+  it.each([
+    ['resumo', resumoFilosofiaU3],
+    ['mapaFichamento', mapaFilosofiaU3],
+    ['mnemônicos', mnemonicosFilosofiaU3],
+    ['quiz', quizFilosofiaU3],
+    ['meta', metaFilosofiaU3]
+  ] as const)('%s', (_nome, conteudo) => {
+    expect(caminhosQueApontamParaMaterial(conteudo)).toEqual([]);
   });
 });

@@ -40,5 +40,11 @@ export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos = {
   'p1/filosofia-juridica/u1': async (): Promise<IndiceDispositivos> => {
     const { dispositivos } = await import('@/conteudo/p1/filosofia-juridica/u1/dispositivos');
     return dispositivos;
+  },
+  // Unidade 3 de Filosofia: o registro é obrigatório para toda unidade
+  // publicada (tests/unidade/carregamento.registrosCompletos.spec.ts).
+  'p1/filosofia-juridica/u3': async (): Promise<IndiceDispositivos> => {
+    const { dispositivos } = await import('@/conteudo/p1/filosofia-juridica/u3/dispositivos');
+    return dispositivos;
   }
 };

@@ -17,5 +17,7 @@ export const ROTULOS_CATEGORIA_QUIZ: Record<CategoriaQuiz, string> = {
   aplicacao: 'Aplicação',
   antiga: 'Idade Antiga',
   media: 'Idade Média',
-  revisao: 'Revisão do professor'
+  revisao: 'Revisão do professor',
+  'filosofia-moderna': 'Filosofia Moderna',
+  'filosofia-social': 'Filosofia Social'
 };

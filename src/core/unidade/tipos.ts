@@ -78,8 +78,9 @@ export interface PecaComentada {
 /**
  * Categorias de pergunta. As três primeiras nasceram no piloto (40, 10 e 10
  * perguntas); as quatro seguintes são da unidade de Sociologia Jurídica; as
- * três últimas (Idade Antiga, Idade Média, revisão do professor) são de
- * Filosofia Jurídica.
+ * três seguintes (Idade Antiga, Idade Média, revisão do professor) são de
+ * Filosofia Jurídica; as duas últimas (Filosofia Moderna e Filosofia Social)
+ * são da 3a unidade de Filosofia Jurídica.
  */
 export type CategoriaQuiz =
   | 'teoria'
@@ -91,7 +92,9 @@ export type CategoriaQuiz =
   | 'aplicacao'
   | 'antiga'
   | 'media'
-  | 'revisao';
+  | 'revisao'
+  | 'filosofia-moderna'
+  | 'filosofia-social';
 
 /** Posição de uma alternativa na ordem original: 0 é A, 4 é E. */
 export type IndiceAlternativa = 0 | 1 | 2 | 3 | 4;

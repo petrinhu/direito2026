@@ -1,4 +1,4 @@
-import type { Cadeira, Curriculo, Periodo, ReferenciaUnidade } from './tipos';
+import type { AtalhoUnidade, Cadeira, Curriculo, Periodo, ReferenciaUnidade } from './tipos';
 
 /**
  * Os dez períodos do curso. Hoje só existe uma unidade publicada: 1o
@@ -15,6 +15,17 @@ import type { Cadeira, Curriculo, Periodo, ReferenciaUnidade } from './tipos';
  * seção 2 do plano: src/conteudo/ nunca importa de src/app/.
  */
 
+/**
+ * Ordem do líder: "ponha em todas as disciplinas (no menu lateral) que a
+ * segunda unidade é o interdisciplinar (link para ele)". Mesmo atalho nas
+ * quatro cadeiras públicas; aponta para a cadeira restrita, sem página nova.
+ */
+const atalhoInterdisciplinar: AtalhoUnidade = {
+  rotulo: 'Unidade 2: Interdisciplinar',
+  apos: 'u1',
+  cadeiraId: 'interdisciplinar',
+};
+
 const unidade1IntrDireito: ReferenciaUnidade = {
   id: 'u1',
   rotulo: 'Unidade 1',
@@ -28,6 +39,7 @@ const cadeiraIntrDireito: Cadeira = {
   nome: 'Introdução ao Direito',
   estado: 'publicado',
   unidades: [unidade1IntrDireito],
+  atalhoUnidade: atalhoInterdisciplinar,
 };
 
 const unidade1RedacaoJuridica: ReferenciaUnidade = {
@@ -43,6 +55,7 @@ const cadeiraRedacaoJuridica: Cadeira = {
   nome: 'Português e Redação Jurídica 1',
   estado: 'publicado',
   unidades: [unidade1RedacaoJuridica],
+  atalhoUnidade: atalhoInterdisciplinar,
 };
 
 /**
@@ -62,6 +75,7 @@ const cadeiraSociologia: Cadeira = {
   nome: 'Sociologia Jurídica',
   estado: 'publicado',
   unidades: [unidade1Sociologia],
+  atalhoUnidade: atalhoInterdisciplinar,
 };
 
 /**
@@ -78,11 +92,25 @@ const unidade1Filosofia: ReferenciaUnidade = {
   abas: ['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz'],
 };
 
+/**
+ * Unidade 3 de Filosofia Jurídica (ordem do líder): Filosofia Moderna e
+ * Contemporânea, com as mesmas abas da 1a. Os arquivos do conteúdo moram em
+ * src/conteudo/p1/filosofia-juridica/u3/ e entram por src/app/carregamento.
+ */
+const unidade3Filosofia: ReferenciaUnidade = {
+  id: 'u3',
+  rotulo: 'Unidade 3',
+  titulo: 'Filosofia Moderna e Contemporânea',
+  estado: 'publicado',
+  abas: ['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz'],
+};
+
 const cadeiraFilosofia: Cadeira = {
   id: 'filosofia-juridica',
   nome: 'Filosofia Jurídica',
   estado: 'publicado',
-  unidades: [unidade1Filosofia],
+  unidades: [unidade1Filosofia, unidade3Filosofia],
+  atalhoUnidade: atalhoInterdisciplinar,
 };
 
 /**

@@ -11,10 +11,13 @@ describe('Home com o currículo real', () => {
   });
   const links = wrapper.findAll('a.cartao-unidade');
 
-  it('mostra um cartão por cadeira publicada, os quatro com nome e link distintos', () => {
-    expect(links).toHaveLength(4);
-    expect(new Set(links.map((l) => l.attributes('href'))).size).toBe(4);
-    expect(new Set(links.map((l) => l.text())).size).toBe(4);
+  // Um cartão por UNIDADE publicada (Filosofia tem duas: a 1 e a 3). O atalho
+  // do menu para o interdisciplinar não é unidade, então não ganha cartão.
+  it('mostra um cartão por unidade publicada, os cinco com link e nome distintos', () => {
+    expect(links).toHaveLength(5);
+    expect(new Set(links.map((l) => l.attributes('href'))).size).toBe(5);
+    expect(new Set(links.map((l) => l.text())).size).toBe(5);
+    expect(links.some((l) => (l.attributes('href') ?? '').endsWith('/u2'))).toBe(false);
   });
 
   it('o cartão de Filosofia Jurídica traz o nome da cadeira e não oferece petição', () => {

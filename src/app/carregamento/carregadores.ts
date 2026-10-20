@@ -48,5 +48,16 @@ export const CARREGADORES: RegistroDeCarregadores = {
       import('@/conteudo/p1/filosofia-juridica/u1/mnemonicos')
     ]);
     return { meta, resumo, quiz, mapaFichamento, mnemonicos };
+  },
+  // Unidade 3 (Filosofia Moderna e Contemporânea): mesmas partes da 1a.
+  'p1/filosofia-juridica/u3': async (): Promise<ConteudoUnidade> => {
+    const [{ meta }, { resumo }, { quiz }, { mapaFichamento }, { mnemonicos }] = await Promise.all([
+      import('@/conteudo/p1/filosofia-juridica/u3/meta'),
+      import('@/conteudo/p1/filosofia-juridica/u3/resumo'),
+      import('@/conteudo/p1/filosofia-juridica/u3/quiz'),
+      import('@/conteudo/p1/filosofia-juridica/u3/mapaFichamento'),
+      import('@/conteudo/p1/filosofia-juridica/u3/mnemonicos')
+    ]);
+    return { meta, resumo, quiz, mapaFichamento, mnemonicos };
   }
 };

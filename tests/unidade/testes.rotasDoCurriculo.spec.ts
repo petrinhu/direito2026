@@ -128,10 +128,11 @@ describe('rotasDeAbaAusente', () => {
     expect(rotasDeAbaAusente(sintetico)).toEqual(['/p/p1/sem-peticao/u1/peticao']);
   });
 
-  it('no currículo real, as petições de Sociologia e de Filosofia Jurídica são as únicas ausências', () => {
+  it('no currículo real, as petições de Sociologia e de Filosofia Jurídica (Unidades 1 e 3) são as únicas ausências', () => {
     expect(rotasDeAbaAusente(curriculo)).toEqual([
       '/p/p1/sociologia-juridica/u1/peticao',
-      '/p/p1/filosofia-juridica/u1/peticao'
+      '/p/p1/filosofia-juridica/u1/peticao',
+      '/p/p1/filosofia-juridica/u3/peticao'
     ]);
   });
 });

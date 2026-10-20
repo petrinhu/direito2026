@@ -145,7 +145,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 :id="`lista-${cadeira.id}`"
                 class="menu-curriculo__nivel-3 menu-curriculo__lista--guia"
               >
-                <li v-for="unidade in cadeira.unidades" :key="unidade.id">
+                <template v-for="unidade in cadeira.unidades" :key="unidade.id">
+                <li>
                   <EstadoEmBreve v-if="unidade.estado === 'em-breve'" :rotulo="unidade.rotulo" />
                   <template v-else>
                     <div class="menu-curriculo__linha">
@@ -337,6 +338,32 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                     </ul>
                   </template>
                 </li>
+                <li v-if="cadeira.atalhoUnidade?.apos === unidade.id">
+                  <!--
+                    Atalho da Unidade 2 (ordem do líder): link para a cadeira
+                    restrita, sem triângulo e sem submenu. O espaçador reserva
+                    a largura do triângulo, para o texto alinhar com o da
+                    Unidade 1 logo acima.
+                  -->
+                  <div class="menu-curriculo__linha">
+                    <span class="menu-curriculo__recuo" aria-hidden="true" />
+                    <a
+                      :href="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
+                      class="menu-curriculo__link-unidade"
+                      :aria-current="
+                        ehAtual(
+                          `p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`,
+                          caminhoAtual
+                        )
+                          ? 'page'
+                          : undefined
+                      "
+                    >
+                      {{ cadeira.atalhoUnidade.rotulo }}
+                    </a>
+                  </div>
+                </li>
+                </template>
               </ul>
             </template>
           </li>
@@ -506,6 +533,14 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   border: none;
   color: var(--menu-cor, inherit);
   cursor: pointer;
+}
+
+/* Espaçador do atalho da Unidade 2: ocupa a largura do triângulo das unidades
+   com submenu, sem botão nem foco, para o texto ficar na mesma coluna. */
+.menu-curriculo__recuo {
+  flex-shrink: 0;
+  width: var(--menu-toggle);
+  min-width: var(--menu-toggle);
 }
 
 .menu-curriculo__carregando {

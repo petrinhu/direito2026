@@ -27,17 +27,17 @@ Nos três, os testes de `tests/caracterizacao`, `tests/unidade` e `tests/compone
 
 Medido na F10, numa cópia do HEAD, com estes acréscimos seguidos de `npm run atualizar-referencias`: uma pergunta de múltipla escolha na Introdução ao Direito u1 (id 61), uma pergunta de verdadeiro ou falso na Filosofia Jurídica u1 (id 81), um feriado e um prazo no semestre 2026.2. Resultado: os testes de `tests/caracterizacao`, `tests/unidade` e `tests/componente` ficaram verdes (1674 testes), `npx vue-tsc --noEmit` saiu com 0 e `node --import tsx scripts/validar-conteudo.ts` saiu com 0. O resumo do `atualizar-referencias` mostrou só as duas unidades alteradas.
 
+Atualizado na F10.4 e F10.5, com as decisões do líder de 20/10/2026: prova parcial aceita e verdadeiro ou falso liberado em qualquer quiz. Medido numa cópia do HEAD c5aa25b, com uma pergunta de verdadeiro ou falso nova na Introdução ao Direito u1 (id 61) e uma prova AV1 de uma só cadeira: `atualizar-referencias`, vitest 1665 verdes, `npx vue-tsc --noEmit` 0 e `validar-conteudo` 0. Sabotagens na mesma cópia reprovaram como deve: verdadeiro ou falso com alternativas, múltipla escolha com tamanho misturado no quiz e prova AV1 repetida.
+
 Reprovam de propósito (são regra, não lacuna):
 
-- pergunta de verdadeiro ou falso numa unidade só de múltipla escolha (Introdução ao Direito u1, Redação Jurídica 1, Sociologia Jurídica e Filosofia Jurídica u3): o formato é da unidade;
 - pergunta do professor que não seja de verdadeiro ou falso;
 - id repetido ou com buraco no quiz;
 - feriado municipal novo sem a fonte oficial no comentário logo acima dele;
-- item repetido no calendário (mesmo semestre, datas e título).
+- item repetido no calendário (mesmo semestre, datas e título), e prova repetida (mesma cadeira, tipo e semestre).
 
 Lacunas conhecidas (registradas no `TODO.md`, na INBOX):
 
-- **Prova com tipo faltando.** Cada cadeira que tem prova no semestre precisa das cinco (AV1, AV2, AV3, chamada e final). Uma cadeira com só algumas datas marcadas reprova, de propósito. Decisão pendente do líder: manter ou aceitar prova parcial.
 - **Data de prova já conferida.** As datas de cada prova de 2026.2 estão conferidas uma a uma em `tests/unidade/calendario.dadosDoSemestre.spec.ts`. Corrigir uma data exige editar essa linha no mesmo commit.
 - **Atalho Interdisciplinar só no 1º período.** O teste do atalho confere as cadeiras do 1º período, onde mora a cadeira restrita Interdisciplinar. Uma cadeira de outro período não é conferida por ele.
 
@@ -144,7 +144,7 @@ Regras:
 
 - Use 4 ou 5 alternativas. Escolha uma quantidade e use a mesma em todo o quiz. Não misture.
 - `correta` é o número da alternativa certa, começando em 0, na ordem em que você escreveu. O site embaralha as alternativas a cada rodada. Por isso a explicação nunca aponta letra nem posição.
-- Pergunta de verdadeiro ou falso: use `tipo: 'verdadeiro-ou-falso'` e `correta: true` ou `correta: false`. Não coloque `alternativasHtml`.
+- Pergunta de verdadeiro ou falso: use `tipo: 'verdadeiro-ou-falso'` e `correta: true` ou `correta: false`. Não coloque `alternativasHtml`. Vale em qualquer unidade (decisão do líder, 20/10/2026).
 - O `id` precisa ser único dentro do quiz.
 - A categoria precisa de rótulo em `src/conteudo/quiz/categorias.ts`. Para criar uma categoria nova, acrescente uma linha ali com o nome que o aluno vê, por exemplo `'nova-categoria': 'Nome para o aluno',`.
 - `origem: 'professor'` (pergunta do simulado do professor) e `gabaritoDoCaderno: true` (resposta tirada do caderno de estudo) liberam só o enunciado e as alternativas da regra de aula e slide. A explicação nunca é liberada. Use só nesses dois casos. A pergunta do professor tem de ser de verdadeiro ou falso, e a marca do caderno só vai em pergunta da categoria `atividade`.
@@ -180,7 +180,7 @@ Exemplo de prova:
 
 Estas regras rodam nos testes, não no `validar-conteudo`. Para conferir, rode `npm run test:unit`. As mensagens de erro têm a forma `provas[N]: cadeiraId desconhecido "..."`, `prova duplicada`, `data inválida`, `fim (...) antes do início (...)` e `categoria desconhecida`.
 
-Acrescentar prova só quebra se repetir, para a mesma cadeira e no mesmo semestre, um tipo que já existe: o validador acusa `prova duplicada`. Feriado, prazo e período online novos não quebram. Os já conhecidos (feriados de 2026.2, prazo e período online das provas de Economia e Empreendedorismo) continuam obrigatórios: não apague um sem combinar com o líder.
+Acrescentar prova só quebra se repetir, para a mesma cadeira e no mesmo semestre, um tipo que já existe: o validador acusa `prova duplicada`. Uma cadeira pode ter só parte das provas do semestre (ex.: só a AV1): é aceito, por decisão do líder (20/10/2026). Feriado, prazo e período online novos não quebram. Os já conhecidos (feriados de 2026.2, prazo e período online das provas de Economia e Empreendedorismo) continuam obrigatórios: não apague um sem combinar com o líder.
 
 Feriado municipal do Recife precisa de comentário com a fonte oficial logo acima do item, no mesmo formato dos dois que já existem em `feriados.ts`. Sem ele, `tests/unidade/calendario.feriadosRecifeFonte.spec.ts` reprova.
 
@@ -243,7 +243,7 @@ Não reprovados pela trava, e que você confere à mão:
 - Testes do currículo real (`tests/unidade/curriculo.*` e `tests/componente/MenuCurriculo.*`): leem as cadeiras e as unidades do currículo, sem lista à mão.
 - Caracterização (`tests/caracterizacao/`): regravada por `npm run atualizar-referencias`, sem editar JSON à mão.
 
-Continuam pedindo cuidado: o atalho Interdisciplinar e a data de prova já conferida (seção 5). A decisão sobre prova parcial está pendente com o líder (seção "Estado atual").
+Continuam pedindo cuidado: o atalho Interdisciplinar e a data de prova já conferida (seção 5).
 
 ## 9. Quando a estrutura básica precisa de programador
 

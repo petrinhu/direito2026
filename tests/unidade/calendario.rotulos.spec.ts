@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { rotuloCategoria, rotuloCategoriaCurto, rotuloTipoProva } from '@/core/calendario/rotulos';
+import type { CategoriaEvento } from '@/core/calendario/tipos';
+
+const TODAS_AS_CATEGORIAS: readonly CategoriaEvento[] = [
+  'AV1',
+  'AV2',
+  'AV3',
+  'chamada',
+  'final',
+  'feriado',
+  'prazo',
+  'semestre'
+];
 
 describe('rotuloTipoProva (para frases: "a 3ª AV de ...")', () => {
   it.each([
@@ -37,8 +49,20 @@ describe('rotuloCategoriaCurto (rótulo de tela estreita, cabe na célula)', () 
     ['final', 'Final'],
     ['feriado', 'Feriado'],
     ['prazo', 'Prazo'],
-    ['semestre', 'Semestre']
+    ['semestre', 'Semest.']
   ] as const)('%s -> %s', (categoria, rotulo) => {
     expect(rotuloCategoriaCurto(categoria)).toBe(rotulo);
+  });
+
+  it('nenhuma palavra do rótulo curto passa de 7 caracteres (cabe inteira na célula)', () => {
+    for (const categoria of TODAS_AS_CATEGORIAS) {
+      const palavras = rotuloCategoriaCurto(categoria).split(' ');
+      for (const palavra of palavras) {
+        expect(
+          [...palavra].length,
+          `"${palavra}" (de ${categoria}) tem mais de 7 caracteres`
+        ).toBeLessThanOrEqual(7);
+      }
+    }
   });
 });

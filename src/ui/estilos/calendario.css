@@ -165,14 +165,41 @@
    título sai da vista (continua lido por leitor de tela e no title do evento)
    e fica o rótulo curto, para não picotar palavra numa célula pequena. Acima
    de 640px, o título aparece com reticências e o rótulo some da vista. */
+/* Quebra nas palavras, no máximo 2 linhas: o FullCalendar põe nowrap no evento,
+   e este span o desfaz. Reticências só depois de palavra inteira (line-clamp).
+   O max-height é o recurso para navegador sem -webkit-line-clamp. */
 .grade-calendario .cal-evento__titulo,
 .grade-calendario .cal-evento__rotulo {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   min-width: 0;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  line-height: 1.3;
+  max-height: calc(2 * 1.3em);
+  padding: 0 var(--esp-1, 0.25rem);
+}
+
+/* Tela estreita: o rótulo curto cabe numa célula de ~48px (rotulos.ts). Sem
+   padding lateral, "Feriado" (40,5px em Inter 700, 11px) cabe nos ~47px úteis. */
+.grade-calendario .cal-evento__rotulo {
+  font-size: 0.6875rem;
+  padding: 0;
+}
+
+/* Barra de vários dias (classe cal-evento--barra, GradeCalendario.vue): fica
+   numa linha só, com reticências quando o título inteiro não cabe. */
+.grade-calendario .cal-evento--barra .cal-evento__titulo,
+.grade-calendario .cal-evento--barra .cal-evento__rotulo {
+  display: block;
+  -webkit-line-clamp: none;
+  max-height: none;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding: 0 var(--esp-1, 0.25rem);
 }
 
 .grade-calendario .cal-evento__titulo {
@@ -238,6 +265,7 @@
   padding: 0 var(--esp-1, 0.25rem);
   clip-path: none;
   color: #000000;
+  font-size: inherit;
 }
 
 :root[data-modo-adaptado='on'] .grade-calendario .fc-button {

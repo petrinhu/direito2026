@@ -56,16 +56,59 @@ describe('dias de outro mês: número legível (D3)', () => {
   });
 });
 
-describe('títulos dos chips: reticências e rótulo curto em tela estreita (D4)', () => {
-  it('o título completo corta com reticências (overflow, nowrap e ellipsis no mesmo elemento)', () => {
-    const corpos = corposDeRegras('.grade-calendario .cal-evento__titulo');
+/** Corpos das regras do seletor que estão fora do modo adaptado. */
+function corposBase(trecho: string): string[] {
+  const achados: string[] = [];
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const seletor = (m[1] ?? '').replace(/\s+/g, ' ').trim();
+    if (seletor.includes(trecho) && !seletor.includes(':root')) achados.push(m[2] ?? '');
+  }
+  return achados;
+}
+
+describe('títulos dos chips: quebra em palavras, no máximo 2 linhas (D4)', () => {
+  it('o título quebra nas palavras (normal, sem nowrap) e corta em 2 linhas com reticências', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento__titulo');
     const ok = corpos.some(
       (c) =>
+        /white-space:\s*normal/.test(c) &&
+        /overflow-wrap:\s*normal/.test(c) &&
+        /hyphens:\s*none/.test(c) &&
+        /display:\s*-webkit-box/.test(c) &&
+        /-webkit-box-orient:\s*vertical/.test(c) &&
+        /-webkit-line-clamp:\s*2\b/.test(c) &&
         /overflow:\s*hidden/.test(c) &&
-        /white-space:\s*nowrap/.test(c) &&
-        /text-overflow:\s*ellipsis/.test(c)
+        /max-height:/.test(c)
     );
     expect(ok).toBe(true);
+  });
+
+  it('o rótulo curto também quebra nas palavras e tem o mesmo limite de 2 linhas', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento__rotulo');
+    const ok = corpos.some(
+      (c) =>
+        /white-space:\s*normal/.test(c) &&
+        /overflow-wrap:\s*normal/.test(c) &&
+        /-webkit-line-clamp:\s*2\b/.test(c)
+    );
+    expect(ok).toBe(true);
+  });
+
+  it('o rótulo curto de tela estreita usa fonte de 0,6875rem para caber na célula', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento__rotulo');
+    expect(corpos.some((c) => /font-size:\s*0\.6875rem/.test(c))).toBe(true);
+  });
+
+  it('a mesma regra da tela estreita tira o padding lateral (sobra largura para "Feriado" caber)', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento__rotulo');
+    expect(
+      corpos.some((c) => /font-size:\s*0\.6875rem/.test(c) && /padding:\s*0\s*;/.test(c))
+    ).toBe(true);
+  });
+
+  it('no modo adaptado o rótulo herda o tamanho base (não os 0,6875rem da tela estreita)', () => {
+    const corpos = corposDeRegras(`${ADAPTADO} .cal-evento__rotulo`);
+    expect(corpos.some((c) => /font-size:\s*inherit/.test(c))).toBe(true);
   });
 
   it('abaixo de 641px o título sai da vista e o rótulo curto fica (mobile-first)', () => {
@@ -74,5 +117,23 @@ describe('títulos dos chips: reticências e rótulo curto em tela estreita (D4)
     const telaLarga = css.slice(css.indexOf('@media (min-width: 641px)'));
     expect(telaLarga).toContain('.cal-evento__titulo');
     expect(telaLarga).toContain('.cal-evento__rotulo');
+  });
+});
+
+describe('barras de vários dias: continuam numa linha só (D4)', () => {
+  it('o título da barra não quebra linha e corta com reticências', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento--barra .cal-evento__titulo');
+    const ok = corpos.some(
+      (c) =>
+        /white-space:\s*nowrap/.test(c) &&
+        /overflow:\s*hidden/.test(c) &&
+        /text-overflow:\s*ellipsis/.test(c)
+    );
+    expect(ok).toBe(true);
+  });
+
+  it('o rótulo da barra em tela estreita também fica numa linha', () => {
+    const corpos = corposBase('.grade-calendario .cal-evento--barra .cal-evento__rotulo');
+    expect(corpos.some((c) => /white-space:\s*nowrap/.test(c))).toBe(true);
   });
 });

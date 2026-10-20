@@ -108,6 +108,30 @@ describe('grade: título completo e rótulo curto nos eventos (D4)', () => {
   });
 });
 
+describe('grade: barra de vários dias recebe a classe de barra (D4)', () => {
+  it('evento de vários dias (13 a 16/10) traz cal-evento--barra no elemento', async () => {
+    const w = montar();
+    await flushPromises();
+    const barra = w
+      .findAll('.fc-event')
+      .find((el) => el.attributes('title') === 'Trabalhos interdisciplinares (2ª avaliação)');
+    expect(barra, 'barra de 13 a 16/10').toBeDefined();
+    expect(barra!.classes()).toContain('cal-evento--barra');
+    w.unmount();
+  });
+
+  it('evento de um dia (Dia do Professor) não recebe a classe de barra', async () => {
+    const w = montar();
+    await flushPromises();
+    const umDia = w
+      .findAll('.fc-event')
+      .find((el) => el.attributes('title') === 'Dia do Professor');
+    expect(umDia, 'evento de um dia').toBeDefined();
+    expect(umDia!.classes()).not.toContain('cal-evento--barra');
+    w.unmount();
+  });
+});
+
 describe('grade: ícones de navegação fora da árvore de acessibilidade (D5)', () => {
   it('cada ícone de seta da barra de navegação tem aria-hidden="true"', async () => {
     const w = montar();

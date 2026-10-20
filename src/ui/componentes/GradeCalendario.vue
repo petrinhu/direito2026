@@ -75,6 +75,7 @@ const opcoes: CalendarOptions = {
   events: eventosParaGrade(),
   eventDisplay: 'block',
   eventContent: conteudoDoEvento,
+  eventClassNames: (arg: EventContentArg) => (arg.event.end ? ['cal-evento--barra'] : []),
   eventDidMount: (arg: EventMountArg) => {
     arg.el.setAttribute('title', arg.event.title);
   },

@@ -87,7 +87,7 @@ describe.each([
   ['Redação Jurídica 1', quizRedacao, 4],
   ['Sociologia Jurídica', quizSociologia, 5],
   ['Filosofia Jurídica, unidade 3', quizFilosofiaU3, 4]
-] as const)('%s: só múltipla escolha, com %i alternativas', (_nome, quiz, alternativas) => {
+] as const)('%s: só múltipla escolha', (_nome, quiz, alternativas) => {
   it('não tem verdadeiro ou falso', () => {
     expect(() => soMultiplaEscolha(quiz)).not.toThrow();
   });

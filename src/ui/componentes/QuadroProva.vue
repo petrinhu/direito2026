@@ -73,7 +73,7 @@ function abrirCalendario(): void {
   <aside
     v-if="contador"
     class="quadro-prova"
-    :class="`quadro-prova--${faixaAtual}`"
+    :class="[`quadro-prova--${faixaAtual}`, { 'quadro-prova--minimizado': minimizado }]"
     :data-faixa="faixaAtual"
     aria-label="Contagem para a próxima prova"
   >
@@ -119,6 +119,13 @@ function abrirCalendario(): void {
   color: var(--cor-texto, #1c1c1c);
   box-shadow: var(--sombra-elevada, 0 8px 24px rgba(13, 36, 64, 0.12));
   font-size: var(--escala-sm, 0.9375rem);
+}
+
+/* Minimizado sobra só a pílula e o botão Mostrar: encolhe na largura também,
+   sem passar do teto de 22rem. A ancoragem à direita (margin-left: auto) vale. */
+.quadro-prova--minimizado {
+  width: max-content;
+  max-width: min(100%, 22rem);
 }
 
 .quadro-prova__topo {

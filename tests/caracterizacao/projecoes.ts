@@ -98,9 +98,40 @@ export interface ResumoConteudo {
   readonly resumoBlocos: number;
   readonly quizPerguntas: number | null;
   readonly quizCategorias: readonly string[] | null;
+  /**
+   * Contagens e faixas exatas do quiz. Ficam aqui (congeladas) e não nos
+   * testes de conteúdo, para que acrescentar pergunta só peça
+   * `npm run atualizar-referencias`, sem editar teste. O resumo do comando
+   * mostra a mudança.
+   */
+  readonly quizTipos: {
+    readonly multiplaEscolha: number;
+    readonly verdadeiroOuFalso: number;
+  } | null;
+  readonly quizIdsDoProfessor: readonly number[] | null;
+  readonly quizIdsComMarca: readonly number[] | null;
+  readonly quizIdsPorCategoria: Readonly<Record<string, readonly number[]>> | null;
   readonly peticaoSecoes: number | null;
   readonly mapaFichamento: { readonly eras: number; readonly pensadores: number } | null;
   readonly mnemonicos: number | null;
+}
+
+/** Ids em ordem crescente: a referência compara a lista, não a ordem do arquivo. */
+function idsOrdenados(perguntas: readonly { readonly id: number }[]): number[] {
+  return perguntas.map((p) => p.id).sort((a, b) => a - b);
+}
+
+/** Categoria → ids, com as chaves em ordem alfabética (a referência não depende da ordem de montagem). */
+function idsPorCategoria(
+  quiz: readonly { readonly id: number; readonly categoria: string }[]
+): Record<string, number[]> {
+  const grupos: Record<string, number[]> = {};
+  for (const pergunta of quiz) (grupos[pergunta.categoria] ??= []).push(pergunta.id);
+  return Object.fromEntries(
+    Object.keys(grupos)
+      .sort()
+      .map((categoria) => [categoria, idsOrdenados(quiz.filter((p) => p.categoria === categoria))])
+  );
 }
 
 export function resumirConteudo(conteudo: ConteudoUnidade): ResumoConteudo {
@@ -110,6 +141,15 @@ export function resumirConteudo(conteudo: ConteudoUnidade): ResumoConteudo {
     resumoBlocos: conteudo.resumo.length,
     quizPerguntas: quiz ? quiz.length : null,
     quizCategorias: quiz ? [...new Set(quiz.map((p) => p.categoria))].sort() : null,
+    quizTipos: quiz
+      ? {
+          multiplaEscolha: quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso').length,
+          verdadeiroOuFalso: quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso').length
+        }
+      : null,
+    quizIdsDoProfessor: quiz ? idsOrdenados(quiz.filter((p) => p.origem === 'professor')) : null,
+    quizIdsComMarca: quiz ? idsOrdenados(quiz.filter((p) => p.gabaritoDoCaderno === true)) : null,
+    quizIdsPorCategoria: quiz ? idsPorCategoria(quiz) : null,
     peticaoSecoes: conteudo.peticao ? conteudo.peticao.secoes.length : null,
     mapaFichamento: conteudo.mapaFichamento
       ? {

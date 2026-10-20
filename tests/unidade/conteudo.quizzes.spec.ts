@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CARREGADORES } from '@/app/carregamento/carregadores';
 import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
@@ -12,17 +13,20 @@ import type {
 } from '@/core/unidade/tipos';
 
 /**
- * Invariantes de conteúdo dos quizzes que NÃO são regra geral. As regras
- * gerais (ids únicos, alternativas, correta, campos vazios, categoria com
- * rótulo, letra/posição, aula/slide, "o material", gabarito só true) valem
- * para TODA unidade pela varredura (conteudo.varredura.spec.ts) e por
- * validarUnidade. As contagens de perguntas e de categorias por unidade estão
- * congeladas em tests/caracterizacao/carregadores.esperado.json.
+ * Invariantes de conteúdo dos quizzes. Todas valem para QUALQUER número de
+ * perguntas: acrescentar pergunta não quebra este arquivo.
+ *
+ * As contagens e faixas exatas (perguntas por tipo, perguntas do professor,
+ * ids com marca do caderno e ids por categoria) NÃO ficam aqui: estão
+ * congeladas em tests/caracterizacao/ (carregadores.esperado.json) e se
+ * atualizam com `npm run atualizar-referencias`. As regras gerais de texto
+ * (alternativas, correta, campos vazios, categoria com rótulo, aula/slide,
+ * travessão) valem para toda unidade pela varredura (conteudo.varredura.spec.ts).
  */
 
-/** Sequência 1..n, sem repetir o número de perguntas no código. */
-function sequencia(quiz: readonly PerguntaQuiz[]): number[] {
-  return Array.from({ length: quiz.length }, (_, i) => i + 1);
+/** Sequência 1..n. */
+function sequencia(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => i + 1);
 }
 
 function idsDe(quiz: readonly PerguntaQuiz[]): number[] {
@@ -36,6 +40,47 @@ function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMult
     return p;
   });
 }
+
+/** Todo quiz que o carregamento descobre em src/conteudo, sem lista à mão. */
+async function quizzesDescobertos(): Promise<{ chave: string; quiz: readonly PerguntaQuiz[] }[]> {
+  const achados: { chave: string; quiz: readonly PerguntaQuiz[] }[] = [];
+  for (const chave of Object.keys(CARREGADORES)) {
+    const conteudo = await CARREGADORES[chave]!();
+    if (conteudo.quiz) achados.push({ chave, quiz: conteudo.quiz });
+  }
+  return achados;
+}
+
+describe('todo quiz descoberto em src/conteudo', () => {
+  it('há quizzes para varrer (piso: zero seria varredura quebrada, não conteúdo limpo)', async () => {
+    expect((await quizzesDescobertos()).length).toBeGreaterThan(0);
+  });
+
+  it('ids únicos e contíguos a partir de 1, em cada quiz', async () => {
+    for (const { chave, quiz } of await quizzesDescobertos()) {
+      expect(idsDe(quiz), chave).toEqual(sequencia(quiz.length));
+    }
+  });
+
+  it('toda pergunta do professor é verdadeiro ou falso', async () => {
+    for (const { chave, quiz } of await quizzesDescobertos()) {
+      for (const p of quiz.filter((q) => q.origem === 'professor')) {
+        expect(p.tipo, `${chave} id ${p.id}`).toBe('verdadeiro-ou-falso');
+      }
+    }
+  });
+
+  it('verdadeiro ou falso não tem alternativas e a correta é booleana', async () => {
+    for (const { chave, quiz } of await quizzesDescobertos()) {
+      for (const p of quiz) {
+        if (p.tipo !== 'verdadeiro-ou-falso') continue;
+        const vf = p as PerguntaVerdadeiroOuFalso;
+        expect('alternativasHtml' in vf, `${chave} id ${vf.id}`).toBe(false);
+        expect(typeof vf.correta, `${chave} id ${vf.id}`).toBe('boolean');
+      }
+    }
+  });
+});
 
 describe.each([
   ['Introdução ao Direito', quizIntr, 4],
@@ -55,12 +100,10 @@ describe.each([
 });
 
 describe('Sociologia Jurídica: marca do caderno', () => {
-  it('só as perguntas da atividade levam a marca, e são as de número 1 a 10', () => {
+  it('toda pergunta marcada com o gabarito do caderno é da categoria atividade', () => {
     const marcadas = quizSociologia.filter((p) => p.gabaritoDoCaderno === true);
-    expect(idsDe(marcadas)).toEqual(sequencia(marcadas));
+    expect(marcadas.length).toBeGreaterThan(0);
     expect(marcadas.every((p) => p.categoria === 'atividade')).toBe(true);
-    expect(idsDe(marcadas)[0]).toBe(1);
-    expect(idsDe(marcadas).at(-1)).toBe(10);
   });
 });
 
@@ -73,29 +116,15 @@ describe('Filosofia Jurídica, unidade 1: formato', () => {
   );
 
   it('ids contíguos de 1 ao total de perguntas', () => {
-    expect(idsDe(quizFilosofia)).toEqual(sequencia(quizFilosofia));
+    expect(idsDe(quizFilosofia)).toEqual(sequencia(quizFilosofia.length));
   });
 
-  it('metade de múltipla escolha, cinco alternativas cada, e metade de verdadeiro ou falso', () => {
-    expect(multipla).toHaveLength(40);
-    expect(verdadeiroOuFalso).toHaveLength(40);
+  it('a múltipla escolha tem cinco alternativas cada, e tem verdadeiro ou falso junto', () => {
+    expect(multipla.length).toBeGreaterThan(0);
+    expect(verdadeiroOuFalso.length).toBeGreaterThan(0);
     for (const p of multipla) {
       expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(5);
     }
-  });
-
-  it('verdadeiro ou falso não tem alternativas e a correta é booleana', () => {
-    for (const p of verdadeiroOuFalso) {
-      expect('alternativasHtml' in p, `id ${p.id}`).toBe(false);
-      expect(typeof p.correta, `id ${p.id}`).toBe('boolean');
-    }
-  });
-
-  it('as 20 do professor são os ids 1 a 20, todas verdadeiro ou falso, e só elas', () => {
-    const doProfessor = quizFilosofia.filter((p) => p.origem === 'professor');
-    expect(idsDe(doProfessor)).toEqual(sequencia(doProfessor));
-    expect(doProfessor).toHaveLength(20);
-    expect(doProfessor.every((p) => p.tipo === 'verdadeiro-ou-falso')).toBe(true);
   });
 
   it('nenhuma pergunta leva a marca do caderno (o gabarito é do professor)', () => {
@@ -103,13 +132,12 @@ describe('Filosofia Jurídica, unidade 1: formato', () => {
   });
 });
 
-describe('Filosofia Jurídica, unidade 3: faixas por categoria', () => {
-  it('ids 1 a 16 são Filosofia Moderna e 17 a 20 são Filosofia Social', () => {
-    const moderna = quizFilosofiaU3.filter((p) => p.id <= 16);
-    const social = quizFilosofiaU3.filter((p) => p.id >= 17);
-    expect(moderna.every((p) => p.categoria === 'filosofia-moderna')).toBe(true);
-    expect(social.every((p) => p.categoria === 'filosofia-social')).toBe(true);
-    expect(idsDe(quizFilosofiaU3)).toEqual(sequencia(quizFilosofiaU3));
+describe('Filosofia Jurídica, unidade 3: categorias com rótulo', () => {
+  it('as categorias usadas nesta unidade têm rótulo, e os ids seguem em ordem', () => {
+    expect(idsDe(quizFilosofiaU3)).toEqual(sequencia(quizFilosofiaU3.length));
+    for (const p of quizFilosofiaU3) {
+      expect(ROTULOS_CATEGORIA_QUIZ[p.categoria], `id ${p.id}`).toBeDefined();
+    }
   });
 
   it('rótulos das duas categorias', () => {

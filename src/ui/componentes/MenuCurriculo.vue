@@ -5,6 +5,7 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
+import IconeCalendario from './IconeCalendario.vue';
 
 const ABAS_DE_LINK_DIRETO = ['mapa', 'fichamento', 'mnemonicos'] as const;
 
@@ -94,6 +95,22 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 
 <template>
   <nav aria-label="Currículo" class="menu-curriculo">
+    <!--
+      Link do calendário, no topo da barra, acima do 1º período (ordem do líder,
+      20/10/2026). É um link de página, não um nível do currículo: sem disclosure.
+    -->
+    <ul class="menu-curriculo__topo">
+      <li>
+        <a
+          href="/calendario"
+          class="menu-curriculo__calendario"
+          :aria-current="ehAtual('calendario', caminhoAtual) ? 'page' : undefined"
+        >
+          <IconeCalendario />
+          Calendário
+        </a>
+      </li>
+    </ul>
     <ul class="menu-curriculo__nivel-1">
       <li v-for="periodo in curriculo" :key="periodo.id">
         <button
@@ -393,6 +410,13 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   list-style: none;
   margin: 0;
   padding: 0;
+}
+/* Separa o link do calendário da árvore de períodos, com o mesmo tom de guia
+   já usado nas listas (rgba fixo, ver o comentário de --lista--guia abaixo). */
+.menu-curriculo__topo {
+  padding-bottom: var(--esp-2, 0.5rem);
+  margin-bottom: var(--esp-2, 0.5rem);
+  border-bottom: 1px solid rgba(184, 192, 204, 0.35);
 }
 
 /* Guia de árvore: linha vertical ligando cada nível ao seu pai, decorativa

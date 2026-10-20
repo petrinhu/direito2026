@@ -1,0 +1,236 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { contadorProva } from '@/app/calendario/contadorProva';
+import {
+  gravarMinimizado,
+  lerMinimizado,
+  type ArmazenamentoSimples
+} from '@/app/calendario/estadoQuadroProva';
+import type { NivelUrgencia } from '@/core/calendario/tipos';
+
+/**
+ * Quadro flutuante de contagem (ordem do líder, 20/10/2026): aparece em
+ * todas as páginas, cresce e muda de cor conforme a prova chega, e pode ser
+ * minimizado. `agora` é injetável para teste; sem ele, usa o relógio.
+ */
+const props = defineProps<{ agora?: Date }>();
+
+const contador = computed(() => contadorProva(props.agora ?? new Date()));
+
+function armazenamentoPadrao(): ArmazenamentoSimples | undefined {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
+const minimizado = ref(
+  contador.value ? lerMinimizado(armazenamentoPadrao(), contador.value.faixa) : false
+);
+
+// Mudou de faixa de urgência: reabre sozinho e guarda o estado da nova faixa.
+watch(
+  () => contador.value?.faixa,
+  (faixa, anterior) => {
+    if (!faixa || faixa === anterior) return;
+    minimizado.value = false;
+    gravarMinimizado(armazenamentoPadrao(), faixa, false);
+  }
+);
+
+function alternar(): void {
+  const faixa = contador.value?.faixa;
+  if (!faixa) return;
+  minimizado.value = !minimizado.value;
+  gravarMinimizado(armazenamentoPadrao(), faixa, minimizado.value);
+}
+
+function resumoCurto(dias: number): string {
+  if (dias === 0) return 'Hoje';
+  if (dias === 1) return 'Amanhã';
+  return `${dias} dias`;
+}
+
+const faixaAtual = computed<NivelUrgencia | undefined>(() => contador.value?.faixa);
+</script>
+
+<template>
+  <aside
+    v-if="contador"
+    class="quadro-prova"
+    :class="`quadro-prova--${faixaAtual}`"
+    :data-faixa="faixaAtual"
+    aria-label="Contagem para a próxima prova"
+  >
+    <div class="quadro-prova__topo">
+      <span class="quadro-prova__pilula">{{ resumoCurto(contador.dias) }}</span>
+      <button
+        type="button"
+        class="quadro-prova__alternar"
+        :aria-expanded="minimizado ? 'false' : 'true'"
+        :aria-controls="minimizado ? undefined : 'quadro-prova-texto'"
+        @click="alternar"
+      >
+        {{ minimizado ? 'Mostrar' : 'Minimizar' }}
+        <span class="visualmente-oculto">o quadro de contagem</span>
+      </button>
+    </div>
+    <div v-if="!minimizado" id="quadro-prova-texto" data-testid="quadro-texto">
+      <p class="quadro-prova__texto">{{ contador.texto }}</p>
+      <a class="quadro-prova__link" href="/calendario">Abrir o calendário</a>
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.quadro-prova {
+  pointer-events: auto;
+  width: min(100%, 22rem);
+  margin-left: auto;
+  margin-right: var(--esp-4, 1rem);
+  padding: var(--esp-3, 0.75rem) var(--esp-4, 1rem);
+  border-radius: var(--raio-lg, 16px);
+  border: 1px solid var(--cor-borda-forte, #c3bca4);
+  background: var(--cor-fundo-elevado, #fff);
+  color: var(--cor-texto, #1c1c1c);
+  box-shadow: var(--sombra-elevada, 0 8px 24px rgba(13, 36, 64, 0.12));
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+.quadro-prova__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3, 0.75rem);
+}
+
+/* A pílula leva a cor da faixa: usa só pares já medidos no portão de contraste
+   (categorias do calendário, fixas nos dois temas). Cresce com a urgência. */
+.quadro-prova__pilula {
+  display: inline-block;
+  padding: var(--esp-1, 0.25rem) var(--esp-3, 0.75rem);
+  border-radius: var(--raio-md, 10px);
+  background: var(--cor-cal-av1-fundo, #163a5f);
+  color: var(--cor-cal-av1-texto, #ffffff);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.quadro-prova--calmo .quadro-prova__pilula {
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+.quadro-prova--dourado {
+  border: 2px solid var(--cor-acento, #7c621c);
+}
+
+.quadro-prova--dourado .quadro-prova__pilula {
+  background: var(--cor-cal-av2-fundo, #7c621c);
+  color: var(--cor-cal-av2-texto, #ffffff);
+  font-size: var(--escala-base, 1.0625rem);
+}
+
+.quadro-prova--garnet {
+  border: 2px solid var(--cor-bordo, #7a2331);
+}
+
+.quadro-prova--garnet .quadro-prova__pilula {
+  background: var(--cor-cal-av3-fundo, #7a2331);
+  color: var(--cor-cal-av3-texto, #ffffff);
+  font-size: var(--escala-md, 1.25rem);
+}
+
+.quadro-prova--pulsante {
+  border: 3px solid var(--cor-bordo, #7a2331);
+}
+
+.quadro-prova--pulsante .quadro-prova__pilula {
+  background: var(--cor-cal-av3-fundo, #7a2331);
+  color: var(--cor-cal-av3-texto, #ffffff);
+  font-size: var(--escala-lg, 1.75rem);
+}
+
+/* Pulso só para quem não pediu menos movimento e não está no modo adaptado
+   (ordem do líder: nesses casos muda só cor e tamanho). */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-modo-adaptado='on']) .quadro-prova--pulsante {
+    animation: quadro-prova-pulsar 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes quadro-prova-pulsar {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(122, 35, 49, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(122, 35, 49, 0);
+  }
+}
+
+.quadro-prova__alternar {
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  background: none;
+  border: none;
+  color: var(--cor-texto, #1c1c1c);
+  text-decoration: underline;
+  font: inherit;
+  font-size: var(--escala-xs, 0.8125rem);
+  cursor: pointer;
+}
+
+.quadro-prova__texto {
+  margin: var(--esp-2, 0.5rem) 0 0;
+  font-weight: 600;
+}
+
+.quadro-prova__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--cor-primaria, #163a5f);
+  text-decoration: underline;
+}
+
+.quadro-prova__alternar:focus-visible,
+.quadro-prova__link:focus-visible {
+  outline: 2px solid var(--cor-foco, #163a5f);
+  outline-offset: 2px;
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Modo adaptado: preto sobre branco, sem pulso e com contorno, por desenho. */
+:root[data-modo-adaptado='on'] .quadro-prova {
+  background: #ffffff;
+  color: #000000;
+  border: 3px solid #000000;
+}
+
+:root[data-modo-adaptado='on'] .quadro-prova__pilula {
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+:root[data-modo-adaptado='on'] .quadro-prova__link,
+:root[data-modo-adaptado='on'] .quadro-prova__alternar {
+  color: #000000;
+}
+
+@media print {
+  .quadro-prova {
+    display: none;
+  }
+}
+</style>

@@ -84,6 +84,42 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   // entrado neste portão. A linha de oferecimento usa o par dedicado da
   // lateral, já coberto acima ('texto suave sobre a lateral').
   { nome: 'texto suave sobre fundo da página', texto: '--cor-texto-suave', fundo: '--cor-fundo' },
+  // Calendário (ordem do líder, 20/10/2026): cada categoria de evento tem o
+  // seu par fixo, igual nos dois temas, porque a cor identifica o tipo de data
+  // e não pode mudar de tom com a preferência de tema. Texto sempre com par
+  // próprio: a cor não é o único sinal (o evento também traz o rótulo).
+  { nome: 'calendário, 1ª AV', texto: '--cor-cal-av1-texto', fundo: '--cor-cal-av1-fundo' },
+  { nome: 'calendário, 2ª AV', texto: '--cor-cal-av2-texto', fundo: '--cor-cal-av2-fundo' },
+  { nome: 'calendário, 3ª AV', texto: '--cor-cal-av3-texto', fundo: '--cor-cal-av3-fundo' },
+  {
+    nome: 'calendário, 2ª chamada',
+    texto: '--cor-cal-chamada-texto',
+    fundo: '--cor-cal-chamada-fundo'
+  },
+  { nome: 'calendário, final', texto: '--cor-cal-final-texto', fundo: '--cor-cal-final-fundo' },
+  {
+    nome: 'calendário, feriado',
+    texto: '--cor-cal-feriado-texto',
+    fundo: '--cor-cal-feriado-fundo'
+  },
+  {
+    nome: 'calendário, prazo acadêmico',
+    texto: '--cor-cal-prazo-texto',
+    fundo: '--cor-cal-prazo-fundo'
+  },
+  {
+    nome: 'calendário, semestre',
+    texto: '--cor-cal-semestre-texto',
+    fundo: '--cor-cal-semestre-fundo'
+  },
+  // Dia de hoje na grade: o número do dia fica sobre o fundo de trilha ativa.
+  { nome: 'calendário, dia de hoje', texto: '--cor-texto', fundo: '--cor-primaria-clara' },
+  // Texto de apoio da grade (dias de outro mês, legenda) sobre o cartão.
+  {
+    nome: 'texto suave sobre cartão',
+    texto: '--cor-texto-suave',
+    fundo: '--cor-fundo-elevado'
+  },
   // Cabeçalho (ordem do líder, 22/09/2026): trilha de navegação sobre a
   // faixa (mesmo par da lateral) e o fio de progresso dourado, que por
   // ser cor nova (não reaproveita --cor-acento, que muda com o tema)
@@ -347,4 +383,32 @@ describe('mapa visual, nó central', () => {
       expect(valores[1], variavel).toBe(valores[2]);
     }
   );
+});
+
+/**
+ * As cores de categoria do calendário são fixas: o mesmo valor no tema claro
+ * e no escuro (ordem do líder: cor de tipo de data não muda com o tema). Se
+ * algum dia uma delas passar a variar, este teste reprova, para o par ser
+ * medido nos dois temas de novo.
+ */
+describe('calendário, cores de categoria fixas entre os temas', () => {
+  const temas = carregarTemas();
+  const categorias = [
+    'av1',
+    'av2',
+    'av3',
+    'chamada',
+    'final',
+    'feriado',
+    'prazo',
+    'semestre'
+  ] as const;
+
+  it.each(categorias)('%s: fundo e texto iguais no claro e no escuro', (cat) => {
+    for (const papel of ['fundo', 'texto'] as const) {
+      const variavel = `--cor-cal-${cat}-${papel}`;
+      expect(temas.claro[variavel], `${variavel} no claro`).toBeDefined();
+      expect(temas.escuro[variavel], `${variavel} no escuro`).toBe(temas.claro[variavel]);
+    }
+  });
 });

@@ -51,6 +51,13 @@ export const rotas: RouteRecordRaw[] = [
     props: (route) => ({ ...route.params, aba: 'quiz' })
   },
   {
+    // Calendário (ordem do líder, 20/10/2026): a grade do FullCalendar só é
+    // baixada nesta rota, por import() preguiçoso.
+    path: '/calendario',
+    name: 'calendario',
+    component: () => import('@/ui/paginas/Calendario.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'nao-encontrado',
     component: () => import('@/ui/paginas/NaoEncontrado.vue')

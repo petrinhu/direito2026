@@ -10,6 +10,7 @@ import BarraTopo from './BarraTopo.vue';
 import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
 import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
+import QuadroProva from '../componentes/QuadroProva.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -116,7 +117,15 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     </main>
   </div>
   <Rodape :repositorio="repositorio" />
-  <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
+  <!--
+    Pilha inferior: aviso de armazenamento e quadro de contagem. Os dois são
+    sticky dentro desta caixa (que é sticky no fim do documento), então ficam
+    empilhados e nunca se sobrepõem nem cobrem o conteúdo do fim da página.
+  -->
+  <div class="layout-base__inferior">
+    <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
+    <QuadroProva />
+  </div>
 </template>
 
 <style scoped>
@@ -159,6 +168,24 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 .layout-base__conteudo {
   flex: 1;
   min-width: 0;
+}
+
+/* Pilha inferior (aviso de armazenamento + quadro de contagem). Sticky e no
+   fluxo do documento: reserva a própria altura no fim da página, como o aviso
+   fazia sozinho antes. pointer-events: none deixa passar o clique pelo vão
+   transparente; os filhos reativam o próprio toque. */
+.layout-base__inferior {
+  position: sticky;
+  bottom: var(--esp-4, 1rem);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3, 0.75rem);
+  pointer-events: none;
+}
+
+.layout-base__inferior > * {
+  pointer-events: auto;
 }
 
 .layout-base__sobreposicao {
@@ -239,6 +266,10 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 
 @media print {
   .layout-base__gaveta {
+    display: none;
+  }
+
+  .layout-base__inferior {
     display: none;
   }
 }

@@ -237,6 +237,27 @@
      faixa). Valor fixo nos dois temas, igual ao da faixa; o modo adaptado põe preto. */
   --cor-friso: #d3b563;
 
+  /* Calendário (ordem do líder, 20/10/2026): cor de cada categoria de data.
+     Fixa nos dois temas, porque a cor identifica o tipo de data e não muda
+     com a preferência. Cada par está medido no portão de contraste
+     (tests/unidade/design.contrasteTokens.spec.ts). */
+  --cor-cal-av1-fundo: #163a5f;
+  --cor-cal-av1-texto: #ffffff;
+  --cor-cal-av2-fundo: #7c621c;
+  --cor-cal-av2-texto: #ffffff;
+  --cor-cal-av3-fundo: #7a2331;
+  --cor-cal-av3-texto: #ffffff;
+  --cor-cal-chamada-fundo: #3d5a80;
+  --cor-cal-chamada-texto: #ffffff;
+  --cor-cal-final-fundo: #1f5f6b;
+  --cor-cal-final-texto: #ffffff;
+  --cor-cal-feriado-fundo: #5a5442;
+  --cor-cal-feriado-texto: #ffffff;
+  --cor-cal-prazo-fundo: #f3ead1;
+  --cor-cal-prazo-texto: #1c1c1c;
+  --cor-cal-semestre-fundo: #dcd7c8;
+  --cor-cal-semestre-texto: #1c1c1c;
+
   color-scheme: light;
 }
 
@@ -331,6 +352,27 @@
    localStorage e aplica data-theme="dark" na tag <html>). Vale mesmo em
    sistema claro. */
 :root[data-theme="dark"] {
+  /* Calendário (ordem do líder, 20/10/2026): cor de cada categoria de data.
+     Fixa nos dois temas, porque a cor identifica o tipo de data e não muda
+     com a preferência. Cada par está medido no portão de contraste
+     (tests/unidade/design.contrasteTokens.spec.ts). */
+  --cor-cal-av1-fundo: #163a5f;
+  --cor-cal-av1-texto: #ffffff;
+  --cor-cal-av2-fundo: #7c621c;
+  --cor-cal-av2-texto: #ffffff;
+  --cor-cal-av3-fundo: #7a2331;
+  --cor-cal-av3-texto: #ffffff;
+  --cor-cal-chamada-fundo: #3d5a80;
+  --cor-cal-chamada-texto: #ffffff;
+  --cor-cal-final-fundo: #1f5f6b;
+  --cor-cal-final-texto: #ffffff;
+  --cor-cal-feriado-fundo: #5a5442;
+  --cor-cal-feriado-texto: #ffffff;
+  --cor-cal-prazo-fundo: #f3ead1;
+  --cor-cal-prazo-texto: #1c1c1c;
+  --cor-cal-semestre-fundo: #dcd7c8;
+  --cor-cal-semestre-texto: #1c1c1c;
+
   --cor-fundo: #12161c;
   --cor-fundo-elevado: #1a1f27;
   --cor-fundo-sutil: #1f242d;

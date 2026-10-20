@@ -1,0 +1,184 @@
+/* ==========================================================================
+   Calendário: cores de categoria, grade do FullCalendar e modo adaptado.
+   As cores vêm dos tokens --cor-cal-* (tokens.css), fixas nos dois temas e
+   medidas no portão de contraste. Só este arquivo conhece a grade; os
+   componentes recebem a classe cal-cat-<categoria> e usam --cal-fundo/--cal-texto.
+   ========================================================================== */
+
+.cal-cat-av1 {
+  --cal-fundo: var(--cor-cal-av1-fundo);
+  --cal-texto: var(--cor-cal-av1-texto);
+}
+.cal-cat-av2 {
+  --cal-fundo: var(--cor-cal-av2-fundo);
+  --cal-texto: var(--cor-cal-av2-texto);
+}
+.cal-cat-av3 {
+  --cal-fundo: var(--cor-cal-av3-fundo);
+  --cal-texto: var(--cor-cal-av3-texto);
+}
+.cal-cat-chamada {
+  --cal-fundo: var(--cor-cal-chamada-fundo);
+  --cal-texto: var(--cor-cal-chamada-texto);
+}
+.cal-cat-final {
+  --cal-fundo: var(--cor-cal-final-fundo);
+  --cal-texto: var(--cor-cal-final-texto);
+}
+.cal-cat-feriado {
+  --cal-fundo: var(--cor-cal-feriado-fundo);
+  --cal-texto: var(--cor-cal-feriado-texto);
+}
+.cal-cat-prazo {
+  --cal-fundo: var(--cor-cal-prazo-fundo);
+  --cal-texto: var(--cor-cal-prazo-texto);
+}
+.cal-cat-semestre {
+  --cal-fundo: var(--cor-cal-semestre-fundo);
+  --cal-texto: var(--cor-cal-semestre-texto);
+}
+
+/* Chip: rótulo de categoria na legenda e no painel. Sempre com texto. */
+.cal-chip {
+  display: inline-block;
+  padding: var(--esp-1, 0.25rem) var(--esp-2, 0.5rem);
+  border-radius: var(--raio-sm, 6px);
+  background: var(--cal-fundo);
+  color: var(--cal-texto);
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.cal-cat-prazo.cal-chip {
+  border: 1px dashed var(--cor-texto, #1c1c1c);
+}
+
+.calendario {
+  max-width: var(--largura-conteudo, 1180px);
+  margin-inline: auto;
+  padding: var(--esp-6, 2rem) var(--esp-5, 1.5rem);
+  display: grid;
+  gap: var(--esp-5, 1.5rem);
+}
+
+.calendario__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: var(--escala-xl, 2.5rem);
+  color: var(--cor-titulo-texto, #0d2440);
+  margin: 0;
+}
+
+.calendario__subtitulo {
+  font-family: var(--fonte-titulo);
+  font-size: var(--escala-md, 1.25rem);
+  color: var(--cor-titulo-texto, #0d2440);
+  margin: 0;
+}
+
+.calendario__apresentacao,
+.calendario__apoio {
+  margin: 0;
+  color: var(--cor-texto-suave, #4a4a4a);
+}
+
+.calendario__nota {
+  margin: 0;
+  font-weight: 600;
+}
+
+.calendario__observacoes {
+  margin: var(--esp-2, 0.5rem) 0 0;
+  padding-left: var(--esp-5, 1.5rem);
+  color: var(--cor-texto-suave, #4a4a4a);
+}
+
+/* Grade: variáveis do FullCalendar apontam para os tokens do site. */
+.grade-calendario .fc {
+  --fc-border-color: var(--cor-borda, #dcd7c8);
+  --fc-page-bg-color: var(--cor-fundo-elevado, #fff);
+  --fc-neutral-bg-color: var(--cor-fundo-sutil, #f2efe6);
+  --fc-neutral-text-color: var(--cor-texto-suave, #4a4a4a);
+  --fc-button-bg-color: var(--cor-primaria, #163a5f);
+  --fc-button-border-color: var(--cor-primaria, #163a5f);
+  --fc-button-text-color: var(--cor-texto-invertido, #faf9f5);
+  --fc-button-hover-bg-color: var(--cor-primaria, #163a5f);
+  --fc-button-hover-border-color: var(--cor-primaria, #163a5f);
+  --fc-button-active-bg-color: var(--cor-primaria, #163a5f);
+  --fc-button-active-border-color: var(--cor-primaria, #163a5f);
+  --fc-today-bg-color: var(--cor-primaria-clara, #eaf1f8);
+  color: var(--cor-texto, #1c1c1c);
+  font-family: var(--fonte-texto);
+}
+
+.grade-calendario .fc-toolbar-title {
+  font-family: var(--fonte-titulo);
+  font-size: var(--escala-lg, 1.75rem);
+  color: var(--cor-titulo-texto, #0d2440);
+}
+
+.grade-calendario .fc-button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.grade-calendario .fc-daygrid-day-number {
+  color: var(--cor-texto, #1c1c1c);
+  text-decoration: none;
+}
+
+.grade-calendario .fc-day-other .fc-daygrid-day-number {
+  color: var(--cor-texto-suave, #4a4a4a);
+}
+
+/* Dia de hoje: fundo de trilha ativa e um contorno, para não depender só da cor. */
+.grade-calendario .fc-day-today {
+  box-shadow: inset 0 0 0 2px var(--cor-primaria, #163a5f);
+}
+
+.grade-calendario .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+}
+
+.grade-calendario .fc-event {
+  --fc-event-bg-color: var(--cal-fundo);
+  --fc-event-border-color: var(--cal-fundo);
+  --fc-event-text-color: var(--cal-texto);
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grade-calendario .fc-event.cal-cat-prazo {
+  border-style: dashed;
+  border-color: var(--cor-texto, #1c1c1c);
+}
+
+/* Modo adaptado (baixa visão): preto sobre branco, rótulo sempre visível. */
+:root[data-modo-adaptado='on'] .cal-chip,
+:root[data-modo-adaptado='on'] .grade-calendario .fc-event {
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  font-size: var(--escala-base, 1.0625rem);
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .fc-day-today {
+  box-shadow: inset 0 0 0 4px #000000;
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .fc-button {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: var(--escala-base, 1.0625rem);
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .fc,
+:root[data-modo-adaptado='on'] .grade-calendario .fc-daygrid-day-number {
+  font-size: var(--escala-base, 1.5rem);
+}
+
+:root[data-modo-adaptado='on'] .calendario__titulo,
+:root[data-modo-adaptado='on'] .calendario__subtitulo {
+  color: #000000;
+}

@@ -5,6 +5,11 @@
  * valor exportado: os validadores só varrem valores.
  */
 
+import {
+  TEXTO_PENDENTE_CURTO,
+  TEXTO_PENDENTE_META
+} from '../../../src/core/conteudo/regrasDeTexto';
+
 export interface EntradaDaUnidade {
   readonly periodo: string;
   readonly nomeDaCadeira: string;
@@ -96,7 +101,7 @@ function modeloDoMeta(entrada: EntradaDaUnidade): string {
     "  estado: 'em-breve',",
     `  titulo: ${literal(entrada.titulo)},`,
     `  subtitulo: ${literal(subtitulo)},`,
-    "  descricao: 'A escrever antes da publicação.'",
+    `  descricao: ${literal(TEXTO_PENDENTE_META)}`,
     '};',
     ''
   ].join('\n');
@@ -174,7 +179,7 @@ function modeloDaPeticao(entrada: EntradaDaUnidade): string {
     ]),
     'export const peticao: PecaComentada = {',
     `  titulo: ${literal(`Peça comentada: ${entrada.titulo}`)},`,
-    "  notaHtml: '<p>A escrever.</p>',",
+    `  notaHtml: '<p>${TEXTO_PENDENTE_CURTO}</p>',`,
     '  secoes: []',
     '};',
     ''

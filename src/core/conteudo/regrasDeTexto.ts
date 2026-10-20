@@ -23,6 +23,21 @@ export const CITA_AULA_OU_SLIDE =
 export const APONTA_PARA_MATERIAL =
   /(?<![\p{L}\p{N}_])(?:segundo o|fora do|o|no|do) material(?![\p{L}\p{N}_])|(?<![\p{L}\p{N}_])(?:a|vale) conferir(?![\p{L}\p{N}_])/iu;
 
+/**
+ * Travessão longo (U+2014) e médio (U+2013): proibidos em todo texto de conteúdo,
+ * em qualquer campo da unidade, sem isenção. Substitutos: vírgula, dois-pontos
+ * ou hífen comum.
+ */
+export const TRAVESSAO = /[\u2013\u2014]/;
+
+/**
+ * Textos de espera que o gerador escreve nos modelos (meta.ts e petição). São
+ * válidos só em unidade em-breve; publicada com algum deles reprova. A
+ * comparação é do texto inteiro, sem tags, nunca por trecho.
+ */
+export const TEXTO_PENDENTE_META = 'A escrever antes da publicação.';
+export const TEXTO_PENDENTE_CURTO = 'A escrever.';
+
 /** Referência genérica da lista de fontes: não tem número de aula nem data. */
 export const REFERENCIA_GENERICA_DE_MATERIAL = /Material de aula da disciplina/g;
 export const FONTE_COM_AULA_OU_DATA = /\b(?:aulas?|slides?)\b|\b\d{1,2}\/\d{1,2}\b/i;

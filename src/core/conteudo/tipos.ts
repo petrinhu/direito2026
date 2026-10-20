@@ -16,7 +16,9 @@ export type RegraDeUnidade =
   | 'gabarito-do-caderno'
   | 'categoria-sem-rotulo'
   | 'fonte-repetida-no-corpo'
-  | 'titulo-com-numero-de-bloco';
+  | 'titulo-com-numero-de-bloco'
+  | 'travessao'
+  | 'placeholder';
 
 /** Um achado: a regra, o caminho dentro do ConteudoUnidade e o que foi achado. */
 export interface ErroDeUnidade {

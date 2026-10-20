@@ -7,7 +7,9 @@ import { validarCitacaoDeAlternativa } from './validarCitacaoDeAlternativa';
 import { validarFichas } from './validarFichas';
 import { validarMeta } from './validarMeta';
 import { validarPerguntas } from './validarPerguntas';
+import { validarPlaceholder } from './validarPlaceholder';
 import { validarTextos } from './validarTextos';
+import { validarTravessao } from './validarTravessao';
 import type { ErroDeUnidade } from './tipos';
 
 /**
@@ -28,6 +30,8 @@ export function validarUnidade(
     ...validarCategorias(quiz, rotulos),
     ...validarBlocos(conteudo.resumo),
     ...validarTextos(conteudo),
+    ...validarTravessao(conteudo),
+    ...validarPlaceholder(conteudo),
     ...validarFichas(conteudo)
   ];
 }

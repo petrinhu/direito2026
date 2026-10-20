@@ -11,8 +11,9 @@ import {
  * Projeções usadas pelos testes de caracterização (tests/caracterizacao/).
  *
  * Este arquivo NÃO é um spec (não casa com *.spec.ts, então o vitest não o
- * coleta). Ele também é importado pelo gerador one-off que produziu os
- * arquivos *.esperado.json; por isso a forma da projeção mora num lugar só.
+ * coleta). Ele também é importado por scripts/atualizar-referencias.ts, que
+ * regenera os arquivos *.esperado.json; por isso a forma da projeção mora num
+ * lugar só.
  *
  * Regra: cada projeção devolve SOMENTE dados (sem funções) e com chaves
  * sempre presentes (null quando ausente), para a referência não depender

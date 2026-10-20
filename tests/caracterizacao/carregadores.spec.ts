@@ -12,6 +12,9 @@ import { chavesDasUnidadesPublicadas, resumirConteudo } from './projecoes';
  * unidade publicada, quais propriedades o ConteudoUnidade carregado tem e
  * quantos itens cada uma traz (blocos de resumo, perguntas do quiz e suas
  * categorias, seções da petição, eras/pensadores do mapa, mnemônicos).
+ *
+ * Depois de acrescentar conteúdo de propósito, rode `npm run atualizar-referencias`
+ * e commite a referência junto. Mudança que você não pediu continua reprovando aqui.
  */
 describe('carregadores: chaves congeladas', () => {
   it('CARREGADORES tem as chaves da referência', () => {

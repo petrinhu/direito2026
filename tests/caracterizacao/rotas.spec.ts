@@ -11,7 +11,8 @@ import esperado from './rotas.esperado.json';
  * Caracterização das rotas que o e2e percorre (tests/e2e/apoio/
  * rotasDoCurriculo.ts). Se a lista de caminhos, h1 ou abas mudar, o e2e
  * passa a exercitar outra coisa sem aviso; este teste torna a mudança
- * vermelha e obriga a revisar a referência.
+ * vermelha e obriga a revisar a referência. Para regravá-la depois de
+ * acrescentar conteúdo de propósito: `npm run atualizar-referencias`.
  */
 describe('rotas do e2e: lista congelada', () => {
   it('rotasDoCurriculo(curriculo) é igual à referência', () => {

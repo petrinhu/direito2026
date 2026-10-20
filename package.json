@@ -22,7 +22,8 @@
     "verificar:dispositivos-no-pacote": "node --import tsx scripts/verificar-dispositivos-no-pacote.ts",
     "verificar:fontes": "bash scripts/verificar-fontes.sh",
     "verificar:publicacao": "bash scripts/verificar-publicacao.sh",
-    "preci": "bash scripts/preci.sh"
+    "preci": "bash scripts/preci.sh",
+    "nova-unidade": "node --import tsx scripts/nova-unidade.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.6.0",

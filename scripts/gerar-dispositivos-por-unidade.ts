@@ -17,7 +17,9 @@ import {
 } from '../src/core/dispositivos/citacoesDaUnidade';
 import type { CatalogoDispositivos, IndiceDispositivos } from '../src/core/dispositivos/tipos';
 import { curriculo } from '../src/conteudo/curriculo';
-import { CARREGADORES } from '../src/app/carregamento/carregadores';
+import { carregadoresDoDisco } from './apoio/conteudoDoDisco';
+
+const CARREGADORES = carregadoresDoDisco();
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CATALOGO_PATH = resolve(AQUI, '../src/dados/dispositivos-legais.json');

@@ -1,63 +1,15 @@
-import type { ConteudoUnidade } from '@/core/unidade/tipos';
+import { agruparPorUnidade } from '@/core/curriculo/agruparPorUnidade';
 import type { RegistroDeCarregadores } from './decorarCurriculo';
+import { montarCarregadores } from './montarCarregadores';
+import { CAMINHOS_DO_CONTEUDO, importarDoConteudo } from './modulosDoConteudo';
 
 /**
- * Um carregador por unidade publicada, escrito à mão: cada entrada é o
- * `import()` dinâmico dos quatro arquivos da unidade (seção 3 da
- * arquitetura), combinados em um só ConteudoUnidade. Onda 3 traz a
- * ferramenta que gera isto a partir do HTML antigo; até lá, uma entrada por
- * unidade publicada é natural e não é abstração prematura (regra de 3,
- * L-33: a segunda unidade duplica, a terceira decide o que extrair).
+ * Um carregador por unidade descoberta em src/conteudo/ (glob do Vite). Antes
+ * esta lista era escrita à mão; agora a pasta de cada unidade é a fonte: uma
+ * unidade nova entra sozinha, e uma pasta fora do formato reprova em
+ * agruparPorUnidade, com o nome da unidade.
  */
-export const CARREGADORES: RegistroDeCarregadores = {
-  'p1/intr-direito/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { peticao }, { quiz }] = await Promise.all([
-      import('@/conteudo/p1/intr-direito/u1/meta'),
-      import('@/conteudo/p1/intr-direito/u1/resumo'),
-      import('@/conteudo/p1/intr-direito/u1/peticao'),
-      import('@/conteudo/p1/intr-direito/u1/quiz')
-    ]);
-    return { meta, resumo, peticao, quiz };
-  },
-  'p1/redacao-juridica-1/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { peticao }, { quiz }] = await Promise.all([
-      import('@/conteudo/p1/redacao-juridica-1/u1/meta'),
-      import('@/conteudo/p1/redacao-juridica-1/u1/resumo'),
-      import('@/conteudo/p1/redacao-juridica-1/u1/peticao'),
-      import('@/conteudo/p1/redacao-juridica-1/u1/quiz')
-    ]);
-    return { meta, resumo, peticao, quiz };
-  },
-  // Sem petição: esta cadeira só tem resumo e quiz.
-  'p1/sociologia-juridica/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { quiz }] = await Promise.all([
-      import('@/conteudo/p1/sociologia-juridica/u1/meta'),
-      import('@/conteudo/p1/sociologia-juridica/u1/resumo'),
-      import('@/conteudo/p1/sociologia-juridica/u1/quiz')
-    ]);
-    return { meta, resumo, quiz };
-  },
-  // Sem petição. Além de resumo e quiz, tem mapa mental, fichamento e
-  // mnemônicos: mapa e fichamento leem a mesma fonte de dados.
-  'p1/filosofia-juridica/u1': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { quiz }, { mapaFichamento }, { mnemonicos }] = await Promise.all([
-      import('@/conteudo/p1/filosofia-juridica/u1/meta'),
-      import('@/conteudo/p1/filosofia-juridica/u1/resumo'),
-      import('@/conteudo/p1/filosofia-juridica/u1/quiz'),
-      import('@/conteudo/p1/filosofia-juridica/u1/mapaFichamento'),
-      import('@/conteudo/p1/filosofia-juridica/u1/mnemonicos')
-    ]);
-    return { meta, resumo, quiz, mapaFichamento, mnemonicos };
-  },
-  // Unidade 3 (Filosofia Moderna e Contemporânea): mesmas partes da 1a.
-  'p1/filosofia-juridica/u3': async (): Promise<ConteudoUnidade> => {
-    const [{ meta }, { resumo }, { quiz }, { mapaFichamento }, { mnemonicos }] = await Promise.all([
-      import('@/conteudo/p1/filosofia-juridica/u3/meta'),
-      import('@/conteudo/p1/filosofia-juridica/u3/resumo'),
-      import('@/conteudo/p1/filosofia-juridica/u3/quiz'),
-      import('@/conteudo/p1/filosofia-juridica/u3/mapaFichamento'),
-      import('@/conteudo/p1/filosofia-juridica/u3/mnemonicos')
-    ]);
-    return { meta, resumo, quiz, mapaFichamento, mnemonicos };
-  }
-};
+export const CARREGADORES: RegistroDeCarregadores = montarCarregadores(
+  agruparPorUnidade(CAMINHOS_DO_CONTEUDO),
+  importarDoConteudo
+);

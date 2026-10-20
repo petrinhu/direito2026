@@ -30,7 +30,9 @@ import { TETO_INDICE_BUSCA_BYTES, type DocumentoBusca } from '../src/core/busca/
 import { normalizarTermo } from '../src/core/busca/normalizar';
 import { validarIndiceGerado } from '../src/core/busca/validarIndice';
 import { curriculo } from '../src/conteudo/curriculo';
-import { CARREGADORES } from '../src/app/carregamento/carregadores';
+import { carregadoresDoDisco } from './apoio/conteudoDoDisco';
+
+const CARREGADORES = carregadoresDoDisco();
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const SAIDA = resolve(AQUI, '../public/assets/busca-indice.json');

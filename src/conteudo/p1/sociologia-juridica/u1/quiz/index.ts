@@ -1,8 +1,8 @@
-import type { PerguntaQuiz } from '../../../tipos';
-import { atividade } from './quiz/atividade';
-import { conceitos } from './quiz/conceitos';
-import { classicos } from './quiz/classicos';
-import { aplicacao } from './quiz/aplicacao';
+import type { PerguntaQuiz } from '../../../../tipos';
+import { atividade } from './atividade';
+import { conceitos } from './conceitos';
+import { classicos } from './classicos';
+import { aplicacao } from './aplicacao';
 
 /**
  * O quiz de Sociologia Jurídica, 1a unidade: 80 perguntas de cinco

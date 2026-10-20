@@ -1,50 +1,16 @@
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
+import { agruparPorUnidade } from '@/core/curriculo/agruparPorUnidade';
+import { montarCarregadoresDispositivos } from './montarCarregadores';
+import { CAMINHOS_DO_CONTEUDO, importarDoConteudo } from './modulosDoConteudo';
 
 export type RegistroDeCarregadoresDispositivos = Record<string, () => Promise<IndiceDispositivos>>;
 
 /**
- * Prioridade zero (achado do líder, medido: em produção o balão de
- * citação legal não abria e o apêndice de impressão nunca aparecia).
- * Causa: Unidade.vue chamava um import() dinâmico com caminho montado em
- * TEMPO DE EXECUÇÃO (template string com os três segmentos da rota) e o
- * comentário mágico do Vite que desliga o aviso de análise estática — o
- * Vite/Rollup
- * não consegue enxergar isso em tempo de CONSTRUÇÃO, então nenhum pedaço é
- * gerado para esse módulo. Em produção, a rota pedida cai no fallback da
- * SPA (devolve index.html, 200), o `import()` recebe HTML em vez de
- * JavaScript e falha; o `catch` silencioso escondia o erro.
- *
- * Correção: mesmo padrão já usado e comprovado por src/app/carregamento/
- * carregadores.ts (RegistroDeCarregadores) para o conteúdo da unidade — um
- * `import()` de CAMINHO LITERAL por unidade publicada, que o empacotador
- * enxerga e transforma em pedaço de verdade. Uma entrada por unidade
- * publicada é natural nesta escala (regra de 3, L-33); quando a terceira
- * entrada chegar, extrair um gerador é a decisão certa, não antes.
+ * Prioridade zero (achado do líder, medido: em produção o balão de citação
+ * legal não abria). Causa: import() com caminho montado em tempo de execução
+ * não é visto pelo empacotador, e nenhum pedaço era gerado. Correção: o
+ * carregador de cada unidade aponta para o arquivo de dispositivos achado pelo
+ * glob, com caminho literal que o empacotador enxerga.
  */
-export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos = {
-  'p1/intr-direito/u1': async (): Promise<IndiceDispositivos> => {
-    const { dispositivos } = await import('@/conteudo/p1/intr-direito/u1/dispositivos');
-    return dispositivos;
-  },
-  'p1/redacao-juridica-1/u1': async (): Promise<IndiceDispositivos> => {
-    const { dispositivos } = await import('@/conteudo/p1/redacao-juridica-1/u1/dispositivos');
-    return dispositivos;
-  },
-  // Sociologia Jurídica não cita artigo de lei: o módulo gerado exporta um
-  // índice vazio, e o balão e o apêndice simplesmente não têm o que mostrar.
-  'p1/sociologia-juridica/u1': async (): Promise<IndiceDispositivos> => {
-    const { dispositivos } = await import('@/conteudo/p1/sociologia-juridica/u1/dispositivos');
-    return dispositivos;
-  },
-  // Filosofia Jurídica também não cita artigo de lei: índice vazio.
-  'p1/filosofia-juridica/u1': async (): Promise<IndiceDispositivos> => {
-    const { dispositivos } = await import('@/conteudo/p1/filosofia-juridica/u1/dispositivos');
-    return dispositivos;
-  },
-  // Unidade 3 de Filosofia: o registro é obrigatório para toda unidade
-  // publicada (tests/unidade/carregamento.registrosCompletos.spec.ts).
-  'p1/filosofia-juridica/u3': async (): Promise<IndiceDispositivos> => {
-    const { dispositivos } = await import('@/conteudo/p1/filosofia-juridica/u3/dispositivos');
-    return dispositivos;
-  }
-};
+export const CARREGADORES_DISPOSITIVOS: RegistroDeCarregadoresDispositivos =
+  montarCarregadoresDispositivos(agruparPorUnidade(CAMINHOS_DO_CONTEUDO), importarDoConteudo);

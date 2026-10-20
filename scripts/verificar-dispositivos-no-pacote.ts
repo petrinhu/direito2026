@@ -23,7 +23,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { curriculo } from '../src/conteudo/curriculo';
-import { CARREGADORES_DISPOSITIVOS } from '../src/app/carregamento/carregadoresDispositivos';
+import { carregadoresDispositivosDoDisco } from './apoio/conteudoDoDisco';
+
+const CARREGADORES_DISPOSITIVOS = carregadoresDispositivosDoDisco();
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const DIST_ASSETS = process.env.VERIFICAR_DISPOSITIVOS_PACOTE_DIST

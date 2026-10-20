@@ -21,7 +21,9 @@ import { coletarHtmlDaUnidade } from '../src/core/dispositivos/citacoesDaUnidade
 import { validarDispositivo } from '../src/core/dispositivos/validar';
 import type { CatalogoDispositivos } from '../src/core/dispositivos/tipos';
 import { curriculo } from '../src/conteudo/curriculo';
-import { CARREGADORES } from '../src/app/carregamento/carregadores';
+import { carregadoresDoDisco } from './apoio/conteudoDoDisco';
+
+const CARREGADORES = carregadoresDoDisco();
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const CATALOGO_PATH = process.env.VERIFICAR_DISPOSITIVOS_CATALOGO

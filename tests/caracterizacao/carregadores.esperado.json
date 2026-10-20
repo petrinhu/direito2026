@@ -1,0 +1,69 @@
+{
+  "chavesCarregadores": [
+    "p1/filosofia-juridica/u1",
+    "p1/filosofia-juridica/u3",
+    "p1/intr-direito/u1",
+    "p1/redacao-juridica-1/u1",
+    "p1/sociologia-juridica/u1"
+  ],
+  "chavesCarregadoresDispositivos": [
+    "p1/filosofia-juridica/u1",
+    "p1/filosofia-juridica/u3",
+    "p1/intr-direito/u1",
+    "p1/redacao-juridica-1/u1",
+    "p1/sociologia-juridica/u1"
+  ],
+  "unidades": {
+    "p1/intr-direito/u1": {
+      "propriedades": ["meta", "peticao", "quiz", "resumo"],
+      "resumoBlocos": 9,
+      "quizPerguntas": 60,
+      "quizCategorias": ["fundamentos", "peticao", "teoria"],
+      "peticaoSecoes": 6,
+      "mapaFichamento": null,
+      "mnemonicos": null
+    },
+    "p1/redacao-juridica-1/u1": {
+      "propriedades": ["meta", "peticao", "quiz", "resumo"],
+      "resumoBlocos": 15,
+      "quizPerguntas": 30,
+      "quizCategorias": ["fundamentos", "peticao", "teoria"],
+      "peticaoSecoes": 11,
+      "mapaFichamento": null,
+      "mnemonicos": null
+    },
+    "p1/sociologia-juridica/u1": {
+      "propriedades": ["meta", "quiz", "resumo"],
+      "resumoBlocos": 12,
+      "quizPerguntas": 80,
+      "quizCategorias": ["aplicacao", "atividade", "classicos", "conceitos"],
+      "peticaoSecoes": null,
+      "mapaFichamento": null,
+      "mnemonicos": null
+    },
+    "p1/filosofia-juridica/u1": {
+      "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],
+      "resumoBlocos": 12,
+      "quizPerguntas": 80,
+      "quizCategorias": ["antiga", "media", "revisao"],
+      "peticaoSecoes": null,
+      "mapaFichamento": {
+        "eras": 2,
+        "pensadores": 12
+      },
+      "mnemonicos": 10
+    },
+    "p1/filosofia-juridica/u3": {
+      "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],
+      "resumoBlocos": 17,
+      "quizPerguntas": 20,
+      "quizCategorias": ["filosofia-moderna", "filosofia-social"],
+      "peticaoSecoes": null,
+      "mapaFichamento": {
+        "eras": 3,
+        "pensadores": 13
+      },
+      "mnemonicos": 7
+    }
+  }
+}

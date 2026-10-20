@@ -18,7 +18,13 @@ export default mergeConfig(
       // Node puro). Cada teste de componente declara
       // "// @vitest-environment jsdom" no topo do próprio arquivo.
       environment: 'node',
-      include: ['tests/unidade/**/*.spec.ts', 'tests/componente/**/*.spec.ts'],
+      include: [
+        'tests/unidade/**/*.spec.ts',
+        'tests/componente/**/*.spec.ts',
+        // Caracterização (F0 da onda estrutura pronta): congela o que tem de
+        // continuar idêntico durante a refatoração.
+        'tests/caracterizacao/**/*.spec.ts'
+      ],
       css: false
     }
   })

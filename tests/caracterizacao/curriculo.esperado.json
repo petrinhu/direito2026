@@ -1,0 +1,158 @@
+[
+  {
+    "id": "p1",
+    "numero": 1,
+    "rotulo": "1º período",
+    "cadeiras": [
+      {
+        "id": "intr-direito",
+        "nome": "Introdução ao Direito",
+        "estado": "publicado",
+        "restrita": false,
+        "atalhoUnidade": {
+          "rotulo": "Interdisciplinar",
+          "apos": "u1",
+          "cadeiraId": "interdisciplinar"
+        },
+        "unidades": [
+          {
+            "id": "u1",
+            "rotulo": "Unidade 1",
+            "titulo": "Resumo de estudo, petição comentada e quiz",
+            "estado": "publicado",
+            "abas": ["resumo", "peticao", "quiz"]
+          }
+        ]
+      },
+      {
+        "id": "redacao-juridica-1",
+        "nome": "Português e Redação Jurídica 1",
+        "estado": "publicado",
+        "restrita": false,
+        "atalhoUnidade": {
+          "rotulo": "Interdisciplinar",
+          "apos": "u1",
+          "cadeiraId": "interdisciplinar"
+        },
+        "unidades": [
+          {
+            "id": "u1",
+            "rotulo": "Unidade 1",
+            "titulo": "Resumo de estudo, petição comentada e quiz",
+            "estado": "publicado",
+            "abas": ["resumo", "peticao", "quiz"]
+          }
+        ]
+      },
+      {
+        "id": "sociologia-juridica",
+        "nome": "Sociologia Jurídica",
+        "estado": "publicado",
+        "restrita": false,
+        "atalhoUnidade": {
+          "rotulo": "Interdisciplinar",
+          "apos": "u1",
+          "cadeiraId": "interdisciplinar"
+        },
+        "unidades": [
+          {
+            "id": "u1",
+            "rotulo": "Unidade 1",
+            "titulo": "Resumo de estudo e quiz",
+            "estado": "publicado",
+            "abas": ["resumo", "quiz"]
+          }
+        ]
+      },
+      {
+        "id": "filosofia-juridica",
+        "nome": "Filosofia Jurídica",
+        "estado": "publicado",
+        "restrita": false,
+        "atalhoUnidade": {
+          "rotulo": "Interdisciplinar",
+          "apos": "u1",
+          "cadeiraId": "interdisciplinar"
+        },
+        "unidades": [
+          {
+            "id": "u1",
+            "rotulo": "Unidade 1",
+            "titulo": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
+            "estado": "publicado",
+            "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
+          },
+          {
+            "id": "u3",
+            "rotulo": "Unidade 3",
+            "titulo": "Filosofia Moderna e Contemporânea",
+            "estado": "publicado",
+            "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
+          }
+        ]
+      },
+      {
+        "id": "interdisciplinar",
+        "nome": "Interdisciplinar",
+        "estado": "publicado",
+        "restrita": true,
+        "atalhoUnidade": null,
+        "unidades": []
+      }
+    ]
+  },
+  {
+    "id": "p2",
+    "numero": 2,
+    "rotulo": "2º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p3",
+    "numero": 3,
+    "rotulo": "3º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p4",
+    "numero": 4,
+    "rotulo": "4º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p5",
+    "numero": 5,
+    "rotulo": "5º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p6",
+    "numero": 6,
+    "rotulo": "6º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p7",
+    "numero": 7,
+    "rotulo": "7º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p8",
+    "numero": 8,
+    "rotulo": "8º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p9",
+    "numero": 9,
+    "rotulo": "9º período",
+    "cadeiras": []
+  },
+  {
+    "id": "p10",
+    "numero": 10,
+    "rotulo": "10º período",
+    "cadeiras": []
+  }
+]

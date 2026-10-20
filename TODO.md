@@ -22,6 +22,15 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-20: no menu a 1280px, o nome de Português e Redação Jurídica 1 quebra e deixa o 1 sozinho na linha de baixo (QA em produção).
 - 2026-10-20: calendário (rota /calendario): conferir em fonte oficial as datas nacionais (Planalto estava inacessível na sessão) e os feriados municipais do Recife de 16/07 e 08/12 (lei e decreto não localizados; fonte atual é o TRT6 e a imprensa).
 - 2026-10-20: calendário: QA visual pendente (screenshot headless da grade, do quadro nas quatro faixas, do modo adaptado e do tema escuro), a cargo do qa-engineer.
+- 2026-10-20: estrutura pronta para só acrescentar texto, F0 caracterização: testes congelados em tests/caracterizacao/ (currículo montado, rotas do e2e, carregadores, índice de busca); a referência de cada um é dado versionado; especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F1 descoberta automática: unidades e abas lidas das pastas de src/conteudo/ (glob e fs, função pura em core); especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F2 currículo montado a partir de uma descrição por cadeira (cadeira.ts) e por unidade (meta.ts), mesmo tipo Curriculo; especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F3 categorias de quiz como dado em src/conteudo/quiz/categorias.ts, sem união fechada no core; especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F4 validação genérica de todas as unidades (spec e scripts/validar-conteudo.ts antes do vite build, saindo 1 se zero varridas); especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F5 calendário com nomes estáveis (PROVAS, FERIADOS, PRAZOS, EVENTOS_EXTRAS) e campo semestre, nome da cadeira vindo do currículo; especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F6 gerador npm run nova-unidade (cria a pasta com arquivos-modelo comentados e descrição em-breve, recusa sobrescrever); especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F7 service worker: regra de cache dos pedaços de conteúdo (conteudo-*.js) volta a valer com chunkFileNames e portão no build; especificação em docs/como-adicionar-conteudo.md (a criar na F8).
+- 2026-10-20: estrutura pronta para só acrescentar texto, F8 documentação: docs/como-adicionar-conteudo.md (roteiro por caso), ligado no README e na seção 4.1 de docs/arquitetura.md; especificação em docs/como-adicionar-conteudo.md (este próprio arquivo).
 
 ## TABELA UNIFICADA
 

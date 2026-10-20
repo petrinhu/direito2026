@@ -45,9 +45,16 @@ export function caminhosDoDisco(raiz: string = RAIZ_DO_CONTEUDO): string[] {
   return caminhos.sort();
 }
 
-/** Importa o arquivo pelo caminho relativo a src/conteudo (mesmo contrato do glob). */
-export function importarDoDisco(caminho: string): Promise<unknown> {
-  return import(pathToFileURL(join(RAIZ_DO_CONTEUDO, caminho)).href);
+/**
+ * Importa o arquivo pelo caminho relativo à raiz do conteúdo (mesmo contrato do
+ * glob). A raiz vem do chamador: uma raiz diferente de src/conteudo precisa ser
+ * lida dela, não do repositório.
+ */
+export function importarDoDisco(
+  caminho: string,
+  raiz: string = RAIZ_DO_CONTEUDO
+): Promise<unknown> {
+  return import(pathToFileURL(join(raiz, caminho)).href);
 }
 
 /**
@@ -58,12 +65,12 @@ export async function curriculoDoDisco(raiz: string = RAIZ_DO_CONTEUDO): Promise
   const caminhos = caminhosDoDisco(raiz);
   const cadeiras: Record<string, DescricaoCadeira> = {};
   for (const caminho of caminhosDeCadeiraNoDisco(raiz)) {
-    const modulo = (await importarDoDisco(caminho)) as { cadeira: DescricaoCadeira };
+    const modulo = (await importarDoDisco(caminho, raiz)) as { cadeira: DescricaoCadeira };
     cadeiras[caminho] = modulo.cadeira;
   }
   const metas: Record<string, DescricaoUnidade> = {};
   for (const caminho of caminhos.filter((c) => c.endsWith('/meta.ts'))) {
-    const modulo = (await importarDoDisco(caminho)) as { meta: DescricaoUnidade };
+    const modulo = (await importarDoDisco(caminho, raiz)) as { meta: DescricaoUnidade };
     metas[caminho] = modulo.meta;
   }
   return montarCurriculo({ caminhos, cadeiras, metas });
@@ -71,14 +78,18 @@ export async function curriculoDoDisco(raiz: string = RAIZ_DO_CONTEUDO): Promise
 
 /** Carregadores do conteúdo, montados do disco (mesma montagem do site). */
 export function carregadoresDoDisco(raiz: string = RAIZ_DO_CONTEUDO): RegistroDeCarregadores {
-  return montarCarregadores(agruparPorUnidade(caminhosDoDisco(raiz)), importarDoDisco);
+  return montarCarregadores(agruparPorUnidade(caminhosDoDisco(raiz)), (c) =>
+    importarDoDisco(c, raiz)
+  );
 }
 
 /** Carregadores de dispositivos por unidade, montados do disco. */
 export function carregadoresDispositivosDoDisco(
   raiz: string = RAIZ_DO_CONTEUDO
 ): Record<string, () => Promise<IndiceDispositivos>> {
-  return montarCarregadoresDispositivos(agruparPorUnidade(caminhosDoDisco(raiz)), importarDoDisco);
+  return montarCarregadoresDispositivos(agruparPorUnidade(caminhosDoDisco(raiz)), (c) =>
+    importarDoDisco(c, raiz)
+  );
 }
 
 function caminhosDeCadeiraNoDisco(raiz: string): string[] {

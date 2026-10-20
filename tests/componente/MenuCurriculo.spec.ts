@@ -84,7 +84,12 @@ describe('MenuCurriculo', () => {
     const wrapper = mount(MenuCurriculo, {
       props: { curriculo: curriculoDeTeste(), caminhoAtual: '' }
     });
-    const link = wrapper.findAll('a').find((a) => a.text().includes('Unidade 1'));
+    const link = wrapper.findAll('a').find((a) =>
+      a
+        .text()
+        .replace(/\u00a0/g, ' ')
+        .includes('Unidade 1')
+    );
     expect(link).toBeTruthy();
     expect(link!.attributes('href')).toContain('/p/p1/intr-direito/u1');
   });

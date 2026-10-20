@@ -20,7 +20,7 @@ describe('MenuCurriculo, currículo real, cadeira de Redação Jurídica 1', () 
     await botaoPeriodo1.trigger('click');
 
     expect(wrapper.text()).toContain('Introdução ao Direito');
-    expect(wrapper.text()).toContain('Português e Redação Jurídica 1');
+    expect(wrapper.text().replace(/\u00a0/g, ' ')).toContain('Português e Redação Jurídica 1');
 
     const botoesCadeira = wrapper.findAll('button[aria-expanded]').slice(1, 3);
     for (const botao of botoesCadeira) await botao.trigger('click');

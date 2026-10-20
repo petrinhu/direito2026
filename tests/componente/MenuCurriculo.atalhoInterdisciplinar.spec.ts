@@ -117,7 +117,12 @@ async function abrirPeriodoECadeira(w: VueWrapper, cadeiraId: string): Promise<v
 
 /** Textos dos itens que estão DENTRO da lista da cadeira, na ordem do DOM. */
 function itensDaCadeira(w: VueWrapper, cadeiraId: string): string[] {
-  return w.findAll(`#lista-${cadeiraId} > li`).map((li) => li.text().trim());
+  return w.findAll(`#lista-${cadeiraId} > li`).map((li) =>
+    li
+      .text()
+      .replace(/\u00a0/g, ' ')
+      .trim()
+  );
 }
 
 function atalhoDa(w: VueWrapper, cadeiraId: string) {

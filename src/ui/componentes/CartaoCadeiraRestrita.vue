@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Cadeira, Periodo } from '@/core/curriculo/tipos';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 
 defineProps<{
   periodo: Periodo;
@@ -11,7 +12,7 @@ defineProps<{
 <template>
   <a :href="href" class="cartao-restrito">
     <span class="cartao-restrito__rotulo">{{ periodo.rotulo }} · Área restrita</span>
-    <h3 class="cartao-restrito__cadeira">{{ cadeira.nome }}</h3>
+    <h3 class="cartao-restrito__cadeira">{{ rotuloSemViuva(cadeira.nome) }}</h3>
     <p class="cartao-restrito__aviso">Acesso com login.</p>
   </a>
 </template>

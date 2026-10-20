@@ -120,7 +120,12 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     });
     await abrirAteUnidade(wrapper);
 
-    const linkUnidade = wrapper.findAll('a').find((a) => a.text().includes('Unidade 1'));
+    const linkUnidade = wrapper.findAll('a').find((a) =>
+      a
+        .text()
+        .replace(/\u00a0/g, ' ')
+        .includes('Unidade 1')
+    );
     expect(linkUnidade!.attributes('href')).toBe('/p/p1/intr-direito/u1');
 
     const toggleUnidade = wrapper.find('button[aria-label="Mostrar submenu de Unidade 1"]');

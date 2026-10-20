@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Cadeira, Periodo, ReferenciaUnidade } from '@/core/curriculo/tipos';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 
 defineProps<{
@@ -25,7 +26,7 @@ defineProps<{
   -->
   <a v-else :href="href" class="cartao-unidade">
     <span class="cartao-unidade__rotulo">{{ periodo.rotulo }} · {{ unidade.rotulo }}</span>
-    <h3 class="cartao-unidade__cadeira">{{ cadeira.nome }}</h3>
+    <h3 class="cartao-unidade__cadeira">{{ rotuloSemViuva(cadeira.nome) }}</h3>
     <p class="cartao-unidade__titulo">{{ unidade.titulo }}</p>
     <span v-if="progresso" class="cartao-unidade__progresso">
       {{ progresso.lidos }} de {{ progresso.total }} blocos lidos

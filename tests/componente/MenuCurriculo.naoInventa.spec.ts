@@ -55,7 +55,7 @@ describe('MenuCurriculo não inventa item de navegação', () => {
       if (botao.attributes('aria-expanded') === 'false') await botao.trigger('click');
     }
 
-    const texto = wrapper.text();
+    const texto = wrapper.text().replace(/\u00a0/g, ' ');
 
     // A única cadeira e a única unidade reais têm de aparecer.
     expect(texto).toContain('Introdução ao Direito');

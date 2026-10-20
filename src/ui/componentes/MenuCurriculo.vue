@@ -3,6 +3,7 @@ import { reactive } from 'vue';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 
 const ABAS_DE_LINK_DIRETO = ['mapa', 'fichamento', 'mnemonicos'] as const;
@@ -116,7 +117,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
           </li>
           <li v-for="cadeira in periodo.cadeiras" :key="cadeira.id">
             <template v-if="cadeira.estado === 'em-breve'">
-              <EstadoEmBreve :rotulo="cadeira.nome" />
+              <EstadoEmBreve :rotulo="rotuloSemViuva(cadeira.nome)" />
             </template>
             <a
               v-else-if="cadeira.restrita"
@@ -126,7 +127,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 ehAtual(`p/${periodo.id}/${cadeira.id}`, caminhoAtual) ? 'page' : undefined
               "
             >
-              {{ cadeira.nome }}
+              {{ rotuloSemViuva(cadeira.nome) }}
             </a>
             <template v-else>
               <button
@@ -138,7 +139,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 @keydown.esc="fechar(`c-${cadeira.id}`, $event)"
               >
                 <span class="menu-curriculo__seta" aria-hidden="true" />
-                {{ cadeira.nome }}
+                {{ rotuloSemViuva(cadeira.nome) }}
               </button>
               <ul
                 v-show="estaAberto(`c-${cadeira.id}`)"
@@ -147,7 +148,10 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
               >
                 <template v-for="unidade in cadeira.unidades" :key="unidade.id">
                   <li>
-                    <EstadoEmBreve v-if="unidade.estado === 'em-breve'" :rotulo="unidade.rotulo" />
+                    <EstadoEmBreve
+                      v-if="unidade.estado === 'em-breve'"
+                      :rotulo="rotuloSemViuva(unidade.rotulo)"
+                    />
                     <template v-else>
                       <div class="menu-curriculo__linha">
                         <button
@@ -182,7 +186,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                               : undefined
                           "
                         >
-                          {{ unidade.rotulo }}
+                          {{ rotuloSemViuva(unidade.rotulo) }}
                         </a>
                       </div>
                       <ul

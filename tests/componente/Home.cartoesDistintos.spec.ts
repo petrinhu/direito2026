@@ -50,7 +50,7 @@ describe('Home, cartões de unidades com o mesmo id em cadeiras diferentes', () 
     });
 
     expect(wrapper.text()).toContain('Introdução ao Direito');
-    expect(wrapper.text()).toContain('Português e Redação Jurídica 1');
+    expect(wrapper.text().replace(/\u00a0/g, ' ')).toContain('Português e Redação Jurídica 1');
 
     const links = wrapper.findAll('a.cartao-unidade');
     expect(links).toHaveLength(2);

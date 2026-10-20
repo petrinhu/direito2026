@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, inject } from 'vue';
 import { CHAVE_CURRICULO } from '@/app/chaves';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import CartaoUnidade from '../componentes/CartaoUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
 
@@ -17,7 +18,7 @@ const cadeira = computed(() => periodo.value?.cadeiras.find((c) => c.id === prop
 <template>
   <AreaRestrita v-if="cadeira?.restrita" />
   <div v-else-if="cadeira" class="pagina-cadeira">
-    <h1>{{ cadeira.nome }}</h1>
+    <h1>{{ rotuloSemViuva(cadeira.nome) }}</h1>
     <section class="pagina-cadeira__lista">
       <CartaoUnidade
         v-for="unidade in cadeira.unidades"

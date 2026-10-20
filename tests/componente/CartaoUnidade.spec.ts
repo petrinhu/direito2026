@@ -69,7 +69,7 @@ describe('CartaoUnidade, distinção entre cadeiras com a mesma unidade', () => 
       }
     });
     expect(wrapperA.text()).not.toBe(wrapperB.text());
-    expect(wrapperB.text()).toContain('Português e Redação Jurídica 1');
+    expect(wrapperB.text().replace(/\u00a0/g, ' ')).toContain('Português e Redação Jurídica 1');
   });
 
   it('o nome acessível do link não é só "Unidade 1" (inclui a cadeira)', () => {
@@ -84,7 +84,7 @@ describe('CartaoUnidade, distinção entre cadeiras com a mesma unidade', () => 
     const link = wrapper.find('a');
     // Sem aria-label, o nome acessível vem do texto do próprio link: por
     // isso basta provar que o texto do <a> contém o nome da cadeira.
-    expect(link.text()).toContain('Português e Redação Jurídica 1');
+    expect(link.text().replace(/\u00a0/g, ' ')).toContain('Português e Redação Jurídica 1');
     expect(link.attributes('href')).toBe('/p/p1/redacao-juridica-1/u1');
   });
 

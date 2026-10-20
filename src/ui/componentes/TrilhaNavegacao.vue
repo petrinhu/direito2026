@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import { resolverRota } from '@/app/curriculo/resolverRota';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 
 const props = defineProps<{
   curriculo: Curriculo;
@@ -62,7 +63,7 @@ const itens = computed<ItemTrilha[]>(() => {
     <ol :data-truncavel="itens.length > 2 ? 'true' : 'false'">
       <li v-for="(item, indice) in itens" :key="`${item.href}-${indice}`">
         <a :href="item.href" :aria-current="indice === itens.length - 1 ? 'page' : undefined">
-          {{ item.rotulo }}
+          {{ rotuloSemViuva(item.rotulo) }}
         </a>
       </li>
     </ol>

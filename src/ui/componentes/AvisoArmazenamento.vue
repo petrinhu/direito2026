@@ -43,17 +43,21 @@ function apagar(): void {
 </template>
 
 <style scoped>
+/* Faixa no FLUXO do documento, não position: fixed. Fixa, ela cobria o
+   conteúdo do fim da página (QA em produção: botão "Anterior" do quiz, 1280px)
+   até o aluno clicar em "Entendi". Sticky reserva a altura real da faixa no
+   fim do conteúdo (mesma lógica do padding-top de LayoutBase.vue, que reserva
+   espaço para a BarraTopo) e, enquanto a página é mais alta que a janela, a
+   faixa continua visível colada na base da janela. */
 .aviso-armazenamento {
-  position: fixed;
-  left: var(--esp-4, 1rem);
-  right: var(--esp-4, 1rem);
+  position: sticky;
   bottom: var(--esp-4, 1rem);
   z-index: 70;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--esp-4, 1rem);
-  max-width: 640px;
+  width: min(100% - 2 * var(--esp-4, 1rem), 640px);
   margin-inline: auto;
   padding: var(--esp-4, 1rem) var(--esp-5, 1.5rem);
   border-radius: var(--raio-md, 10px);
@@ -112,9 +116,8 @@ function apagar(): void {
 
 @media (max-width: 640px) {
   .aviso-armazenamento {
-    left: var(--esp-2, 0.5rem);
-    right: var(--esp-2, 0.5rem);
     bottom: var(--esp-2, 0.5rem);
+    width: min(100% - 2 * var(--esp-2, 0.5rem), 640px);
     flex-direction: column;
     align-items: stretch;
   }

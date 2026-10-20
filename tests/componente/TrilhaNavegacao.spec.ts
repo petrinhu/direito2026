@@ -60,7 +60,7 @@ describe('TrilhaNavegacao', () => {
     expect(links[0]!.attributes('href')).toBe('/p/p1');
     expect(links[1]!.text()).toBe('Introdução ao Direito');
     expect(links[1]!.attributes('href')).toBe('/p/p1/intr-direito');
-    expect(links[2]!.text()).toBe('Unidade 1');
+    expect(links[2]!.text().replace(/\u00a0/g, ' ')).toBe('Unidade 1');
     expect(links[2]!.attributes('href')).toBe('/p/p1/intr-direito/u1');
     expect(links[3]!.text()).toBe('Resumo');
     expect(links[3]!.attributes('aria-current')).toBe('page');

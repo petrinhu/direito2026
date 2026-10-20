@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
 import { CHAVE_CURRICULO } from '@/app/chaves';
+import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
 
 const props = defineProps<{ periodo: string }>();
@@ -15,8 +16,11 @@ const periodo = computed(() => curriculo.find((p) => p.id === props.periodo));
     <EstadoEmBreve v-if="periodo.cadeiras.length === 0" rotulo="Nenhuma cadeira publicada ainda" />
     <ul v-else>
       <li v-for="cadeira in periodo.cadeiras" :key="cadeira.id">
-        <EstadoEmBreve v-if="cadeira.estado === 'em-breve'" :rotulo="cadeira.nome" />
-        <a v-else :href="`/p/${periodo.id}/${cadeira.id}`">{{ cadeira.nome }}</a>
+        <EstadoEmBreve
+          v-if="cadeira.estado === 'em-breve'"
+          :rotulo="rotuloSemViuva(cadeira.nome)"
+        />
+        <a v-else :href="`/p/${periodo.id}/${cadeira.id}`">{{ rotuloSemViuva(cadeira.nome) }}</a>
       </li>
     </ul>
   </div>

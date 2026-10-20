@@ -7,7 +7,7 @@ import {
   OBSERVACOES_ACADEMICAS
 } from '@/conteudo/calendario/calendarioAcademico';
 import { validarCalendario, type DadosDoCalendario } from '@/core/calendario/validarCalendario';
-import { TIPOS_PROVA, type EventoDoSemestre } from '@/core/calendario/tipos';
+import type { EventoDoSemestre } from '@/core/calendario/tipos';
 
 /**
  * Dado real do calendário. Os fatos abaixo são do semestre 2026.2 (filtrados
@@ -58,11 +58,12 @@ describe('dado do calendário inteiro', () => {
     expect(analisados).toBeGreaterThan(0);
   });
 
-  it('nenhum feriado, evento, período online ou prazo aparece duplicado', () => {
+  it('nenhum feriado, evento, período online, prazo ou prova aparece duplicado (mesma cadeira, tipo e semestre)', () => {
     expect(chavesRepetidas(FERIADOS, chaveEvento)).toEqual([]);
     expect(chavesRepetidas(EVENTOS_ACADEMICOS, chaveEvento)).toEqual([]);
     expect(chavesRepetidas(PERIODOS_ONLINE, chaveEvento)).toEqual([]);
     expect(chavesRepetidas(PRAZOS, (p) => `${p.semestre}|${p.data}|${p.descricao}`)).toEqual([]);
+    expect(chavesRepetidas(PROVAS, (p) => `${p.semestre}|${p.cadeiraId}|${p.tipo}`)).toEqual([]);
   });
 });
 
@@ -93,16 +94,14 @@ describe('provas do semestre 2026.2, por cadeira', () => {
     expect(achadas.map((p) => p.data)).toEqual([data]);
   });
 
-  it('cada cadeira com prova no semestre tem uma prova de cada tipo, sem falta nem repetição', () => {
-    const provas = doSemestre(PROVAS);
-    const cadeiras = [...new Set(provas.map((p) => p.cadeiraId))];
-    expect(cadeiras.length).toBeGreaterThan(0);
-    for (const cadeiraId of cadeiras) {
-      for (const tipo of TIPOS_PROVA) {
-        const achadas = provas.filter((p) => p.cadeiraId === cadeiraId && p.tipo === tipo);
-        expect(achadas, `${cadeiraId} ${tipo}`).toHaveLength(1);
-      }
-    }
+  it('prova parcial é aceita: uma cadeira só com a AV1 passa o validador (sem exigir as cinco)', () => {
+    const parcial: DadosDoCalendario = {
+      ...DADOS,
+      provas: [
+        { semestre: SEMESTRE, data: '2026-09-15', cadeiraId: 'interdisciplinar', tipo: 'AV1' }
+      ]
+    };
+    expect(validarCalendario(parcial, { cadeiraIds: CADEIRA_IDS })).toEqual([]);
   });
 });
 

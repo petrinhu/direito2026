@@ -11,6 +11,7 @@ import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
 import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
 import QuadroProva from '../componentes/QuadroProva.vue';
+import BotaoHome from '../componentes/BotaoHome.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -33,6 +34,10 @@ const props = withDefaults(
 // O aviso diz que o site não usa cookies nem servidor: na área restrita isso é falso
 // (há cookie de sessão e API), e ele cobriria o login. Lá ele não aparece.
 const emAreaRestrita = computed(() => caminhoEmAreaRestrita(props.curriculo, props.caminhoAtual));
+
+// A página inicial tem caminho vazio (App.vue passa route.path sem a barra inicial).
+// Lá o botão Home não aparece: a própria página já é a home.
+const naPaginaInicial = computed(() => props.caminhoAtual === '');
 
 const emit = defineEmits<{ buscar: [string] }>();
 
@@ -118,13 +123,15 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   </div>
   <Rodape :repositorio="repositorio" />
   <!--
-    Pilha inferior: aviso de armazenamento e quadro de contagem. Os dois são
-    sticky dentro desta caixa (que é sticky no fim do documento), então ficam
-    empilhados e nunca se sobrepõem nem cobrem o conteúdo do fim da página.
+    Pilha inferior: aviso de armazenamento, quadro de contagem e botão Home. Os
+    três são sticky dentro desta caixa (que é sticky no fim do documento), então
+    ficam empilhados e nunca se sobrepõem nem cobrem o conteúdo do fim da página.
+    O botão Home vai por último, no canto inferior direito, abaixo do quadro.
   -->
   <div class="layout-base__inferior">
     <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
     <QuadroProva />
+    <BotaoHome v-if="!naPaginaInicial" />
   </div>
 </template>
 
@@ -186,6 +193,14 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 
 .layout-base__inferior > * {
   pointer-events: auto;
+}
+
+/* Botão Home: canto inferior direito da pilha, alinhado à mesma margem direita
+   do quadro de contagem. Fica sempre abaixo do quadro (em 1280 e em 390), então
+   os dois nunca se sobrepõem. */
+.layout-base__inferior > .botao-home {
+  align-self: flex-end;
+  margin-right: var(--esp-4, 1rem);
 }
 
 .layout-base__sobreposicao {

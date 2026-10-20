@@ -24,9 +24,10 @@ describe('QuadroProva, texto e faixa de urgência', () => {
     expect(w.text()).toContain('Faltam 35 dias para a 3ª AV de Introdução ao Direito');
   });
 
-  it('tem link para o calendário', () => {
+  it('tem botão para abrir o calendário numa janela, sem link de navegação', () => {
     const w = montar(AGORA_20_10);
-    expect(w.find('a[href="/calendario"]').exists()).toBe(true);
+    expect(w.find('button.quadro-prova__link').text()).toBe('Abrir o calendário');
+    expect(w.find('a[href="/calendario"]').exists()).toBe(false);
   });
 
   it.each([

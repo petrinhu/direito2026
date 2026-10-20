@@ -7,6 +7,7 @@ import {
   type ArmazenamentoSimples
 } from '@/app/calendario/estadoQuadroProva';
 import type { NivelUrgencia } from '@/core/calendario/tipos';
+import ModalCalendario from './ModalCalendario.vue';
 
 /**
  * Quadro flutuante de contagem (ordem do líder, 20/10/2026): aparece em
@@ -53,6 +54,19 @@ function resumoCurto(dias: number): string {
 }
 
 const faixaAtual = computed<NivelUrgencia | undefined>(() => contador.value?.faixa);
+
+/**
+ * O calendário abre numa janela modal, sem trocar de página (ordem do líder,
+ * 20/10/2026). O botão recebe o foco antes de abrir: o Safari não foca botão
+ * clicado com o mouse, e o foco tem de voltar a ele ao fechar a janela.
+ */
+const calendarioAberto = ref(false);
+const botaoAbrirCalendario = ref<HTMLButtonElement>();
+
+function abrirCalendario(): void {
+  botaoAbrirCalendario.value?.focus();
+  calendarioAberto.value = true;
+}
 </script>
 
 <template>
@@ -78,8 +92,17 @@ const faixaAtual = computed<NivelUrgencia | undefined>(() => contador.value?.fai
     </div>
     <div v-if="!minimizado" id="quadro-prova-texto" data-testid="quadro-texto">
       <p class="quadro-prova__texto">{{ contador.texto }}</p>
-      <a class="quadro-prova__link" href="/calendario">Abrir o calendário</a>
+      <button
+        ref="botaoAbrirCalendario"
+        type="button"
+        class="quadro-prova__link"
+        aria-haspopup="dialog"
+        @click="abrirCalendario"
+      >
+        Abrir o calendário
+      </button>
     </div>
+    <ModalCalendario v-model:aberto="calendarioAberto" :agora="props.agora" />
   </aside>
 </template>
 
@@ -191,8 +214,13 @@ const faixaAtual = computed<NivelUrgencia | undefined>(() => contador.value?.fai
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
   color: var(--cor-primaria, #163a5f);
   text-decoration: underline;
+  cursor: pointer;
 }
 
 .quadro-prova__alternar:focus-visible,

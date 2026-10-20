@@ -14,17 +14,38 @@ import type { DateClickArg } from '@fullcalendar/interaction';
 import { eventosParaGrade } from '@/app/calendario/eventosParaGrade';
 import { mesDoCalendario } from '@/app/calendario/mesDoCalendario';
 import { dataDaCelulaSob, type ElementoSobPonteiro } from '@/app/calendario/dataDaCelulaSob';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 /**
- * Grade mensal (FullCalendar, só nesta rota: a página é carregada por
- * import() preguiçoso). Clique numa data ou num evento avisa a página, que
- * mostra as descrições. O teclado usa a lista de datas do mês, ao lado.
+ * Grade mensal (FullCalendar). Só entra no pacote por import() preguiçoso: a
+ * página /calendario e a janela modal do quadro são os únicos pontos que a
+ * carregam. Clique numa data ou num evento avisa o pai, que mostra as
+ * descrições. O teclado usa a lista de datas do mês, ao lado.
  */
 const props = defineProps<{ hoje: string }>();
 const emit = defineEmits<{
   selecionar: [data: string];
   mudarMes: [mes: string];
 }>();
+
+/**
+ * O FullCalendar mede a largura na montagem. Dentro da janela modal, a grade
+ * nasce logo depois do showModal(); o updateSize num quadro depois da montagem
+ * garante a medida com o layout já assentado (cada abertura remonta a grade).
+ */
+const grade = ref<InstanceType<typeof FullCalendar>>();
+let quadroPendente: number | undefined;
+
+onMounted(() => {
+  quadroPendente = requestAnimationFrame(() => {
+    quadroPendente = undefined;
+    grade.value?.getApi().updateSize();
+  });
+});
+
+onBeforeUnmount(() => {
+  if (quadroPendente !== undefined) cancelAnimationFrame(quadroPendente);
+});
 
 /**
  * Elementos sob o ponto de um clique de mouse ou toque (detail > 0). Tecla
@@ -85,6 +106,6 @@ const opcoes: CalendarOptions = {
 
 <template>
   <div class="grade-calendario">
-    <FullCalendar :options="opcoes" />
+    <FullCalendar ref="grade" :options="opcoes" />
   </div>
 </template>

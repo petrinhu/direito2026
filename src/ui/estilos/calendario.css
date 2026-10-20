@@ -155,6 +155,23 @@
   justify-self: end;
 }
 
+/* Abaixo de 340px os dois grupos (ANTERIOR e HOJE; PRÓXIMO) não cabem numa linha
+   só de baixo, com 24px de margem (272px de conteúdo, contra 283px medidos com
+   as fontes do projeto). Cada grupo vira uma linha própria, e o bloco quebra os
+   botões de dentro. A fonte não desce abaixo de --escala-xs (13px). */
+@media (max-width: 339px) {
+  .grade-calendario .fc-header-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'titulo' 'esq' 'dir';
+  }
+
+  .grade-calendario .fc-toolbar-chunk {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2, 0.5rem);
+  }
+}
+
 @media (min-width: 40rem) {
   .grade-calendario .fc-header-toolbar {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);

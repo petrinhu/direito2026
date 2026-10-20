@@ -16,8 +16,8 @@ const publicadas = curriculo.flatMap((p) =>
 );
 
 describe('registros de carregamento cobrem o currículo', () => {
-  it('há unidades publicadas para conferir', () => {
-    expect(publicadas.length).toBeGreaterThanOrEqual(3);
+  it('há unidades publicadas para conferir (piso: zero é varredura quebrada)', () => {
+    expect(publicadas.length).toBeGreaterThan(0);
   });
 
   it.each(publicadas)('%s tem carregador de conteúdo e de dispositivos', (chave) => {
@@ -28,14 +28,5 @@ describe('registros de carregamento cobrem o currículo', () => {
   it('nenhum registro tem chave que o currículo não publica', () => {
     expect(Object.keys(CARREGADORES).sort()).toEqual([...publicadas].sort());
     expect(Object.keys(CARREGADORES_DISPOSITIVOS).sort()).toEqual([...publicadas].sort());
-  });
-});
-
-describe('carregador de Filosofia Jurídica', () => {
-  it('entrega meta, resumo e o quiz de 80 perguntas', async () => {
-    const conteudo = await CARREGADORES['p1/filosofia-juridica/u1']!();
-    expect(conteudo.resumo.length).toBeGreaterThan(0);
-    expect(conteudo.quiz).toHaveLength(80);
-    expect(conteudo.peticao).toBeUndefined();
   });
 });

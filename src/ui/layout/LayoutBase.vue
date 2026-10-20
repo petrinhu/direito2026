@@ -104,6 +104,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     :store-tema="storeTema"
     :store-busca="storeBusca"
     :store-modo-adaptado="storeModoAdaptado"
+    :na-pagina-inicial="naPaginaInicial"
     @abrir-gaveta="abrirGaveta"
     @buscar="(termo) => emit('buscar', termo)"
   />

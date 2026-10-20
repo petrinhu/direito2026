@@ -7,6 +7,7 @@ import type { StoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import AlternadorTema from '../componentes/AlternadorTema.vue';
 import BotaoModoAdaptado from '../componentes/BotaoModoAdaptado.vue';
 import CampoBusca from '../componentes/CampoBusca.vue';
+import SeloHome from '../componentes/SeloHome.vue';
 import TrilhaNavegacao from '../componentes/TrilhaNavegacao.vue';
 
 const props = defineProps<{
@@ -15,6 +16,11 @@ const props = defineProps<{
   storeTema: StoreTema;
   storeBusca: StoreBusca;
   storeModoAdaptado: StoreModoAdaptado;
+  /**
+   * Quem decide é o LayoutBase (ele já sabe que a página é a inicial). Na home
+   * o selo não aparece e a barra fica como era. Boolean ausente vale false.
+   */
+  naPaginaInicial?: boolean;
 }>();
 const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
 
@@ -127,6 +133,7 @@ onBeforeUnmount(() => {
     @focusin="aoReceberFoco"
   >
     <div class="barra-topo__linha">
+      <SeloHome v-if="!props.naPaginaInicial" />
       <button
         type="button"
         class="barra-topo__botao-gaveta"

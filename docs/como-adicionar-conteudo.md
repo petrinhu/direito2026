@@ -176,7 +176,7 @@ Uma categoria de evento nova não cabe no dado. Ela exige código (seção 9).
 
 O arquivo é `src/conteudo/avisoLegal.ts`, com `rotulo` e `corpo`. O texto foi aprovado pelo líder e é usado exatamente como está.
 
-**Exceção aprovada pelo líder (2026-10-20).** O aviso legal fica fora da validação de "o material": ele contém essa expressão, aprovada literalmente pelo líder, e o validador lê só as unidades, não este arquivo. Por isso, esse texto não passa por nenhuma regra de texto de unidade. Não há outra exceção.
+**Exceção registrada na F9 (2026-10-20), conforme a ordem de fechamento.** O texto do aviso legal foi aprovado pelo líder (cabeçalho de `avisoLegal.ts`). Por isso o aviso fica fora da validação de "o material": ele contém essa expressão, e o validador lê só as unidades, não este arquivo. Não passa por nenhuma regra de texto de unidade. A confirmação formal da exceção pelo líder está pendente (ver INBOX). Não há outra exceção.
 
 Para mudar o texto:
 

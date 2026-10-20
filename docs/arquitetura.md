@@ -73,7 +73,7 @@ Quatro camadas. Cada uma só importa das de baixo. Um front estático tem as qua
 | **Back** | `src/core/` | Domínio puro em TypeScript: tipos do currículo e da unidade, correção e embaralhamento do quiz, cálculo de progresso, construção e consulta do índice, resolução de rota a partir do currículo. | `import` de Vue, de `vue-router`, de `window`, `document` ou `localStorage`. Roda em Node sem DOM. |
 | **Foundation** | `public/`, `scripts/`, raiz | `.htaccess`, `manifest.webmanifest`, ícones, service worker gerado, `vite.config.ts`, scripts de build/recorte de fonte/índice/deploy, CI, pré-CI. | Conteúdo de estudo. |
 
-`src/conteudo/` é **dado**, não camada: arquivos `.ts` que só exportam objetos tipados pelos tipos de `core`. Importa de `core` (os tipos) e de mais nada.
+`src/conteudo/` é **dado**, não camada: arquivos `.ts` que exportam objetos tipados pelos tipos de `core`. Importa de `core` os tipos e a função pura de montagem do currículo (`montarCurriculo`, em `src/core/curriculo/`), e de mais nada. Não importa de `src/app` nem de `src/ui`.
 
 Sentido permitido: `ui` -> `app` -> `core`. `conteudo` -> `core`. `foundation` não é importada em runtime por ninguém, ela produz o artefato.
 
@@ -131,16 +131,20 @@ site_direito2026/
 │   │   └── fontes/               # .woff2 recortados
 │   ├── dados/                    # dado compartilhado entre TODAS as cadeiras
 │   │   └── dispositivos-legais.json   # catálogo verificado, entrada de build
-│   ├── conteudo/
-│   │   ├── curriculo.ts          # os 10 períodos
+│   ├── conteudo/                 # dado: uma pasta por período, cadeira e unidade
+│   │   ├── avisoLegal.ts         # aviso do rodapé, texto aprovado pelo líder
+│   │   ├── curriculo.ts          # montado a partir das pastas (seção 4.1.1), não escrito à mão
+│   │   ├── calendario/           # provas, feriados, prazos e observações
+│   │   ├── quiz/categorias.ts    # rótulos das categorias de quiz
 │   │   └── p1/
 │   │       └── intr-direito/
-│   │           └── u1/
+│   │           ├── cadeira.ts    # nome, ordem e estado da cadeira
+│   │           └── u1/           # exemplo: nem toda unidade tem todos os arquivos
 │   │               ├── meta.ts
 │   │               ├── resumo.ts
 │   │               ├── peticao.ts
-│   │               ├── quiz.ts
-│   │               └── dispositivos.ts # GERADO no build, subconjunto da unidade
+│   │               ├── quiz.ts   # ou quiz/index.ts, nunca os dois
+│   │               └── dispositivos.ts # GERADO no build, no .gitignore, não editar
 │   └── main.ts
 ├── tests/
 │   ├── unidade/
@@ -168,7 +172,7 @@ site_direito2026/
 export type EstadoPublicacao = 'publicado' | 'em-breve';
 
 /** Abas possíveis de uma unidade. Fechado de propósito: o layout depende disso. */
-export type ChaveAba = 'resumo' | 'peticao' | 'quiz';
+export type ChaveAba = 'resumo' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
 
 export interface ReferenciaUnidade {
   /** Slug estável usado na URL. Ex.: 'u1'. */
@@ -182,7 +186,8 @@ export interface ReferenciaUnidade {
   readonly abas: readonly ChaveAba[];
   /**
    * Carregador sob demanda do conteúdo. Ausente quando estado é 'em-breve'.
-   * Implementado como () => import('../../conteudo/p1/intr-direito/u1').
+   * Implementado em src/app/carregamento: um import() por unidade, a partir do
+   * glob de src/conteudo. Não há caminho escrito à mão.
    */
   readonly carregar?: () => Promise<ConteudoUnidade>;
 }
@@ -216,7 +221,21 @@ export type ResolucaoRota =
 
 [INFERÊNCIA] `estado` existe nos três níveis porque R6 pede o esqueleto completo visível: um período inteiro pode estar vazio, uma cadeira pode existir sem nenhuma unidade pronta, e uma unidade pode estar anunciada sem conteúdo. Um booleano `publicado` só resolveria um nível.
 
+### 4.1.1 Descoberta por pastas
+
+Cada pasta se descreve. Não existe índice único do currículo escrito à mão. O roteiro prático para acrescentar conteúdo está em [como-adicionar-conteudo.md](como-adicionar-conteudo.md).
+
+- **No site:** `src/conteudo/curriculo.ts` usa `import.meta.glob` para achar cada `cadeira.ts`, cada `meta.ts` e os arquivos de conteúdo de cada unidade (inclusive `quiz/*.ts`). Passa os caminhos e as descrições para `montarCurriculo`, função pura em `src/core/curriculo/montarCurriculo.ts`. O resultado tem o mesmo tipo `Curriculo` de antes. Períodos sem pasta saem como "em breve".
+- **Nos scripts e no e2e:** `import.meta.glob` existe só no Vite. Por isso `scripts/apoio/conteudoDoDisco.ts` lê as pastas com `readdirSync` e entrega os mesmos caminhos às mesmas funções puras. A paridade entre glob e disco é testada em `tests/unidade/conteudo.paridadeGlobDisco.spec.ts`.
+- **Agrupamento:** `agruparPorUnidade` (`src/core/curriculo/agruparPorUnidade.ts`) transforma os caminhos em unidades. Uma aba existe só se o arquivo existe. A ordem das abas é fixa (`ORDEM_ABAS`, em `src/core/curriculo/ordemAbas.ts`): resumo, mapa, fichamento, mnemônicos, petição e quiz.
+- **Erros nomeados:** pasta fora do padrão, `quiz.ts` e `quiz/` juntos, pasta sem `meta.ts`, pasta sem `cadeira.ts`, período fora de 1 a 10, ordem repetida e unidade publicada sem aba são lançados como `ErroDeConteudo`, com o nome da unidade. Nada some em silêncio.
+- **Validação antes do build:** `scripts/validar-conteudo.ts` roda no `npm run build`, antes do `vite build`, e no `preci`. Imprime `encontradas`, `validadas` e `falharam`, e sai com erro quando não acha nenhuma unidade.
+- **Pedaços de conteúdo:** no `vite build`, cada unidade vira um pedaço de JavaScript carregado sob demanda. O `chunkFileNames` de `vite.config.ts` (função `nomeDoPedaco`) dá o nome `assets/conteudo-<nome>-<hash>.js` aos pedaços que contêm só código de `src/conteudo`. Pedaço misto, com código do app, não recebe o prefixo.
+- **Regra de cache:** o service worker guarda os `conteudo-*.js` em cache-first (regra `conteudo-unidades`, regex `/\/assets\/conteudo-.*\.js$/`). O hash no nome torna seguro o cache de longa duração, porque o nome muda quando o conteúdo muda. O portão `scripts/verificar-cache-conteudo.ts`, no `preci`, prova que a regex casa com arquivos reais de `dist/assets`.
+
 ### 4.2 Conteúdo de uma unidade
+
+[ATUALIZAÇÃO 2026-10-20] O bloco de código desta seção está defasado. O tipo vivo de `PerguntaQuiz` está em `src/core/unidade/tipos.ts`: os campos são `enunciadoHtml`, `alternativasHtml` e `explicacaoHtml`; a categoria é texto, com rótulo em `src/conteudo/quiz/categorias.ts`; e a pergunta tem 4 ou 5 alternativas. Atualizar o bloco inteiro é uma fatia própria.
 
 ```ts
 // src/core/unidade/tipos.ts

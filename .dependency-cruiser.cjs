@@ -36,7 +36,7 @@ module.exports = {
     {
       name: 'conteudo-so-tipos',
       comment:
-        'src/conteudo é dado, não camada. Só pode importar tipos de src/core; nunca de src/app nem de src/ui.',
+        'src/conteudo é dado, não camada. Pode importar de src/core os tipos e as funções puras de montagem (ex.: montarCurriculo); nunca de src/app nem de src/ui.',
       severity: 'error',
       from: { path: '^src/conteudo' },
       to: { path: '^src/(app|ui)' }

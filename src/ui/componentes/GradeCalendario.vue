@@ -59,8 +59,9 @@ const opcoes: CalendarOptions = {
   initialDate: props.hoje,
   now: () => new Date(`${props.hoje}T12:00:00`),
   headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-  // Sem ícone de fonte: a fonte data: é bloqueada pela CSP (font-src 'self').
-  // Os botões mostram o texto do locale ("Anterior", "Próximo", "Hoje").
+  // Sem ícone de fonte: os botões mostram o texto do locale ("Anterior",
+  // "Próximo", "Hoje"). A regra @font-face da fonte de ícones é injetada pelo
+  // próprio core e sai no build (vite.config.ts), senão a CSP bloqueia o pedido.
   buttonIcons: false,
   events: eventosParaGrade(),
   eventDisplay: 'block',

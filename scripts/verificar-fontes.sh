@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # Portão da seção 10 da arquitetura: reprova a construção se algum .woff2
-# em dist/ passar de 60 KB, ou se sobrar a sequência "data:font" em
-# qualquer arquivo de dist/ (fonte embutida em base64, o problema medido
-# no piloto: ~490 KB de @font-face inline).
+# em dist/ passar de 60 KB, ou se sobrar fonte embutida em base64 (data:
+# com MIME de fonte) em qualquer arquivo de dist/ (o problema medido no
+# piloto: ~490 KB de @font-face inline).
+#
+# Achado (20/10/2026): a versão anterior procurava a sequência "data:font",
+# que nunca aparece: o MIME real do FullCalendar é "data:application/x-font-ttf".
+# O portão passou com exit 0 contra um dist que tinha a fonte embutida. O
+# padrão abaixo cobre a família de MIME de fonte, e NÃO casa "data:" genérico,
+# porque img-src permite data: para imagem.
 #
 # Achado do líder, 22/09/2026: nada aqui embaixo conferia se a fonte SERVE
 # de verdade, só se HÁ arquivo. O recorte do commit a68fc44 tinha 129
@@ -41,10 +47,11 @@ if [ "$ARQUIVOS_WOFF2" -eq 0 ]; then
   FALHOU=1
 fi
 
-OCORRENCIAS_DATA_FONT=$(grep -rl 'data:font' "$DIST" 2>/dev/null | wc -l || true)
+PADRAO_FONTE_EMBUTIDA='data:(font/|application/(x-)?font|application/vnd\.ms-fontobject)'
+OCORRENCIAS_DATA_FONT=$(grep -rlE "$PADRAO_FONTE_EMBUTIDA" "$DIST" 2>/dev/null | wc -l || true)
 if [ "$OCORRENCIAS_DATA_FONT" -gt 0 ]; then
   echo "fonte embutida em base64 encontrada em $OCORRENCIAS_DATA_FONT arquivo(s) de $DIST" >&2
-  grep -rl 'data:font' "$DIST" >&2 || true
+  grep -rlE "$PADRAO_FONTE_EMBUTIDA" "$DIST" >&2 || true
   FALHOU=1
 fi
 

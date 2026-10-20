@@ -655,7 +655,7 @@ Total sobe de ~28,8 KB para ~66,8 KB (quatro arquivos), ainda bem abaixo do teto
 
 **Métrica de reserva (fallback) confirmada intacta:** `ascent-override`/`descent-override`/`size-adjust` das faces `Inter Fallback`/`Lora Fallback` (seção acima, técnica de Malchev) foram calculados a partir de `sTypoAscender`/`sTypoDescender`/`sTypoLineGap` da tabela `OS/2` — medido (não suposto) que esses três valores são **idênticos**, byte a byte, entre o arquivo quebrado e o corrigido: recortar glifos não altera a métrica de corpo da fonte. Nenhum recálculo foi necessário.
 
-**Gate, agora em duas camadas.** `scripts/verificar-fontes.sh` (chamado por `npm run build`, ao final — antes não era chamado por `build` nenhum, falha corrigida junto): (1) reprova se algum `.woff2` em `dist/` passar de 60 KB, ou se sobrar `data:font` embutido; (2) **portão novo**, `scripts/verificar-fontes-glifos.py` (Python + `fontTools`, já instalados nesta máquina, nada novo): lê cada `.woff2` de verdade e reprova se faltar qualquer uma das 26 maiúsculas, 26 minúsculas, 10 dígitos ou a acentuação pt-br. Achado do líder que motivou o portão novo, verbatim: *"o portão que faltava: o que existe hoje só confere se HÁ arquivo de fonte, não se a fonte SERVE."* Visto reprovando contra o recorte quebrado (85 glifos faltando por arquivo) antes do conserto, e verde depois — as duas rodadas medidas, não descritas de memória.
+**Gate, agora em duas camadas.** `scripts/verificar-fontes.sh` (chamado por `npm run build`, ao final — antes não era chamado por `build` nenhum, falha corrigida junto): (1) reprova se algum `.woff2` em `dist/` passar de 60 KB, ou se sobrar fonte embutida em base64 (`data:` com MIME de fonte, padrão em `verificar-fontes.sh`); (2) **portão novo**, `scripts/verificar-fontes-glifos.py` (Python + `fontTools`, já instalados nesta máquina, nada novo): lê cada `.woff2` de verdade e reprova se faltar qualquer uma das 26 maiúsculas, 26 minúsculas, 10 dígitos ou a acentuação pt-br. Achado do líder que motivou o portão novo, verbatim: *"o portão que faltava: o que existe hoje só confere se HÁ arquivo de fonte, não se a fonte SERVE."* Visto reprovando contra o recorte quebrado (85 glifos faltando por arquivo) antes do conserto, e verde depois — as duas rodadas medidas, não descritas de memória.
 
 ### O conserto não chegava a quem já visitou o site — cache sem impressão digital
 
@@ -1084,7 +1084,7 @@ Verificação: `curl -sI` traz o cabeçalho `X-Robots-Tag`, e o `index.html` ser
 2. `npm run build`. Gera `dist/`, já com `.htaccess`, manifest, ícones, service worker e `busca/indice.json`.
 3. Conferência local, com `exit 1` em cada item antes de seguir:
    - `test -f dist/.htaccess`
-   - `grep -rL 'data:font' dist/` não acha nada, ou seja, nenhuma fonte embutida sobrou
+   - `grep -rLE 'data:(font/|application/(x-)?font|application/vnd\.ms-fontobject)' dist/` não acha nada, ou seja, nenhuma fonte embutida sobrou (o padrão antigo `data:font` nunca casava o MIME real do FullCalendar)
    - `bash scripts/verificar-proibicoes.sh dist/` (R3) sai zero
    - `node scripts/verificar-dispositivos.ts` sai zero, com `citações encontradas` maior que zero
    - a marcação `noindex` está presente no `index.html` construído
@@ -1197,7 +1197,7 @@ Toda onda fecha pelos quatro tempos da L-24 (commit por fatia, push para branch,
 
 Repositório, Vite mais Vue mais TypeScript, as quatro pastas de camada, `dependency-cruiser` com as quatro regras, ESLint, Prettier, `tsc`, Vitest, `preci.sh`, `README.md` como hub, `.htaccess`, tokens de tema vindos do documento de design visual, fontes recortadas, **`browserslist` e o alvo de build fixados a partir do guia de compatibilidade** (seção 13), `robots.txt` e a marcação `noindex`, e os dois portões de conteúdo (`verificar-proibicoes.sh` e `verificar-dispositivos.ts`).
 
-**Fechamento:** `preci.sh` verde; gate de camadas demonstrado vermelho contra um import proibido e depois verde; `npm run build` produz `dist/` com `.htaccess` presente e sem nenhuma ocorrência de `data:font`; tamanho real de cada `.woff2` medido e registrado no `README.md`; `browserslist` escrito e a decisão sobre prefixação de CSS tomada **com a medição anexa**, não por suposição; **os dois portões de conteúdo provados vermelhos e depois verdes**, cada um no seu commit de estreia.
+**Fechamento:** `preci.sh` verde; gate de camadas demonstrado vermelho contra um import proibido e depois verde; `npm run build` produz `dist/` com `.htaccess` presente e sem nenhuma fonte embutida em base64 (`data:` com MIME de fonte); tamanho real de cada `.woff2` medido e registrado no `README.md`; `browserslist` escrito e a decisão sobre prefixação de CSS tomada **com a medição anexa**, não por suposição; **os dois portões de conteúdo provados vermelhos e depois verdes**, cada um no seu commit de estreia.
 
 ### Onda 1: home e unidade piloto
 

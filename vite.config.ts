@@ -1,7 +1,49 @@
 import { fileURLToPath, URL } from 'node:url';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
+
+/**
+ * O FullCalendar 6.1.22 injeta, ao ser importado, uma regra @font-face da
+ * fonte de ícones "fcicons" com a fonte embutida em data:. Sob a CSP de
+ * produção (font-src 'self', public/.htaccess), o navegador tenta essa fonte no
+ * carregamento mesmo sem nenhum elemento que a use, e a tentativa vira erro no
+ * console (medido: sonda Chromium, 20/10/2026; buttonIcons:false não bastava,
+ * porque a regra é injetada pelo próprio core). O caminho oficial é liberar
+ * data: em font-src, proibido aqui (L-02). Os botões usam texto (buttonIcons:
+ * false), então a fonte não tem uso: a regra sai do código do pacote no build.
+ */
+const REGRA_FONTE_ICONES_FULLCALENDAR = /@font-face\{font-family:fcicons[^}]*\}/g;
+
+/** Só o módulo interno do core guarda o CSS injetado. */
+export function ehModuloDoCore(id: string): boolean {
+  return /[\\/]@fullcalendar[\\/]core[\\/]internal-common\.js$/.test(id);
+}
+
+/**
+ * Fail-closed: exige exatamente uma regra. Se o pacote mudar esse trecho, o
+ * build quebra em vez de publicar a fonte em silêncio.
+ */
+export function removerFonteIconesFullCalendar(codigo: string): string {
+  const ocorrencias = codigo.match(REGRA_FONTE_ICONES_FULLCALENDAR)?.length ?? 0;
+  if (ocorrencias !== 1) {
+    throw new Error(
+      `removerFonteIconesFullCalendar: esperava 1 regra fcicons, achei ${ocorrencias}. ` +
+        'O FullCalendar mudou o CSS injetado: revisar antes de publicar.'
+    );
+  }
+  return codigo.replace(REGRA_FONTE_ICONES_FULLCALENDAR, '');
+}
+
+function removerFonteIconesDoCalendario(): Plugin {
+  return {
+    name: 'caderno-remover-fonte-icones-fullcalendar',
+    transform(codigo, id) {
+      if (!ehModuloDoCore(id)) return null;
+      return { code: removerFonteIconesFullCalendar(codigo), map: null };
+    }
+  };
+}
 
 /**
  * Exportado para o teste tests/unidade/sw.areaRestrita.spec.ts conferir a
@@ -50,6 +92,7 @@ export default defineConfig({
   base: '/',
   plugins: [
     vue(),
+    removerFonteIconesDoCalendario(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: null,

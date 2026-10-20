@@ -45,6 +45,36 @@ function removerFonteIconesDoCalendario(): Plugin {
   };
 }
 
+/** Prefixo dos pedaços de conteúdo: é o padrão que a regra conteudo-unidades procura. */
+export const PREFIXO_PEDACO_CONTEUDO = 'conteudo-';
+
+const ORIGEM_DO_CONTEUDO = /[\\/]src[\\/]conteudo[\\/]/;
+
+export interface PedacoDoBuild {
+  readonly name: string;
+  readonly facadeModuleId?: string | null;
+  readonly moduleIds?: readonly string[];
+}
+
+/**
+ * Pedaço é de conteúdo só se TODO módulo dele vem de src/conteudo. Pedaço misto
+ * (conteúdo com código do app) não vira CacheFirst: fica com o nome de sempre.
+ */
+export function ehPedacoDeConteudo(pedaco: PedacoDoBuild): boolean {
+  const modulos = pedaco.moduleIds?.length ? pedaco.moduleIds : [pedaco.facadeModuleId ?? ''];
+  return modulos.every((origem) => ORIGEM_DO_CONTEUDO.test(origem));
+}
+
+/**
+ * Nome dos arquivos de pedaço do build (chunkFileNames). Mantém "assets/" e
+ * "[hash]": sem "assets/" a regex /\/assets\/conteudo-/ não casa, e sem o hash o
+ * verificar-cache-fingerprint reprova (o .htaccess deixa *.js imutável por um ano).
+ */
+export function nomeDoPedaco(pedaco: PedacoDoBuild): string {
+  const prefixo = ehPedacoDeConteudo(pedaco) ? PREFIXO_PEDACO_CONTEUDO : '';
+  return `assets/${prefixo}[name]-[hash].js`;
+}
+
 /**
  * Exportado para o teste tests/unidade/sw.areaRestrita.spec.ts conferir a
  * regra da API da área restrita sem rodar o build.
@@ -114,7 +144,14 @@ export default defineConfig({
     // 22/09/2026): o mapa carrega o caminho absoluto de disco de quem
     // construiu, e publicar isso expõe a estrutura de pastas pessoal.
     // Diagnóstico local usa CADERNO_SOURCEMAP=true npm run build.
-    sourcemap: process.env.CADERNO_SOURCEMAP === 'true'
+    sourcemap: process.env.CADERNO_SOURCEMAP === 'true',
+    rollupOptions: {
+      output: {
+        // Pedaço de conteúdo sai como conteudo-<nome>-<hash>.js, o padrão da
+        // regra de cache do service worker (ver nomeDoPedaco acima).
+        chunkFileNames: nomeDoPedaco
+      }
+    }
   },
   css: {
     transformer: 'lightningcss',

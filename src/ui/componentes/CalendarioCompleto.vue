@@ -45,7 +45,7 @@ function selecionar(data: string): void {
 
     <section class="calendario__lista" aria-labelledby="calendario-lista-titulo">
       <h2 id="calendario-lista-titulo" class="calendario__subtitulo">Datas do mês, em lista</h2>
-      <p class="calendario__apoio">Mesma informação da grade, em botões que o teclado alcança.</p>
+      <p class="calendario__apoio">Mesmas datas da grade, em botões acessíveis pelo teclado.</p>
       <ListaDatasDoMes :datas="datasDoMes" :selecionada="diaSelecionado" @selecionar="selecionar" />
     </section>
 

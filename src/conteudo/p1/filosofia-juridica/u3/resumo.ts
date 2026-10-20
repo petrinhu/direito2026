@@ -19,7 +19,7 @@ export const resumo: readonly BlocoResumo[] = [
     corpoHtml: `
       <p>A filosofia moderna começa em 1453, com o fim da Guerra dos Cem Anos e a tomada de Constantinopla pelos turcos. É nesse contexto que se forma o <strong>Estado moderno</strong>: um território com fronteiras bem definidas, moeda e tributação únicas, exército profissional e poder político centralizado. Ele é o oposto do sistema fragmentado da sociedade medieval.</p>
       <p>A discussão se organiza em duas fases. Na <strong>primeira fase</strong>, o problema é <strong>formar o Estado</strong>: Maquiavel, Bodin, Bossuet e Hobbes defendem a centralização máxima do poder para unificar e criar o Estado. Na <strong>segunda fase</strong>, com o absolutismo em crise, o problema se inverte e passa a ser <strong>limitar o Estado</strong>: surgem as teorias da separação de poderes e dos direitos naturais, origem do Estado de Direito.</p>
-      <p>A segunda fase se opõe à primeira, mas só é possível porque a primeira já havia construído o Estado nacional. Não se limita um poder que ainda não existe.</p>
+      <p>A segunda fase se opõe à primeira, mas só é possível porque a primeira já havia construído o Estado nacional. Só se limita um poder que já existe.</p>
     `,
     resumo: [
       'Estado moderno: território, moeda e tributação únicos, exército profissional e poder centralizado.',
@@ -27,7 +27,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Segunda fase, limitar o Estado: de Grotius a Hegel, origem do Estado de Direito.',
       'A segunda fase depende da primeira: só se limita o que já foi construído.'
     ],
-    exemploHtml: `Quando se discute se o Estado pode tudo ou se deve respeitar direitos individuais, está em jogo exatamente a passagem da primeira fase para a segunda.`
+    exemploHtml: `Quando se discute se o Estado pode tudo ou se deve respeitar direitos individuais, está em jogo a passagem da primeira fase para a segunda.`
   },
   {
     id: 'bloco-1',
@@ -59,7 +59,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>Introduz a <strong>soberania</strong> e a <strong>legitimidade</strong>. A soberania é poder supremo, uno e indivisível: não há Estado sem poder soberano. O soberano faz as leis e não se sujeita a elas; está preso apenas às leis divinas e naturais.</p>
       <h3>Jacques Bossuet (1627-1704)</h3>
       <p>Ideólogo do poder régio por direito divino. Qualquer ideia de rebeldia contra o príncipe cristão é sacrilégio e atentado à ordem sagrada. Esse fundamento religioso não prevaleceu na história.</p>
-      <p><strong>O que sobreviveu:</strong> a soberania de Bodin, o poder que não reconhece outro superior, nem dentro nem fora do território.</p>
+      <p>O que sobreviveu foi a soberania de Bodin, o poder que não reconhece outro superior, nem dentro nem fora do território.</p>
     `,
     resumo: [
       'Bodin: soberania como poder supremo, uno e indivisível, ligada à legitimidade.',
@@ -115,13 +115,13 @@ export const resumo: readonly BlocoResumo[] = [
     titulo: 'Locke I: estado de natureza e contrato',
     fonte: 'Dois Tratados sobre o Governo (1690).',
     corpoHtml: `
-      <p>Inglaterra em convulsão: Revolução Puritana de 1640, Revolução Gloriosa de 1689 e a assinatura do <em>Bill of Rights</em>. Locke escreve os <em>Dois Tratados sobre o Governo</em> em 1690.</p>
+      <p>O contexto é a Inglaterra, com a Revolução Puritana de 1640, Revolução Gloriosa de 1689 e a assinatura do <em>Bill of Rights</em>. Locke escreve os <em>Dois Tratados sobre o Governo</em> em 1690.</p>
       <h3>O oposto de Hobbes</h3>
       <p>O estado de natureza é de liberdade e igualdade, não de guerra. Já é um estado de sociedade, com direitos à vida, à liberdade e à propriedade.</p>
       <h3>Por que criar o Estado</h3>
       <p>Nem todos respeitam as leis naturais, e ninguém julga bem em causa própria. O <strong>governo civil</strong> entra como árbitro imparcial.</p>
       <h3>Contra a monarquia absoluta</h3>
-      <p>Se o monarca é apenas um homem e julga a própria causa, o remédio vira a doença.</p>
+      <p>Se o monarca é apenas um homem e julga a própria causa, a solução reproduz o problema.</p>
       <p><strong>Guarde:</strong> Locke inverte a lógica do direito natural, que antes legitimava o poder do rei, e passa a usá-lo para defender o indivíduo contra o Estado.</p>
     `,
     resumo: [
@@ -240,7 +240,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Dignidade da pessoa, individual: não pode ser sacrificada em nome do grupo.',
       'Crítica contemporânea: dimensão ecológica da dignidade.'
     ],
-    exemploHtml: `Quando um direito individual é restringido em nome da coletividade, a pergunta de Kant é se a pessoa está sendo tratada como meio. Essa pergunta está na base da dignidade da pessoa humana.`
+    exemploHtml: `Quando um direito individual é restringido em nome da coletividade, a pergunta de Kant é se a pessoa está sendo tratada como meio.`
   },
   {
     id: 'bloco-11',
@@ -272,7 +272,7 @@ export const resumo: readonly BlocoResumo[] = [
     titulo: 'Quadro comparativo: ponto de partida, poder e poderes',
     fonte: 'Material de aula da disciplina.',
     corpoHtml: `
-      <p>O quadro reúne, para cada autor da segunda fase e da primeira, o ponto de partida e quem fica com o poder.</p>
+      <p>Hobbes, Locke e Rousseau, com o ponto de partida e quem detém o poder em cada um.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>
@@ -334,14 +334,14 @@ export const resumo: readonly BlocoResumo[] = [
     titulo: 'Proudhon: crítica atenuada ao capitalismo',
     fonte: 'Material de aula da disciplina.',
     corpoHtml: `
-      <p>Proudhon (1809-1865) representa a fase mais <strong>atenuada</strong> da crítica ao capitalismo: censura a grande propriedade, mas admite manter a pequena propriedade privada.</p>
+      <p>Proudhon (1809-1865) está na fase mais <strong>atenuada</strong> da crítica ao capitalismo: censura a grande propriedade, mas admite manter a pequena propriedade privada.</p>
       <h3>Coletivizar sem romper</h3>
       <p>Queria que os meios de produção passassem aos artesãos, garantindo a venda equitativa dos produtos, sem abandonar por completo as estruturas capitalistas.</p>
       <h3>Justiça é social</h3>
       <p>O homem só é homem pela sociedade. A justiça se constrói sobre a dignidade reconhecida no outro tanto quanto em si mesmo.</p>
       <h3>O que ele negava</h3>
       <p>A luta de classes, a revolução proletária, a ditadura do proletariado e a necessidade do Estado.</p>
-      <p><strong>Importância:</strong> com ele começa a dimensão social e anti-individualista que depois leva ao constitucionalismo social.</p>
+      <p>Com ele começa a dimensão social e anti-individualista que depois leva ao constitucionalismo social.</p>
     `,
     resumo: [
       'Fase mais atenuada: censura a grande propriedade e admite a pequena.',
@@ -362,7 +362,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>A infraestrutura é tudo o que está ligado aos meios de produção e gera riqueza: indústria, agricultura, comércio, mineração. A superestrutura é o que se levanta sobre ela: Estado, Constituição, religião, cultura, ideologia e Direito.</p>
       <h3>O Direito para Marx</h3>
       <p>É elemento da superestrutura que serve para manter a infraestrutura capitalista: instrumento de dominação burguesa e do <em>status quo</em>. Por isso deveria ser abolido. Marx não formulou uma teoria marxista do direito.</p>
-      <p><strong>Repercussão prática:</strong> o receio de ruptura gerado por essas críticas ajudou a produzir o constitucionalismo social no Ocidente.</p>
+      <p>Na prática, o receio de ruptura gerado por essas críticas ajudou a produzir o constitucionalismo social no Ocidente.</p>
     `,
     resumo: [
       'Meios de produção: burguesia subjuga o proletariado.',

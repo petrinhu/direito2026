@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FERIADOS_2026_2 } from '@/conteudo/calendario/feriados';
+import { FERIADOS } from '@/conteudo/calendario/feriados';
+
+const feriadosDoSemestre = FERIADOS.filter((f) => f.semestre === '2026.2');
 
 /**
  * Fonte oficial dos feriados municipais do Recife (confirmada pelo líder,
@@ -25,7 +27,7 @@ function comentarioAcima(titulo: string): string {
 
 describe('feriados municipais do Recife: fonte oficial', () => {
   it('são 16/07 e 08/12, e os dois existem na janela', () => {
-    const municipais = FERIADOS_2026_2.filter(
+    const municipais = feriadosDoSemestre.filter(
       (f) => f.descricao === 'Feriado municipal do Recife.'
     );
     expect(municipais.map((f) => f.inicio)).toEqual(['2026-07-16', '2026-12-08']);
@@ -47,7 +49,7 @@ describe('feriados municipais do Recife: fonte oficial', () => {
   });
 
   it('São João (24/06) não entra: a janela começa em 01/07/2026', () => {
-    expect(FERIADOS_2026_2.map((f) => f.inicio)).not.toContain('2026-06-24');
-    expect(FERIADOS_2026_2.every((f) => f.inicio >= '2026-07-01')).toBe(true);
+    expect(feriadosDoSemestre.map((f) => f.inicio)).not.toContain('2026-06-24');
+    expect(feriadosDoSemestre.every((f) => f.inicio >= '2026-07-01')).toBe(true);
   });
 });

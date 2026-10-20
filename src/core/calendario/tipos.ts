@@ -47,3 +47,43 @@ export interface DatasComEventos {
   data: DataIso;
   eventos: Evento[];
 }
+
+/** Semestre letivo no formato AAAA.N (ex.: '2026.2'). Todo item de dado do calendário traz o seu. */
+export type Semestre = string;
+
+/** Prova como está no dado: só o id da cadeira. O nome sai do currículo (resolverProvas). */
+export interface ProvaDoSemestre {
+  semestre: Semestre;
+  data: DataIso;
+  cadeiraId: string;
+  tipo: TipoProva;
+}
+
+export interface EventoDoSemestre extends Evento {
+  semestre: Semestre;
+}
+
+export interface PrazoDoSemestre extends PrazoDoCalendario {
+  semestre: Semestre;
+}
+
+export interface ObservacaoDoSemestre {
+  semestre: Semestre;
+  texto: string;
+}
+
+/** Lista fechada de tipos de prova: o validador e a legenda leem daqui. */
+export const TIPOS_PROVA: readonly TipoProva[] = ['AV1', 'AV2', 'AV3', 'chamada', 'final'];
+
+/** Lista fechada de categorias de evento. Adicionar uma categoria exige rótulo em rotulos.ts. */
+export const CATEGORIAS_EVENTO: readonly CategoriaEvento[] = [
+  'AV1',
+  'AV2',
+  'AV3',
+  'chamada',
+  'final',
+  'online',
+  'feriado',
+  'prazo',
+  'semestre'
+];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contadorProva } from '@/app/calendario/contadorProva';
-import { PROVAS_2026_2 } from '@/conteudo/calendario/provas';
+import { PROVAS } from '@/app/calendario/dadosDoCalendario';
 import type { Prova } from '@/core/calendario/tipos';
 
 const PROVAS_DE_TESTE: Prova[] = [
@@ -54,7 +54,7 @@ describe('contadorProva', () => {
     expect(r?.dias).toBe(26);
     expect(r?.faixa).toBe('calmo');
     expect(r?.texto).toBe(`Faltam 26 dias para ${FIM_ONLINE}`);
-    expect(PROVAS_2026_2.length).toBeGreaterThan(0);
+    expect(PROVAS.length).toBeGreaterThan(0);
   });
 
   it('no último dia das provas online (15/11) o texto é "É hoje" com o fim do período', () => {

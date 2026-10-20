@@ -1,29 +1,49 @@
 import { describe, expect, it } from 'vitest';
+import { curriculo } from '@/conteudo/curriculo';
+import { PERIODOS_ONLINE, PRAZOS, PROVAS } from '@/conteudo/calendario/provas';
+import { FERIADOS } from '@/conteudo/calendario/feriados';
 import {
-  PERIODO_PROVAS_ONLINE_2026_2,
-  PRAZOS_2026_2,
-  PROVAS_2026_2
-} from '@/conteudo/calendario/provas';
-import { FERIADOS_2026_2 } from '@/conteudo/calendario/feriados';
-import {
-  EVENTOS_ACADEMICOS_2026_2,
-  OBSERVACOES_ACADEMICAS_2026_2
+  EVENTOS_ACADEMICOS,
+  OBSERVACOES_ACADEMICAS
 } from '@/conteudo/calendario/calendarioAcademico';
-import { ehDataIso } from '@/core/calendario/datas';
+import { validarCalendario, type DadosDoCalendario } from '@/core/calendario/validarCalendario';
+import { TIPOS_PROVA } from '@/core/calendario/tipos';
 
 /**
- * Fatos transcritos das fontes do líder (provas por cadeira, 2026) e do
- * calendário discente 2026.2 (PDF oficial). Estes testes travam os números:
- * se alguém mudar uma data sem conferir a fonte, o teste reprova.
+ * Dado real do calendário. Os fatos abaixo são do semestre 2026.2 (filtrados
+ * pelo campo semestre), para que acrescentar outro semestre ao dado não quebre
+ * estes testes. A forma e as regras do dado são travadas pelo validador.
  */
+const SEMESTRE = '2026.2';
+const doSemestre = <T extends { semestre: string }>(itens: readonly T[]): T[] =>
+  itens.filter((item) => item.semestre === SEMESTRE);
+
+const DADOS: DadosDoCalendario = {
+  provas: PROVAS,
+  feriados: FERIADOS,
+  eventosAcademicos: EVENTOS_ACADEMICOS,
+  periodosOnline: PERIODOS_ONLINE,
+  prazos: PRAZOS,
+  observacoes: OBSERVACOES_ACADEMICAS
+};
+
+const CADEIRA_IDS = new Set(curriculo.flatMap((periodo) => periodo.cadeiras).map((c) => c.id));
+
 const INICIO_DA_JANELA = '2026-07-01';
 const FIM_DA_JANELA = '2027-01-31';
 
-describe('provas de 2026.2, por cadeira', () => {
-  it('são 20 provas: 4 cadeiras x 5 avaliações', () => {
-    expect(PROVAS_2026_2).toHaveLength(20);
+describe('dado do calendário inteiro', () => {
+  it('passa no validador: datas, cadeiras do currículo, sem duplicata, categorias e semestre', () => {
+    expect(validarCalendario(DADOS, { cadeiraIds: CADEIRA_IDS })).toEqual([]);
   });
 
+  it('varre itens de verdade (piso: zero itens seria varredura quebrada, não dado limpo)', () => {
+    const analisados = Object.values(DADOS).reduce((total, lista) => total + lista.length, 0);
+    expect(analisados).toBeGreaterThan(0);
+  });
+});
+
+describe('provas do semestre 2026.2, por cadeira', () => {
   it.each([
     ['intr-direito', 'AV1', '2026-09-22'],
     ['intr-direito', 'AV2', '2026-10-16'],
@@ -46,21 +66,26 @@ describe('provas de 2026.2, por cadeira', () => {
     ['filosofia-juridica', 'chamada', '2026-12-09'],
     ['filosofia-juridica', 'final', '2026-12-15']
   ])('%s, %s -> %s', (cadeiraId, tipo, data) => {
-    const achadas = PROVAS_2026_2.filter((p) => p.cadeiraId === cadeiraId && p.tipo === tipo);
+    const achadas = doSemestre(PROVAS).filter((p) => p.cadeiraId === cadeiraId && p.tipo === tipo);
     expect(achadas.map((p) => p.data)).toEqual([data]);
   });
 
-  it('cada prova tem data ISO válida e nome de cadeira preenchido', () => {
-    for (const p of PROVAS_2026_2) {
-      expect(ehDataIso(p.data)).toBe(true);
-      expect(p.cadeiraNome.length).toBeGreaterThan(0);
+  it('cada cadeira com prova no semestre tem uma prova de cada tipo, sem falta nem repetição', () => {
+    const provas = doSemestre(PROVAS);
+    const cadeiras = [...new Set(provas.map((p) => p.cadeiraId))];
+    expect(cadeiras.length).toBeGreaterThan(0);
+    for (const cadeiraId of cadeiras) {
+      for (const tipo of TIPOS_PROVA) {
+        const achadas = provas.filter((p) => p.cadeiraId === cadeiraId && p.tipo === tipo);
+        expect(achadas, `${cadeiraId} ${tipo}`).toHaveLength(1);
+      }
     }
   });
 });
 
-describe('feriados', () => {
+describe('feriados do semestre 2026.2', () => {
   it('são exatamente os confirmados nas fontes (nacionais e Recife; PE não tem feriado estadual na janela)', () => {
-    expect(FERIADOS_2026_2.map((f) => f.inicio)).toEqual([
+    expect(doSemestre(FERIADOS).map((f) => f.inicio)).toEqual([
       '2026-07-16',
       '2026-09-07',
       '2026-10-12',
@@ -73,27 +98,25 @@ describe('feriados', () => {
     ]);
   });
 
-  it('todo feriado é da categoria feriado e tem uma linha de descrição', () => {
-    for (const f of FERIADOS_2026_2) {
+  it('todo feriado (qualquer semestre) é da categoria feriado e tem uma linha de descrição', () => {
+    for (const f of FERIADOS) {
       expect(f.categoria).toBe('feriado');
       expect(f.descricao.length).toBeGreaterThan(0);
     }
   });
 });
 
-describe('eventos acadêmicos e observações', () => {
-  it('todo evento tem datas ISO válidas, em ordem, dentro da janela do semestre', () => {
-    for (const e of EVENTOS_ACADEMICOS_2026_2) {
-      expect(ehDataIso(e.inicio)).toBe(true);
-      expect(ehDataIso(e.fim)).toBe(true);
-      expect(e.inicio <= e.fim).toBe(true);
-      expect(e.inicio >= INICIO_DA_JANELA && e.fim <= FIM_DA_JANELA).toBe(true);
+describe('eventos acadêmicos e observações do semestre 2026.2', () => {
+  const eventos = doSemestre(EVENTOS_ACADEMICOS);
+
+  it('caem dentro da janela do semestre', () => {
+    for (const e of eventos) {
+      expect(e.inicio >= INICIO_DA_JANELA && e.fim <= FIM_DA_JANELA, e.titulo).toBe(true);
     }
   });
 
-  it('traz as datas-chave do calendário discente', () => {
-    const porTitulo = (trecho: string) =>
-      EVENTOS_ACADEMICOS_2026_2.find((e) => e.titulo.includes(trecho));
+  it('trazem as datas-chave do calendário discente', () => {
+    const porTitulo = (trecho: string) => eventos.find((e) => e.titulo.includes(trecho));
     expect(porTitulo('Início das aulas')?.inicio).toBe('2026-08-10');
     expect(porTitulo('Período de inclusão')?.fim).toBe('2026-09-08');
     expect(porTitulo('dispensa')?.inicio).toBe('2026-09-14');
@@ -104,25 +127,32 @@ describe('eventos acadêmicos e observações', () => {
   });
 
   it('guarda a observação de revisão de prova (até 10 dias após a nota)', () => {
-    expect(OBSERVACOES_ACADEMICAS_2026_2.join(' ')).toContain('10 dias');
+    const textos = OBSERVACOES_ACADEMICAS.filter((o) => o.semestre === SEMESTRE).map(
+      (o) => o.texto
+    );
+    expect(textos.join(' ')).toContain('10 dias');
   });
 });
 
-describe('provas online de Economia e de Empreendedorismo (sala digital)', () => {
+describe('provas online de Economia e de Empreendedorismo (sala digital), 2026.2', () => {
   it('são um período de 13/10 a 15/11/2026, na categoria própria online', () => {
-    expect(PERIODO_PROVAS_ONLINE_2026_2).toEqual({
-      inicio: '2026-10-13',
-      fim: '2026-11-15',
-      categoria: 'online',
-      titulo: 'Provas online: Economia e Empreendedorismo',
-      descricao:
-        'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
-    });
+    expect(doSemestre(PERIODOS_ONLINE)).toEqual([
+      {
+        semestre: SEMESTRE,
+        inicio: '2026-10-13',
+        fim: '2026-11-15',
+        categoria: 'online',
+        titulo: 'Provas online: Economia e Empreendedorismo',
+        descricao:
+          'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
+      }
+    ]);
   });
 
   it('o prazo do contador é o fim desse período, com a frase do quadro', () => {
-    expect(PRAZOS_2026_2).toEqual([
+    expect(doSemestre(PRAZOS)).toEqual([
       {
+        semestre: SEMESTRE,
         data: '2026-11-15',
         descricao: 'o fim das provas online de Economia e Empreendedorismo'
       }

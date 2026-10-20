@@ -1,4 +1,4 @@
-import { PRAZOS_2026_2, PROVAS_2026_2 } from '@/conteudo/calendario/provas';
+import { PRAZOS, PROVAS } from './dadosDoCalendario';
 import { nivelUrgencia } from '@/core/calendario/urgencia';
 import { proximaProva } from '@/core/calendario/proximaProva';
 import { proximoPrazo } from '@/core/calendario/proximoPrazo';
@@ -21,8 +21,8 @@ export interface ContadorProva {
  */
 export function contadorProva(
   agora: Date,
-  provas: readonly Prova[] = PROVAS_2026_2,
-  prazos: readonly PrazoDoCalendario[] = PRAZOS_2026_2
+  provas: readonly Prova[] = PROVAS,
+  prazos: readonly PrazoDoCalendario[] = PRAZOS
 ): ContadorProva | undefined {
   const hoje = dataDeHoje(agora);
   const prova = proximaProva(provas, hoje);

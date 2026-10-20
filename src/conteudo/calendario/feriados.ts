@@ -1,4 +1,4 @@
-import type { Evento } from '@/core/calendario/tipos';
+import type { EventoDoSemestre } from '@/core/calendario/tipos';
 
 /**
  * Feriados da janela de 01/07/2026 a 31/01/2027: nacionais e do Recife.
@@ -20,9 +20,10 @@ import type { Evento } from '@/core/calendario/tipos';
  * (feriado municipal, 24/06) e 12/03 (aniversário do Recife), porque caem antes de
  * 01/07/2026 ou não são feriado; e os dias de ponto facultativo do fim de ano.
  */
-export const FERIADOS_2026_2: readonly Evento[] = [
+export const FERIADOS: readonly EventoDoSemestre[] = [
   // Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)
   {
+    semestre: '2026.2',
     inicio: '2026-07-16',
     fim: '2026-07-16',
     categoria: 'feriado',
@@ -30,6 +31,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado municipal do Recife.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-09-07',
     fim: '2026-09-07',
     categoria: 'feriado',
@@ -37,6 +39,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado nacional.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-10-12',
     fim: '2026-10-12',
     categoria: 'feriado',
@@ -44,6 +47,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado nacional: Nossa Senhora Aparecida.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-11-02',
     fim: '2026-11-02',
     categoria: 'feriado',
@@ -51,6 +55,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado nacional.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-11-15',
     fim: '2026-11-15',
     categoria: 'feriado',
@@ -58,6 +63,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado nacional.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-11-20',
     fim: '2026-11-20',
     categoria: 'feriado',
@@ -66,6 +72,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
   },
   // Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)
   {
+    semestre: '2026.2',
     inicio: '2026-12-08',
     fim: '2026-12-08',
     categoria: 'feriado',
@@ -73,6 +80,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado municipal do Recife.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-12-25',
     fim: '2026-12-25',
     categoria: 'feriado',
@@ -80,6 +88,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     descricao: 'Feriado nacional.'
   },
   {
+    semestre: '2026.2',
     inicio: '2027-01-01',
     fim: '2027-01-01',
     categoria: 'feriado',

@@ -1,4 +1,4 @@
-import type { Evento } from '@/core/calendario/tipos';
+import type { EventoDoSemestre, ObservacaoDoSemestre } from '@/core/calendario/tipos';
 
 /**
  * Datas do calendário discente 2026.2 (PDF oficial do semestre, conferido
@@ -6,8 +6,9 @@ import type { Evento } from '@/core/calendario/tipos';
  * inteiro. Os feriados ficam em feriados.ts, e as provas por cadeira em
  * provas.ts.
  */
-export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
+export const EVENTOS_ACADEMICOS: readonly EventoDoSemestre[] = [
   {
+    semestre: '2026.2',
     inicio: '2026-07-07',
     fim: '2026-07-07',
     categoria: 'semestre',
@@ -15,6 +16,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Lançamento dos editais de monitoria e de pesquisa de extensão.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-08-03',
     fim: '2026-08-07',
     categoria: 'semestre',
@@ -22,6 +24,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Semana de abertura do semestre, de 3 a 7 de agosto.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-08-03',
     fim: '2026-08-08',
     categoria: 'semestre',
@@ -29,6 +32,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Semana de encontro docente, de 3 a 8 de agosto.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-08-10',
     fim: '2026-08-10',
     categoria: 'semestre',
@@ -36,6 +40,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Primeiro dia de aulas do semestre.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-08-24',
     fim: '2026-09-08',
     categoria: 'prazo',
@@ -43,6 +48,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'De 24 de agosto a 8 de setembro. A data limite é 8 de setembro.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-09-10',
     fim: '2026-09-10',
     categoria: 'prazo',
@@ -50,6 +56,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Último dia para solicitar a colação de grau unificada na secretaria acadêmica.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-09-14',
     fim: '2026-09-14',
     categoria: 'prazo',
@@ -57,6 +64,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Último dia para solicitar dispensas de disciplinas no semestre.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-09-21',
     fim: '2026-10-02',
     categoria: 'AV1',
@@ -64,6 +72,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'De 21 de setembro a 2 de outubro. A data de cada prova depende do curso.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-10-13',
     fim: '2026-10-16',
     categoria: 'AV2',
@@ -71,6 +80,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'De 13 a 16 de outubro. Os trabalhos interdisciplinares são a 2ª avaliação.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-10-15',
     fim: '2026-10-15',
     categoria: 'semestre',
@@ -78,6 +88,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Data comemorativa do calendário. Não é feriado.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-10-19',
     fim: '2026-10-19',
     categoria: 'prazo',
@@ -85,6 +96,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Último dia para entregar os atestados de abono da taxa da 2ª chamada da 1ª avaliação.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-11-03',
     fim: '2026-11-03',
     categoria: 'prazo',
@@ -92,6 +104,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Entrega dos atestados de abono da taxa da 2ª chamada da 2ª avaliação (interdisciplinar).'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-11-23',
     fim: '2026-12-04',
     categoria: 'AV3',
@@ -99,6 +112,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'De 23 de novembro a 4 de dezembro. A data de cada prova depende do curso.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-12-07',
     fim: '2026-12-07',
     categoria: 'prazo',
@@ -106,6 +120,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Último dia para entregar atestados de abono de falta e da 2ª chamada da 3ª avaliação.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-12-09',
     fim: '2026-12-11',
     categoria: 'chamada',
@@ -113,6 +128,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Provas de 2ª chamada, de 9 a 11 de dezembro.'
   },
   {
+    semestre: '2026.2',
     inicio: '2026-12-15',
     fim: '2026-12-17',
     categoria: 'final',
@@ -120,6 +136,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
     descricao: 'Avaliações finais, de 15 a 17 de dezembro.'
   },
   {
+    semestre: '2026.2',
     inicio: '2027-01-04',
     fim: '2027-01-22',
     categoria: 'prazo',
@@ -129,7 +146,7 @@ export const EVENTOS_ACADEMICOS_2026_2: readonly Evento[] = [
 ];
 
 /** Observações do calendário que não têm data própria. */
-export const OBSERVACOES_ACADEMICAS_2026_2: readonly string[] = [
-  'Revisão de prova: até 10 dias após a divulgação da nota.',
-  'Colação de grau unificada: data a definir.'
+export const OBSERVACOES_ACADEMICAS: readonly ObservacaoDoSemestre[] = [
+  { semestre: '2026.2', texto: 'Revisão de prova: até 10 dias após a divulgação da nota.' },
+  { semestre: '2026.2', texto: 'Colação de grau unificada: data a definir.' }
 ];

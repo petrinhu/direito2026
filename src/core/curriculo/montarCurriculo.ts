@@ -53,6 +53,10 @@ export function montarCurriculo(entradas: EntradasDoCurriculo): Curriculo {
     ...Object.keys(entradas.cadeiras).map(chaveDaDescricaoDeCadeira)
   ]);
 
+  for (const chave of chavesDeCadeira) {
+    checarPeriodo(chave.split('/')[0] ?? '');
+  }
+
   const cadeirasPorPeriodo = new Map<string, CadeiraOrdenada[]>();
   for (const chave of [...chavesDeCadeira].sort()) {
     const periodoId = chave.split('/')[0] ?? '';
@@ -68,13 +72,6 @@ export function montarCurriculo(entradas: EntradasDoCurriculo): Curriculo {
     );
     const doPeriodo = cadeirasPorPeriodo.get(periodoId) ?? [];
     cadeirasPorPeriodo.set(periodoId, [...doPeriodo, { ordem: descricao.ordem, cadeira }]);
-  }
-
-  for (const periodoId of cadeirasPorPeriodo.keys()) {
-    const numero = numeroDoPeriodo(periodoId);
-    if (numero < 1 || numero > TOTAL_DE_PERIODOS) {
-      throw new ErroDeConteudo(`período fora de 1 a ${TOTAL_DE_PERIODOS}: ${periodoId}`);
-    }
   }
 
   return Array.from({ length: TOTAL_DE_PERIODOS }, (_, indice) => {
@@ -99,8 +96,14 @@ function chaveDaDescricaoDeCadeira(caminho: string): string {
   return caminho.slice(0, -'/cadeira.ts'.length);
 }
 
-function numeroDoPeriodo(periodoId: string): number {
-  return Number(periodoId.slice(1));
+const PERIODO = /^p\d+$/;
+
+/** Pasta de período tem que ser pN, com N de 1 a TOTAL_DE_PERIODOS. Outra coisa reprova (não some por NaN). */
+function checarPeriodo(periodoId: string): void {
+  const numero = PERIODO.test(periodoId) ? Number(periodoId.slice(1)) : Number.NaN;
+  if (!Number.isInteger(numero) || numero < 1 || numero > TOTAL_DE_PERIODOS) {
+    throw new ErroDeConteudo(`período fora de 1 a ${TOTAL_DE_PERIODOS}: ${periodoId}`);
+  }
 }
 
 /** Cadeira já montada, com a ordem do menu, que só serve para ordenar. */

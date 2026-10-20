@@ -81,6 +81,14 @@ describe('montarCurriculo: forma dos períodos', () => {
     expect(curriculo[1]?.cadeiras).toEqual([]);
   });
 
+  it('reprova pasta de período que não é pN (não some em silêncio por NaN)', () => {
+    expect(() =>
+      montarCurriculo(
+        entradas({ cadeiras: { ...entradas().cadeiras, 'provas/x/cadeira.ts': CADEIRA_A } })
+      )
+    ).toThrow(/fora de 1 a 10.*provas/);
+  });
+
   it('reprova pasta de período fora de 1 a 10', () => {
     expect(() =>
       montarCurriculo(

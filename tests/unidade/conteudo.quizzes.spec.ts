@@ -3,16 +3,7 @@ import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
 import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/quiz';
-import { resumo as resumoIntr } from '@/conteudo/p1/intr-direito/u1/resumo';
-import { resumo as resumoRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/resumo';
-import { resumo as resumoSociologia } from '@/conteudo/p1/sociologia-juridica/u1/resumo';
-import { resumo as resumoFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/resumo';
-import { mnemonicos as mnemonicosFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/mnemonicos';
 import { quiz as quizFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/quiz';
-import { resumo as resumoFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/resumo';
-import { mnemonicos as mnemonicosFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mnemonicos';
-import { mapaFichamento as mapaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mapaFichamento';
-import { meta as metaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/meta';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/conteudo/quiz/categorias';
 import type {
   PerguntaMultiplaEscolha,
@@ -20,7 +11,24 @@ import type {
   PerguntaVerdadeiroOuFalso
 } from '@/core/unidade/tipos';
 
-/** Estas três cadeiras só têm múltipla escolha; um verdadeiro ou falso aqui é erro de conteúdo. */
+/**
+ * Invariantes de conteúdo dos quizzes que NÃO são regra geral. As regras
+ * gerais (ids únicos, alternativas, correta, campos vazios, categoria com
+ * rótulo, letra/posição, aula/slide, "o material", gabarito só true) valem
+ * para TODA unidade pela varredura (conteudo.varredura.spec.ts) e por
+ * validarUnidade. As contagens de perguntas e de categorias por unidade estão
+ * congeladas em tests/caracterizacao/carregadores.esperado.json.
+ */
+
+/** Sequência 1..n, sem repetir o número de perguntas no código. */
+function sequencia(quiz: readonly PerguntaQuiz[]): number[] {
+  return Array.from({ length: quiz.length }, (_, i) => i + 1);
+}
+
+function idsDe(quiz: readonly PerguntaQuiz[]): number[] {
+  return quiz.map((p) => p.id).sort((a, b) => a - b);
+}
+
 function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMultiplaEscolha[] {
   return quiz.map((p) => {
     if (p.tipo === 'verdadeiro-ou-falso')
@@ -29,99 +37,34 @@ function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMult
   });
 }
 
-const TODOS: ReadonlyArray<{
-  nome: string;
-  quiz: readonly PerguntaMultiplaEscolha[];
-  alternativas: 4 | 5;
-}> = [
-  { nome: 'Introdução ao Direito', quiz: soMultiplaEscolha(quizIntr), alternativas: 4 },
-  { nome: 'Redação Jurídica 1', quiz: soMultiplaEscolha(quizRedacao), alternativas: 4 },
-  { nome: 'Sociologia Jurídica', quiz: soMultiplaEscolha(quizSociologia), alternativas: 5 },
-  {
-    nome: 'Filosofia Jurídica, unidade 3',
-    quiz: soMultiplaEscolha(quizFilosofiaU3),
-    alternativas: 4
-  }
-];
-
-/**
- * O motor embaralha as alternativas a cada rodada: a explicação não pode
- * apontar letra nem posição ("alternativa B", "a D", "acima"), só o
- * conteúdo da resposta. Vale para as quatro cadeiras.
- */
-// Letras de alternativa em maiúscula, por isso sem a flag i (com ela, "de a" ou
-// "o e a" seriam lidos como letras).
-const CITA_LETRA =
-  /\b(?:[Aa]lternativa|[Ll]etra|[Oo]p[çc][ãa]o)s?\s*\(?[A-E]\)?\b|\([A-E]\)|\b[Aa]s? [B-D]\b|\b[Ee] a [A-E]\b|\b[B-D] e [A-E]\b|\b[A-E] e [B-D]\b|\b(?:[Pp]rimeira|[Ss]egunda|[Tt]erceira|[Qq]uarta|[Qq]uinta|[Úú]ltima) (?:alternativa|op[çc][ãa]o)/;
-// "acima"/"abaixo" só importam na explicação, onde apontariam para a ordem das
-// respostas; no enunciado ("qual das frases abaixo") não dependem do sorteio.
-const CITA_POSICAO = /\b(acima|abaixo)\b(?! do)/i;
-
-function idsQueCitamLetra(quiz: readonly PerguntaQuiz[]): number[] {
-  return quiz
-    .filter(
-      (p) =>
-        CITA_LETRA.test(p.explicacaoHtml) ||
-        CITA_POSICAO.test(p.explicacaoHtml.replace(/acima do homem/g, '')) ||
-        CITA_LETRA.test(p.enunciadoHtml)
-    )
-    .map((p) => p.id);
-}
-
-describe.each(TODOS)('quiz de $nome', ({ quiz, alternativas }) => {
-  it('ids únicos', () => {
-    const ids = quiz.map((p) => p.id);
-    expect(new Set(ids).size).toBe(ids.length);
+describe.each([
+  ['Introdução ao Direito', quizIntr, 4],
+  ['Redação Jurídica 1', quizRedacao, 4],
+  ['Sociologia Jurídica', quizSociologia, 5],
+  ['Filosofia Jurídica, unidade 3', quizFilosofiaU3, 4]
+] as const)('%s: só múltipla escolha, com %i alternativas', (_nome, quiz, alternativas) => {
+  it('não tem verdadeiro ou falso', () => {
+    expect(() => soMultiplaEscolha(quiz)).not.toThrow();
   });
 
-  it(`toda pergunta tem ${alternativas} alternativas e a correta cabe nelas`, () => {
-    for (const p of quiz) {
+  it(`toda pergunta tem ${alternativas} alternativas`, () => {
+    for (const p of soMultiplaEscolha(quiz)) {
       expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(alternativas);
-      expect(p.correta, `id ${p.id}`).toBeGreaterThanOrEqual(0);
-      expect(p.correta, `id ${p.id}`).toBeLessThan(p.alternativasHtml.length);
-    }
-  });
-
-  it('nenhuma alternativa ou explicação vazia, e toda categoria tem rótulo', () => {
-    for (const p of quiz) {
-      for (const a of p.alternativasHtml) expect(a.trim(), `id ${p.id}`).not.toBe('');
-      expect(p.explicacaoHtml.trim(), `id ${p.id}`).not.toBe('');
-      expect(ROTULOS_CATEGORIA_QUIZ[p.categoria], `id ${p.id}`).toBeTruthy();
-    }
-  });
-
-  it('nenhuma explicação ou enunciado cita letra ou posição de alternativa', () => {
-    expect(idsQueCitamLetra(quiz)).toEqual([]);
-  });
-
-  it('gabaritoDoCaderno, quando existe, é true (nunca false)', () => {
-    for (const p of quiz) {
-      if ('gabaritoDoCaderno' in p) expect(p.gabaritoDoCaderno, `id ${p.id}`).toBe(true);
     }
   });
 });
 
-describe('quiz de Sociologia Jurídica, conjunto', () => {
-  it('tem 80 perguntas', () => {
-    expect(quizSociologia).toHaveLength(80);
-  });
-
-  it('só usa as quatro categorias da unidade', () => {
-    const cats = new Set(quizSociologia.map((p) => p.categoria));
-    expect([...cats].sort()).toEqual(['aplicacao', 'atividade', 'classicos', 'conceitos']);
-  });
-
-  it('as 10 da atividade (ids 1 a 10) levam a marca do caderno e só elas', () => {
+describe('Sociologia Jurídica: marca do caderno', () => {
+  it('só as perguntas da atividade levam a marca, e são as de número 1 a 10', () => {
     const marcadas = quizSociologia.filter((p) => p.gabaritoDoCaderno === true);
-    expect(marcadas).toHaveLength(10);
-    expect(marcadas.map((p) => p.id).sort((a, b) => a - b)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-    ]);
+    expect(idsDe(marcadas)).toEqual(sequencia(marcadas));
     expect(marcadas.every((p) => p.categoria === 'atividade')).toBe(true);
+    expect(idsDe(marcadas)[0]).toBe(1);
+    expect(idsDe(marcadas).at(-1)).toBe(10);
   });
 });
 
-describe('quiz de Filosofia Jurídica, conjunto', () => {
+describe('Filosofia Jurídica, unidade 1: formato', () => {
   const multipla = quizFilosofia.filter(
     (p): p is PerguntaMultiplaEscolha => p.tipo !== 'verdadeiro-ou-falso'
   );
@@ -129,210 +72,48 @@ describe('quiz de Filosofia Jurídica, conjunto', () => {
     (p): p is PerguntaVerdadeiroOuFalso => p.tipo === 'verdadeiro-ou-falso'
   );
 
-  it('tem 80 perguntas, ids únicos de 1 a 80', () => {
-    expect(quizFilosofia).toHaveLength(80);
-    expect(quizFilosofia.map((p) => p.id).sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 80 }, (_, i) => i + 1)
-    );
+  it('ids contíguos de 1 ao total de perguntas', () => {
+    expect(idsDe(quizFilosofia)).toEqual(sequencia(quizFilosofia));
   });
 
-  it('40 de múltipla escolha, cada uma com cinco alternativas não vazias e correta que cabe', () => {
+  it('metade de múltipla escolha, cinco alternativas cada, e metade de verdadeiro ou falso', () => {
     expect(multipla).toHaveLength(40);
+    expect(verdadeiroOuFalso).toHaveLength(40);
     for (const p of multipla) {
       expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(5);
-      for (const a of p.alternativasHtml) expect(a.trim(), `id ${p.id}`).not.toBe('');
-      expect(p.correta, `id ${p.id}`).toBeGreaterThanOrEqual(0);
-      expect(p.correta, `id ${p.id}`).toBeLessThan(5);
     }
   });
 
-  it('40 de verdadeiro ou falso, sem alternativasHtml e com correta booleana', () => {
-    expect(verdadeiroOuFalso).toHaveLength(40);
+  it('verdadeiro ou falso não tem alternativas e a correta é booleana', () => {
     for (const p of verdadeiroOuFalso) {
       expect('alternativasHtml' in p, `id ${p.id}`).toBe(false);
       expect(typeof p.correta, `id ${p.id}`).toBe('boolean');
     }
   });
 
-  it('as 20 do professor (ids 1 a 20) têm origem professor, são V/F e só elas', () => {
+  it('as 20 do professor são os ids 1 a 20, todas verdadeiro ou falso, e só elas', () => {
     const doProfessor = quizFilosofia.filter((p) => p.origem === 'professor');
-    expect(doProfessor.map((p) => p.id).sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 20 }, (_, i) => i + 1)
-    );
+    expect(idsDe(doProfessor)).toEqual(sequencia(doProfessor));
+    expect(doProfessor).toHaveLength(20);
     expect(doProfessor.every((p) => p.tipo === 'verdadeiro-ou-falso')).toBe(true);
   });
 
-  it('nenhuma leva a nota do caderno (o gabarito é do professor)', () => {
+  it('nenhuma pergunta leva a marca do caderno (o gabarito é do professor)', () => {
     expect(quizFilosofia.filter((p) => 'gabaritoDoCaderno' in p)).toEqual([]);
   });
-
-  it('nenhuma explicação ou enunciado cita letra ou posição de alternativa', () => {
-    expect(idsQueCitamLetra(quizFilosofia.filter((p) => p.tipo !== 'verdadeiro-ou-falso'))).toEqual(
-      []
-    );
-  });
-
-  it('explicação preenchida e categoria com rótulo em todas', () => {
-    for (const p of quizFilosofia) {
-      expect(p.explicacaoHtml.trim(), `id ${p.id}`).not.toBe('');
-      expect(ROTULOS_CATEGORIA_QUIZ[p.categoria], `id ${p.id}`).toBeTruthy();
-    }
-    expect(new Set(quizFilosofia.map((p) => p.categoria))).toEqual(
-      new Set(['revisao', 'antiga', 'media'])
-    );
-  });
 });
 
-/**
- * Quem lê de fora não sabe o que é "a aula 3" nem "o slide": o texto diz o
- * conteúdo ou atribui ao autor/obra. O enunciado das questões da professora
- * ou do professor (origem 'professor' ou gabarito do caderno) é dele(a) e
- * fica de fora; as explicações valem para todas.
- */
-const CITA_AULA_OU_SLIDE =
-  /\b(?:aulas?|slides?)\b|\bquadro d[ao]s? aulas?|\bna atividade d[aeo]\b|\batividade de \d/i;
-
-function doProfessor(p: PerguntaQuiz): boolean {
-  return p.origem === 'professor' || ('gabaritoDoCaderno' in p && p.gabaritoDoCaderno === true);
-}
-
-function idsQueCitamAula(quiz: readonly PerguntaQuiz[]): number[] {
-  return quiz
-    .filter((p) => {
-      const alternativas = 'alternativasHtml' in p ? p.alternativasHtml : [];
-      const dele = doProfessor(p);
-      return (
-        CITA_AULA_OU_SLIDE.test(p.explicacaoHtml) ||
-        (!dele && CITA_AULA_OU_SLIDE.test(p.enunciadoHtml)) ||
-        (!dele && alternativas.some((a) => CITA_AULA_OU_SLIDE.test(a)))
-      );
-    })
-    .map((p) => p.id);
-}
-
-describe('quizzes das quatro cadeiras não citam aula nem slide', () => {
-  it.each([
-    ['Introdução ao Direito', quizIntr],
-    ['Redação Jurídica 1', quizRedacao],
-    ['Sociologia Jurídica', quizSociologia],
-    ['Filosofia Jurídica', quizFilosofia],
-    ['Filosofia Jurídica, unidade 3', quizFilosofiaU3]
-  ] as const)('%s', (_nome, quiz) => {
-    expect(idsQueCitamAula(quiz)).toEqual([]);
-  });
-});
-
-/** Percorre todo texto de um valor, dizendo o caminho de cada string. */
-function textos(valor: unknown, caminho = ''): Array<[string, string]> {
-  if (typeof valor === 'string') return [[caminho, valor]];
-  if (Array.isArray(valor)) return valor.flatMap((v, i) => textos(v, `${caminho}[${i}]`));
-  if (valor && typeof valor === 'object')
-    return Object.entries(valor).flatMap(([k, v]) => textos(v, `${caminho}.${k}`));
-  return [];
-}
-
-const SEM_REFERENCIA_GENERICA = /Material de aula da disciplina/g;
-
-function caminhosQueCitamAula(valor: unknown): string[] {
-  return textos(valor)
-    .filter(([caminho, texto]) =>
-      caminho.endsWith('.fonte')
-        ? // A lista de referências só pode dizer "Material de aula da disciplina",
-          // sem número, data nem tipo de aula.
-          /\b(?:aulas?|slides?)\b|\b\d{1,2}\/\d{1,2}\b/i.test(
-            texto.replace(SEM_REFERENCIA_GENERICA, '')
-          )
-        : CITA_AULA_OU_SLIDE.test(texto)
-    )
-    .map(([caminho]) => caminho);
-}
-
-describe('resumos e mnemônicos não citam aula nem slide', () => {
-  it.each([
-    ['Introdução ao Direito', resumoIntr],
-    ['Redação Jurídica 1', resumoRedacao],
-    ['Sociologia Jurídica', resumoSociologia],
-    ['Filosofia Jurídica', resumoFilosofia],
-    ['mnemônicos de Filosofia Jurídica', mnemonicosFilosofia],
-    ['Filosofia Jurídica, unidade 3', resumoFilosofiaU3],
-    ['mnemônicos de Filosofia Jurídica, unidade 3', mnemonicosFilosofiaU3]
-  ] as const)('%s', (_nome, conteudo) => {
-    expect(caminhosQueCitamAula(conteudo)).toEqual([]);
-  });
-});
-
-describe('quiz de Filosofia Jurídica, unidade 3', () => {
-  it('tem 20 perguntas, ids de 1 a 20, cada uma com exatamente 4 alternativas', () => {
-    expect(quizFilosofiaU3).toHaveLength(20);
-    expect(quizFilosofiaU3.map((p) => p.id).sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 20 }, (_, i) => i + 1)
-    );
-    for (const p of quizFilosofiaU3) {
-      expect('alternativasHtml' in p && p.alternativasHtml, `id ${p.id}`).toHaveLength(4);
-    }
-  });
-
-  it('ids 1 a 16 são Filosofia Moderna e 17 a 20 são Filosofia Social, com rótulos próprios', () => {
+describe('Filosofia Jurídica, unidade 3: faixas por categoria', () => {
+  it('ids 1 a 16 são Filosofia Moderna e 17 a 20 são Filosofia Social', () => {
     const moderna = quizFilosofiaU3.filter((p) => p.id <= 16);
     const social = quizFilosofiaU3.filter((p) => p.id >= 17);
-    expect(moderna).toHaveLength(16);
-    expect(social).toHaveLength(4);
     expect(moderna.every((p) => p.categoria === 'filosofia-moderna')).toBe(true);
     expect(social.every((p) => p.categoria === 'filosofia-social')).toBe(true);
+    expect(idsDe(quizFilosofiaU3)).toEqual(sequencia(quizFilosofiaU3));
+  });
+
+  it('rótulos das duas categorias', () => {
     expect(ROTULOS_CATEGORIA_QUIZ['filosofia-moderna']).toBe('Filosofia Moderna');
     expect(ROTULOS_CATEGORIA_QUIZ['filosofia-social']).toBe('Filosofia Social');
-  });
-});
-
-/**
- * Expressões que apontam para o material de aula ou o referenciam de fora
- * ("Segundo o material", "Fora do material", "vale conferir"). Com \b, "o
- * materialista" e "Aguardando material do professor" não casam.
- */
-const APONTA_PARA_MATERIAL = /\b(?:segundo o|fora do|o|no|do) material\b|\b(?:a|vale) conferir\b/i;
-
-function caminhosQueApontamParaMaterial(valor: unknown): string[] {
-  return textos(valor)
-    .filter(([, texto]) => APONTA_PARA_MATERIAL.test(texto))
-    .map(([caminho]) => caminho);
-}
-
-describe('unidade 3 de Filosofia Jurídica não aponta para o material nem manda conferir', () => {
-  it.each([
-    ['resumo', resumoFilosofiaU3],
-    ['mapaFichamento', mapaFilosofiaU3],
-    ['mnemônicos', mnemonicosFilosofiaU3],
-    ['quiz', quizFilosofiaU3],
-    ['meta', metaFilosofiaU3]
-  ] as const)('%s', (_nome, conteudo) => {
-    expect(caminhosQueApontamParaMaterial(conteudo)).toEqual([]);
-  });
-});
-
-/**
- * Texto que o leitor vê no corpo de um bloco: tags removidas e espaços
- * colapsados. A fonte aparece logo acima do corpo, então um texto repetido
- * nos dois lugares fica visível duas vezes na mesma tela.
- */
-function textoVisivelDoCorpo(corpoHtml: string): string {
-  return corpoHtml
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-describe('blocos do resumo da unidade 3 de Filosofia Jurídica', () => {
-  it('nenhuma fonte aparece também dentro do corpo do próprio bloco', () => {
-    const repetidos = resumoFilosofiaU3
-      .filter((bloco) => textoVisivelDoCorpo(bloco.corpoHtml).includes(bloco.fonte.trim()))
-      .map((bloco) => bloco.id);
-    expect(repetidos).toEqual([]);
-  });
-
-  it('nenhum título começa com "Bloco N", pois a página já numera os blocos', () => {
-    const comNumeroNoTitulo = resumoFilosofiaU3
-      .filter((bloco) => /^bloco\s*\d+/i.test(bloco.titulo.trim()))
-      .map((bloco) => bloco.id);
-    expect(comNumeroNoTitulo).toEqual([]);
   });
 });

@@ -1,6 +1,6 @@
 # Como adicionar conteúdo ao site
 
-> **Tipo:** how-to (Diátaxis). **Para quem:** o líder, que é iniciante em programação, e os agentes que escrevem texto. **Dono:** o líder. **Última revisão:** 2026-10-20 (F9).
+> **Tipo:** how-to (Diátaxis). **Para quem:** o líder, que é iniciante em programação, e os agentes que escrevem texto. **Dono:** o líder. **Última revisão:** 2026-10-20 (F10).
 >
 > Para entender por que as pastas viram o currículo, veja [arquitetura.md](arquitetura.md), seção 4.1.1.
 
@@ -11,9 +11,11 @@
 3. Regra de ouro: cada pasta se descreve. Período é a pasta `p1`, cadeira é a pasta `intr-direito` e unidade é a pasta `u1`. Não existe lista central para editar.
 4. Regra do passo a passo: sempre que você acrescentar conteúdo (unidade, cadeira, período ou pergunta), rode `npm run atualizar-referencias` antes do `npm run preci`. Veja a seção 10.
 
-## Estado atual: o que mudou com a F9
+## Estado atual: o que mudou com a F10
 
-Desde 2026-10-20 acrescentar conteúdo não exige mais mexer em código de teste. O único passo novo é `npm run atualizar-referencias`, que regrava a caracterização (os arquivos `tests/caracterizacao/*.esperado.json`) e mostra o que mudou. Confira que o resumo mostra só o que você acrescentou e commite junto com o conteúdo.
+Desde 2026-10-20 acrescentar conteúdo não exige mais mexer em código de teste. O passo novo é `npm run atualizar-referencias`, que regrava a caracterização (os arquivos `tests/caracterizacao/*.esperado.json`) e mostra o que mudou. Confira que o resumo mostra só o que você acrescentou e commite junto com o conteúdo.
+
+Na F10, as contagens exatas saíram dos testes de regra e foram para a caracterização: número de perguntas por tipo, perguntas do professor, ids com marca do caderno e ids por categoria de quiz. Os testes de regra conferem só invariantes, que valem para qualquer número de perguntas.
 
 Medido em 2026-10-20, numa cópia do repositório, com estes três casos seguidos de `npm run atualizar-referencias`:
 
@@ -23,10 +25,20 @@ Medido em 2026-10-20, numa cópia do repositório, com estes três casos seguido
 
 Nos três, os testes de `tests/caracterizacao`, `tests/unidade` e `tests/componente` ficaram verdes, `npx vue-tsc --noEmit` saiu com 0 e `node --import tsx scripts/validar-conteudo.ts` saiu com 0.
 
-Ainda não cobertas (lacunas conhecidas, registradas no `TODO.md`, na INBOX):
+Medido na F10, numa cópia do HEAD, com estes acréscimos seguidos de `npm run atualizar-referencias`: uma pergunta de múltipla escolha na Introdução ao Direito u1 (id 61), uma pergunta de verdadeiro ou falso na Filosofia Jurídica u1 (id 81), um feriado e um prazo no semestre 2026.2. Resultado: os testes de `tests/caracterizacao`, `tests/unidade` e `tests/componente` ficaram verdes (1674 testes), `npx vue-tsc --noEmit` saiu com 0 e `node --import tsx scripts/validar-conteudo.ts` saiu com 0. O resumo do `atualizar-referencias` mostrou só as duas unidades alteradas.
 
-- **Contagem fixa de perguntas.** `tests/unidade/conteudo.quizzes.spec.ts` (Filosofia Jurídica, 1ª unidade) e `tests/componente/CartaoPergunta.marcacao.spec.ts` (Introdução ao Direito, 1ª unidade) conferem o número exato de perguntas. Acrescentar pergunta a essas duas unidades quebra a contagem. Pergunta nova em qualquer outra unidade não quebra.
-- **Lista exata do calendário.** `tests/unidade/calendario.dadosDoSemestre.spec.ts` confere, com lista fixa, os feriados, prazos e períodos online do semestre 2026.2. Acrescentar item nesse semestre pode quebrar esse teste.
+Reprovam de propósito (são regra, não lacuna):
+
+- pergunta de verdadeiro ou falso numa unidade só de múltipla escolha (Introdução ao Direito u1, Redação Jurídica 1, Sociologia Jurídica e Filosofia Jurídica u3): o formato é da unidade;
+- pergunta do professor que não seja de verdadeiro ou falso;
+- id repetido ou com buraco no quiz;
+- feriado municipal novo sem a fonte oficial no comentário logo acima dele;
+- item repetido no calendário (mesmo semestre, datas e título).
+
+Lacunas conhecidas (registradas no `TODO.md`, na INBOX):
+
+- **Prova com tipo faltando.** Cada cadeira que tem prova no semestre precisa das cinco (AV1, AV2, AV3, chamada e final). Uma cadeira com só algumas datas marcadas reprova, de propósito. Decisão pendente do líder: manter ou aceitar prova parcial.
+- **Data de prova já conferida.** As datas de cada prova de 2026.2 estão conferidas uma a uma em `tests/unidade/calendario.dadosDoSemestre.spec.ts`. Corrigir uma data exige editar essa linha no mesmo commit.
 - **Atalho Interdisciplinar só no 1º período.** O teste do atalho confere as cadeiras do 1º período, onde mora a cadeira restrita Interdisciplinar. Uma cadeira de outro período não é conferida por ele.
 
 Quando um teste reprovar e o resumo do `atualizar-referencias` não explicar a mudança, pare e leve a mensagem de erro a um programador. A seção 9 explica quando isso é preciso.
@@ -135,9 +147,9 @@ Regras:
 - Pergunta de verdadeiro ou falso: use `tipo: 'verdadeiro-ou-falso'` e `correta: true` ou `correta: false`. Não coloque `alternativasHtml`.
 - O `id` precisa ser único dentro do quiz.
 - A categoria precisa de rótulo em `src/conteudo/quiz/categorias.ts`. Para criar uma categoria nova, acrescente uma linha ali com o nome que o aluno vê, por exemplo `'nova-categoria': 'Nome para o aluno',`.
-- `origem: 'professor'` (pergunta do simulado do professor) e `gabaritoDoCaderno: true` (resposta tirada do caderno de estudo) liberam só o enunciado e as alternativas da regra de aula e slide. A explicação nunca é liberada. Use só nesses dois casos.
+- `origem: 'professor'` (pergunta do simulado do professor) e `gabaritoDoCaderno: true` (resposta tirada do caderno de estudo) liberam só o enunciado e as alternativas da regra de aula e slide. A explicação nunca é liberada. Use só nesses dois casos. A pergunta do professor tem de ser de verdadeiro ou falso, e a marca do caderno só vai em pergunta da categoria `atividade`.
 
-Para conferir: `node --import tsx scripts/validar-conteudo.ts`. Depois de acrescentar pergunta a uma unidade publicada, rode `npm run atualizar-referencias`: a caracterização guarda o número de perguntas de cada unidade publicada, e o resumo deve mostrar a unidade alterada.
+Para conferir: `node --import tsx scripts/validar-conteudo.ts`. Depois de acrescentar pergunta a uma unidade publicada, rode `npm run atualizar-referencias`: a caracterização guarda o número de perguntas, a quantidade por tipo, as perguntas do professor, as marcas do caderno e os ids por categoria de cada unidade publicada, e o resumo deve mostrar a unidade alterada.
 
 ## 5. Provas, feriados e prazos no calendário
 
@@ -168,7 +180,9 @@ Exemplo de prova:
 
 Estas regras rodam nos testes, não no `validar-conteudo`. Para conferir, rode `npm run test:unit`. As mensagens de erro têm a forma `provas[N]: cadeiraId desconhecido "..."`, `prova duplicada`, `data inválida`, `fim (...) antes do início (...)` e `categoria desconhecida`.
 
-Acrescentar prova só quebra se repetir, para a mesma cadeira e no mesmo semestre, um tipo que já existe: o validador acusa `prova duplicada`. Acrescentar feriado ou prazo no semestre 2026.2 pode quebrar a lista exata descrita em "Estado atual".
+Acrescentar prova só quebra se repetir, para a mesma cadeira e no mesmo semestre, um tipo que já existe: o validador acusa `prova duplicada`. Feriado, prazo e período online novos não quebram. Os já conhecidos (feriados de 2026.2, prazo e período online das provas de Economia e Empreendedorismo) continuam obrigatórios: não apague um sem combinar com o líder.
+
+Feriado municipal do Recife precisa de comentário com a fonte oficial logo acima do item, no mesmo formato dos dois que já existem em `feriados.ts`. Sem ele, `tests/unidade/calendario.feriadosRecifeFonte.spec.ts` reprova.
 
 Uma categoria de evento nova não cabe no dado. Ela exige código (seção 9).
 
@@ -229,7 +243,7 @@ Não reprovados pela trava, e que você confere à mão:
 - Testes do currículo real (`tests/unidade/curriculo.*` e `tests/componente/MenuCurriculo.*`): leem as cadeiras e as unidades do currículo, sem lista à mão.
 - Caracterização (`tests/caracterizacao/`): regravada por `npm run atualizar-referencias`, sem editar JSON à mão.
 
-As lacunas da seção "Estado atual" continuam pedindo cuidado: pergunta de quiz em Filosofia Jurídica u1 ou Introdução ao Direito u1, e lista exata do calendário 2026.2.
+Continuam pedindo cuidado: o atalho Interdisciplinar e a data de prova já conferida (seção 5). A decisão sobre prova parcial está pendente com o líder (seção "Estado atual").
 
 ## 9. Quando a estrutura básica precisa de programador
 
@@ -242,7 +256,7 @@ Leve ao programador, ou a um agente de programação, quando:
 - for preciso mudar uma regra de texto em `src/core/conteudo/regrasDeTexto.ts`;
 - for preciso mudar menu, layout, cores ou rotas;
 - for preciso mexer na área restrita, nos termos proibidos ou no cache;
-- a lista exata do calendário de 2026.2 ou a contagem de perguntas de uma das duas unidades citadas na seção "Estado atual" reprovar.
+- a caracterização reprovar (contagem de perguntas, de tipos, perguntas do professor, marca do caderno ou ids por categoria) e o `atualizar-referencias` não explicar a mudança.
 
 Para agentes: leia este roteiro e `src/core/conteudo/regrasDeTexto.ts` antes de editar. Não mude tipos para acomodar um texto. Não crie `dispositivos.ts`. Não edite `tests/caracterizacao/*.esperado.json` à mão: rode `npm run atualizar-referencias`.
 

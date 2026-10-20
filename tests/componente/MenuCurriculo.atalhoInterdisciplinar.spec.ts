@@ -234,15 +234,33 @@ describe('MenuCurriculo, atalho Interdisciplinar dentro da cadeira', () => {
 });
 
 describe('MenuCurriculo com o currículo real: o atalho está em todas as cadeiras públicas', () => {
-  it.each([
-    ['intr-direito', ['Unidade 1', 'Interdisciplinar']],
-    ['redacao-juridica-1', ['Unidade 1', 'Interdisciplinar']],
-    ['sociologia-juridica', ['Unidade 1', 'Interdisciplinar']],
-    ['filosofia-juridica', ['Unidade 1', 'Interdisciplinar', 'Unidade 3']]
-  ])('%s: lista = %j', async (cadeiraId, esperado) => {
-    const w = montar(curriculoReal);
-    await abrirPeriodoECadeira(w, cadeiraId);
+  // Cadeiras públicas lidas do currículo (publicada e não restrita): nenhuma listada à mão.
+  const publicas = curriculoReal
+    .flatMap((p) => p.cadeiras)
+    .filter((c) => c.estado === 'publicado' && !c.restrita);
 
-    expect(itensDaCadeira(w, cadeiraId)).toEqual(esperado);
+  it('há cadeiras públicas para conferir (piso contra varredura vazia)', () => {
+    expect(publicas.length).toBeGreaterThan(0);
   });
+
+  it.each(publicas.map((c) => c.id))(
+    '%s: a lista é a ordem do currículo, com o atalho logo depois da unidade "apos"',
+    async (cadeiraId) => {
+      const cadeira = publicas.find((c) => c.id === cadeiraId)!;
+      const atalho = cadeira.atalhoUnidade!;
+      const w = montar(curriculoReal);
+      await abrirPeriodoECadeira(w, cadeiraId);
+
+      const itens = itensDaCadeira(w, cadeiraId);
+      const posicaoDoAtalho = cadeira.unidades.findIndex((u) => u.id === atalho.apos) + 1;
+
+      expect(itens).toHaveLength(cadeira.unidades.length + 1);
+      expect(itens[posicaoDoAtalho]).toBe(RotuloAtalho);
+      const semAtalho = itens.filter((texto) => texto !== RotuloAtalho);
+      // "Unidade 3 em breve" começa pelo rótulo da unidade: basta o prefixo.
+      cadeira.unidades.forEach((unidade, i) => {
+        expect(semAtalho[i]?.startsWith(unidade.rotulo), unidade.id).toBe(true);
+      });
+    }
+  );
 });

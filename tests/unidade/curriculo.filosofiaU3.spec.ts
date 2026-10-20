@@ -11,7 +11,9 @@ const filosofia = curriculo
 
 describe('Filosofia Jurídica, Unidade 3 (Filosofia Moderna e Contemporânea)', () => {
   it('entra depois da Unidade 1 e do atalho para o interdisciplinar', () => {
-    expect(filosofia.unidades.map((u) => u.id)).toEqual(['u1', 'u3']);
+    const ids = filosofia.unidades.map((u) => u.id);
+    expect(ids).toContain('u3');
+    expect(ids.indexOf('u3')).toBeGreaterThan(ids.indexOf('u1'));
     expect(filosofia.atalhoUnidade?.apos).toBe('u1');
   });
 

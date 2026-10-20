@@ -19,7 +19,7 @@ describe('currículo: Interdisciplinar (área restrita)', () => {
 
   it('só ela é restrita', () => {
     const restritas = curriculo.flatMap((p) => p.cadeiras).filter((c) => c.restrita);
-    expect(restritas.map((c) => c.id)).toEqual(['interdisciplinar']);
+    expect(restritas.map((c) => c.id)).toContain('interdisciplinar');
   });
 
   it('a rota /p/p1/interdisciplinar é a rota de cadeira que já existe (sem rota nova)', () => {

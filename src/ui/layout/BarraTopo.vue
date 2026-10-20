@@ -284,11 +284,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  /* Base maior para a trilha: com 8rem (128px) ela dividia a primeira linha
-     com o menu e a busca e o texto era cortado (COSMÉTICO 2 do QA). Com
-     14rem a busca desce para a linha de baixo, junto dos botões. */
+  /* Celular: a trilha ocupa a linha inteira. Com a busca dividindo a linha
+     (14rem de base, achado da QA em 390 e 360px) a trilha "Unidade 3 /
+     Resumo" quebrava ao lado da busca e a barra ia para 3 linhas. A ordem
+     do markup não muda: Tab segue a ordem visual (selo, ☰, trilha, busca). */
   .barra-topo__trilha {
-    flex-basis: 14rem;
+    flex-basis: 100%;
   }
 }
 

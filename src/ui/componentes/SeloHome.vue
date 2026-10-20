@@ -44,6 +44,10 @@
   grid-template-columns: var(--selo-templo) auto;
   align-items: center;
   flex: none;
+  /* Nunca passa da largura disponível: o título quebra dentro da pílula
+     (abaixo), em vez de empurrar a barra para fora da tela. */
+  max-width: 100%;
+  min-width: 0;
   min-height: var(--selo-altura);
   padding-left: var(--selo-recuo);
   padding-right: 0;
@@ -80,6 +84,7 @@
    retângulo inteiro. */
 .selo-home__texto {
   grid-column: 2;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,7 +98,9 @@
   font-size: var(--selo-titulo);
   line-height: 1.1;
   color: var(--cor-sidebar-texto, #faf9f5);
-  white-space: nowrap;
+  /* Pode quebrar em duas linhas dentro da pílula quando o espaço é pouco. */
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* letter-spacing soma espaço depois da última letra; o padding-left de mesmo
@@ -107,6 +114,7 @@
   padding-left: 0.32em;
   line-height: 1.2;
   color: var(--cor-friso, #d3b563);
+  white-space: nowrap;
 }
 
 .selo-home:focus-visible {
@@ -124,12 +132,30 @@
   }
 }
 
+/* Abaixo de 400px (telas de 320 a 400px): versão compacta, com altura de 44px
+   e textos menores, para o selo e o ☰ caberem na mesma linha. */
+@media (max-width: 400px) {
+  .selo-home {
+    --selo-altura: 44px;
+    --selo-templo: 26px;
+    --selo-recuo: 10px;
+    --selo-titulo: 0.875rem;
+    --selo-rotulo: 0.6875rem;
+  }
+}
+
 /* Modo adaptado: pílula preta com contorno e texto brancos, o mesmo par do
    círculo Home (BotaoHome.vue). Aqui o friso vira preto, então HOME e título
    são explícitos em branco, senão o HOME sumiria sobre o fundo preto. O título
    perde a serifa, como os demais títulos do modo (base.css). */
 :root[data-modo-adaptado='on'] .selo-home {
-  --selo-altura: 80px;
+  --selo-altura: 64px;
+  --selo-templo: 36px;
+  --selo-recuo: 12px;
+  /* Teto próprio do modo: o texto em 16px ocuparia mais de 280px numa linha
+     só e espremeria a trilha até quebrá-la em muitas linhas. Com teto de
+     12rem, "Caderno de Direito" quebra em duas linhas dentro da pílula. */
+  max-width: 12rem;
   background: #000000;
   border-color: #ffffff;
   color: #ffffff;
@@ -139,19 +165,25 @@
   stroke: #ffffff;
 }
 
+/* 16px no mínimo nos dois textos do modo (legibilidade mínima pedida). O
+   tamanho fica fixo aqui e não segue as variáveis de tamanho do selo. */
 :root[data-modo-adaptado='on'] .selo-home__titulo {
   font-family: var(--fonte-texto);
   font-weight: 700;
+  font-size: 1rem;
   color: #ffffff;
 }
 
 :root[data-modo-adaptado='on'] .selo-home__rotulo {
+  font-size: 1rem;
   color: #ffffff;
 }
 
 @media (max-width: 640px) {
   :root[data-modo-adaptado='on'] .selo-home {
-    --selo-altura: 64px;
+    --selo-altura: 56px;
+    --selo-templo: 30px;
+    --selo-recuo: 10px;
   }
 }
 

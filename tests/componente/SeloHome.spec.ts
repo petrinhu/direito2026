@@ -86,9 +86,52 @@ describe('SeloHome, forma e tamanhos', () => {
     expect(fonte).toMatch(/@media \(max-width:\s*640px\)\s*\{[\s\S]*?--selo-altura:\s*48px/);
   });
 
-  it('texto não quebra em linhas (white-space: nowrap) e o selo não encolhe', () => {
-    expect(corpoDoSeletor('.selo-home')).toMatch(/white-space:\s*nowrap/);
+  it('o HOME não quebra em linhas, e o selo não é espremido pelo flex da barra', () => {
+    expect(corpoDoSeletor('.selo-home__rotulo')).toMatch(/white-space:\s*nowrap/);
     expect(corpoDoSeletor('.selo-home')).toMatch(/flex:\s*none/);
+  });
+});
+
+/**
+ * Achado da QA (medido em 320, 360, 390, 672 e 1280px, modo adaptado e normal):
+ * o selo com título em 28px e nowrap media 327px a 320px e 413px a 672px, e
+ * estourava o cabeçalho ou espremia a trilha. Regras travadas aqui: o selo
+ * nunca passa da largura disponível, o título pode quebrar em linha dentro
+ * da pílula, e há uma versão compacta abaixo de 400px e no modo adaptado.
+ */
+describe('SeloHome, nunca passa da largura disponível', () => {
+  it('o selo limita a própria largura ao contêiner (max-width: 100%) e pode encolher (min-width: 0)', () => {
+    expect(corpoDoSeletor('.selo-home')).toMatch(/max-width:\s*100%/);
+    expect(corpoDoSeletor('.selo-home')).toMatch(/min-width:\s*0/);
+  });
+
+  it('o título pode quebrar em linha dentro da pílula, em vez de estourar a largura', () => {
+    expect(corpoDoSeletor('.selo-home__titulo')).toMatch(/white-space:\s*normal/);
+  });
+
+  it('abaixo de 400px (normal): versão compacta com altura de 44px', () => {
+    expect(fonte).toMatch(/@media \(max-width:\s*400px\)\s*\{[\s\S]*?--selo-altura:\s*44px/);
+  });
+
+  it('modo adaptado: altura de 64px no computador (regra de topo, não a do celular)', () => {
+    expect(corpoDoSeletor(":root[data-modo-adaptado='on'] .selo-home")).toMatch(
+      /--selo-altura:\s*64px/
+    );
+  });
+
+  it('modo adaptado: teto de 12rem na pílula, para o título quebrar em duas linhas e não espremer a trilha', () => {
+    expect(corpoDoSeletor(":root[data-modo-adaptado='on'] .selo-home")).toMatch(
+      /max-width:\s*12rem/
+    );
+  });
+
+  it('modo adaptado: título e HOME em 16px no mínimo (legibilidade mínima pedida)', () => {
+    expect(corpoDoSeletor(":root[data-modo-adaptado='on'] .selo-home__titulo")).toMatch(
+      /font-size:\s*1rem/
+    );
+    expect(corpoDoSeletor(":root[data-modo-adaptado='on'] .selo-home__rotulo")).toMatch(
+      /font-size:\s*1rem/
+    );
   });
 });
 

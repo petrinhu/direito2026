@@ -22,6 +22,7 @@
 
 .dicas-forma__titulo {
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
   margin-block-start: 0;
 }
 

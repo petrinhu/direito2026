@@ -22,7 +22,7 @@ const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
  * Cabeçalho que recolhe ao rolar para baixo e volta ao rolar para cima
  * (ordem do líder, 22/09/2026), fio de leitura (fração da página já
  * rolada) e fundo translúcido só depois que o leitor já rolou (a faixa
- * nasce sólida). Mesmo padrão já usado em FundoAnimado.vue e citacoes.ts
+ * nasce sólida). Mesmo padrão já usado em citacoes.ts
  * para prefers-reduced-motion: checagem única no setup, sem listener de
  * mudança ao vivo (ninguém troca essa preferência com a página aberta).
  */

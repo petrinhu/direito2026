@@ -66,6 +66,7 @@ defineProps<{ peca: PecaComentada }>();
 
 .peca-comentada__enunciado h3 {
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
   margin-block-start: 0;
 }
 

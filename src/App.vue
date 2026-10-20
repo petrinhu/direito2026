@@ -37,6 +37,7 @@ function aoBuscar(termo: string): void {
     :store-tema="storeTema"
     :store-busca="storeBusca"
     :store-modo-adaptado="storeModoAdaptado"
+    :com-faixa="route.meta.faixaDeTopo === true"
     @buscar="aoBuscar"
   >
     <router-view />

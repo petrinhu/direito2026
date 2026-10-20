@@ -6,7 +6,13 @@ import type { RouteRecordRaw } from 'vue-router';
  * sem precisar de `window`/`document` que `createWebHistory()` exige.
  */
 export const rotas: RouteRecordRaw[] = [
-  { path: '/', name: 'home', component: () => import('@/ui/paginas/Home.vue') },
+  {
+    path: '/',
+    name: 'home',
+    component: () => import('@/ui/paginas/Home.vue'),
+    // Faixa de topo (fachada do templo): só a página inicial a pede (LayoutBase, prop comFaixa).
+    meta: { faixaDeTopo: true }
+  },
   { path: '/busca', name: 'busca', component: () => import('@/ui/paginas/Busca.vue') },
   {
     path: '/p/:periodo',

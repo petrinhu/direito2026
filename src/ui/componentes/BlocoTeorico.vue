@@ -91,6 +91,7 @@ onBeforeUnmount(() => observador?.disconnect());
 
 .bloco-teorico__titulo {
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
 }
 
 .bloco-teorico__corpo :deep(p) {
@@ -165,6 +166,7 @@ onBeforeUnmount(() => observador?.disconnect());
 .bloco-teorico__corpo :deep(th) {
   background: var(--cor-fundo-sutil, #f2efe6);
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
 }
 
 @media print {

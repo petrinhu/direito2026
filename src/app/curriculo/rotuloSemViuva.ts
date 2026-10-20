@@ -14,5 +14,5 @@ export function rotuloSemViuva(texto: string): string {
   if (ultimaPalavra.length === 0 || ultimaPalavra.length > TAMANHO_MAXIMO_PALAVRA_SOLTA) {
     return texto;
   }
-  return `${texto.slice(0, ultimoEspaco)} ${ultimaPalavra}`;
+  return `${texto.slice(0, ultimoEspaco)}\u00a0${ultimaPalavra}`;
 }

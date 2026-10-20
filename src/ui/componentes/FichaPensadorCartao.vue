@@ -116,6 +116,7 @@ const idCorpo = computed(() => `ficha-${props.ficha.id}-corpo`);
   color: var(--cor-titulo-texto, #0d2440);
   font: inherit;
   font-family: var(--fonte-titulo, serif);
+  font-variant-numeric: lining-nums;
   font-weight: 600;
   text-align: start;
   cursor: pointer;

@@ -140,6 +140,7 @@ function aoClicar(): void {
 
 .no-mapa--raiz > .no-mapa__corpo {
   font-family: var(--fonte-titulo, serif);
+  font-variant-numeric: lining-nums;
   font-size: var(--escala-md, 1.25rem);
 }
 

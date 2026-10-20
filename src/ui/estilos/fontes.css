@@ -4,13 +4,26 @@
    pilha de sistema). Sem CDN externo (zero requisição de rede fora do
    pacote publicado, mesma regra do resto do projeto).
 
+   Títulos do site inteiro: Cormorant Garamond (OFL, decisão do líder de
+   20/10/2026, "Cormorant nos títulos do Site inteiro"). Texto corrido:
+   Inter. Lora 700 continua aqui porque um texto de SVG do conteúdo
+   (src/conteudo/p1/intr-direito/u1/resumo.ts) a pede pelo nome; ver
+   docs/design-visual.md.
+
    Origem: @fontsource/lora e @fontsource-variable/inter, já presentes em
-   devDependencies. Cada arquivo aqui é um RECORTE (scripts/gerar-fontes.sh,
-   pyftsubset/fonttools, disponíveis nesta máquina), nunca o pacote completo
-   da fonte. Pesos: só os que o CSS do projeto usa de verdade
-   (grep -rn "font-weight" src/ui): Inter 400/500/700 (corpo, negrito de
-   componente, peso 500 do modo adaptado); Lora 700 (h1-h4 usam o peso
-   bold padrão do navegador, nenhum h1-h6 pede peso 400 nem itálico).
+   devDependencies; Cormorant Garamond vem de mockups/fontes/ (Fontsource 5,
+   OFL, LICENSE-OFL-cormorant-garamond.txt ao lado destes arquivos). Cada
+   arquivo aqui é um RECORTE (scripts/gerar-fontes.sh, pyftsubset/fonttools,
+   disponíveis nesta máquina), nunca o pacote completo da fonte. Pesos: só
+   os que o CSS do projeto usa de verdade (grep -rn "font-weight" src/ui):
+   Inter 400/500/700 (corpo, negrito de componente, peso 500 do modo
+   adaptado); Cormorant 600 (menu e subtítulos), 700 (títulos) e 500 itálico
+   (lema em latim); Lora 700 (só o SVG do conteúdo).
+
+   Cormorant vem só no recorte "latin" do Fontsource, sem o "latin-ext": o
+   latin-ext não tem o conjunto mínimo de glifos do português (o portão
+   scripts/verificar-fontes-glifos.py exige a letra inteira e a acentuação
+   em CADA arquivo), e tudo o que o site escreve cabe no latin.
 
    CORREÇÃO 1 (achado do líder, 22/09/2026, docs/arquitetura.md seção 10
    tem o relato completo): a versão original recortava contra "o alfabeto
@@ -67,6 +80,32 @@
 }
 
 @font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('./fontes/cormorant-garamond-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('./fontes/cormorant-garamond-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('./fontes/cormorant-garamond-500-italic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Lora 700 só para o SVG do conteúdo (font-family="Lora, serif" em
+   src/conteudo/p1/intr-direito/u1/resumo.ts). Nenhum título usa mais a Lora. */
+@font-face {
   font-family: 'Lora';
   src: url('./fontes/lora-700.woff2') format('woff2');
   font-weight: 700;
@@ -81,8 +120,8 @@
    (o "pulo" de layout que troca de fonte costuma causar, porque cada
    fonte tem métricas verticais diferentes para o mesmo tamanho nominal).
 
-   Duas famílias sintéticas ("Inter Fallback"/"Lora Fallback"), sem
-   arquivo de fonte nenhum (`src: local(...)` só, resolve contra a fonte
+   Duas famílias sintéticas ("Inter Fallback"/"Cormorant Garamond Fallback"),
+   sem arquivo de fonte nenhum (`src: local(...)` só, resolve contra a fonte
    do próprio sistema já usada como fallback) com `ascent-override`/
    `descent-override`/`line-gap-override`/`size-adjust` calculados para
    que a métrica vertical do fallback imite a da fonte própria. O
@@ -90,18 +129,20 @@
    (ela entra na pilha logo depois do nome real), então a área ocupada já
    nasce do tamanho certo, e a troca não move nada embaixo.
 
-   Números medidos nesta máquina (não estimados), com fontTools, técnica
-   de Malchev ("The Perfect Font Fallback"): size-adjust = (ascent+descent
-   do fallback) / (ascent+descent da fonte própria); os demais valores são
-   a métrica da fonte própria dividida por esse size-adjust. Comando:
-   python3 -c "from fontTools.ttLib import TTFont; ..." lendo sTypoAscender/
-   sTypoDescender/sTypoLineGap de src/ui/estilos/fontes/inter-400.woff2 e
-   lora-700.woff2 contra as fontes já instaladas nesta máquina que mais se
-   aproximam do primeiro nome da pilha de fallback de cada token
-   (Liberation Sans, clone métrico do Arial, para --fonte-texto; Liberation
-   Serif, a serifa genérica mais próxima disponível aqui, para
-   --fonte-titulo — não há arquivo de Georgia nesta máquina, fonte
-   proprietária, então este é o melhor material de referência local). */
+   Cálculo (técnica de Malchev, "The Perfect Font Fallback"), medido nesta
+   máquina com fontTools, não estimado: size-adjust = (sTypoAscender +
+   |sTypoDescender| do fallback) / (o mesmo da fonte própria); cada override
+   = métrica da fonte própria / size-adjust. Reproduz exatamente os números
+   que a Lora já tinha (71,03%), o que confirma o método.
+   - Cormorant Garamond (própria, UPM 1000): sTypo 924 / -287 / 0.
+   - Liberation Serif (fallback, UPM 2048): sTypo 0,6934 / -0,2158 / 0,1499,
+     o clone métrico de Times New Roman disponível aqui (não há Georgia nem
+     Times nesta máquina; Georgia é proprietária). Soma 0,9092.
+   - size-adjust = 0,9092 / 1,211 = 75,08%; ascent-override = 0,924 / 0,7508
+     = 123,07%; descent-override = 0,287 / 0,7508 = 38,23%.
+   Os `local()` abaixo são a pilha reserva na ordem: num sistema com Georgia,
+   a face usa a Georgia com a mesma métrica calculada para a Liberation Serif
+   (aproximação, o mesmo compromisso que a Lora Fallback já aceitava). */
 @font-face {
   font-family: 'Inter Fallback';
   src: local('Arial'), local('Helvetica'), local('Liberation Sans');
@@ -112,10 +153,10 @@
 }
 
 @font-face {
-  font-family: 'Lora Fallback';
+  font-family: 'Cormorant Garamond Fallback';
   src: local('Georgia'), local('Liberation Serif');
-  ascent-override: 141.63%;
-  descent-override: 38.58%;
+  ascent-override: 123.07%;
+  descent-override: 38.23%;
   line-gap-override: 0%;
-  size-adjust: 71.03%;
+  size-adjust: 75.08%;
 }

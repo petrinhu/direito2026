@@ -168,7 +168,29 @@ describe('MenuCurriculo, atalho Interdisciplinar dentro da cadeira', () => {
     expect(atalhoDa(w, 'intr-direito').isVisible()).toBe(false);
   });
 
-  it('o atalho não tem triângulo de submenu e não cria link para unidade falsa', async () => {
+  /**
+   * Ordem do líder (20/10/2026, verbatim): "O link do interdisciplinar deve ser
+   * ter a seta lateral também, mesmo sem expandir, pois conta como se fosse a
+   * unidade 2. Para não parecer que foi esquecimento." A seta é decorativa
+   * (aria-hidden), fica na mesma coluna do triângulo das unidades, não é botão
+   * e não expande nada: o atalho continua sendo um link.
+   */
+  it('o atalho ganha a seta lateral, decorativa, sem virar botão nem expandir', async () => {
+    const w = montar(curriculoComAtalho());
+    await abrirPeriodoECadeira(w, 'intr-direito');
+
+    const atalho = atalhoDa(w, 'intr-direito');
+    const linhaAtalho = atalho.element.parentElement!;
+    const coluna = linhaAtalho.querySelector('.menu-curriculo__recuo');
+    expect(coluna, 'coluna do triângulo ausente na linha do atalho').not.toBeNull();
+    expect(coluna!.getAttribute('aria-hidden')).toBe('true');
+    expect(coluna!.querySelector('.menu-curriculo__seta')).not.toBeNull();
+    expect(linhaAtalho.querySelector('button')).toBeNull();
+    expect(atalho.element.tagName).toBe('A');
+    expect(atalho.attributes('aria-expanded')).toBeUndefined();
+  });
+
+  it('o atalho não é um segundo botão de submenu e não cria link para unidade falsa', async () => {
     const w = montar(curriculoComAtalho());
     await abrirPeriodoECadeira(w, 'intr-direito');
 

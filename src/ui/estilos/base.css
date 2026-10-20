@@ -63,6 +63,7 @@ h2,
 h3,
 h4 {
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
   line-height: var(--altura-linha-titulo);
   color: var(--cor-titulo-texto);
 }
@@ -78,8 +79,8 @@ h4 {
    atributo próprio - `:root[data-modo-adaptado='on']` -, então o empate é
    estrutural, não acidental), e num empate vence quem carrega por
    último no CSS final, nunca o modo por definição. Achado real:
-   Home.vue, `.pagina-home__hero h1 { font-family: var(--fonte-titulo) }`
-   vencia sempre. `!important` é a única garantia GERAL (vale para todo
+   Achado real (em Home.vue na época; hoje o mesmo padrão vive em
+   FachadaTemplo.vue, `.fachada__titulo`) vencia sempre. `!important` é a única garantia GERAL (vale para todo
    componente presente e futuro, sem precisar de correção caso a caso a
    cada novo `<style scoped>` que declare font-family/font-weight de
    título): o modo de acessibilidade sempre vence decoração de

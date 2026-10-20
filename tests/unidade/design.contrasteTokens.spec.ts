@@ -71,8 +71,8 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   },
   // O balão de citação legal usa as mesmas variáveis do cartão (seção 12).
   { nome: 'balão de citação', texto: '--cor-texto', fundo: '--cor-fundo-elevado' },
-  // Hero da home (achado do QA em produção, 22/09/2026): fica sobre o
-  // FundoAnimado, sempre escuro nos dois temas, mesma classe de bug da
+  // Hero da home (achado do QA em produção, 22/09/2026): fica sobre a faixa
+  // escura da fachada, sempre escura nos dois temas, mesma classe de bug da
   // lateral, só que no <h1> em vez do fundo.
   { nome: 'hero da home', texto: '--cor-hero-texto', fundo: '--cor-sidebar-fundo' },
   // Botão primário: as duas variáveis mudam JUNTAS com o tema (não é o

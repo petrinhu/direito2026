@@ -26,7 +26,7 @@ export interface ReferenciaUnidade {
  * Atalho do menu lateral para a cadeira restrita Interdisciplinar (ordem do
  * líder: "a segunda unidade é o interdisciplinar, link para ele"). Não é
  * unidade: não tem abas, carregador nem página própria, e por isso mora fora
- * de `Cadeira.unidades`. Busca, home, trilha e roteador nunca o enxergam.
+ * de `Cadeira.unidades`. Busca, trilha e roteador nunca o enxergam; a home lê o atalho só para desenhar a linha da placa.
  */
 export interface AtalhoUnidade {
   /** Rótulo exibido no menu. Ex.: 'Interdisciplinar'. */

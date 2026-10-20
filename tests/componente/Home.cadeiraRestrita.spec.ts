@@ -6,8 +6,14 @@ import { CHAVE_CURRICULO } from '@/app/chaves';
 import { curriculo } from '@/conteudo/curriculo';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
+/** Teleport vai para a faixa do layout; aqui ele fica inline, como na página real. */
 function montar(c: Curriculo) {
-  return mount(Home, { global: { provide: { [CHAVE_CURRICULO as unknown as symbol]: c } } });
+  return mount(Home, {
+    global: {
+      provide: { [CHAVE_CURRICULO as unknown as symbol]: c },
+      stubs: { teleport: true }
+    }
+  });
 }
 
 describe('Home e a cadeira restrita', () => {
@@ -29,28 +35,28 @@ describe('Home e a cadeira restrita', () => {
     }
   ];
 
-  it('a cadeira restrita aparece como cartão vindo do currículo, com link e indicação discreta', () => {
-    const cartao = montar(sintetico).get('a.cartao-restrito');
-    expect(cartao.attributes('href')).toBe('/p/p1/secreta');
-    expect(cartao.text()).toContain('Cadeira Secreta');
-    expect(cartao.text()).toMatch(/área restrita/i);
-    expect(cartao.find('h3').text()).toBe('Cadeira Secreta');
+  it('a cadeira restrita vira placa própria, com selo "Área restrita" e link de entrada', () => {
+    const placa = montar(sintetico).get('article.placa--restrita');
+    expect(placa.find('h3').text()).toBe('Cadeira Secreta');
+    expect(placa.find('.selo').text()).toContain('Área restrita');
+    expect(placa.get('a.linha').attributes('href')).toBe('/p/p1/secreta');
   });
 
-  it('cadeira restrita ainda não publicada não ganha cartão', () => {
-    expect(montar(sintetico).findAll('a.cartao-restrito')).toHaveLength(1);
+  it('cadeira restrita ainda não publicada não ganha placa', () => {
+    expect(montar(sintetico).findAll('article.placa')).toHaveLength(1);
   });
 
-  it('no currículo real, o Interdisciplinar aparece uma vez, sem nada do conteúdo restrito', () => {
+  it('no currículo real, o Interdisciplinar tem uma só placa restrita, sem conteúdo vazado', () => {
     const w = montar(curriculo);
-    const cartoes = w.findAll('a.cartao-restrito');
-    expect(cartoes).toHaveLength(1);
-    expect(cartoes[0]!.attributes('href')).toBe('/p/p1/interdisciplinar');
-    expect(cartoes[0]!.text()).toContain('Interdisciplinar');
+    const restritas = w.findAll('article.placa--restrita');
+    expect(restritas).toHaveLength(1);
+    expect(restritas[0]!.get('a.linha').attributes('href')).toBe('/p/p1/interdisciplinar');
+    expect(restritas[0]!.text()).not.toMatch(/Resumo|Quiz|Unidade 1|Petição/);
   });
 
-  it('o cartão restrito não cria link duplicado nem cartão de unidade', () => {
+  it('a placa restrita não cria linha de unidade', () => {
     const w = montar(sintetico);
-    expect(w.findAll('a.cartao-unidade')).toHaveLength(0);
+    expect(w.findAll('article.placa--restrita a.linha')).toHaveLength(1);
+    expect(w.findAll('a').some((a) => (a.attributes('href') ?? '').endsWith('/u1'))).toBe(false);
   });
 });

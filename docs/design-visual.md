@@ -1,6 +1,6 @@
 # Design visual, Caderno de Direito
 
-Decisões de design visual dos mockups estáticos em `mockups/`. Personalidade aprovada: "jurídico moderno sóbrio", serifa nos títulos, sem serifa no texto corrido, azul-petróleo como cor de marca, dourado/âmbar como acento raro, muito espaço em branco, cartões discretos.
+Decisões de design visual dos mockups estáticos em `mockups/`. Personalidade aprovada: "jurídico moderno sóbrio", com a grandiosidade clássica de uma fachada de templo (decisão do líder, 20/10/2026: "Fachada de templo"; "Quero algo com a grandiosidade clássica do direito mas com aspecto moderno"), serifa nos títulos, sem serifa no texto corrido, azul-petróleo como cor de marca, dourado/âmbar como acento raro, muito espaço em branco, cartões discretos.
 
 **Mudança de rumo, 21/09/2026.** O esqueleto de navegação passou por duas rodadas na mesma tarde. Primeiro o líder reprovou a home com o menu no topo ocupando quase a tela inteira ("home a está péssima! O menu ocupa quase a tela inteira"). A correção proposta então foi um painel suspenso compacto (altura máxima 60% da janela, colunas por nível). O líder reprovou essa correção também ("ruim. Mantenha o design do arquivo original com o menu lateral") e decidiu manter o esqueleto do arquivo piloto de resumo da 1a unidade de Introdução ao Direito, que fica na árvore local de estudo, fora deste repositório: barra lateral fixa à esquerda, não menu no topo. **A seção sobre painel suspenso foi removida deste documento** porque a decisão que a gerou foi revogada; o histórico da conversa é quem guarda esse passo, não este arquivo (L-67: canon revogado é apagado, não arquivado).
 
@@ -61,7 +61,7 @@ Contraste calculado pela fórmula de luminância relativa do WCAG 2.2 (não esti
 
 ## Tipografia
 
-- Título: pilha de sistema com serifa nos mockups (`Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif`). **Fonte de verdade recomendada para produção: Lora**, a ser hospedada no próprio site (sem CDN externo).
+- Título: pilha de sistema com serifa nos mockups (`Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif`). **Fonte de verdade para produção: Cormorant Garamond** em todos os títulos do site (decisão do líder, 20/10/2026: "Cormorant nos títulos do Site inteiro"), hospedada no próprio site (sem CDN externo). A Lora (recorte 700) fica só para o texto SVG do conteúdo que a pede pelo nome.
 - Texto corrido: pilha de sistema sem serifa nos mockups (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`). **Fonte de verdade recomendada: Inter**, também hospedada no próprio site.
 - Escala: 13 / 15 / 17 / 20 / 28 / 40 / 52px, base em `rem`. Corpo de leitura longa em 17px com altura de linha 1.7 (generosa, para não cansar em leitura extensa).
 

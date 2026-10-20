@@ -3,8 +3,9 @@ import { test, expect } from '@playwright/test';
 /**
  * IMPORTANTE 3 do QA (docs/qa-modo-adaptado.md): o h1 "Caderno de
  * Direito" da home continua em Georgia (serifa) com o modo ligado.
- * Causa: `Home.vue`, `.pagina-home__hero h1 { font-family: var(--fonte-
- * titulo) }` - o `<style scoped>` do Vue injeta um seletor de atributo
+ * Causa (achado na época em Home.vue, `.pagina-home__hero h1 { font-family:
+ * var(--fonte-titulo) }`; hoje o mesmo padrão está em FachadaTemplo.vue,
+ * `.fachada__titulo`) - o `<style scoped>` do Vue injeta um seletor de atributo
  * (`[data-v-xxx]`) em cada regra, o que empata a especificidade com a
  * regra global do modo (`:root[data-modo-adaptado='on'] h1`, também com
  * um seletor de atributo) - com empate, quem vem DEPOIS no CSS final
@@ -30,7 +31,7 @@ test('o h1 da home usa a fonte sem serifa do modo, nunca a serifa do componente'
   });
   await page.goto('/');
   await page.locator('[data-modo-adaptado="on"]').waitFor({ state: 'attached' });
-  const h1 = page.locator('.pagina-home__hero h1');
+  const h1 = page.locator('.fachada__titulo');
   await h1.waitFor({ state: 'visible' });
 
   const fontFamily = await h1.evaluate((el) => getComputedStyle(el).fontFamily);

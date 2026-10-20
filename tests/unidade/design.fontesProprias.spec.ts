@@ -29,10 +29,13 @@ const ARQUIVOS_ESPERADOS = [
   'src/ui/estilos/fontes/inter-400.woff2',
   'src/ui/estilos/fontes/inter-500.woff2',
   'src/ui/estilos/fontes/inter-700.woff2',
-  'src/ui/estilos/fontes/lora-700.woff2'
+  'src/ui/estilos/fontes/lora-700.woff2',
+  'src/ui/estilos/fontes/cormorant-garamond-600.woff2',
+  'src/ui/estilos/fontes/cormorant-garamond-700.woff2',
+  'src/ui/estilos/fontes/cormorant-garamond-500-italic.woff2'
 ];
 
-describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
+describe('fontes próprias (Cormorant Garamond/Inter/Lora), self-hosted, sem CDN', () => {
   it.each(ARQUIVOS_ESPERADOS)('%s existe e fica abaixo de 60KB', (caminhoRelativo) => {
     const caminho = resolve(RAIZ, caminhoRelativo);
     expect(existsSync(caminho), `arquivo ausente: ${caminho}`).toBe(true);
@@ -45,11 +48,14 @@ describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
     expect(css).not.toMatch(/https?:\/\//);
     expect(css).toMatch(/url\('\.\/fontes\/inter-400\.woff2'\)/);
     expect(css).toMatch(/url\('\.\/fontes\/lora-700\.woff2'\)/);
+    expect(css).toMatch(/url\('\.\/fontes\/cormorant-garamond-600\.woff2'\)/);
+    expect(css).toMatch(/url\('\.\/fontes\/cormorant-garamond-700\.woff2'\)/);
+    expect(css).toMatch(/url\('\.\/fontes\/cormorant-garamond-500-italic\.woff2'\)/);
   });
 
-  it('tokens.css usa Lora/Inter como fonte primária (não só a pilha de sistema)', () => {
+  it('tokens.css usa Cormorant Garamond nos títulos e Inter no texto corrido (não só a pilha de sistema)', () => {
     const css = readFileSync(resolve(RAIZ, 'src/ui/estilos/tokens.css'), 'utf-8');
-    expect(css).toMatch(/--fonte-titulo:\s*'Lora'/);
+    expect(css).toMatch(/--fonte-titulo:\s*'Cormorant Garamond'/);
     expect(css).toMatch(/--fonte-texto:\s*'Inter'/);
   });
 
@@ -80,5 +86,18 @@ describe('fontes próprias (Lora/Inter), self-hosted, sem CDN', () => {
       resultado.status,
       `saída do verificador:\n${resultado.stdout}\n${resultado.stderr}`
     ).toBe(0);
+  });
+
+  /**
+   * Algarismos alinhados nos títulos (pedido do líder, protótipo aprovado): a
+   * Cormorant desenha numerais antigos por padrão, e um "1º período" com
+   * numeral descendente sai desalinhado da linha de base. A regra fica na
+   * base dos títulos (h1-h4), que todo título do site herda.
+   */
+  it('base.css pede algarismos alinhados (lining-nums) nos títulos h1-h4', () => {
+    const base = readFileSync(resolve(RAIZ, 'src/ui/estilos/base.css'), 'utf-8');
+    const bloco = base.match(/h1,\s*h2,\s*h3,\s*h4\s*\{([^}]*)\}/);
+    expect(bloco, 'bloco h1-h4 ausente em base.css').not.toBeNull();
+    expect(bloco![1]).toMatch(/font-variant-numeric:\s*lining-nums/);
   });
 });

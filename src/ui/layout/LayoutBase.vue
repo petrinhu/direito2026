@@ -11,14 +11,23 @@ import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
 import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
 
-const props = defineProps<{
-  curriculo: Curriculo;
-  caminhoAtual: string;
-  repositorio: RepositorioProgresso;
-  storeTema: StoreTema;
-  storeBusca: StoreBusca;
-  storeModoAdaptado: StoreModoAdaptado;
-}>();
+const props = withDefaults(
+  defineProps<{
+    curriculo: Curriculo;
+    caminhoAtual: string;
+    repositorio: RepositorioProgresso;
+    storeTema: StoreTema;
+    storeBusca: StoreBusca;
+    storeModoAdaptado: StoreModoAdaptado;
+    /**
+     * Faixa de topo: a página (só a inicial) preenche por Teleport o alvo
+     * `#faixa-do-layout`, de lado a lado, logo abaixo do cabeçalho e por cima
+     * da coluna da barra lateral. Sem a faixa, o layout fica como sempre.
+     */
+    comFaixa?: boolean;
+  }>(),
+  { comFaixa: false }
+);
 
 // O aviso diz que o site não usa cookies nem servidor: na área restrita isso é falso
 // (há cookie de sessão e API), e ele cobriria o login. Lá ele não aparece.
@@ -91,7 +100,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     @abrir-gaveta="abrirGaveta"
     @buscar="(termo) => emit('buscar', termo)"
   />
-  <div class="layout-base__corpo">
+  <div v-if="comFaixa" id="faixa-do-layout" class="layout-base__faixa" />
+  <div class="layout-base__corpo" :class="{ 'layout-base__corpo--com-faixa': comFaixa }">
     <div v-if="gavetaAberta" class="layout-base__sobreposicao" @click="fecharGaveta" />
     <aside
       ref="gavetaRef"
@@ -153,6 +163,34 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 
 .layout-base__sobreposicao {
   display: none;
+}
+
+/* Faixa de topo (só com comFaixa): a faixa já começa abaixo do cabeçalho, então
+   a grade não precisa do respiro de cima. A barra lateral nasce na base da faixa
+   e fica presa logo abaixo do cabeçalho ao rolar (sticky), como no protótipo
+   aprovado. Só em tela larga: em tela estreita a gaveta continua fixa (regra
+   abaixo, mesmo ponto de quebra de 880px). */
+.layout-base__faixa {
+  /* A faixa começa no topo do documento, por baixo do cabeçalho fixo: o
+     respiro de cima é a altura do cabeçalho, para o conteúdo da página nunca
+     nascer escondido atrás dele. */
+  padding-top: var(--altura-cabecalho, 64px);
+}
+
+.layout-base__corpo--com-faixa {
+  padding-top: 0;
+}
+
+@media (min-width: 881px) {
+  .layout-base__corpo--com-faixa .layout-base__gaveta {
+    position: sticky;
+    top: var(--altura-cabecalho, 64px);
+    align-self: flex-start;
+    min-height: 0;
+    height: calc(100vh - var(--altura-cabecalho, 64px));
+    height: calc(100dvh - var(--altura-cabecalho, 64px));
+    overflow-y: auto;
+  }
 }
 
 @media (max-width: 880px) {

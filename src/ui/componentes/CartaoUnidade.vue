@@ -60,6 +60,7 @@ defineProps<{
 
 .cartao-unidade__cadeira {
   font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
   margin: var(--esp-2, 0.5rem) 0;
 }
 

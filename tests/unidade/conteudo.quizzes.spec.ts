@@ -1,20 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { CARREGADORES } from '@/app/carregamento/carregadores';
-import { quiz as quizIntr } from '@/conteudo/p1/intr-direito/u1/quiz';
-import { quiz as quizRedacao } from '@/conteudo/p1/redacao-juridica-1/u1/quiz';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
 import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/quiz';
 import { quiz as quizFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/quiz';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/conteudo/quiz/categorias';
-import type {
-  PerguntaMultiplaEscolha,
-  PerguntaQuiz,
-  PerguntaVerdadeiroOuFalso
-} from '@/core/unidade/tipos';
+import type { PerguntaQuiz, PerguntaVerdadeiroOuFalso } from '@/core/unidade/tipos';
 
 /**
  * Invariantes de conteúdo dos quizzes. Todas valem para QUALQUER número de
- * perguntas: acrescentar pergunta não quebra este arquivo.
+ * perguntas e para QUALQUER tipo de unidade: acrescentar pergunta, inclusive de
+ * verdadeiro ou falso, não quebra este arquivo.
  *
  * As contagens e faixas exatas (perguntas por tipo, perguntas do professor,
  * ids com marca do caderno e ids por categoria) NÃO ficam aqui: estão
@@ -31,14 +26,6 @@ function sequencia(n: number): number[] {
 
 function idsDe(quiz: readonly PerguntaQuiz[]): number[] {
   return quiz.map((p) => p.id).sort((a, b) => a - b);
-}
-
-function soMultiplaEscolha(quiz: readonly PerguntaQuiz[]): readonly PerguntaMultiplaEscolha[] {
-  return quiz.map((p) => {
-    if (p.tipo === 'verdadeiro-ou-falso')
-      throw new Error(`id ${p.id}: verdadeiro ou falso inesperado`);
-    return p;
-  });
 }
 
 /** Todo quiz que o carregamento descobre em src/conteudo, sem lista à mão. */
@@ -62,6 +49,16 @@ describe('todo quiz descoberto em src/conteudo', () => {
     }
   });
 
+  it('dentro de cada quiz, toda pergunta de múltipla escolha tem a mesma quantidade de alternativas, 4 ou 5', async () => {
+    for (const { chave, quiz } of await quizzesDescobertos()) {
+      const tamanhos = new Set(
+        quiz.flatMap((p) => ('alternativasHtml' in p ? [p.alternativasHtml.length] : []))
+      );
+      expect(tamanhos.size, chave).toBeLessThanOrEqual(1);
+      for (const tamanho of tamanhos) expect([4, 5], chave).toContain(tamanho);
+    }
+  });
+
   it('toda pergunta do professor é verdadeiro ou falso', async () => {
     for (const { chave, quiz } of await quizzesDescobertos()) {
       for (const p of quiz.filter((q) => q.origem === 'professor')) {
@@ -82,23 +79,6 @@ describe('todo quiz descoberto em src/conteudo', () => {
   });
 });
 
-describe.each([
-  ['Introdução ao Direito', quizIntr, 4],
-  ['Redação Jurídica 1', quizRedacao, 4],
-  ['Sociologia Jurídica', quizSociologia, 5],
-  ['Filosofia Jurídica, unidade 3', quizFilosofiaU3, 4]
-] as const)('%s: só múltipla escolha', (_nome, quiz, alternativas) => {
-  it('não tem verdadeiro ou falso', () => {
-    expect(() => soMultiplaEscolha(quiz)).not.toThrow();
-  });
-
-  it(`toda pergunta tem ${alternativas} alternativas`, () => {
-    for (const p of soMultiplaEscolha(quiz)) {
-      expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(alternativas);
-    }
-  });
-});
-
 describe('Sociologia Jurídica: marca do caderno', () => {
   it('toda pergunta marcada com o gabarito do caderno é da categoria atividade', () => {
     const marcadas = quizSociologia.filter((p) => p.gabaritoDoCaderno === true);
@@ -107,26 +87,7 @@ describe('Sociologia Jurídica: marca do caderno', () => {
   });
 });
 
-describe('Filosofia Jurídica, unidade 1: formato', () => {
-  const multipla = quizFilosofia.filter(
-    (p): p is PerguntaMultiplaEscolha => p.tipo !== 'verdadeiro-ou-falso'
-  );
-  const verdadeiroOuFalso = quizFilosofia.filter(
-    (p): p is PerguntaVerdadeiroOuFalso => p.tipo === 'verdadeiro-ou-falso'
-  );
-
-  it('ids contíguos de 1 ao total de perguntas', () => {
-    expect(idsDe(quizFilosofia)).toEqual(sequencia(quizFilosofia.length));
-  });
-
-  it('a múltipla escolha tem cinco alternativas cada, e tem verdadeiro ou falso junto', () => {
-    expect(multipla.length).toBeGreaterThan(0);
-    expect(verdadeiroOuFalso.length).toBeGreaterThan(0);
-    for (const p of multipla) {
-      expect(p.alternativasHtml, `id ${p.id}`).toHaveLength(5);
-    }
-  });
-
+describe('Filosofia Jurídica, unidade 1: marca do caderno', () => {
   it('nenhuma pergunta leva a marca do caderno (o gabarito é do professor)', () => {
     expect(quizFilosofia.filter((p) => 'gabaritoDoCaderno' in p)).toEqual([]);
   });

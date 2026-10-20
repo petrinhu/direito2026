@@ -3,11 +3,40 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import CartaoPergunta from '@/ui/componentes/CartaoPergunta.vue';
 import type { PerguntaEmbaralhada } from '@/core/quiz/tipos';
+import { ALTERNATIVAS_VERDADEIRO_OU_FALSO } from '@/core/quiz/alternativasVerdadeiroOuFalso';
 import { quiz as quizIntro } from '@/conteudo/p1/intr-direito/u1/quiz';
-import type { PerguntaMultiplaEscolha } from '@/core/unidade/tipos';
+import type { PerguntaQuiz } from '@/core/unidade/tipos';
 
-// Introdução ao Direito só tem múltipla escolha (4 alternativas).
-const perguntasReais = quizIntro as readonly PerguntaMultiplaEscolha[];
+const perguntasReais: readonly PerguntaQuiz[] = quizIntro;
+
+/**
+ * Forma que o motor entrega ao cartão: múltipla escolha com as alternativas da
+ * pergunta, verdadeiro ou falso com as duas fixas (mesma regra do motor, sem sorteio).
+ */
+function embaralhadaDe(pergunta: PerguntaQuiz): PerguntaEmbaralhada {
+  const comum = {
+    id: pergunta.id,
+    categoria: pergunta.categoria,
+    enunciadoHtml: pergunta.enunciadoHtml,
+    explicacaoHtml: pergunta.explicacaoHtml,
+    fonteExtra: pergunta.fonteExtra
+  };
+  if (pergunta.tipo === 'verdadeiro-ou-falso') {
+    return {
+      ...comum,
+      tipo: 'verdadeiro-ou-falso',
+      alternativasHtml: ALTERNATIVAS_VERDADEIRO_OU_FALSO,
+      indiceCorreto: pergunta.correta ? 0 : 1
+    };
+  }
+  return { ...comum, alternativasHtml: pergunta.alternativasHtml, indiceCorreto: pergunta.correta };
+}
+
+/** Textos que o cartão mostra: enunciado, explicação e alternativas (se houver). */
+function textosDaPergunta(pergunta: PerguntaQuiz): string[] {
+  const alternativas = 'alternativasHtml' in pergunta ? pergunta.alternativasHtml : [];
+  return [pergunta.enunciadoHtml, pergunta.explicacaoHtml, ...alternativas];
+}
 
 /**
  * Achado do QA (relatado pelo orquestrador): numa pergunta do quiz, a
@@ -79,28 +108,17 @@ describe('CartaoPergunta, marcação de citação vira botão de verdade (nunca 
 describe('varredura das perguntas reais: nenhuma marcação crua aparece na tela', () => {
   it('há perguntas para varrer e pelo menos uma com marcação embutida (piso, L-36)', () => {
     expect(perguntasReais.length).toBeGreaterThan(0);
-    const comMarcacao = perguntasReais.filter(
-      (p) =>
-        p.enunciadoHtml.includes('<') ||
-        p.explicacaoHtml.includes('<') ||
-        p.alternativasHtml.some((a) => a.includes('<'))
+    const comMarcacao = perguntasReais.filter((p) =>
+      textosDaPergunta(p).some((texto) => texto.includes('<'))
     );
     expect(comMarcacao.length).toBeGreaterThan(0);
   });
 
   it('toda pergunta com marcação embutida renderiza como elemento real, nunca como texto cru', () => {
     for (const pergunta of perguntasReais) {
-      const embaralhada: PerguntaEmbaralhada = {
-        id: pergunta.id,
-        categoria: pergunta.categoria,
-        enunciadoHtml: pergunta.enunciadoHtml,
-        explicacaoHtml: pergunta.explicacaoHtml,
-        fonteExtra: pergunta.fonteExtra,
-        alternativasHtml: pergunta.alternativasHtml,
-        indiceCorreto: pergunta.correta
-      };
+      const embaralhada = embaralhadaDe(pergunta);
       const wrapper = mount(CartaoPergunta, {
-        props: { pergunta: embaralhada, respostaEscolhida: pergunta.correta }
+        props: { pergunta: embaralhada, respostaEscolhida: embaralhada.indiceCorreto }
       });
       expect(wrapper.text(), `pergunta id ${pergunta.id}`).not.toContain('<button');
       expect(wrapper.text(), `pergunta id ${pergunta.id}`).not.toContain('&lt;');

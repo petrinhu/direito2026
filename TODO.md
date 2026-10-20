@@ -18,7 +18,8 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 
 ## INBOX (descobertas não priorizadas)
 
-- Vazia no momento da criação.
+- 2026-10-20: aviso de armazenamento cobre o botão Anterior do quiz em 1280px até clicar em Entendi (QA em produção).
+- 2026-10-20: no menu a 1280px, o nome de Português e Redação Jurídica 1 quebra e deixa o 1 sozinho na linha de baixo (QA em produção).
 
 ## TABELA UNIFICADA
 

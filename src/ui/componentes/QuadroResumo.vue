@@ -3,7 +3,7 @@ defineProps<{ itens: readonly string[] }>();
 </script>
 
 <template>
-  <aside class="quadro-resumo" aria-label="Quadro-resumo de revisão">
+  <aside v-if="itens.length > 0" class="quadro-resumo" aria-label="Quadro-resumo de revisão">
     <h4>Quadro-resumo</h4>
     <ul>
       <li v-for="(item, indice) in itens" :key="indice">{{ item }}</li>

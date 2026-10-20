@@ -38,9 +38,7 @@ describe('Home com o currículo real', () => {
   it('mostra uma linha por unidade publicada, todas com link e nome distintos', () => {
     expect(unidadesPublicadas.length).toBeGreaterThan(0);
     expect(unidades).toHaveLength(unidadesPublicadas.length);
-    expect(new Set(unidades.map((l) => l.attributes('href'))).size).toBe(
-      unidadesPublicadas.length
-    );
+    expect(new Set(unidades.map((l) => l.attributes('href'))).size).toBe(unidadesPublicadas.length);
     expect(new Set(unidades.map((l) => l.text())).size).toBe(unidadesPublicadas.length);
     expect(unidades.some((l) => (l.attributes('href') ?? '').endsWith('/u2'))).toBe(false);
   });

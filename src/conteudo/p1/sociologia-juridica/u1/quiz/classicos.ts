@@ -153,7 +153,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Infraestrutura, forças produtivas e ideologia.`
       ], correta: 1, fonteExtra: false, explicacaoHtml: `Weber analisa a sociedade moderna marcada pelo capitalismo industrial, pela racionalização e pelo desencantamento do mundo, e considera fatores econômicos, políticos, religiosos e culturais. A resposta de modos de produção, luta de classes e superestrutura é a mais tentadora, porque Marx também trata do capitalismo, mas o vocabulário de modos de produção e luta de classes é dele. A resposta de divisão do trabalho, solidariedade orgânica e fatos sociais e a resposta de consciência coletiva, sanção e coesão trazem Durkheim, e a resposta de infraestrutura, forças produtivas e ideologia traz de novo Marx.` },
 
-    { id: 50, categoria: 'classicos', enunciadoHtml: `Como o material situa Weber em relação a Marx?`, alternativasHtml: [
+    { id: 50, categoria: 'classicos', enunciadoHtml: `Como as fontes desta unidade situam Weber em relação a Marx?`, alternativasHtml: [
         `Aceita que a economia determina tudo e apenas troca as classes pela burocracia.`,
         `Nega qualquer influência da economia sobre a sociedade moderna.`,
         `Parte da consciência coletiva como ponto de partida do direito.`,
@@ -191,7 +191,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Porque reproduz diretamente a estrutura de classes.`,
         `Porque substitui o direito pela vontade do dominante.`,
         `Porque organiza a dominação por normas abstratas, competências especializadas, registros escritos e procedimentos previsíveis, reduzindo o peso do parentesco e dos costumes tradicionais.`
-      ], correta: 4, fonteExtra: false, explicacaoHtml: `A burocracia organiza a dominação legal por meio de normas, competências, registros e procedimentos previsíveis, e reduz a importância do parentesco e dos costumes tradicionais. O material observa que as pessoas obedecem a uma decisão administrativa porque creem na legitimidade do procedimento legal, não porque o servidor seja carismático. A resposta do carisma do servidor público é a mais tentadora, porque mistura o tipo legal com o carismático. A resposta da reprodução direta da estrutura de classes é leitura marxista.` },
+      ], correta: 4, fonteExtra: false, explicacaoHtml: `A burocracia organiza a dominação legal por meio de normas, competências, registros e procedimentos previsíveis, e reduz a importância do parentesco e dos costumes tradicionais. Weber observa que as pessoas obedecem a uma decisão administrativa porque creem na legitimidade do procedimento legal, não porque o servidor seja carismático. A resposta do carisma do servidor público é a mais tentadora, porque mistura o tipo legal com o carismático. A resposta da reprodução direta da estrutura de classes é leitura marxista.` },
 
     { id: 55, categoria: 'classicos', enunciadoHtml: `O que significa <strong>racionalizar</strong> no sentido weberiano?`, alternativasHtml: [
         `Tornar a sociedade mais solidária por meio da divisão do trabalho.`,
@@ -207,7 +207,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `É órgão neutro, que aplica as normas sem qualquer relação com a distribuição do poder.`,
         `É apenas um instrumento do modo de produção, sem lógica própria.`,
         `É instituição que só restaura situações anteriores, sem aspecto de dominação.`
-      ], correta: 0, fonteExtra: false, explicacaoHtml: `O artigo afirma que o Poder Judiciário pode ser lido como empresa de dominação e que os juízes detêm o monopólio de decidir, sendo agentes privilegiados da dominação legal. A resposta do órgão neutro é a mais tentadora, porque a imagem do juiz neutro é comum, mas o material liga a ordem jurídica à distribuição do poder na comunidade. A resposta do mero instrumento do modo de produção reduz a leitura a Marx e a resposta da instituição que só restaura confunde a sanção restitutiva de Durkheim com a análise weberiana.` },
+      ], correta: 0, fonteExtra: false, explicacaoHtml: `O artigo afirma que o Poder Judiciário pode ser lido como empresa de dominação e que os juízes detêm o monopólio de decidir, sendo agentes privilegiados da dominação legal. A resposta do órgão neutro é a mais tentadora, porque a imagem do juiz neutro é comum, mas Weber liga a ordem jurídica à distribuição do poder na comunidade. A resposta do mero instrumento do modo de produção reduz a leitura a Marx e a resposta da instituição que só restaura confunde a sanção restitutiva de Durkheim com a análise weberiana.` },
 
     { id: 57, categoria: 'classicos', enunciadoHtml: `O direito pode ser visto como norma coletiva, instrumento de poder, sistema racional-legal e prática social viva. Qual é a associação correta com os autores, na ordem?`, alternativasHtml: [
         `Marx, Durkheim, Weber e Ehrlich.`,
@@ -217,7 +217,7 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Weber, Marx, Durkheim e Kelsen.`
       ], correta: 1, fonteExtra: false, explicacaoHtml: `Norma coletiva associa-se a Durkheim (o direito como fato social e expressão da solidariedade), instrumento de poder a Marx, sistema racional-legal a Weber e prática social viva a Ehrlich. A resposta de Marx, Durkheim, Weber e Ehrlich é a mais tentadora, porque troca apenas os dois primeiros autores, e a resposta de Weber, Marx, Durkheim e Kelsen traz Kelsen, que não se associa a essa lista.` },
 
-    { id: 58, categoria: 'classicos', enunciadoHtml: `Um estudante quer observar como as pessoas realmente vivem as regras no dia a dia, para além do texto escrito da lei. Que autor do material se aproxima dessa preocupação?`, alternativasHtml: [
+    { id: 58, categoria: 'classicos', enunciadoHtml: `Um estudante quer observar como as pessoas realmente vivem as regras no dia a dia, para além do texto escrito da lei. Que autor estudado se aproxima dessa preocupação?`, alternativasHtml: [
         `Kelsen, que defende a pureza normativa do direito.`,
         `Weber, que estuda o direito como sistema racional-legal e a burocracia.`,
         `Ehrlich, que analisa o direito vivo das práticas sociais.`,
@@ -225,11 +225,11 @@ export const classicos: readonly PerguntaQuiz[] = [
         `Durkheim, que vê o direito apenas como sanção estatal escrita.`
       ], correta: 2, fonteExtra: false, explicacaoHtml: `Ehrlich é o autor do direito visto como prática social viva, que analisa o direito vivo das práticas sociais. A resposta de Weber é a mais tentadora, porque Weber também parte do comportamento social relacionado às normas, mas seu foco é o sistema racional-legal e a dominação legal. A resposta de Kelsen trata da pureza normativa, e não das práticas vividas.` },
 
-    { id: 59, categoria: 'classicos', enunciadoHtml: `Qual contraste entre Ehrlich e Kelsen aparece no material da disciplina?`, alternativasHtml: [
+    { id: 59, categoria: 'classicos', enunciadoHtml: `Qual contraste entre Ehrlich e Kelsen aparece nas fontes desta unidade?`, alternativasHtml: [
         `Ehrlich defende a pureza normativa do direito; Kelsen analisa o direito vivo das práticas sociais.`,
         `Ambos explicam o direito pela estrutura econômica e pela luta de classes.`,
         `Ehrlich estuda a dominação legal e a burocracia; Kelsen, a solidariedade social.`,
         `Kelsen liga o direito à luta de classes; Ehrlich, à consciência coletiva.`,
         `Ehrlich analisa o direito vivo das práticas sociais; Kelsen defende a pureza normativa do direito.`
-      ], correta: 4, fonteExtra: false, explicacaoHtml: `No material, Ehrlich é ligado ao direito vivo das práticas sociais (a prática social viva), e Kelsen, à pureza normativa do direito. A resposta que troca Ehrlich e Kelsen é a mais tentadora, porque troca os autores. As demais atribuem a eles ideias que o material associa a Marx, Weber e Durkheim.` },
+      ], correta: 4, fonteExtra: false, explicacaoHtml: `Ehrlich é ligado ao direito vivo das práticas sociais (a prática social viva), e Kelsen, à pureza normativa do direito. A resposta que troca Ehrlich e Kelsen é a mais tentadora, porque troca os autores. As demais atribuem a eles ideias que as fontes desta unidade associam a Marx, Weber e Durkheim.` },
 ];

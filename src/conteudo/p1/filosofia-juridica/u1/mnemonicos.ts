@@ -32,7 +32,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'A hierarquia vira posição no espaço (alto, meio, baixo), e a lei que não está na cadeia de derivação vira um objeto separado.',
     ressalva:
-      'O material da disciplina destaca três leis (eterna, natural e humana); a divina entra pela exposição de Wolkmer, que completa as quatro. A escada e o livro são só apoio de memória: não constam do material.',
+      'Destacam-se três leis (eterna, natural e humana); a divina entra pela exposição de Wolkmer, que completa as quatro. A escada e o livro são só apoio de memória: não constam das fontes estudadas.',
     blocoResumo: 'bloco-8'
   },
   {
@@ -75,7 +75,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Cada nome em latim tem uma palavra do português dentro dele (cidade, gente, natureza), que já diz a abrangência.',
     ressalva:
-      'A classificação do ius gentium é discutida: Bobbio o aproxima do direito natural, e Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O mnemônico segue a tripartição do material da disciplina e só ajuda a lembrar que as três categorias não se equivalem.',
+      'A classificação do ius gentium é discutida: Bobbio o aproxima do direito natural, e Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo. O mnemônico segue a tripartição apresentada no resumo e só ajuda a lembrar que as três categorias não se equivalem.',
     blocoResumo: 'bloco-6'
   },
   {
@@ -114,7 +114,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Cada pensador fica preso a um lugar e a uma imagem, o percurso fixa a ordem, e a imagem de cada parada lembra a ideia central, não só o nome.',
     ressalva:
-      'Datas do material da disciplina; Sófocles e os sofistas são do mesmo século. As imagens são só apoio de memória: o conteúdo vem do resumo.',
+      'As datas são as adotadas neste resumo; Sófocles e os sofistas são do mesmo século. As imagens são só apoio de memória: o conteúdo vem do resumo.',
     blocoResumo: 'bloco-11'
   },
   {
@@ -131,7 +131,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'O corpo dá um lugar para cada função, e os três verbos seguem a ordem das classes, do que pensa ao que produz.',
     ressalva:
-      'Cada cidadão cumpre rigidamente o seu papel, e o desvio dessa ordem gera injustiça. A imagem do corpo é só apoio de memória: não consta do material.',
+      'Cada cidadão cumpre rigidamente o seu papel, e o desvio dessa ordem gera injustiça. A imagem do corpo é só apoio de memória: não consta das fontes estudadas.',
     blocoResumo: 'bloco-4'
   },
   {
@@ -154,7 +154,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'O começo de cada nome lembra uma palavra do português (protagonista, trono) cuja imagem já carrega a tese.',
     ressalva:
-      'É das confusões mais cobradas em verdadeiro ou falso. A palavra "trono" é só apoio de memória: não consta do material.',
+      'É das confusões mais cobradas em verdadeiro ou falso. A palavra "trono" é só apoio de memória: não consta das fontes estudadas.',
     blocoResumo: 'bloco-2'
   },
   {
@@ -177,7 +177,7 @@ export const mnemonicos: readonly Mnemonico[] = [
     comoFunciona:
       'Uma frase curta com a mesma estrutura nos dois lados pesa os dois polos do conflito de uma vez, sem favorecer nenhum.',
     ressalva:
-      'É a leitura adotada pelo material da disciplina. O livro de apoio lembra que nem Creonte nem Antígona teriam razão absoluta (hybris).',
+      'É a leitura adotada neste resumo. O livro de apoio lembra que nem Creonte nem Antígona teriam razão absoluta (hybris).',
     blocoResumo: 'bloco-1'
   },
   {
@@ -222,7 +222,7 @@ export const mnemonicos: readonly Mnemonico[] = [
       }
     ],
     comoFunciona:
-      'A sigla fixa a ordem do lado bom, e a ordem do lado ruim segue a mesma sequência de letras da lista do material da disciplina.',
+      'A sigla fixa a ordem do lado bom, e a ordem do lado ruim segue a mesma sequência de letras da lista de Aristóteles.',
     ressalva:
       'Siglas de primeira letra têm evidência de eficácia mais fraca que as imagens: use a sigla junto com o desafio de recordar, nunca no lugar dele.',
     blocoResumo: 'bloco-5'

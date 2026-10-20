@@ -126,7 +126,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>Na obra da maturidade, <em>As Leis</em>, a lei escrita aparece como sinal de progresso e noção primitiva de Estado de Direito; ali predominam as leis, ao contrário da <em>República</em>, em que governam os guardiães.</p>
       <h3>Cuidado com quem fala</h3>
       <p>O livro de apoio adverte que nem tudo o que aparece nos diálogos é a posição de Platão. O mito de Giges (<em>República</em>, livro II) é uma exposição de Glauco dentro da dialética; o mito de Prometeu, no <em>Protágoras</em>, representa a posição de Protágoras. Na <em>República</em> I, Platão contesta Trasímaco e considera a justiça natural (<em>katà physin</em>), não mera convenção.</p>
-      <p>Sobre as datas, o material da disciplina dá 427-348 a.C. e os livros de apoio trazem 428-347 e 427-347. Seguindo o material da disciplina, este resumo usa 427-348.</p>
+      <p>Sobre as datas, uma fonte dá 427-348 a.C. e os livros de apoio trazem 428-347 e 427-347. Este resumo adota 427-348.</p>
     `,
     resumo: [
       'Justiça como harmonia: sábios governam, guerreiros defendem, artífices produzem, sem desvio de funções.',
@@ -205,8 +205,8 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Direito positivo</strong> (<em>ius civile</em>): fundado na vontade do povo, próprio de um povo determinado, com limites. O exemplo dado é o das leis positivas de Creonte.</li>
       </ul>
       <h3>Ius civile, ius gentium e ius naturale</h3>
-      <p>A tripartição usada no material da disciplina e no relatório de sistematização é: <em>ius civile</em>, próprio do povo romano; <em>ius gentium</em>, comum a todos os povos; <em>ius naturale</em>, os princípios ditados pela razão natural. O Digesto de Justiniano registra essa diferenciação entre normas positivas locais, direito universal entre os povos e leis derivadas da natureza.</p>
-      <p><strong>Uma divergência de fontes e a escolha feita aqui.</strong> O Manual de Humanística registra que Bobbio aproxima o <em>ius gentium</em> do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo, e diz que é conceito romano, não grego. Como a classificação é discutida na doutrina, este resumo mantém a tripartição do material da disciplina, que é a que as questões de fixação seguem, e retém o essencial: as três categorias não se equivalem. O direito da cidade de Roma não se confunde com a razão universal comum a todos os viventes.</p>
+      <p>A tripartição adotada neste resumo e no relatório de sistematização é: <em>ius civile</em>, próprio do povo romano; <em>ius gentium</em>, comum a todos os povos; <em>ius naturale</em>, os princípios ditados pela razão natural. O Digesto de Justiniano registra essa diferenciação entre normas positivas locais, direito universal entre os povos e leis derivadas da natureza.</p>
+      <p><strong>Uma divergência de fontes e a escolha feita aqui.</strong> O Manual de Humanística registra que Bobbio aproxima o <em>ius gentium</em> do direito natural, enquanto Del Vecchio o trata como uma espécie de direito internacional, categoria do direito positivo, e diz que é conceito romano, não grego. Como a classificação é discutida na doutrina, este resumo mantém a tripartição apresentada acima, que é a que as questões de fixação seguem, e retém o essencial: as três categorias não se equivalem. O direito da cidade de Roma não se confunde com a razão universal comum a todos os viventes.</p>
       <p>Sobre o Digesto, Wolkmer lembra que reúne extratos de 39 jurisconsultos (entre eles Ulpiano, Paulo, Papiniano e Gaio) e traz a definição de justiça de Ulpiano, "vontade constante e perpétua de dar a cada um o seu direito", e os preceitos <em>honeste vivere</em>, <em>alterum non laedere</em> e <em>suum cuique tribuere</em>.</p>
     `,
     resumo: [
@@ -228,7 +228,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>A Idade Média (séculos IV a XIV) é marcada ideologicamente pelo cristianismo. O indivíduo é visto como membro de uma coletividade, uma grande comunidade cristã, perfeita por ser determinada por Deus, com papéis sociais definidos e imutáveis: o <strong>organicismo cristão</strong>. Prega-se o amor ao próximo, mas a finalidade última é o amor a Deus, e a sociedade é um "corpo místico". Wolkmer acrescenta que, ao contrário da Antiguidade, que valorizava o homem por posses e feitos e excluía pobres, mulheres e escravos, o cristianismo reconhece o homem como unidade de matéria e espírito.</p>
       <h3>Santo Agostinho (354-430)</h3>
       <p>Para Agostinho, a inserção do indivíduo no grupo é essencial: só na coletividade dos fiéis, a Igreja, está o caminho da salvação. Ele retoma o dualismo platônico e distingue duas leis: a de Deus, perfeita e acabada, e a dos homens, imperfeita e cheia de vícios. No choque, prevalece a lei de Deus, o que se chama de <strong>jusnaturalismo teológico</strong>. As obras lembradas são as <em>Confissões</em> e <em>A Cidade de Deus</em>, que opõe a Cidade de Deus (perfeita, de lei ideal e imutável) à Cidade dos Homens (imperfeita).</p>
-      <p>Wolkmer acrescenta que Agostinho harmoniza o cristianismo com as ideias de lei eterna, natural e humana: a lei eterna expressa a razão e a vontade de Deus e fundamenta as leis humanas, e a lei natural é a participação da criatura racional na ordem divina. Uma nota de fonte: o livro de Marcondes e Struchiner não traz texto de Agostinho, então aqui só se resume o que o material da disciplina e Wolkmer dizem dele.</p>
+      <p>Wolkmer acrescenta que Agostinho harmoniza o cristianismo com as ideias de lei eterna, natural e humana: a lei eterna expressa a razão e a vontade de Deus e fundamenta as leis humanas, e a lei natural é a participação da criatura racional na ordem divina. Uma nota de fonte: o livro de Marcondes e Struchiner não traz texto de Agostinho, então aqui só se resume o que Wolkmer e as demais fontes desta unidade dizem dele.</p>
     `,
     resumo: [
       'Organicismo cristão: sociedade como corpo místico, papéis definidos, fim último em Deus.',
@@ -251,7 +251,7 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Lei eterna</strong>: a lei de Deus, fundamento de todas as demais.</li>
         <li><strong>Lei natural</strong>: a participação da criatura racional na lei eterna, alcançável pela razão. Obriga, por exemplo, a conservar a vida, gerar e educar os filhos e buscar a verdade.</li>
         <li><strong>Lei humana</strong>: a lei posta, positiva, estabelecida pelos homens com base na lei natural e voltada à utilidade comum.</li>
-        <li><strong>Lei divina</strong>: a que vem das Escrituras. O material da disciplina destaca as três primeiras; Wolkmer, ao expor as questões 90 a 97 da <em>Suma</em>, acrescenta a divina, completando as quatro.</li>
+        <li><strong>Lei divina</strong>: a que vem das Escrituras. Destacam-se as três primeiras; Wolkmer, ao expor as questões 90 a 97 da <em>Suma</em>, acrescenta a divina, completando as quatro.</li>
       </ul>
       <p>A lei natural não se confunde com os decretos do soberano temporal: estes pertencem à lei humana. E a lei natural é a mesma para todos nos princípios gerais; as conclusões de detalhe valem na maioria dos casos, com exceções (o exemplo da <em>Suma</em>, q. 94, art. 4, é devolver o que foi emprestado, que em um caso particular pode ser danoso).</p>
       <h3>Lei humana contra lei natural: duas leituras na bibliografia</h3>
@@ -260,7 +260,7 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Wolkmer</strong>: a lei humana só tem caráter de lei na medida em que deriva da lei natural, e a que se afasta dela "não será lei, senão a corrupção da lei".</li>
         <li><strong>Manual de Humanística</strong>: para Aquino, no conflito entre a lei humana e a lei natural, deve prevalecer a humana, respeitada mesmo quando eventualmente se mostre contrária ao bem comum.</li>
       </ul>
-      <p>As duas leituras não se reduzem uma à outra, e o material não as concilia. O ponto em que os dois autores concordam é o conflito com a lei eterna: nele, esta prevalece. Em resposta de prova, atribua a tese ao autor que a sustenta (segundo Wolkmer, segundo o Manual) em vez de apresentá-la como posição única de Tomás.</p>
+      <p>As duas leituras não se reduzem uma à outra, e nenhuma das fontes as concilia. O ponto em que os dois autores concordam é o conflito com a lei eterna: nele, esta prevalece. Em resposta de prova, atribua a tese ao autor que a sustenta (segundo Wolkmer, segundo o Manual) em vez de apresentá-la como posição única de Tomás.</p>
     `,
     resumo: [
       'Suma Teológica; síntese entre Aristóteles e o cristianismo; razão a serviço da fé.',
@@ -303,7 +303,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte:
       'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito.',
     corpoHtml: `
-      <p>O quadro reúne, para cada um dos três autores, o que é justiça e de onde vem a lei, no sentido em que o material da disciplina os apresenta.</p>
+      <p>O quadro reúne, para cada um dos três autores, o que é justiça e de onde vem a lei, no sentido em que as fontes desta unidade os apresentam.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>

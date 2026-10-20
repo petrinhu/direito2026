@@ -291,7 +291,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte:
       'Material de aula da disciplina; TEIXEIRA, Ana Paula Fernandes; TEIXEIRA, Mariana Fernandes; PERES, Anna Paula Lemos Santos. Da luta à ordem. Revista Aracê, 2025.',
     corpoHtml: `
-      <p>O quadro reúne, para cada autor, como ele vê o direito, o conceito-chave, o método e um exemplo aplicado. Os campos de objeto, método, conceito-chave e exemplo seguem o material da disciplina; a coluna "Como vê o direito" resume a leitura do artigo. A última linha, de Ehrlich, vem do mesmo material.</p>
+      <p>O quadro reúne, para cada autor, como ele vê o direito, o conceito-chave, o método e um exemplo aplicado. Os campos de objeto, método, conceito-chave e exemplo seguem as fontes desta unidade; a coluna "Como vê o direito" resume a leitura do artigo. A última linha, de Ehrlich, vem dessas mesmas fontes.</p>
       <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
         <table>
           <thead>

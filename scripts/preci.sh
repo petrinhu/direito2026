@@ -24,6 +24,7 @@ passo "v-html só de src/conteudo" bash scripts/verificar-v-html.sh
 passo "gerar subconjunto de dispositivos por unidade" node --import tsx scripts/gerar-dispositivos-por-unidade.ts
 passo "gerar índice de busca" node --import tsx scripts/gerar-indice-busca.ts
 passo "citações resolvem no catálogo" node --import tsx scripts/verificar-dispositivos.ts
+passo "validação do conteúdo, toda unidade descoberta" node --import tsx scripts/validar-conteudo.ts
 passo "termos proibidos (R3), fonte" bash scripts/verificar-proibicoes.sh src
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
 passo "testes unitários, de componente e de caracterização" npx vitest run tests/unidade tests/componente tests/caracterizacao

@@ -58,7 +58,7 @@ Os commits também entram no escopo: o `pre-commit` do repositório chama o mesm
 
 ### Fora de escopo
 
-Backend, login, sincronização entre dispositivos, edição de conteúdo pelo navegador, analytics de terceiro.
+Backend além da API PHP da área restrita (seção "Área restrita"), sincronização entre dispositivos, edição de conteúdo pelo navegador, analytics de terceiro.
 
 ---
 
@@ -1357,6 +1357,19 @@ A estrutura de abas de Filosofia Jurídica u1 é o modelo das próximas cadeiras
 ## Área restrita (05/10/2026)
 
 Ordem do líder: a cadeira Interdisciplinar, e só ela, tem login e senha. O conteúdo (resumo, mapa mental, quiz, slides, equipe e instituição) é um JSON que mora **fora do repositório público**, no servidor, e só chega ao navegador pela API PHP depois do login. Esta seção descreve o lado do site (front); o servidor está em `docs/publicacao.md`. Sem nomes e sem conteúdo aqui, de propósito.
+
+### O que o servidor faz hoje
+
+A API PHP mora em `public/api/` e segue no pacote publicado. Publicação e operação (criação do primeiro administrador, desbloqueio, redefinição de senha) estão em `docs/publicacao.md`, seção "Área restrita (servidor)". Resumo do que o código faz:
+
+- **Senha:** guardada só como hash Argon2id. Conta inexistente gasta o mesmo custo de uma conta real.
+- **Sessão:** cookie `__Host-d26`, com `SameSite=Strict`. A pré-sessão de CSRF (`__Host-d26pre`) também é `SameSite=Strict`.
+- **CSRF:** as requisições de escrita exigem `Content-Type: application/json` e o token no cabeçalho `X-CSRF-Token`.
+- **Limite de tentativas:** três chaves, por usuário somado ao IP, por IP e por conta. Tentativa recusada responde 429 e não grava nada.
+- **Dispositivos confiáveis:** o aparelho que entrou recebe o cookie `__Host-d26disp` (30 dias), e o servidor guarda só o hash do token. Troca de senha, redefinição e desativação revogam todos os aparelhos da conta. O administrador também os revoga pela aba Admin.
+- **Administração de usuários:** restrita à conta administradora (403 para as demais). Nenhuma ação deixa o sistema sem administrador ativo (409).
+- **Conteúdo restrito:** `public/api/conteudo.php` lê um arquivo fixo que mora fora do webroot. Sem sessão, responde 401. O JSON não entra no repositório nem no pacote.
+- **Service worker:** `/api/` sempre vai à rede (`NetworkOnly`, primeira regra) e nunca entra no cache.
 
 ### Fluxo
 

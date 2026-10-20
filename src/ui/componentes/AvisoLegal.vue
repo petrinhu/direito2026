@@ -4,7 +4,7 @@ import { AVISO_LEGAL } from '@/conteudo/avisoLegal';
 
 <template>
   <section class="aviso-legal" role="note" aria-label="Aviso legal">
-    <p class="aviso-legal__texto">
+    <p class="aviso-legal__texto" lang="pt-BR">
       <strong>{{ AVISO_LEGAL.rotulo }}</strong> {{ AVISO_LEGAL.corpo }}
     </p>
   </section>
@@ -27,11 +27,28 @@ import { AVISO_LEGAL } from '@/conteudo/avisoLegal';
   color: var(--cor-texto, #1c1c1c);
 }
 
+/*
+  Justificado com recuo de primeira linha. hyphens: auto (com lang="pt-BR"
+  no próprio <p>) evita os buracos grandes entre palavras que a justificação
+  causa em linhas curtas.
+*/
 .aviso-legal__texto {
   margin: 0;
   font-size: var(--escala-base, 1.0625rem);
   line-height: 1.6;
-  text-align: start;
+  text-align: justify;
+  text-indent: 2em;
+  hyphens: auto;
+}
+
+/*
+  Modo adaptado (baixa visão): sem justificar e sem recuo, porque a WCAG
+  1.4.8 recomenda alinhamento à esquerda e o recuo quebra a leitura linha a
+  linha. Seletor com :root, mesmo padrão de BarraTopo.vue.
+*/
+:root[data-modo-adaptado='on'] .aviso-legal__texto {
+  text-align: left;
+  text-indent: 0;
 }
 
 @media print {

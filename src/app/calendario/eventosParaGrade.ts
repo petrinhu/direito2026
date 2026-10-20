@@ -1,5 +1,6 @@
 import { somarDias } from '@/core/calendario/datas';
 import { agruparProvasParaGrade } from '@/core/calendario/agruparProvasParaGrade';
+import { rotuloCategoriaCurto } from '@/core/calendario/rotulos';
 import { FERIADOS_2026_2 } from '@/conteudo/calendario/feriados';
 import { EVENTOS_ACADEMICOS_2026_2 } from '@/conteudo/calendario/calendarioAcademico';
 import { PROVAS_2026_2 } from '@/conteudo/calendario/provas';
@@ -14,7 +15,8 @@ export interface EventoDaGrade {
   end?: string;
   allDay: true;
   classNames: string[];
-  extendedProps: { categoria: string; descricao: string };
+  /** rotuloCurto: o rótulo de tela estreita (ex.: "3ª AV", "Prazo"); o título completo fica em title. */
+  extendedProps: { categoria: string; descricao: string; rotuloCurto: string };
 }
 
 function paraEventoDaGrade(evento: Evento, indice: number): EventoDaGrade {
@@ -26,7 +28,11 @@ function paraEventoDaGrade(evento: Evento, indice: number): EventoDaGrade {
     ...(ultimo ? { end: somarDias(evento.fim, 1) } : {}),
     allDay: true,
     classNames: [`cal-cat-${evento.categoria.toLowerCase()}`],
-    extendedProps: { categoria: evento.categoria, descricao: evento.descricao }
+    extendedProps: {
+      categoria: evento.categoria,
+      descricao: evento.descricao,
+      rotuloCurto: rotuloCategoriaCurto(evento.categoria)
+    }
   };
 }
 

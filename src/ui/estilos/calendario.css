@@ -131,6 +131,13 @@
   color: var(--cor-texto-suave, #4a4a4a);
 }
 
+/* O FullCalendar põe opacity 0,3 no topo de todo dia de outro mês (1,65:1 no
+   claro). Sem opacidade, o número usa --cor-texto-suave sobre o cartão, par
+   medido no portão de contraste (design.contrasteTokens). */
+.grade-calendario .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+}
+
 /* Dia de hoje: fundo de trilha ativa e um contorno, para não depender só da cor. */
 .grade-calendario .fc-day-today {
   box-shadow: inset 0 0 0 2px var(--cor-primaria, #163a5f);
@@ -154,6 +161,46 @@
   border-color: var(--cor-texto, #1c1c1c);
 }
 
+/* Conteúdo do evento (GradeCalendario.vue). Mobile-first: em tela estreita o
+   título sai da vista (continua lido por leitor de tela e no title do evento)
+   e fica o rótulo curto, para não picotar palavra numa célula pequena. Acima
+   de 640px, o título aparece com reticências e o rótulo some da vista. */
+.grade-calendario .cal-evento__titulo,
+.grade-calendario .cal-evento__rotulo {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 var(--esp-1, 0.25rem);
+}
+
+.grade-calendario .cal-evento__titulo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  clip-path: inset(50%);
+}
+
+@media (min-width: 641px) {
+  .grade-calendario .cal-evento__titulo {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0 var(--esp-1, 0.25rem);
+    clip-path: none;
+  }
+
+  .grade-calendario .cal-evento__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    clip-path: inset(50%);
+  }
+}
+
 /* Modo adaptado (baixa visão): preto sobre branco, rótulo sempre visível. */
 :root[data-modo-adaptado='on'] .cal-chip,
 :root[data-modo-adaptado='on'] .grade-calendario .fc-event {
@@ -165,6 +212,32 @@
 
 :root[data-modo-adaptado='on'] .grade-calendario .fc-day-today {
   box-shadow: inset 0 0 0 4px #000000;
+}
+
+/* D2 (QA visual): o FullCalendar pinta o texto interno com --fc-event-text-color,
+   que a categoria define em branco. Sobre o fundo branco do modo adaptado, o
+   texto sumia. Aqui o evento e o texto interno ficam pretos, e o rótulo da
+   categoria fica sempre visível (a categoria se identifica pelo texto, não pela cor). */
+:root[data-modo-adaptado='on'] .grade-calendario .fc-event {
+  --cal-fundo: #ffffff;
+  --cal-texto: #000000;
+  --fc-event-bg-color: #ffffff;
+  --fc-event-border-color: #000000;
+  --fc-event-text-color: #000000;
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .fc-event .fc-event-main,
+:root[data-modo-adaptado='on'] .grade-calendario .fc-event .cal-evento__titulo {
+  color: #000000;
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .cal-evento__rotulo {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0 var(--esp-1, 0.25rem);
+  clip-path: none;
+  color: #000000;
 }
 
 :root[data-modo-adaptado='on'] .grade-calendario .fc-button {

@@ -42,6 +42,12 @@
   --cal-texto: var(--cor-cal-semestre-texto);
 }
 
+/* Fim de semana: não é categoria de evento, mas usa o mesmo chip da legenda. */
+.cal-fim-de-semana {
+  --cal-fundo: var(--cor-cal-fimdesemana-fundo);
+  --cal-texto: var(--cor-cal-fimdesemana-texto);
+}
+
 /* Chip: rótulo de categoria na legenda e no painel. Sempre com texto. */
 .cal-chip {
   display: inline-block;
@@ -140,6 +146,16 @@
    medido no portão de contraste (design.contrasteTokens). */
 .grade-calendario .fc-day-other .fc-daygrid-day-top {
   opacity: 1;
+}
+
+/* Colunas de sábado e domingo (célula e cabeçalho). O dia de hoje fica de fora
+   da regra da célula: mantém o próprio fundo e o contorno, mesmo num fim de
+   semana. Seletor mais forte que o do FullCalendar para o tom ganhar dele. */
+.grade-calendario .fc-daygrid-day.fc-day-sat:not(.fc-day-today),
+.grade-calendario .fc-daygrid-day.fc-day-sun:not(.fc-day-today),
+.grade-calendario .fc-col-header-cell.fc-day-sat,
+.grade-calendario .fc-col-header-cell.fc-day-sun {
+  background-color: var(--cor-cal-fimdesemana-fundo);
 }
 
 /* Dia de hoje: fundo de trilha ativa e um contorno, para não depender só da cor. */

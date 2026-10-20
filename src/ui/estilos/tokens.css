@@ -260,6 +260,14 @@
   --cor-cal-semestre-fundo: #dcd7c8;
   --cor-cal-semestre-texto: #1c1c1c;
 
+  /* Fim de semana (ordem do líder, 20/10/2026): tom de FUNDO da coluna de
+     sábado e domingo, não de categoria. Por isso varia com o tema (o escuro
+     precisa de um cinza escuro), e não entra no bloco fixo acima. Fica longe
+     do creme de prazo, do bege de semestre e do azul de hoje (medido em
+     tests/unidade/calendario.fimDeSemanaTokens.spec.ts). */
+  --cor-cal-fimdesemana-fundo: #ebeae6;
+  --cor-cal-fimdesemana-texto: #1c1c1c;
+
   color-scheme: light;
 }
 
@@ -341,6 +349,8 @@
     --cor-mapa-ramo-6-texto: #12161c;
     --cor-cabecalho-progresso: #d3b563;
     --cor-hero-texto: #faf9f5;
+    --cor-cal-fimdesemana-fundo: #2a2a33;
+    --cor-cal-fimdesemana-texto: #eceff2;
 
     --sombra-cartao: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
     --sombra-elevada: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -376,6 +386,8 @@
   --cor-cal-prazo-texto: #1c1c1c;
   --cor-cal-semestre-fundo: #dcd7c8;
   --cor-cal-semestre-texto: #1c1c1c;
+  --cor-cal-fimdesemana-fundo: #2a2a33;
+  --cor-cal-fimdesemana-texto: #eceff2;
 
   --cor-fundo: #12161c;
   --cor-fundo-elevado: #1a1f27;
@@ -581,6 +593,10 @@
   --cor-mapa-ramo-6-texto: #000000;
 
   --cor-cabecalho-progresso: #000000;
+  /* Fim de semana sem tom: branco, como o resto da grade. O sinal de fim de
+     semana passa a ser o nome do dia no cabeçalho, não a cor. */
+  --cor-cal-fimdesemana-fundo: #ffffff;
+  --cor-cal-fimdesemana-texto: #000000;
   /* Opaco e igual ao fundo da lateral/cabeçalho (branco), sem translucidez:
      texto preto do cabeçalho mede 21:1 contra ele, rolado ou não. */
   --cor-cabecalho-rolado-fundo: #ffffff;

@@ -11,6 +11,9 @@ const itens = legendaDoCalendario();
       <li v-for="item in itens" :key="item.categoria">
         <span class="cal-chip" :class="item.classe">{{ item.rotulo }}</span>
       </li>
+      <li>
+        <span class="cal-chip cal-fim-de-semana">Fim de semana</span>
+      </li>
     </ul>
   </section>
 </template>

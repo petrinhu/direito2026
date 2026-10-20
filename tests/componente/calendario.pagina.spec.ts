@@ -33,7 +33,7 @@ describe('página do calendário', () => {
     w.unmount();
   });
 
-  it('a legenda mostra os nove rótulos de categoria (texto, não só cor)', () => {
+  it('a legenda mostra os nove rótulos de categoria e o de fim de semana (texto, não só cor)', () => {
     const w = montar();
     const legenda = w.find('[data-testid="legenda-calendario"]');
     expect(legenda.exists()).toBe(true);
@@ -47,7 +47,8 @@ describe('página do calendário', () => {
       'Provas online',
       'Feriado',
       'Prazo acadêmico',
-      'Semestre'
+      'Semestre',
+      'Fim de semana'
     ]);
     w.unmount();
   });

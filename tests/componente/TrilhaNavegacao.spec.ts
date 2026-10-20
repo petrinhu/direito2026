@@ -107,4 +107,22 @@ describe('TrilhaNavegacao', () => {
     });
     expect(wrapper.find('ol').attributes('data-truncavel')).toBe('false');
   });
+
+  /**
+   * Ordem do líder (cabeçalho em celular, 390px): o nome da página atual
+   * aparece inteiro, quebrando em linhas quando preciso, nunca cortado. O
+   * CSS identifica esse item pela classe no <li>, não pela posição, para a
+   * regra de corte não depender de quantos níveis a trilha tem.
+   */
+  it('marca só o último item como página atual, no li, para o CSS poder deixá-lo inteiro', () => {
+    const wrapper = mount(TrilhaNavegacao, {
+      props: { curriculo: curriculoDeTeste(), caminhoAtual: 'p/p1/intr-direito/u1' }
+    });
+    const lis = wrapper.findAll('li');
+    expect(lis).toHaveLength(4);
+    expect(lis[3]!.classes()).toContain('trilha-navegacao__atual');
+    for (const li of lis.slice(0, 3)) {
+      expect(li.classes()).not.toContain('trilha-navegacao__atual');
+    }
+  });
 });

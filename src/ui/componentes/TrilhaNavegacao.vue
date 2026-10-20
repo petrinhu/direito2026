@@ -61,7 +61,11 @@ const itens = computed<ItemTrilha[]>(() => {
 <template>
   <nav aria-label="Trilha de navegação" class="trilha-navegacao">
     <ol :data-truncavel="itens.length > 2 ? 'true' : 'false'">
-      <li v-for="(item, indice) in itens" :key="`${item.href}-${indice}`">
+      <li
+        v-for="(item, indice) in itens"
+        :key="`${item.href}-${indice}`"
+        :class="{ 'trilha-navegacao__atual': indice === itens.length - 1 }"
+      >
         <a :href="item.href" :aria-current="indice === itens.length - 1 ? 'page' : undefined">
           {{ rotuloSemViuva(item.rotulo) }}
         </a>
@@ -85,14 +89,7 @@ const itens = computed<ItemTrilha[]>(() => {
 .trilha-navegacao li {
   display: flex;
   align-items: center;
-  white-space: nowrap;
   min-width: 0;
-}
-
-.trilha-navegacao li:last-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .trilha-navegacao li + li::before {
@@ -134,79 +131,68 @@ const itens = computed<ItemTrilha[]>(() => {
   font-weight: 600;
 }
 
-/* Tela estreita (LayoutBase.vue, mesmo ponto de quebra da gaveta):
-   mostra só os dois últimos níveis, com reticências no que foi cortado,
-   sem quebrar em duas linhas (ordem do líder, 22/09/2026, item 1). */
+/* Tela estreita (LayoutBase.vue, mesmo ponto de quebra da gaveta): mostra
+   só os dois últimos níveis, o penúltimo sem marca de corte. Nenhum nome é
+   cortado com reticências (ordem do líder, cabeçalho em celular). */
 @media (max-width: 880px) {
   .trilha-navegacao ol[data-truncavel='true'] li:nth-last-child(n + 3) {
     display: none;
   }
 
   .trilha-navegacao ol[data-truncavel='true'] li:nth-last-child(2)::before {
-    content: '\2026' !important;
-    margin: 0 var(--esp-2, 0.5rem) 0 0;
-  }
-
-  .trilha-navegacao ol[data-truncavel='true'] li:nth-last-child(2) + li::before {
-    content: '/';
+    content: none;
   }
 }
 
 /*
-  Modo normal: a página atual (último item) sempre aparece; o que não cabe
-  com largura legível SAI DA ÁRVORE (display:none, por consulta de contêiner
-  na própria trilha), em vez de encolher até 0px. Link espremido a 0px
-  continuaria na ordem de Tab sem ficar visível, e foco invisível reprova
-  WCAG 2.4.7 e 2.4.11 (achado do líder, 29/09/2026). COSMÉTICO 2 do QA
-  (docs/qa-conserto-cabecalho-quiz.md): o <a> era inline-flex (texto em item
-  anônimo, onde text-overflow não age) e o texto era cortado seco; agora é
-  bloco de uma linha com reticências.
+  Modo normal: nenhum nível é cortado. Cada item quebra em linhas quando o
+  nome é longo, e a página atual (classe no li) ocupa o espaço que sobra
+  para quebrar sem espremer. Os níveis que não cabem saem da árvore
+  (display:none) em vez de encolher até 0px: link espremido a 0px continua
+  na ordem de Tab sem ficar visível, e foco invisível reprova WCAG 2.4.7 e
+  2.4.11 (achado do líder, 29/09/2026).
 
-  Larguras por construção, sem JS: cada intermediário mede no máximo 9rem de
-  link mais a barra (~10,5rem) e a página atual no máximo 10rem, todos sem
-  encolher. As consultas abaixo só deixam aparecer quantos intermediários
-  cabem somando esses máximos: 21rem para 1, 32rem para 2, 42rem para 3
-  (a "página atual" sozinha cabe em qualquer largura, a caixa tem no mínimo
-  8rem, BarraTopo.vue). O modo adaptado quebra em várias linhas e nunca
-  trunca (bloco abaixo).
+  As faixas de contêiner decidem só QUANTOS níveis aparecem, nunca cortam:
+  cada intermediário mede o próprio texto e quebra se a faixa não couber.
+  Em tela estreita o penúltimo nível ganha a primeira linha e a página
+  atual a segunda, inteira, e nenhum deles leva barra ou marca no início da
+  linha.
 */
-.trilha-navegacao {
-  container-type: inline-size;
-}
-
 :root:not([data-modo-adaptado='on']) .trilha-navegacao li {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
-:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child {
-  max-width: min(100%, 10rem);
+:root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual {
+  flex: 1 1 auto;
 }
 
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
-  display: block;
-  line-height: 44px;
+  display: flex;
+  align-items: center;
   min-width: 0;
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-height: 44px;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
-:root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child a {
-  max-width: 100%;
-}
-
-/* O primeiro item que continua visível leva "…" no lugar da barra, para a
-   pessoa saber que há níveis omitidos (mesma marca do corte de tela estreita
-   acima). :not(:first-child) evita a marca quando nada foi omitido. */
 @container (max-width: 20.99rem) {
-  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:not(:last-child) {
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao ol {
+    flex-wrap: wrap;
+  }
+
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(n + 3) {
     display: none;
   }
 
-  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:last-child:not(:first-child)::before {
-    content: '\2026';
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(2)::before,
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual::before {
+    content: none;
+  }
+
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual {
+    flex-basis: 100%;
   }
 }
 
@@ -215,10 +201,8 @@ const itens = computed<ItemTrilha[]>(() => {
     display: none;
   }
 
-  :root:not([data-modo-adaptado='on'])
-    .trilha-navegacao
-    li:nth-last-child(2):not(:first-child)::before {
-    content: '\2026';
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(2)::before {
+    content: none;
   }
 }
 
@@ -227,23 +211,18 @@ const itens = computed<ItemTrilha[]>(() => {
     display: none;
   }
 
-  :root:not([data-modo-adaptado='on'])
-    .trilha-navegacao
-    li:nth-last-child(3):not(:first-child)::before {
-    content: '\2026';
+  :root:not([data-modo-adaptado='on']) .trilha-navegacao li:nth-last-child(3)::before {
+    content: none;
   }
 }
 
-/* Críticos 1 e 2 do QA (docs/qa-modo-adaptado.md): com flex-wrap:nowrap e
-   white-space:nowrap acima, o texto de cada item não cabia na caixa
-   encolhida e PINTAVA POR CIMA do item vizinho (achado 1, qualquer
-   largura), e na home (um item só) vazava pra fora da tela sem gerar
-   rolagem (achado 2, mesma causa). docs/modo-adaptado.md §4 já pedia
-   "quebra em mais de uma linha [...] nunca corta com reticências" para
-   este exato componente sob o modo - nunca implementado. Este bloco
-   sobrepõe tanto o nowrap padrão quanto o truncamento por reticências de
-   tela estreita acima (que também corta, o que o modo proíbe), sempre
-   que o modo estiver ligado, em qualquer largura. */
+.trilha-navegacao {
+  container-type: inline-size;
+}
+
+/* Modo adaptado: a trilha quebra em várias linhas e nunca corta. O nowrap e
+   o corte do modo normal acima não se aplicam aqui (seletor :root:not), e
+   este bloco desfaz o que sobrar do modo normal nos mesmos itens. */
 :root[data-modo-adaptado='on'] .trilha-navegacao ol {
   flex-wrap: wrap;
   overflow: visible;
@@ -252,11 +231,6 @@ const itens = computed<ItemTrilha[]>(() => {
 :root[data-modo-adaptado='on'] .trilha-navegacao li {
   white-space: normal;
   overflow-wrap: anywhere;
-}
-
-:root[data-modo-adaptado='on'] .trilha-navegacao li:last-child {
-  overflow: visible;
-  text-overflow: clip;
 }
 
 :root[data-modo-adaptado='on']

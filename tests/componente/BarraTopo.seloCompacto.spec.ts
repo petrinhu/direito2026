@@ -25,7 +25,13 @@ describe('BarraTopo no celular, layout do selo', () => {
     );
   });
 
-  it('a linha inteira da trilha vale só fora do modo adaptado (dentro dele empurra o Tema para baixo do quadro)', () => {
+  it('no modo adaptado, a linha inteira da trilha vale de 341px a 640px (abaixo disso empurra o Tema para baixo do quadro)', () => {
+    expect(fonte).toMatch(
+      /@media \(min-width:\s*341px\)\s*and\s*\(max-width:\s*640px\)\s*\{[^@]*?:root\[data-modo-adaptado='on'\] \.barra-topo__trilha\s*\{[^}]*flex-basis:\s*100%/
+    );
+  });
+
+  it('fora do modo adaptado, a linha inteira da trilha vale até 640px', () => {
     expect(fonte).toMatch(
       /@media \(max-width:\s*640px\)\s*\{[^@]*?:root:not\(\[data-modo-adaptado='on'\]\) \.barra-topo__trilha\s*\{[^}]*flex-basis:\s*100%/
     );

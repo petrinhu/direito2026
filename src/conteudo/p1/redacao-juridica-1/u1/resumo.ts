@@ -217,7 +217,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte: 'Material de aula da disciplina.',
     corpoHtml: `
       <p>Para cada fato relevante de uma petição, convém desenhar a prova correspondente: prova não é uma formalidade vazia, é o que sustenta o gatilho da prova (bloco 3) no caso concreto. Aplicada ao caso Marina e Ricardo, a matriz fica assim:</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead><tr><th>Fato</th><th>Prova</th></tr></thead>
           <tbody>

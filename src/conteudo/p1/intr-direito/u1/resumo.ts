@@ -167,7 +167,7 @@ export const resumo: readonly BlocoResumo[] = [
         <p>Ferraz Jr., a partir de Luhmann, chama de "princípio da inegabilidade dos pontos de partida" o fato de que, na dogmática, certas premissas (como o princípio da legalidade) são tratadas como vinculantes e não podem ser negadas no curso da argumentação, mesmo sendo, em si, resultado de uma decisão política, e não de uma evidência. Por isso se diz que a zetética "parte de evidências" (sempre sujeitas a revisão), enquanto a dogmática "parte de dogmas" (subtraídos à dúvida por decisão ou por poder).</p>
         <p>O autor também descreve a "dupla abstração" do saber dogmático: as normas jurídicas já são, em si, um produto abstrato da vida social; as regras de interpretação dessas normas constituem um segundo nível de abstração, incidindo sobre o primeiro. O jurista dogmático opera nesse segundo nível, o que traz o risco de distanciamento progressivo da realidade social que a norma pretende regular.</p>
         <h3>O quadro classificatório da zetética jurídica</h3>
-        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+        <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead><tr><th>Tipo</th><th>Pura</th><th>Aplicada</th></tr></thead>
           <tbody>
@@ -211,7 +211,7 @@ export const resumo: readonly BlocoResumo[] = [
         <h3>Regras de Trato Social</h3>
         <p>As Regras de Trato Social (usos, convenções de etiqueta, costumes de cortesia) têm natureza social e exterioridade, mas são unilaterais e heterônomas (impostas pelo grupo, sem gerar um direito exigível), e incoercíveis (não há aparato estatal para impor seu cumprimento). Sua sanção é difusa (reprovação social, e não uma pena jurídica), e variam conforme a classe social ou a cultura de cada grupo (isonomia por classe/cultura).</p>
         <h3>Quadro comparativo final</h3>
-        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+        <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead><tr><th>Critério</th><th>Direito</th><th>Moral</th><th>Regras de Trato Social</th><th>Preceitos Religiosos</th></tr></thead>
           <tbody>
@@ -252,7 +252,7 @@ export const resumo: readonly BlocoResumo[] = [
         </ul>
         <h3>Da teoria ao projeto político</h3>
         <p>A Revolução Francesa (1789) é o momento em que a teoria jusnaturalista contratualista deixa de ser apenas uma construção filosófica e se converte em projeto político concreto. A Declaração dos Direitos do Homem e do Cidadão, em seus arts. 1º e 2º, afirma que os homens nascem e permanecem livres e iguais em direitos, e que a finalidade de toda associação política é a conservação dos direitos naturais e imprescritíveis do homem (liberdade, propriedade, segurança, resistência à opressão). Pouco depois, o Código Civil de Napoleão (1804) representa a consolidação prática do positivismo: o direito privado passa a ser sistematizado numa lei escrita, com forte influência da tradição romanística herdada do Corpus Juris Civilis.</p>
-        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+        <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead><tr><th>Critério</th><th>Jusnaturalismo</th><th>Juspositivismo</th></tr></thead>
           <tbody>
@@ -285,7 +285,7 @@ export const resumo: readonly BlocoResumo[] = [
         <p>Locke, considerado o pai do liberalismo político, defende que o poder legislativo é supremo, mas não absoluto: permanece limitado pelo próprio contrato social e pela lei natural, que reconhece direitos básicos à vida, à liberdade e à propriedade. A soberania popular é inalienável e indivisível na sua fonte (o povo), ainda que seu exercício seja delegado a representantes. Locke rompe com o absolutismo ao admitir que o povo resista a um governo que viole esse pacto.</p>
         <h3>Rousseau</h3>
         <p>Rousseau funda a soberania na vontade geral. Ela é inalienável e indivisível, mas não absoluta, já que está limitada pela própria busca do bem comum. Seu modelo é bipartido: de um lado, o soberano (o próprio povo, que legisla); de outro, o governo (que apenas administra e pode ser destituído).</p>
-        <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+        <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead><tr><th>Aspecto</th><th>Hobbes</th><th>Locke</th><th>Rousseau</th></tr></thead>
           <tbody>

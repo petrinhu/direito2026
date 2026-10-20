@@ -109,38 +109,21 @@ onBeforeUnmount(() => observador?.disconnect());
 }
 
 /*
-  Achado do QA, 22/09/2026: a tabela comparativa do bloco 6 (e de mais
-  três blocos, mesmo padrão) estourava a largura em 360px, 184px de
-  rolagem horizontal NA PÁGINA. Cada <table> vem envolvida por este
-  quadro (src/conteudo/.../resumo.ts) que rola sozinho, sem empurrar o
-  layout: min-width:0 é o que faz o quadro respeitar a largura do pai
-  num contexto flex/grid, em vez de crescer para caber a tabela.
+  A tabela do resumo cabe na largura do quadro em desktop e tablet, sem
+  barra de rolagem. Antes, `table { min-width: max-content }` forçava a
+  tabela à largura de uma linha só (1512px em 1280px) e o quadro rolava
+  sempre. Agora a tabela ocupa 100% e as células quebram linha normal;
+  overflow-wrap: break-word só atua quando uma palavra não cabe na célula
+  (anywhere mudaria o cálculo de largura mínima e partiria palavras comuns).
 
-  Indicador visual de mais conteúdo pro lado ("indicação visual", ordem
-  do líder): a técnica clássica de "scroll shadow" com dois fundos —
-  um preso ao CONTEÚDO (background-attachment: local, anda junto do
-  scroll) que mascara a sombra do outro, preso ao QUADRO (attachment:
-  scroll, fica parado) — sem JavaScript, some sozinho quando não há mais
-  conteúdo para aquele lado.
+  Rolagem horizontal só no celular (<= 640px), com sombra na borda como
+  dica de que há mais conteúdo para o lado: dois fundos, um preso ao
+  CONTEÚDO (local, anda com o scroll) que mascara o outro, preso ao QUADRO
+  (scroll, fica parado). Sem JavaScript; some quando não há mais conteúdo.
 */
 .bloco-teorico__corpo :deep(.tabela-rolavel) {
-  overflow-x: auto;
   min-width: 0;
   margin-block: var(--esp-4, 1rem);
-  background:
-    linear-gradient(to right, var(--cor-fundo-elevado, #fff) 30%, rgba(255, 255, 255, 0)) local,
-    linear-gradient(to left, var(--cor-fundo-elevado, #fff) 30%, rgba(255, 255, 255, 0)) local 100%
-      0,
-    radial-gradient(farthest-side at 0 50%, rgba(13, 36, 64, 0.18), rgba(255, 255, 255, 0)) scroll,
-    radial-gradient(farthest-side at 100% 50%, rgba(13, 36, 64, 0.18), rgba(255, 255, 255, 0))
-      scroll 100% 0;
-  background-repeat: no-repeat;
-  background-color: var(--cor-fundo-elevado, #fff);
-  background-size:
-    40px 100%,
-    40px 100%,
-    14px 100%,
-    14px 100%;
 }
 
 .bloco-teorico__corpo :deep(.tabela-rolavel):focus-visible {
@@ -151,22 +134,43 @@ onBeforeUnmount(() => observador?.disconnect());
 .bloco-teorico__corpo :deep(table) {
   border-collapse: collapse;
   width: 100%;
-  min-width: max-content;
   font-size: var(--escala-sm, 0.9375rem);
 }
 
 .bloco-teorico__corpo :deep(th),
 .bloco-teorico__corpo :deep(td) {
   border: 1px solid var(--cor-borda, #dcd7c8);
-  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  padding: var(--esp-1, 0.25rem) var(--esp-2, 0.5rem);
   text-align: left;
   vertical-align: top;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .bloco-teorico__corpo :deep(th) {
   background: var(--cor-fundo-sutil, #f2efe6);
   font-family: var(--fonte-titulo);
   font-variant-numeric: lining-nums;
+}
+
+@media (max-width: 640px) {
+  .bloco-teorico__corpo :deep(.tabela-rolavel) {
+    overflow-x: auto;
+    background:
+      linear-gradient(to right, var(--cor-fundo-elevado, #fff) 30%, rgba(255, 255, 255, 0)) local,
+      linear-gradient(to left, var(--cor-fundo-elevado, #fff) 30%, rgba(255, 255, 255, 0)) local
+        100% 0,
+      radial-gradient(farthest-side at 0 50%, rgba(13, 36, 64, 0.18), rgba(255, 255, 255, 0)) scroll,
+      radial-gradient(farthest-side at 100% 50%, rgba(13, 36, 64, 0.18), rgba(255, 255, 255, 0))
+        scroll 100% 0;
+    background-repeat: no-repeat;
+    background-color: var(--cor-fundo-elevado, #fff);
+    background-size:
+      40px 100%,
+      40px 100%,
+      14px 100%,
+      14px 100%;
+  }
 }
 
 @media print {

@@ -150,7 +150,7 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Universal (sentido amplo)</strong>: cumprir as leis, que garantem o bem comum.</li>
         <li><strong>Particular (sentido estrito)</strong>: distribuir justiça entre os indivíduos. Divide-se em comutativa e distributiva.</li>
       </ul>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Tipo</th><th>Relação</th><th>Igualdade</th><th>Exemplos</th></tr>
@@ -304,7 +304,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2; MARCONDES e STRUCHINER, Textos básicos de filosofia do direito.',
     corpoHtml: `
       <p>O quadro reúne, para cada um dos três autores, o que é justiça e de onde vem a lei, no sentido em que as fontes desta unidade os apresentam.</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Autor</th><th>O que é justiça</th><th>Fonte da lei</th><th>Ideia que se costuma cobrar</th></tr>
@@ -350,7 +350,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Material de aula da disciplina; NASCIMENTO, Manual de Humanística, cap. 2. Onde os livros trazem valor diferente, o bloco do autor avisa.',
     corpoHtml: `
       <p>Datas, na ordem cronológica, com a ideia central de cada autor ou corrente.</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Período</th><th>Autor ou corrente</th><th>Ideia central</th></tr>

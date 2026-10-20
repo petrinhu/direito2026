@@ -273,7 +273,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte: 'Material de aula da disciplina.',
     corpoHtml: `
       <p>Hobbes, Locke e Rousseau, com o ponto de partida e quem detém o poder em cada um.</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Autor</th><th>Ponto de partida</th><th>Quem detém o poder</th><th>Ideia que se costuma cobrar</th></tr>
@@ -301,7 +301,7 @@ export const resumo: readonly BlocoResumo[] = [
         </table>
       </div>
       <p>Os três poderes de Locke e de Montesquieu diferem em um ponto: o federativo de Locke ocupa o lugar que o judiciário ocupa em Montesquieu.</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Autor</th><th>Poderes</th><th>Observação</th></tr>
@@ -379,7 +379,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte: 'Material de aula da disciplina.',
     corpoHtml: `
       <p>Datas de vida, em ordem de nascimento, com a ideia central de cada autor.</p>
-      <div class="tabela-rolavel" tabindex="0" role="group" aria-label="Tabela com rolagem lateral">
+      <div class="tabela-rolavel" tabindex="0" role="region" aria-label="Tabela do resumo">
         <table>
           <thead>
             <tr><th>Período</th><th>Autor ou marco</th><th>Ideia central</th></tr>

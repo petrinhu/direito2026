@@ -10,6 +10,7 @@ import BarraTopo from './BarraTopo.vue';
 import Rodape from './Rodape.vue';
 import MenuCurriculo from '../componentes/MenuCurriculo.vue';
 import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
+import AvisoLegal from '../componentes/AvisoLegal.vue';
 import QuadroProva from '../componentes/QuadroProva.vue';
 import BotaoHome from '../componentes/BotaoHome.vue';
 
@@ -121,6 +122,13 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
       <slot />
     </main>
   </div>
+  <!--
+    Aviso legal (ordem do líder, 20/10/2026): fica FORA do Rodape de propósito,
+    porque o rodapé some na impressão (display:none em @media print) e o aviso
+    tem de aparecer no papel. Mesmo critério de área restrita do aviso de
+    armazenamento e do quadro: não aparece na cadeira Interdisciplinar.
+  -->
+  <AvisoLegal v-if="!emAreaRestrita" />
   <Rodape :repositorio="repositorio" />
   <!--
     Pilha inferior: aviso de armazenamento, quadro de contagem e botão Home. Os

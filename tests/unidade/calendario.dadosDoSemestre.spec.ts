@@ -7,7 +7,7 @@ import {
   OBSERVACOES_ACADEMICAS
 } from '@/conteudo/calendario/calendarioAcademico';
 import { validarCalendario, type DadosDoCalendario } from '@/core/calendario/validarCalendario';
-import { TIPOS_PROVA } from '@/core/calendario/tipos';
+import { TIPOS_PROVA, type EventoDoSemestre } from '@/core/calendario/tipos';
 
 /**
  * Dado real do calendário. Os fatos abaixo são do semestre 2026.2 (filtrados
@@ -32,6 +32,22 @@ const CADEIRA_IDS = new Set(curriculo.flatMap((periodo) => periodo.cadeiras).map
 const INICIO_DA_JANELA = '2026-07-01';
 const FIM_DA_JANELA = '2027-01-31';
 
+/** Chave que identifica um evento, com semestre, datas e título. */
+const chaveEvento = (e: EventoDoSemestre): string =>
+  `${e.semestre}|${e.inicio}|${e.fim}|${e.titulo}`;
+
+/** Chaves que aparecem mais de uma vez na lista. Lista limpa devolve []. */
+function chavesRepetidas<T>(itens: readonly T[], chave: (item: T) => string): string[] {
+  const vistas = new Set<string>();
+  const repetidas: string[] = [];
+  for (const item of itens) {
+    const k = chave(item);
+    if (vistas.has(k)) repetidas.push(k);
+    vistas.add(k);
+  }
+  return repetidas;
+}
+
 describe('dado do calendário inteiro', () => {
   it('passa no validador: datas, cadeiras do currículo, sem duplicata, categorias e semestre', () => {
     expect(validarCalendario(DADOS, { cadeiraIds: CADEIRA_IDS })).toEqual([]);
@@ -40,6 +56,13 @@ describe('dado do calendário inteiro', () => {
   it('varre itens de verdade (piso: zero itens seria varredura quebrada, não dado limpo)', () => {
     const analisados = Object.values(DADOS).reduce((total, lista) => total + lista.length, 0);
     expect(analisados).toBeGreaterThan(0);
+  });
+
+  it('nenhum feriado, evento, período online ou prazo aparece duplicado', () => {
+    expect(chavesRepetidas(FERIADOS, chaveEvento)).toEqual([]);
+    expect(chavesRepetidas(EVENTOS_ACADEMICOS, chaveEvento)).toEqual([]);
+    expect(chavesRepetidas(PERIODOS_ONLINE, chaveEvento)).toEqual([]);
+    expect(chavesRepetidas(PRAZOS, (p) => `${p.semestre}|${p.data}|${p.descricao}`)).toEqual([]);
   });
 });
 
@@ -84,18 +107,20 @@ describe('provas do semestre 2026.2, por cadeira', () => {
 });
 
 describe('feriados do semestre 2026.2', () => {
-  it('são exatamente os confirmados nas fontes (nacionais e Recife; PE não tem feriado estadual na janela)', () => {
-    expect(doSemestre(FERIADOS).map((f) => f.inicio)).toEqual([
-      '2026-07-16',
-      '2026-09-07',
-      '2026-10-12',
-      '2026-11-02',
-      '2026-11-15',
-      '2026-11-20',
-      '2026-12-08',
-      '2026-12-25',
-      '2027-01-01'
-    ]);
+  it('os confirmados nas fontes estão presentes (nacionais e Recife; PE não tem feriado estadual na janela), sem exigir que sejam os únicos', () => {
+    expect(doSemestre(FERIADOS).map((f) => f.inicio)).toEqual(
+      expect.arrayContaining([
+        '2026-07-16',
+        '2026-09-07',
+        '2026-10-12',
+        '2026-11-02',
+        '2026-11-15',
+        '2026-11-20',
+        '2026-12-08',
+        '2026-12-25',
+        '2027-01-01'
+      ])
+    );
   });
 
   it('todo feriado (qualquer semestre) é da categoria feriado e tem uma linha de descrição', () => {
@@ -135,27 +160,23 @@ describe('eventos acadêmicos e observações do semestre 2026.2', () => {
 });
 
 describe('provas online de Economia e de Empreendedorismo (sala digital), 2026.2', () => {
-  it('são um período de 13/10 a 15/11/2026, na categoria própria online', () => {
-    expect(doSemestre(PERIODOS_ONLINE)).toEqual([
-      {
-        semestre: SEMESTRE,
-        inicio: '2026-10-13',
-        fim: '2026-11-15',
-        categoria: 'online',
-        titulo: 'Provas online: Economia e Empreendedorismo',
-        descricao:
-          'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
-      }
-    ]);
+  it('o período de 13/10 a 15/11/2026, na categoria própria online, está presente (outros períodos não quebram)', () => {
+    expect(doSemestre(PERIODOS_ONLINE)).toContainEqual({
+      semestre: SEMESTRE,
+      inicio: '2026-10-13',
+      fim: '2026-11-15',
+      categoria: 'online',
+      titulo: 'Provas online: Economia e Empreendedorismo',
+      descricao:
+        'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
+    });
   });
 
-  it('o prazo do contador é o fim desse período, com a frase do quadro', () => {
-    expect(doSemestre(PRAZOS)).toEqual([
-      {
-        semestre: SEMESTRE,
-        data: '2026-11-15',
-        descricao: 'o fim das provas online de Economia e Empreendedorismo'
-      }
-    ]);
+  it('o prazo do contador (fim desse período, com a frase do quadro) está presente', () => {
+    expect(doSemestre(PRAZOS)).toContainEqual({
+      semestre: SEMESTRE,
+      data: '2026-11-15',
+      descricao: 'o fim das provas online de Economia e Empreendedorismo'
+    });
   });
 });

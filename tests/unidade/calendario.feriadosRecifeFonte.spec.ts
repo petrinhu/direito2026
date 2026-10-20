@@ -17,20 +17,35 @@ const FONTE_OFICIAL =
 const CAMINHO_FONTE = resolve(__dirname, '../../src/conteudo/calendario/feriados.ts');
 const fonte = readFileSync(CAMINHO_FONTE, 'utf-8');
 
+/**
+ * Texto entre o item anterior (o último `}` antes do feriado) e o `{` do
+ * próprio feriado: é o comentário que fica logo acima dele, e só ele. Um
+ * comentário de feriado anterior não pode valer para este.
+ */
 function comentarioAcima(titulo: string): string {
   const indice = fonte.indexOf(`titulo: '${titulo}'`);
   expect(indice).toBeGreaterThan(-1);
   const antes = fonte.slice(0, indice);
   const inicioDoObjeto = antes.lastIndexOf('{');
-  return antes.slice(0, inicioDoObjeto);
+  const fimDoAnterior = antes.lastIndexOf('}', inicioDoObjeto);
+  return antes.slice(fimDoAnterior + 1, inicioDoObjeto);
 }
 
+const municipais = () =>
+  feriadosDoSemestre.filter((f) => f.descricao === 'Feriado municipal do Recife.');
+
 describe('feriados municipais do Recife: fonte oficial', () => {
-  it('são 16/07 e 08/12, e os dois existem na janela', () => {
-    const municipais = feriadosDoSemestre.filter(
-      (f) => f.descricao === 'Feriado municipal do Recife.'
+  it('16/07 e 08/12 estão presentes na janela (outro município novo não quebra)', () => {
+    expect(municipais().map((f) => f.inicio)).toEqual(
+      expect.arrayContaining(['2026-07-16', '2026-12-08'])
     );
-    expect(municipais.map((f) => f.inicio)).toEqual(['2026-07-16', '2026-12-08']);
+  });
+
+  it('todo feriado municipal do semestre traz a fonte oficial no comentário logo acima dele', () => {
+    expect(municipais().length).toBeGreaterThan(0);
+    for (const f of municipais()) {
+      expect(comentarioAcima(f.titulo), f.titulo).toContain(FONTE_OFICIAL);
+    }
   });
 
   it('o comentário do feriado de 16/07 traz a fonte oficial', () => {

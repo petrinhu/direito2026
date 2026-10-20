@@ -16,6 +16,7 @@ const ROTULO_CATEGORIA: Record<CategoriaEvento, string> = {
   AV3: '3ª AV',
   chamada: '2ª chamada',
   final: 'Final',
+  online: 'Provas online',
   feriado: 'Feriado',
   prazo: 'Prazo acadêmico',
   semestre: 'Semestre'
@@ -28,6 +29,7 @@ const ROTULO_CATEGORIA_CURTO: Record<CategoriaEvento, string> = {
   AV3: '3ª AV',
   chamada: '2ª cham.',
   final: 'Final',
+  online: 'Online',
   feriado: 'Feriado',
   prazo: 'Prazo',
   semestre: 'Letivo'

@@ -14,16 +14,14 @@ import type { Evento } from '@/core/calendario/tipos';
  * - Pernambuco: Lei nº 16.241/2017, art. 49, consultada no ALEPE (texto
  *   anotado, id=28224). Data Magna em 6 de março, fora da janela.
  * - Recife (municipais): 16 de julho (Nossa Senhora do Carmo) e 8 de dezembro
- *   (Nossa Senhora da Conceição), listados pelo TRT6 como feriados municipais do
- *   Recife e noticiados pelo Diário de Pernambuco (dez/2025 e jul/2026). O número
- *   da lei municipal e o decreto NÃO foram localizados: pendência de conferência
- *   no Diário Oficial do Recife.
+ *   (Nossa Senhora da Conceição). A fonte oficial de cada um fica no próprio item.
  *
  * Ficam de fora, de propósito: Sexta-feira Santa, Corpus Christi, São João
  * (feriado municipal, 24/06) e 12/03 (aniversário do Recife), porque caem antes de
  * 01/07/2026 ou não são feriado; e os dias de ponto facultativo do fim de ano.
  */
 export const FERIADOS_2026_2: readonly Evento[] = [
+  // Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)
   {
     inicio: '2026-07-16',
     fim: '2026-07-16',
@@ -66,6 +64,7 @@ export const FERIADOS_2026_2: readonly Evento[] = [
     titulo: 'Dia Nacional de Zumbi e da Consciência Negra',
     descricao: 'Feriado nacional (Lei nº 14.759/2023).'
   },
+  // Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)
   {
     inicio: '2026-12-08',
     fim: '2026-12-08',

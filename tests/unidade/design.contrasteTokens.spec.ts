@@ -112,6 +112,11 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
     texto: '--cor-cal-semestre-texto',
     fundo: '--cor-cal-semestre-fundo'
   },
+  {
+    nome: 'calendário, provas online',
+    texto: '--cor-cal-online-texto',
+    fundo: '--cor-cal-online-fundo'
+  },
   // Dia de hoje na grade: o número do dia fica sobre o fundo de trilha ativa.
   { nome: 'calendário, dia de hoje', texto: '--cor-texto', fundo: '--cor-primaria-clara' },
   // Texto de apoio da grade (dias de outro mês, legenda) sobre o cartão.

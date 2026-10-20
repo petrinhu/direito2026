@@ -3,7 +3,7 @@ import {
   EVENTOS_ACADEMICOS_2026_2,
   OBSERVACOES_ACADEMICAS_2026_2
 } from '@/conteudo/calendario/calendarioAcademico';
-import { PROVAS_2026_2 } from '@/conteudo/calendario/provas';
+import { PERIODO_PROVAS_ONLINE_2026_2, PROVAS_2026_2 } from '@/conteudo/calendario/provas';
 import { provaComoEvento } from '@/core/calendario/provaComoEvento';
 import { eventosDoDia } from '@/core/calendario/eventosDoDia';
 import { datasComEventosDoMes } from '@/core/calendario/datasDoMes';
@@ -16,6 +16,7 @@ import type { DatasComEventos, DataIso, Evento } from '@/core/calendario/tipos';
 export function todosOsEventos(): Evento[] {
   const eventos = [
     ...PROVAS_2026_2.map(provaComoEvento),
+    PERIODO_PROVAS_ONLINE_2026_2,
     ...FERIADOS_2026_2,
     ...EVENTOS_ACADEMICOS_2026_2
   ];

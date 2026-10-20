@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { descricaoDasProvas } from '@/core/calendario/descricaoProvas';
-import { textoContador } from '@/core/calendario/textoContador';
+import { textoContador, textoDoContador } from '@/core/calendario/textoContador';
 import type { Prova } from '@/core/calendario/tipos';
 
 const prova = (cadeiraNome: string, tipo: Prova['tipo'], data = '2026-11-24'): Prova => ({
@@ -76,5 +76,21 @@ describe('textoContador', () => {
     expect(textoContador({ data: '2026-11-24', dias: 2, provas: provaUnica })).toBe(
       'Faltam 2 dias para a 3ª AV de Introdução ao Direito'
     );
+  });
+});
+
+describe('textoDoContador (texto para qualquer descrição, de prova ou de prazo)', () => {
+  const FIM = 'o fim das provas online de Economia e Empreendedorismo';
+
+  it('mais de um dia: "Faltam N dias para ..."', () => {
+    expect(textoDoContador(26, FIM)).toBe(`Faltam 26 dias para ${FIM}`);
+  });
+
+  it('zero dias: "É hoje: ..."', () => {
+    expect(textoDoContador(0, FIM)).toBe(`É hoje: ${FIM}`);
+  });
+
+  it('um dia: "É amanhã: ..."', () => {
+    expect(textoDoContador(1, FIM)).toBe(`É amanhã: ${FIM}`);
   });
 });

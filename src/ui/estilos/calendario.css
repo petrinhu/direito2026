@@ -25,6 +25,10 @@
   --cal-fundo: var(--cor-cal-final-fundo);
   --cal-texto: var(--cor-cal-final-texto);
 }
+.cal-cat-online {
+  --cal-fundo: var(--cor-cal-online-fundo);
+  --cal-texto: var(--cor-cal-online-texto);
+}
 .cal-cat-feriado {
   --cal-fundo: var(--cor-cal-feriado-fundo);
   --cal-texto: var(--cor-cal-feriado-texto);

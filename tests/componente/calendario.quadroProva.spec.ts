@@ -7,7 +7,8 @@ import { CHAVE_ESTADO_QUADRO_PROVA } from '@/app/calendario/estadoQuadroProva';
 /**
  * Quadro flutuante de contagem (ordem do líder, 20/10/2026). A data vem
  * injetada pela prop `agora`, para o teste não depender do relógio real.
- * Com 20/10 a próxima prova é a 3ª AV de Introdução ao Direito, em 24/11.
+ * Com 20/10 o que vem primeiro é o fim das provas online (15/11, 26 dias), antes
+ * da 3ª AV de Introdução ao Direito (24/11, 35 dias).
  */
 const AGORA_20_10 = new Date('2026-10-20T15:00:00Z');
 
@@ -21,7 +22,9 @@ describe('QuadroProva, texto e faixa de urgência', () => {
 
   it('mostra quantos dias faltam e para qual prova', () => {
     const w = montar(AGORA_20_10);
-    expect(w.text()).toContain('Faltam 35 dias para a 3ª AV de Introdução ao Direito');
+    expect(w.text()).toContain(
+      'Faltam 26 dias para o fim das provas online de Economia e Empreendedorismo'
+    );
   });
 
   it('tem botão para abrir o calendário numa janela, sem link de navegação', () => {
@@ -32,7 +35,7 @@ describe('QuadroProva, texto e faixa de urgência', () => {
 
   it.each([
     ['2026-10-20T15:00:00Z', 'calmo'],
-    ['2026-11-10T15:00:00Z', 'dourado'],
+    ['2026-11-08T15:00:00Z', 'dourado'],
     ['2026-11-19T15:00:00Z', 'garnet'],
     ['2026-11-22T15:00:00Z', 'pulsante']
   ])('em %s a faixa é %s (marcada no elemento)', (instante, faixa) => {
@@ -88,7 +91,7 @@ describe('QuadroProva, minimizar e lembrar', () => {
     await w.find('button[aria-expanded]').trigger('click');
     expect(w.find('button[aria-expanded]').attributes('aria-expanded')).toBe('false');
 
-    await w.setProps({ agora: new Date('2026-11-10T15:00:00Z') });
+    await w.setProps({ agora: new Date('2026-11-08T15:00:00Z') });
     expect(w.find('button[aria-expanded]').attributes('aria-expanded')).toBe('true');
     expect(w.find('.quadro-prova').attributes('data-faixa')).toBe('dourado');
   });

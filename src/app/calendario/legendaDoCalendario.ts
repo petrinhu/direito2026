@@ -1,13 +1,14 @@
 import { rotuloCategoria } from '@/core/calendario/rotulos';
 import type { CategoriaEvento } from '@/core/calendario/tipos';
 
-/** Ordem da legenda: as cinco avaliações, depois feriado, prazo e semestre. */
+/** Ordem da legenda: as cinco avaliações, provas online, depois feriado, prazo e semestre. */
 const ORDEM: readonly CategoriaEvento[] = [
   'AV1',
   'AV2',
   'AV3',
   'chamada',
   'final',
+  'online',
   'feriado',
   'prazo',
   'semestre'

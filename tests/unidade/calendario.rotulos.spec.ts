@@ -8,6 +8,7 @@ const TODAS_AS_CATEGORIAS: readonly CategoriaEvento[] = [
   'AV3',
   'chamada',
   'final',
+  'online',
   'feriado',
   'prazo',
   'semestre'
@@ -32,6 +33,7 @@ describe('rotuloCategoria (texto da legenda e do evento)', () => {
     ['AV3', '3ª AV'],
     ['chamada', '2ª chamada'],
     ['final', 'Final'],
+    ['online', 'Provas online'],
     ['feriado', 'Feriado'],
     ['prazo', 'Prazo acadêmico'],
     ['semestre', 'Semestre']
@@ -47,6 +49,7 @@ describe('rotuloCategoriaCurto (rótulo de tela estreita, cabe na célula)', () 
     ['AV3', '3ª AV'],
     ['chamada', '2ª cham.'],
     ['final', 'Final'],
+    ['online', 'Online'],
     ['feriado', 'Feriado'],
     ['prazo', 'Prazo'],
     ['semestre', 'Letivo']
@@ -68,5 +71,11 @@ describe('rotuloCategoriaCurto (rótulo de tela estreita, cabe na célula)', () 
         ).toBeLessThanOrEqual(7);
       }
     }
+  });
+});
+
+describe('categoria online (provas de Economia e Empreendedorismo)', () => {
+  it('o rótulo curto cabe numa célula: no máximo 7 caracteres', () => {
+    expect([...rotuloCategoriaCurto('online')].length).toBeLessThanOrEqual(7);
   });
 });

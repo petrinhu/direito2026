@@ -33,7 +33,7 @@ describe('página do calendário', () => {
     w.unmount();
   });
 
-  it('a legenda mostra os oito rótulos de categoria (texto, não só cor)', () => {
+  it('a legenda mostra os nove rótulos de categoria (texto, não só cor)', () => {
     const w = montar();
     const legenda = w.find('[data-testid="legenda-calendario"]');
     expect(legenda.exists()).toBe(true);
@@ -44,6 +44,7 @@ describe('página do calendário', () => {
       '3ª AV',
       '2ª chamada',
       'Final',
+      'Provas online',
       'Feriado',
       'Prazo acadêmico',
       'Semestre'
@@ -56,7 +57,9 @@ describe('página do calendário', () => {
     const painel = w.find('[data-testid="painel-do-dia"]');
     expect(painel.attributes('aria-live')).toBe('polite');
     expect(painel.find('h2').text()).toContain('20 de outubro de 2026');
-    expect(painel.text()).toContain('Nenhuma data marcada');
+    expect(painel.text()).toContain(
+      'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
+    );
     w.unmount();
   });
 
@@ -102,13 +105,14 @@ describe('página do calendário', () => {
     w.unmount();
   });
 
-  it('traz a nota de Economia e Empreendedorismo, que segue a sala digital', () => {
+  it('traz a nota de Economia e Empreendedorismo, com o período das provas online na sala digital', () => {
     const w = montar();
     const nota = w.find('[data-testid="nota-sala-digital"]');
     expect(nota.exists()).toBe(true);
     expect(nota.text()).toContain('Economia');
     expect(nota.text()).toContain('Empreendedorismo');
     expect(nota.text()).toContain('sala digital');
+    expect(nota.text()).toContain('de 13/10 a 15/11/2026');
     w.unmount();
   });
 });

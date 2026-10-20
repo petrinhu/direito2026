@@ -1,4 +1,4 @@
-import type { Prova } from '@/core/calendario/tipos';
+import type { Evento, PrazoDoCalendario, Prova } from '@/core/calendario/tipos';
 
 /**
  * Provas por cadeira do semestre 2026.2. Fonte: quadro de avaliações do
@@ -7,7 +7,8 @@ import type { Prova } from '@/core/calendario/tipos';
  * das provas: o período de cada avaliação está em calendarioAcademico.ts.
  *
  * Nomes e ids de cadeira seguem src/conteudo/curriculo.ts. Economia e
- * Empreendedorismo não entram aqui: seguem a sala digital, não o quadro.
+ * Empreendedorismo não entram aqui: fazem provas online, na sala digital, no
+ * período de PERIODO_PROVAS_ONLINE_2026_2 (no fim deste arquivo).
  */
 export const PROVAS_2026_2: readonly Prova[] = [
   { data: '2026-09-22', cadeiraId: 'intr-direito', cadeiraNome: 'Introdução ao Direito', tipo: 'AV1' },
@@ -33,4 +34,26 @@ export const PROVAS_2026_2: readonly Prova[] = [
   { data: '2026-12-03', cadeiraId: 'filosofia-juridica', cadeiraNome: 'Filosofia Jurídica', tipo: 'AV3' },
   { data: '2026-12-09', cadeiraId: 'filosofia-juridica', cadeiraNome: 'Filosofia Jurídica', tipo: 'chamada' },
   { data: '2026-12-15', cadeiraId: 'filosofia-juridica', cadeiraNome: 'Filosofia Jurídica', tipo: 'final' }
+];
+
+/**
+ * Provas online de Economia e de Empreendedorismo (sala digital), de 13/10 a
+ * 15/11/2026 (ordem do líder, 20/10/2026). É um período de vários dias, não
+ * uma prova por dia, e tem categoria própria (online) no calendário.
+ */
+export const PERIODO_PROVAS_ONLINE_2026_2: Evento = {
+  inicio: '2026-10-13',
+  fim: '2026-11-15',
+  categoria: 'online',
+  titulo: 'Provas online: Economia e Empreendedorismo',
+  descricao:
+    'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
+};
+
+/** Prazos que o contador do quadro considera além das provas: o fim do período online. */
+export const PRAZOS_2026_2: readonly PrazoDoCalendario[] = [
+  {
+    data: PERIODO_PROVAS_ONLINE_2026_2.fim,
+    descricao: 'o fim das provas online de Economia e Empreendedorismo'
+  }
 ];

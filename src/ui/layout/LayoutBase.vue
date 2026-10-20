@@ -130,7 +130,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   -->
   <div class="layout-base__inferior">
     <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
-    <QuadroProva />
+    <!-- Mesmo critério do aviso: o quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
+    <QuadroProva v-if="!emAreaRestrita" />
     <BotaoHome v-if="!naPaginaInicial" />
   </div>
 </template>

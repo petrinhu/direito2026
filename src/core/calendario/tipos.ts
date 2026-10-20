@@ -4,7 +4,7 @@ export type DataIso = string;
 /** Tipos de prova que a faculdade aplica, por cadeira. */
 export type TipoProva = 'AV1' | 'AV2' | 'AV3' | 'chamada' | 'final';
 
-export type CategoriaEvento = TipoProva | 'feriado' | 'prazo' | 'semestre';
+export type CategoriaEvento = TipoProva | 'online' | 'feriado' | 'prazo' | 'semestre';
 
 export interface Prova {
   data: DataIso;
@@ -23,6 +23,19 @@ export interface Evento {
 }
 
 export type NivelUrgencia = 'calmo' | 'dourado' | 'garnet' | 'pulsante';
+
+/** Prazo que vale para o contador além das provas (ex.: o fim de um período de provas online). */
+export interface PrazoDoCalendario {
+  data: DataIso;
+  /** Frase que completa o contador: "Faltam N dias para <descricao>". */
+  descricao: string;
+}
+
+export interface ProximoPrazo {
+  data: DataIso;
+  dias: number;
+  descricao: string;
+}
 
 export interface ProximaProva {
   data: DataIso;

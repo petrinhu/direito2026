@@ -51,7 +51,8 @@ function selecionar(data: string): void {
 
     <section class="calendario__notas" aria-label="Observações do calendário">
       <p data-testid="nota-sala-digital" class="calendario__nota">
-        As disciplinas de Economia e de Empreendedorismo seguem o calendário da sala digital.
+        As provas de Economia e de Empreendedorismo são online, na sala digital, de 13/10 a
+        15/11/2026.
       </p>
       <ul class="calendario__observacoes">
         <li v-for="texto in observacoes" :key="texto">{{ texto }}</li>

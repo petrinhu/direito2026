@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PROVAS_2026_2 } from '@/conteudo/calendario/provas';
+import {
+  PERIODO_PROVAS_ONLINE_2026_2,
+  PRAZOS_2026_2,
+  PROVAS_2026_2
+} from '@/conteudo/calendario/provas';
 import { FERIADOS_2026_2 } from '@/conteudo/calendario/feriados';
 import {
   EVENTOS_ACADEMICOS_2026_2,
@@ -101,5 +105,27 @@ describe('eventos acadêmicos e observações', () => {
 
   it('guarda a observação de revisão de prova (até 10 dias após a nota)', () => {
     expect(OBSERVACOES_ACADEMICAS_2026_2.join(' ')).toContain('10 dias');
+  });
+});
+
+describe('provas online de Economia e de Empreendedorismo (sala digital)', () => {
+  it('são um período de 13/10 a 15/11/2026, na categoria própria online', () => {
+    expect(PERIODO_PROVAS_ONLINE_2026_2).toEqual({
+      inicio: '2026-10-13',
+      fim: '2026-11-15',
+      categoria: 'online',
+      titulo: 'Provas online: Economia e Empreendedorismo',
+      descricao:
+        'Provas online de Economia e de Empreendedorismo (sala digital): de 13/10 a 15/11/2026.'
+    });
+  });
+
+  it('o prazo do contador é o fim desse período, com a frase do quadro', () => {
+    expect(PRAZOS_2026_2).toEqual([
+      {
+        data: '2026-11-15',
+        descricao: 'o fim das provas online de Economia e Empreendedorismo'
+      }
+    ]);
   });
 });

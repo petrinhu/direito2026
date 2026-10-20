@@ -3,7 +3,7 @@ import { agruparProvasParaGrade } from '@/core/calendario/agruparProvasParaGrade
 import { rotuloCategoriaCurto } from '@/core/calendario/rotulos';
 import { FERIADOS_2026_2 } from '@/conteudo/calendario/feriados';
 import { EVENTOS_ACADEMICOS_2026_2 } from '@/conteudo/calendario/calendarioAcademico';
-import { PROVAS_2026_2 } from '@/conteudo/calendario/provas';
+import { PERIODO_PROVAS_ONLINE_2026_2, PROVAS_2026_2 } from '@/conteudo/calendario/provas';
 import type { Evento } from '@/core/calendario/tipos';
 
 /** Evento no formato que a grade (FullCalendar) recebe. Sem dependência da lib. */
@@ -40,6 +40,7 @@ function paraEventoDaGrade(evento: Evento, indice: number): EventoDaGrade {
 export function eventosParaGrade(): EventoDaGrade[] {
   const todos = [
     ...agruparProvasParaGrade(PROVAS_2026_2),
+    PERIODO_PROVAS_ONLINE_2026_2,
     ...FERIADOS_2026_2,
     ...EVENTOS_ACADEMICOS_2026_2
   ];

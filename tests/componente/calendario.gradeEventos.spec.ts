@@ -12,8 +12,8 @@ import GradeCalendario from '@/ui/componentes/GradeCalendario.vue';
  *   document.elementsFromPoint, então ele é emprestado por teste.
  * - D4: cada evento traz o título completo (ellipsis + title) e o rótulo
  *   curto (3ª AV, Feriado, Prazo), para telas estreitas.
- * - D5: os ícones de seta da barra de navegação ficam fora da árvore de
- *   acessibilidade (os botões já têm aria-label).
+ * - D5 (revisto em 20/10/2026): a navegação usa botões de texto, sem ícone
+ *   de fonte, que a CSP (font-src 'self') bloqueia.
  */
 const HOJE = '2026-10-20';
 
@@ -132,26 +132,23 @@ describe('grade: barra de vários dias recebe a classe de barra (D4)', () => {
   });
 });
 
-describe('grade: ícones de navegação fora da árvore de acessibilidade (D5)', () => {
-  it('cada ícone de seta da barra de navegação tem aria-hidden="true"', async () => {
+describe('grade: navegação sem fonte de ícones (CSP font-src, QA 20/10/2026)', () => {
+  it('a barra de navegação não tem nenhum .fc-icon (a fonte data: do FullCalendar é bloqueada pela CSP)', async () => {
     const w = montar();
     await flushPromises();
-    const icones = w.findAll('.fc-toolbar .fc-icon');
-    expect(icones.length).toBeGreaterThan(0);
-    for (const icone of icones) {
-      expect(icone.attributes('aria-hidden')).toBe('true');
-    }
+    expect(w.findAll('.fc-icon').length).toBe(0);
+    expect(document.querySelectorAll('.fc-icon').length).toBe(0);
     w.unmount();
   });
 
-  it('os botões de navegação continuam com nome acessível (title, que o FullCalendar põe)', async () => {
+  it('os botões de navegação têm texto visível como nome acessível e dica (title) com o mês', async () => {
     const w = montar();
     await flushPromises();
-    const nomes = w
-      .findAll('.fc-toolbar button')
-      .map((b) => b.attributes('aria-label') ?? b.attributes('title'))
-      .filter((n): n is string => Boolean(n));
-    expect(nomes).toEqual(expect.arrayContaining(['Mês Anterior', 'Próximo Mês']));
+    const botoes = w.findAll('.fc-toolbar button');
+    const textos = botoes.map((b) => b.text());
+    expect(textos).toEqual(expect.arrayContaining(['Anterior', 'Próximo', 'Hoje']));
+    const dicas = botoes.map((b) => b.attributes('title'));
+    expect(dicas).toEqual(expect.arrayContaining(['Mês Anterior', 'Próximo Mês']));
     w.unmount();
   });
 });

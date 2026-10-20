@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -27,8 +26,6 @@ const emit = defineEmits<{
   mudarMes: [mes: string];
 }>();
 
-const raiz = ref<HTMLElement | null>(null);
-
 /**
  * Elementos sob o ponto de um clique de mouse ou toque (detail > 0). Tecla
  * Enter gera clique com detail 0 e ponto 0,0, sem significado: fica de fora.
@@ -38,16 +35,6 @@ function elementosNoPontoDoClique(evento: MouseEvent | undefined): ElementoSobPo
     return [];
   }
   return document.elementsFromPoint(evento.clientX, evento.clientY);
-}
-
-/**
- * Os ícones de seta (chevron) são decorativos: os botões já têm nome pelo
- * title. Escondidos da árvore de acessibilidade (achado D5 do QA visual).
- */
-function ocultarIconesDeNavegacao(): void {
-  raiz.value?.querySelectorAll('.fc-toolbar .fc-icon').forEach((icone) => {
-    icone.setAttribute('aria-hidden', 'true');
-  });
 }
 
 /**
@@ -72,6 +59,9 @@ const opcoes: CalendarOptions = {
   initialDate: props.hoje,
   now: () => new Date(`${props.hoje}T12:00:00`),
   headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+  // Sem ícone de fonte: a fonte data: é bloqueada pela CSP (font-src 'self').
+  // Os botões mostram o texto do locale ("Anterior", "Próximo", "Hoje").
+  buttonIcons: false,
   events: eventosParaGrade(),
   eventDisplay: 'block',
   eventContent: conteudoDoEvento,
@@ -87,14 +77,13 @@ const opcoes: CalendarOptions = {
     emit('selecionar', dataDaCelulaSob(elementosNoPontoDoClique(arg.jsEvent), inicio));
   },
   datesSet: (arg: DatesSetArg) => {
-    void nextTick(ocultarIconesDeNavegacao);
     emit('mudarMes', mesDoCalendario(arg.view.calendar.getDate()));
   }
 };
 </script>
 
 <template>
-  <div ref="raiz" class="grade-calendario">
+  <div class="grade-calendario">
     <FullCalendar :options="opcoes" />
   </div>
 </template>

@@ -49,9 +49,13 @@ describe('rotuloCategoriaCurto (rótulo de tela estreita, cabe na célula)', () 
     ['final', 'Final'],
     ['feriado', 'Feriado'],
     ['prazo', 'Prazo'],
-    ['semestre', 'Semest.']
+    ['semestre', 'Letivo']
   ] as const)('%s -> %s', (categoria, rotulo) => {
     expect(rotuloCategoriaCurto(categoria)).toBe(rotulo);
+  });
+
+  it('o rótulo curto de semestre tem no máximo 6 caracteres', () => {
+    expect([...rotuloCategoriaCurto('semestre')].length).toBeLessThanOrEqual(6);
   });
 
   it('nenhuma palavra do rótulo curto passa de 7 caracteres (cabe inteira na célula)', () => {

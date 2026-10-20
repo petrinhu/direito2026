@@ -30,7 +30,7 @@ const ROTULO_CATEGORIA_CURTO: Record<CategoriaEvento, string> = {
   final: 'Final',
   feriado: 'Feriado',
   prazo: 'Prazo',
-  semestre: 'Semest.'
+  semestre: 'Letivo'
 };
 
 export function rotuloTipoProva(tipo: TipoProva): string {

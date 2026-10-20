@@ -52,7 +52,8 @@ function linhasDeSucesso(
     `1. Escreva os textos da unidade: resumo.ts, mapaFichamento.ts, mnemonicos.ts, quiz/index.ts${argumentos.peticao ? ' e peticao.ts' : ''}. Os modelos trazem as regras do líder em comentário.`,
     '2. Confira: node --import tsx scripts/validar-conteudo.ts && npx vue-tsc --noEmit',
     `3. Publique: troque estado: 'em-breve' por 'publicado' em ${aqui(meta)}${plano.cadeiraNova ? ` e em ${aqui(plano.caminhoDaCadeira)}` : ''}.`,
-    '4. Antes do commit: npm run preci.'
+    '4. Antes do commit: npm run atualizar-referencias (ele regrava a caracterização e mostra o que entrou; confira que só aparece o que você acrescentou) e depois npm run preci.',
+    '5. Ao publicar uma cadeira, o teste do atalho Interdisciplinar exige o bloco atalhoUnidade em cadeira.ts (docs/como-adicionar-conteudo.md, seção 2).'
   );
   return linhas;
 }

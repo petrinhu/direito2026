@@ -166,4 +166,23 @@ describe('AreaRestrita', () => {
     w = undefined;
     expect(cliente.sair).not.toHaveBeenCalled();
   });
+
+  it('o foco que vai para o título na troca de tela (login) não rola a página', async () => {
+    await montar(clienteFalso());
+    const focar = vi.spyOn(HTMLElement.prototype, 'focus');
+    try {
+      const titulo = w!.get('h1').element;
+      await w!.get('input[name="usuario"]').setValue('u');
+      await w!.get('input[name="senha"]').setValue('s');
+      await w!.get('form').trigger('submit');
+      await flushPromises();
+      const chamadasNoTitulo = focar.mock.calls.filter(
+        (_argumentos, indice) => focar.mock.contexts[indice] === titulo
+      );
+      expect(chamadasNoTitulo.length).toBeGreaterThan(0);
+      expect(chamadasNoTitulo).toEqual(chamadasNoTitulo.map(() => [{ preventScroll: true }]));
+    } finally {
+      focar.mockRestore();
+    }
+  });
 });

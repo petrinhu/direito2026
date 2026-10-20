@@ -14,9 +14,13 @@ export function criarRouter() {
   // Seção 11 da arquitetura: na troca de rota, o foco vai para o <h1> (aqui,
   // para a área de conteúdo com tabindex="-1" em LayoutBase), e não fica
   // preso na página anterior para quem usa leitor de tela.
+  // preventScroll: o foco é de leitura de tela, não de rolagem. Sem ele, o
+  // navegador rolava até o <main>, que fica abaixo da faixa do templo na
+  // página inicial (defeito de 20/10/2026: a página abria rolada). A rolagem
+  // na troca de rota é do scrollBehavior acima (topo ou âncora).
   router.afterEach(() => {
     requestAnimationFrame(() => {
-      document.getElementById('conteudo-principal')?.focus();
+      document.getElementById('conteudo-principal')?.focus({ preventScroll: true });
     });
   });
 

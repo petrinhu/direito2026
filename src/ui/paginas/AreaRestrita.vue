@@ -26,7 +26,9 @@ onBeforeUnmount(() => sessao.descartar());
 watch(fase, async (nova, antiga) => {
   if (antiga === 'carregando') return;
   await nextTick();
-  titulo.value?.focus();
+  // preventScroll: a troca de tela não deve rolar a página; o foco só
+  // anuncia onde o leitor de tela está (mesma regra do router, index.ts).
+  titulo.value?.focus({ preventScroll: true });
 });
 </script>
 

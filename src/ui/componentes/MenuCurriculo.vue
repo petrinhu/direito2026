@@ -588,6 +588,28 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   font-size: var(--escala-sm, 0.9375rem);
 }
 
+/* Rótulos de período e de cadeira em Cormorant, com numerais lining, como no
+   protótipo aprovado (mockups/home-neoclassica.html). Títulos do site inteiro
+   (decisão do líder, 20/10/2026); unidades e abas seguem em Inter. Fora do modo
+   de leitura adaptada apenas: lá o menu segue com o que o modo já define (escala
+   própria em tokens.css), sem trocar família nem tamanho aqui. */
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-1 > li > .menu-curriculo__botao {
+  font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > .menu-curriculo__botao,
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > a {
+  font-family: var(--fonte-titulo);
+  font-variant-numeric: lining-nums;
+  font-weight: 600;
+  font-size: 1.1875rem;
+  line-height: 1.25;
+}
+
 .menu-curriculo ul.menu-curriculo__nivel-3 {
   --menu-cor: var(--cor-menu-unidade, #faf9f5);
   margin-left: var(--esp-3, 0.75rem);

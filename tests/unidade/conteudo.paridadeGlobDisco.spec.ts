@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CAMINHOS_DO_CONTEUDO } from '@/app/carregamento/modulosDoConteudo';
-import { caminhosDoDisco } from '../../scripts/apoio/conteudoDoDisco';
+import { curriculo } from '@/conteudo/curriculo';
+import { caminhosDoDisco, curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
 
 /**
  * Paridade entre os dois modos de descoberta: o glob do Vite (site e vitest)
@@ -19,5 +20,9 @@ describe('paridade: glob do Vite x leitura direta do disco', () => {
 
   it('as chaves do glob são exatamente as lidas do disco', () => {
     expect([...CAMINHOS_DO_CONTEUDO].sort()).toEqual([...doDisco].sort());
+  });
+
+  it('o currículo montado pelo glob é igual ao montado do disco', async () => {
+    expect(JSON.stringify(curriculo)).toBe(JSON.stringify(await curriculoDoDisco()));
   });
 });

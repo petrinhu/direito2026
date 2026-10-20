@@ -38,6 +38,11 @@ export type {
 export type { DispositivoLegal, CatalogoDispositivos } from '../core/dispositivos/tipos';
 
 export type {
+  DescricaoCadeira,
+  DescricaoUnidade,
+} from '../core/curriculo/montarCurriculo';
+
+export type {
   MapaFichamento,
   EraHistorica,
   FaseHistorica,

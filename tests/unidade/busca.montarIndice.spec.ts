@@ -4,7 +4,13 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 
 function unidadeDeExemplo(): ConteudoUnidade {
   return {
-    meta: { titulo: 'Conceito e fontes do Direito', subtitulo: 'sub', descricao: 'desc' },
+    meta: {
+      rotulo: 'Unidade 1',
+      estado: 'publicado',
+      titulo: 'Conceito e fontes do Direito',
+      subtitulo: 'sub',
+      descricao: 'desc'
+    },
     resumo: [
       {
         id: 'bloco-1',

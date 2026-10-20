@@ -1,7 +1,12 @@
 import type { MapaFichamento } from '../fichamento/tipos';
 import type { Mnemonico } from '../mnemonicos/tipos';
+import type { EstadoPublicacao } from '../curriculo/tipos';
 
 export interface MetaUnidade {
+  /** Rótulo curto no menu. Ex.: 'Unidade 1'. */
+  readonly rotulo: string;
+  /** Publicada ou em breve: a pasta se descreve (D1). */
+  readonly estado: EstadoPublicacao;
   readonly titulo: string;
   readonly subtitulo: string;
   /** Usado em <meta name="description"> e no cartão de resultado da busca. */

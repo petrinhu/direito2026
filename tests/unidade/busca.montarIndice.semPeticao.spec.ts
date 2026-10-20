@@ -4,7 +4,13 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 
 /** Cadeira sem petição (Sociologia Jurídica): a busca só aponta para resumo e quiz. */
 const conteudo: ConteudoUnidade = {
-  meta: { titulo: 'Resumo de estudo e quiz', subtitulo: 's', descricao: 'd' },
+  meta: {
+    rotulo: 'Unidade 1',
+    estado: 'publicado',
+    titulo: 'Resumo de estudo e quiz',
+    subtitulo: 's',
+    descricao: 'd'
+  },
   resumo: [
     {
       id: 'bloco-0',

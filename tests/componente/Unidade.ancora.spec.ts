@@ -16,7 +16,7 @@ import { resumo } from '@/conteudo/p1/filosofia-juridica/u1/resumo';
  * (o conteúdo chega por import dinâmico), então ninguém rolava depois.
  */
 const conteudo: ConteudoUnidade = {
-  meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+  meta: { rotulo: 'Unidade 1', estado: 'publicado', titulo: 't', subtitulo: 's', descricao: 'd' },
   resumo,
   mnemonicos,
   mapaFichamento

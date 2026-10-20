@@ -9,6 +9,8 @@ import type { MetaUnidade } from '../../../tipos';
  * campo (docs/arquitetura.md, seção 4.2).
  */
 export const meta: MetaUnidade = {
+  rotulo: 'Unidade 1',
+  estado: 'publicado',
   titulo: 'Resumo de estudo, petição comentada e quiz',
   subtitulo: 'Introdução ao Direito · faculdade · 1º período',
   descricao:

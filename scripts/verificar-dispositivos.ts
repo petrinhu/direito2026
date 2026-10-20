@@ -20,8 +20,7 @@ import { extrairCitacoes } from '../src/core/dispositivos/extrairCitacoes';
 import { coletarHtmlDaUnidade } from '../src/core/dispositivos/citacoesDaUnidade';
 import { validarDispositivo } from '../src/core/dispositivos/validar';
 import type { CatalogoDispositivos } from '../src/core/dispositivos/tipos';
-import { curriculo } from '../src/conteudo/curriculo';
-import { carregadoresDoDisco } from './apoio/conteudoDoDisco';
+import { carregadoresDoDisco, curriculoDoDisco } from './apoio/conteudoDoDisco';
 
 const CARREGADORES = carregadoresDoDisco();
 
@@ -31,6 +30,7 @@ const CATALOGO_PATH = process.env.VERIFICAR_DISPOSITIVOS_CATALOGO
   : resolve(AQUI, '../src/dados/dispositivos-legais.json');
 
 async function principal(): Promise<void> {
+  const curriculo = await curriculoDoDisco();
   let falhou = false;
 
   const catalogo = JSON.parse(readFileSync(CATALOGO_PATH, 'utf-8')) as CatalogoDispositivos;

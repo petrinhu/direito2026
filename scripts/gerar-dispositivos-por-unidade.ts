@@ -16,8 +16,7 @@ import {
   resolverCitacoesDaUnidade
 } from '../src/core/dispositivos/citacoesDaUnidade';
 import type { CatalogoDispositivos, IndiceDispositivos } from '../src/core/dispositivos/tipos';
-import { curriculo } from '../src/conteudo/curriculo';
-import { carregadoresDoDisco } from './apoio/conteudoDoDisco';
+import { carregadoresDoDisco, curriculoDoDisco } from './apoio/conteudoDoDisco';
 
 const CARREGADORES = carregadoresDoDisco();
 
@@ -25,6 +24,7 @@ const AQUI = dirname(fileURLToPath(import.meta.url));
 const CATALOGO_PATH = resolve(AQUI, '../src/dados/dispositivos-legais.json');
 
 async function principal(): Promise<void> {
+  const curriculo = await curriculoDoDisco();
   const catalogo = JSON.parse(readFileSync(CATALOGO_PATH, 'utf-8')) as CatalogoDispositivos;
   const catalogoPorId: IndiceDispositivos = Object.fromEntries(catalogo.map((d) => [d.id, d]));
 

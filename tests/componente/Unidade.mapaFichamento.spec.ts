@@ -9,7 +9,7 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { DADOS_SINTETICOS } from '../unidade/apoio/dadosFichamento';
 
 const conteudo: ConteudoUnidade = {
-  meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+  meta: { rotulo: 'Unidade 1', estado: 'publicado', titulo: 't', subtitulo: 's', descricao: 'd' },
   resumo: [],
   mapaFichamento: DADOS_SINTETICOS,
   mnemonicos: [

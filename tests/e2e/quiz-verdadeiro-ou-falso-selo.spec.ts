@@ -1,5 +1,4 @@
 import { test, expect, type Page } from '@playwright/test';
-import { curriculo } from '../../src/conteudo/curriculo';
 import { calcularContraste } from '../../src/core/design/contraste';
 import { quiz as quizIntr } from '../../src/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '../../src/conteudo/p1/redacao-juridica-1/u1/quiz';
@@ -8,6 +7,10 @@ import { quiz as quizFilosofia } from '../../src/conteudo/p1/filosofia-juridica/
 import type { PerguntaQuiz } from '../../src/core/unidade/tipos';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 import { prepararEstadoInicial, type EstadoInicial } from './apoio/estadoInicial';
+import { curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
+
+// Lido do disco: o glob do Vite não existe no Node que roda o Playwright.
+const curriculo = await curriculoDoDisco();
 
 /**
  * Pergunta de verdadeiro ou falso e selo "Revisão do professor" (ordem do

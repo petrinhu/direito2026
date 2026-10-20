@@ -16,7 +16,7 @@ const mnemonico: Mnemonico = {
 };
 
 const conteudo: ConteudoUnidade = {
-  meta: { titulo: 'T', subtitulo: 's', descricao: 'd' },
+  meta: { rotulo: 'Unidade 1', estado: 'publicado', titulo: 'T', subtitulo: 's', descricao: 'd' },
   resumo: [],
   mapaFichamento: DADOS_SINTETICOS,
   mnemonicos: [mnemonico]

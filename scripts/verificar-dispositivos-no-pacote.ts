@@ -22,8 +22,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { curriculo } from '../src/conteudo/curriculo';
-import { carregadoresDispositivosDoDisco } from './apoio/conteudoDoDisco';
+import { carregadoresDispositivosDoDisco, curriculoDoDisco } from './apoio/conteudoDoDisco';
 
 const CARREGADORES_DISPOSITIVOS = carregadoresDispositivosDoDisco();
 
@@ -38,6 +37,7 @@ function carregarTextoDeTodosOsArquivosJs(diretorio: string): string {
 }
 
 async function principal(): Promise<void> {
+  const curriculo = await curriculoDoDisco();
   let falhou = false;
   let unidadesVarridas = 0;
   let dispositivosConferidos = 0;

@@ -14,7 +14,7 @@ import type { ConteudoUnidade } from '@/core/unidade/tipos';
  */
 function conteudoComPeticaoSegmentada(): ConteudoUnidade {
   return {
-    meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+    meta: { rotulo: 'Unidade 1', estado: 'publicado', titulo: 't', subtitulo: 's', descricao: 'd' },
     resumo: [],
     peticao: {
       titulo: 'Petição',

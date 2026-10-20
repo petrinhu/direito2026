@@ -24,7 +24,7 @@ function bloco(corpoHtml: string, exemploHtml = ''): ConteudoUnidade['resumo'][n
 
 function unidadeSemCitacao(): ConteudoUnidade {
   return {
-    meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+    meta: { rotulo: 'Unidade 1', estado: 'publicado', titulo: 't', subtitulo: 's', descricao: 'd' },
     resumo: [bloco('<p>Sociologia pura, sem artigo de lei.</p>', '<p>exemplo</p>')],
     quiz: [
       {

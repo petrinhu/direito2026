@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { curriculo } from '../../src/conteudo/curriculo';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
+import { curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
+
+// Lido do disco: o glob do Vite não existe no Node que roda o Playwright.
+const curriculo = await curriculoDoDisco();
 
 /**
  * Item 6 da onda: verificação automática de acessibilidade nas páginas

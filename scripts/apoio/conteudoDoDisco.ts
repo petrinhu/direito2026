@@ -8,6 +8,12 @@ import {
 } from '../../src/app/carregamento/montarCarregadores';
 import type { RegistroDeCarregadores } from '../../src/app/carregamento/decorarCurriculo';
 import type { IndiceDispositivos } from '../../src/core/dispositivos/tipos';
+import type { Curriculo } from '../../src/core/curriculo/tipos';
+import {
+  montarCurriculo,
+  type DescricaoCadeira,
+  type DescricaoUnidade
+} from '../../src/core/curriculo/montarCurriculo';
 
 /**
  * Leitura direta de src/conteudo/ no disco, para scripts Node (tsx) e para o
@@ -44,6 +50,25 @@ export function importarDoDisco(caminho: string): Promise<unknown> {
   return import(pathToFileURL(join(RAIZ_DO_CONTEUDO, caminho)).href);
 }
 
+/**
+ * Currículo montado do disco, pela mesma função que o site usa (montarCurriculo).
+ * Lê cadeira.ts e meta.ts das pastas; o glob do Vite faz o mesmo no site.
+ */
+export async function curriculoDoDisco(raiz: string = RAIZ_DO_CONTEUDO): Promise<Curriculo> {
+  const caminhos = caminhosDoDisco(raiz);
+  const cadeiras: Record<string, DescricaoCadeira> = {};
+  for (const caminho of caminhosDeCadeiraNoDisco(raiz)) {
+    const modulo = (await importarDoDisco(caminho)) as { cadeira: DescricaoCadeira };
+    cadeiras[caminho] = modulo.cadeira;
+  }
+  const metas: Record<string, DescricaoUnidade> = {};
+  for (const caminho of caminhos.filter((c) => c.endsWith('/meta.ts'))) {
+    const modulo = (await importarDoDisco(caminho)) as { meta: DescricaoUnidade };
+    metas[caminho] = modulo.meta;
+  }
+  return montarCurriculo({ caminhos, cadeiras, metas });
+}
+
 /** Carregadores do conteúdo, montados do disco (mesma montagem do site). */
 export function carregadoresDoDisco(raiz: string = RAIZ_DO_CONTEUDO): RegistroDeCarregadores {
   return montarCarregadores(agruparPorUnidade(caminhosDoDisco(raiz)), importarDoDisco);
@@ -54,6 +79,18 @@ export function carregadoresDispositivosDoDisco(
   raiz: string = RAIZ_DO_CONTEUDO
 ): Record<string, () => Promise<IndiceDispositivos>> {
   return montarCarregadoresDispositivos(agruparPorUnidade(caminhosDoDisco(raiz)), importarDoDisco);
+}
+
+function caminhosDeCadeiraNoDisco(raiz: string): string[] {
+  const caminhos: string[] = [];
+  for (const periodo of listarPastas(raiz).filter((nome) => nome.startsWith('p'))) {
+    for (const cadeira of listarPastas(join(raiz, periodo))) {
+      if (listar(join(raiz, periodo, cadeira)).includes('cadeira.ts')) {
+        caminhos.push(`${periodo}/${cadeira}/cadeira.ts`);
+      }
+    }
+  }
+  return caminhos.sort();
 }
 
 function listarPastas(pasta: string): string[] {

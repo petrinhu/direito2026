@@ -40,7 +40,13 @@ describe('decorarCurriculo', () => {
   it('acrescenta carregar() só nas unidades publicadas que têm registro', async () => {
     const decorado = decorarCurriculo(curriculoSemCarregador(), {
       'p1/intr-direito/u1': async () => ({
-        meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+        meta: {
+          rotulo: 'Unidade 1',
+          estado: 'publicado',
+          titulo: 't',
+          subtitulo: 's',
+          descricao: 'd'
+        },
         resumo: []
       })
     });
@@ -53,7 +59,13 @@ describe('decorarCurriculo', () => {
   it('unidade em-breve não ganha carregar, mesmo se houver registro', () => {
     const decorado = decorarCurriculo(curriculoSemCarregador(), {
       'p1/intr-direito/u2': async () => ({
-        meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+        meta: {
+          rotulo: 'Unidade 1',
+          estado: 'publicado',
+          titulo: 't',
+          subtitulo: 's',
+          descricao: 'd'
+        },
         resumo: []
       })
     });
@@ -71,7 +83,13 @@ describe('decorarCurriculo', () => {
     const original = curriculoSemCarregador();
     decorarCurriculo(original, {
       'p1/intr-direito/u1': async () => ({
-        meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+        meta: {
+          rotulo: 'Unidade 1',
+          estado: 'publicado',
+          titulo: 't',
+          subtitulo: 's',
+          descricao: 'd'
+        },
         resumo: []
       })
     });

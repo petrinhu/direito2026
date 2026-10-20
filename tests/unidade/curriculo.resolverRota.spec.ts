@@ -21,7 +21,13 @@ function curriculoDeTeste(): Curriculo {
               estado: 'publicado',
               abas: ['resumo', 'peticao', 'quiz'],
               carregar: async () => ({
-                meta: { titulo: 't', subtitulo: 's', descricao: 'd' },
+                meta: {
+                  rotulo: 'Unidade 1',
+                  estado: 'publicado',
+                  titulo: 't',
+                  subtitulo: 's',
+                  descricao: 'd'
+                },
                 resumo: []
               })
             },

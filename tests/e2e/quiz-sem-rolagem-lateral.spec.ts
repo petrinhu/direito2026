@@ -1,6 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-import { curriculo } from '../../src/conteudo/curriculo';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
+import { curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
+
+// Lido do disco: o glob do Vite não existe no Node que roda o Playwright.
+const curriculo = await curriculoDoDisco();
 
 /**
  * Achado do QA (docs/qa-redacao-u1.md, seção "Rodada final"): em tema

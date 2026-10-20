@@ -26,7 +26,7 @@ passo "gerar índice de busca" node --import tsx scripts/gerar-indice-busca.ts
 passo "citações resolvem no catálogo" node --import tsx scripts/verificar-dispositivos.ts
 passo "termos proibidos (R3), fonte" bash scripts/verificar-proibicoes.sh src
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
-passo "testes unitários e de componente" npx vitest run tests/unidade tests/componente
+passo "testes unitários, de componente e de caracterização" npx vitest run tests/unidade tests/componente tests/caracterizacao
 # npm run build já encadeia geração de índice/dispositivos, typecheck,
 # vite build, 404.html e o portão de pacote publicável (package.json).
 passo "construção completa (inclui o portão de pacote publicável)" npm run build

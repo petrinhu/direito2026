@@ -19,9 +19,15 @@ import type { AtalhoUnidade, Cadeira, Curriculo, Periodo, ReferenciaUnidade } fr
  * Ordem do líder: "ponha em todas as disciplinas (no menu lateral) que a
  * segunda unidade é o interdisciplinar (link para ele)". Mesmo atalho nas
  * quatro cadeiras públicas; aponta para a cadeira restrita, sem página nova.
+ *
+ * Ordem do líder (20/10/2026): "A estrutura do menu lateral deve ser:
+ * Filosofia Jurídica | -- Unidade 1 | -- Interdisciplinar | -- Unidade 3.
+ * Deve ser recolhível, como já é. O mesmo pras outras cadeiras". Por isso o
+ * rótulo é só 'Interdisciplinar', sem o prefixo "Unidade 2", e o atalho cai
+ * depois da Unidade 1 (`apos`), dentro da lista recolhível da cadeira.
  */
 const atalhoInterdisciplinar: AtalhoUnidade = {
-  rotulo: 'Unidade 2: Interdisciplinar',
+  rotulo: 'Interdisciplinar',
   apos: 'u1',
   cadeiraId: 'interdisciplinar',
 };

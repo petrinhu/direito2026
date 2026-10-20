@@ -24,10 +24,24 @@ describe('atalho para a Unidade 2 (Interdisciplinar) nas cadeiras públicas', ()
   it.each(cadeirasPublicas)('%s aponta para a cadeira restrita, logo depois da Unidade 1', (id) => {
     expect(cadeiraDe(id).atalhoUnidade).toEqual({
       apos: 'u1',
-      rotulo: 'Unidade 2: Interdisciplinar',
+      rotulo: 'Interdisciplinar',
       cadeiraId: 'interdisciplinar'
     });
   });
+
+  it('em Filosofia Jurídica o atalho cai entre a Unidade 1 e a Unidade 3', () => {
+    const filosofia = cadeiraDe('filosofia-juridica');
+    expect(filosofia.unidades.map((u) => u.id)).toEqual(['u1', 'u3']);
+    expect(filosofia.atalhoUnidade?.apos).toBe('u1');
+  });
+
+  it.each(['intr-direito', 'redacao-juridica-1', 'sociologia-juridica'])(
+    '%s: a única unidade é a Unidade 1, e o atalho vem depois dela',
+    (id) => {
+      expect(cadeiraDe(id).unidades.map((u) => u.id)).toEqual(['u1']);
+      expect(cadeiraDe(id).atalhoUnidade?.apos).toBe('u1');
+    }
+  );
 
   it('o destino é a cadeira restrita Interdisciplinar, no mesmo período', () => {
     const destino = cadeiraDe('interdisciplinar');

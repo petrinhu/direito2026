@@ -29,7 +29,7 @@ export interface ReferenciaUnidade {
  * de `Cadeira.unidades`. Busca, home, trilha e roteador nunca o enxergam.
  */
 export interface AtalhoUnidade {
-  /** Rótulo exibido no menu. Ex.: 'Unidade 2: Interdisciplinar'. */
+  /** Rótulo exibido no menu. Ex.: 'Interdisciplinar'. */
   readonly rotulo: string;
   /** Id da unidade da própria cadeira após a qual o atalho aparece. Ex.: 'u1'. */
   readonly apos: string;

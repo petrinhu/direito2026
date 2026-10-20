@@ -340,16 +340,19 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 </li>
                 <li v-if="cadeira.atalhoUnidade?.apos === unidade.id">
                   <!--
-                    Atalho da Unidade 2 (ordem do líder): link para a cadeira
-                    restrita, sem triângulo e sem submenu. O espaçador reserva
-                    a largura do triângulo, para o texto alinhar com o da
-                    Unidade 1 logo acima.
+                    Atalho para a cadeira restrita (ordem do líder, 20/10/2026):
+                    fica entre a Unidade 1 e a unidade seguinte, sem triângulo e
+                    sem submenu. O espaçador reserva a largura do triângulo, para
+                    o texto alinhar com o da Unidade 1 logo acima. O aria-label
+                    diz que é atalho, para o leitor de tela não confundir com o
+                    item próprio Interdisciplinar da mesma lista de cadeiras.
                   -->
                   <div class="menu-curriculo__linha">
                     <span class="menu-curriculo__recuo" aria-hidden="true" />
                     <a
                       :href="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
                       class="menu-curriculo__link-unidade"
+                      :aria-label="`${cadeira.atalhoUnidade.rotulo}, atalho para a área restrita`"
                       :aria-current="
                         ehAtual(
                           `p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`,
@@ -535,7 +538,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   cursor: pointer;
 }
 
-/* Espaçador do atalho da Unidade 2: ocupa a largura do triângulo das unidades
+/* Espaçador do atalho Interdisciplinar: ocupa a largura do triângulo das unidades
    com submenu, sem botão nem foco, para o texto ficar na mesma coluna. */
 .menu-curriculo__recuo {
   flex-shrink: 0;

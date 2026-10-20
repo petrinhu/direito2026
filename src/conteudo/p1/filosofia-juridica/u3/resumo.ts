@@ -414,8 +414,8 @@ export const resumo: readonly BlocoResumo[] = [
   {
     id: 'bloco-16',
     numero: 17,
-    titulo: 'Bloco 3: Teorias contemporâneas da justiça',
-    fonte: 'Aguardando material do professor.',
+    titulo: 'Teorias contemporâneas da justiça',
+    fonte: 'Material de aula da disciplina.',
     corpoHtml: `
       <p>Aguardando material do professor.</p>
     `,

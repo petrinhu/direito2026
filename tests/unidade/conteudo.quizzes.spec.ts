@@ -305,3 +305,28 @@ describe('unidade 3 de Filosofia Jurídica não aponta para o material nem manda
     expect(caminhosQueApontamParaMaterial(conteudo)).toEqual([]);
   });
 });
+
+/**
+ * Texto que o leitor vê no corpo de um bloco: tags removidas e espaços
+ * colapsados. A fonte aparece logo acima do corpo, então um texto repetido
+ * nos dois lugares fica visível duas vezes na mesma tela.
+ */
+function textoVisivelDoCorpo(corpoHtml: string): string {
+  return corpoHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+describe('blocos do resumo da unidade 3 de Filosofia Jurídica', () => {
+  it('nenhuma fonte aparece também dentro do corpo do próprio bloco', () => {
+    const repetidos = resumoFilosofiaU3
+      .filter((bloco) => textoVisivelDoCorpo(bloco.corpoHtml).includes(bloco.fonte.trim()))
+      .map((bloco) => bloco.id);
+    expect(repetidos).toEqual([]);
+  });
+
+  it('nenhum título começa com "Bloco N", pois a página já numera os blocos', () => {
+    const comNumeroNoTitulo = resumoFilosofiaU3
+      .filter((bloco) => /^bloco\s*\d+/i.test(bloco.titulo.trim()))
+      .map((bloco) => bloco.id);
+    expect(comNumeroNoTitulo).toEqual([]);
+  });
+});

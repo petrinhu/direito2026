@@ -15,19 +15,19 @@
     {
       "caminho": "/p/p1/intr-direito/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (resumo)",
+      "nome": "Introdução ao Direito: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/intr-direito/u1/peticao",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (peticao)",
+      "nome": "Introdução ao Direito: u1 (peticao)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/intr-direito/u1/quiz",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (quiz)",
+      "nome": "Introdução ao Direito: u1 (quiz)",
       "tipo": "unidade"
     },
     {
@@ -39,19 +39,19 @@
     {
       "caminho": "/p/p1/redacao-juridica-1/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (resumo)",
+      "nome": "Português e Redação Jurídica 1: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/redacao-juridica-1/u1/peticao",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (peticao)",
+      "nome": "Português e Redação Jurídica 1: u1 (peticao)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/redacao-juridica-1/u1/quiz",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (quiz)",
+      "nome": "Português e Redação Jurídica 1: u1 (quiz)",
       "tipo": "unidade"
     },
     {
@@ -63,13 +63,13 @@
     {
       "caminho": "/p/p1/sociologia-juridica/u1",
       "h1": "Resumo de estudo e quiz",
-      "nome": "Sociologia Jurídica: unidade (resumo)",
+      "nome": "Sociologia Jurídica: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/sociologia-juridica/u1/quiz",
       "h1": "Resumo de estudo e quiz",
-      "nome": "Sociologia Jurídica: unidade (quiz)",
+      "nome": "Sociologia Jurídica: u1 (quiz)",
       "tipo": "unidade"
     },
     {
@@ -81,61 +81,61 @@
     {
       "caminho": "/p/p1/filosofia-juridica/u1",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (resumo)",
+      "nome": "Filosofia Jurídica: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/mapa",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (mapa)",
+      "nome": "Filosofia Jurídica: u1 (mapa)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/fichamento",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (fichamento)",
+      "nome": "Filosofia Jurídica: u1 (fichamento)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/mnemonicos",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (mnemonicos)",
+      "nome": "Filosofia Jurídica: u1 (mnemonicos)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/quiz",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (quiz)",
+      "nome": "Filosofia Jurídica: u1 (quiz)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (resumo)",
+      "nome": "Filosofia Jurídica: u3 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/mapa",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (mapa)",
+      "nome": "Filosofia Jurídica: u3 (mapa)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/fichamento",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (fichamento)",
+      "nome": "Filosofia Jurídica: u3 (fichamento)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/mnemonicos",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (mnemonicos)",
+      "nome": "Filosofia Jurídica: u3 (mnemonicos)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/quiz",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (quiz)",
+      "nome": "Filosofia Jurídica: u3 (quiz)",
       "tipo": "unidade"
     },
     {
@@ -150,113 +150,122 @@
     {
       "caminho": "/p/p1/intr-direito/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (resumo)",
+      "nome": "Introdução ao Direito: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/intr-direito/u1/peticao",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (peticao)",
+      "nome": "Introdução ao Direito: u1 (peticao)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/intr-direito/u1/quiz",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Introdução ao Direito: unidade (quiz)",
+      "nome": "Introdução ao Direito: u1 (quiz)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/redacao-juridica-1/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (resumo)",
+      "nome": "Português e Redação Jurídica 1: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/redacao-juridica-1/u1/peticao",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (peticao)",
+      "nome": "Português e Redação Jurídica 1: u1 (peticao)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/redacao-juridica-1/u1/quiz",
       "h1": "Resumo de estudo, petição comentada e quiz",
-      "nome": "Português e Redação Jurídica 1: unidade (quiz)",
+      "nome": "Português e Redação Jurídica 1: u1 (quiz)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/sociologia-juridica/u1",
       "h1": "Resumo de estudo e quiz",
-      "nome": "Sociologia Jurídica: unidade (resumo)",
+      "nome": "Sociologia Jurídica: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/sociologia-juridica/u1/quiz",
       "h1": "Resumo de estudo e quiz",
-      "nome": "Sociologia Jurídica: unidade (quiz)",
+      "nome": "Sociologia Jurídica: u1 (quiz)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (resumo)",
+      "nome": "Filosofia Jurídica: u1 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/mapa",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (mapa)",
+      "nome": "Filosofia Jurídica: u1 (mapa)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/fichamento",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (fichamento)",
+      "nome": "Filosofia Jurídica: u1 (fichamento)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/mnemonicos",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (mnemonicos)",
+      "nome": "Filosofia Jurídica: u1 (mnemonicos)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u1/quiz",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
-      "nome": "Filosofia Jurídica: unidade (quiz)",
+      "nome": "Filosofia Jurídica: u1 (quiz)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (resumo)",
+      "nome": "Filosofia Jurídica: u3 (resumo)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/mapa",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (mapa)",
+      "nome": "Filosofia Jurídica: u3 (mapa)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/fichamento",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (fichamento)",
+      "nome": "Filosofia Jurídica: u3 (fichamento)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/mnemonicos",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (mnemonicos)",
+      "nome": "Filosofia Jurídica: u3 (mnemonicos)",
       "tipo": "unidade"
     },
     {
       "caminho": "/p/p1/filosofia-juridica/u3/quiz",
       "h1": "Filosofia Moderna e Contemporânea",
-      "nome": "Filosofia Jurídica: unidade (quiz)",
+      "nome": "Filosofia Jurídica: u3 (quiz)",
       "tipo": "unidade"
     }
   ],
   "rotasDeAbaAusente": [
+    "/p/p1/intr-direito/u1/mapa",
+    "/p/p1/intr-direito/u1/fichamento",
+    "/p/p1/intr-direito/u1/mnemonicos",
+    "/p/p1/redacao-juridica-1/u1/mapa",
+    "/p/p1/redacao-juridica-1/u1/fichamento",
+    "/p/p1/redacao-juridica-1/u1/mnemonicos",
+    "/p/p1/sociologia-juridica/u1/mapa",
+    "/p/p1/sociologia-juridica/u1/fichamento",
+    "/p/p1/sociologia-juridica/u1/mnemonicos",
     "/p/p1/sociologia-juridica/u1/peticao",
     "/p/p1/filosofia-juridica/u1/peticao",
     "/p/p1/filosofia-juridica/u3/peticao"

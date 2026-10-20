@@ -1,4 +1,5 @@
-import type { ChaveAba, Curriculo } from '../../../src/core/curriculo/tipos';
+import { ORDEM_ABAS } from '../../../src/core/curriculo/ordemAbas';
+import type { Curriculo } from '../../../src/core/curriculo/tipos';
 import { TITULO_AREA_RESTRITA } from '../../../src/core/restrito/titulo';
 
 /**
@@ -46,7 +47,7 @@ export function rotasDoCurriculo(curriculo: Curriculo): RotaDoCurriculo[] {
           rotas.push({
             caminho: aba === 'resumo' ? base : `${base}/${aba}`,
             h1: unidade.titulo,
-            nome: `${cadeira.nome}: unidade (${aba})`,
+            nome: `${cadeira.nome}: ${unidade.id} (${aba})`,
             tipo: 'unidade'
           });
         }
@@ -61,11 +62,10 @@ export function rotasDeUnidades(curriculo: Curriculo): RotaDoCurriculo[] {
   return rotasDoCurriculo(curriculo).filter((r) => r.tipo === 'unidade');
 }
 
-const TODAS_AS_ABAS: readonly ChaveAba[] = ['resumo', 'peticao', 'quiz'];
-
 /**
  * Endereços de aba que a unidade NÃO tem (ex.: petição numa cadeira sem
- * petição). Cada um tem de abrir "Página não encontrada", nunca uma página
+ * petição). Todas as abas do core (ORDEM_ABAS), não só três: mapa, fichamento e
+ * mnemônicos entram na checagem. Cada um tem de abrir "Página não encontrada", nunca uma página
  * em branco nem o conteúdo de outra aba.
  */
 export function rotasDeAbaAusente(curriculo: Curriculo): string[] {
@@ -74,7 +74,7 @@ export function rotasDeAbaAusente(curriculo: Curriculo): string[] {
     for (const cadeira of periodo.cadeiras) {
       for (const unidade of cadeira.unidades) {
         if (unidade.estado !== 'publicado') continue;
-        for (const aba of TODAS_AS_ABAS) {
+        for (const aba of ORDEM_ABAS) {
           if (aba === 'resumo' || unidade.abas.includes(aba)) continue;
           caminhos.push(`/p/${periodo.id}/${cadeira.id}/${unidade.id}/${aba}`);
         }

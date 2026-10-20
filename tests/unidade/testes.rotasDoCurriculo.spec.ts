@@ -81,7 +81,7 @@ describe('rotasDoCurriculo', () => {
   it('rotasDeUnidades traz só as páginas de unidade, com nome legível para o relatório', () => {
     const rotas = rotasDeUnidades(sintetico);
     expect(rotas).toHaveLength(5);
-    expect(rotas[0]!.nome).toBe('Com Petição: unidade (resumo)');
+    expect(rotas[0]!.nome).toBe('Com Petição: u1 (resumo)');
   });
 
   it('no currículo real, a Sociologia Jurídica aparece com resumo e quiz e sem petição', () => {
@@ -125,11 +125,20 @@ describe('rotasDoCurriculo e a cadeira restrita', () => {
 
 describe('rotasDeAbaAusente', () => {
   it('lista só as abas que a unidade não tem', () => {
-    expect(rotasDeAbaAusente(sintetico)).toEqual(['/p/p1/sem-peticao/u1/peticao']);
+    expect(rotasDeAbaAusente(sintetico)).toEqual([
+      '/p/p1/com-peticao/u1/mapa',
+      '/p/p1/com-peticao/u1/fichamento',
+      '/p/p1/com-peticao/u1/mnemonicos',
+      '/p/p1/sem-peticao/u1/mapa',
+      '/p/p1/sem-peticao/u1/fichamento',
+      '/p/p1/sem-peticao/u1/mnemonicos',
+      '/p/p1/sem-peticao/u1/peticao'
+    ]);
   });
 
-  it('no currículo real, as petições de Sociologia e de Filosofia Jurídica (Unidades 1 e 3) são as únicas ausências', () => {
-    expect(rotasDeAbaAusente(curriculo)).toEqual([
+  it('no currículo real, as petições de Sociologia e de Filosofia Jurídica (Unidades 1 e 3) são as únicas petições ausentes', () => {
+    const peticoes = rotasDeAbaAusente(curriculo).filter((c) => c.endsWith('/peticao'));
+    expect(peticoes).toEqual([
       '/p/p1/sociologia-juridica/u1/peticao',
       '/p/p1/filosofia-juridica/u1/peticao',
       '/p/p1/filosofia-juridica/u3/peticao'

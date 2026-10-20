@@ -109,13 +109,16 @@
   --fc-page-bg-color: var(--cor-fundo-elevado, #fff);
   --fc-neutral-bg-color: var(--cor-fundo-sutil, #f2efe6);
   --fc-neutral-text-color: var(--cor-texto-suave, #4a4a4a);
-  --fc-button-bg-color: var(--cor-primaria, #163a5f);
-  --fc-button-border-color: var(--cor-primaria, #163a5f);
-  --fc-button-text-color: var(--cor-texto-invertido, #faf9f5);
-  --fc-button-hover-bg-color: var(--cor-primaria, #163a5f);
-  --fc-button-hover-border-color: var(--cor-primaria, #163a5f);
-  --fc-button-active-bg-color: var(--cor-primaria, #163a5f);
-  --fc-button-active-border-color: var(--cor-primaria, #163a5f);
+  /* Botões da barra: o par da lateral (fixo nos dois temas, 14,84:1), não o
+     --cor-primaria, que no escuro vira cor de texto. Assim qualquer estado do
+     FullCalendar que não esteja nas regras abaixo já sai com a cor do site. */
+  --fc-button-bg-color: var(--cor-sidebar-fundo);
+  --fc-button-border-color: var(--cor-friso);
+  --fc-button-text-color: var(--cor-sidebar-texto);
+  --fc-button-hover-bg-color: var(--cor-sidebar-item-ativo-fundo);
+  --fc-button-hover-border-color: var(--cor-friso);
+  --fc-button-active-bg-color: var(--cor-sidebar-item-ativo-fundo);
+  --fc-button-active-border-color: var(--cor-friso);
   --fc-today-bg-color: var(--cor-primaria-clara, #eaf1f8);
   color: var(--cor-texto, #1c1c1c);
   font-family: var(--fonte-texto);
@@ -123,13 +126,98 @@
 
 .grade-calendario .fc-toolbar-title {
   font-family: var(--fonte-titulo);
-  font-size: var(--escala-lg, 1.75rem);
+  font-size: var(--escala-md, 1.25rem);
   color: var(--cor-titulo-texto, #0d2440);
 }
 
+/* Barra de navegação (ordem do líder, 20/10/2026). Celular: título centralizado
+   em cima, ANTERIOR e HOJE na esquerda e PRÓXIMO na direita, embaixo. A partir de
+   640px vira uma linha só: o título fica no meio das duas colunas iguais (1fr),
+   então ele centraliza de verdade, mesmo com lados de larguras diferentes. */
+.grade-calendario .fc-header-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'titulo titulo' 'esq dir';
+  align-items: center;
+  gap: var(--esp-2, 0.5rem);
+}
+
+.grade-calendario .fc-header-toolbar > :nth-child(1) {
+  grid-area: esq;
+  justify-self: start;
+}
+.grade-calendario .fc-header-toolbar > :nth-child(2) {
+  grid-area: titulo;
+  justify-self: center;
+}
+.grade-calendario .fc-header-toolbar > :nth-child(3) {
+  grid-area: dir;
+  justify-self: end;
+}
+
+@media (min-width: 40rem) {
+  .grade-calendario .fc-header-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: 'esq titulo dir';
+  }
+}
+
+@media (min-width: 64rem) {
+  .grade-calendario .fc-toolbar-title {
+    font-size: var(--escala-lg, 1.75rem);
+  }
+}
+
+/* Botões no padrão do site: azul-marinho da lateral, texto claro, contorno do
+   friso (BotaoHome e o cabeçalho usam o mesmo par). Texto nunca corta: a barra
+   quebra antes disso. */
 .grade-calendario .fc-button {
   min-height: 44px;
   min-width: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  background-color: var(--cor-sidebar-fundo);
+  color: var(--cor-sidebar-texto);
+  border: 1px solid var(--cor-friso);
+  border-radius: var(--raio-md);
+  font-family: var(--fonte-texto);
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none;
+}
+
+@media (min-width: 40rem) {
+  .grade-calendario .fc-button {
+    font-size: var(--escala-sm, 0.9375rem);
+  }
+}
+
+.grade-calendario .fc-button:not(:disabled):hover {
+  background-color: var(--cor-sidebar-item-ativo-fundo);
+  color: var(--cor-sidebar-texto);
+  text-decoration: underline;
+}
+
+/* Foco: o anel do site (token de foco). O FullCalendar põe outline: 0 e uma
+   sombra cinza, que aqui saem. */
+.grade-calendario .fc-button:focus {
+  box-shadow: none;
+}
+
+.grade-calendario .fc-button:focus-visible {
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria));
+  outline-offset: var(--foco-deslocamento, 2px);
+}
+
+/* Desabilitado (HOJE quando o mês exibido já é o atual): sem opacidade, que
+   derruba o contraste; o sinal é o fundo sutil e o contorno tracejado. */
+.grade-calendario .fc-button:disabled {
+  opacity: 1;
+  background-color: var(--cor-fundo-sutil);
+  color: var(--cor-texto-suave);
+  border-style: dashed;
+  cursor: default;
 }
 
 .grade-calendario .fc-daygrid-day-number {
@@ -292,6 +380,17 @@
   min-height: 44px;
   min-width: 44px;
   font-size: var(--escala-base, 1.0625rem);
+  /* Contorno estrutural de 2px (preto no adaptado): o botão continua reconhecível
+     sem depender do fundo, que no adaptado é branco. */
+  border: 2px solid var(--cor-friso);
+  /* Texto grande não cabe numa linha: quebra dentro do botão, em vez de vazar. */
+  white-space: normal;
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .fc-toolbar-chunk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2, 0.5rem);
 }
 
 :root[data-modo-adaptado='on'] .grade-calendario .fc,

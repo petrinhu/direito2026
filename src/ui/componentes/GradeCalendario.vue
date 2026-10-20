@@ -34,12 +34,32 @@ const emit = defineEmits<{
  * garante a medida com o layout já assentado (cada abertura remonta a grade).
  */
 const grade = ref<InstanceType<typeof FullCalendar>>();
+const raiz = ref<HTMLElement>();
 let quadroPendente: number | undefined;
+
+/**
+ * O FullCalendar põe o hint só em `title` (tooltip) e deixa o nome acessível
+ * para o texto visível ("< ANTERIOR"). Aqui cada botão recebe um aria-label
+ * que diz o que faz. Refeito a cada mudança de mês, porque a barra pode ser
+ * redesenhada pelo próprio FullCalendar.
+ */
+const NOMES_DE_NAVEGACAO: Record<'prev' | 'next' | 'today', string> = {
+  prev: 'Mês anterior',
+  next: 'Próximo mês',
+  today: 'Ir para hoje'
+};
+
+function nomearBotoesDeNavegacao(): void {
+  for (const [botao, nome] of Object.entries(NOMES_DE_NAVEGACAO)) {
+    raiz.value?.querySelector(`.fc-${botao}-button`)?.setAttribute('aria-label', nome);
+  }
+}
 
 onMounted(() => {
   quadroPendente = requestAnimationFrame(() => {
     quadroPendente = undefined;
     grade.value?.getApi().updateSize();
+    nomearBotoesDeNavegacao();
   });
 });
 
@@ -79,7 +99,11 @@ const opcoes: CalendarOptions = {
   initialView: 'dayGridMonth',
   initialDate: props.hoje,
   now: () => new Date(`${props.hoje}T12:00:00`),
-  headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+  headerToolbar: { left: 'prev today', center: 'title', right: 'next' },
+  // Textos literais da ordem (líder, 20/10/2026). Os hints viram tooltip (title);
+  // o nome acessível é o aria-label de nomearBotoesDeNavegacao.
+  buttonText: { prev: '< ANTERIOR', next: 'PRÓXIMO >', today: 'HOJE' },
+  buttonHints: { prev: 'Mês anterior', next: 'Próximo mês', today: 'Ir para hoje' },
   // Sem ícone de fonte: os botões mostram o texto do locale ("Anterior",
   // "Próximo", "Hoje"). A regra @font-face da fonte de ícones é injetada pelo
   // próprio core e sai no build (vite.config.ts), senão a CSP bloqueia o pedido.
@@ -99,13 +123,14 @@ const opcoes: CalendarOptions = {
     emit('selecionar', dataDaCelulaSob(elementosNoPontoDoClique(arg.jsEvent), inicio));
   },
   datesSet: (arg: DatesSetArg) => {
+    nomearBotoesDeNavegacao();
     emit('mudarMes', mesDoCalendario(arg.view.calendar.getDate()));
   }
 };
 </script>
 
 <template>
-  <div class="grade-calendario">
+  <div ref="raiz" class="grade-calendario">
     <FullCalendar ref="grade" :options="opcoes" />
   </div>
 </template>

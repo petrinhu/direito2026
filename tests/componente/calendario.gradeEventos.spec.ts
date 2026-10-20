@@ -141,14 +141,16 @@ describe('grade: navegação sem fonte de ícones (CSP font-src, QA 20/10/2026)'
     w.unmount();
   });
 
-  it('os botões de navegação têm texto visível como nome acessível e dica (title) com o mês', async () => {
+  it('os botões de navegação têm o texto da ordem, nome acessível (aria-label) e dica (title)', async () => {
     const w = montar();
     await flushPromises();
     const botoes = w.findAll('.fc-toolbar button');
     const textos = botoes.map((b) => b.text());
-    expect(textos).toEqual(expect.arrayContaining(['Anterior', 'Próximo', 'Hoje']));
+    expect(textos).toEqual(expect.arrayContaining(['< ANTERIOR', 'PRÓXIMO >', 'HOJE']));
     const dicas = botoes.map((b) => b.attributes('title'));
-    expect(dicas).toEqual(expect.arrayContaining(['Mês Anterior', 'Próximo Mês']));
+    expect(dicas).toEqual(expect.arrayContaining(['Mês anterior', 'Próximo mês']));
+    const nomes = botoes.map((b) => b.attributes('aria-label'));
+    expect(nomes).toEqual(expect.arrayContaining(['Mês anterior', 'Próximo mês', 'Ir para hoje']));
     w.unmount();
   });
 });

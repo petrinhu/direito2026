@@ -81,25 +81,12 @@ export interface PecaComentada {
 }
 
 /**
- * Categorias de pergunta. As três primeiras nasceram no piloto (40, 10 e 10
- * perguntas); as quatro seguintes são da unidade de Sociologia Jurídica; as
- * três seguintes (Idade Antiga, Idade Média, revisão do professor) são de
- * Filosofia Jurídica; as duas últimas (Filosofia Moderna e Filosofia Social)
- * são da 3a unidade de Filosofia Jurídica.
+ * Categoria de pergunta, texto livre (F3 da onda "estrutura pronta"). Não é
+ * mais união fechada: quem cria uma categoria nova escreve o rótulo dela em
+ * src/conteudo/quiz/categorias.ts, e a regra "toda categoria tem rótulo" é
+ * testada pela varredura de unidades.
  */
-export type CategoriaQuiz =
-  | 'teoria'
-  | 'peticao'
-  | 'fundamentos'
-  | 'atividade'
-  | 'conceitos'
-  | 'classicos'
-  | 'aplicacao'
-  | 'antiga'
-  | 'media'
-  | 'revisao'
-  | 'filosofia-moderna'
-  | 'filosofia-social';
+export type CategoriaQuiz = string;
 
 /** Posição de uma alternativa na ordem original: 0 é A, 4 é E. */
 export type IndiceAlternativa = 0 | 1 | 2 | 3 | 4;

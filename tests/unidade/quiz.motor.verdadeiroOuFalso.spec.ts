@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { corrigirResposta, embaralharRodada } from '@/core/quiz/motor';
-import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
+import { ROTULOS_CATEGORIA_QUIZ } from '@/conteudo/quiz/categorias';
 import { mostrarLetras } from '@/core/quiz/rotuloAlternativa';
 import type { PerguntaQuiz } from '@/core/unidade/tipos';
 

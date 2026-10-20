@@ -13,7 +13,7 @@ import { resumo as resumoFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3
 import { mnemonicos as mnemonicosFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mnemonicos';
 import { mapaFichamento as mapaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/mapaFichamento';
 import { meta as metaFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/meta';
-import { ROTULOS_CATEGORIA_QUIZ } from '@/core/quiz/rotulosCategoria';
+import { ROTULOS_CATEGORIA_QUIZ } from '@/conteudo/quiz/categorias';
 import type {
   PerguntaMultiplaEscolha,
   PerguntaQuiz,

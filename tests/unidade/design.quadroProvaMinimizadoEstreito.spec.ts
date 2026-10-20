@@ -58,9 +58,7 @@ describe('QuadroProva minimizado: regra CSS de largura', () => {
   });
 
   it('o estado minimizado mantém o teto de 22rem e o encaixe no contêiner', () => {
-    expect(corpoDaRegra('.quadro-prova--minimizado')).toMatch(
-      /max-width:\s*min\(100%,\s*22rem\)/
-    );
+    expect(corpoDaRegra('.quadro-prova--minimizado')).toMatch(/max-width:\s*min\(100%,\s*22rem\)/);
   });
 
   it('a ancoragem à direita (margin-left: auto) continua valendo quando minimizado', () => {

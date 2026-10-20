@@ -234,8 +234,11 @@ describe('MenuCurriculo, atalho Interdisciplinar dentro da cadeira', () => {
 });
 
 describe('MenuCurriculo com o currículo real: o atalho está em todas as cadeiras públicas', () => {
-  // Cadeiras públicas lidas do currículo (publicada e não restrita): nenhuma listada à mão.
+  // Cadeiras públicas do 1º período lidas do currículo (publicada e não restrita):
+  // nenhuma listada à mão. O atalho Interdisciplinar é conferido só no 1º período,
+  // como documentado em docs/como-adicionar-conteudo.md (seção 2) e no spec de unidade.
   const publicas = curriculoReal
+    .filter((p) => p.id === 'p1')
     .flatMap((p) => p.cadeiras)
     .filter((c) => c.estado === 'publicado' && !c.restrita);
 
@@ -247,6 +250,7 @@ describe('MenuCurriculo com o currículo real: o atalho está em todas as cadeir
     '%s: a lista é a ordem do currículo, com o atalho logo depois da unidade "apos"',
     async (cadeiraId) => {
       const cadeira = publicas.find((c) => c.id === cadeiraId)!;
+      expect(cadeira.atalhoUnidade, `${cadeiraId} sem bloco atalhoUnidade`).toBeDefined();
       const atalho = cadeira.atalhoUnidade!;
       const w = montar(curriculoReal);
       await abrirPeriodoECadeira(w, cadeiraId);

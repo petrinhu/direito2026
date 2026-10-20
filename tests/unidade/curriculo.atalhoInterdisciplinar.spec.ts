@@ -44,6 +44,7 @@ describe('atalho para a Unidade 2 (Interdisciplinar) nas cadeiras públicas', ()
     '%s: a unidade apontada pelo atalho existe de verdade',
     (id) => {
       const cadeira = cadeiraDe(id);
+      expect(cadeira.atalhoUnidade, `${id} sem bloco atalhoUnidade`).toBeDefined();
       const atalho = cadeira.atalhoUnidade!;
       expect(cadeira.unidades.some((u) => u.id === atalho.apos)).toBe(true);
     }

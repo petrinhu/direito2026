@@ -155,6 +155,60 @@ describe('SeloHome, cores da especificação', () => {
   });
 });
 
+/**
+ * Decisão do líder (20/10/2026): com "Leitura ampliada" ligada, em telas de até
+ * 400px, o selo mostra só o desenho do templo. Os textos somem da tela, mas o
+ * link continua com nome acessível (aria-label), e a pílula fica compacta com
+ * o contorno dourado. Fora desse caso o selo segue completo.
+ */
+describe('SeloHome, modo adaptado até 400px: só o templo', () => {
+  /**
+   * Corpo de todos os blocos @media (max-width: 400px) (a chave de fechamento
+   * fica na coluna 0). Há dois: o compacto normal e o do modo adaptado.
+   */
+  function blocoAte400px(): string {
+    return Array.from(
+      fonte.matchAll(/@media \(max-width:\s*400px\)\s*\{([\s\S]*?)\n\}/g),
+      (m) => m[1]
+    ).join('\n');
+  }
+
+  /** O CSS sem os blocos de 400px, para provar que uma regra não está fora deles. */
+  function foraDoBloco400px(): string {
+    return fonte.replace(/@media \(max-width:\s*400px\)\s*\{[\s\S]*?\n\}/g, '');
+  }
+
+  it('os textos do selo ficam escondidos visualmente nesse caso', () => {
+    expect(blocoAte400px()).toMatch(
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home__texto\s*\{[^}]*display:\s*none/
+    );
+  });
+
+  it('o link continua com nome acessível pelo aria-label, mesmo sem texto visível', () => {
+    const w = mount(SeloHome);
+    expect(w.find('a').attributes('aria-label')).toBe('Caderno de Direito, página inicial');
+    expect(blocoAte400px()).not.toMatch(/aria-label|aria-hidden/);
+  });
+
+  it('a pílula fica compacta, com altura de 44px', () => {
+    expect(blocoAte400px()).toMatch(
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*--selo-altura:\s*44px/
+    );
+  });
+
+  it('a pílula mantém o contorno dourado (valor fixo do friso, não o preto do token do modo)', () => {
+    expect(blocoAte400px()).toMatch(
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*border-color:\s*#d3b563/
+    );
+  });
+
+  it('o modo adaptado acima de 400px continua com o texto completo', () => {
+    expect(foraDoBloco400px()).not.toMatch(
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home__texto\s*\{[^}]*display:\s*none/
+    );
+  });
+});
+
 describe('SeloHome, foco, impressão e posição', () => {
   it('foco de teclado visível sobre a barra escura (mesmo anel da trilha)', () => {
     expect(corpoDoSeletor('.selo-home:focus-visible')).toMatch(

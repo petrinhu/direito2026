@@ -187,6 +187,24 @@
   }
 }
 
+/* Decisão do líder (20/10/2026): com "Leitura ampliada" ligada, até 400px, o
+   selo mostra só o templo. Os textos saem da tela, mas o link segue com nome
+   acessível pelo aria-label. O contorno continua dourado: o valor é fixo aqui,
+   porque --cor-friso vira preto no modo. */
+@media (max-width: 400px) {
+  :root[data-modo-adaptado='on'] .selo-home {
+    --selo-altura: 44px;
+    --selo-templo: 30px;
+    --selo-recuo: 8px;
+    padding-right: var(--selo-recuo);
+    border-color: #d3b563;
+  }
+
+  :root[data-modo-adaptado='on'] .selo-home__texto {
+    display: none;
+  }
+}
+
 @media print {
   .selo-home {
     display: none;

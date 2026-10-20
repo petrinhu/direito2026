@@ -284,11 +284,13 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  /* Celular: a trilha ocupa a linha inteira. Com a busca dividindo a linha
-     (14rem de base, achado da QA em 390 e 360px) a trilha "Unidade 3 /
+  /* Celular, modo normal: a trilha ocupa a linha inteira. Com a busca dividindo
+     a linha (14rem de base, achado da QA em 390 e 360px) a trilha "Unidade 3 /
      Resumo" quebrava ao lado da busca e a barra ia para 3 linhas. A ordem
-     do markup não muda: Tab segue a ordem visual (selo, ☰, trilha, busca). */
-  .barra-topo__trilha {
+     do markup não muda: Tab segue a ordem visual (selo, ☰, trilha, busca).
+     Fora do modo adaptado a regra é a mesma; dentro dele ela empurra o botão
+     Tema para baixo do quadro de prova em 320px (medido), então não vale. */
+  :root:not([data-modo-adaptado='on']) .barra-topo__trilha {
     flex-basis: 100%;
   }
 }

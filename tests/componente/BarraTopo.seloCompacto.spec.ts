@@ -25,6 +25,12 @@ describe('BarraTopo no celular, layout do selo', () => {
     );
   });
 
+  it('a linha inteira da trilha vale só fora do modo adaptado (dentro dele empurra o Tema para baixo do quadro)', () => {
+    expect(fonte).toMatch(
+      /@media \(max-width:\s*640px\)\s*\{[^@]*?:root:not\(\[data-modo-adaptado='on'\]\) \.barra-topo__trilha\s*\{[^}]*flex-basis:\s*100%/
+    );
+  });
+
   it('a trilha no celular não divide mais a linha com a busca (sem flex-basis de 14rem)', () => {
     expect(fonte).not.toMatch(/\.barra-topo__trilha\s*\{[^}]*flex-basis:\s*14rem/);
   });

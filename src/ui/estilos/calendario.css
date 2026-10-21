@@ -69,7 +69,14 @@
   margin-inline: auto;
   padding: var(--esp-6, 2rem) var(--esp-5, 1.5rem);
   display: grid;
+  /* Coluna que encolhe: com a trilha automática, o filho mais largo (no adaptado,
+     326px) empurrava a página para além da tela de 320px. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-5, 1.5rem);
+}
+
+.calendario > * {
+  min-width: 0;
 }
 
 .calendario__titulo {
@@ -101,6 +108,12 @@
   margin: var(--esp-2, 0.5rem) 0 0;
   padding-left: var(--esp-5, 1.5rem);
   color: var(--cor-texto-suave, #4a4a4a);
+}
+
+/* A grade rola por dentro quando os sete dias não cabem (leitura ampliada em
+   320px): o contorno do quadro segura a largura, a página não rola. */
+.grade-calendario {
+  overflow-x: auto;
 }
 
 /* Grade: variáveis do FullCalendar apontam para os tokens do site. */
@@ -453,4 +466,11 @@
 :root[data-modo-adaptado='on'] .calendario__titulo,
 :root[data-modo-adaptado='on'] .calendario__subtitulo {
   color: #000000;
+}
+
+/* Leitura ampliada: o título cede à largura da tela para a palavra inteira caber
+   (em 320px, "Calendário" com 56px e o espaçamento do modo tem 326px; com 272px
+   de conteúdo, quebrava no meio da palavra). Mesmo critério do h1 de Unidade.vue. */
+:root[data-modo-adaptado='on'] .calendario__titulo {
+  font-size: min(var(--escala-xl), 12vw);
 }

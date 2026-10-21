@@ -62,8 +62,16 @@ function selecionar(data: string): void {
 </template>
 
 <style scoped>
+/* Coluna que encolhe e filhos com min-width: 0: sem isso, o filho mais largo (a
+   grade, no modo adaptado) põe a coluna na largura do próprio conteúdo e a página
+   passa da tela em 320px. A grade rola por dentro (calendario.css). */
 .calendario-completo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-5, 1.5rem);
+}
+
+.calendario-completo > * {
+  min-width: 0;
 }
 </style>

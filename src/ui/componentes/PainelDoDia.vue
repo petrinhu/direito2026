@@ -25,6 +25,10 @@ defineProps<{ visao: VisaoDoDia }>();
 <style scoped>
 .painel-do-dia {
   margin-top: var(--esp-5, 1.5rem);
+  /* Palavra longa sem ponto de quebra (ex.: "Empreendedorismo") na leitura ampliada
+     passava da caixa em 320px. "anywhere" vale também para o tamanho mínimo do item
+     (justify-items: start dá largura de conteúdo), não só para a quebra de linha. */
+  overflow-wrap: anywhere;
   padding: var(--esp-4, 1rem) var(--esp-5, 1.5rem);
   border-radius: var(--raio-lg, 16px);
   border: 1px solid var(--cor-borda, #dcd7c8);
@@ -44,11 +48,13 @@ defineProps<{ visao: VisaoDoDia }>();
   margin: 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-3, 0.75rem);
 }
 
 .painel-do-dia__item {
   display: grid;
+  min-width: 0;
   gap: var(--esp-1, 0.25rem);
   justify-items: start;
 }

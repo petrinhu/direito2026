@@ -109,6 +109,17 @@ onBeforeUnmount(() => observador?.disconnect());
 }
 
 /*
+  Palavra sem ponto de quebra (ex.: "incondicionalmente" num item da lista) é
+  mais larga que a caixa na leitura ampliada (24px e espaçamento de letra do
+  modo) e passava da tela: a página rolava 358px contra 320px. overflow-wrap:
+  break-word só parte a palavra que não cabe, e é herdado por parágrafos, itens
+  e legendas do corpo. Mesmo critério das células de tabela, abaixo.
+*/
+.bloco-teorico__corpo {
+  overflow-wrap: break-word;
+}
+
+/*
   A tabela do resumo cabe na largura do quadro em desktop e tablet, sem
   barra de rolagem. Antes, `table { min-width: max-content }` forçava a
   tabela à largura de uma linha só (1512px em 1280px) e o quadro rolava

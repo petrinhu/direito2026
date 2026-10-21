@@ -1,7 +1,23 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
+
+/**
+ * Versão do site (campo "version" do package.json) entra no código como
+ * constante de build, declarada em src/versao-site.d.ts. Lida aqui no Node,
+ * para o pacote do navegador não carregar o package.json inteiro. Vitest
+ * (vitest.config.ts) importa esta mesma constante, para o teste ver a mesma
+ * versão do build.
+ */
+const pacote = JSON.parse(
+  readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8')
+) as { version: string };
+
+export const definicoesDeVersao = {
+  __VERSAO_SITE__: JSON.stringify(pacote.version)
+};
 
 /**
  * O FullCalendar 6.1.22 injeta, ao ser importado, uma regra @font-face da
@@ -120,6 +136,7 @@ export const opcoesWorkbox = {
 // completo e a ordem do líder verbatim.
 export default defineConfig({
   base: '/',
+  define: definicoesDeVersao,
   plugins: [
     vue(),
     removerFonteIconesDoCalendario(),

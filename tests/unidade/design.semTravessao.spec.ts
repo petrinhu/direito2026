@@ -10,12 +10,11 @@ import { describe, expect, it } from 'vitest';
  * terceiro teste injeta um travessão sintético fora da exceção e prova
  * que o varredor reprova.
  *
- * ÚNICA exceção conhecida, declarada aqui e em nenhum outro lugar: a
- * linha de direitos do rodapé (src/ui/layout/Rodape.vue), por ordem
- * expressa do líder, 22/09/2026, verbatim: "Ponha ainda no rodapé
- * copyright [símbolo copyright] [travessão] [2026 [travessão]
- * ano_atual_dinamico]". Fora dessa linha, travessão continua proibido em
- * todo o produto — inclusive no resto do próprio Rodape.vue.
+ * Sem exceção. A exceção que existia para a linha de direitos do rodapé
+ * (ordem de 22/09/2026, com travessões) foi REVOGADA pela decisão do
+ * líder de 20/10/2026: "v1.0.0.0 · © 2026 Caderno de Direito. A partir de
+ * 2027 vira © 2026-2027" (hífen comum, sem travessão). Travessão continua
+ * proibido em todo o produto, inclusive no rodapé.
  *
  * Escopo do varredor: só o bloco <template> de cada .vue em src/ui, com
  * comentário HTML (<!-- ... -->) removido antes de comparar — é ali que
@@ -23,10 +22,6 @@ import { describe, expect, it } from 'vitest';
  * /* * /) não é o alvo desta regra e não é varrido.
  */
 const TRAVESSOES = ['—', '–'];
-
-const EXCECOES: ReadonlyArray<{ arquivo: string; linhaContem: string }> = [
-  { arquivo: 'src/ui/layout/Rodape.vue', linhaContem: 'Copyright' }
-];
 
 const RAIZ_UI = resolve(__dirname, '../../src/ui');
 
@@ -71,28 +66,13 @@ describe('nenhum travessão longo (—) ou meio (–) em texto renderizado, fora
     if (!template) return;
 
     const caminhoRelativo = relative(resolve(__dirname, '../..'), caminho).replace(/\\/g, '/');
-    const excecao = EXCECOES.find((e) => e.arquivo === caminhoRelativo);
+    const violacoes = violacoesNoTexto(template);
 
-    const violacoes = violacoesNoTexto(template).filter(
-      (linha) => !excecao || !linha.includes(excecao.linhaContem)
-    );
-
-    expect(
-      violacoes,
-      `travessão fora da exceção em ${caminhoRelativo}: ${violacoes.join('; ')}`
-    ).toEqual([]);
+    expect(violacoes, `travessão em ${caminhoRelativo}: ${violacoes.join('; ')}`).toEqual([]);
   });
 
   it('prova vermelha: o varredor REPROVA travessão fora da exceção declarada', () => {
     const textoComTravessaoForaDaExcecao = 'não é X — é Y';
     expect(violacoesNoTexto(textoComTravessaoForaDaExcecao)).not.toEqual([]);
-  });
-
-  it('a exceção só perdoa a linha do rodapé que contém "Copyright", nenhuma outra', () => {
-    const linhaFalsa = 'preço — R$ 10 (não é a linha de direitos)';
-    const violacoes = violacoesNoTexto(linhaFalsa).filter(
-      (linha) => !linha.includes(EXCECOES[0]!.linhaContem)
-    );
-    expect(violacoes).not.toEqual([]);
   });
 });

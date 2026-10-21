@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
+import { montarLinhaDeDireitos } from '@/core/rodape/linhaDeDireitos';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
 // Import (não caminho cru em public/): achado do líder, medido no site já
 // publicado, 22/09/2026 - arquivo em public/ tem nome fixo, e
@@ -15,9 +16,14 @@ import logoOferecimento from './oferecimento-logo.png';
  * escrito à mão (tests/componente/Rodape.spec.ts prova isso congelando o
  * relógio em anos diferentes): hoje os dois números empatam em 2026, e a
  * cada virada de ano o segundo avança sozinho.
+ *
+ * A versão vem da constante de build __VERSAO_SITE__ (campo "version" do
+ * package.json, ver vite.config.ts). A forma da linha é decidida em
+ * montarLinhaDeDireitos (src/core/rodape).
  */
 const ANO_INICIAL = 2026;
 const anoAtual = new Date().getFullYear();
+const linhaDireitos = montarLinhaDeDireitos(__VERSAO_SITE__, ANO_INICIAL, anoAtual);
 
 const props = defineProps<{ repositorio: RepositorioProgresso }>();
 
@@ -35,11 +41,15 @@ function apagar(): void {
     instituição, sem contato: ponto mais sensível de R3, coberto por
     scripts/verificar-proibicoes.sh.
 
-    As duas linhas seguintes (oferecimento e direitos) são ordem do
-    líder, 22/09/2026, verbatim: "ponha discretamente no rodapé que o
-    caderno de direito é oferecimento de [logo]-[link drpetrus.top].
-    Ponha ainda no rodapé copyright [símbolo copyright] [travessão]
-    [2026 [travessão] ano_atual_dinamico]".
+    A linha de oferecimento é ordem do líder, 22/09/2026, verbatim:
+    "ponha discretamente no rodapé que o caderno de direito é
+    oferecimento de [logo]-[link drpetrus.top]". A linha de direitos
+    (versão e copyright) é decisão do líder, 20/10/2026, verbatim: "quero
+    que a tag vá junto do copyright: [vx.y.z.w Copyright 2026-[ano atual]].
+    Existe outro formato mais padronizado?"; escolheu "v1.0.0.0 · © 2026
+    Caderno de Direito. A partir de 2027 vira © 2026-2027". Substitui a
+    forma antiga de 22/09/2026 (copyright com travessões); sem travessão
+    em lugar nenhum desta linha (L-32).
 
     Nome próprio na imagem: EXCEÇÃO declarada e única, autorizada pelo
     líder por pergunta direta, 22/09/2026 ("Nome do líder: liberado
@@ -67,14 +77,7 @@ function apagar(): void {
         <span>Caderno de Direito é um oferecimento de drpetrus.top</span>
       </a>
     </p>
-    <!--
-      Travessão longo AUTORIZADO nesta linha, e só nela, por ordem
-      expressa do líder citada acima. Em qualquer outro texto renderizado
-      do produto o travessão continua proibido: ver
-      tests/unidade/design.semTravessao.spec.ts, que varre todo
-      src/ui/**/*.vue e reprova qualquer ocorrência fora desta linha.
-    -->
-    <p class="rodape__direitos">Copyright © — {{ ANO_INICIAL }}—{{ anoAtual }}</p>
+    <p class="rodape__direitos">{{ linhaDireitos }}</p>
     <p>Material de estudo sem valor oficial.</p>
     <p>
       O progresso fica salvo neste navegador.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
-import { montarLinhaDeDireitos } from '@/core/rodape/linhaDeDireitos';
+import { montarLinhaDeDireitos } from '@/app/rodape/linhaDeDireitos';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
 // Import (não caminho cru em public/): achado do líder, medido no site já
 // publicado, 22/09/2026 - arquivo em public/ tem nome fixo, e

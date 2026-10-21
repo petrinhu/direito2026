@@ -410,6 +410,34 @@
   gap: var(--esp-2, 0.5rem);
 }
 
+/* Leitura ampliada, faixa intermediária: título em cima e botões embaixo, como
+   no celular. Com a fonte da leitura ampliada, a linha única só cabe a partir de
+   1262px de viewport (medido pelo QA; contas no teste barraAdaptado). */
+@media (min-width: 40rem) and (max-width: 1261px) {
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-header-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'titulo titulo' 'esq dir';
+  }
+}
+
+/* Leitura ampliada, a partir de 1262px: uma linha. A margem entre ANTERIOR e
+   HOJE cai de 18px (FullCalendar, 0,75em) para 8px, e o bloco não soma gap extra
+   (o espaço já vem da margem). Sem mudar a fonte do modo. */
+@media (min-width: 1262px) {
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-header-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: 'esq titulo dir';
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-toolbar-chunk {
+    gap: 0;
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-toolbar-chunk > :not(:first-child) {
+    margin-left: var(--esp-2, 0.5rem);
+  }
+}
+
 :root[data-modo-adaptado='on'] .grade-calendario .fc,
 :root[data-modo-adaptado='on'] .grade-calendario .fc-daygrid-day-number {
   font-size: var(--escala-base, 1.5rem);

@@ -137,8 +137,8 @@ publicar: plano (--seco, nada foi alterado)
   3. prepara $WT no commit da tag e copia os dispositivos.ts gerados
   4. preci em $WT (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito)
   5. rsync em 2 etapas para $DESTINO_RSYNC
-     etapa 1: tudo menos os 5 arquivos de entrada, com --delete (limite 200)
-     etapa 2: index.html, sw.js, 404.html, workbox-*.js, manifest.webmanifest, sem --delete
+     etapa 1: tudo menos os 5 arquivos de entrada (nada é apagado no servidor)
+     etapa 2: index.html, sw.js, 404.html, workbox-*.js, manifest.webmanifest
   6. conferência: md5 de cada arquivo do dist, api/saude.php, api/conteudo.php (401),
      raiz $RAIZ_PRINCIPAL (md5 $MD5_RAIZ_PRINCIPAL), scripts/verificar-publicacao.sh
   7. só com 6 verde: git push $REMOTO $BRANCH_PUBLICA e git push $REMOTO v$VERSAO_NOVA,
@@ -241,15 +241,15 @@ publicar_arquivos() {
   local origem="$WT/dist/"
   local ssh_opcoes="ssh -o BatchMode=yes -o ConnectTimeout=20"
   DEPLOY_INICIADO=1
-  # Etapa 1: tudo menos os 5 arquivos de entrada. --delete apaga no destino o
-  # que saiu do pacote; os 5 excluídos não são tocados por esta etapa.
-  timeout 900 rsync -rlt --checksum --delete --max-delete=200 --timeout=60 \
+  # Etapa 1: tudo menos os 5 arquivos de entrada. SEM --delete: arquivos antigos
+  # com hash (assets) ficam no servidor, para quem ainda tem a página antiga
+  # aberta ou o service worker antigo não receber 404. Acumular é inofensivo.
+  timeout 900 rsync -rlt --checksum --timeout=60 \
     -e "$ssh_opcoes" \
     --exclude=/index.html --exclude=/sw.js --exclude=/404.html \
     --exclude='/workbox-*.js' --exclude=/manifest.webmanifest \
     "$origem" "$DESTINO_RSYNC"
-  # Etapa 2: só os 5, por último. SEM --delete: com --exclude='*' um --delete
-  # aqui apagaria todo o resto do destino.
+  # Etapa 2: só os 5, por último. Também sem --delete.
   timeout 300 rsync -rlt --checksum --timeout=60 \
     -e "$ssh_opcoes" \
     --include=/index.html --include=/sw.js --include=/404.html \
@@ -392,7 +392,17 @@ ao_sair() {
   local codigo=$?
   if [ "$codigo" -ne 0 ]; then
     if [ "$DEPLOY_INICIADO" = 1 ]; then
-      echo "publicar: ABORTADO após iniciar o deploy (código $codigo). O remoto pode estar parcial; nada foi enviado ao git. Decida com o líder antes de repetir." >&2
+      echo "publicar: ABORTADO após iniciar o deploy (código $codigo). O remoto pode estar parcial." >&2
+      if [ -n "$SHA_RELEASE" ]; then
+        if [ "$TAG_CRIADA" = 1 ]; then
+          echo "publicar: ficaram LOCAIS e NÃO enviados ao git: commit de release $SHA_RELEASE e tag local v$VERSAO_NOVA." >&2
+        else
+          echo "publicar: ficou LOCAL e NÃO enviado ao git: commit de release $SHA_RELEASE (sem tag)." >&2
+        fi
+        echo "publicar: decida com o líder antes de repetir: rodar de novo calcula outra versão." >&2
+      else
+        echo "publicar: nada foi commitado nem enviado ao git." >&2
+      fi
     else
       if [ "$PACKAGE_ALTERADO" = 1 ]; then
         git checkout -- package.json >/dev/null 2>&1 || true

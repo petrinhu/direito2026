@@ -46,13 +46,13 @@ npm run publicar -- recurso --versao 1.0.0.0
 2. Grava a versão nova em `package.json` e cria o commit `chore(release): vX.Y.Z.W`, só com esse arquivo.
 3. Cria a tag anotada `vX.Y.Z.W`.
 4. Prepara a cópia de trabalho `.worktrees/pub` no commit da tag e roda o `preci`, a mesma verificação do CI local. Se o `preci` falhar, o comando desfaz o commit e a tag que ele mesmo criou, e para. Nada vai ao servidor.
-5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. Primeiro tudo menos cinco arquivos de entrada (`index.html`, `sw.js`, `404.html`, `workbox-*.js` e `manifest.webmanifest`); depois esses cinco. Na primeira etapa, arquivos que saíram do pacote são apagados no destino. Na segunda, nada é apagado.
+5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. Primeiro tudo menos cinco arquivos de entrada (`index.html`, `sw.js`, `404.html`, `workbox-*.js` e `manifest.webmanifest`); depois esses cinco. Nenhuma etapa apaga nada no servidor: arquivos antigos com hash ficam lá, de propósito, para quem ainda tem a página antiga aberta não receber 404. Acumular é inofensivo.
 6. Confere o ar: compara o md5 de cada arquivo do pacote com a resposta do endereço, confere `api/saude.php` (`{"ok":true}`), `api/conteudo.php` (401 sem sessão), a raiz do site principal (que não pode mudar) e roda `scripts/verificar-publicacao.sh`.
 7. Só com tudo verde, envia `main` e a tag ao GitHub e confirma os dois com `git ls-remote`.
 
 ### Se a conferência falhar
 
-O comando para com erro e diz o que divergiu. Ele NÃO desfaz o deploy, porque o servidor já mudou. Nada foi enviado ao GitHub. Decida com o líder antes de corrigir ou repetir.
+O comando para com erro e diz o que divergiu. Ele NÃO desfaz o deploy, porque o servidor já mudou. Nada foi enviado ao GitHub. O commit de release e a tag ficam locais, e a mensagem diz o SHA e o nome da tag. Decida com o líder antes de corrigir ou repetir: rodar de novo calcula outra versão.
 
 ### Como verificar depois
 

@@ -39,6 +39,9 @@ const emAreaRestrita = computed(() => caminhoEmAreaRestrita(props.curriculo, pro
 // A página inicial tem caminho vazio (App.vue passa route.path sem a barra inicial).
 // Lá o botão Home não aparece: a própria página já é a home.
 const naPaginaInicial = computed(() => props.caminhoAtual === '');
+// Na página do calendário o quadro de contagem começa minimizado, sem escolha
+// gravada (ordem do orquestrador, para ratificação do líder, 20/10/2026).
+const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario');
 
 const emit = defineEmits<{ buscar: [string] }>();
 
@@ -140,7 +143,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   <div class="layout-base__inferior">
     <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
     <!-- Mesmo critério do aviso: o quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
-    <QuadroProva v-if="!emAreaRestrita" />
+    <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
     <BotaoHome v-if="!naPaginaInicial" />
   </div>
 </template>

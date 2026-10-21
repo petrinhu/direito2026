@@ -14,8 +14,11 @@ import ModalCalendario from './ModalCalendario.vue';
  * Quadro flutuante de contagem (ordem do líder, 20/10/2026): aparece em
  * todas as páginas, cresce e muda de cor conforme a prova chega, e pode ser
  * minimizado. `agora` é injetável para teste; sem ele, usa o relógio.
+ * `minimizadoPorPadrao` é o padrão da página (hoje, a do calendário, que repete
+ * o que o calendário já mostra e cobre ANTERIOR, HOJE e PRÓXIMO quando aberto).
+ * Vale só sem escolha gravada: se a pessoa tocar em Mostrar, a escolha vale.
  */
-const props = defineProps<{ agora?: Date }>();
+const props = defineProps<{ agora?: Date; minimizadoPorPadrao?: boolean }>();
 
 const contador = computed(() => contadorProva(props.agora ?? new Date()));
 
@@ -44,7 +47,9 @@ function modoAdaptadoLigadoNaRaiz(): boolean {
 
 const modoAdaptadoLigado = ref(modoAdaptadoLigadoNaRaiz());
 const telaEstreita = ref(consultaTelaEstreita?.matches ?? false);
-const padraoMinimizado = computed(() => modoAdaptadoLigado.value && telaEstreita.value);
+const padraoMinimizado = computed(
+  () => (props.minimizadoPorPadrao ?? false) || (modoAdaptadoLigado.value && telaEstreita.value)
+);
 
 // Só o toque da pessoa (Mostrar ou Minimizar) conta como escolha na faixa atual.
 const escolhaDaPessoa = ref<boolean | undefined>(

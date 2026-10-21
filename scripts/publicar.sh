@@ -42,6 +42,8 @@ SSH_OPCOES="ssh -o BatchMode=yes -o ConnectTimeout=20"
 ETAPA1_EXCLUI=(--exclude=/index.html --exclude=/sw.js --exclude=/404.html --exclude=/manifest.webmanifest)
 ETAPA2_INCLUI=(--include=/index.html --include=/sw.js --include=/404.html --include=/manifest.webmanifest --exclude='*')
 APAGAR_FORA=0
+APAGAR_HABILITADO=1
+MANIFESTO_ATUAL_EXISTE=0
 
 TIPO=""
 VERSAO_FORCADA=""
@@ -290,6 +292,8 @@ REGRAS
 # manifesto", que liberaria apagar a geração que está no ar).
 ler_manifestos_remotos() {
   local listagem="$ESPACO/listagem-destino.txt" nome
+  APAGAR_HABILITADO=1
+  MANIFESTO_ATUAL_EXISTE=0
   mkdir -p "$ESPACO/manifestos-remotos"
   rsync --list-only -e "$SSH_OPCOES" "$DESTINO_RSYNC" > "$listagem" ||
     recusar "não consegui listar o destino (rede ou chave SSH); nada foi apagado nem enviado"
@@ -297,8 +301,46 @@ ler_manifestos_remotos() {
     if awk -v n="$nome" '$NF==n{achou=1} END{exit !achou}' "$listagem"; then
       rsync -e "$SSH_OPCOES" "$DESTINO_RSYNC$nome" "$ESPACO/manifestos-remotos/" ||
         recusar "$nome existe no destino mas não foi baixado"
+      if [ "$nome" = "$MANIFESTO_ATUAL" ]; then
+        MANIFESTO_ATUAL_EXISTE=1
+      fi
     fi
   done
+  if [ "$MANIFESTO_ATUAL_EXISTE" = 0 ]; then
+    protege_versao_no_ar
+  fi
+}
+
+# Primeira publicação com este comando (sem manifesto no servidor): a versão no
+# ar é lida da lista de precache do sw.js publicado, que é o que o navegador já
+# tem em cache. Se não der para ler, NÃO se apaga nada nesta publicação.
+protege_versao_no_ar() {
+  local sw="$ESPACO/sw-no-ar.js" lista="$ESPACO/versao-no-ar.txt" qtd
+  if ! curl -sf --max-time 30 -o "$sw" "$DOMINIO/sw.js"; then
+    avisar_sem_apagar "não consegui baixar $DOMINIO/sw.js"
+    return 0
+  fi
+  qtd=$(grep -o -E "url *: *[\"'][^\"']+[\"']" "$sw" | wc -l || true)
+  if [ "${qtd:-0}" -eq 0 ]; then
+    avisar_sem_apagar "o sw.js publicado não tem lista de precache legível"
+    return 0
+  fi
+  {
+    printf '%s\n' index.html sw.js 404.html manifest.webmanifest
+    grep -o -E "url *: *[\"'][^\"']+[\"']" "$sw" | sed -E "s/^url *: *[\"']//; s/[\"']\$//" || true
+    grep -o -E '\./workbox-[A-Za-z0-9_-]+' "$sw" | sed -E 's|^\./||; s|$|.js|' || true
+  } | sed -E 's|^\./||; s|^/||' | sort -u > "$lista"
+  if grep -q -v -E '^[A-Za-z0-9._/-]+$' "$lista"; then
+    avisar_sem_apagar "a lista de precache tem nome fora do padrão seguro"
+    return 0
+  fi
+  cp -- "$lista" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"
+  echo "publicar: primeira publicação: versão no ar protegida por $(grep -c . "$lista") caminho(s) lidos do sw.js"
+}
+
+avisar_sem_apagar() {
+  APAGAR_HABILITADO=0
+  echo "publicar: AVISO: $1. Esta publicação segue SEM apagar nada no servidor." >&2
 }
 
 # Regras de proteção = fixas + tudo que está nos dois manifestos remotos.
@@ -355,6 +397,8 @@ publicar_manifestos() {
   (cd "$WT/dist" && find . -type f -printf '%P\n' | sort) > "$novo/$MANIFESTO_ATUAL"
   if [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" ]; then
     cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$novo/$MANIFESTO_ANTERIOR"
+  elif [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR" ]; then
+    cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR" "$novo/$MANIFESTO_ANTERIOR"
   fi
   # --checksum: sem ele, rsync compara tamanho e mtime, e dois manifestos de
   # mesmo tamanho gravados no mesmo segundo parecem iguais e não são atualizados.
@@ -363,11 +407,17 @@ publicar_manifestos() {
 
 publicar_arquivos() {
   local origem="$WT/dist/"
+  local -a apagar=()
   ler_manifestos_remotos
   montar_regras_protecao
-  calcular_apagamentos
+  if [ "$APAGAR_HABILITADO" = 1 ]; then
+    calcular_apagamentos
+    apagar=(--delete --max-delete="$TETO_APAGAR")
+  else
+    echo "publicar: sem apagamento nesta publicação"
+  fi
   DEPLOY_INICIADO=1
-  timeout 900 rsync -rlt --checksum --delete --max-delete="$TETO_APAGAR" --timeout=60 \
+  timeout 900 rsync -rlt --checksum "${apagar[@]}" --timeout=60 \
     -e "$SSH_OPCOES" --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
     "$origem" "$DESTINO_RSYNC"
   timeout 300 rsync -rlt --checksum --timeout=60 \

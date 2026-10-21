@@ -144,10 +144,12 @@
   }
 }
 
-/* Modo adaptado: pílula preta com contorno e texto brancos, o mesmo par do
-   círculo Home (BotaoHome.vue). Aqui o friso vira preto, então HOME e título
-   são explícitos em branco, senão o HOME sumiria sobre o fundo preto. O título
-   perde a serifa, como os demais títulos do modo (base.css). */
+/* Modo adaptado: pílula preta com texto branco, como o círculo Home (BotaoHome.vue).
+   O contorno é preto: a barra do modo é branca, e preto sobre branco dá 21:1
+   (WCAG 1.4.11 pede 3:1). Branco ou dourado sobre a barra branca não cumpre.
+   Aqui o friso vira preto, então HOME e título são explícitos em branco, senão
+   o HOME sumiria sobre o fundo preto. O título perde a serifa, como os demais
+   títulos do modo (base.css). */
 :root[data-modo-adaptado='on'] .selo-home {
   --selo-altura: 64px;
   --selo-templo: 36px;
@@ -157,7 +159,7 @@
      12rem, "Caderno de Direito" quebra em duas linhas dentro da pílula. */
   max-width: 12rem;
   background: #000000;
-  border-color: #ffffff;
+  border-color: #000000;
   color: #ffffff;
 }
 
@@ -189,15 +191,15 @@
 
 /* Decisão do líder (20/10/2026): com "Leitura ampliada" ligada, até 400px, o
    selo mostra só o templo. Os textos saem da tela, mas o link segue com nome
-   acessível pelo aria-label. O contorno continua dourado: o valor é fixo aqui,
-   porque --cor-friso vira preto no modo. */
+   acessível pelo aria-label. O contorno é preto (ver o bloco do modo acima):
+   o dourado sobre a barra branca dá 2:1, abaixo do mínimo de 3:1. */
 @media (max-width: 400px) {
   :root[data-modo-adaptado='on'] .selo-home {
     --selo-altura: 44px;
     --selo-templo: 30px;
     --selo-recuo: 8px;
     padding-right: var(--selo-recuo);
-    border-color: #d3b563;
+    border-color: #000000;
   }
 
   :root[data-modo-adaptado='on'] .selo-home__texto {

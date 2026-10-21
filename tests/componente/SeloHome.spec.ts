@@ -196,10 +196,11 @@ describe('SeloHome, modo adaptado até 400px: só o templo', () => {
     );
   });
 
-  it('a pílula mantém o contorno dourado (valor fixo do friso, não o preto do token do modo)', () => {
+  it('a pílula tem contorno preto: ao lado da barra branca do modo, o contorno dourado dava 2:1 (WCAG 1.4.11 pede 3:1)', () => {
     expect(blocoAte400px()).toMatch(
-      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*border-color:\s*#d3b563/
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*border-color:\s*#000000/
     );
+    expect(blocoAte400px()).not.toMatch(/#d3b563/);
   });
 
   it('o modo adaptado acima de 400px continua com o texto completo', () => {
@@ -226,12 +227,18 @@ describe('SeloHome, foco, impressão e posição', () => {
 });
 
 describe('SeloHome, modo adaptado', () => {
-  it('pílula preta com contorno e texto brancos (mesmo padrão do BotaoHome)', () => {
+  it('pílula preta com contorno preto e texto branco: a barra do modo é branca, então o contorno tem 21:1', () => {
     expect(fonte).toMatch(
       /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*background:\s*#000000/
     );
     expect(fonte).toMatch(
-      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*border-color:\s*#ffffff/
+      /:root\[data-modo-adaptado='on'\]\s+\.selo-home\s*\{[^}]*border-color:\s*#000000/
+    );
+  });
+
+  it('o contorno do selo no modo nunca é branco nem dourado (branco some sobre a barra branca)', () => {
+    expect(corpoDoSeletor(":root[data-modo-adaptado='on'] .selo-home")).not.toMatch(
+      /border-color:\s*#ffffff/
     );
   });
 

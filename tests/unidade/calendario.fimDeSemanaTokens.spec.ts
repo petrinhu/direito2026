@@ -107,9 +107,17 @@ describe('o tom não se confunde com cores já usadas no calendário (claro)', (
   });
 });
 
-describe('modo adaptado: sem tom colorido (sinal é o nome do dia no cabeçalho)', () => {
-  it('o fundo fica branco e o texto preto, como o resto da grade no modo adaptado', () => {
-    expect(ADAPTADO['--cor-cal-fimdesemana-fundo']).toBe('#ffffff');
+describe('modo adaptado: fim de semana sinalizado com cinza claro neutro (QA final, 20/10/2026)', () => {
+  it('o fundo é cinza claro neutro (#e6e6e6) e o texto preto, para o fim de semana continuar visível', () => {
+    expect(ADAPTADO['--cor-cal-fimdesemana-fundo']).toBe('#e6e6e6');
     expect(ADAPTADO['--cor-cal-fimdesemana-texto']).toBe('#000000');
+  });
+
+  it('o texto preto sobre o cinza claro passa de 15:1 (contraste bem acima do piso AA)', () => {
+    const cr = calcularContraste(
+      ADAPTADO['--cor-cal-fimdesemana-fundo'] ?? '',
+      ADAPTADO['--cor-cal-fimdesemana-texto'] ?? ''
+    );
+    expect(cr).toBeGreaterThanOrEqual(15);
   });
 });

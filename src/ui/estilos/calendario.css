@@ -362,6 +362,13 @@
   font-size: var(--escala-base, 1.0625rem);
 }
 
+/* Chip "Fim de semana" da legenda: mesmo cinza das colunas. Os chips das categorias
+   seguem brancos, como antes desta mudança. */
+:root[data-modo-adaptado='on'] .cal-fim-de-semana {
+  background: var(--cal-fundo);
+  color: var(--cal-texto);
+}
+
 :root[data-modo-adaptado='on'] .grade-calendario .fc-day-today {
   box-shadow: inset 0 0 0 4px #000000;
 }

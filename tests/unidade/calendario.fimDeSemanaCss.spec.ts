@@ -65,4 +65,12 @@ describe('chip "Fim de semana" da legenda', () => {
     expect(chip?.corpo).toContain('--cal-fundo: var(--cor-cal-fimdesemana-fundo)');
     expect(chip?.corpo).toContain('--cal-texto: var(--cor-cal-fimdesemana-texto)');
   });
+
+  it('no modo adaptado o chip mostra o mesmo cinza das colunas, não o branco do chip padrão', () => {
+    const chip = regras().find(
+      (r) => r.seletor === ":root[data-modo-adaptado='on'] .cal-fim-de-semana"
+    );
+    expect(chip, 'sem regra de chip de fim de semana no modo adaptado').toBeDefined();
+    expect(chip?.corpo.replace(/\s+/g, ' ')).toContain('background: var(--cal-fundo)');
+  });
 });

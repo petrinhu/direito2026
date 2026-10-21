@@ -44,6 +44,8 @@ ETAPA2_INCLUI=(--include=/index.html --include=/sw.js --include=/404.html --incl
 APAGAR_FORA=0
 APAGAR_HABILITADO=1
 MANIFESTO_ATUAL_EXISTE=0
+PUSH_MAIN_FEITO=0
+PUSH_TAG_FEITO=0
 
 TIPO=""
 VERSAO_FORCADA=""
@@ -525,17 +527,42 @@ conferir_ar() {
   fi
 }
 
-enviar_ao_git() {
-  local tag_remota tag_comitada main_remota
-  git push "$REMOTO" "$BRANCH_PUBLICA"
-  git push "$REMOTO" "v$VERSAO_NOVA"
+# Commit para onde a tag remota aponta. Tag anotada: o ls-remote devolve o objeto
+# da tag em refs/tags/vX e o commit descascado em refs/tags/vX^{} (só aparece se a
+# consulta pedir o conjunto de tags, não um padrão exato). Tag leve: a própria
+# refs/tags/vX já é o commit. Devolve vazio se a tag não existir.
+commit_da_tag_remota() {
+  local remoto="$1" tag="$2" linhas
+  linhas="$(git ls-remote --tags "$remoto")" || return 1
+  printf '%s\n' "$linhas" | awk -v t="refs/tags/$tag" '
+    $2==t"^{}" {descascado=$1}
+    $2==t {direto=$1}
+    END { if (descascado != "") print descascado; else print direto }'
+}
+
+# Prova, só leitura, que branch e tag remotas apontam para o commit de release.
+provar_envio() {
+  local main_remota tag_comitada
   main_remota="$(git ls-remote "$REMOTO" "refs/heads/$BRANCH_PUBLICA" |
     awk -v r="refs/heads/$BRANCH_PUBLICA" '$2==r{print $1}')"
-  tag_remota="$(git ls-remote --tags "$REMOTO" "refs/tags/v$VERSAO_NOVA")"
-  tag_comitada="$(printf '%s\n' "$tag_remota" | awk -v r="refs/tags/v$VERSAO_NOVA^{}" '$2==r{print $1}')"
-  [ "$main_remota" = "$SHA_RELEASE" ] || recusar "ls-remote: $BRANCH_PUBLICA remoto não é o commit de release"
-  [ "$tag_comitada" = "$SHA_RELEASE" ] || recusar "ls-remote: tag v$VERSAO_NOVA remota não aponta para o commit de release"
+  tag_comitada="$(commit_da_tag_remota "$REMOTO" "v$VERSAO_NOVA")" || tag_comitada=""
+  if [ "$main_remota" != "$SHA_RELEASE" ]; then
+    echo "publicar: prova falhou: $BRANCH_PUBLICA em $REMOTO é '${main_remota:-vazio}', esperado $SHA_RELEASE" >&2
+    return 1
+  fi
+  if [ "$tag_comitada" != "$SHA_RELEASE" ]; then
+    echo "publicar: prova falhou: v$VERSAO_NOVA em $REMOTO aponta para '${tag_comitada:-nada}', esperado o commit de release $SHA_RELEASE" >&2
+    return 1
+  fi
   echo "publicar: git ls-remote confirma $BRANCH_PUBLICA e v$VERSAO_NOVA em $REMOTO"
+}
+
+enviar_ao_git() {
+  git push "$REMOTO" "$BRANCH_PUBLICA"
+  PUSH_MAIN_FEITO=1
+  git push "$REMOTO" "v$VERSAO_NOVA"
+  PUSH_TAG_FEITO=1
+  provar_envio || recusar "prova do envio falhou (mensagem acima); confira com git ls-remote antes de agir"
 }
 
 desfazer_release() {
@@ -564,9 +591,14 @@ ao_sair() {
       echo "publicar: ABORTADO após iniciar o deploy (código $codigo). O remoto pode estar parcial." >&2
       if [ -n "$SHA_RELEASE" ]; then
         if [ "$TAG_CRIADA" = 1 ]; then
-          echo "publicar: ficaram LOCAIS e NÃO enviados ao git: commit de release $SHA_RELEASE e tag local v$VERSAO_NOVA." >&2
+          echo "publicar: commit de release $SHA_RELEASE e tag local v$VERSAO_NOVA existem localmente." >&2
         else
-          echo "publicar: ficou LOCAL e NÃO enviado ao git: commit de release $SHA_RELEASE (sem tag)." >&2
+          echo "publicar: commit de release $SHA_RELEASE existe localmente (sem tag)." >&2
+        fi
+        if [ "$PUSH_MAIN_FEITO" = 1 ] || [ "$PUSH_TAG_FEITO" = 1 ]; then
+          echo "publicar: o script chegou a enviar ao git (branch=$PUSH_MAIN_FEITO, tag=$PUSH_TAG_FEITO). Confirme com git ls-remote antes de agir." >&2
+        else
+          echo "publicar: o script NÃO confirmou envio ao git. Confirme com git ls-remote github refs/heads/main e git ls-remote --tags github antes de repetir." >&2
         fi
         echo "publicar: decida com o líder antes de repetir: rodar de novo calcula outra versão." >&2
       else

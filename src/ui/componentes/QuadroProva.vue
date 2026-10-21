@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { contadorProva } from '@/app/calendario/contadorProva';
 import {
-  gravarMinimizado,
-  lerMinimizado,
+  gravarEscolha,
+  gravarSemEscolha,
+  lerEscolha,
   type ArmazenamentoSimples
 } from '@/app/calendario/estadoQuadroProva';
 import type { NivelUrgencia } from '@/core/calendario/tipos';
@@ -26,25 +27,69 @@ function armazenamentoPadrao(): ArmazenamentoSimples | undefined {
   }
 }
 
-const minimizado = ref(
-  contador.value ? lerMinimizado(armazenamentoPadrao(), contador.value.faixa) : false
-);
+/**
+ * Modo adaptado em tela de até 340px (decisão do líder, 20/10/2026): o quadro
+ * começa minimizado, a letra continua grande, e só abre se a pessoa tocar em
+ * Mostrar. O modo vem do atributo data-modo-adaptado no <html> (o mesmo que o
+ * MapaMentalVisor lê), e a largura, de matchMedia. Os dois reagem com a página
+ * aberta. Sem escolha da pessoa, vale o padrão; com escolha, vale a escolha.
+ */
+const CONSULTA_TELA_ESTREITA = '(max-width: 340px)';
+const consultaTelaEstreita =
+  typeof matchMedia === 'function' ? matchMedia(CONSULTA_TELA_ESTREITA) : undefined;
 
-// Mudou de faixa de urgência: reabre sozinho e guarda o estado da nova faixa.
+function modoAdaptadoLigadoNaRaiz(): boolean {
+  return document.documentElement.getAttribute('data-modo-adaptado') === 'on';
+}
+
+const modoAdaptadoLigado = ref(modoAdaptadoLigadoNaRaiz());
+const telaEstreita = ref(consultaTelaEstreita?.matches ?? false);
+const padraoMinimizado = computed(() => modoAdaptadoLigado.value && telaEstreita.value);
+
+// Só o toque da pessoa (Mostrar ou Minimizar) conta como escolha na faixa atual.
+const escolhaDaPessoa = ref<boolean | undefined>(
+  contador.value ? lerEscolha(armazenamentoPadrao(), contador.value.faixa) : undefined
+);
+const minimizado = computed(() => escolhaDaPessoa.value ?? padraoMinimizado.value);
+
+let observadorModo: InstanceType<typeof window.MutationObserver> | undefined;
+
+function aoMudarLargura(): void {
+  telaEstreita.value = consultaTelaEstreita?.matches ?? false;
+}
+
+onMounted(() => {
+  consultaTelaEstreita?.addEventListener('change', aoMudarLargura);
+  observadorModo = new window.MutationObserver(() => {
+    modoAdaptadoLigado.value = modoAdaptadoLigadoNaRaiz();
+  });
+  observadorModo.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-modo-adaptado']
+  });
+});
+
+onBeforeUnmount(() => {
+  consultaTelaEstreita?.removeEventListener('change', aoMudarLargura);
+  observadorModo?.disconnect();
+});
+
+// Mudou de faixa de urgência: a escolha da faixa anterior não vale mais. O reset
+// não conta como escolha da pessoa, então o padrão de cada caso volta a valer.
 watch(
   () => contador.value?.faixa,
   (faixa, anterior) => {
     if (!faixa || faixa === anterior) return;
-    minimizado.value = false;
-    gravarMinimizado(armazenamentoPadrao(), faixa, false);
+    escolhaDaPessoa.value = undefined;
+    gravarSemEscolha(armazenamentoPadrao(), faixa);
   }
 );
 
 function alternar(): void {
   const faixa = contador.value?.faixa;
   if (!faixa) return;
-  minimizado.value = !minimizado.value;
-  gravarMinimizado(armazenamentoPadrao(), faixa, minimizado.value);
+  escolhaDaPessoa.value = !minimizado.value;
+  gravarEscolha(armazenamentoPadrao(), faixa, escolhaDaPessoa.value);
 }
 
 function resumoCurto(dias: number): string {

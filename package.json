@@ -23,6 +23,7 @@
     "verificar:fontes": "bash scripts/verificar-fontes.sh",
     "verificar:publicacao": "bash scripts/verificar-publicacao.sh",
     "preci": "bash scripts/preci.sh",
+    "publicar": "bash scripts/publicar.sh",
     "nova-unidade": "node --import tsx scripts/nova-unidade.ts",
     "atualizar-referencias": "node --import tsx scripts/gerar-dispositivos-por-unidade.ts && node --import tsx scripts/atualizar-referencias.ts"
   },

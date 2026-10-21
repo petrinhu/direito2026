@@ -2,6 +2,72 @@
 
 Pacote publicável da primeira versão estática do site, montado a partir dos mockups aprovados em `mockups/`. É exatamente o conteúdo que sobe para a raiz do servidor (não há build: os arquivos aqui já são o produto final desta versão).
 
+## Publicar uma versão
+
+Use o comando único `npm run publicar`. Ele grava a versão nova em `package.json`, cria o commit e a tag, monta o pacote, publica no servidor, confere o ar e só então envia o commit e a tag ao GitHub. Você não mexe em número de versão nem em tag à mão.
+
+### Escolha o tipo da mudança
+
+A versão tem quatro números, A.B.C.D (a mesma regra do GlintFx). O tipo decide qual número sobe:
+
+| Tipo | Quando usar | Exemplo, a partir de 0.1.0 |
+|---|---|---|
+| `recurso` | Algo novo para quem usa o site: tela, função ou conteúdo que muda a experiência. Sobe B e zera C e D. | 0.2.0.0 |
+| `correcao` | Só conserto de erro, sem nada novo. Sobe C e zera D. | 0.1.1.0 |
+| `construcao` | Só empacotamento, teste ou build, sem efeito para quem usa o site. Sobe D. | 0.1.0.1 |
+
+O número A só muda por ordem expressa do líder. O cálculo não mexe nele: para isso existe `--versao` (ver abaixo).
+
+### Exemplos
+
+Veja o plano sem alterar nada:
+
+```
+npm run publicar -- correcao --seco
+```
+
+Publicação de verdade (exige branch `main` e nenhuma mudança não commitada em arquivo rastreado):
+
+```
+npm run publicar -- recurso
+```
+
+Primeira publicação, na versão 1.0.0.0 (só por ordem do líder):
+
+```
+npm run publicar -- recurso --versao 1.0.0.0
+```
+
+`--versao` precisa ter quatro números e ser maior que a versão atual. Sem `--versao`, o comando calcula a versão sozinho.
+
+### O que o comando faz, em ordem
+
+1. Recusa se a branch não for `main`, se houver mudança não commitada em arquivo rastreado (arquivo novo ainda não adicionado não bloqueia), se o tipo for inválido ou se a versão for inválida.
+2. Grava a versão nova em `package.json` e cria o commit `chore(release): vX.Y.Z.W`, só com esse arquivo.
+3. Cria a tag anotada `vX.Y.Z.W`.
+4. Prepara a cópia de trabalho `.worktrees/pub` no commit da tag e roda o `preci`, a mesma verificação do CI local. Se o `preci` falhar, o comando desfaz o commit e a tag que ele mesmo criou, e para. Nada vai ao servidor.
+5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. Primeiro tudo menos cinco arquivos de entrada (`index.html`, `sw.js`, `404.html`, `workbox-*.js` e `manifest.webmanifest`); depois esses cinco. Na primeira etapa, arquivos que saíram do pacote são apagados no destino. Na segunda, nada é apagado.
+6. Confere o ar: compara o md5 de cada arquivo do pacote com a resposta do endereço, confere `api/saude.php` (`{"ok":true}`), `api/conteudo.php` (401 sem sessão), a raiz do site principal (que não pode mudar) e roda `scripts/verificar-publicacao.sh`.
+7. Só com tudo verde, envia `main` e a tag ao GitHub e confirma os dois com `git ls-remote`.
+
+### Se a conferência falhar
+
+O comando para com erro e diz o que divergiu. Ele NÃO desfaz o deploy, porque o servidor já mudou. Nada foi enviado ao GitHub. Decida com o líder antes de corrigir ou repetir.
+
+### Como verificar depois
+
+- A última linha do comando é `publicado: vX.Y.Z.W sha=... divergencias=0`.
+- `git ls-remote --tags github refs/tags/vX.Y.Z.W` mostra a tag, e `git ls-remote github refs/heads/main` mostra o mesmo commit.
+- `curl -s https://direito2026.drpetrus.top/api/saude.php` responde `{"ok":true}`.
+
+### Se algo der errado
+
+- Recusa logo no início: nada foi alterado. Leia a mensagem.
+- Falha depois do commit e antes do deploy: o comando desfaz sozinho o que criou. Se avisar que não desfez, porque o HEAD já mudou, desfaça à mão a tag local e o commit de release, sem tocar em mais nada.
+- Falha no `preci`: o diagnóstico fica numa pasta `/var/tmp/publicar.*` (permissão 700). Ela pode conter trechos do conteúdo restrito. Leia e apague à mão. O caminho é impresso na mensagem.
+- Falha depois do rsync: o servidor pode ter ficado parcial. Não há desfazer automático.
+- Se o push for recusado, resolva o histórico e rode de novo. O comando nunca força push, nunca usa `--no-verify` e nunca reescreve commit.
+
 ## O que está em `site/`
 
 | Arquivo | O que faz |

@@ -46,9 +46,21 @@ npm run publicar -- recurso --versao 1.0.0.0
 2. Grava a versão nova em `package.json` e cria o commit `chore(release): vX.Y.Z.W`, só com esse arquivo.
 3. Cria a tag anotada `vX.Y.Z.W`.
 4. Prepara a cópia de trabalho `.worktrees/pub` no commit da tag e roda o `preci`, a mesma verificação do CI local. Se o `preci` falhar, o comando desfaz o commit e a tag que ele mesmo criou, e para. Nada vai ao servidor.
-5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. Primeiro tudo menos cinco arquivos de entrada (`index.html`, `sw.js`, `404.html`, `workbox-*.js` e `manifest.webmanifest`); depois esses cinco. Nenhuma etapa apaga nada no servidor: arquivos antigos com hash ficam lá, de propósito, para quem ainda tem a página antiga aberta não receber 404. Acumular é inofensivo.
+5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. A primeira envia tudo menos `index.html`, `sw.js`, `404.html` e `manifest.webmanifest`, e faz a higiene descrita abaixo. A segunda envia esses quatro, sem apagar nada. Por último grava os manifestos (ver abaixo).
 6. Confere o ar: compara o md5 de cada arquivo do pacote com a resposta do endereço, confere `api/saude.php` (`{"ok":true}`), `api/conteudo.php` (401 sem sessão), a raiz do site principal (que não pode mudar) e roda `scripts/verificar-publicacao.sh`.
 7. Só com tudo verde, envia `main` e a tag ao GitHub e confirma os dois com `git ls-remote`.
+
+### Higiene do servidor: o que pode ser apagado
+
+Cada publicação apaga no servidor só arquivos velhos de `assets/` e `workbox-*.js` que não estão no pacote atual **nem** na geração publicada antes dele. Quem ainda tem a página da versão anterior aberta não leva 404 no meio do uso.
+
+- **Manifestos.** O comando grava no servidor `.publicacao-manifesto.txt` (o que está no ar) e `.publicacao-manifesto-anterior.txt` (a geração anterior). Assim cada publicação protege as duas gerações mais recentes.
+- **Teto.** No máximo 500 arquivos apagados por publicação. Se a simulação passar disso, o comando para antes de apagar qualquer coisa.
+- **Escopo.** Se houver algo a apagar fora de `assets/` e `workbox-*.js`, o comando para e mostra a lista. Para apagar mesmo assim, revise a lista e rode de novo com `--apagar-fora-de-assets`.
+- **Dados do servidor nunca são apagados.** O PHP grava seus dados fora de `direito2026/`, em `direito2026_privado` (`public/api/nucleo/config.php:32-37`; contas em `contas.php:24`, tentativas em `armazenamento.php:214`, erros em `respostas.php:83`, sessões em `sessao.php:20`). As regras de proteção (`regras_fixas_protecao` em `scripts/publicar.sh`) guardam os mesmos nomes caso apareçam dentro do destino: `usuarios.json`, `tentativas.json`, `segredo.key`, `erros.log`, `verificacoes.log`, `pausado-*`, `*.lock`, `sessoes/`, `conteudo/`, `cgi-bin/`, `.well-known/`, `.user.ini`, `error_log`, e os próprios manifestos.
+- **Primeira publicação com o comando.** Não há manifesto no servidor ainda. Então tudo em `assets/` e `workbox-*.js` que não está no pacote é apagado, e vale a regra de escopo acima.
+- **Antes de apagar, nada é escrito.** A simulação usa `rsync -n` contra o destino real; o `--seco` não consulta o servidor.
+
 
 ### Se a conferência falhar
 

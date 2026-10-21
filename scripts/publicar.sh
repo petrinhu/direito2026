@@ -31,6 +31,18 @@ PRECI_TMPDIR=/var/tmp/preci-pub
 WT="$RAIZ/.worktrees/pub"
 CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-$CONTEUDO_RESTRITO_PADRAO}"
 
+# Higiene da produção, com uma geração de folga. Só apaga o que não está no
+# pacote atual, nem no manifesto publicado antes (que está no ar), e nunca fora
+# de assets/ e workbox-*.js sem --apagar-fora-de-assets. Teto por publicação:
+TETO_APAGAR=500
+MANIFESTO_ATUAL=.publicacao-manifesto.txt
+MANIFESTO_ANTERIOR=.publicacao-manifesto-anterior.txt
+SSH_OPCOES="ssh -o BatchMode=yes -o ConnectTimeout=20"
+# Etapa 1: tudo menos os arquivos de entrada (que sobem por último, na etapa 2).
+ETAPA1_EXCLUI=(--exclude=/index.html --exclude=/sw.js --exclude=/404.html --exclude=/manifest.webmanifest)
+ETAPA2_INCLUI=(--include=/index.html --include=/sw.js --include=/404.html --include=/manifest.webmanifest --exclude='*')
+APAGAR_FORA=0
+
 TIPO=""
 VERSAO_FORCADA=""
 FORCADA_DEFINIDA=0
@@ -53,7 +65,7 @@ recusar() {
 }
 
 uso() {
-  echo "uso: npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco]" >&2
+  echo "uso: npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco] [--apagar-fora-de-assets]" >&2
   exit 1
 }
 
@@ -73,6 +85,10 @@ ler_argumentos() {
       --versao=*)
         VERSAO_FORCADA="${1#--versao=}"
         FORCADA_DEFINIDA=1
+        shift
+        ;;
+      --apagar-fora-de-assets)
+        APAGAR_FORA=1
         shift
         ;;
       -*)
@@ -137,8 +153,11 @@ publicar: plano (--seco, nada foi alterado)
   3. prepara $WT no commit da tag e copia os dispositivos.ts gerados
   4. preci em $WT (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito)
   5. rsync em 2 etapas para $DESTINO_RSYNC
-     etapa 1: tudo menos os 5 arquivos de entrada (nada é apagado no servidor)
-     etapa 2: index.html, sw.js, 404.html, workbox-*.js, manifest.webmanifest
+     etapa 1: tudo menos index.html, sw.js, 404.html, manifest.webmanifest; apaga no
+              servidor só assets/ e workbox-*.js fora do pacote e do manifesto anterior
+              (teto $TETO_APAGAR; fora disso aborta, salvo --apagar-fora-de-assets)
+     etapa 2: index.html, sw.js, 404.html, manifest.webmanifest (sem apagar nada)
+     dados do servidor (usuarios.json, sessoes/, conteudo/ etc.) ficam protegidos
   6. conferência: md5 de cada arquivo do dist, api/saude.php, api/conteudo.php (401),
      raiz $RAIZ_PRINCIPAL (md5 $MD5_RAIZ_PRINCIPAL), scripts/verificar-publicacao.sh
   7. só com 6 verde: git push $REMOTO $BRANCH_PUBLICA e git push $REMOTO v$VERSAO_NOVA,
@@ -237,25 +256,125 @@ rodar_preci() {
   echo "publicar: preci verde"
 }
 
+# Regras de proteção fixas: o que o servidor escreve sozinho. Hoje isso fica
+# FORA de direito2026/ (public/api/nucleo/config.php:32-37 resolve $priv como
+# irmão de public_html; armazenamento.php:208-216 e respostas.php:83 gravam lá).
+# Estas regras são cinto de segurança: se algum dia caírem dentro do destino,
+# nunca são apagadas.
+regras_fixas_protecao() {
+  cat <<'REGRAS'
+# dados gravados pelo PHP (public/api/nucleo/contas.php:24, limite.php:51,
+# armazenamento.php:177 e 208-218, respostas.php:83, sessao.php:20, contas.php:117/142)
+P usuarios.json
+P tentativas.json
+P segredo.key
+P erros.log
+P verificacoes.log
+P pausado-*
+P *.lock
+P sessoes/
+P conteudo/
+# manifestos da própria higiene
+P .publicacao-manifesto.txt
+P .publicacao-manifesto-anterior.txt
+# arquivos que a hospedagem põe no diretório
+P error_log
+P cgi-bin/
+P .well-known/
+P .user.ini
+REGRAS
+}
+
+# Baixa do destino os manifestos publicados (atual e anterior). Antes, lista o
+# destino: se a listagem falhar, aborta (não tratar falha de rede como "sem
+# manifesto", que liberaria apagar a geração que está no ar).
+ler_manifestos_remotos() {
+  local listagem="$ESPACO/listagem-destino.txt" nome
+  mkdir -p "$ESPACO/manifestos-remotos"
+  rsync --list-only -e "$SSH_OPCOES" "$DESTINO_RSYNC" > "$listagem" ||
+    recusar "não consegui listar o destino (rede ou chave SSH); nada foi apagado nem enviado"
+  for nome in "$MANIFESTO_ATUAL" "$MANIFESTO_ANTERIOR"; do
+    if awk -v n="$nome" '$NF==n{achou=1} END{exit !achou}' "$listagem"; then
+      rsync -e "$SSH_OPCOES" "$DESTINO_RSYNC$nome" "$ESPACO/manifestos-remotos/" ||
+        recusar "$nome existe no destino mas não foi baixado"
+    fi
+  done
+}
+
+# Regras de proteção = fixas + tudo que está nos dois manifestos remotos.
+montar_regras_protecao() {
+  local arq
+  REGRAS="$ESPACO/protecao.rules"
+  for arq in "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"; do
+    if [ -f "$arq" ] && grep -q -v -E '^([A-Za-z0-9._/-]+)?$' "$arq"; then
+      recusar "manifesto remoto com nome fora do padrão seguro: $arq"
+    fi
+  done
+  {
+    regras_fixas_protecao
+    printf 'P %s\nP %s\n' "$MANIFESTO_ATUAL" "$MANIFESTO_ANTERIOR"
+    for arq in "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"; do
+      if [ -f "$arq" ]; then
+        sed -n '/./s|^|P /|p' "$arq"
+      fi
+    done
+  } > "$REGRAS"
+}
+
+# Simula a etapa 1 com --dry-run (-n): não escreve nada no destino. Lista o que
+# apagaria, separa o que está dentro do escopo (assets/ e workbox-*.js) e aborta
+# se passar do teto ou se houver algo fora do escopo sem --apagar-fora-de-assets.
+calcular_apagamentos() {
+  local origem="$WT/dist/" simulacao="$ESPACO/simulacao.txt" lista="$ESPACO/apagar.txt"
+  local total fora assets workbox
+  timeout 300 rsync -n -i -rlt --checksum --delete --timeout=60 -e "$SSH_OPCOES" \
+    --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
+    "$origem" "$DESTINO_RSYNC" > "$simulacao" 2>&1 ||
+    recusar "simulação de apagamento falhou (nada foi apagado)"
+  grep -E '^\*deleting' "$simulacao" | sed -E 's/^\*deleting +//; s|/$||' > "$lista" || true
+  total=$(grep -c . "$lista" || true)
+  assets=$(grep -c -E '^assets/' "$lista" || true)
+  workbox=$(grep -c -E '^workbox-[^/]*\.js$' "$lista" || true)
+  fora=$(grep -v -E '^(assets/|workbox-[^/]*\.js$)' "$lista" | grep -c . || true)
+  echo "publicar: apagamento previsto: $total (assets/: $assets, workbox-*.js: $workbox, fora do escopo: $fora)"
+  if [ "$fora" -gt 0 ]; then
+    grep -v -E '^(assets/|workbox-[^/]*\.js$)' "$lista" | head -n 50 | sed 's/^/publicar:   fora do escopo: /' >&2
+  fi
+  [ "$total" -le "$TETO_APAGAR" ] ||
+    recusar "apagamento previsto ($total) passa do teto de $TETO_APAGAR; nada foi apagado"
+  if [ "$fora" -gt 0 ] && [ "$APAGAR_FORA" != 1 ]; then
+    recusar "$fora caminho(s) fora de assets/ e workbox-*.js a apagar; revise a lista acima e rode de novo com --apagar-fora-de-assets"
+  fi
+}
+
+# Grava no destino o manifesto deste pacote e move o atual para o anterior.
+# Depois do rsync das duas etapas, para que o manifesto só mude com o pacote no ar.
+publicar_manifestos() {
+  local novo="$ESPACO/manifestos-enviar"
+  mkdir -p "$novo"
+  (cd "$WT/dist" && find . -type f -printf '%P\n' | sort) > "$novo/$MANIFESTO_ATUAL"
+  if [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" ]; then
+    cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$novo/$MANIFESTO_ANTERIOR"
+  fi
+  # --checksum: sem ele, rsync compara tamanho e mtime, e dois manifestos de
+  # mesmo tamanho gravados no mesmo segundo parecem iguais e não são atualizados.
+  timeout 300 rsync -rlt --checksum --timeout=60 -e "$SSH_OPCOES" "$novo/" "$DESTINO_RSYNC"
+}
+
 publicar_arquivos() {
   local origem="$WT/dist/"
-  local ssh_opcoes="ssh -o BatchMode=yes -o ConnectTimeout=20"
+  ler_manifestos_remotos
+  montar_regras_protecao
+  calcular_apagamentos
   DEPLOY_INICIADO=1
-  # Etapa 1: tudo menos os 5 arquivos de entrada. SEM --delete: arquivos antigos
-  # com hash (assets) ficam no servidor, para quem ainda tem a página antiga
-  # aberta ou o service worker antigo não receber 404. Acumular é inofensivo.
-  timeout 900 rsync -rlt --checksum --timeout=60 \
-    -e "$ssh_opcoes" \
-    --exclude=/index.html --exclude=/sw.js --exclude=/404.html \
-    --exclude='/workbox-*.js' --exclude=/manifest.webmanifest \
+  timeout 900 rsync -rlt --checksum --delete --max-delete="$TETO_APAGAR" --timeout=60 \
+    -e "$SSH_OPCOES" --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
     "$origem" "$DESTINO_RSYNC"
-  # Etapa 2: só os 5, por último. Também sem --delete.
   timeout 300 rsync -rlt --checksum --timeout=60 \
-    -e "$ssh_opcoes" \
-    --include=/index.html --include=/sw.js --include=/404.html \
-    --include='/workbox-*.js' --include=/manifest.webmanifest --exclude='*' \
+    -e "$SSH_OPCOES" "${ETAPA2_INCLUI[@]}" \
     "$origem" "$DESTINO_RSYNC"
-  echo "publicar: rsync em duas etapas concluído"
+  publicar_manifestos
+  echo "publicar: rsync (duas etapas) e manifestos concluídos"
 }
 
 conferir_md5_dos_arquivos() {

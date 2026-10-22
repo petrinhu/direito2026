@@ -76,10 +76,8 @@ describe('MenuCurriculo, seção de peça sem corpo na árvore', () => {
     await wrapper.find('button[aria-label="Mostrar submenu de Unidade 1"]').trigger('click'); // unidade
     await new Promise((r) => setTimeout(r, 0)); // resolve o `carregar()`
     await wrapper.vm.$nextTick();
-    const botaoPeticao = wrapper
-      .findAll('button')
-      .find((b) => b.text().includes('Petição comentada') || b.text().includes('Petição'));
-    await botaoPeticao!.trigger('click');
+    const botaoPeticao = wrapper.find('button[aria-controls^="lista-peticao-"]');
+    await botaoPeticao.trigger('click');
 
     const linksSecao = wrapper
       .findAll('a')

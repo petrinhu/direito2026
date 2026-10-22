@@ -355,32 +355,42 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                               </a>
                             </li>
                             <li v-if="unidade.abas.includes('resumo')">
-                              <button
-                                type="button"
-                                class="menu-curriculo__botao"
-                                :aria-expanded="
-                                  estaAberto(
-                                    `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                                  )
-                                    ? 'true'
-                                    : 'false'
-                                "
-                                :aria-controls="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                                @click="
-                                  alternar(
-                                    `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                                  )
-                                "
-                                @keydown.esc="
-                                  fechar(
-                                    `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
-                                    $event
-                                  )
-                                "
-                              >
-                                <span class="menu-curriculo__seta" aria-hidden="true" />
-                                {{ ROTULOS_ABA.resumo }}
-                              </button>
+                              <!--
+                                Resumo: a página é o link; a seta, num botão à parte, expande (ordem do líder, 22/10/2026).
+                              -->
+                              <div class="menu-curriculo__linha">
+                                <button
+                                  type="button"
+                                  class="menu-curriculo__toggle menu-curriculo__toggle--aba"
+                                  :aria-expanded="
+                                    estaAberto(
+                                      `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                    )
+                                      ? 'true'
+                                      : 'false'
+                                  "
+                                  :aria-controls="`lista-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                                  :aria-label="`Mostrar blocos de ${ROTULOS_ABA.resumo}`"
+                                  @click="
+                                    alternar(
+                                      `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                    )
+                                  "
+                                  @keydown.esc="
+                                    fechar(
+                                      `ab-resumo-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                      $event
+                                    )
+                                  "
+                                >
+                                  <span class="menu-curriculo__seta" aria-hidden="true" />
+                                </button>
+                                <a
+                                  :href="hrefUnidade(periodo.id, cadeira.id, unidade.id)"
+                                  class="menu-curriculo__link-aba"
+                                  >{{ ROTULOS_ABA.resumo }}</a
+                                >
+                              </div>
                               <ul
                                 v-show="
                                   estaAberto(
@@ -411,32 +421,42 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                                   ?.peticao
                               "
                             >
-                              <button
-                                type="button"
-                                class="menu-curriculo__botao"
-                                :aria-expanded="
-                                  estaAberto(
-                                    `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                                  )
-                                    ? 'true'
-                                    : 'false'
-                                "
-                                :aria-controls="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
-                                @click="
-                                  alternar(
-                                    `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
-                                  )
-                                "
-                                @keydown.esc="
-                                  fechar(
-                                    `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
-                                    $event
-                                  )
-                                "
-                              >
-                                <span class="menu-curriculo__seta" aria-hidden="true" />
-                                {{ ROTULOS_ABA.peticao }}
-                              </button>
+                              <!--
+                                Petição comentada: a página é o link; a seta, num botão à parte, expande (ordem do líder, 22/10/2026).
+                              -->
+                              <div class="menu-curriculo__linha">
+                                <button
+                                  type="button"
+                                  class="menu-curriculo__toggle menu-curriculo__toggle--aba"
+                                  :aria-expanded="
+                                    estaAberto(
+                                      `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                    )
+                                      ? 'true'
+                                      : 'false'
+                                  "
+                                  :aria-controls="`lista-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`"
+                                  :aria-label="`Mostrar seções de ${ROTULOS_ABA.peticao}`"
+                                  @click="
+                                    alternar(
+                                      `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`
+                                    )
+                                  "
+                                  @keydown.esc="
+                                    fechar(
+                                      `ab-peticao-${chaveUnidade(periodo.id, cadeira.id, unidade.id)}`,
+                                      $event
+                                    )
+                                  "
+                                >
+                                  <span class="menu-curriculo__seta" aria-hidden="true" />
+                                </button>
+                                <a
+                                  :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/peticao`"
+                                  class="menu-curriculo__link-aba"
+                                  >{{ ROTULOS_ABA.peticao }}</a
+                                >
+                              </div>
                               <ul
                                 v-show="
                                   estaAberto(
@@ -747,6 +767,23 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   overflow-wrap: break-word;
 }
 
+/* Aba com página e submenu (Resumo, Petição comentada): o rótulo é link para a
+   página, e a seta é um botão à parte que expande. Antes o botão inteiro era a
+   seta mais o rótulo; agora a seta ocupa 26px (12px de recuo, 6px da seta e 8px
+   de margem), e o link começa logo depois, na mesma coluna do texto de Texto
+   integral e das demais abas. */
+.menu-curriculo__toggle--aba {
+  width: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
+  min-width: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
+  flex-shrink: 0;
+}
+
+.menu-curriculo a.menu-curriculo__link-aba {
+  flex: 1;
+  min-width: 0;
+  padding-left: 0;
+}
+
 /* Coluna da seta do atalho Interdisciplinar: mesma largura e mesmo recuo
    interno do botão de triângulo das unidades (padding-left igual), para a seta
    e o texto caírem na mesma coluna. Sem botão e sem foco: é só decoração. */
@@ -857,6 +894,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo__nivel-4 > li > .menu-curriculo__botao,
+.menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-aba,
 .menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
   font-size: 0.875rem;
 }

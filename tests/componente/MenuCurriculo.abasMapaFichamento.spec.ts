@@ -48,6 +48,7 @@ describe('MenuCurriculo: abas novas de Filosofia Jurídica', () => {
       .map((a) => [a.attributes('href'), a.text()]);
     expect(abas).toEqual([
       [base, expect.any(String)],
+      [base, 'Resumo'],
       [`${base}/mapa`, 'Mapa mental'],
       [`${base}/fichamento`, 'Fichamento'],
       [`${base}/mnemonicos`, 'Mnemônicos'],

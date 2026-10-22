@@ -175,9 +175,9 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     await new Promise((r) => setTimeout(r, 0));
     await wrapper.vm.$nextTick();
 
-    const botaoResumo = wrapper.findAll('button').find((b) => b.text() === 'Resumo');
-    expect(botaoResumo).toBeTruthy();
-    await botaoResumo!.trigger('click');
+    const botaoResumo = wrapper.find('button[aria-controls^="lista-resumo-"]');
+    expect(botaoResumo.exists()).toBe(true);
+    await botaoResumo.trigger('click');
 
     const linkBlocoA = wrapper.findAll('a').find((a) => a.text() === 'Bloco A');
     expect(linkBlocoA).toBeTruthy();
@@ -196,8 +196,8 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     await new Promise((r) => setTimeout(r, 0));
     await wrapper.vm.$nextTick();
 
-    const botaoPeticao = wrapper.findAll('button').find((b) => b.text() === 'Petição comentada');
-    await botaoPeticao!.trigger('click');
+    const botaoPeticao = wrapper.find('button[aria-controls^="lista-peticao-"]');
+    await botaoPeticao.trigger('click');
 
     const linkSecao = wrapper.findAll('a').find((a) => a.text() === 'Endereçamento');
     expect(linkSecao).toBeTruthy();
@@ -299,8 +299,8 @@ describe('MenuCurriculo, 4o e 5o nível (submenus de unidade)', () => {
     await wrapper.find('button[aria-label="Mostrar submenu de Unidade 1"]').trigger('click');
     await new Promise((r) => setTimeout(r, 0));
     await wrapper.vm.$nextTick();
-    const botaoResumo = wrapper.findAll('button').find((b) => b.text() === 'Resumo');
-    await botaoResumo!.trigger('click');
+    const botaoResumo = wrapper.find('button[aria-controls^="lista-resumo-"]');
+    await botaoResumo.trigger('click');
 
     expect(wrapper.find('[class*="menu-curriculo__nivel-2"]').exists()).toBe(true);
     expect(wrapper.find('[class*="menu-curriculo__nivel-3"]').exists()).toBe(true);

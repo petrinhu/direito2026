@@ -635,6 +635,25 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
      temas: contraste medido 1,09:1 antes da correção. */
   color: var(--menu-cor, var(--cor-sidebar-texto, #faf9f5));
   text-decoration: none;
+  cursor: pointer;
+}
+
+/* Retorno visual ao passar o ponteiro (ordem do líder, 22/10/2026): todo item
+   clicável do menu realça, rótulo que navega (link) ou que expande (botão).
+   Overlay translúcido sobre a lateral escura, no padrão da linha-guia: é
+   realce de estado, não token de paleta. No modo adaptado (lateral branca),
+   o mesmo realce vira preto translúcido. Fica antes do item atual, que
+   mantém o próprio fundo ao ser a página aberta. */
+.menu-curriculo__botao:hover,
+.menu-curriculo__toggle:hover,
+.menu-curriculo a:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo__botao:hover,
+:root[data-modo-adaptado='on'] .menu-curriculo__toggle:hover,
+:root[data-modo-adaptado='on'] .menu-curriculo a:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .menu-curriculo a[aria-current='page'] {

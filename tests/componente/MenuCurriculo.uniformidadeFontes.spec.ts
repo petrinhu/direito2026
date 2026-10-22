@@ -130,7 +130,9 @@ describe('MenuCurriculo, uniformidade no nível 4 e 5', () => {
   it('o "em breve" de grupo (nível 4) usa o tamanho do nível (propriedade do nível 4) e a coluna do texto dos grupos', () => {
     const regra = regrasQue('nivel-4 > li > :deep(.estado-em-breve)');
     expect(regra.some((r) => /font-size:\s*var\(--menu-tam-4\)/.test(r.corpo))).toBe(true);
-    expect(regra.some((r) => /padding-left:\s*calc\(var\(--esp-3/.test(r.corpo))).toBe(true);
+    expect(regra.some((r) => /padding-left:\s*calc\(var\(--menu-coluna-aba/.test(r.corpo))).toBe(
+      true
+    );
   });
 
   it('o "em breve" de tópico (nível 5) usa o tamanho do nível (propriedade do nível 5) e o recuo dos tópicos', () => {

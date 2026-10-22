@@ -596,6 +596,9 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   --menu-tam-3: var(--escala-base, 1.0625rem);
   --menu-tam-4: var(--escala-sm, 0.9375rem);
   --menu-tam-5: var(--escala-xs, 0.8125rem);
+  /* Coluna da seta dos níveis 4 (Resumo, Petição e grupos): 26 px no normal (recuo de
+     12 px, seta de 6 px e margem de 8 px). O texto começa logo depois. */
+  --menu-coluna-aba: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
 }
 
 :root[data-modo-adaptado='on'] .menu-curriculo {
@@ -606,6 +609,9 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   --menu-tam-3: var(--escala-xs, 1.125rem);
   --menu-tam-4: var(--escala-xs, 1.125rem);
   --menu-tam-5: var(--escala-xs, 1.125rem);
+  /* Leitura ampliada: a seta da aba tem 44 x 44 px (alvo de toque), e o texto do
+     nível 4 começa nessa mesma coluna. */
+  --menu-coluna-aba: var(--menu-toggle);
 }
 
 /* Seta/chevron: mesmo elemento de ligação usado em todos os níveis que
@@ -785,8 +791,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
    de margem), e o link começa logo depois, na mesma coluna do texto de Texto
    integral e das demais abas. */
 .menu-curriculo__toggle--aba {
-  width: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
-  min-width: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
+  width: var(--menu-coluna-aba);
+  min-width: var(--menu-coluna-aba);
   flex-shrink: 0;
 }
 
@@ -913,11 +919,17 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 
 /* "Em breve" de grupo: mesma altura e mesma coluna de texto do grupo (botão com
    seta de 14px). */
+.menu-curriculo__nivel-4 > li > .menu-curriculo__botao {
+  /* Texto dos botões do nível 4 na coluna da seta (ver --menu-coluna-aba): a seta
+     de 14 px fica depois do recuo, e o texto começa logo depois dela. */
+  padding-left: calc(var(--menu-coluna-aba) - 6px - var(--esp-2, 0.5rem));
+}
+
 .menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
   display: flex;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
-  padding-left: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
+  padding-left: calc(var(--menu-coluna-aba) - 6px - var(--esp-2, 0.5rem));
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-5 {

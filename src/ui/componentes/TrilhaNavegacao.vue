@@ -19,7 +19,8 @@ interface ItemTrilha {
 
 /**
  * Itens da unidade na trilha. Unidade simples: um item (o rótulo AVN). Tópico de
- * grupo (uN-grupo-topico): AV e grupo levam à cadeira, e o título leva à unidade.
+ * grupo (uN-grupo-topico): um item só (ex.: Livro da AV3), que leva à cadeira; o
+ * título fica no h1 e no menu.
  */
 function itensDaUnidade(
   periodoId: string,
@@ -32,11 +33,7 @@ function itensDaUnidade(
     return [{ rotulo: unidade.rotulo, href: `${base}/${unidade.id}` }];
   }
   const grupo = cadeira.grupos?.find((g) => g.id === id.grupo && g.unidade === `u${id.numero}`);
-  return [
-    { rotulo: unidade.rotulo, href: base },
-    { rotulo: grupo?.rotulo ?? id.grupo, href: base },
-    { rotulo: unidade.titulo, href: `${base}/${unidade.id}` }
-  ];
+  return [{ rotulo: `${grupo?.rotulo ?? id.grupo} da ${unidade.rotulo}`, href: base }];
 }
 
 function hrefAba(periodoId: string, cadeiraId: string, unidadeId: string, aba: string): string {

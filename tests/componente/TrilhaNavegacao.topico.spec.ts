@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils';
 import TrilhaNavegacao from '@/ui/componentes/TrilhaNavegacao.vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
-/** Trilha de um tópico: Período > Cadeira > AV3 > Livro > título do tópico > aba. */
+/** Trilha de um tópico: Período > Cadeira > Livro da AV3 (um nível só) > aba. */
 const curriculo: Curriculo = [
   {
     id: 'p1',
@@ -35,21 +35,14 @@ function textosDaTrilha(wrapper: ReturnType<typeof mount>): string[] {
 }
 
 describe('TrilhaNavegacao: tópico de grupo', () => {
-  it('mostra Período, Cadeira, AV3, Livro, título do tópico e a aba: seis itens', () => {
+  it('mostra Período, Cadeira, Livro da AV3 e a aba: quatro itens', () => {
     const wrapper = mount(TrilhaNavegacao, {
       props: { curriculo, caminhoAtual: 'p/p1/cadeira/u3-livro-topico/resumo' }
     });
-    expect(textosDaTrilha(wrapper)).toEqual([
-      '1º período',
-      'Cadeira',
-      'AV3',
-      'Livro',
-      'Título do tópico',
-      'Resumo'
-    ]);
+    expect(textosDaTrilha(wrapper)).toEqual(['1º período', 'Cadeira', 'Livro da AV3', 'Resumo']);
   });
 
-  it('AV3 e Livro levam à página da cadeira; o título e a aba levam à unidade do tópico', () => {
+  it('Livro da AV3 leva à cadeira; a aba leva à unidade do tópico', () => {
     const wrapper = mount(TrilhaNavegacao, {
       props: { curriculo, caminhoAtual: 'p/p1/cadeira/u3-livro-topico' }
     });
@@ -58,8 +51,6 @@ describe('TrilhaNavegacao: tópico de grupo', () => {
       '/p/p1',
       '/p/p1/cadeira',
       '/p/p1/cadeira',
-      '/p/p1/cadeira',
-      '/p/p1/cadeira/u3-livro-topico',
       '/p/p1/cadeira/u3-livro-topico'
     ]);
   });

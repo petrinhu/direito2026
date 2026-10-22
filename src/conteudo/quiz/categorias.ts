@@ -18,5 +18,9 @@ export const ROTULOS_CATEGORIA_QUIZ: RotulosCategoriaQuiz = {
   media: 'Idade Média',
   revisao: 'Revisão do professor',
   'filosofia-moderna': 'Filosofia Moderna',
-  'filosofia-social': 'Filosofia Social'
+  'filosofia-social': 'Filosofia Social',
+  'infancia-midias': 'Infância e mídias',
+  'riscos-crimes': 'Riscos e crimes',
+  'mediacao-parental': 'Mediação parental',
+  'vinculo-familiar': 'Vínculo e responsabilidade'
 };

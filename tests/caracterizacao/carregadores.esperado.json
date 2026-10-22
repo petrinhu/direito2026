@@ -4,14 +4,16 @@
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
     "p1/redacao-juridica-1/u1",
-    "p1/sociologia-juridica/u1"
+    "p1/sociologia-juridica/u1",
+    "p1/sociologia-juridica/u3"
   ],
   "chavesCarregadoresDispositivos": [
     "p1/filosofia-juridica/u1",
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
     "p1/redacao-juridica-1/u1",
-    "p1/sociologia-juridica/u1"
+    "p1/sociologia-juridica/u1",
+    "p1/sociologia-juridica/u3"
   ],
   "unidades": {
     "p1/intr-direito/u1": {
@@ -84,6 +86,35 @@
       "peticaoSecoes": null,
       "mapaFichamento": null,
       "mnemonicos": null
+    },
+    "p1/sociologia-juridica/u3": {
+      "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],
+      "resumoBlocos": 10,
+      "quizPerguntas": 40,
+      "quizCategorias": [
+        "infancia-midias",
+        "mediacao-parental",
+        "riscos-crimes",
+        "vinculo-familiar"
+      ],
+      "quizTipos": {
+        "multiplaEscolha": 40,
+        "verdadeiroOuFalso": 0
+      },
+      "quizIdsDoProfessor": [],
+      "quizIdsComMarca": [],
+      "quizIdsPorCategoria": {
+        "infancia-midias": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        "mediacao-parental": [21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+        "riscos-crimes": [11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        "vinculo-familiar": [31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+      },
+      "peticaoSecoes": null,
+      "mapaFichamento": {
+        "eras": 4,
+        "pensadores": 3
+      },
+      "mnemonicos": 5
     },
     "p1/filosofia-juridica/u1": {
       "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],

@@ -73,6 +73,36 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/sociologia-juridica/u3",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/mapa",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/fichamento",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/mnemonicos",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/quiz",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/filosofia-juridica",
       "h1": "Filosofia Jurídica",
       "nome": "Filosofia Jurídica",
@@ -196,6 +226,36 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/sociologia-juridica/u3",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/mapa",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/fichamento",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/mnemonicos",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3/quiz",
+      "h1": "Infância, redes sociais e tecnologias digitais",
+      "nome": "Sociologia Jurídica: u3 (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/filosofia-juridica/u1",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
       "nome": "Filosofia Jurídica: u1 (resumo)",
@@ -267,6 +327,7 @@
     "/p/p1/sociologia-juridica/u1/fichamento",
     "/p/p1/sociologia-juridica/u1/mnemonicos",
     "/p/p1/sociologia-juridica/u1/peticao",
+    "/p/p1/sociologia-juridica/u3/peticao",
     "/p/p1/filosofia-juridica/u1/peticao",
     "/p/p1/filosofia-juridica/u3/peticao"
   ]

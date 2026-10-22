@@ -58,6 +58,8 @@ npm run nova-unidade -- p1 intr-direito u2 "Título da unidade"
 
 Acrescente `--peticao` no fim se a unidade tiver peça comentada.
 
+Se a unidade for um tópico de grupo (AV3 > Livro), o id é `uN-grupo-topico`, por exemplo `u3-material-apostila`. Veja a seção 1A.
+
 O comando cria a pasta `src/conteudo/p1/intr-direito/u2/` com estes arquivos:
 
 | Arquivo | O que preencher |
@@ -84,6 +86,56 @@ npm run preci
 ```
 
 O validador termina com uma linha `encontradas=N validadas=N falharam=0` e sai com 0. O `N` é o número de unidades do projeto. Depois do `atualizar-referencias`, confira o resumo: deve aparecer só a unidade que você acrescentou.
+
+## 1A. Tópicos agrupados (AV3 > Livro e Material de estudo)
+
+Uma AV pode ter grupos de tópicos. A Introdução ao Direito usa a AV3 com dois grupos, Livro e Material de estudo. A declaração mora em `src/conteudo/p1/intr-direito/cadeira.ts`, no campo `grupos`:
+
+```ts
+grupos: [
+  { unidade: 'u3', id: 'livro', rotulo: 'Livro' },
+  { unidade: 'u3', id: 'material', rotulo: 'Material de estudo' }
+]
+```
+
+Cada tópico é uma pasta `uN-grupo-topico`, com o `id` do grupo no meio. O tópico do livro sobre a textura aberta fica em `src/conteudo/p1/intr-direito/u3-livro-textura-aberta/` e tem o endereço `/p/p1/intr-direito/u3-livro-textura-aberta`.
+
+Regras que a montagem confere:
+
+- Declare o grupo em `cadeira.ts` antes de criar o tópico. Tópico de grupo não declarado reprova.
+- Grupo sem tópico aparece no menu como "em breve".
+- `id` de grupo tem só letras minúsculas e dígitos, sem hífen.
+- A vaga 2 é do atalho Interdisciplinar: nenhum tópico nem grupo usa `u2`.
+- Unidade simples `uN` e tópico da mesma AV não convivem na mesma cadeira.
+
+Para o tópico novo de um professor, o comando é este, e ele recusa o conflito com a unidade simples antes de gravar nada:
+
+```bash
+npm run nova-unidade -- p1 intr-direito u3-material-<slug> "Título"
+```
+
+O rótulo da AV é `AV3` (ou o número da pasta), nunca escrito à mão.
+
+## 1B. Texto integral (transcrição do OCR)
+
+O texto integral é a aba "Texto integral" de uma unidade. O corpo vem de um arquivo markdown do OCR, convertido por este comando:
+
+```bash
+npm run texto-integral -- <arquivo.md> p1 intr-direito u3-livro-textura-aberta --fonte "Autor, Obra, ano. Números entre colchetes: páginas do PDF." [--substituir] [--raiz <dir>]
+```
+
+O comando grava `textoIntegral.ts` na pasta da unidade, que precisa existir, com o `meta.ts`. Não grava por cima sem `--substituir`.
+
+Regras da conversão:
+
+- `# Título` vira o título, e `## Notas` vira subtítulo. Outro cabeçalho é recusado, com o número da linha.
+- `[p. 139]` vira marcador de página, na própria linha ou no meio do parágrafo.
+- `*termo*` vira itálico, e `\*` vira asterisco literal.
+- As linhas de um parágrafo são juntas com espaço. Nenhum outro caractere muda: a conversão é fiel ao OCR.
+
+O corpo do texto não passa pela trava de texto nem pela de travessão (seção 7). Título e fonte passam por todas as regras.
+
+O texto integral não entra na busca do site. O índice já usa 281.212 de 307.200 bytes, e o texto integral não cabe nesse teto. Por isso palavras que só aparecem no texto integral não são encontradas pela busca.
 
 ## 2. Nova cadeira
 
@@ -231,12 +283,14 @@ O verificador de nomes lê uma lista de termos guardada fora do repositório. Se
 Não reprovados pela trava, e que você confere à mão:
 
 - o aviso legal (`src/conteudo/avisoLegal.ts`): exceção aprovada, seção 6.
+- o corpo do texto integral (`textoIntegral.blocos`): transcrição fiel do OCR, exceção registrada no `GODS_LAWS.md` (ordem do líder, 21/10/2026). Título e fonte continuam sob todas as regras.
 
 ## 8. O que não precisa mais ser tocado
 
 - Carregadores (`src/app/carregamento/`): descobrem as unidades pelas pastas.
 - Currículo (`src/conteudo/curriculo.ts`): é montado a partir das pastas. Não edite.
 - Rotas, menu, home e busca: seguem sozinhos.
+- Rótulo da unidade: é AVN pelo número da pasta (AV1, AV3...). O `meta.ts` não tem campo `rotulo`, e o gerador não o escreve.
 - `dispositivos.ts`: é gerado no build e está no `.gitignore`. Não crie nem edite.
 - Cache do service worker: os pedaços de conteúdo saem como `conteudo-*.js`, com hash, no build.
 - Testes de conteúdo (`tests/unidade/conteudo.*`): varrem todas as unidades sozinhos.

@@ -53,8 +53,10 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-22: 🔍 Pendente verificação, F11.6: AV e tópicos no núcleo (lerIdDeUnidade, rótulo AV derivado do número da pasta, grupos declarados em cadeira.ts); especificação em docs/como-adicionar-conteudo.md, seção Tópicos agrupados.
 - 2026-10-22: 🔍 Pendente verificação, F11.7: submenu AV com grupos Livro e Material de estudo no menu e na trilha, tópico com link próprio; especificação em docs/arquitetura.md.
 - 2026-10-22: 🔍 Pendente verificação, F11.8: npm run nova-unidade aceita tópico uN-grupo-topico e recusa conflito com uN simples; especificação em docs/como-adicionar-conteudo.md.
-- 2026-10-22: ⏳ Pendente, F11.9: documentação da onda F11 e fechamento da Parte A (portões de conjunto); especificação em docs/como-adicionar-conteudo.md e docs/arquitetura.md.
+- 2026-10-22: 🔍 Pendente verificação, F11.9: documentação da onda F11 e fechamento da Parte A (portões de conjunto); especificação em docs/como-adicionar-conteudo.md e docs/arquitetura.md.
 
+- 2026-10-22: descoberta da F11: a página da cadeira (Cadeira.vue) ainda não agrupa a AV em seções; os grupos aparecem só no menu e na trilha. Entra depois que o material do professor chegar.
+- 2026-10-22: descoberta da F11: o texto integral fica fora da busca pelo teto do índice (281.212 de 307.200 bytes); busca de palavra que só aparece no texto integral não acha nada.
 ## TABELA UNIFICADA
 
 | WSJF | ID | Onda | Grupo | Descrição Técnica | Prioridade | Pré-requisito | Dificuldade | Status | Estado Auditado |

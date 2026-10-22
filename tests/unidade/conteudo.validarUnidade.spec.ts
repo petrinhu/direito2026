@@ -341,3 +341,62 @@ describe('blocos do resumo', () => {
     expect(regras(unidade({ resumo }))).toEqual(['titulo-com-numero-de-bloco']);
   });
 });
+
+/**
+ * Exceção do texto fiel (ordem do líder, 21/10/2026: "OCR pressupõe texto
+ * fiel. Pode manter como estiver"). O corpo de textoIntegral.blocos não passa
+ * pelas regras de redação nem pela de travessão; título e fonte passam.
+ */
+describe('texto integral: corpo fiel de OCR fica fora das regras de redação', () => {
+  const textoFiel = {
+    titulo: 'A textura aberta do direito',
+    fonte: 'Autor, Obra, 2010. Números entre colchetes: páginas do PDF.',
+    blocos: [
+      { tipo: 'subtitulo' as const, texto: 'Seção — com travessão original' },
+      {
+        tipo: 'paragrafo' as const,
+        trechos: [
+          { tipo: 'texto' as const, texto: 'A regra — vista no material do autor' },
+          { tipo: 'italico' as const, texto: 'conveyance' },
+          { tipo: 'pagina' as const, numero: 138 }
+        ]
+      }
+    ]
+  };
+
+  it('aceita travessão e "o material" dentro do corpo do texto fiel', () => {
+    expect(regras(unidade({ textoIntegral: textoFiel }))).toEqual([]);
+  });
+
+  it('reprova travessão na fonte do texto integral', () => {
+    expect(
+      regras(unidade({ textoIntegral: { ...textoFiel, fonte: 'Autor — Obra, 2010' } }))
+    ).toEqual(['travessao']);
+  });
+
+  it('reprova número de aula na fonte do texto integral', () => {
+    expect(
+      regras(unidade({ textoIntegral: { ...textoFiel, fonte: 'Autor, Obra, aula 3' } }))
+    ).toEqual(['fonte-proibida']);
+  });
+
+  it('o mesmo travessão fora do texto fiel continua reprovando', () => {
+    expect(
+      regras(
+        unidade({
+          resumo: [
+            {
+              id: 'bloco-0',
+              numero: 1,
+              titulo: 'Conceito básico',
+              fonte: 'Autor, Obra, 2020',
+              corpoHtml: 'Texto — com travessão.',
+              resumo: ['Item do quadro'],
+              exemploHtml: 'Exemplo na prática.'
+            }
+          ]
+        })
+      )
+    ).toContain('travessao');
+  });
+});

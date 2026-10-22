@@ -57,6 +57,16 @@ function ehAbaComSubmenu(aba: ChaveAba): boolean {
   return aba === 'resumo' || aba === 'peticao';
 }
 
+/** Caminho relativo da aba (sem barra inicial), no formato de caminhoAtual. Resumo é a própria unidade. */
+function caminhoRelativoDaAba(aba: ChaveAba): string {
+  const base = `p/${props.periodoId}/${props.cadeiraId}/${props.unidade.id}`;
+  return aba === 'resumo' ? base : `${base}/${aba}`;
+}
+
+function ariaDaAba(aba: ChaveAba): 'page' | undefined {
+  return estado.ehAtual(caminhoRelativoDaAba(aba), props.caminhoAtual) ? 'page' : undefined;
+}
+
 function estadoDaAba(aba: ChaveAba): string {
   return `ab-${aba}-${chave.value}`;
 }
@@ -141,7 +151,11 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
                 >
                   <span class="menu-curriculo__seta" aria-hidden="true" />
                 </button>
-                <a :href="hrefDaAba(aba)" class="menu-curriculo__link-aba">
+                <a
+                  :href="hrefDaAba(aba)"
+                  class="menu-curriculo__link-aba"
+                  :aria-current="ariaDaAba(aba)"
+                >
                   {{ ROTULOS_ABA[aba] }}
                 </a>
               </div>
@@ -156,7 +170,11 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
               </ul>
             </li>
             <li v-else>
-              <a :href="`${caminhoPagina}/${aba}`" class="menu-curriculo__botao">
+              <a
+                :href="`${caminhoPagina}/${aba}`"
+                class="menu-curriculo__botao"
+                :aria-current="ariaDaAba(aba)"
+              >
                 {{ ROTULOS_ABA[aba] }}
               </a>
             </li>

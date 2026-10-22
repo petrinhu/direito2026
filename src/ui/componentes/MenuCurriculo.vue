@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, reactive } from 'vue';
+import { provide, reactive, watch } from 'vue';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { itensDaCadeira } from '@/app/curriculo/itensDaCadeira';
@@ -7,9 +7,10 @@ import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 import MenuUnidadeComAbas from './MenuUnidadeComAbas.vue';
 import { ESTADO_MENU } from './menuEstado';
+import { cadeiaDoCaminho } from './cadeiaDoCaminho';
 import IconeCalendario from './IconeCalendario.vue';
 
-defineProps<{
+const props = defineProps<{
   curriculo: Curriculo;
   /** Caminho da rota atual (sem barra inicial), para aria-current. */
   caminhoAtual: string;
@@ -78,10 +79,7 @@ function conteudoPronto(chave: string): ConteudoUnidade | undefined {
   return estado?.tipo === 'pronto' ? estado.conteudo : undefined;
 }
 
-async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promise<void> {
-  const idAberto = `u-${chave}`;
-  alternar(idAberto);
-  if (!estaAberto(idAberto)) return;
+async function carregarConteudoDaUnidade(chave: string, unidade: ReferenciaUnidade): Promise<void> {
   if (detalhes.has(chave)) return;
   if (!unidade.carregar) {
     // Currículo ainda não decorado com o carregador (ex.: dado de teste
@@ -97,6 +95,29 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
     detalhes.set(chave, { tipo: 'indisponivel' });
   }
 }
+
+async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promise<void> {
+  const idAberto = `u-${chave}`;
+  alternar(idAberto);
+  if (!estaAberto(idAberto)) return;
+  await carregarConteudoDaUnidade(chave, unidade);
+}
+
+/**
+ * Abre a cadeia até a página atual (ordem do líder, 22/10/2026). Só acrescenta
+ * ramos: nunca fecha o que já estava aberto, seja por clique seja por navegação
+ * anterior. Quando a página é uma unidade, carrega o conteúdo para as abas e os
+ * blocos existirem na árvore.
+ */
+function abrirCadeiaDaPaginaAtual(caminho: string): void {
+  const cadeia = cadeiaDoCaminho(props.curriculo, caminho);
+  for (const id of cadeia.ids) abertos.add(id);
+  if (cadeia.unidade && cadeia.chave) {
+    void carregarConteudoDaUnidade(cadeia.chave, cadeia.unidade);
+  }
+}
+
+watch(() => props.caminhoAtual, abrirCadeiaDaPaginaAtual, { immediate: true });
 provide(ESTADO_MENU, {
   estaAberto,
   alternar,

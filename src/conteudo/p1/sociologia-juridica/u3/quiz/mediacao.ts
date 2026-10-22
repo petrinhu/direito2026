@@ -61,7 +61,7 @@ export const mediacao: readonly PerguntaQuiz[] = [
         `Em terceiro lugar.`,
         `Em segundo lugar, logo depois do bloqueio de conteúdo.`,
         `Não foram citadas entre as funcionalidades mais importantes.`
-      ], correta: 1, fonteExtra: false, explicacaoHtml: `As notificações sobre atividades suspeitas ficaram em terceiro lugar, depois do bloqueio de conteúdo e da restrição de tempo de uso. Colocá-las em primeiro lugar contraria o resultado. Ficar em segundo lugar também não corresponde ao texto, em que essa posição é ocupada pela restrição de tempo. Dizer que não foram citadas contradiz o artigo, que as menciona como a terceira mais importante.` },
+      ], correta: 1, fonteExtra: false, explicacaoHtml: `As notificações sobre atividades suspeitas ficaram em terceiro lugar, depois do bloqueio de conteúdo e da restrição de tempo de uso. Colocá-las em primeiro lugar contraria o resultado. Ficar em segundo lugar também não corresponde ao texto, em que essa posição é ocupada pela restrição de tempo. Dizer que não foram citadas contradiz o artigo, que as lista entre as mais importantes.` },
 
     { id: 29, categoria: 'mediacao-parental', enunciadoHtml: `Segundo a conclusão de Santos, o que muitas vezes falta aos pais?`, alternativasHtml: [
         `Esclarecimento necessário e as ferramentas certas para proteger os filhos.`,

@@ -120,7 +120,7 @@ export const mnemonicos: readonly Mnemonico[] = [
       }
     ],
     comoFunciona:
-      'Cada elo causa o seguinte, e a cadeia mostra que a ausência tem efeito muito além das horas fora de casa.',
+      'Cada elo leva ao seguinte, e a ausência pesa além das horas fora de casa.',
     ressalva:
       'A cadeia é apoio de memória, invenção didática. O conteúdo vem de Nóbrega, que lê Ferreira.',
     blocoResumo: 'bloco-7'

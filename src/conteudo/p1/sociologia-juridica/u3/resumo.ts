@@ -31,7 +31,7 @@ export const resumo: readonly BlocoResumo[] = [
       'As experiências infantis não são homogêneas: família, acesso e condição socioeconômica pesam.',
       'A criança é coprodutora de conteúdo e, ao mesmo tempo, consumidora.'
     ],
-    exemploHtml: `Uma criança com aparelho próprio e outra sem acesso à internet em casa não vivem a mesma infância digital. É esse o ponto que Othon, citada por Santos, pede que se leve em conta.`
+    exemploHtml: `Uma criança com aparelho próprio e outra sem acesso à internet em casa não vivem a mesma infância digital. Othon, citada por Santos, pede que essa diferença seja levada em conta.`
   },
   {
     id: 'bloco-1',
@@ -96,7 +96,7 @@ export const resumo: readonly BlocoResumo[] = [
       'O abuso pode acontecer à distância, e a aproximação começa com elogios e atenção.',
       'Riscos como o aliciamento em grupos de automutilação ou pró-anorexia podem levar à ansiedade, à depressão ou ao suicídio.'
     ],
-    exemploHtml: `Quando alguém ameaça um adolescente para que ele envie fotos íntimas, sob pena de divulgar outras imagens, a situação se chama sextortion. É o tipo de crime que a lista de Stanger, citada por Nóbrega, descreve.`
+    exemploHtml: `Quando alguém ameaça um adolescente para que ele envie fotos íntimas, sob pena de divulgar outras imagens, a situação se chama sextortion, crime descrito na lista de Stanger, citada por Nóbrega.`
   },
   {
     id: 'bloco-4',
@@ -115,7 +115,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>O problema, segundo Santos, é que essas estratégias não são amplamente divulgadas. Muitos pais nem sabem que elas existem e, por isso, não conseguem usá-las para tornar a vivência online dos filhos mais segura.</p>
     `,
     resumo: [
-      'Controle parental não é só programa instalado: também há configurações dentro das plataformas.',
+      'Controle parental também existe dentro das plataformas, além dos programas instalados nos aparelhos.',
       'Exemplos: modo kids, perfil público ou fechado, bloqueio de comentários e perfil de adulto vinculado.',
       'As ferramentas são pouco divulgadas, e muitos pais não sabem que existem.',
       'O foco do estudo é a perspectiva dos pais, que mediam o acesso das crianças aos conteúdos.'
@@ -153,10 +153,10 @@ export const resumo: readonly BlocoResumo[] = [
     titulo: 'Exposição e privacidade: o que se publica não volta',
     fonte: 'NÓBREGA (2024), Tecnologias digitais e os possíveis impactos para a privacidade, a segurança e a subjetividade de crianças e adolescentes.',
     corpoHtml: `
-      <p>Nóbrega identifica a questão central da privacidade: depois que um texto, uma foto ou um vídeo é postado, dificilmente ele sai de circulação. Também não se controla o impacto que ele terá, nem o uso que terceiros farão dele.</p>
-      <p>A autora lembra que pensar a privacidade exige antes entender o que é público e o que é privado, e o que é consentimento. Ela destaca que as crianças deveriam ser tratadas com a mesma consideração e o mesmo respeito que teríamos por um adulto.</p>
-      <p>Um ponto central do texto é a crítica aos próprios adultos. Pais postam fotos e vídeos dos filhos, às vezes bebês, em situações aparentemente ingênuas que podem, no futuro, ser usadas para fins criminosos ou gerar bullying e constrangimento. A autora também menciona vídeos de crianças humilhadas por adultos apenas para viralizar.</p>
-      <p>Ela relata ainda o depoimento público de uma jovem que, quando criança, foi exposta pela mãe nas redes, com detalhes de doenças e da vida íntima, e relata que fotos e vídeos dela, quando criança, foram diversas vezes usados em redes de pedofilia. O caso mostra, para a autora, o que a exposição pode causar.</p>
+      <p>Nóbrega parte de um fato básico da privacidade: depois que um texto, uma foto ou um vídeo é postado, dificilmente ele sai de circulação. Também não se controla o impacto que ele terá, nem o uso que terceiros farão dele.</p>
+      <p>A autora lembra que pensar a privacidade exige antes entender o que é público e o que é privado, e o que é consentimento. Ela afirma que as crianças deveriam ser tratadas com a mesma consideração e o mesmo respeito que teríamos por um adulto.</p>
+      <p>A autora critica os próprios adultos. Pais postam fotos e vídeos dos filhos, às vezes bebês, em situações aparentemente ingênuas que podem, no futuro, ser usadas para fins criminosos ou gerar bullying e constrangimento. A autora também menciona vídeos de crianças humilhadas por adultos apenas para viralizar.</p>
+      <p>Ela relata ainda o depoimento público de uma jovem que, quando criança, foi exposta pela mãe nas redes, com detalhes de doenças e da vida íntima, e relata que fotos e vídeos dela, quando criança, foram diversas vezes usados em redes de pedofilia.</p>
     `,
     resumo: [
       'Depois de postado, um conteúdo dificilmente sai de circulação, e o uso por terceiros não se controla.',
@@ -164,7 +164,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Os próprios pais expõem as crianças, muitas vezes sem avaliar as consequências.',
       'Crianças devem ter a mesma consideração e o mesmo respeito que um adulto.'
     ],
-    exemploHtml: `Uma foto de bebê publicada hoje pode ser vista, comentada e copiada por pessoas que os pais nunca conheceram. A pergunta que a autora deixa é como delegar à criança uma decisão que nem um adulto consegue medir por completo.`
+    exemploHtml: `Uma foto de bebê publicada hoje pode ser vista, comentada e copiada por pessoas que os pais nunca conheceram. A autora pergunta como delegar à criança uma decisão que nem um adulto consegue medir por completo.`
   },
   {
     id: 'bloco-7',
@@ -194,7 +194,7 @@ export const resumo: readonly BlocoResumo[] = [
       <p>Santos sustenta que a responsabilidade de mediar a relação das crianças com as plataformas acaba ficando apenas com os pais, que precisam entender as ferramentas para lidar com uma indústria que movimenta bilhões em publicidade. Ela aponta também a falta de uma normativa mais dura, por parte do Estado, para proteger esse público.</p>
       <p>Para Santos, estar seguro no ambiente online é um direito da criança. A cultura digital é fundamental para entender as dinâmicas sociais de hoje, e as crianças não podem ser excluídas dela nem tratadas sem levar em conta a sua vulnerabilidade.</p>
       <p>Nóbrega fala da família e da escola como lugares da educação digital. Para ela, não há como fugir dessa educação, nem se pode delegar aos outros o cuidado com as crianças, nem achar que elas terão maturidade para avaliar os riscos sozinhas.</p>
-      <p>Santos destaca a escola como espaço de discussão: as escolas tiveram protagonismo nas discussões sobre os impactos do uso excessivo de smartphones. A autora lembra que, no período da coleta, ainda não tinha sido sancionada a Lei nº 15.100/2025, que proíbe o uso de celulares em escolas em todo o território nacional.</p>
+      <p>Santos aponta a escola como espaço de discussão: as escolas tiveram protagonismo nas discussões sobre os impactos do uso excessivo de smartphones. A autora lembra que, no período da coleta, ainda não tinha sido sancionada a Lei nº 15.100/2025, que proíbe o uso de celulares em escolas em todo o território nacional.</p>
     `,
     resumo: [
       'Santos: a responsabilidade recai sobre os pais, e falta normativa mais dura do Estado.',

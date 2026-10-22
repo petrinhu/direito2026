@@ -54,7 +54,7 @@ export const riscos: readonly PerguntaQuiz[] = [
         `Com um convite para um encontro presencial em local público.`,
         `Com a oferta de presentes caros logo no primeiro contato.`,
         `Com elogios e atenção, que fazem a criança se sentir especial, muitas vezes por meses ou anos antes do abuso.`
-      ], correta: 3, fonteExtra: false, explicacaoHtml: `Nóbrega descreve uma aproximação gradual: elogios e atenção fazem a criança se sentir olhada e especial, e a comunicação pode durar meses ou anos antes do abuso. Ameaças imediatas, sem conversa prévia, contrariam esse padrão, em que a confiança vem antes. O encontro presencial em local público e os presentes caros não são descritos no texto. A aproximação pelos elogios é o que a autora descreve.` },
+      ], correta: 3, fonteExtra: false, explicacaoHtml: `Nóbrega descreve uma aproximação gradual: elogios e atenção fazem a criança se sentir olhada e especial, e a comunicação pode durar meses ou anos antes do abuso. Ameaças imediatas, sem conversa prévia, contrariam esse padrão, em que a confiança vem antes. O encontro presencial em local público e os presentes caros não são descritos no texto.` },
 
     { id: 18, categoria: 'riscos-crimes', enunciadoHtml: `Qual destas situações Nóbrega cita como risco que crianças e adolescentes enfrentam na internet?`, alternativasHtml: [
         `Uso de aplicativos de mensagens para combinar trabalhos escolares.`,

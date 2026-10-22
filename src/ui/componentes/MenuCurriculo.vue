@@ -272,10 +272,15 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                     :key="unidade.id"
                   >
                     <li>
-                      <EstadoEmBreve
-                        v-if="unidade.estado === 'em-breve'"
-                        :rotulo="rotuloSemViuva(unidade.rotulo)"
-                      />
+                      <!--
+                        Em breve de unidade: fica na mesma coluna de recuo dos nomes das
+                        unidades (sem seta, porque não expande). Sem botão e sem realce:
+                        é item desativado de propósito.
+                      -->
+                      <div v-if="unidade.estado === 'em-breve'" class="menu-curriculo__linha">
+                        <span class="menu-curriculo__recuo" aria-hidden="true" />
+                        <EstadoEmBreve :rotulo="rotuloSemViuva(unidade.rotulo)" />
+                      </div>
                       <template v-else>
                         <div class="menu-curriculo__linha">
                           <button
@@ -721,26 +726,23 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 /* Botão da AV (ordem do líder, 22/10/2026): o rótulo faz parte do botão, então
-   o botão ocupa a linha inteira. Preserva o layout de antes: seta na mesma
-   coluna (padding-left do --esp-3), texto começando na coluna do --menu-toggle
-   (onde o span ficava depois do triângulo de 32/44px), texto herdando a cor da
-   lateral e seta na cor do nível. O rótulo fica no topo da linha, como antes. */
+   o botão ocupa a linha inteira. Seta na coluna do padding-left (--esp-3) e
+   texto começando na coluna do --menu-toggle, onde o texto da unidade começa.
+   Cor e tamanho do rótulo são os do nível 3 (--menu-cor, 0.875rem), igual aos
+   links de unidade, por isso o botão não define cor nem fonte próprias. */
 .menu-curriculo__toggle--av {
   flex: 1 1 0;
   width: auto;
   min-width: 0;
   font: inherit;
-  color: inherit;
   text-align: left;
 }
 
 .menu-curriculo__toggle--av .menu-curriculo__seta {
   margin-right: calc(var(--menu-toggle) - var(--esp-3, 0.75rem) - 6px);
-  border-left-color: var(--menu-cor, currentColor);
 }
 
 .menu-curriculo__rotulo-av {
-  align-self: flex-start;
   min-width: 0;
   overflow-wrap: break-word;
 }
@@ -779,8 +781,34 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   padding-left: var(--esp-2, 0.5rem);
 }
 
-.menu-curriculo__nivel-2 > li > .menu-curriculo__botao {
+/* Mesmo tamanho no nível 2 para botão, link restrito e "em breve" (modo adaptado:
+   o tamanho de título não se aplica, então o nível fica na escala pequena). */
+.menu-curriculo__nivel-2 > li > .menu-curriculo__botao,
+.menu-curriculo__nivel-2 > li > a,
+.menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
   font-size: var(--escala-sm, 0.9375rem);
+}
+
+/* Cadeira restrita é link, sem seta: o texto começa na mesma coluna da cadeira
+   publicada. A seta do botão ocupa 14px (6px da borda + 8px de margem). */
+.menu-curriculo a.menu-curriculo__link-restrita {
+  padding-left: var(--esp-3, 0.75rem);
+}
+
+.menu-curriculo a.menu-curriculo__link-restrita::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  margin-right: var(--esp-2, 0.5rem);
+  flex-shrink: 0;
+}
+
+/* "Em breve" de cadeira: mesma altura e mesma coluna de texto da cadeira. */
+.menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
+  display: flex;
+  min-height: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  padding-left: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
 }
 
 /* Rótulos de período e de cadeira em Cormorant, com numerais lining, como no
@@ -797,7 +825,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 :root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > .menu-curriculo__botao,
-:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > a {
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > a,
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
   font-family: var(--fonte-titulo);
   font-variant-numeric: lining-nums;
   font-weight: 600;
@@ -812,6 +841,8 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__link-unidade,
+.menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__rotulo-av,
+.menu-curriculo__nivel-3 > li > .menu-curriculo__linha :deep(.estado-em-breve),
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__seta {
   font-size: 0.875rem;
 }
@@ -825,8 +856,18 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   padding-left: var(--esp-2, 0.5rem);
 }
 
-.menu-curriculo__nivel-4 > li > .menu-curriculo__botao {
+.menu-curriculo__nivel-4 > li > .menu-curriculo__botao,
+.menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
   font-size: 0.875rem;
+}
+
+/* "Em breve" de grupo: mesma altura e mesma coluna de texto do grupo (botão com
+   seta de 14px). */
+.menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
+  display: flex;
+  min-height: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  padding-left: calc(var(--esp-3, 0.75rem) + 6px + var(--esp-2, 0.5rem));
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-5 {
@@ -836,6 +877,14 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo__nivel-5 > li > a {
+  font-size: var(--escala-xs, 0.8125rem);
+}
+
+/* "Em breve" de tópico: mesmo tamanho e mesmo recuo dos tópicos (link de nível 5). */
+.menu-curriculo__nivel-5 > li > :deep(.estado-em-breve) {
+  display: flex;
+  min-height: 44px;
+  padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
   font-size: var(--escala-xs, 0.8125rem);
 }
 

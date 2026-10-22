@@ -67,6 +67,36 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/mapa",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/quiz",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/redacao-juridica-1",
       "h1": "Português e Redação Jurídica 1",
       "nome": "Português e Redação Jurídica 1",
@@ -268,6 +298,36 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/mapa",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-material-norma-interpretacao/quiz",
+      "h1": "Norma, interpretação e fontes do Direito",
+      "nome": "Introdução ao Direito: u3-material-norma-interpretacao (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/redacao-juridica-1/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
       "nome": "Português e Redação Jurídica 1: u1 (resumo)",
@@ -394,6 +454,8 @@
     "/p/p1/intr-direito/u1/fichamento",
     "/p/p1/intr-direito/u1/mnemonicos",
     "/p/p1/intr-direito/u3-livro-textura-aberta/peticao",
+    "/p/p1/intr-direito/u3-material-norma-interpretacao/texto",
+    "/p/p1/intr-direito/u3-material-norma-interpretacao/peticao",
     "/p/p1/redacao-juridica-1/u1/texto",
     "/p/p1/redacao-juridica-1/u1/mapa",
     "/p/p1/redacao-juridica-1/u1/fichamento",

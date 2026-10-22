@@ -26,5 +26,16 @@ export const ROTULOS_CATEGORIA_QUIZ: RotulosCategoriaQuiz = {
   'textura-comunicacao': 'Comunicação de padrões',
   'textura-penumbra': 'Casos claros e penumbra',
   'textura-formalismo': 'Formalismo e padrões variáveis',
-  'textura-precedentes': 'Regras fixas e precedentes'
+  'textura-precedentes': 'Regras fixas e precedentes',
+  'fontes-direito': 'Fontes do direito',
+  'kelsen-pureza': 'Pureza e ato jurídico',
+  'norma-validade': 'Norma e validade',
+  'norma-caracteres': 'Caracteres e classificações',
+  semiotica: 'Semiótica',
+  'textura-aberta': 'Textura aberta',
+  'integracao-sentenca': 'Integração e sentença',
+  'precedentes-sumula': 'Precedente, jurisprudência e súmula',
+  'interpretacao-kelsen': 'Interpretação em Kelsen',
+  'direito-subjetivo': 'Direito subjetivo e objetivo',
+  'ramos-direito': 'Ramos do direito'
 };

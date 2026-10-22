@@ -28,6 +28,13 @@
             "titulo": "A textura aberta do direito",
             "estado": "publicado",
             "abas": ["texto", "resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
+          },
+          {
+            "id": "u3-material-norma-interpretacao",
+            "rotulo": "AV3",
+            "titulo": "Norma, interpretação e fontes do Direito",
+            "estado": "publicado",
+            "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
           }
         ]
       },

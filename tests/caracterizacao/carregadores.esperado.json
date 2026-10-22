@@ -4,6 +4,7 @@
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
     "p1/intr-direito/u3-livro-textura-aberta",
+    "p1/intr-direito/u3-material-norma-interpretacao",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
     "p1/sociologia-juridica/u3"
@@ -13,6 +14,7 @@
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
     "p1/intr-direito/u3-livro-textura-aberta",
+    "p1/intr-direito/u3-material-norma-interpretacao",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
     "p1/sociologia-juridica/u3"
@@ -67,6 +69,49 @@
       "mapaFichamento": {
         "eras": 4,
         "pensadores": 1
+      },
+      "mnemonicos": 5
+    },
+    "p1/intr-direito/u3-material-norma-interpretacao": {
+      "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],
+      "resumoBlocos": 13,
+      "quizPerguntas": 30,
+      "quizCategorias": [
+        "direito-subjetivo",
+        "fontes-direito",
+        "integracao-sentenca",
+        "interpretacao-kelsen",
+        "kelsen-pureza",
+        "norma-caracteres",
+        "norma-validade",
+        "precedentes-sumula",
+        "ramos-direito",
+        "semiotica",
+        "textura-aberta"
+      ],
+      "quizTipos": {
+        "multiplaEscolha": 30,
+        "verdadeiroOuFalso": 0
+      },
+      "quizIdsDoProfessor": [],
+      "quizIdsComMarca": [],
+      "quizIdsPorCategoria": {
+        "direito-subjetivo": [27, 28],
+        "fontes-direito": [1, 2, 3],
+        "integracao-sentenca": [19, 20, 21],
+        "interpretacao-kelsen": [25, 26],
+        "kelsen-pureza": [4, 5, 6],
+        "norma-caracteres": [11, 12, 13],
+        "norma-validade": [7, 8, 9, 10],
+        "precedentes-sumula": [22, 23, 24],
+        "ramos-direito": [29, 30],
+        "semiotica": [14, 15, 16],
+        "textura-aberta": [17, 18]
+      },
+      "peticaoSecoes": null,
+      "mapaFichamento": {
+        "eras": 4,
+        "pensadores": 2
       },
       "mnemonicos": 5
     },

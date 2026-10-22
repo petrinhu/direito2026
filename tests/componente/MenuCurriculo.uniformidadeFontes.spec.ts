@@ -33,8 +33,10 @@ function regrasQue(trecho: string): { seletor: string; corpo: string }[] {
 }
 
 describe('MenuCurriculo, uniformidade no nível 3 (unidade e AV)', () => {
-  it('o rótulo da AV tem o mesmo tamanho do rótulo de unidade (0.875rem)', () => {
-    expect(regrasQue('rotulo-av').some((r) => /font-size:\s*0\.875rem/.test(r.corpo))).toBe(true);
+  it('o rótulo da AV tem o mesmo tamanho do rótulo de unidade (propriedade do nível 3)', () => {
+    expect(
+      regrasQue('rotulo-av').some((r) => /font-size:\s*var\(--menu-tam-3\)/.test(r.corpo))
+    ).toBe(true);
   });
 
   it('a AV não sobrescreve a cor: herda --menu-cor do nível, como a unidade', () => {
@@ -52,10 +54,10 @@ describe('MenuCurriculo, uniformidade no nível 3 (unidade e AV)', () => {
     );
   });
 
-  it('o "em breve" de unidade usa o tamanho do nível 3 (0.875rem)', () => {
+  it('o "em breve" de unidade usa o tamanho do nível 3 (propriedade do nível 3)', () => {
     expect(
       regrasQue('nivel-3 > li > .menu-curriculo__linha :deep(.estado-em-breve)').some((r) =>
-        /font-size:\s*0\.875rem/.test(r.corpo)
+        /font-size:\s*var\(--menu-tam-3\)/.test(r.corpo)
       )
     ).toBe(true);
   });
@@ -125,17 +127,15 @@ describe('MenuCurriculo, uniformidade no nível 2 (cadeira)', () => {
 });
 
 describe('MenuCurriculo, uniformidade no nível 4 e 5', () => {
-  it('o "em breve" de grupo (nível 4) usa o tamanho do nível (0.875rem) e a coluna do texto dos grupos', () => {
+  it('o "em breve" de grupo (nível 4) usa o tamanho do nível (propriedade do nível 4) e a coluna do texto dos grupos', () => {
     const regra = regrasQue('nivel-4 > li > :deep(.estado-em-breve)');
-    expect(regra.some((r) => /font-size:\s*0\.875rem/.test(r.corpo))).toBe(true);
+    expect(regra.some((r) => /font-size:\s*var\(--menu-tam-4\)/.test(r.corpo))).toBe(true);
     expect(regra.some((r) => /padding-left:\s*calc\(var\(--esp-3/.test(r.corpo))).toBe(true);
   });
 
-  it('o "em breve" de tópico (nível 5) usa o tamanho do nível (0.8125rem) e o recuo dos tópicos', () => {
+  it('o "em breve" de tópico (nível 5) usa o tamanho do nível (propriedade do nível 5) e o recuo dos tópicos', () => {
     const regra = regrasQue('nivel-5 > li > :deep(.estado-em-breve)');
-    expect(
-      regra.some((r) => /font-size:\s*var\(--escala-xs|font-size:\s*0\.8125rem/.test(r.corpo))
-    ).toBe(true);
+    expect(regra.some((r) => /font-size:\s*var\(--menu-tam-5\)/.test(r.corpo))).toBe(true);
     expect(regra.some((r) => /padding:\s*var\(--esp-2/.test(r.corpo))).toBe(true);
   });
 });

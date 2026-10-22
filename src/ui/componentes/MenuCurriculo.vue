@@ -590,10 +590,22 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
    adaptado, que exige alvo de 44x44 (docs/modo-adaptado.md, seção 2). */
 .menu-curriculo {
   --menu-toggle: 32px;
+  /* Escada de tamanho dos níveis 3, 4 e 5 (ordem do líder, 22/10/2026): cada um
+     um pouco menor que o de cima. No modo normal: 3 = base (17 px), 4 = sm (15 px),
+     5 = xs (13 px), abaixo do 2 (19 px). */
+  --menu-tam-3: var(--escala-base, 1.0625rem);
+  --menu-tam-4: var(--escala-sm, 0.9375rem);
+  --menu-tam-5: var(--escala-xs, 0.8125rem);
 }
 
 :root[data-modo-adaptado='on'] .menu-curriculo {
   --menu-toggle: 44px;
+  /* Leitura ampliada: o nível 2 fica em sm (21 px) e o piso dos níveis 3 a 5 é xs
+     (18 px). Sem um token abaixo de 18 px, os três ficam iguais (sem inversão). A
+     escada estrita só cabe se o nível 2 subir: decisão do líder em aberto. */
+  --menu-tam-3: var(--escala-xs, 1.125rem);
+  --menu-tam-4: var(--escala-xs, 1.125rem);
+  --menu-tam-5: var(--escala-xs, 1.125rem);
 }
 
 /* Seta/chevron: mesmo elemento de ligação usado em todos os níveis que
@@ -881,7 +893,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__rotulo-av,
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha :deep(.estado-em-breve),
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__seta {
-  font-size: 0.875rem;
+  font-size: var(--menu-tam-3);
 }
 
 .menu-curriculo ul.menu-curriculo__nivel-4 {
@@ -896,7 +908,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 .menu-curriculo__nivel-4 > li > .menu-curriculo__botao,
 .menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-aba,
 .menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
-  font-size: 0.875rem;
+  font-size: var(--menu-tam-4);
 }
 
 /* "Em breve" de grupo: mesma altura e mesma coluna de texto do grupo (botão com
@@ -915,7 +927,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
 }
 
 .menu-curriculo__nivel-5 > li > a {
-  font-size: var(--escala-xs, 0.8125rem);
+  font-size: var(--menu-tam-5);
 }
 
 /* "Em breve" de tópico: mesmo tamanho e mesmo recuo dos tópicos (link de nível 5). */
@@ -923,7 +935,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   display: flex;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
-  font-size: var(--escala-xs, 0.8125rem);
+  font-size: var(--menu-tam-5);
 }
 
 /* EstadoEmBreve (rótulo e selo "em breve") também vive só dentro da

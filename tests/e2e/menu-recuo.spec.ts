@@ -45,7 +45,7 @@ async function abrirMenuAteAba(page: Page, largura: number): Promise<void> {
   };
   await abrir('button[aria-controls="lista-p1"]');
   await abrir('button[aria-controls="lista-intr-direito"]');
-  await abrir('button[aria-label="Mostrar submenu de Unidade 1"]');
+  await abrir('button[aria-label="Mostrar submenu de AV1"]');
   await abrir('button[aria-controls^="lista-resumo-"]');
   await menu.locator('[id^="lista-resumo-"] a').first().waitFor({ state: 'visible' });
   await esperarLayoutAssentar(page);
@@ -76,7 +76,7 @@ async function medir(page: Page): Promise<Medidas> {
     const linkUnidade = um(
       'a.menu-curriculo__link-unidade[href="' + window.location.pathname + '"]'
     );
-    const toggle = um('button[aria-label="Mostrar submenu de Unidade 1"]');
+    const toggle = um('button[aria-label="Mostrar submenu de AV1"]');
     const resumo = um('button[aria-controls^="lista-resumo-"]');
     const quiz = um('a[href$="/intr-direito/u1/quiz"]');
     const bloco = um('[id^="lista-resumo-"] a');

@@ -51,7 +51,7 @@ test('o menu lateral leva às abas novas', async ({ page }) => {
     page
       .locator(`li:has(a[href="${BASE}"])`)
       .last()
-      .getByRole('button', { name: /submenu de Unidade 1/ })
+      .getByRole('button', { name: /submenu de AV1/ })
   );
   await expect(menu.locator(`a[href="${BASE}/mapa"]`)).toHaveCount(1);
   await expect(menu.locator(`a[href="${BASE}/fichamento"]`)).toHaveCount(1);

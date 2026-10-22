@@ -258,7 +258,9 @@ describe('MenuCurriculo com o currículo real: o atalho está em todas as cadeir
       const itens = itensDaCadeira(w, cadeiraId);
       const posicaoDoAtalho = cadeira.unidades.findIndex((u) => u.id === atalho.apos) + 1;
 
-      expect(itens).toHaveLength(cadeira.unidades.length + 1);
+      // Cada AV com grupos declarados (cadeira.ts) entra como item próprio do menu (D7).
+      const avs = new Set((cadeira.grupos ?? []).map((g) => g.unidade)).size;
+      expect(itens).toHaveLength(cadeira.unidades.length + 1 + avs);
       expect(itens[posicaoDoAtalho]).toBe(RotuloAtalho);
       const semAtalho = itens.filter((texto) => texto !== RotuloAtalho);
       // "Unidade 3 em breve" começa pelo rótulo da unidade: basta o prefixo.

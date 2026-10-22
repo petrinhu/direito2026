@@ -127,9 +127,11 @@ describe('rotasDoCurriculo e a cadeira restrita', () => {
 describe('rotasDeAbaAusente', () => {
   it('lista só as abas que a unidade não tem', () => {
     expect(rotasDeAbaAusente(sintetico)).toEqual([
+      '/p/p1/com-peticao/u1/texto',
       '/p/p1/com-peticao/u1/mapa',
       '/p/p1/com-peticao/u1/fichamento',
       '/p/p1/com-peticao/u1/mnemonicos',
+      '/p/p1/sem-peticao/u1/texto',
       '/p/p1/sem-peticao/u1/mapa',
       '/p/p1/sem-peticao/u1/fichamento',
       '/p/p1/sem-peticao/u1/mnemonicos',

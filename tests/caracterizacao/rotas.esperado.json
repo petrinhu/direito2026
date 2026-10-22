@@ -317,18 +317,24 @@
     }
   ],
   "rotasDeAbaAusente": [
+    "/p/p1/intr-direito/u1/texto",
     "/p/p1/intr-direito/u1/mapa",
     "/p/p1/intr-direito/u1/fichamento",
     "/p/p1/intr-direito/u1/mnemonicos",
+    "/p/p1/redacao-juridica-1/u1/texto",
     "/p/p1/redacao-juridica-1/u1/mapa",
     "/p/p1/redacao-juridica-1/u1/fichamento",
     "/p/p1/redacao-juridica-1/u1/mnemonicos",
+    "/p/p1/sociologia-juridica/u1/texto",
     "/p/p1/sociologia-juridica/u1/mapa",
     "/p/p1/sociologia-juridica/u1/fichamento",
     "/p/p1/sociologia-juridica/u1/mnemonicos",
     "/p/p1/sociologia-juridica/u1/peticao",
+    "/p/p1/sociologia-juridica/u3/texto",
     "/p/p1/sociologia-juridica/u3/peticao",
+    "/p/p1/filosofia-juridica/u1/texto",
     "/p/p1/filosofia-juridica/u1/peticao",
+    "/p/p1/filosofia-juridica/u3/texto",
     "/p/p1/filosofia-juridica/u3/peticao"
   ]
 }

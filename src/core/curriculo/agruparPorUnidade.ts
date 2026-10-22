@@ -6,6 +6,8 @@ import type { ChaveAba } from './tipos';
 export interface ArquivosDaUnidade {
   readonly meta: string;
   readonly resumo?: string;
+  /** Transcrição fiel (OCR) do texto, gerada por npm run texto-integral. */
+  readonly textoIntegral?: string;
   readonly mapaFichamento?: string;
   readonly mnemonicos?: string;
   readonly peticao?: string;
@@ -40,6 +42,7 @@ type ParteDoArquivo = keyof ArquivosDaUnidade;
 const PARTE_POR_NOME_DE_ARQUIVO: Readonly<Record<string, ParteDoArquivo>> = {
   'meta.ts': 'meta',
   'resumo.ts': 'resumo',
+  'textoIntegral.ts': 'textoIntegral',
   'mapaFichamento.ts': 'mapaFichamento',
   'mnemonicos.ts': 'mnemonicos',
   'peticao.ts': 'peticao',
@@ -153,6 +156,8 @@ function abaPresente(aba: ChaveAba, arquivos: Partial<Record<ParteDoArquivo, str
   switch (aba) {
     case 'resumo':
       return arquivos.resumo !== undefined;
+    case 'texto':
+      return arquivos.textoIntegral !== undefined;
     case 'mapa':
     case 'fichamento':
       return arquivos.mapaFichamento !== undefined;

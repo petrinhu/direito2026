@@ -18,7 +18,8 @@ const PARTES_DO_CONTEUDO = [
   'peticao',
   'quiz',
   'mapaFichamento',
-  'mnemonicos'
+  'mnemonicos',
+  'textoIntegral'
 ] as const;
 
 /**

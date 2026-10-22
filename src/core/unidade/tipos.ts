@@ -1,6 +1,7 @@
 import type { MapaFichamento } from '../fichamento/tipos';
 import type { Mnemonico } from '../mnemonicos/tipos';
 import type { EstadoPublicacao } from '../curriculo/tipos';
+import type { TextoIntegral } from '../textoIntegral/tipos';
 
 export interface MetaUnidade {
   /** Rótulo curto no menu. Ex.: 'Unidade 1'. */
@@ -165,4 +166,6 @@ export interface ConteudoUnidade {
   readonly mapaFichamento?: MapaFichamento;
   /** Alimenta a aba Mnemônicos. */
   readonly mnemonicos?: readonly Mnemonico[];
+  /** Alimenta a aba Texto integral. */
+  readonly textoIntegral?: TextoIntegral;
 }

@@ -50,6 +50,24 @@ describe('agruparPorUnidade: abas na ordem fixa', () => {
   });
 });
 
+describe('agruparPorUnidade: texto integral é uma aba logo depois do resumo', () => {
+  it('textoIntegral.ts vira a aba texto, entre resumo e mapa', () => {
+    const [unidade] = agruparPorUnidade([
+      `${UNIDADE}/meta.ts`,
+      `${UNIDADE}/mapaFichamento.ts`,
+      `${UNIDADE}/resumo.ts`,
+      `${UNIDADE}/textoIntegral.ts`
+    ]);
+    expect(unidade?.abas).toEqual(['resumo', 'texto', 'mapa', 'fichamento']);
+    expect(unidade?.arquivos.textoIntegral).toBe(`${UNIDADE}/textoIntegral.ts`);
+  });
+
+  it('unidade só com textoIntegral.ts (sem resumo) mantém a aba texto e nenhuma outra', () => {
+    const [unidade] = agruparPorUnidade([`${UNIDADE}/meta.ts`, `${UNIDADE}/textoIntegral.ts`]);
+    expect(unidade?.abas).toEqual(['texto']);
+  });
+});
+
 describe('agruparPorUnidade: arquivos e quiz em pasta', () => {
   it('quiz/index.ts vira o arquivo de quiz e os sub-arquivos de quiz/ não viram aba', () => {
     const [unidade] = agruparPorUnidade([

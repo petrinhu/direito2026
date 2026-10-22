@@ -12,12 +12,18 @@ import {
  * só as partes que existem entram, e cada carregador é preguiçoso.
  */
 const META = { titulo: 'T', subtitulo: 'S', descricao: 'D' };
+const TEXTO = {
+  titulo: 'T',
+  fonte: 'F',
+  blocos: [{ tipo: 'paragrafo', trechos: [{ tipo: 'texto', texto: 'x' }] }]
+};
 const MODULOS: Record<string, Record<string, unknown>> = {
   'p1/intr-direito/u1/meta.ts': { meta: META },
   'p1/intr-direito/u1/resumo.ts': { resumo: [{ id: 'bloco-1' }] },
   'p1/intr-direito/u1/peticao.ts': { peticao: { secoes: [] } },
   'p1/intr-direito/u1/quiz.ts': { quiz: [{ id: 'q-1' }] },
   'p1/intr-direito/u1/dispositivos.ts': { dispositivos: { 'cpc-1': { id: 'cpc-1' } } },
+  'p1/intr-direito/u1/textoIntegral.ts': { textoIntegral: TEXTO },
   'p1/sociologia-juridica/u1/meta.ts': { meta: META },
   'p1/sociologia-juridica/u1/resumo.ts': { resumo: [{ id: 'bloco-s' }] },
   'p1/sociologia-juridica/u1/quiz/index.ts': { quiz: [{ id: 'q-s' }] }
@@ -45,7 +51,19 @@ describe('montarCarregadores: uma entrada por unidade descoberta', () => {
   it('carregador só traz as partes que existem (sem chave com undefined)', async () => {
     const registro = montarCarregadores(UNIDADES, importadorFalso());
     const conteudo = await registro['p1/intr-direito/u1']!();
-    expect(Object.keys(conteudo).sort()).toEqual(['meta', 'peticao', 'quiz', 'resumo']);
+    expect(Object.keys(conteudo).sort()).toEqual([
+      'meta',
+      'peticao',
+      'quiz',
+      'resumo',
+      'textoIntegral'
+    ]);
+  });
+
+  it('textoIntegral.ts entra no conteúdo como textoIntegral, na forma do tipo', async () => {
+    const registro = montarCarregadores(UNIDADES, importadorFalso());
+    const conteudo = await registro['p1/intr-direito/u1']!();
+    expect(conteudo.textoIntegral).toEqual(TEXTO);
   });
 
   it('quiz em quiz/index.ts entra como quiz, sem peticao', async () => {

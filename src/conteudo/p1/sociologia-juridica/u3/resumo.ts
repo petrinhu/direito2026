@@ -22,12 +22,12 @@ export const resumo: readonly BlocoResumo[] = [
         <li><strong>Entendimento natural e intuitivo:</strong> vê a relação das crianças com as mídias como algo natural e espontâneo.</li>
         <li><strong>Infâncias pluralizadas:</strong> um olhar menos dicotômico, que busca entender o fenômeno social com ênfase nas mediações.</li>
       </ul>
-      <p>É o terceiro ponto de vista que orienta a discussão de Santos. Ela lembra que as experiências das crianças com esses meios não são homogêneas: a estrutura familiar, as formas de acesso à internet e as condições socioeconômicas variam muito de um território para outro.</p>
+      <p>A passagem de Santos sobre experiências não homogêneas, citando Othon, é a que mais se aproxima do terceiro ponto de vista. Ela lembra que as experiências das crianças com esses meios não são homogêneas: a estrutura familiar, as formas de acesso à internet e as condições socioeconômicas variam muito de um território para outro.</p>
       <p>A criança, nesse cenário, passa a ser <strong>coprodutora de conteúdo</strong> e, ao mesmo tempo, consumidora.</p>
     `,
     resumo: [
       'Três pontos de vista: crítico (desaparecimento da infância), natural e intuitivo, e infâncias pluralizadas com ênfase nas mediações.',
-      'O terceiro olhar, o menos dicotômico, é o que Santos adota.',
+      'A passagem de Santos sobre experiências não homogêneas é a que mais se aproxima do terceiro olhar, o menos dicotômico.',
       'As experiências infantis não são homogêneas: família, acesso e condição socioeconômica pesam.',
       'A criança é coprodutora de conteúdo e, ao mesmo tempo, consumidora.'
     ],
@@ -173,7 +173,7 @@ export const resumo: readonly BlocoResumo[] = [
     fonte: 'NÓBREGA (2024), citando FERREIRA, A geração do quarto.',
     corpoHtml: `
       <p>Nóbrega lê o livro <em>A geração do quarto</em>, de Hugo Monteiro Ferreira, que entrevistou, ao longo de dois anos, mais de três mil meninos e meninas de 11 a 18 anos. Segundo o autor, essas crianças passam mais de seis horas por dia isoladas no quarto, quase sem conversar com quem mora na mesma casa. Têm dificuldade de dizer o que sentem e apresentam sofrimento psíquico.</p>
-      <p>Para Ferreira, a condição dessa geração pede novas posturas dos adultos. Os pais dessas crianças passam de 8 a 12 horas trabalhando, e o autor chama de abandono, uma negligência em nome do poder econômico e da sobrevivência social, a solidão que elas vivem. Ele afirma que "terceirizar uma criança é possibilitar a emergência de desvinculações emocionais".</p>
+      <p>Para Ferreira, a condição dessa geração pede novas posturas dos adultos. Os pais dessas crianças passam de 8 a 12 horas trabalhando, e o autor chama de abandono, uma negligência em nome do poder econômico e da sobrevivência social, a solidão que elas vivem. Ele afirma que "Terceirizar uma criança é possibilitar a emergência de desvinculações emocionais".</p>
       <p>Nóbrega acrescenta que a culpa dos pais pode levá-los a compensar a ausência com permissividade, ficando desatentos às orientações e indecisos nos momentos que exigem um limite mais firme.</p>
       <p>Ela sustenta que o problema não é a conexão em si. As redes sociais são como lupas que mostram o silenciamento que já existia dentro das casas. Sem diálogo em casa, a criança procura respostas rápidas do outro lado da tela.</p>
     `,
@@ -181,7 +181,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Mais de três mil entrevistados de 11 a 18 anos, e mais de seis horas por dia isolados no quarto (Ferreira).',
       'Isolamento, sofrimento psíquico e dificuldade de dizer o que sentem.',
       'Terceirizar o cuidado pode gerar desvinculações emocionais, e a culpa leva à permissividade.',
-      'Diálogo e presença afetiva são o que possibilita a adesão, segundo Ferreira.'
+      'Adesão, segundo Ferreira, é ouvir quem fala, ainda que se discorde; Nóbrega liga a adesão ao diálogo.'
     ],
     exemploHtml: `Quando um adolescente passa a tarde inteira no quarto e quase não conversa com a família, a leitura de Ferreira pede que se pergunte o que falta na convivência, e não apenas quanto tempo a tela ocupa.`
   },
@@ -202,7 +202,7 @@ export const resumo: readonly BlocoResumo[] = [
       'Nóbrega: a educação digital é tarefa da família e da escola, e não pode ser delegada.',
       'Lei nº 15.100/2025: sancionada depois da coleta de junho de 2024, proíbe celulares em escolas.'
     ],
-    exemploHtml: `Quando se pergunta de quem é a tarefa de proteger a criança na internet, Santos aponta para os pais, o Estado e a indústria, e Nóbrega aponta para a família e a escola. Nenhuma das duas deixa essa tarefa com a própria criança.`
+    exemploHtml: `Quando se pergunta de quem é a tarefa de proteger a criança na internet, Santos observa que a responsabilidade acaba ficando apenas com os pais, e aponta a falta de norma mais dura do Estado; Nóbrega aponta para a família e a escola. Nenhuma das duas deixa essa tarefa com a própria criança.`
   },
   {
     id: 'bloco-9',

@@ -19,7 +19,7 @@ export const mediacao: readonly PerguntaQuiz[] = [
         `Apagar automaticamente o histórico do aparelho a cada vinte e quatro horas.`,
         `Desligar a conexão de internet da casa durante a noite inteira.`,
         `Proibir qualquer foto da criança em redes sociais, mesmo as de familiares.`
-      ], correta: 0, fonteExtra: false, explicacaoHtml: `Santos cita a possibilidade de conectar o perfil de um adulto responsável ao de uma criança ou adolescente, para mediar a experiência. Ela também lembra as configurações de perfil público ou fechado e o bloqueio de comentários com determinados assuntos. Apagar o histórico a cada vinte e quatro horas e desligar a internet à noite não aparecem no texto. A proibição de fotos de crianças é tema que Nóbrega discute, e não uma ferramenta da plataforma citada por Santos.` },
+      ], correta: 0, fonteExtra: false, explicacaoHtml: `Santos cita a possibilidade de conectar o perfil de um adulto responsável ao de uma criança ou adolescente, para mediar a experiência. Ela também lembra as configurações de perfil público ou fechado e o bloqueio de comentários com determinados assuntos. Apagar o histórico a cada vinte e quatro horas e desligar a internet à noite não aparecem no texto. Nenhum dos dois textos propõe proibir fotos de crianças: Nóbrega critica a exposição feita pelos próprios pais, e Santos não cita isso como ferramenta da plataforma.` },
 
     { id: 23, categoria: 'mediacao-parental', enunciadoHtml: `Segundo Santos, por que muitos pais não usam as ferramentas de mediação disponíveis?`, alternativasHtml: [
         `Porque as plataformas proíbem os pais de configurar qualquer recurso.`,
@@ -40,7 +40,7 @@ export const mediacao: readonly PerguntaQuiz[] = [
         `Acesso a conteúdo inapropriado, citado por 65,2% dos pais.`,
         `Uso excessivo de tempo nas redes, citado por 57,6% dos pais.`,
         `Cyberbullying, citado por 30,3% dos pais.`
-      ], correta: 0, fonteExtra: false, explicacaoHtml: `O contato com estranhos é a principal preocupação, com 75,8% das respostas, e a autora associa isso ao risco de crimes como assédio e pedofilia. O acesso a conteúdo inapropriado ocupa o segundo lugar, com 65,2%. O uso excessivo de tempo vem em terceiro, com 57,6%. O cyberbullying aparece em quinto lugar, com 30,3%.` },
+      ], correta: 0, fonteExtra: false, explicacaoHtml: `O contato com estranhos é a principal preocupação, com 75,8% das respostas, e a autora sugere que isso provavelmente envolva o risco de crimes como assédio e pedofilia. O acesso a conteúdo inapropriado ocupa o segundo lugar, com 65,2%. O uso excessivo de tempo vem em terceiro, com 57,6%. O cyberbullying aparece em quinto lugar, com 30,3%.` },
 
     { id: 26, categoria: 'mediacao-parental', enunciadoHtml: `Na ordem de preocupações dos pais, qual ficou em quarto lugar?`, alternativasHtml: [
         `Cyberbullying, com 30,3%.`,

@@ -19,7 +19,7 @@ export const riscos: readonly PerguntaQuiz[] = [
         `A criança pratica atos de violência online, como fazer bullying com seus pares.`,
         `A criança é usada como exemplo em anúncios de produtos infantis.`,
         `A criança, como receptora-participante, tem a privacidade violada e comercializada, ou sofre bullying ou assédio online.`
-      ], correta: 3, fonteExtra: false, explicacaoHtml: `No risco de contato, a criança está no papel de receptora-participante: tem a privacidade violada e comercializada, ou sofre bullying ou assédio online. A descrição de mensagens publicitárias sem conteúdo inapropriado corresponde ao risco de conteúdo, e não ao de contato. A prática de violência online pela própria criança é o risco de conduta. O uso da criança em anúncios não aparece no texto.` },
+      ], correta: 3, fonteExtra: false, explicacaoHtml: `No risco de contato, a criança está no papel de receptora-participante: tem a privacidade violada e comercializada, ou sofre bullying ou assédio online. Mensagens publicitárias sem conteúdo inapropriado não configuram o risco de conteúdo, que exige mensagens inapropriadas, nem o risco de contato. A prática de violência online pela própria criança é o risco de conduta. O uso da criança em anúncios não aparece no texto.` },
 
     { id: 13, categoria: 'riscos-crimes', enunciadoHtml: `Segundo Santos, qual é o papel da criança no risco de conduta?`, alternativasHtml: [
         `O de ator de atos de violência online, como compartilhar imagens pornográficas ou fazer bullying com os pares.`,

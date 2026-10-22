@@ -8,7 +8,7 @@ import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 import IconeCalendario from './IconeCalendario.vue';
 
-const ABAS_DE_LINK_DIRETO = ['texto', 'mapa', 'fichamento', 'mnemonicos'] as const;
+const ABAS_DE_LINK_DIRETO = ['mapa', 'fichamento', 'mnemonicos'] as const;
 
 defineProps<{
   curriculo: Curriculo;
@@ -336,6 +336,18 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                               conteudoPronto(chaveUnidade(periodo.id, cadeira.id, unidade.id))
                             "
                           >
+                            <!--
+                            Ordem do líder, 22/10/2026: Texto integral vem
+                            antes do Resumo (mesma ordem de ORDEM_ABAS).
+                          -->
+                            <li v-if="unidade.abas.includes('texto')">
+                              <a
+                                :href="`${hrefUnidade(periodo.id, cadeira.id, unidade.id)}/texto`"
+                                class="menu-curriculo__botao"
+                              >
+                                {{ ROTULOS_ABA.texto }}
+                              </a>
+                            </li>
                             <li v-if="unidade.abas.includes('resumo')">
                               <button
                                 type="button"

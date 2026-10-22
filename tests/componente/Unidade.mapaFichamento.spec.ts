@@ -126,7 +126,7 @@ const curriculoComTexto: Curriculo = [
             rotulo: 'Unidade 1',
             titulo: 'Unidade com texto integral',
             estado: 'publicado',
-            abas: ['resumo', 'texto'],
+            abas: ['texto', 'resumo'],
             carregar: async () => ({ ...conteudo, textoIntegral: TEXTO_SINTETICO })
           }
         ]
@@ -150,11 +150,11 @@ async function montarComTexto(aba: ChaveAba) {
 }
 
 describe('Unidade com a aba Texto integral', () => {
-  it('oferece a aba com o rótulo "Texto integral", depois do Resumo', async () => {
+  it('oferece a aba com o rótulo "Texto integral", antes do Resumo', async () => {
     const wrapper = await montarComTexto('texto');
     expect(wrapper.findAll('[role="tab"]').map((a) => a.text())).toEqual([
-      'Resumo',
-      'Texto integral'
+      'Texto integral',
+      'Resumo'
     ]);
   });
 

@@ -31,15 +31,15 @@
       "tipo": "unidade"
     },
     {
-      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
-      "h1": "A textura aberta do direito",
-      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
-      "tipo": "unidade"
-    },
-    {
       "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/texto",
       "h1": "A textura aberta do direito",
       "nome": "Introdução ao Direito: u3-livro-textura-aberta (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
       "tipo": "unidade"
     },
     {
@@ -232,15 +232,15 @@
       "tipo": "unidade"
     },
     {
-      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
-      "h1": "A textura aberta do direito",
-      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
-      "tipo": "unidade"
-    },
-    {
       "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/texto",
       "h1": "A textura aberta do direito",
       "nome": "Introdução ao Direito: u3-livro-textura-aberta (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
       "tipo": "unidade"
     },
     {

@@ -27,7 +27,7 @@
             "rotulo": "AV3",
             "titulo": "A textura aberta do direito",
             "estado": "publicado",
-            "abas": ["resumo", "texto", "mapa", "fichamento", "mnemonicos", "quiz"]
+            "abas": ["texto", "resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
           }
         ]
       },

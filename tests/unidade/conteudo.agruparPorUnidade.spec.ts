@@ -50,15 +50,15 @@ describe('agruparPorUnidade: abas na ordem fixa', () => {
   });
 });
 
-describe('agruparPorUnidade: texto integral é uma aba logo depois do resumo', () => {
-  it('textoIntegral.ts vira a aba texto, entre resumo e mapa', () => {
+describe('agruparPorUnidade: texto integral é a primeira aba, antes do resumo', () => {
+  it('textoIntegral.ts vira a aba texto, antes de resumo e mapa', () => {
     const [unidade] = agruparPorUnidade([
       `${UNIDADE}/meta.ts`,
       `${UNIDADE}/mapaFichamento.ts`,
       `${UNIDADE}/resumo.ts`,
       `${UNIDADE}/textoIntegral.ts`
     ]);
-    expect(unidade?.abas).toEqual(['resumo', 'texto', 'mapa', 'fichamento']);
+    expect(unidade?.abas).toEqual(['texto', 'resumo', 'mapa', 'fichamento']);
     expect(unidade?.arquivos.textoIntegral).toBe(`${UNIDADE}/textoIntegral.ts`);
   });
 

@@ -5,8 +5,8 @@ import type { ChaveAba } from './tipos';
  * e2e, menu) segue esta ordem; ela não depende da ordem do disco.
  */
 export const ORDEM_ABAS: readonly ChaveAba[] = [
-  'resumo',
   'texto',
+  'resumo',
   'mapa',
   'fichamento',
   'mnemonicos',

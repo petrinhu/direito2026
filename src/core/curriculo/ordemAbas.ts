@@ -6,6 +6,7 @@ import type { ChaveAba } from './tipos';
  */
 export const ORDEM_ABAS: readonly ChaveAba[] = [
   'resumo',
+  'texto',
   'mapa',
   'fichamento',
   'mnemonicos',

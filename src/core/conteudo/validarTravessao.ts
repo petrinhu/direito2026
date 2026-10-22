@@ -1,5 +1,6 @@
 import type { ConteudoUnidade } from '../unidade/tipos';
 import { textosDoValor } from './caminhosDeTexto';
+import { semTextoFiel } from './semTextoFiel';
 import { TRAVESSAO } from './regrasDeTexto';
 import type { ErroDeUnidade } from './tipos';
 
@@ -9,7 +10,7 @@ import type { ErroDeUnidade } from './tipos';
  * universal para o conteúdo público, e a pergunta do professor também é público.
  */
 export function validarTravessao(conteudo: ConteudoUnidade): ErroDeUnidade[] {
-  return textosDoValor(conteudo).flatMap(({ caminho, texto }) => {
+  return textosDoValor(semTextoFiel(conteudo)).flatMap(({ caminho, texto }) => {
     const achado = TRAVESSAO.exec(texto);
     if (!achado) return [];
     return [

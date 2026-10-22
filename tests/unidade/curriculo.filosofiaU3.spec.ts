@@ -19,7 +19,7 @@ describe('Filosofia Jurídica, Unidade 3 (Filosofia Moderna e Contemporânea)', 
 
   it('tem rótulo, título, estado e abas da ordem do líder', () => {
     const u3 = filosofia.unidades.find((u) => u.id === 'u3')!;
-    expect(u3.rotulo).toBe('Unidade 3');
+    expect(u3.rotulo).toBe('AV3');
     expect(u3.titulo).toBe('Filosofia Moderna e Contemporânea');
     expect(u3.estado).toBe('publicado');
     expect([...u3.abas]).toEqual(['resumo', 'mapa', 'fichamento', 'mnemonicos', 'quiz']);

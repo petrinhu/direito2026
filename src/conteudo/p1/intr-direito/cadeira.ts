@@ -13,5 +13,10 @@ export const cadeira: DescricaoCadeira = {
     rotulo: 'Interdisciplinar',
     apos: 'u1',
     cadeiraId: 'interdisciplinar'
-  }
+  },
+  // AV3 com Livro e Material de estudo (ordem do líder, 22/10/2026): tópicos uN-grupo-topico.
+  grupos: [
+    { unidade: 'u3', id: 'livro', rotulo: 'Livro' },
+    { unidade: 'u3', id: 'material', rotulo: 'Material de estudo' }
+  ]
 };

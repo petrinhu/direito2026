@@ -6,7 +6,6 @@ import type { MetaUnidade } from '../../../tipos';
  * têm texto, por isso o estado é 'publicado'.
  */
 export const meta: MetaUnidade = {
-  rotulo: 'Unidade 3',
   estado: 'publicado',
   titulo: 'Infância, redes sociais e tecnologias digitais',
   subtitulo: 'Sociologia Jurídica · Unidade 3 · faculdade · 1º período',

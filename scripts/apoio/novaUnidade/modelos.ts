@@ -9,6 +9,7 @@ import {
   TEXTO_PENDENTE_CURTO,
   TEXTO_PENDENTE_META
 } from '../../../src/core/conteudo/regrasDeTexto';
+import { lerIdDeUnidade } from '../../../src/core/curriculo/idDeUnidade';
 
 export interface EntradaDaUnidade {
   readonly periodo: string;
@@ -43,8 +44,11 @@ function comentario(descricao: string[], extras: string[] = []): string {
   return `/**\n${linhas.map((linha) => (linha === '' ? ' *' : ` * ${linha}`)).join('\n')}\n */`;
 }
 
+/** Número da AV, lido do id da pasta (uN ou uN-grupo-topico). A unidade já foi validada. */
 function numeroDaUnidade(unidade: string): string {
-  return unidade.slice(1);
+  const id = lerIdDeUnidade(unidade);
+  if (!id) throw new Error(`id de unidade fora do padrão: ${unidade}`);
+  return String(id.numero);
 }
 
 function numeroDoPeriodo(periodo: string): string {
@@ -87,17 +91,16 @@ export function modeloDaCadeira(entrada: EntradaDaCadeira): string {
 }
 
 function modeloDoMeta(entrada: EntradaDaUnidade): string {
-  const subtitulo = `${entrada.nomeDaCadeira} · Unidade ${numeroDaUnidade(entrada.unidade)} · faculdade · ${numeroDoPeriodo(entrada.periodo)}º período`;
+  const subtitulo = `${entrada.nomeDaCadeira} · AV${numeroDaUnidade(entrada.unidade)} · faculdade · ${numeroDoPeriodo(entrada.periodo)}º período`;
   return [
     "import type { MetaUnidade } from '../../../tipos';",
     '',
     comentario([
-      `Metadados da Unidade ${numeroDaUnidade(entrada.unidade)}. Nasce em-breve: a unidade fica`,
+      `Metadados da AV ${numeroDaUnidade(entrada.unidade)}. Nasce em-breve: a unidade fica`,
       "fora do menu até o estado virar 'publicado', e isso só depois de o resumo, o mapa,",
       'o fichamento, os mnemônicos e o quiz terem texto.'
     ]),
     'export const meta: MetaUnidade = {',
-    `  rotulo: ${literal(`Unidade ${numeroDaUnidade(entrada.unidade)}`)},`,
     "  estado: 'em-breve',",
     `  titulo: ${literal(entrada.titulo)},`,
     `  subtitulo: ${literal(subtitulo)},`,

@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { lerIdDeUnidade } from '../../../src/core/curriculo/idDeUnidade';
 
 /** Argumento que não passa no formato. A mensagem nomeia o valor ruim. */
 export class ErroDeArgumento extends Error {
@@ -28,7 +29,6 @@ export const USO =
 
 const PERIODO = /^p(?:10|[1-9])$/;
 const CADEIRA = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const UNIDADE = /^u[1-9]\d*$/;
 
 /**
  * Lê os argumentos da linha de comando e recusa o que não tem o formato
@@ -57,8 +57,10 @@ export function interpretarArgumentos(argv: readonly string[]): ArgumentosNovaUn
       `cadeira inválida: "${cadeira}". Use kebab-case sem acento, por exemplo "filosofia-juridica".`
     );
   }
-  if (!UNIDADE.test(unidade)) {
-    throw new ErroDeArgumento(`unidade inválida: "${unidade}". Use uN, com N a partir de 1.`);
+  if (lerIdDeUnidade(unidade) === undefined) {
+    throw new ErroDeArgumento(
+      `unidade inválida: "${unidade}". Use uN, com N a partir de 1, ou uN-grupo-topico (ex.: u3-material-apostila).`
+    );
   }
   if (titulo.trim() === '') {
     throw new ErroDeArgumento('o título da unidade não pode ser vazio.');

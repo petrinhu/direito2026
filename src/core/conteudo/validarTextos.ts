@@ -1,5 +1,6 @@
 import type { ConteudoUnidade, PerguntaQuiz } from '../unidade/tipos';
 import { textosDoValor } from './caminhosDeTexto';
+import { semTextoFiel } from './semTextoFiel';
 import type { ErroDeUnidade } from './tipos';
 import {
   APONTA_PARA_MATERIAL,
@@ -17,7 +18,7 @@ import {
  * pergunta do professor ou do caderno, que é de quem escreveu.
  */
 export function validarTextos(conteudo: ConteudoUnidade): ErroDeUnidade[] {
-  const { quiz, ...restante } = conteudo;
+  const { quiz, ...restante } = semTextoFiel(conteudo);
   const erros = textosDoValor(restante).flatMap(({ caminho, campo, texto }) => {
     if (campo === 'fonte' || campo === 'referencias') {
       const semGenerica = texto.replace(REFERENCIA_GENERICA_DE_MATERIAL, '');

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Curriculo } from '@/core/curriculo/tipos';
+import type { Cadeira, Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
+import { lerIdDeUnidade } from '@/core/curriculo/idDeUnidade';
 import { resolverRota } from '@/app/curriculo/resolverRota';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
@@ -14,6 +15,28 @@ const props = defineProps<{
 interface ItemTrilha {
   readonly rotulo: string;
   readonly href: string;
+}
+
+/**
+ * Itens da unidade na trilha. Unidade simples: um item (o rótulo AVN). Tópico de
+ * grupo (uN-grupo-topico): AV e grupo levam à cadeira, e o título leva à unidade.
+ */
+function itensDaUnidade(
+  periodoId: string,
+  cadeira: Cadeira,
+  unidade: ReferenciaUnidade
+): ItemTrilha[] {
+  const base = `/p/${periodoId}/${cadeira.id}`;
+  const id = lerIdDeUnidade(unidade.id);
+  if (!id || id.grupo === undefined) {
+    return [{ rotulo: unidade.rotulo, href: `${base}/${unidade.id}` }];
+  }
+  const grupo = cadeira.grupos?.find((g) => g.id === id.grupo && g.unidade === `u${id.numero}`);
+  return [
+    { rotulo: unidade.rotulo, href: base },
+    { rotulo: grupo?.rotulo ?? id.grupo, href: base },
+    { rotulo: unidade.titulo, href: `${base}/${unidade.id}` }
+  ];
 }
 
 function hrefAba(periodoId: string, cadeiraId: string, unidadeId: string, aba: string): string {
@@ -36,7 +59,7 @@ const itens = computed<ItemTrilha[]>(() => {
     return [
       { rotulo: periodo.rotulo, href: `/p/${periodo.id}` },
       { rotulo: cadeira.nome, href: `/p/${periodo.id}/${cadeira.id}` },
-      { rotulo: unidade.rotulo, href: `/p/${periodo.id}/${cadeira.id}/${unidade.id}` },
+      ...itensDaUnidade(periodo.id, cadeira, unidade),
       { rotulo: ROTULOS_ABA[aba], href: hrefAba(periodo.id, cadeira.id, unidade.id, aba) }
     ];
   }
@@ -45,12 +68,7 @@ const itens = computed<ItemTrilha[]>(() => {
     const { periodo, cadeira, unidade } = resolucao;
     const parcial: ItemTrilha[] = [{ rotulo: periodo.rotulo, href: `/p/${periodo.id}` }];
     if (cadeira) parcial.push({ rotulo: cadeira.nome, href: `/p/${periodo.id}/${cadeira.id}` });
-    if (unidade) {
-      parcial.push({
-        rotulo: unidade.rotulo,
-        href: `/p/${periodo.id}/${cadeira!.id}/${unidade.id}`
-      });
-    }
+    if (unidade && cadeira) parcial.push(...itensDaUnidade(periodo.id, cadeira, unidade));
     return parcial;
   }
 

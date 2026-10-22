@@ -51,3 +51,9 @@ export type {
 } from '../core/fichamento/tipos';
 
 export type { Mnemonico, ItemGuardado, TecnicaMnemonica } from '../core/mnemonicos/tipos';
+
+export type {
+  TextoIntegral,
+  BlocoDoTexto,
+  TrechoDoTexto
+} from '../core/textoIntegral/tipos';

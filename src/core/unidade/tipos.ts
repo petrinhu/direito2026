@@ -1,10 +1,11 @@
 import type { MapaFichamento } from '../fichamento/tipos';
 import type { Mnemonico } from '../mnemonicos/tipos';
 import type { EstadoPublicacao } from '../curriculo/tipos';
+import type { TextoIntegral } from '../textoIntegral/tipos';
 
 export interface MetaUnidade {
-  /** Rótulo curto no menu. Ex.: 'Unidade 1'. */
-  readonly rotulo: string;
+  /** Não lido: o rótulo é AVN pelo número da pasta, ordem do líder de 22/10/2026. */
+  readonly rotulo?: string;
   /** Publicada ou em breve: a pasta se descreve (D1). */
   readonly estado: EstadoPublicacao;
   readonly titulo: string;
@@ -165,4 +166,6 @@ export interface ConteudoUnidade {
   readonly mapaFichamento?: MapaFichamento;
   /** Alimenta a aba Mnemônicos. */
   readonly mnemonicos?: readonly Mnemonico[];
+  /** Alimenta a aba Texto integral. */
+  readonly textoIntegral?: TextoIntegral;
 }

@@ -1,4 +1,5 @@
 import { ErroDeConteudo } from './erroDeConteudo';
+import { lerIdDeUnidade } from './idDeUnidade';
 import { ORDEM_ABAS } from './ordemAbas';
 import type { ChaveAba } from './tipos';
 
@@ -6,6 +7,8 @@ import type { ChaveAba } from './tipos';
 export interface ArquivosDaUnidade {
   readonly meta: string;
   readonly resumo?: string;
+  /** Transcrição fiel (OCR) do texto, gerada por npm run texto-integral. */
+  readonly textoIntegral?: string;
   readonly mapaFichamento?: string;
   readonly mnemonicos?: string;
   readonly peticao?: string;
@@ -32,7 +35,6 @@ export interface UnidadeDescoberta {
  * própria cadeira) não casa e é ignorado aqui: quem o descreve é o currículo.
  */
 const CAMINHO_DE_UNIDADE = /(?:^|\/)(p\d+)\/([^/]+)\/([^/]+)\/(.+)$/;
-const ID_UNIDADE = /^u\d+$/;
 const ARQUIVO_TS = /^[^/]+\.ts$/;
 
 type ParteDoArquivo = keyof ArquivosDaUnidade;
@@ -40,6 +42,7 @@ type ParteDoArquivo = keyof ArquivosDaUnidade;
 const PARTE_POR_NOME_DE_ARQUIVO: Readonly<Record<string, ParteDoArquivo>> = {
   'meta.ts': 'meta',
   'resumo.ts': 'resumo',
+  'textoIntegral.ts': 'textoIntegral',
   'mapaFichamento.ts': 'mapaFichamento',
   'mnemonicos.ts': 'mnemonicos',
   'peticao.ts': 'peticao',
@@ -73,9 +76,9 @@ export function agruparPorUnidade(caminhos: readonly string[]): UnidadeDescobert
     const cadeira = casa[2] ?? '';
     const unidade = casa[3] ?? '';
     const resto = casa[4] ?? '';
-    if (!ID_UNIDADE.test(unidade)) {
+    if (lerIdDeUnidade(unidade) === undefined) {
       throw new ErroDeConteudo(
-        `unidade fora do padrão uN: ${periodo}/${cadeira}/${unidade} (${caminho})`
+        `unidade fora do padrão uN ou uN-grupo-topico: ${periodo}/${cadeira}/${unidade} (${caminho})`
       );
     }
     const chave = `${periodo}/${cadeira}/${unidade}`;
@@ -153,6 +156,8 @@ function abaPresente(aba: ChaveAba, arquivos: Partial<Record<ParteDoArquivo, str
   switch (aba) {
     case 'resumo':
       return arquivos.resumo !== undefined;
+    case 'texto':
+      return arquivos.textoIntegral !== undefined;
     case 'mapa':
     case 'fichamento':
       return arquivos.mapaFichamento !== undefined;

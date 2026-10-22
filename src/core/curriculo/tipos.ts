@@ -2,7 +2,8 @@
 export type EstadoPublicacao = 'publicado' | 'em-breve';
 
 /** Abas possíveis de uma unidade. Fechado de propósito: o layout depende disso. */
-export type ChaveAba = 'resumo' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
+export type ChaveAba =
+  'resumo' | 'texto' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
 
 export interface ReferenciaUnidade {
   /** Slug estável usado na URL. Ex.: 'u1'. */
@@ -37,6 +38,15 @@ export interface AtalhoUnidade {
   readonly cadeiraId: string;
 }
 
+/** Grupo de tópicos de uma AV, declarado em cadeira.ts (ex.: Livro, Material de estudo). */
+export interface GrupoDeTopicos {
+  /** Unidade da AV a que o grupo pertence, ex.: 'u3'. */
+  readonly unidade: string;
+  /** Id do grupo no nome da pasta uN-grupo-topico: só minúsculas e dígitos, sem hífen. */
+  readonly id: string;
+  readonly rotulo: string;
+}
+
 export interface Cadeira {
   /** Slug usado na URL. Ex.: 'intr-direito'. */
   readonly id: string;
@@ -51,6 +61,8 @@ export interface Cadeira {
   readonly unidades: readonly ReferenciaUnidade[];
   /** Atalho opcional no menu lateral para outra cadeira (só o menu o lê). */
   readonly atalhoUnidade?: AtalhoUnidade;
+  /** Grupos de tópicos das AVs desta cadeira (ver itensDaCadeira). */
+  readonly grupos?: readonly GrupoDeTopicos[];
 }
 
 export interface Periodo {

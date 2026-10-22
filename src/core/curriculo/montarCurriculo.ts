@@ -1,10 +1,12 @@
 import { agruparPorUnidade, type UnidadeDescoberta } from './agruparPorUnidade';
 import { ErroDeConteudo } from './erroDeConteudo';
+import { lerIdDeUnidade, rotuloDaAv } from './idDeUnidade';
 import type {
   AtalhoUnidade,
   Cadeira,
   Curriculo,
   EstadoPublicacao,
+  GrupoDeTopicos,
   Periodo,
   ReferenciaUnidade
 } from './tipos';
@@ -20,11 +22,11 @@ export interface DescricaoCadeira {
   readonly estado: EstadoPublicacao;
   readonly restrita?: true;
   readonly atalhoUnidade?: AtalhoUnidade;
+  readonly grupos?: readonly GrupoDeTopicos[];
 }
 
 /** Os campos de meta.ts que o currículo usa; o resto do meta é do conteúdo. */
 export interface DescricaoUnidade {
-  readonly rotulo: string;
   readonly titulo: string;
   readonly estado: EstadoPublicacao;
 }
@@ -140,8 +142,9 @@ function montarCadeira(
   metas: Readonly<Record<string, DescricaoUnidade>>
 ): Cadeira {
   const id = chave.split('/')[1] ?? '';
+  checarTopicos(chave, descricao.grupos ?? [], unidadesDaCadeira);
   const unidades = [...unidadesDaCadeira]
-    .sort((a, b) => numeroDaUnidade(a.unidade) - numeroDaUnidade(b.unidade))
+    .sort(compararPorNumeroEId)
     .map((unidade) => montarReferencia(unidade, metas));
 
   if (descricao.estado === 'publicado' && !descricao.restrita) {
@@ -156,7 +159,8 @@ function montarCadeira(
     estado: descricao.estado,
     ...(descricao.restrita ? { restrita: true as const } : {}),
     unidades,
-    ...(descricao.atalhoUnidade ? { atalhoUnidade: descricao.atalhoUnidade } : {})
+    ...(descricao.atalhoUnidade ? { atalhoUnidade: descricao.atalhoUnidade } : {}),
+    ...(descricao.grupos ? { grupos: descricao.grupos } : {})
   };
 }
 
@@ -173,7 +177,7 @@ function montarReferencia(
   }
   return {
     id: unidade.unidade,
-    rotulo: meta.rotulo,
+    rotulo: rotuloDaAv(numeroDaUnidade(unidade.unidade)),
     titulo: meta.titulo,
     estado: meta.estado,
     abas: meta.estado === 'publicado' ? unidade.abas : []
@@ -181,5 +185,61 @@ function montarReferencia(
 }
 
 function numeroDaUnidade(unidadeId: string): number {
-  return Number(unidadeId.slice(1));
+  const id = lerIdDeUnidade(unidadeId);
+  if (!id) throw new ErroDeConteudo(`id de unidade fora do padrão: ${unidadeId}`);
+  return id.numero;
+}
+
+function compararPorNumeroEId(a: UnidadeDescoberta, b: UnidadeDescoberta): number {
+  return (
+    numeroDaUnidade(a.unidade) - numeroDaUnidade(b.unidade) ||
+    (a.unidade < b.unidade ? -1 : a.unidade > b.unidade ? 1 : 0)
+  );
+}
+
+/** Vaga 2 é do atalho (AV2 reservada por número); grupos e tópicos só valem fora dela. */
+const VAGA_RESERVADA = 2;
+const ID_DE_GRUPO = /^[a-z0-9]+$/;
+
+/**
+ * Regras dos tópicos agrupados (D7): a vaga 2 é reservada; id de grupo sem hífen;
+ * uN simples não convive com grupo da mesma AV; todo tópico tem grupo declarado.
+ */
+function checarTopicos(
+  chave: string,
+  grupos: readonly GrupoDeTopicos[],
+  unidades: readonly UnidadeDescoberta[]
+): void {
+  for (const grupo of grupos) {
+    if (!ID_DE_GRUPO.test(grupo.id)) {
+      throw new ErroDeConteudo(
+        `id de grupo inválido em ${chave}: "${grupo.id}" (só minúsculas e dígitos, sem hífen)`
+      );
+    }
+    if (numeroDaUnidade(grupo.unidade) === VAGA_RESERVADA) {
+      throw new ErroDeConteudo(`vaga 2 reservada ao atalho, grupo em ${chave}: ${grupo.unidade}`);
+    }
+  }
+  const numerosComGrupo = new Set(grupos.map((g) => numeroDaUnidade(g.unidade)));
+  for (const unidade of unidades) {
+    const id = lerIdDeUnidade(unidade.unidade);
+    if (!id) continue;
+    if (id.grupo === undefined) {
+      if (numerosComGrupo.has(id.numero)) {
+        throw new ErroDeConteudo(
+          `unidade u${id.numero} simples junto com grupo de tópicos em ${chave}`
+        );
+      }
+      continue;
+    }
+    if (id.numero === VAGA_RESERVADA) {
+      throw new ErroDeConteudo(`vaga 2 reservada ao atalho: ${unidade.unidade} em ${chave}`);
+    }
+    const declarado = grupos.some(
+      (g) => numeroDaUnidade(g.unidade) === id.numero && g.id === id.grupo
+    );
+    if (!declarado) {
+      throw new ErroDeConteudo(`tópico de grupo não declarado em ${chave}: ${unidade.unidade}`);
+    }
+  }
 }

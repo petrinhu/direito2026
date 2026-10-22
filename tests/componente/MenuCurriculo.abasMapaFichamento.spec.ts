@@ -5,6 +5,8 @@ import MenuCurriculo from '@/ui/componentes/MenuCurriculo.vue';
 import { decorarCurriculo } from '@/app/carregamento/decorarCurriculo';
 import { CARREGADORES } from '@/app/carregamento/carregadores';
 import { curriculo as curriculoSemCarregador } from '@/conteudo/curriculo';
+import type { Curriculo } from '@/core/curriculo/tipos';
+import type { TextoIntegral } from '@/core/textoIntegral/tipos';
 
 const curriculo = decorarCurriculo(curriculoSemCarregador, CARREGADORES);
 
@@ -70,5 +72,94 @@ describe('MenuCurriculo: abas novas de Filosofia Jurídica', () => {
         ).toBe(false);
       }
     }
+  });
+});
+
+const TEXTO_NO_MENU: TextoIntegral = {
+  titulo: 'Título do texto integral',
+  fonte: 'Autor, Obra, 2010.',
+  blocos: [{ tipo: 'paragrafo', trechos: [{ tipo: 'texto', texto: 'Corpo.' }] }]
+};
+
+const curriculoComTextoNoMenu: Curriculo = [
+  {
+    id: 'p1',
+    numero: 1,
+    rotulo: '1º período',
+    cadeiras: [
+      {
+        id: 'cadeira',
+        nome: 'Cadeira',
+        estado: 'publicado',
+        unidades: [
+          {
+            id: 'u1',
+            rotulo: 'Unidade 1',
+            titulo: 'Com texto integral',
+            estado: 'publicado',
+            abas: ['resumo', 'texto', 'quiz'],
+            carregar: async () => ({
+              meta: {
+                rotulo: 'Unidade 1',
+                estado: 'publicado',
+                titulo: 't',
+                subtitulo: 's',
+                descricao: 'd'
+              },
+              resumo: [],
+              textoIntegral: TEXTO_NO_MENU
+            })
+          },
+          {
+            id: 'u2',
+            rotulo: 'Unidade 2',
+            titulo: 'Sem texto integral',
+            estado: 'publicado',
+            abas: ['resumo', 'quiz'],
+            carregar: async () => ({
+              meta: {
+                rotulo: 'Unidade 2',
+                estado: 'publicado',
+                titulo: 't',
+                subtitulo: 's',
+                descricao: 'd'
+              },
+              resumo: []
+            })
+          }
+        ]
+      }
+    ]
+  }
+];
+
+describe('MenuCurriculo: link Texto integral', () => {
+  it('a unidade que declara texto ganha link /texto, antes do quiz', async () => {
+    const wrapper = mount(MenuCurriculo, {
+      props: { curriculo: curriculoComTextoNoMenu, caminhoAtual: '' }
+    });
+    await abrirTudo(wrapper);
+    await vi.waitFor(() =>
+      expect(wrapper.find('a[href="/p/p1/cadeira/u1/quiz"]').exists()).toBe(true)
+    );
+    const linksDaUnidade = wrapper
+      .findAll('a')
+      .map((a) => [a.attributes('href'), a.text()])
+      .filter(([href]) => href?.startsWith('/p/p1/cadeira/u1/'));
+    expect(linksDaUnidade).toEqual([
+      ['/p/p1/cadeira/u1/texto', 'Texto integral'],
+      ['/p/p1/cadeira/u1/quiz', 'Quiz']
+    ]);
+  });
+
+  it('a unidade que não declara texto não ganha o link', async () => {
+    const wrapper = mount(MenuCurriculo, {
+      props: { curriculo: curriculoComTextoNoMenu, caminhoAtual: '' }
+    });
+    await abrirTudo(wrapper);
+    await vi.waitFor(() =>
+      expect(wrapper.find('a[href="/p/p1/cadeira/u2/quiz"]').exists()).toBe(true)
+    );
+    expect(wrapper.find('a[href="/p/p1/cadeira/u2/texto"]').exists()).toBe(false);
   });
 });

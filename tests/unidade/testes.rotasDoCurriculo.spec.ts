@@ -5,6 +5,7 @@ import {
   rotasDeAbaAusente
 } from '../e2e/apoio/rotasDoCurriculo';
 import { curriculo } from '@/conteudo/curriculo';
+import { ORDEM_ABAS } from '@/core/curriculo/ordemAbas';
 import { TITULO_AREA_RESTRITA } from '@/core/restrito/titulo';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
@@ -126,9 +127,11 @@ describe('rotasDoCurriculo e a cadeira restrita', () => {
 describe('rotasDeAbaAusente', () => {
   it('lista só as abas que a unidade não tem', () => {
     expect(rotasDeAbaAusente(sintetico)).toEqual([
+      '/p/p1/com-peticao/u1/texto',
       '/p/p1/com-peticao/u1/mapa',
       '/p/p1/com-peticao/u1/fichamento',
       '/p/p1/com-peticao/u1/mnemonicos',
+      '/p/p1/sem-peticao/u1/texto',
       '/p/p1/sem-peticao/u1/mapa',
       '/p/p1/sem-peticao/u1/fichamento',
       '/p/p1/sem-peticao/u1/mnemonicos',
@@ -136,12 +139,41 @@ describe('rotasDeAbaAusente', () => {
     ]);
   });
 
-  it('no currículo real, as petições de Sociologia e de Filosofia Jurídica (Unidades 1 e 3) são as únicas petições ausentes', () => {
-    const peticoes = rotasDeAbaAusente(curriculo).filter((c) => c.endsWith('/peticao'));
-    expect(peticoes).toEqual([
-      '/p/p1/sociologia-juridica/u1/peticao',
-      '/p/p1/filosofia-juridica/u1/peticao',
-      '/p/p1/filosofia-juridica/u3/peticao'
-    ]);
+  it('no currículo real, cada aba ausente aponta para unidade publicada sem essa aba, e nenhuma aba ausente fica de fora', () => {
+    const lista = rotasDeAbaAusente(curriculo);
+    expect(lista.length).toBeGreaterThan(0);
+    expect(lista.every((c) => apontaParaAbaNaoDeclarada(c, curriculo))).toBe(true);
+    expect(apontaParaAbaNaoDeclarada('/p/p1/intr-direito/u1/peticao', curriculo)).toBe(false);
+    expect(apontaParaAbaNaoDeclarada('/p/p1/sem-peticao/u1/peticao', sintetico)).toBe(true);
+    const faltando = abasNaoDeclaradasDoCurriculo(curriculo).filter((c) => !lista.includes(c));
+    expect(faltando).toEqual([]);
   });
 });
+
+/** Verdadeiro se o caminho é de unidade publicada e aponta para uma aba que ela não declara. */
+function apontaParaAbaNaoDeclarada(caminho: string, curriculo: Curriculo): boolean {
+  const [periodoId, cadeiraId, unidadeId, aba] = caminho.replace(/^\/p\//, '').split('/');
+  const unidade = curriculo
+    .find((p) => p.id === periodoId)
+    ?.cadeiras.find((c) => c.id === cadeiraId)
+    ?.unidades.find((u) => u.id === unidadeId);
+  if (!unidade || unidade.estado !== 'publicado' || aba === undefined) return false;
+  return !(unidade.abas as readonly string[]).includes(aba);
+}
+
+/** Toda aba de ORDEM_ABAS (menos o resumo) que uma unidade publicada não declara. */
+function abasNaoDeclaradasDoCurriculo(curriculo: Curriculo): string[] {
+  const caminhos: string[] = [];
+  for (const periodo of curriculo) {
+    for (const cadeira of periodo.cadeiras) {
+      for (const unidade of cadeira.unidades) {
+        if (unidade.estado !== 'publicado') continue;
+        for (const aba of ORDEM_ABAS) {
+          if (aba === 'resumo' || (unidade.abas as readonly string[]).includes(aba)) continue;
+          caminhos.push(`/p/${periodo.id}/${cadeira.id}/${unidade.id}/${aba}`);
+        }
+      }
+    }
+  }
+  return caminhos;
+}

@@ -6,6 +6,7 @@ import { CHAVE_CURRICULO, CHAVE_REPOSITORIO } from '@/app/chaves';
 import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 import type { ChaveAba, Curriculo } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
+import type { TextoIntegral } from '@/core/textoIntegral/tipos';
 import { DADOS_SINTETICOS } from '../unidade/apoio/dadosFichamento';
 
 const conteudo: ConteudoUnidade = {
@@ -100,5 +101,67 @@ describe('Unidade com mapa, fichamento e mnemônicos', () => {
     await wrapper.find('#painel-mapa button.mapa-mental__modo').trigger('click');
     expect(wrapper.find('a[href="/p/p1/cadeira/u1/fichamento#ficha-alfa"]').exists()).toBe(true);
     expect(wrapper.find('a[href="/p/p1/cadeira/u1#bloco-0"]').exists()).toBe(true);
+  });
+});
+
+const TEXTO_SINTETICO: TextoIntegral = {
+  titulo: 'Título do texto integral',
+  fonte: 'Autor, Obra, 2010.',
+  blocos: [{ tipo: 'paragrafo', trechos: [{ tipo: 'texto', texto: 'Corpo do texto.' }] }]
+};
+
+const curriculoComTexto: Curriculo = [
+  {
+    id: 'p1',
+    numero: 1,
+    rotulo: '1º período',
+    cadeiras: [
+      {
+        id: 'cadeira',
+        nome: 'Cadeira',
+        estado: 'publicado',
+        unidades: [
+          {
+            id: 'u1',
+            rotulo: 'Unidade 1',
+            titulo: 'Unidade com texto integral',
+            estado: 'publicado',
+            abas: ['resumo', 'texto'],
+            carregar: async () => ({ ...conteudo, textoIntegral: TEXTO_SINTETICO })
+          }
+        ]
+      }
+    ]
+  }
+];
+
+async function montarComTexto(aba: ChaveAba) {
+  const wrapper = mount(Unidade, {
+    props: { periodo: 'p1', cadeira: 'cadeira', unidade: 'u1', aba },
+    global: {
+      provide: {
+        [CHAVE_CURRICULO as unknown as symbol]: curriculoComTexto,
+        [CHAVE_REPOSITORIO as unknown as symbol]: new RepositorioMemoria()
+      }
+    }
+  });
+  await flushPromises();
+  return wrapper;
+}
+
+describe('Unidade com a aba Texto integral', () => {
+  it('oferece a aba com o rótulo "Texto integral", depois do Resumo', async () => {
+    const wrapper = await montarComTexto('texto');
+    expect(wrapper.findAll('[role="tab"]').map((a) => a.text())).toEqual([
+      'Resumo',
+      'Texto integral'
+    ]);
+  });
+
+  it('na aba texto, o painel mostra o visor do texto integral, e só ele', async () => {
+    const wrapper = await montarComTexto('texto');
+    expect(wrapper.find('#painel-texto .texto-integral').exists()).toBe(true);
+    expect(wrapper.find('#painel-texto h2').text()).toBe('Título do texto integral');
+    expect(wrapper.find('#painel-resumo .texto-integral').exists()).toBe(false);
   });
 });

@@ -113,3 +113,40 @@ describe('resolverRota', () => {
     expect(r.tipo).toBe('encontrado');
   });
 });
+
+describe('resolverRota: aba Texto integral', () => {
+  const comTexto: Curriculo = [
+    {
+      id: 'p1',
+      numero: 1,
+      rotulo: '1o período',
+      cadeiras: [
+        {
+          id: 'intr-direito',
+          nome: 'Introdução ao Direito',
+          estado: 'publicado',
+          unidades: [
+            {
+              id: 'u1',
+              rotulo: 'AV1',
+              titulo: 'Conceito e fontes do Direito',
+              estado: 'publicado',
+              abas: ['resumo', 'texto', 'quiz']
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  it('/texto resolve como encontrado, com a aba texto, quando a unidade a declara', () => {
+    const r = resolverRota(comTexto, '/p/p1/intr-direito/u1/texto');
+    expect(r.tipo).toBe('encontrado');
+    if (r.tipo === 'encontrado') expect(r.aba).toBe('texto');
+  });
+
+  it('/texto numa unidade que não declara a aba não cai para resumo', () => {
+    const r = resolverRota(curriculoDeTeste(), '/p/p1/intr-direito/u1/texto');
+    expect(r.tipo).not.toBe('encontrado');
+  });
+});

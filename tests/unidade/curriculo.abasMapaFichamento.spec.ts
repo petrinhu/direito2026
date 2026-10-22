@@ -48,3 +48,9 @@ describe('abas Mapa mental, Fichamento e Mnemônicos', () => {
     }
   });
 });
+
+describe('aba Texto integral', () => {
+  it('tem rótulo próprio, com acentuação', () => {
+    expect(ROTULOS_ABA.texto).toBe('Texto integral');
+  });
+});

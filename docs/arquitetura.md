@@ -172,7 +172,7 @@ site_direito2026/
 export type EstadoPublicacao = 'publicado' | 'em-breve';
 
 /** Abas possíveis de uma unidade. Fechado de propósito: o layout depende disso. */
-export type ChaveAba = 'resumo' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
+export type ChaveAba = 'resumo' | 'texto' | 'mapa' | 'fichamento' | 'mnemonicos' | 'peticao' | 'quiz';
 
 export interface ReferenciaUnidade {
   /** Slug estável usado na URL. Ex.: 'u1'. */
@@ -227,7 +227,7 @@ Cada pasta se descreve. Não existe índice único do currículo escrito à mão
 
 - **No site:** `src/conteudo/curriculo.ts` usa `import.meta.glob` para achar cada `cadeira.ts`, cada `meta.ts` e os arquivos de conteúdo de cada unidade (inclusive `quiz/*.ts`). Passa os caminhos e as descrições para `montarCurriculo`, função pura em `src/core/curriculo/montarCurriculo.ts`. O resultado tem o mesmo tipo `Curriculo` de antes. Períodos sem pasta saem como "em breve".
 - **Nos scripts e no e2e:** `import.meta.glob` existe só no Vite. Por isso `scripts/apoio/conteudoDoDisco.ts` lê as pastas com `readdirSync` e entrega os mesmos caminhos às mesmas funções puras. A paridade entre glob e disco é testada em `tests/unidade/conteudo.paridadeGlobDisco.spec.ts`.
-- **Agrupamento:** `agruparPorUnidade` (`src/core/curriculo/agruparPorUnidade.ts`) transforma os caminhos em unidades. Uma aba existe só se o arquivo existe. A ordem das abas é fixa (`ORDEM_ABAS`, em `src/core/curriculo/ordemAbas.ts`): resumo, mapa, fichamento, mnemônicos, petição e quiz.
+- **Agrupamento:** `agruparPorUnidade` (`src/core/curriculo/agruparPorUnidade.ts`) transforma os caminhos em unidades. Uma aba existe só se o arquivo existe. A ordem das abas é fixa (`ORDEM_ABAS`, em `src/core/curriculo/ordemAbas.ts`): resumo, texto integral, mapa, fichamento, mnemônicos, petição e quiz. O rótulo da unidade é AVN, derivado do número da pasta (`rotuloDaAv`, em `src/core/curriculo/idDeUnidade.ts`); o `meta.ts` não traz mais `rotulo`.
 - **Erros nomeados:** pasta fora do padrão, `quiz.ts` e `quiz/` juntos, pasta sem `meta.ts`, pasta sem `cadeira.ts`, período fora de 1 a 10, ordem repetida e unidade publicada sem aba são lançados como `ErroDeConteudo`, com o nome da unidade. Nada some em silêncio.
 - **Validação antes do build:** `scripts/validar-conteudo.ts` roda no `npm run build`, antes do `vite build`, e no `preci`. Imprime `encontradas`, `validadas` e `falharam`, e sai com erro quando não acha nenhuma unidade.
 - **Pedaços de conteúdo:** no `vite build`, cada unidade vira um pedaço de JavaScript carregado sob demanda. O `chunkFileNames` de `vite.config.ts` (função `nomeDoPedaco`) dá o nome `assets/conteudo-<nome>-<hash>.js` aos pedaços que contêm só código de `src/conteudo`. Pedaço misto, com código do app, não recebe o prefixo.

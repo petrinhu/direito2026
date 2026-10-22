@@ -122,3 +122,45 @@ Capturas de texto, mapa, fichamento, quiz, trilha e home foram gravadas pela úl
 - Verificar o gate do índice em `488b936` (novo HEAD).
 - Foco visível e ativação por teclado no Firefox, com janela (L-50 impede hoje).
 - Decisões para o líder: trilha do cabeçalho (IMPORTANTE 1); cartão de prazo nas rotas de leitura (IMPORTANTE 3); corte ou fatiamento do índice, se o gate de `488b936` não passar.
+
+## Rodada 2 (HEAD `b2d3f32`, revisão dos consertos 36cd1cd e b2d3f32)
+
+Revisão de conserto feita por este QA (L-12). Cópia isolada em `.worktrees/qa-av3` (fora do git), navegadores em bwrap, headless, vigia ativo e sem aborto nesta rodada.
+
+### Congelamento
+- HEAD no início e no fim: `b2d3f323161b7ff81afabd841fc838840fb86d60` (main). `git status --short` no início e no fim: só `?? mockups/selo-home.html` (não é deste QA).
+- `dist/` (115 arquivos): md5 `26afa8f18273d0bc190ed9a7429a896d` no início (após o build) e no fim.
+
+### Diff revisado
+- `36cd1cd` (trilha de tópico de grupo): o tópico vira um item só, "Livro da AV3", com link para a cadeira. Antes eram três itens (AV, grupo e título). O título continua no h1 e no menu.
+- `b2d3f32` (seletores e2e): `menu-recuo.spec.ts` e `abas-novas-navegacao.spec.ts` deixaram de buscar "Mostrar submenu de Unidade 1" e passam a buscar "Mostrar submenu de AV1". Duas linhas no helper de menu-recuo e uma em abas-novas.
+- `488b936` (portão do índice, gzip): o portão passa a medir o tamanho comprimido.
+
+### Build (`npm run build`, aceite: exit 0 com portão do índice passando)
+- Exit 0. O portão imprime bruto e comprimido: `tamanho bruto do índice: 349849 bytes` e `tamanho comprimido do índice (gzip -9): 80302 bytes (teto 307200 bytes comprimidos)`. Passa.
+- O pendente da rodada 1 (gate em `488b936`) está resolvido nesta medição.
+
+### Suíte e2e (`npx playwright test --project=blink --workers=2`, headless, bwrap)
+- 319 passaram, 42 falharam, 36 pularam (7,5 min).
+- Os 42 falhos estão todos no conjunto conhecido (ver abaixo). Nenhum título fora do conjunto.
+
+### Aceite
+1. **16 testes da regressão de Hart: todos passam.** `modo-adaptado-cabecalho` em modo adaptado (5 de 5), `responsividade-360:139` em modo adaptado (5 de 5), `responsividade-360:189` em modo adaptado (5 de 5) e `responsividade-360:189` em `/mnemonicos` modo normal (1 de 1).
+2. **10 testes de seletor "Unidade 1" para AV1: todos passam.** 9 de `menu-recuo` e 1 de `abas-novas-navegacao`.
+3. **Falhas restantes, 42, todas no conjunto conhecido:**
+   - 29 pré-existentes de `d64bd67` (medidos com os mesmos specs): `modo-adaptado-cabecalho` em rotas antigas (13, inclusive a home, com cabeçalho fixo de 266 px contra teto de 256 px a 320 px); `quiz-sem-rolagem-lateral` em rotas antigas (10); `quiz-verdadeiro-ou-falso-selo` em Filosofia u3 (6).
+   - 13 de causa antiga nas rotas novas: `modo-adaptado-cabecalho` em modo normal a 320 px (9: Hart u3 em 5 entradas, Sociologia u3 em 4; mesmo cabeçalho de 266 px das rotas antigas) e `quiz-sem-rolagem-lateral` nos quizzes novos (4: Introdução u3 e Sociologia u3, em 320 normal e 360 adaptado).
+   - Ressalva de transparência: o conjunto de `d64bd67` não tem as rotas novas (elas dão 404 lá), então as 13 de rotas novas são classificadas por padrão e medição de causa, não por comparação direta.
+
+### Capturas olhadas (em `/var/tmp/qa-av3/caps/`, fora do repositório)
+- `r2-texto-1280-adaptado-topo.png`: trilha completa em 4 níveis ("1º período > Introdução ao Direito > Livro da AV3 > Texto integral"), cabeçalho de 200 px (antes 286 px), título e fonte visíveis e sem palavra partida. O cartão de prazo ainda cobre parte do texto à direita (IMPORTANTE 3).
+- `r2-texto-360-adaptado-topo.png`: trilha completa, em 4 linhas, sem corte; cabeçalho de 382 px. O cartão de prazo cobre a segunda linha do título ("A textura" visível antes do cartão).
+- `r2-texto-360-adaptado-meio.png`: o botão "Home" fixo sobrepõe a palavra "de" no fim da linha, e o cartão de prazo cobre quatro linhas do texto (IMPORTANTE 3).
+- `r2-trilha-mapa-1280-normal.png`: no modo normal a 1280, a trilha mostra só "Livro da AV3 > Mapa mental" (1º período e Introdução com `display: none`). IMPORTANTE 1 persiste no modo normal a 1280; não estava na lista de aceite desta rodada.
+
+### Veredito da rodada 2: APROVADO nos critérios de aceite (build, 16 + 10 testes, e nenhum título fora do conjunto)
+Defeitos abertos que não são critério desta rodada:
+- IMPORTANTE 1: trilha no modo normal a 1280 px mostra 2 de 4 níveis (corte por contêiner). O modo adaptado já mostra os 4.
+- IMPORTANTE 3: cartão de prazo e botão "Home" cobrem o texto integral e as alternativas do quiz (1280 e 360).
+- Firefox: ativação por teclado e foco visível continuam sem verificação (BiDi e L-50).
+- Itens da rodada 1 (COSMÉTICO 1 a 3) continuam valendo.

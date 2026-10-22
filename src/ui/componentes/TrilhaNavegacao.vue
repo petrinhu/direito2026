@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Cadeira, Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
-import { lerIdDeUnidade } from '@/core/curriculo/idDeUnidade';
+import { lerIdDeUnidade } from '@/app/curriculo/idDeUnidade';
 import { resolverRota } from '@/app/curriculo/resolverRota';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';

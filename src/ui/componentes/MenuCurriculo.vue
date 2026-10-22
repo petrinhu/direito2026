@@ -2,7 +2,7 @@
 import { reactive } from 'vue';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
-import { itensDaCadeira } from '@/core/curriculo/itensDaCadeira';
+import { itensDaCadeira } from '@/app/curriculo/itensDaCadeira';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';

@@ -181,27 +181,28 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
                 <template v-for="item in itensDaCadeira(cadeira)" :key="item.chave">
                   <li v-if="item.tipo === 'av'">
                     <!--
-                      AV (ordem do líder, 22/10/2026): um botão de submenu com o rótulo
-                      AVN; dentro, os grupos (Livro, Material de estudo). A AV não é página,
-                      por isso o rótulo é um span e não um link.
+                      AV (ordem do líder, 22/10/2026): um botão de submenu que tem a seta e
+                      o rótulo AVN; dentro, os grupos (Livro, Material de estudo). A AV não é
+                      página, por isso é botão e não link. Rótulo e seta são o mesmo botão:
+                      clicar em qualquer um dos dois expande. O nome acessível é o próprio
+                      texto visível (WCAG 2.5.3), sem aria-label que o contrarie.
                     -->
                     <div class="menu-curriculo__linha">
                       <button
                         type="button"
-                        class="menu-curriculo__toggle"
+                        class="menu-curriculo__toggle menu-curriculo__toggle--av"
                         :aria-expanded="
                           estaAberto(chaveAv(periodo.id, cadeira.id, item.chave)) ? 'true' : 'false'
                         "
                         :aria-controls="`lista-av-${chaveAv(periodo.id, cadeira.id, item.chave)}`"
-                        :aria-label="`Mostrar submenu de ${item.rotulo}`"
                         @click="alternar(chaveAv(periodo.id, cadeira.id, item.chave))"
                         @keydown.esc="fechar(chaveAv(periodo.id, cadeira.id, item.chave), $event)"
                       >
                         <span class="menu-curriculo__seta" aria-hidden="true" />
+                        <span class="menu-curriculo__rotulo-av">{{
+                          rotuloSemViuva(item.rotulo)
+                        }}</span>
                       </button>
-                      <span class="menu-curriculo__rotulo-av">{{
-                        rotuloSemViuva(item.rotulo)
-                      }}</span>
                     </div>
                     <ul
                       v-show="estaAberto(chaveAv(periodo.id, cadeira.id, item.chave))"
@@ -698,6 +699,31 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
   border: none;
   color: var(--menu-cor, inherit);
   cursor: pointer;
+}
+
+/* Botão da AV (ordem do líder, 22/10/2026): o rótulo faz parte do botão, então
+   o botão ocupa a linha inteira. Preserva o layout de antes: seta na mesma
+   coluna (padding-left do --esp-3), texto começando na coluna do --menu-toggle
+   (onde o span ficava depois do triângulo de 32/44px), texto herdando a cor da
+   lateral e seta na cor do nível. O rótulo fica no topo da linha, como antes. */
+.menu-curriculo__toggle--av {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.menu-curriculo__toggle--av .menu-curriculo__seta {
+  margin-right: calc(var(--menu-toggle) - var(--esp-3, 0.75rem) - 6px);
+  border-left-color: var(--menu-cor, currentColor);
+}
+
+.menu-curriculo__rotulo-av {
+  align-self: flex-start;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 /* Coluna da seta do atalho Interdisciplinar: mesma largura e mesmo recuo

@@ -61,15 +61,44 @@ async function abrirTudo(wrapper: ReturnType<typeof mount>): Promise<void> {
   }
 }
 
+/** Botão de submenu da AV3: o que tem o texto visível "AV3" (a seta é aria-hidden, sem texto). */
+function botaoDaAv3(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.text().trim() === 'AV3');
+}
+
+/** v-show grava display:none inline; isVisible() do VTU exige o wrapper anexado ao documento. */
+function estaVisivel(alvo: { element: object }): boolean {
+  return (alvo.element as HTMLElement).style.display !== 'none';
+}
+
 describe('MenuCurriculo: AV com grupos e tópicos', () => {
   it('a AV3 aparece como botão de submenu, fechado no início, e abre ao clicar', async () => {
     const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
-    const av = wrapper.find('button[aria-label="Mostrar submenu de AV3"]');
-    expect(av.exists()).toBe(true);
-    expect(av.attributes('aria-expanded')).toBe('false');
-    await av.trigger('click');
-    expect(av.attributes('aria-expanded')).toBe('true');
+    const av = botaoDaAv3(wrapper);
+    expect(av?.exists()).toBe(true);
+    expect(av?.attributes('aria-expanded')).toBe('false');
+    await av?.trigger('click');
+    expect(botaoDaAv3(wrapper)?.attributes('aria-expanded')).toBe('true');
     expect(wrapper.text()).toContain('Material de estudo');
+  });
+
+  it('clicar no TEXTO "AV3" abre o submenu, e um novo clique no texto recolhe (ordem do líder, 22/10/2026)', async () => {
+    const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
+    const submenu = wrapper.find('ul[id^="lista-av-"]');
+    expect(estaVisivel(submenu)).toBe(false);
+    await wrapper.find('.menu-curriculo__rotulo-av').trigger('click');
+    expect(botaoDaAv3(wrapper)?.attributes('aria-expanded')).toBe('true');
+    expect(estaVisivel(submenu)).toBe(true);
+    await wrapper.find('.menu-curriculo__rotulo-av').trigger('click');
+    expect(botaoDaAv3(wrapper)?.attributes('aria-expanded')).toBe('false');
+    expect(estaVisivel(submenu)).toBe(false);
+  });
+
+  it('o botão da AV3 tem o texto visível como nome acessível, sem aria-label que o contrarie (WCAG 2.5.3)', () => {
+    const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
+    const botao = botaoDaAv3(wrapper);
+    expect(botao?.text()).toBe('AV3');
+    expect(botao?.attributes('aria-label')).toBeUndefined();
   });
 
   it('dentro da AV3: o grupo Livro é botão de submenu e Material de estudo está em breve, sem link', async () => {

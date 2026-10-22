@@ -45,6 +45,15 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-20: 🔍 Pendente verificação, F10.3: docs/como-adicionar-conteudo.md sem lacuna de pergunta nem de calendário (estado atual, seções 4, 5, 8 e 9). Medido numa cópia do HEAD ea37a6f: pergunta nova de múltipla escolha e de verdadeiro ou falso, feriado e prazo, `atualizar-referencias`, vitest 1674 verdes, vue-tsc 0, validar-conteudo 0. Oito sabotagens e um controle provaram os invariantes novos.
 - 2026-10-20: decisão resolvida pelo líder (F10): prova parcial aceita, uma cadeira com só a AV1 passa; sem exigir as cinco. 🔍 Pendente verificação, F10.4 (commit 6410671; teste de validarCalendario com só AV1, cópia com prova AV1 de uma cadeira).
 - 2026-10-20: decisão resolvida pelo líder (F10): verdadeiro ou falso liberado em qualquer quiz; a regra de só múltipla escolha saiu. 🔍 Pendente verificação, F10.5 (commit c5aa25b; cópia com pergunta V/F nova em Introdução ao Direito u1 passou após `npm run atualizar-referencias`).
+- 2026-10-22: 🔍 Pendente verificação, F11.1: a lista fixa de petições ausentes de tests/unidade/testes.rotasDoCurriculo.spec.ts vira invariante sobre ORDEM_ABAS e o currículo (cada aba ausente aponta para unidade publicada sem a aba, e nenhuma fica de fora). Primeira fatia da onda F11 (AV3 com Livro e texto integral); especificação em docs/como-adicionar-conteudo.md.
+- 2026-10-22: ⏳ Pendente, F11.2: aba texto integral no núcleo do currículo (ORDEM_ABAS, rótulo, rota, descoberta por textoIntegral.ts e tipos TextoIntegral); especificação em docs/arquitetura.md, seções de ChaveAba e ordem das abas.
+- 2026-10-22: ⏳ Pendente, F11.3: travas de texto (regras de redação e de travessão) não se aplicam ao corpo do texto fiel de OCR, só a título e fonte; especificação em docs/como-adicionar-conteudo.md, seção 7.
+- 2026-10-22: ⏳ Pendente, F11.4: visor do texto integral (TextoIntegralVisor.vue) sem v-html, com marcador de página e rota /texto; especificação em docs/arquitetura.md e scripts/verificar-v-html.sh.
+- 2026-10-22: ⏳ Pendente, F11.5: conversor npm run texto-integral (markdown para textoIntegral.ts, sem alterar caractere do OCR); especificação em docs/como-adicionar-conteudo.md, seção Texto integral.
+- 2026-10-22: ⏳ Pendente, F11.6: AV e tópicos no núcleo (lerIdDeUnidade, rótulo AV derivado do número da pasta, grupos declarados em cadeira.ts); especificação em docs/como-adicionar-conteudo.md, seção Tópicos agrupados.
+- 2026-10-22: ⏳ Pendente, F11.7: submenu AV com grupos Livro e Material de estudo no menu e na trilha, tópico com link próprio; especificação em docs/arquitetura.md.
+- 2026-10-22: ⏳ Pendente, F11.8: npm run nova-unidade aceita tópico uN-grupo-topico e recusa conflito com uN simples; especificação em docs/como-adicionar-conteudo.md.
+- 2026-10-22: ⏳ Pendente, F11.9: documentação da onda F11 e fechamento da Parte A (portões de conjunto); especificação em docs/como-adicionar-conteudo.md e docs/arquitetura.md.
 
 ## TABELA UNIFICADA
 

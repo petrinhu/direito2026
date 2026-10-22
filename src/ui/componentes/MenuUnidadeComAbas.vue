@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
+import { RouterLink } from 'vue-router';
 import type { ChaveAba, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
@@ -122,9 +123,13 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
         >
           <span class="menu-curriculo__seta" aria-hidden="true" />
         </button>
-        <a :href="caminhoPagina" class="menu-curriculo__link-unidade" :aria-current="ariaAtual">
+        <RouterLink
+          :to="caminhoPagina"
+          class="menu-curriculo__link-unidade"
+          :aria-current="ariaAtual"
+        >
           {{ rotuloSemViuva(rotulo) }}
-        </a>
+        </RouterLink>
       </div>
       <ul
         v-if="temAbas"
@@ -151,13 +156,13 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
                 >
                   <span class="menu-curriculo__seta" aria-hidden="true" />
                 </button>
-                <a
-                  :href="hrefDaAba(aba)"
+                <RouterLink
+                  :to="hrefDaAba(aba)"
                   class="menu-curriculo__link-aba"
                   :aria-current="ariaDaAba(aba)"
                 >
                   {{ ROTULOS_ABA[aba] }}
-                </a>
+                </RouterLink>
               </div>
               <ul
                 v-show="estado.estaAberto(estadoDaAba(aba))"
@@ -165,18 +170,18 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
                 class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
               >
                 <li v-for="subitem in subitensDaAba(aba)" :key="subitem.id">
-                  <a :href="subitem.href">{{ subitem.titulo }}</a>
+                  <RouterLink :to="subitem.href">{{ subitem.titulo }}</RouterLink>
                 </li>
               </ul>
             </li>
             <li v-else>
-              <a
-                :href="`${caminhoPagina}/${aba}`"
+              <RouterLink
+                :to="`${caminhoPagina}/${aba}`"
                 class="menu-curriculo__botao"
                 :aria-current="ariaDaAba(aba)"
               >
                 {{ ROTULOS_ABA[aba] }}
-              </a>
+              </RouterLink>
             </li>
           </template>
         </template>

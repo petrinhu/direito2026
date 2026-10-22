@@ -22,7 +22,7 @@ const fonte = readFileSync(
   'utf-8'
 );
 
-const estilo = fonte.slice(fonte.indexOf('<style scoped>')).replace(/\/\*[\s\S]*?\*\//g, '');
+const estilo = fonte.slice(fonte.indexOf('<style>')).replace(/\/\*[\s\S]*?\*\//g, '');
 const regras = [...estilo.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
   seletor: m[1]!.trim(),
   corpo: m[2]!
@@ -56,7 +56,7 @@ describe('MenuCurriculo, uniformidade no nível 3 (unidade e AV)', () => {
 
   it('o "em breve" de unidade usa o tamanho do nível 3 (propriedade do nível 3)', () => {
     expect(
-      regrasQue('nivel-3 > li > .menu-curriculo__linha :deep(.estado-em-breve)').some((r) =>
+      regrasQue('nivel-3 > li > .menu-curriculo__linha .estado-em-breve').some((r) =>
         /font-size:\s*var\(--menu-tam-3\)/.test(r.corpo)
       )
     ).toBe(true);
@@ -99,7 +99,7 @@ describe('MenuCurriculo, uniformidade no nível 3 (unidade e AV)', () => {
 describe('MenuCurriculo, uniformidade no nível 2 (cadeira)', () => {
   it('o "em breve" de cadeira usa a fonte de título do nível 2 (Cormorant), fora do modo adaptado', () => {
     expect(
-      regrasQue('nivel-2 > li > :deep(.estado-em-breve)').some((r) =>
+      regrasQue('nivel-2 > li > .estado-em-breve').some((r) =>
         /font-family:\s*var\(--fonte-titulo\)/.test(r.corpo)
       )
     ).toBe(true);
@@ -120,15 +120,15 @@ describe('MenuCurriculo, uniformidade no nível 2 (cadeira)', () => {
     );
     expect(regraAdaptada.length).toBeGreaterThan(0);
     expect(regraAdaptada.some((r) => r.seletor.includes('nivel-2 > li > a'))).toBe(true);
-    expect(
-      regraAdaptada.some((r) => r.seletor.includes('nivel-2 > li > :deep(.estado-em-breve)'))
-    ).toBe(true);
+    expect(regraAdaptada.some((r) => r.seletor.includes('nivel-2 > li > .estado-em-breve'))).toBe(
+      true
+    );
   });
 });
 
 describe('MenuCurriculo, uniformidade no nível 4 e 5', () => {
   it('o "em breve" de grupo (nível 4) usa o tamanho do nível (propriedade do nível 4) e a coluna do texto dos grupos', () => {
-    const regra = regrasQue('nivel-4 > li > :deep(.estado-em-breve)');
+    const regra = regrasQue('nivel-4 > li > .estado-em-breve');
     expect(regra.some((r) => /font-size:\s*var\(--menu-tam-4\)/.test(r.corpo))).toBe(true);
     expect(regra.some((r) => /padding-left:\s*calc\(var\(--menu-coluna-aba/.test(r.corpo))).toBe(
       true
@@ -136,7 +136,7 @@ describe('MenuCurriculo, uniformidade no nível 4 e 5', () => {
   });
 
   it('o "em breve" de tópico (nível 5) usa o tamanho do nível (propriedade do nível 5) e o recuo dos tópicos', () => {
-    const regra = regrasQue('nivel-5 > li > :deep(.estado-em-breve)');
+    const regra = regrasQue('nivel-5 > li > .estado-em-breve');
     expect(regra.some((r) => /font-size:\s*var\(--menu-tam-5\)/.test(r.corpo))).toBe(true);
     expect(regra.some((r) => /padding:\s*var\(--esp-2/.test(r.corpo))).toBe(true);
   });

@@ -39,7 +39,7 @@ function escalaDo(bloco: string): Escala {
 const ESCALA_CLARO = escalaDo(blocoDe(tokens, ':root {'));
 const ESCALA_AMPLIADO = escalaDo(blocoDe(tokens, ':root[data-modo-adaptado="on"] {'));
 
-const estilo = fonte.slice(fonte.indexOf('<style scoped>')).replace(/\/\*[\s\S]*?\*\//g, '');
+const estilo = fonte.slice(fonte.indexOf('<style>')).replace(/\/\*[\s\S]*?\*\//g, '');
 const regras = [...estilo.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
   seletor: m[1]!.trim(),
   corpo: m[2]!

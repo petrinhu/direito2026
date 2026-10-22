@@ -21,6 +21,8 @@ const props = defineProps<{
    * o selo não aparece e a barra fica como era. Boolean ausente vale false.
    */
   naPaginaInicial?: boolean;
+  /** Gaveta do menu do currículo aberta (celular). Boolean ausente vale false. */
+  gavetaAberta?: boolean;
 }>();
 const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
 
@@ -138,6 +140,8 @@ onBeforeUnmount(() => {
         type="button"
         class="barra-topo__botao-gaveta"
         aria-label="Abrir menu do currículo"
+        aria-controls="gaveta-do-curriculo"
+        :aria-expanded="props.gavetaAberta ? 'true' : 'false'"
         @click="emit('abrir-gaveta')"
       >
         ☰

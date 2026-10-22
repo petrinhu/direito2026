@@ -27,7 +27,9 @@ export default mergeConfig(
         // continuar idêntico durante a refatoração.
         'tests/caracterizacao/**/*.spec.ts'
       ],
-      css: false
+      css: false,
+      // Stub de RouterLink para os componentes (tests/apoio/setupVitest.ts).
+      setupFiles: ['tests/apoio/setupVitest.ts']
     }
   })
 );

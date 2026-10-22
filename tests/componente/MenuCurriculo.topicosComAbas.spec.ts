@@ -154,7 +154,7 @@ describe('MenuCurriculo: tópico com abas segue a escada do nível 5', () => {
     resolve(__dirname, '../../src/ui/componentes/MenuCurriculo.vue'),
     'utf-8'
   );
-  const estilo = fonte.slice(fonte.indexOf('<style scoped>')).replace(/\/\*[\s\S]*?\*\//g, '');
+  const estilo = fonte.slice(fonte.indexOf('<style>')).replace(/\/\*[\s\S]*?\*\//g, '');
   const regras = [...estilo.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
     seletor: m[1]!.trim(),
     corpo: m[2]!
@@ -167,7 +167,7 @@ describe('MenuCurriculo: tópico com abas segue a escada do nível 5', () => {
   it.each([
     '.menu-curriculo__nivel-5 > li > .menu-curriculo__linha .menu-curriculo__link-unidade',
     '.menu-curriculo__nivel-5 > li > .menu-curriculo__linha .menu-curriculo__link-aba',
-    '.menu-curriculo__nivel-5 > li > .menu-curriculo__linha :deep(.estado-em-breve)'
+    '.menu-curriculo__nivel-5 > li > .menu-curriculo__linha .estado-em-breve'
   ])('%s usa --menu-tam-5', (trecho) => {
     expect(regraDoTrecho(trecho)?.corpo).toMatch(/font-size:\s*var\(--menu-tam-5\)/);
   });

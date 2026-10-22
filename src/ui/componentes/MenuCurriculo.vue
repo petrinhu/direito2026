@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { provide, reactive, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { itensDaCadeira } from '@/app/curriculo/itensDaCadeira';
@@ -137,14 +138,14 @@ provide(ESTADO_MENU, {
     -->
     <ul class="menu-curriculo__topo">
       <li>
-        <a
-          href="/calendario"
+        <RouterLink
+          to="/calendario"
           class="menu-curriculo__calendario"
           :aria-current="ehAtual('calendario', caminhoAtual) ? 'page' : undefined"
         >
           <IconeCalendario />
           Calendário
-        </a>
+        </RouterLink>
       </li>
     </ul>
     <ul class="menu-curriculo__nivel-1">
@@ -172,16 +173,16 @@ provide(ESTADO_MENU, {
             <template v-if="cadeira.estado === 'em-breve'">
               <EstadoEmBreve :rotulo="rotuloSemViuva(cadeira.nome)" />
             </template>
-            <a
+            <RouterLink
               v-else-if="cadeira.restrita"
-              :href="`/p/${periodo.id}/${cadeira.id}`"
+              :to="`/p/${periodo.id}/${cadeira.id}`"
               class="menu-curriculo__link-unidade menu-curriculo__link-restrita"
               :aria-current="
                 ehAtual(`p/${periodo.id}/${cadeira.id}`, caminhoAtual) ? 'page' : undefined
               "
             >
               {{ rotuloSemViuva(cadeira.nome) }}
-            </a>
+            </RouterLink>
             <template v-else>
               <button
                 type="button"
@@ -303,8 +304,8 @@ provide(ESTADO_MENU, {
                         <span class="menu-curriculo__recuo" aria-hidden="true">
                           <span class="menu-curriculo__seta" />
                         </span>
-                        <a
-                          :href="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
+                        <RouterLink
+                          :to="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
                           class="menu-curriculo__link-unidade"
                           :aria-label="`${cadeira.atalhoUnidade.rotulo}, atalho para a área restrita`"
                           :aria-current="
@@ -317,7 +318,7 @@ provide(ESTADO_MENU, {
                           "
                         >
                           {{ cadeira.atalhoUnidade.rotulo }}
-                        </a>
+                        </RouterLink>
                       </div>
                     </li>
                   </template>
@@ -331,7 +332,7 @@ provide(ESTADO_MENU, {
   </nav>
 </template>
 
-<style scoped>
+<style>
 .menu-curriculo ul {
   list-style: none;
   margin: 0;
@@ -404,7 +405,7 @@ provide(ESTADO_MENU, {
   flex-shrink: 0;
 }
 
-[aria-expanded='true'] > .menu-curriculo__seta {
+.menu-curriculo [aria-expanded='true'] > .menu-curriculo__seta {
   transform: rotate(90deg);
 }
 
@@ -614,7 +615,7 @@ provide(ESTADO_MENU, {
    o tamanho de título não se aplica, então o nível fica na escala pequena). */
 .menu-curriculo__nivel-2 > li > .menu-curriculo__botao,
 .menu-curriculo__nivel-2 > li > a,
-.menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
+.menu-curriculo__nivel-2 > li > .estado-em-breve {
   font-size: var(--escala-sm, 0.9375rem);
 }
 
@@ -633,7 +634,7 @@ provide(ESTADO_MENU, {
 }
 
 /* "Em breve" de cadeira: mesma altura e mesma coluna de texto da cadeira. */
-.menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
+.menu-curriculo__nivel-2 > li > .estado-em-breve {
   display: flex;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
@@ -655,7 +656,7 @@ provide(ESTADO_MENU, {
 
 :root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > .menu-curriculo__botao,
 :root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > a,
-:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > :deep(.estado-em-breve) {
+:root:not([data-modo-adaptado='on']) .menu-curriculo__nivel-2 > li > .estado-em-breve {
   font-family: var(--fonte-titulo);
   font-variant-numeric: lining-nums;
   font-weight: 600;
@@ -671,7 +672,7 @@ provide(ESTADO_MENU, {
 
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__link-unidade,
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__rotulo-av,
-.menu-curriculo__nivel-3 > li > .menu-curriculo__linha :deep(.estado-em-breve),
+.menu-curriculo__nivel-3 > li > .menu-curriculo__linha .estado-em-breve,
 .menu-curriculo__nivel-3 > li > .menu-curriculo__linha .menu-curriculo__seta {
   font-size: var(--menu-tam-3);
 }
@@ -687,7 +688,7 @@ provide(ESTADO_MENU, {
 
 .menu-curriculo__nivel-4 > li > .menu-curriculo__botao,
 .menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-aba,
-.menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
+.menu-curriculo__nivel-4 > li > .estado-em-breve {
   font-size: var(--menu-tam-4);
 }
 
@@ -699,7 +700,7 @@ provide(ESTADO_MENU, {
   padding-left: calc(var(--menu-coluna-aba) - 6px - var(--esp-2, 0.5rem));
 }
 
-.menu-curriculo__nivel-4 > li > :deep(.estado-em-breve) {
+.menu-curriculo__nivel-4 > li > .estado-em-breve {
   display: flex;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
@@ -720,12 +721,12 @@ provide(ESTADO_MENU, {
    "em breve" de tópico usam o tamanho do nível 5, como os demais itens dele. */
 .menu-curriculo__nivel-5 > li > .menu-curriculo__linha .menu-curriculo__link-unidade,
 .menu-curriculo__nivel-5 > li > .menu-curriculo__linha .menu-curriculo__link-aba,
-.menu-curriculo__nivel-5 > li > .menu-curriculo__linha :deep(.estado-em-breve) {
+.menu-curriculo__nivel-5 > li > .menu-curriculo__linha .estado-em-breve {
   font-size: var(--menu-tam-5);
 }
 
 /* "Em breve" de tópico: mesmo tamanho e mesmo recuo dos tópicos (link de nível 5). */
-.menu-curriculo__nivel-5 > li > :deep(.estado-em-breve) {
+.menu-curriculo__nivel-5 > li > .estado-em-breve {
   display: flex;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-4, 1rem);
@@ -737,11 +738,11 @@ provide(ESTADO_MENU, {
    --cor-desativado-texto/--cor-selo-* são pensados para --cor-fundo, e
    mediam 4,27:1 (abaixo do piso de 4,5:1) contra o fundo escuro da
    lateral no tema claro. */
-.menu-curriculo :deep(.estado-em-breve) {
+.menu-curriculo span.estado-em-breve {
   color: var(--cor-sidebar-texto-suave, #b8c0cc);
 }
 
-.menu-curriculo :deep(.estado-em-breve__selo) {
+.menu-curriculo span.estado-em-breve__selo {
   color: var(--cor-sidebar-selo-texto, #d8d2ba);
   background: var(--cor-sidebar-selo-bg, #1a3a5c);
 }

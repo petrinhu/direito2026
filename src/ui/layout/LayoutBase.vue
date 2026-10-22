@@ -108,6 +108,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     :store-busca="storeBusca"
     :store-modo-adaptado="storeModoAdaptado"
     :na-pagina-inicial="naPaginaInicial"
+    :gaveta-aberta="gavetaAberta"
     @abrir-gaveta="abrirGaveta"
     @buscar="(termo) => emit('buscar', termo)"
   />
@@ -115,6 +116,7 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   <div class="layout-base__corpo" :class="{ 'layout-base__corpo--com-faixa': comFaixa }">
     <div v-if="gavetaAberta" class="layout-base__sobreposicao" @click="fecharGaveta" />
     <aside
+      id="gaveta-do-curriculo"
       ref="gavetaRef"
       class="layout-base__gaveta"
       :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"

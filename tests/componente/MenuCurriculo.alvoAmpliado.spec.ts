@@ -18,7 +18,7 @@ const fonte = readFileSync(
   resolve(__dirname, '../../src/ui/componentes/MenuCurriculo.vue'),
   'utf-8'
 );
-const estilo = fonte.slice(fonte.indexOf('<style scoped>')).replace(/\/\*[\s\S]*?\*\//g, '');
+const estilo = fonte.slice(fonte.indexOf('<style>')).replace(/\/\*[\s\S]*?\*\//g, '');
 const regras = [...estilo.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
   seletor: m[1]!.trim(),
   corpo: m[2]!
@@ -64,7 +64,7 @@ describe('MenuCurriculo, alvos de 44 px na leitura ampliada', () => {
   it('o "em breve" de grupo segue a mesma coluna de texto dos grupos', () => {
     const regra = regras.find(
       (r) =>
-        r.seletor.includes('.menu-curriculo__nivel-4 > li > :deep(.estado-em-breve)') &&
+        r.seletor.includes('.menu-curriculo__nivel-4 > li > .estado-em-breve') &&
         valorDe(r.corpo, 'padding-left')
     );
     expect(regra, 'recuo do em breve de grupo não encontrado').toBeDefined();

@@ -24,10 +24,11 @@ describe('validarIndiceGerado: piso de varredura do índice de busca', () => {
     expect(resultado.mensagens).toEqual([]);
   });
 
-  it('reprova quando o índice passa do teto de tamanho, mesmo com documentos', () => {
+  it('reprova quando o índice comprimido passa do teto de tamanho, mesmo com documentos', () => {
     const resultado = validarIndiceGerado(16, TETO_INDICE_BUSCA_BYTES + 1);
     expect(resultado.ok).toBe(false);
     expect(resultado.mensagens.join(' ')).toMatch(/passou do teto/);
+    expect(resultado.mensagens.join(' ')).toMatch(/bytes comprimidos/);
   });
 
   it('acumula as duas mensagens quando os dois problemas ocorrem juntos', () => {

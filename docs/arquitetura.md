@@ -517,7 +517,7 @@ export interface DocumentoBusca {
 
 Granularidade: um documento por bloco teórico, um por seção da peça, e um por unidade para o quiz (não se indexa pergunta por pergunta: entregaria a resposta na busca). O HTML é reduzido a texto puro por remoção de tags no próprio script, sem depender de DOM.
 
-Saída: `public/busca/indice.json`, com `JSON.stringify(mini.toJSON())`. Se passar de 300 KB comprimido, o índice é fatiado por período e o carregador baixa só os períodos que têm material. Esse teto de 300 KB fica fixado **agora, antes de existir a medição** (L-43).
+Saída: `public/busca/indice.json`, com `JSON.stringify(mini.toJSON())`. Se passar de 300 KB comprimido, o índice é fatiado por período e o carregador baixa só os períodos que têm material. Esse teto de 300 KB fica fixado **agora, antes de existir a medição** (L-43). O portão do gerador mede o JSON gravado comprimido com gzip (nível 9), não o tamanho bruto; o bruto é impresso só como informação.
 
 Piso de varredura obrigatório (L-36): o script imprime sempre `documentos encontrados: N / indexados: M`, mesmo quando N é zero, e sai com `exit 1` se N for zero ou se N e M divergirem. Zero documento é varredura quebrada, não conteúdo limpo.
 

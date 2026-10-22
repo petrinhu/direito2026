@@ -30,6 +30,7 @@ import { TETO_INDICE_BUSCA_BYTES, type DocumentoBusca } from '../src/core/busca/
 import { normalizarTermo } from '../src/core/busca/normalizar';
 import { validarIndiceGerado } from '../src/core/busca/validarIndice';
 import { carregadoresDoDisco, curriculoDoDisco } from './apoio/conteudoDoDisco';
+import { medirTamanhoComprimido } from './apoio/medirIndiceComprimido';
 
 const CARREGADORES = carregadoresDoDisco();
 
@@ -81,15 +82,20 @@ async function principal(): Promise<void> {
   mkdirSync(dirname(SAIDA), { recursive: true });
   writeFileSync(SAIDA, json, 'utf-8');
 
-  const tamanhoBytes = Buffer.byteLength(json, 'utf-8');
+  const tamanhoBrutoBytes = Buffer.byteLength(json, 'utf-8');
+  // O teto da RI6 é sobre o tamanho comprimido (gzip -9), não o bruto.
+  const tamanhoComprimidoBytes = medirTamanhoComprimido(json);
   console.log(`documentos encontrados: ${documentos.length} / indexados: ${documentos.length}`);
   console.log(`unidades publicadas varridas: ${unidadesEncontradas}`);
-  console.log(`tamanho do índice: ${tamanhoBytes} bytes (teto ${TETO_INDICE_BUSCA_BYTES} bytes)`);
+  console.log(`tamanho bruto do índice: ${tamanhoBrutoBytes} bytes`);
+  console.log(
+    `tamanho comprimido do índice (gzip -9): ${tamanhoComprimidoBytes} bytes (teto ${TETO_INDICE_BUSCA_BYTES} bytes comprimidos)`
+  );
 
   // Validação extraída para src/core/busca/validarIndice.ts (item 9 da
   // onda): mesma regra de sempre, agora testável de verdade sem precisar
   // rodar este script inteiro (tests/unidade/busca.validarIndice.spec.ts).
-  const validacao = validarIndiceGerado(documentos.length, tamanhoBytes);
+  const validacao = validarIndiceGerado(documentos.length, tamanhoComprimidoBytes);
   if (!validacao.ok) {
     for (const mensagem of validacao.mensagens) {
       console.error(`gerar-indice-busca: ${mensagem}`);

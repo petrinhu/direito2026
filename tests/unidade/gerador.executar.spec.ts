@@ -244,3 +244,31 @@ function existe(relativo: string): boolean {
     return false;
   }
 }
+
+describe('tópico de grupo: criação e conflito com a unidade simples', () => {
+  it('cria um tópico uN-grupo-topico numa cadeira existente, com código 0', async () => {
+    const resultado = await rodar(['p1', 'filosofia-juridica', 'u3-material-apostila', 'Apostila']);
+    expect(resultado.codigo).toBe(0);
+    expect(arvore().filter((a) => a.includes('/u3-material-apostila/'))).toContain(
+      'src/conteudo/p1/filosofia-juridica/u3-material-apostila/meta.ts'
+    );
+  });
+
+  it('recusa uN simples quando já existe tópico de grupo da mesma AV, e nada novo é criado', async () => {
+    await rodar(['p1', 'filosofia-juridica', 'u3-material-apostila', 'Apostila']);
+    const antes = arvore();
+    const resultado = await rodar(['p1', 'filosofia-juridica', 'u3', 'T']);
+    expect(resultado.codigo).not.toBe(0);
+    expect(resultado.erros.join('\n')).toMatch(/não convive/);
+    expect(arvore()).toEqual(antes);
+  });
+
+  it('recusa tópico de grupo quando a AV já tem unidade simples, e nada novo é criado', async () => {
+    await rodar(['p1', 'filosofia-juridica', 'u3', 'T']);
+    const antes = arvore();
+    const resultado = await rodar(['p1', 'filosofia-juridica', 'u3-material-apostila', 'Apostila']);
+    expect(resultado.codigo).not.toBe(0);
+    expect(resultado.erros.join('\n')).toMatch(/não convive/);
+    expect(arvore()).toEqual(antes);
+  });
+});

@@ -41,14 +41,21 @@ describe('modeloDaUnidade: arquivos', () => {
 describe('modeloDaUnidade: meta.ts', () => {
   const meta = modeloDaUnidade(ENTRADA)['meta.ts'] ?? '';
 
-  it('nasce em-breve, com rótulo "Unidade N" e título do argumento', () => {
+  it('nasce em-breve, sem campo rotulo (o rótulo é AVN pelo número da pasta) e com título do argumento', () => {
     expect(meta).toContain("estado: 'em-breve'");
-    expect(meta).toContain("rotulo: 'Unidade 4'");
+    expect(meta).not.toContain('rotulo');
     expect(meta).toContain("titulo: 'Teorias da ação social'");
   });
 
-  it('subtítulo segue o padrão das unidades existentes', () => {
-    expect(meta).toContain("subtitulo: 'Sociologia Jurídica · Unidade 4 · faculdade · 1º período'");
+  it('subtítulo diz AV no lugar de Unidade, seguindo o padrão do menu', () => {
+    expect(meta).toContain("subtitulo: 'Sociologia Jurídica · AV4 · faculdade · 1º período'");
+  });
+
+  it('tópico de grupo usa o número da pasta no subtítulo (AV3), não o id inteiro', () => {
+    const topico =
+      modeloDaUnidade({ ...ENTRADA, unidade: 'u3-material-apostila' })['meta.ts'] ?? '';
+    expect(topico).toContain("subtitulo: 'Sociologia Jurídica · AV3 · faculdade · 1º período'");
+    expect(topico).not.toContain('rotulo');
   });
 
   it('exporta meta do tipo MetaUnidade', () => {

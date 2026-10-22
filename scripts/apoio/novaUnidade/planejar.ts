@@ -1,7 +1,8 @@
 import { join, relative } from 'node:path';
 import { ErroDeArgumento, type ArgumentosNovaUnidade } from './argumentos';
-import { existe, lerCadeira, proximaOrdemLivre, type ArquivoAGravar } from './disco';
+import { existe, lerCadeira, listarPastas, proximaOrdemLivre, type ArquivoAGravar } from './disco';
 import { modeloDaCadeira, modeloDaUnidade } from './modelos';
+import { lerIdDeUnidade } from '../../../src/core/curriculo/idDeUnidade';
 
 export interface PlanoNovaUnidade {
   /** Tudo que será criado, com caminho absoluto. Nada é escrito antes da checagem. */
@@ -19,6 +20,33 @@ export interface PlanoNovaUnidade {
  * descrição sem --cadeira, e --cadeira apontando para cadeira que já existe.
  * Não escreve nada: quem chama grava depois.
  */
+/**
+ * Unidade simples uN e tópico uN-grupo-topico da mesma AV não convivem na mesma cadeira
+ * (ordem do líder, 22/10/2026): a AV é ou uma unidade só, ou um conjunto de grupos.
+ */
+function checarConflitoDeTopico(unidade: string, pastasDaCadeira: readonly string[]): void {
+  const id = lerIdDeUnidade(unidade);
+  if (!id) return;
+  if (id.grupo === undefined) {
+    const topico = pastasDaCadeira.find((nome) => {
+      const outro = lerIdDeUnidade(nome);
+      return outro?.numero === id.numero && outro.grupo !== undefined;
+    });
+    if (topico) {
+      throw new ErroDeArgumento(
+        `unidade simples ${unidade} não convive com tópico de grupo da mesma AV: ${topico}.`
+      );
+    }
+    return;
+  }
+  const simples = pastasDaCadeira.find((nome) => nome === `u${id.numero}`);
+  if (simples) {
+    throw new ErroDeArgumento(
+      `tópico ${unidade} não convive com a unidade simples ${simples} já existente.`
+    );
+  }
+}
+
 export async function planejarNovaUnidade(
   argumentos: ArgumentosNovaUnidade,
   raizDoConteudo: string
@@ -37,6 +65,8 @@ export async function planejarNovaUnidade(
       `a unidade já existe em ${nomeDaPasta}: o gerador não sobrescreve nem completa unidade existente.`
     );
   }
+
+  checarConflitoDeTopico(argumentos.unidade, listarPastas(pastaDaCadeira));
 
   const cadeiraExiste = existe(caminhoDaCadeira);
   if (cadeiraExiste && argumentos.nomeCadeira !== undefined) {

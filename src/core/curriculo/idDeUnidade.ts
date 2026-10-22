@@ -4,7 +4,7 @@
  * ordem e para o rótulo AVN; o rótulo nunca vem do meta.ts (ordem do líder,
  * 22/10/2026).
  */
-const ID_DE_UNIDADE = /^u(\d+)(?:-([a-z0-9]+)-([a-z0-9]+(?:-[a-z0-9]+)*))?$/;
+const ID_DE_UNIDADE = /^u([1-9]\d*)(?:-([a-z0-9]+)-([a-z0-9]+(?:-[a-z0-9]+)*))?$/;
 
 export interface IdDeUnidade {
   readonly numero: number;

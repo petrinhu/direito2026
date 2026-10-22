@@ -55,5 +55,10 @@ function linhasDeSucesso(
     '4. Antes do commit: npm run atualizar-referencias (ele regrava a caracterização e mostra o que entrou; confira que só aparece o que você acrescentou) e depois npm run preci.',
     '5. Ao publicar uma cadeira, o teste do atalho Interdisciplinar exige o bloco atalhoUnidade em cadeira.ts (docs/como-adicionar-conteudo.md, seção 2).'
   );
+  if (argumentos.unidade.includes('-')) {
+    linhas.push(
+      `6. Tópico de grupo: o grupo "${argumentos.unidade.split('-')[1]}" da AV precisa estar declarado em cadeira.ts (campo grupos), senão a montagem recusa o tópico.`
+    );
+  }
   return linhas;
 }

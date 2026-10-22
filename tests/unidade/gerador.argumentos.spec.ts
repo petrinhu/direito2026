@@ -81,3 +81,18 @@ describe('interpretarArgumentos: formatos recusados', () => {
     );
   });
 });
+
+describe('interpretarArgumentos: tópico de grupo (uN-grupo-topico)', () => {
+  it('aceita u3-material-apostila como pasta de unidade', () => {
+    expect(interpretarArgumentos(['p1', 'x-y', 'u3-material-apostila', 'T']).unidade).toBe(
+      'u3-material-apostila'
+    );
+  });
+
+  it.each(['u3-material', 'u3-Material-x', 'u3--x-y', 'u03-material-x', 'u0-material-x'])(
+    'tópico %s é recusado',
+    (unidade) => {
+      expect(() => interpretarArgumentos(['p1', 'x-y', unidade, 'T'])).toThrow(ErroDeArgumento);
+    }
+  );
+});

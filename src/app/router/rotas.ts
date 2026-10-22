@@ -38,7 +38,7 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Unidade.vue'),
     props: (route) => ({ ...route.params, aba: 'peticao' })
   },
-  ...(['mapa', 'fichamento', 'mnemonicos'] as const).map((aba): RouteRecordRaw => ({
+  ...(['texto', 'mapa', 'fichamento', 'mnemonicos'] as const).map((aba): RouteRecordRaw => ({
     path: `/p/:periodo/:cadeira/:unidade/${aba}`,
     name: `unidade-${aba}`,
     component: () => import('@/ui/paginas/Unidade.vue'),

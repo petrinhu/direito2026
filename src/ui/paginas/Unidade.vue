@@ -14,6 +14,7 @@ import VisorResumo from '../componentes/VisorResumo.vue';
 import PecaComentadaVisor from '../componentes/PecaComentadaVisor.vue';
 import MotorQuiz from '../componentes/MotorQuiz.vue';
 import MapaMentalVisor from '../componentes/MapaMentalVisor.vue';
+import TextoIntegralVisor from '../componentes/TextoIntegralVisor.vue';
 import FichamentoVisor from '../componentes/FichamentoVisor.vue';
 import MnemonicosVisor from '../componentes/MnemonicosVisor.vue';
 import IndicadorProgresso from '../componentes/IndicadorProgresso.vue';
@@ -148,6 +149,10 @@ const contagemBlocos = computed(() =>
             :itens-checklist-marcados="storeProgresso.registro.value.itensChecklistMarcados ?? []"
             @bloco-lido="storeProgresso.marcarLido($event)"
             @alternar-item-checklist="storeProgresso.alternarChecklist($event)"
+          />
+          <TextoIntegralVisor
+            v-else-if="abaDoPainel === 'texto' && conteudo.textoIntegral"
+            :texto="conteudo.textoIntegral"
           />
           <MapaMentalVisor
             v-else-if="abaDoPainel === 'mapa' && conteudo.mapaFichamento"

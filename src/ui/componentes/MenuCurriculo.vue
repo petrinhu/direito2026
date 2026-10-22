@@ -7,7 +7,7 @@ import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 import IconeCalendario from './IconeCalendario.vue';
 
-const ABAS_DE_LINK_DIRETO = ['mapa', 'fichamento', 'mnemonicos'] as const;
+const ABAS_DE_LINK_DIRETO = ['texto', 'mapa', 'fichamento', 'mnemonicos'] as const;
 
 defineProps<{
   curriculo: Curriculo;

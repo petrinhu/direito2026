@@ -6,7 +6,6 @@ import type { MetaUnidade } from '../../../tipos';
  * em `curriculo.ts`, e não é repetida aqui.
  */
 export const meta: MetaUnidade = {
-  rotulo: 'Unidade 1',
   estado: 'publicado',
   titulo: 'Resumo de estudo e quiz',
   subtitulo: 'Sociologia Jurídica · faculdade · 1º período',

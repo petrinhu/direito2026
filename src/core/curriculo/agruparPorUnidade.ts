@@ -1,4 +1,5 @@
 import { ErroDeConteudo } from './erroDeConteudo';
+import { lerIdDeUnidade } from './idDeUnidade';
 import { ORDEM_ABAS } from './ordemAbas';
 import type { ChaveAba } from './tipos';
 
@@ -34,7 +35,6 @@ export interface UnidadeDescoberta {
  * própria cadeira) não casa e é ignorado aqui: quem o descreve é o currículo.
  */
 const CAMINHO_DE_UNIDADE = /(?:^|\/)(p\d+)\/([^/]+)\/([^/]+)\/(.+)$/;
-const ID_UNIDADE = /^u\d+$/;
 const ARQUIVO_TS = /^[^/]+\.ts$/;
 
 type ParteDoArquivo = keyof ArquivosDaUnidade;
@@ -76,9 +76,9 @@ export function agruparPorUnidade(caminhos: readonly string[]): UnidadeDescobert
     const cadeira = casa[2] ?? '';
     const unidade = casa[3] ?? '';
     const resto = casa[4] ?? '';
-    if (!ID_UNIDADE.test(unidade)) {
+    if (lerIdDeUnidade(unidade) === undefined) {
       throw new ErroDeConteudo(
-        `unidade fora do padrão uN: ${periodo}/${cadeira}/${unidade} (${caminho})`
+        `unidade fora do padrão uN ou uN-grupo-topico: ${periodo}/${cadeira}/${unidade} (${caminho})`
       );
     }
     const chave = `${periodo}/${cadeira}/${unidade}`;

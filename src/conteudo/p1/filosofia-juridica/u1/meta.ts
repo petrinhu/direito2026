@@ -6,7 +6,6 @@ import type { MetaUnidade } from '../../../tipos';
  * mnemônicos e quiz) mora em `abas`, em `curriculo.ts`, e não é repetida aqui.
  */
 export const meta: MetaUnidade = {
-  rotulo: 'Unidade 1',
   estado: 'publicado',
   titulo: 'Resumo, mapa mental, fichamento, mnemônicos e quiz',
   subtitulo: 'Filosofia Jurídica · faculdade · 1º período',

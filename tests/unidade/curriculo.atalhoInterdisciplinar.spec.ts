@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { curriculo } from '@/conteudo/curriculo';
 import { resolverRota } from '@/core/curriculo/resolverRota';
+import { lerIdDeUnidade } from '@/core/curriculo/idDeUnidade';
 
 /**
  * Ordem do líder: "ponha em todas as disciplinas (no menu lateral) que a
@@ -51,9 +52,10 @@ describe('atalho para a Unidade 2 (Interdisciplinar) nas cadeiras públicas', ()
   );
 
   it.each(cadeirasPublicas.map((c) => c.id))(
-    '%s: o slot da Unidade 2 é do atalho, então não existe unidade u2 nem rota para ela',
+    '%s: o slot da AV2 é do atalho, então nenhuma unidade tem número 2 e nenhuma rota leva a ela',
     (id) => {
-      expect(cadeiraDe(id).unidades.map((u) => u.id)).not.toContain('u2');
+      const numeros = cadeiraDe(id).unidades.map((u) => lerIdDeUnidade(u.id)?.numero);
+      expect(numeros).not.toContain(2);
       expect(resolverRota(curriculo, `/p/p1/${id}/u2`).tipo).toBe('inexistente');
     }
   );

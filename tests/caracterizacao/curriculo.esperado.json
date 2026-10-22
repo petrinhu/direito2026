@@ -17,7 +17,7 @@
         "unidades": [
           {
             "id": "u1",
-            "rotulo": "Unidade 1",
+            "rotulo": "AV1",
             "titulo": "Resumo de estudo, petição comentada e quiz",
             "estado": "publicado",
             "abas": ["resumo", "peticao", "quiz"]
@@ -37,7 +37,7 @@
         "unidades": [
           {
             "id": "u1",
-            "rotulo": "Unidade 1",
+            "rotulo": "AV1",
             "titulo": "Resumo de estudo, petição comentada e quiz",
             "estado": "publicado",
             "abas": ["resumo", "peticao", "quiz"]
@@ -57,14 +57,14 @@
         "unidades": [
           {
             "id": "u1",
-            "rotulo": "Unidade 1",
+            "rotulo": "AV1",
             "titulo": "Resumo de estudo e quiz",
             "estado": "publicado",
             "abas": ["resumo", "quiz"]
           },
           {
             "id": "u3",
-            "rotulo": "Unidade 3",
+            "rotulo": "AV3",
             "titulo": "Infância, redes sociais e tecnologias digitais",
             "estado": "publicado",
             "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
@@ -84,14 +84,14 @@
         "unidades": [
           {
             "id": "u1",
-            "rotulo": "Unidade 1",
+            "rotulo": "AV1",
             "titulo": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
             "estado": "publicado",
             "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
           },
           {
             "id": "u3",
-            "rotulo": "Unidade 3",
+            "rotulo": "AV3",
             "titulo": "Filosofia Moderna e Contemporânea",
             "estado": "publicado",
             "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]

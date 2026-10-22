@@ -6,6 +6,7 @@ import {
   type DescricaoUnidade,
   type EntradasDoCurriculo
 } from '@/core/curriculo/montarCurriculo';
+import type { GrupoDeTopicos } from '@/core/curriculo/tipos';
 
 /**
  * Montagem do currículo a partir de descrições sintéticas (pasta a pasta, D1).
@@ -28,7 +29,6 @@ const RESTRITA: DescricaoCadeira = {
 };
 
 const UNIDADE_U1: DescricaoUnidade = {
-  rotulo: 'Unidade 1',
   titulo: 'Título u1',
   estado: 'publicado'
 };
@@ -143,7 +143,7 @@ describe('montarCurriculo: unidade, abas e atalho', () => {
     const unidade = periodo?.cadeiras.find((c) => c.id === 'cadeira-a')?.unidades[0];
     expect(unidade).toEqual({
       id: 'u1',
-      rotulo: 'Unidade 1',
+      rotulo: 'AV1',
       titulo: 'Título u1',
       estado: 'publicado',
       abas: ['resumo', 'quiz']
@@ -227,5 +227,94 @@ describe('montarCurriculo: erros explícitos de descrição inconsistente', () =
   it('reprova arquivo de unidade sem descrição de meta (meta.ts ausente em metas)', () => {
     expect(() => montarCurriculo(entradas({ metas: {} }))).toThrow(ErroDeConteudo);
     expect(() => montarCurriculo(entradas({ metas: {} }))).toThrow(/sem descrição de unidade/);
+  });
+});
+
+/**
+ * AV com tópicos agrupados (D7): cadeira.ts declara os grupos, e a pasta uN-grupo-topico
+ * é um tópico. Os erros cobrem os casos que o conteúdo não pode ter.
+ */
+const GRUPOS_U3: GrupoDeTopicos[] = [
+  { unidade: 'u3', id: 'livro', rotulo: 'Livro' },
+  { unidade: 'u3', id: 'material', rotulo: 'Material de estudo' }
+];
+const CAMINHOS_TOPICO = [
+  'p1/cadeira-b/u3-livro-textura/meta.ts',
+  'p1/cadeira-b/u3-livro-textura/resumo.ts'
+];
+const METAS_TOPICO = { 'p1/cadeira-b/u3-livro-textura/meta.ts': UNIDADE_U1 };
+
+function cadeiraBComGrupos(
+  caminhos: readonly string[],
+  metas: Readonly<Record<string, DescricaoUnidade>>,
+  grupos: GrupoDeTopicos[] | undefined
+) {
+  return montarCurriculo(
+    entradas({
+      caminhos,
+      metas,
+      cadeiras: { 'p1/cadeira-b/cadeira.ts': { ...CADEIRA_B, grupos } }
+    })
+  )[0]!.cadeiras[0]!;
+}
+
+describe('montarCurriculo: tópicos agrupados (AV com grupos)', () => {
+  it('o tópico do grupo declarado entra na cadeira com rótulo AV do número, e os grupos chegam à cadeira', () => {
+    const cadeira = cadeiraBComGrupos(CAMINHOS_TOPICO, METAS_TOPICO, GRUPOS_U3);
+    expect(cadeira.unidades.map((u) => u.id)).toEqual(['u3-livro-textura']);
+    expect(cadeira.unidades[0]?.rotulo).toBe('AV3');
+    expect(cadeira.grupos).toEqual(GRUPOS_U3);
+  });
+
+  it('ordena por número e, no mesmo número, pelo id', () => {
+    const caminhos = [
+      'p1/cadeira-b/u1/meta.ts',
+      'p1/cadeira-b/u1/resumo.ts',
+      'p1/cadeira-b/u3-livro-b/meta.ts',
+      'p1/cadeira-b/u3-livro-b/resumo.ts',
+      'p1/cadeira-b/u3-livro-a/meta.ts',
+      'p1/cadeira-b/u3-livro-a/resumo.ts'
+    ];
+    const metas = {
+      'p1/cadeira-b/u1/meta.ts': UNIDADE_U1,
+      'p1/cadeira-b/u3-livro-a/meta.ts': UNIDADE_U1,
+      'p1/cadeira-b/u3-livro-b/meta.ts': UNIDADE_U1
+    };
+    const cadeira = cadeiraBComGrupos(caminhos, metas, GRUPOS_U3);
+    expect(cadeira.unidades.map((u) => u.id)).toEqual(['u1', 'u3-livro-a', 'u3-livro-b']);
+  });
+
+  it('o rótulo é AV pelo número da pasta, mesmo que a unidade traga rotulo antigo', () => {
+    const caminhos = ['p1/cadeira-b/u2/meta.ts', 'p1/cadeira-b/u2/resumo.ts'];
+    const metas = {
+      'p1/cadeira-b/u2/meta.ts': { ...UNIDADE_U1, rotulo: 'Unidade 2' } as DescricaoUnidade
+    };
+    const cadeira = cadeiraBComGrupos(caminhos, metas, undefined);
+    expect(cadeira.unidades[0]?.rotulo).toBe('AV2');
+  });
+
+  it('reprova unidade u3 simples junto com grupo de tópicos da mesma AV', () => {
+    const caminhos = [...CAMINHOS_TOPICO, 'p1/cadeira-b/u3/meta.ts', 'p1/cadeira-b/u3/resumo.ts'];
+    const metas = { ...METAS_TOPICO, 'p1/cadeira-b/u3/meta.ts': UNIDADE_U1 };
+    expect(() => cadeiraBComGrupos(caminhos, metas, GRUPOS_U3)).toThrow(/u3.*junto com grupo/);
+  });
+
+  it('reprova tópico cuja AV não declara o grupo, nomeando o tópico', () => {
+    const caminhos = ['p1/cadeira-b/u3-revisao-x/meta.ts', 'p1/cadeira-b/u3-revisao-x/resumo.ts'];
+    const metas = { 'p1/cadeira-b/u3-revisao-x/meta.ts': UNIDADE_U1 };
+    expect(() => cadeiraBComGrupos(caminhos, metas, GRUPOS_U3)).toThrow(
+      /não declarado.*u3-revisao-x/
+    );
+  });
+
+  it('reprova id de grupo com hífen, nomeando o grupo', () => {
+    const grupos: GrupoDeTopicos[] = [{ unidade: 'u3', id: 'meu-livro', rotulo: 'Livro' }];
+    expect(() => cadeiraBComGrupos(CAMINHOS_TOPICO, METAS_TOPICO, grupos)).toThrow(/meu-livro/);
+  });
+
+  it('reprova qualquer unidade na vaga 2 (u2-*), que é do atalho', () => {
+    const caminhos = ['p1/cadeira-b/u2-livro-x/meta.ts', 'p1/cadeira-b/u2-livro-x/resumo.ts'];
+    const metas = { 'p1/cadeira-b/u2-livro-x/meta.ts': UNIDADE_U1 };
+    expect(() => cadeiraBComGrupos(caminhos, metas, GRUPOS_U3)).toThrow(/vaga 2 reservada/);
   });
 });

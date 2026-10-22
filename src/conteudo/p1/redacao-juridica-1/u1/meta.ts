@@ -7,7 +7,6 @@ import type { MetaUnidade } from '../../../tipos';
  * ver src/conteudo/p1/intr-direito/u1/meta.ts).
  */
 export const meta: MetaUnidade = {
-  rotulo: 'Unidade 1',
   estado: 'publicado',
   titulo: 'Resumo de estudo, petição comentada e quiz',
   subtitulo: 'Português e Redação Jurídica 1 · faculdade · 1º período',

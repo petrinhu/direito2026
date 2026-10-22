@@ -31,6 +31,42 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/texto",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/mapa",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/fichamento",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/quiz",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/redacao-juridica-1",
       "h1": "Português e Redação Jurídica 1",
       "nome": "Português e Redação Jurídica 1",
@@ -196,6 +232,42 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/texto",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/mapa",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/fichamento",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/intr-direito/u3-livro-textura-aberta/quiz",
+      "h1": "A textura aberta do direito",
+      "nome": "Introdução ao Direito: u3-livro-textura-aberta (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/redacao-juridica-1/u1",
       "h1": "Resumo de estudo, petição comentada e quiz",
       "nome": "Português e Redação Jurídica 1: u1 (resumo)",
@@ -321,6 +393,7 @@
     "/p/p1/intr-direito/u1/mapa",
     "/p/p1/intr-direito/u1/fichamento",
     "/p/p1/intr-direito/u1/mnemonicos",
+    "/p/p1/intr-direito/u3-livro-textura-aberta/peticao",
     "/p/p1/redacao-juridica-1/u1/texto",
     "/p/p1/redacao-juridica-1/u1/mapa",
     "/p/p1/redacao-juridica-1/u1/fichamento",

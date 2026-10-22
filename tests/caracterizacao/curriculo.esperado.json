@@ -21,6 +21,13 @@
             "titulo": "Resumo de estudo, petição comentada e quiz",
             "estado": "publicado",
             "abas": ["resumo", "peticao", "quiz"]
+          },
+          {
+            "id": "u3-livro-textura-aberta",
+            "rotulo": "AV3",
+            "titulo": "A textura aberta do direito",
+            "estado": "publicado",
+            "abas": ["resumo", "texto", "mapa", "fichamento", "mnemonicos", "quiz"]
           }
         ]
       },

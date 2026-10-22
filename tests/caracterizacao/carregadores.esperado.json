@@ -3,6 +3,7 @@
     "p1/filosofia-juridica/u1",
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
+    "p1/intr-direito/u3-livro-textura-aberta",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
     "p1/sociologia-juridica/u3"
@@ -11,6 +12,7 @@
     "p1/filosofia-juridica/u1",
     "p1/filosofia-juridica/u3",
     "p1/intr-direito/u1",
+    "p1/intr-direito/u3-livro-textura-aberta",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
     "p1/sociologia-juridica/u3"
@@ -38,6 +40,35 @@
       "peticaoSecoes": 6,
       "mapaFichamento": null,
       "mnemonicos": null
+    },
+    "p1/intr-direito/u3-livro-textura-aberta": {
+      "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo", "textoIntegral"],
+      "resumoBlocos": 10,
+      "quizPerguntas": 30,
+      "quizCategorias": [
+        "textura-comunicacao",
+        "textura-formalismo",
+        "textura-penumbra",
+        "textura-precedentes"
+      ],
+      "quizTipos": {
+        "multiplaEscolha": 30,
+        "verdadeiroOuFalso": 0
+      },
+      "quizIdsDoProfessor": [],
+      "quizIdsComMarca": [],
+      "quizIdsPorCategoria": {
+        "textura-comunicacao": [1, 2, 3, 4, 5, 6, 7, 8],
+        "textura-formalismo": [16, 17, 18, 19, 20, 21, 22, 23],
+        "textura-penumbra": [9, 10, 11, 12, 13, 14, 15],
+        "textura-precedentes": [24, 25, 26, 27, 28, 29, 30]
+      },
+      "peticaoSecoes": null,
+      "mapaFichamento": {
+        "eras": 4,
+        "pensadores": 1
+      },
+      "mnemonicos": 5
     },
     "p1/redacao-juridica-1/u1": {
       "propriedades": ["meta", "peticao", "quiz", "resumo"],

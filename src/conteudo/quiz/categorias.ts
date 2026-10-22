@@ -22,5 +22,9 @@ export const ROTULOS_CATEGORIA_QUIZ: RotulosCategoriaQuiz = {
   'infancia-midias': 'Infância e mídias',
   'riscos-crimes': 'Riscos e crimes',
   'mediacao-parental': 'Mediação parental',
-  'vinculo-familiar': 'Vínculo e responsabilidade'
+  'vinculo-familiar': 'Vínculo e responsabilidade',
+  'textura-comunicacao': 'Comunicação de padrões',
+  'textura-penumbra': 'Casos claros e penumbra',
+  'textura-formalismo': 'Formalismo e padrões variáveis',
+  'textura-precedentes': 'Regras fixas e precedentes'
 };

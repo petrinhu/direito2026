@@ -4,6 +4,7 @@ import { mount, type VueWrapper } from '@vue/test-utils';
 import MenuCurriculo from '@/ui/componentes/MenuCurriculo.vue';
 import { curriculo as curriculoReal } from '@/conteudo/curriculo';
 import type { Curriculo } from '@/core/curriculo/tipos';
+import { lerIdDeUnidade } from '@/core/curriculo/idDeUnidade';
 
 /**
  * Ordem do líder (20/10/2026): "A estrutura do menu lateral deve ser: Filosofia
@@ -256,15 +257,17 @@ describe('MenuCurriculo com o currículo real: o atalho está em todas as cadeir
       await abrirPeriodoECadeira(w, cadeiraId);
 
       const itens = itensDaCadeira(w, cadeiraId);
-      const posicaoDoAtalho = cadeira.unidades.findIndex((u) => u.id === atalho.apos) + 1;
+      // Tópicos de grupo (uN-grupo-topico) não são itens próprios: entram na AV (D7).
+      const simples = cadeira.unidades.filter((u) => lerIdDeUnidade(u.id)?.grupo === undefined);
+      const posicaoDoAtalho = simples.findIndex((u) => u.id === atalho.apos) + 1;
 
       // Cada AV com grupos declarados (cadeira.ts) entra como item próprio do menu (D7).
       const avs = new Set((cadeira.grupos ?? []).map((g) => g.unidade)).size;
-      expect(itens).toHaveLength(cadeira.unidades.length + 1 + avs);
+      expect(itens).toHaveLength(simples.length + 1 + avs);
       expect(itens[posicaoDoAtalho]).toBe(RotuloAtalho);
       const semAtalho = itens.filter((texto) => texto !== RotuloAtalho);
       // "Unidade 3 em breve" começa pelo rótulo da unidade: basta o prefixo.
-      cadeira.unidades.forEach((unidade, i) => {
+      simples.forEach((unidade, i) => {
         expect(semAtalho[i]?.startsWith(unidade.rotulo), unidade.id).toBe(true);
       });
     }

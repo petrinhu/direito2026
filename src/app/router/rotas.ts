@@ -1,4 +1,29 @@
 import type { RouteRecordRaw } from 'vue-router';
+import { ENDERECOS_MOVIDOS } from '@/app/curriculo/enderecosMovidos';
+
+/**
+ * Registros de redirecionamento de um endereço movido: o caminho exato e o que vem
+ * depois dele (aba), levados ao novo com a query e a âncora (hash). Ordem do líder
+ * de 25/10/2026: o endereço antigo não pode quebrar, nem o link da aba nem a âncora.
+ */
+function registrosDeMovido(antigo: string, novo: string): RouteRecordRaw[] {
+  const origem = `/p/${antigo}`;
+  const destino = `/p/${novo}`;
+  return [
+    {
+      path: origem,
+      redirect: (to) => ({ path: destino, query: to.query, hash: to.hash })
+    },
+    {
+      path: `${origem}/:resto(.*)`,
+      redirect: (to) => ({
+        path: `${destino}/${String(to.params.resto)}`,
+        query: to.query,
+        hash: to.hash
+      })
+    }
+  ];
+}
 
 /**
  * As rotas da seção 5 da arquitetura (e as três abas novas de Filosofia), separadas de `criarRouter` para
@@ -26,6 +51,9 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Cadeira.vue'),
     props: true
   },
+  // Antes da unidade: um endereço movido não pode cair na página de unidade nova ou
+  // num 404 (ordem do líder, 25/10/2026).
+  ...Object.entries(ENDERECOS_MOVIDOS).flatMap(([antigo, novo]) => registrosDeMovido(antigo, novo)),
   {
     path: '/p/:periodo/:cadeira/:unidade',
     name: 'unidade-resumo',

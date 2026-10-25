@@ -7,7 +7,8 @@
     "p1/intr-direito/u3-material-norma-interpretacao",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
-    "p1/sociologia-juridica/u3"
+    "p1/sociologia-juridica/u3-artigos-infancia-digital",
+    "p1/sociologia-juridica/u3-eca-digital"
   ],
   "chavesCarregadoresDispositivos": [
     "p1/filosofia-juridica/u1",
@@ -17,7 +18,7 @@
     "p1/intr-direito/u3-material-norma-interpretacao",
     "p1/redacao-juridica-1/u1",
     "p1/sociologia-juridica/u1",
-    "p1/sociologia-juridica/u3"
+    "p1/sociologia-juridica/u3-artigos-infancia-digital"
   ],
   "unidades": {
     "p1/intr-direito/u1": {
@@ -163,7 +164,7 @@
       "mapaFichamento": null,
       "mnemonicos": null
     },
-    "p1/sociologia-juridica/u3": {
+    "p1/sociologia-juridica/u3-artigos-infancia-digital": {
       "propriedades": ["mapaFichamento", "meta", "mnemonicos", "quiz", "resumo"],
       "resumoBlocos": 10,
       "quizPerguntas": 40,

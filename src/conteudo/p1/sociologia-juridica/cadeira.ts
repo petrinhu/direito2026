@@ -13,5 +13,11 @@ export const cadeira: DescricaoCadeira = {
     rotulo: 'Interdisciplinar',
     apos: 'u1',
     cadeiraId: 'interdisciplinar'
-  }
+  },
+  // AV3 com Artigos e ECA Digital, cada um item direto (ordem do líder, 25/10/2026: trocar
+  // "Resumo" por "Artigos" e acrescentar "ECA digital"). O texto integral vem primeiro por ORDEM_ABAS.
+  grupos: [
+    { unidade: 'u3', id: 'artigos', rotulo: 'Artigos', direto: true },
+    { unidade: 'u3', id: 'eca', rotulo: 'ECA Digital', direto: true }
+  ]
 };

@@ -77,11 +77,18 @@
             "abas": ["resumo", "quiz"]
           },
           {
-            "id": "u3",
+            "id": "u3-artigos-infancia-digital",
             "rotulo": "AV3",
             "titulo": "Infância, redes sociais e tecnologias digitais",
             "estado": "publicado",
             "abas": ["resumo", "mapa", "fichamento", "mnemonicos", "quiz"]
+          },
+          {
+            "id": "u3-eca-digital",
+            "rotulo": "AV3",
+            "titulo": "ECA Digital",
+            "estado": "em-breve",
+            "abas": []
           }
         ]
       },

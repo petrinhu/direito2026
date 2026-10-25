@@ -6,6 +6,7 @@ import {
   desmarcarBlocoLido,
   marcarBlocoLido
 } from '@/core/progresso/calculo';
+import { ENDERECOS_MOVIDOS } from '@/app/curriculo/enderecosMovidos';
 import type {
   ChaveUnidade,
   RegistroProgressoUnidade,
@@ -23,12 +24,32 @@ export interface StoreProgressoUnidade {
   contagem(idsBlocosExistentes: readonly string[]): { lidos: number; total: number };
 }
 
+/**
+ * Chave antiga de uma unidade movida (inverso de ENDERECOS_MOVIDOS), ou undefined.
+ * Ordem do líder de 25/10/2026: o progresso segue o endereço novo.
+ */
+function chaveAntiga(chave: ChaveUnidade): ChaveUnidade | undefined {
+  return Object.entries(ENDERECOS_MOVIDOS).find(([, nova]) => nova === chave)?.[0];
+}
+
+function lerRegistroInicial(
+  repositorio: RepositorioProgresso,
+  chave: ChaveUnidade
+): RegistroProgressoUnidade {
+  const antiga = chaveAntiga(chave);
+  return (
+    repositorio.ler(chave) ??
+    (antiga === undefined ? undefined : repositorio.ler(antiga)) ??
+    criarRegistroVazio(new Date().toISOString())
+  );
+}
+
 export function criarStoreProgresso(
   repositorio: RepositorioProgresso,
   chave: ChaveUnidade
 ): StoreProgressoUnidade {
   const registro = ref<RegistroProgressoUnidade>(
-    repositorio.ler(chave) ?? criarRegistroVazio(new Date().toISOString())
+    lerRegistroInicial(repositorio, chave)
   ) as Ref<RegistroProgressoUnidade>;
 
   function persistir(novo: RegistroProgressoUnidade): void {

@@ -116,6 +116,27 @@ npm run nova-unidade -- p1 intr-direito u3-material-<slug> "Título"
 
 O rótulo da AV é `AV3` (ou o número da pasta), nunca escrito à mão.
 
+## 1C. Item direto da AV (AV3 > Artigos)
+
+Um grupo pode ser direto: o menu não mostra o grupo como submenu, e sim o único tópico dele na própria AV, com o rótulo do grupo. A AV3 de Sociologia Jurídica usa isso com os grupos Artigos e ECA Digital. A declaração mora em `src/conteudo/p1/sociologia-juridica/cadeira.ts`, no campo `grupos`:
+
+```ts
+grupos: [
+  { unidade: 'u3', id: 'artigos', rotulo: 'Artigos', direto: true },
+  { unidade: 'u3', id: 'eca', rotulo: 'ECA Digital', direto: true }
+]
+```
+
+Regras que a montagem confere e o menu segue:
+
+- `direto: true` só em grupo com no máximo 1 tópico. Com 2 tópicos, a montagem reprova.
+- Grupo direto sem tópico aparece como "em breve", com o rótulo do grupo.
+- O rótulo do item é o do grupo (`Artigos`), não o do tópico. A aba Texto integral, quando existir, vem primeiro, na ordem fixa das abas.
+- A trilha mostra o item num degrau só: "Artigos da AV3".
+- Grupo sem `direto` continua com os três níveis (AV, grupo, tópico), como o Livro da Introdução.
+
+Quando a pasta de um item direto já publicado muda de nome, o endereço antigo tem de continuar funcionando. Registre a troca em `src/app/curriculo/enderecosMovidos.ts`, no formato `'p1/cadeira/antigo': 'p1/cadeira/novo'`. A rota redireciona mantendo a aba e a âncora, e o progresso guardado no endereço antigo passa a ser lido no novo.
+
 ## 1B. Texto integral (transcrição do OCR)
 
 O texto integral é a aba "Texto integral" de uma unidade. O corpo vem de um arquivo markdown do OCR, convertido por este comando:

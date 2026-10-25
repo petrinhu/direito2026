@@ -2,7 +2,7 @@
 
 # TODO: Caderno de Direito
 
-Atualizado em 2026-10-20. Repositório público: nenhum nome de pessoa, de instituição de ensino ou de caminho pessoal entra neste arquivo (portão `scripts/verificar-proibicoes.sh`).
+Atualizado em 2026-10-25. Repositório público: nenhum nome de pessoa, de instituição de ensino ou de caminho pessoal entra neste arquivo (portão `scripts/verificar-proibicoes.sh`).
 
 - Escopo: pendências de conteúdo e de acabamento do site depois da entrega da onda atual. Arquitetura e regras de cada item: `docs/arquitetura.md`.
 - Status usados nesta tabela: ⏳ Pendente e ⛔ Bloqueado. Vocabulário completo: skill `tab_pendencias`.
@@ -58,6 +58,7 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 
 - 2026-10-22: descoberta da F11: a página da cadeira (Cadeira.vue) ainda não agrupa a AV em seções; os grupos aparecem só no menu e na trilha. Entra depois que o material do professor chegar.
 - 2026-10-22: descoberta da F11: o texto integral fica fora da busca pelo teto do índice (281.212 de 307.200 bytes); busca de palavra que só aparece no texto integral não acha nada.
+- 2026-10-25: 🔍 Pendente verificação, PD-07: item direto da AV em Sociologia AV3 (Artigos e ECA Digital, este último em breve) e endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md, seção 1C.
 ## TABELA UNIFICADA
 
 | WSJF | ID | Onda | Grupo | Descrição Técnica | Prioridade | Pré-requisito | Dificuldade | Status | Estado Auditado |
@@ -67,5 +68,6 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 | - | PD-01 | W2 | Conteúdo | Levar a estrutura de abas de Filosofia u1 (Resumo, Mapa mental com markmap e lista acessível, Fichamento, Mnemônicos e Quiz) para Introdução ao Direito u1, Português e Redação Jurídica 1 u1 (mantém a Petição comentada) e Sociologia Jurídica u1. Só executar quando o líder pedir. Modelo em `docs/arquitetura.md`, seção sobre a estrutura de abas de Filosofia u1. | Média | aguardando aulas ou material dos professores | Alta | ⛔ Bloqueado | - |
 | - | PD-02 | W2 | Conteúdo | Filosofia Jurídica, 3a unidade, Bloco 3 (teorias contemporâneas da justiça): hoje é placeholder "Aguardando material do professor" em `src/conteudo/p1/filosofia-juridica/u3/resumo.ts`, com a fase correspondente em `mapaFichamento.ts`. Preencher quando o material chegar. | Média | aguardando aulas ou material dos professores | Média | ⛔ Bloqueado | - |
 | - | PD-03 | W2 | Conteúdo | Quiz de Filosofia Jurídica, 3a unidade: 20 perguntas hoje, em `src/conteudo/p1/filosofia-juridica/u3/quiz/`. Ampliar só se o líder pedir mais perguntas. | Baixa | Pedido do líder (ainda não feito) | Média | ⏳ Pendente | - |
-| - | PD-07 | W1 | Interface | Sociologia AV3: item direto Artigos e ECA Digital, endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md seção 1C | Média | - | Média | 🔄 Em andamento | - |
+| - | PD-07 | W1 | Interface | Sociologia AV3: item direto Artigos e ECA Digital, endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md seção 1C | Média | - | Média | 🔍 Pendente verificação | - |
+| - | PD-08 | W1 | Conteúdo | ECA Digital (u3-eca-digital): texto integral da lei, resumo, mapa, fichamento, mnemônicos, quiz de 40 | Média | - | Média | ⏳ Pendente | - |
 | - | PD-06 | W3 | Documentação | Criar a Wiki nativa do GitHub do repositório e uma documentação em `.md` para iniciante em computação, que explica o jargão sem assumir conhecimento prévio. Conteúdo derivado de `docs/`: linka, não duplica. Execução delegada aos agentes `technical-writer` e `ux-writer`, nunca inline. | Média | - | Média | ⏳ Pendente | - |

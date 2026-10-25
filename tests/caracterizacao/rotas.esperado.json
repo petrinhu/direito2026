@@ -169,6 +169,42 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/texto",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/mapa",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/quiz",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/filosofia-juridica",
       "h1": "Filosofia Jurídica",
       "nome": "Filosofia Jurídica",
@@ -388,6 +424,42 @@
       "tipo": "unidade"
     },
     {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/texto",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (texto)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (resumo)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/mapa",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (mapa)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (fichamento)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (mnemonicos)",
+      "tipo": "unidade"
+    },
+    {
+      "caminho": "/p/p1/sociologia-juridica/u3-eca-digital/quiz",
+      "h1": "ECA Digital",
+      "nome": "Sociologia Jurídica: u3-eca-digital (quiz)",
+      "tipo": "unidade"
+    },
+    {
       "caminho": "/p/p1/filosofia-juridica/u1",
       "h1": "Resumo, mapa mental, fichamento, mnemônicos e quiz",
       "nome": "Filosofia Jurídica: u1 (resumo)",
@@ -467,6 +539,7 @@
     "/p/p1/sociologia-juridica/u1/peticao",
     "/p/p1/sociologia-juridica/u3-artigos-infancia-digital/texto",
     "/p/p1/sociologia-juridica/u3-artigos-infancia-digital/peticao",
+    "/p/p1/sociologia-juridica/u3-eca-digital/peticao",
     "/p/p1/filosofia-juridica/u1/texto",
     "/p/p1/filosofia-juridica/u1/peticao",
     "/p/p1/filosofia-juridica/u3/texto",

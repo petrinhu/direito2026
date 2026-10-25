@@ -1,5 +1,5 @@
 {
-  "documentosEncontrados": 192,
+  "documentosEncontrados": 225,
   "documentos": [
     {
       "id": "p1/filosofia-juridica/u1#bloco-0",
@@ -768,6 +768,138 @@
     {
       "id": "p1/sociologia-juridica/u3-artigos-infancia-digital/quiz",
       "url": "/p/p1/sociologia-juridica/u3-artigos-infancia-digital/quiz"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-0",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-0"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-1",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-1"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-10",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-10"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-11",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-11"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-12",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-12"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-13",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-13"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-2",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-2"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-3",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-3"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-4",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-4"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-5",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-5"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-6",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-6"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-7",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-7"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-8",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-8"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital#bloco-9",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital#bloco-9"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-acesso-provavel",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-acesso-provavel"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-autoridade-administrativa",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-autoridade-administrativa"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-caixas-de-recompensa",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-caixas-de-recompensa"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-dever-de-prevencao",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-dever-de-prevencao"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-perfilamento",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-perfilamento"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-relatorios-de-transparencia",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-relatorios-de-transparencia"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-retirada-de-conteudo",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-retirada-de-conteudo"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-sancoes",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-sancoes"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-supervisao-parental",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-supervisao-parental"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-verificacao-de-idade",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-verificacao-de-idade"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-vigencia-da-lei",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-vigencia-da-lei"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-vinculo-com-responsavel",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/fichamento#ficha-vinculo-com-responsavel"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mapa",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mapa"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-cadeia-solidaria",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-cadeia-solidaria"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-idade-18-16",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-idade-18-16"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-notificacao-identificada",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-notificacao-identificada"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-sancoes-amsp",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-sancoes-amsp"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-verificacao-a-cada-acesso",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos#mnemonico-verificacao-a-cada-acesso"
+    },
+    {
+      "id": "p1/sociologia-juridica/u3-eca-digital/quiz",
+      "url": "/p/p1/sociologia-juridica/u3-eca-digital/quiz"
     }
   ]
 }

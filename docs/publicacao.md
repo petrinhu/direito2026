@@ -45,7 +45,7 @@ npm run publicar -- recurso --versao 1.0.0.0
 1. Recusa se a branch não for `main`, se houver mudança não commitada em arquivo rastreado (arquivo novo ainda não adicionado não bloqueia), se o tipo for inválido ou se a versão for inválida.
 2. Grava a versão nova em `package.json` e cria o commit `chore(release): vX.Y.Z.W`, só com esse arquivo.
 3. Cria a tag anotada `vX.Y.Z.W`.
-4. Prepara a cópia de trabalho `.worktrees/pub` no commit da tag e roda o `preci`, a mesma verificação do CI local. Se o `preci` falhar, o comando desfaz o commit e a tag que ele mesmo criou, e para. Nada vai ao servidor.
+4. Prepara a cópia de trabalho `.worktrees/pub` no commit da tag, apaga nela os `dispositivos.ts` que sobraram de uma geração anterior (só os ignorados pelo git, só dentro de `src/conteudo`, e as pastas que ficaram vazias por isso; o comando imprime quantos removeu), copia os `dispositivos.ts` atuais e roda o `preci`, a mesma verificação do CI local. Se o `preci` falhar, o comando desfaz o commit e a tag que ele mesmo criou, e para. Nada vai ao servidor.
 5. Publica o pacote `dist/` no servidor por rsync, em duas etapas. A primeira envia tudo menos `index.html`, `sw.js`, `404.html` e `manifest.webmanifest`, e faz a higiene descrita abaixo. A segunda envia esses quatro, sem apagar nada. Por último grava os manifestos (ver abaixo).
 6. Confere o ar: compara o md5 de cada arquivo do pacote com a resposta do endereço, confere `api/saude.php` (`{"ok":true}`), `api/conteudo.php` (401 sem sessão), a raiz do site principal (que não pode mudar) e roda `scripts/verificar-publicacao.sh`.
 7. Só com tudo verde, envia `main` e a tag ao GitHub e confirma os dois com `git ls-remote`.

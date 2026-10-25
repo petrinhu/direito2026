@@ -59,7 +59,7 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-22: descoberta da F11: a página da cadeira (Cadeira.vue) ainda não agrupa a AV em seções; os grupos aparecem só no menu e na trilha. Entra depois que o material do professor chegar.
 - 2026-10-22: descoberta da F11: o texto integral fica fora da busca pelo teto do índice (281.212 de 307.200 bytes); busca de palavra que só aparece no texto integral não acha nada.
 - 2026-10-25: ✅ Concluído (v1.3.0.0), PD-07: item direto da AV em Sociologia AV3 (Artigos e ECA Digital, este último em breve) e endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md, seção 1C.
-- 2026-10-25: scripts/publicar.sh copia os dispositivos.ts para a cópia de publicação mas não apaga os que sobraram de unidade renomeada; a pasta antiga sem meta.ts reprovou o preci (removida à mão na publicação da v1.3.0.0).
+- 2026-10-25: 🔍 Pendente verificação, scripts/publicar.sh copia os dispositivos.ts para a cópia de publicação mas não apaga os que sobraram de unidade renomeada; a pasta antiga sem meta.ts reprovou o preci (removida à mão na publicação da v1.3.0.0).
 - 2026-10-25: cartão flutuante "Faltam N dias" cobre o texto e as abas em 390 px com Leitura ampliada, mesmo minimizado (QA docs/qa-eca-digital.md, F1); líder decidiu publicar e consertar em rodada separada.
 ## TABELA UNIFICADA
 

@@ -31,6 +31,10 @@ PRECI_TMPDIR=/var/tmp/preci-pub
 WT="$RAIZ/.worktrees/pub"
 CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-$CONTEUDO_RESTRITO_PADRAO}"
 
+# Funções de cópia dos dispositivos.ts (biblioteca sem efeito ao ser carregada).
+# shellcheck source=scripts/apoio/dispositivos-publicacao.sh
+source "$RAIZ/scripts/apoio/dispositivos-publicacao.sh"
+
 # Higiene da produção, com uma geração de folga. Só apaga o que não está no
 # pacote atual, nem no manifesto publicado antes (que está no ar), e nunca fora
 # de assets/ e workbox-*.js sem --apagar-fora-de-assets. Teto por publicação:
@@ -154,7 +158,7 @@ publicar: plano (--seco, nada foi alterado)
   versão nova:                 $VERSAO_NOVA
   1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json)
   2. cria a tag anotada v$VERSAO_NOVA
-  3. prepara $WT no commit da tag e copia os dispositivos.ts gerados
+  3. prepara $WT no commit da tag, apaga os dispositivos.ts que sobraram de geração anterior e copia os atuais
   4. preci em $WT (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito)
   5. rsync em 2 etapas para $DESTINO_RSYNC
      etapa 1: tudo menos index.html, sw.js, 404.html, manifest.webmanifest; apaga no
@@ -239,12 +243,8 @@ preparar_worktree() {
 }
 
 copiar_dispositivos() {
-  local -a dispositivos=()
-  mapfile -d '' -t dispositivos < <(cd "$RAIZ" && find src/conteudo -name dispositivos.ts -print0)
-  [ "${#dispositivos[@]}" -gt 0 ] ||
-    recusar "nenhum dispositivos.ts gerado em src/conteudo na árvore principal"
-  (cd "$RAIZ" && cp --parents -- "${dispositivos[@]}" "$WT/")
-  echo "publicar: dispositivos.ts copiados: ${#dispositivos[@]}"
+  copiar_dispositivos_gerados "$RAIZ" "$WT" ||
+    recusar "não copiei os dispositivos.ts para $WT (motivo acima)"
 }
 
 rodar_preci() {

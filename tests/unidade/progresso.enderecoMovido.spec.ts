@@ -14,9 +14,7 @@ function registro(blocosLidos: string[]): RegistroProgressoUnidade {
   return { versao: 1, atualizadoEm: '2026-10-01T00:00:00.000Z', blocosLidos, ultimaAba: 'resumo' };
 }
 
-function repositorioCom(
-  dados: Record<string, RegistroProgressoUnidade>
-): RepositorioProgresso {
+function repositorioCom(dados: Record<string, RegistroProgressoUnidade>): RepositorioProgresso {
   const mapa = new Map(Object.entries(dados));
   return {
     ler: (chave: string) => mapa.get(chave),

@@ -205,7 +205,9 @@ const ID_DE_GRUPO = /^[a-z0-9]+$/;
 function topicosDoGrupo(grupo: GrupoDeTopicos, unidades: readonly UnidadeDescoberta[]): number {
   return unidades.filter((unidade) => {
     const id = lerIdDeUnidade(unidade.unidade);
-    return id !== undefined && id.numero === numeroDaUnidade(grupo.unidade) && id.grupo === grupo.id;
+    return (
+      id !== undefined && id.numero === numeroDaUnidade(grupo.unidade) && id.grupo === grupo.id
+    );
   }).length;
 }
 

@@ -201,6 +201,14 @@ function compararPorNumeroEId(a: UnidadeDescoberta, b: UnidadeDescoberta): numbe
 const VAGA_RESERVADA = 2;
 const ID_DE_GRUPO = /^[a-z0-9]+$/;
 
+/** Quantos tópicos da unidade o grupo tem: a regra do grupo direto (no máximo 1) conta por isto. */
+function topicosDoGrupo(grupo: GrupoDeTopicos, unidades: readonly UnidadeDescoberta[]): number {
+  return unidades.filter((unidade) => {
+    const id = lerIdDeUnidade(unidade.unidade);
+    return id !== undefined && id.numero === numeroDaUnidade(grupo.unidade) && id.grupo === grupo.id;
+  }).length;
+}
+
 /**
  * Regras dos tópicos agrupados (D7): a vaga 2 é reservada; id de grupo sem hífen;
  * uN simples não convive com grupo da mesma AV; todo tópico tem grupo declarado.
@@ -218,6 +226,11 @@ function checarTopicos(
     }
     if (numeroDaUnidade(grupo.unidade) === VAGA_RESERVADA) {
       throw new ErroDeConteudo(`vaga 2 reservada ao atalho, grupo em ${chave}: ${grupo.unidade}`);
+    }
+    if (grupo.direto === true && topicosDoGrupo(grupo, unidades) > 1) {
+      throw new ErroDeConteudo(
+        `grupo direto "${grupo.id}" da ${grupo.unidade} com mais de um tópico em ${chave}`
+      );
     }
   }
   const numerosComGrupo = new Set(grupos.map((g) => numeroDaUnidade(g.unidade)));

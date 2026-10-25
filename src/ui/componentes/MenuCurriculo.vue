@@ -231,51 +231,63 @@ provide(ESTADO_MENU, {
                       :id="`lista-av-${chaveAv(periodo.id, cadeira.id, item.chave)}`"
                       class="menu-curriculo__nivel-4 menu-curriculo__lista--guia"
                     >
-                      <li v-for="grupo in item.grupos" :key="grupo.id">
-                        <EstadoEmBreve v-if="grupo.topicos.length === 0" :rotulo="grupo.rotulo" />
-                        <template v-else>
-                          <button
-                            type="button"
-                            class="menu-curriculo__botao"
-                            :aria-expanded="
-                              estaAberto(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
-                                ? 'true'
-                                : 'false'
-                            "
-                            :aria-controls="`lista-g-${chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id)}`"
-                            @click="
-                              alternar(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
-                            "
-                            @keydown.esc="
-                              fechar(
-                                chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id),
-                                $event
-                              )
-                            "
-                          >
-                            <span class="menu-curriculo__seta" aria-hidden="true" />
-                            {{ grupo.rotulo }}
-                          </button>
-                          <ul
-                            v-show="
-                              estaAberto(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
-                            "
-                            :id="`lista-g-${chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id)}`"
-                            class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
-                          >
-                            <MenuUnidadeComAbas
-                              v-for="topico in grupo.topicos"
-                              :key="topico.id"
-                              :periodo-id="periodo.id"
-                              :cadeira-id="cadeira.id"
-                              :unidade="topico"
-                              :rotulo="topico.titulo"
-                              :caminho-atual="caminhoAtual"
-                              :nivel-abas="5"
-                            />
-                          </ul>
-                        </template>
-                      </li>
+                      <template v-for="grupo in item.grupos" :key="grupo.id">
+                        <!-- Grupo direto (ordem do líder, 25/10/2026): o tópico único vai à lista da AV, no lugar do grupo. -->
+                        <MenuUnidadeComAbas
+                          v-if="grupo.direto && grupo.topicos[0]"
+                          :periodo-id="periodo.id"
+                          :cadeira-id="cadeira.id"
+                          :unidade="grupo.topicos[0]"
+                          :rotulo="grupo.rotulo"
+                          :caminho-atual="caminhoAtual"
+                          :nivel-abas="5"
+                        />
+                        <li v-else>
+                          <EstadoEmBreve v-if="grupo.topicos.length === 0" :rotulo="grupo.rotulo" />
+                          <template v-else>
+                            <button
+                              type="button"
+                              class="menu-curriculo__botao"
+                              :aria-expanded="
+                                estaAberto(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
+                                  ? 'true'
+                                  : 'false'
+                              "
+                              :aria-controls="`lista-g-${chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id)}`"
+                              @click="
+                                alternar(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
+                              "
+                              @keydown.esc="
+                                fechar(
+                                  chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id),
+                                  $event
+                                )
+                              "
+                            >
+                              <span class="menu-curriculo__seta" aria-hidden="true" />
+                              {{ grupo.rotulo }}
+                            </button>
+                            <ul
+                              v-show="
+                                estaAberto(chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id))
+                              "
+                              :id="`lista-g-${chaveGrupo(periodo.id, cadeira.id, item.chave, grupo.id)}`"
+                              class="menu-curriculo__nivel-5 menu-curriculo__lista--guia"
+                            >
+                              <MenuUnidadeComAbas
+                                v-for="topico in grupo.topicos"
+                                :key="topico.id"
+                                :periodo-id="periodo.id"
+                                :cadeira-id="cadeira.id"
+                                :unidade="topico"
+                                :rotulo="topico.titulo"
+                                :caminho-atual="caminhoAtual"
+                                :nivel-abas="5"
+                              />
+                            </ul>
+                          </template>
+                        </li>
+                      </template>
                     </ul>
                   </li>
                   <template
@@ -688,6 +700,8 @@ provide(ESTADO_MENU, {
 
 .menu-curriculo__nivel-4 > li > .menu-curriculo__botao,
 .menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-aba,
+.menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-unidade,
+.menu-curriculo__nivel-4 > li > .menu-curriculo__linha .estado-em-breve,
 .menu-curriculo__nivel-4 > li > .estado-em-breve {
   font-size: var(--menu-tam-4);
 }

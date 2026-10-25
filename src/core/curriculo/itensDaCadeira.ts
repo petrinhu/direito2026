@@ -5,6 +5,8 @@ import type { Cadeira, ReferenciaUnidade } from './tipos';
 export interface GrupoNaAv {
   readonly id: string;
   readonly rotulo: string;
+  /** Grupo direto: o tópico único vira o item da AV (ver GrupoDeTopicos.direto). */
+  readonly direto: boolean;
   readonly topicos: readonly ReferenciaUnidade[];
 }
 
@@ -47,6 +49,7 @@ export function itensDaCadeira(cadeira: Cadeira): ItemDaCadeira[] {
       .map((grupo) => ({
         id: grupo.id,
         rotulo: grupo.rotulo,
+        direto: grupo.direto === true,
         topicos: cadeira.unidades.filter((unidade) => {
           const id = lerIdDeUnidade(unidade.id);
           return id?.numero === numero && id.grupo === grupo.id;

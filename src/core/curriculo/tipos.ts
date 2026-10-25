@@ -45,6 +45,8 @@ export interface GrupoDeTopicos {
   /** Id do grupo no nome da pasta uN-grupo-topico: só minúsculas e dígitos, sem hífen. */
   readonly id: string;
   readonly rotulo: string;
+  /** Grupo sem submenu: o único tópico dele aparece na AV no lugar do grupo (ordem do líder, 25/10/2026). */
+  readonly direto?: true;
 }
 
 export interface Cadeira {

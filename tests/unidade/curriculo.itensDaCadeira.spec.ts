@@ -40,8 +40,8 @@ describe('itensDaCadeira', () => {
         numero: 3,
         rotulo: 'AV3',
         grupos: [
-          { id: 'livro', rotulo: 'Livro', topicos: [textura] },
-          { id: 'material', rotulo: 'Material de estudo', topicos: [] }
+          { id: 'livro', rotulo: 'Livro', direto: false, topicos: [textura] },
+          { id: 'material', rotulo: 'Material de estudo', direto: false, topicos: [] }
         ]
       }
     ]);
@@ -77,5 +77,19 @@ describe('itensDaCadeira', () => {
     expect(itensDaCadeira(cadeira(undefined, [u1]))).toEqual([
       { tipo: 'unidade', chave: 'u1', unidade: u1 }
     ]);
+  });
+
+  it('grupo com direto: true chega com direto true; sem a marca, direto false', () => {
+    const itens = itensDaCadeira(
+      cadeira(
+        [
+          { unidade: 'u3', id: 'artigos', rotulo: 'Artigos', direto: true },
+          { unidade: 'u3', id: 'livro', rotulo: 'Livro' }
+        ],
+        [textura]
+      )
+    );
+    const av = itens[0];
+    expect(av?.tipo === 'av' ? av.grupos.map((g) => g.direto) : []).toEqual([true, false]);
   });
 });

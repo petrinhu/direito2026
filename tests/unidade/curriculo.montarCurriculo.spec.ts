@@ -317,4 +317,28 @@ describe('montarCurriculo: tópicos agrupados (AV com grupos)', () => {
     const metas = { 'p1/cadeira-b/u2-livro-x/meta.ts': UNIDADE_U1 };
     expect(() => cadeiraBComGrupos(caminhos, metas, GRUPOS_U3)).toThrow(/vaga 2 reservada/);
   });
+
+  it('grupo direto com 2 tópicos reprova com ErroDeConteudo, nomeando o grupo', () => {
+    const grupos: GrupoDeTopicos[] = [
+      { unidade: 'u3', id: 'livro', rotulo: 'Livro', direto: true }
+    ];
+    const caminhos = [
+      ...CAMINHOS_TOPICO,
+      'p1/cadeira-b/u3-livro-outro/meta.ts',
+      'p1/cadeira-b/u3-livro-outro/resumo.ts'
+    ];
+    const metas = { ...METAS_TOPICO, 'p1/cadeira-b/u3-livro-outro/meta.ts': UNIDADE_U1 };
+    expect(() => cadeiraBComGrupos(caminhos, metas, grupos)).toThrow(ErroDeConteudo);
+    expect(() => cadeiraBComGrupos(caminhos, metas, grupos)).toThrow(/direto.*livro/);
+  });
+
+  it('grupo direto com 1 tópico passa, e com 0 também (em breve)', () => {
+    const grupos: GrupoDeTopicos[] = [
+      { unidade: 'u3', id: 'livro', rotulo: 'Livro', direto: true }
+    ];
+    expect(() => cadeiraBComGrupos(CAMINHOS_TOPICO, METAS_TOPICO, grupos)).not.toThrow();
+    const caminhoU1 = ['p1/cadeira-b/u1/meta.ts', 'p1/cadeira-b/u1/resumo.ts'];
+    const metaU1 = { 'p1/cadeira-b/u1/meta.ts': UNIDADE_U1 };
+    expect(() => cadeiraBComGrupos(caminhoU1, metaU1, grupos)).not.toThrow();
+  });
 });

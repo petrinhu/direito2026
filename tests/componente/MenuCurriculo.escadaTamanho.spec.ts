@@ -137,3 +137,16 @@ describe('MenuCurriculo, escada de tamanho decrescente por nível', () => {
     }
   });
 });
+
+/**
+ * Item direto da AV (ordem do líder, 25/10/2026): o rótulo do grupo e o "em breve"
+ * ficam na lista da AV, que é o nível 4. Leem --menu-tam-4, como os demais itens dele.
+ */
+describe('MenuCurriculo: item direto da AV segue a escada do nível 4', () => {
+  it.each([
+    '.menu-curriculo__nivel-4 > li > .menu-curriculo__linha .menu-curriculo__link-unidade',
+    '.menu-curriculo__nivel-4 > li > .menu-curriculo__linha .estado-em-breve'
+  ])('%s usa --menu-tam-4', (trecho) => {
+    expect(fontSizeDe(trecho)).toBe('var(--menu-tam-4)');
+  });
+});

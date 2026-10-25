@@ -157,3 +157,50 @@ describe('MenuCurriculo: trocar de página não recolhe o ramo atual', () => {
     expect(aberto(wrapper, SETA_TOPICO), 'tópico abre').toBe(true);
   });
 });
+
+/**
+ * Item direto da AV (ordem do líder, 25/10/2026): abrir a página do tópico único de
+ * um grupo direto abre a AV e as abas do tópico, sem grupo intermediário.
+ */
+describe('MenuCurriculo: item direto da AV fica aberto na página atual', () => {
+  const CURRICULO_DIRETO: Curriculo = [
+    {
+      id: 'p1',
+      numero: 1,
+      rotulo: '1º período',
+      cadeiras: [
+        {
+          id: 'cadeira',
+          nome: 'Cadeira',
+          estado: 'publicado',
+          grupos: [{ unidade: 'u3', id: 'artigos', rotulo: 'Artigos', direto: true }],
+          unidades: [
+            {
+              id: 'u3-artigos-infancia',
+              rotulo: 'AV3',
+              titulo: 'Título do artigo',
+              estado: 'publicado',
+              abas: ['texto', 'resumo', 'quiz'],
+              carregar: async () => conteudo
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
+  it('ao abrir a URL do item direto, período, cadeira, AV3 e as abas do tópico abrem sozinhos', async () => {
+    const wrapper = mount(MenuCurriculo, {
+      props: { curriculo: CURRICULO_DIRETO, caminhoAtual: 'p/p1/cadeira/u3-artigos-infancia/texto' }
+    });
+    await flushPromises();
+    expect(aberto(wrapper, SETA_PERIODO), 'período').toBe(true);
+    expect(aberto(wrapper, SETA_CADEIRA), 'cadeira').toBe(true);
+    expect(botaoComTexto(wrapper, 'AV3').attributes('aria-expanded'), 'AV3').toBe('true');
+    expect(
+      aberto(wrapper, 'button[aria-controls="lista-u-p1/cadeira/u3-artigos-infancia"]'),
+      'abas do item direto'
+    ).toBe(true);
+    expect(linkComTexto(wrapper, 'Texto integral').attributes('aria-current')).toBe('page');
+  });
+});

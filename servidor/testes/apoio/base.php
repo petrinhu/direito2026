@@ -13,6 +13,18 @@ final class Registro
 {
     /** @var list<array{nome:string, corpo:callable, servidor:bool}> */
     public static array $testes = [];
+
+    /** @var list<string> pastas que dirTemporario() criou; apagadas ao fim do teste (Ambiente::limparTudo) */
+    public static array $temporarios = [];
+
+    /** Apaga, por caminho exato registrado, só as pastas que dirTemporario() criou (nunca glob). */
+    public static function limparTemporarios(): void
+    {
+        foreach (self::$temporarios as $dir) {
+            apagarArvore($dir);
+        }
+        self::$temporarios = [];
+    }
 }
 
 function teste(string $nome, callable $corpo, bool $servidor = true): void
@@ -520,6 +532,7 @@ final class Ambiente
             $a->parar();
         }
         self::$vivos = [];
+        Registro::limparTemporarios();
     }
 }
 

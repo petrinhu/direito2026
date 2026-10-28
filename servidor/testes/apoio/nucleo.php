@@ -13,9 +13,15 @@ foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'dispositi
     require_once RAIZ_REPO . "/public/api/nucleo/$modulo.php";
 }
 
+/**
+ * Pasta temporária do teste, sob TMPDIR com o prefixo d26-testes-. Fica registrada
+ * em Registro::$temporarios e é apagada ao fim do teste (Ambiente::limparTudo),
+ * pelo caminho exato que ela mesma criou.
+ */
 function dirTemporario(): string
 {
     $dir = rtrim(getenv('TMPDIR') ?: '/var/tmp', '/') . '/d26-testes-' . bin2hex(random_bytes(6));
     mkdir($dir, 0700, true);
+    Registro::$temporarios[] = $dir;
     return $dir;
 }

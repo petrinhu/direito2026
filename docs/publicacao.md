@@ -204,3 +204,211 @@ O CLI exige que a conta exista (login com maiúsculas e minúsculas exatas), gra
 - Ordem fixa de travas no código: `tentativas.json` antes de `usuarios.json`, nunca o inverso.
 
 **Testes antes de publicar:** `php servidor/testes/rodar.php` (suíte PHP, sem phpunit; sobe `php -S` local contra `servidor/dev/roteador.php`). No servidor, `php -S` sobe mas não aceita conexão em 127.0.0.1, então lá só roda a parte sem servidor: `php servidor/testes/rodar.php --sem-servidor` (copiando `public/api` e `servidor` para uma pasta temporária fora de `public_html`, e apagando-a depois).
+
+## Área do Júri: instalação (servidor)
+
+Esta seção instala a conta, o acervo de imagens e o conteúdo da área do Júri. O código (`public/api/juri/`) já vai no pacote publicado, junto com o resto do site. Os dados não vão no pacote: são instalados à mão, uma vez. O procedimento de "esqueci a senha" está na seção seguinte.
+
+**Antes de começar.** Esta instalação muda produção. Ela cria a conta e a chave de cifragem, e as duas são difíceis de desfazer. Antes de rodar o passo 4, siga o roteiro de deploy irreversível (sete fases, com checklist anotado como `[PASSOU]`, `[FALHOU]` ou `[BLOQUEADO]`). Ele fica fora deste repositório. Este guia diz só os comandos. A decisão de ir ao ar é do líder.
+
+**Marcadores.** Nos comandos abaixo, o que está entre `<` e `>` é um valor seu. Nenhum valor real está escrito aqui. O alias `hostinger` é o nome SSH configurado na sua máquina, como nas outras seções deste documento.
+
+| Marcador | O que é |
+|---|---|
+| `<dominio>` | o domínio do site, como aparece na barra de endereço |
+| `<pasta-do-site>` | a pasta dentro de `public_html` onde o pacote foi publicado; dentro dela fica `api/nucleo` |
+| `<raiz-do-repositorio>` | a pasta onde está o clone deste repositório na sua máquina |
+| `<pasta-originais>` | a pasta com as fotos originais, fora do repositório |
+| `<pasta-saida>` | pasta nova, fora do repositório, onde a ferramenta grava o acervo |
+| `<caminho-do-juri.json>` | o arquivo de conteúdo da área, fora do repositório (ver `docs/como-adicionar-conteudo.md`, seção 11) |
+| `<senha-provisoria>` | a senha de 20 caracteres que a ferramenta mostra uma vez |
+
+**Requisitos na sua máquina.**
+- Clone deste repositório na branch `main`, com as dependências do projeto instaladas.
+- Node.js 22 ou mais novo.
+- `exiftool` no PATH. Sem ele, a ferramenta para com a mensagem `exiftool não encontrado no PATH`. A ferramenta não instala nada; o pacote é do sistema.
+- Pasta de originais fora do repositório, com só imagens JPEG, PNG ou WebP. Se houver PDF, pasta ou atalho, a ferramenta recusa a rodada inteira, sem dizer o nome do arquivo.
+- Acesso SSH ao servidor já configurado.
+
+**Passo 1: gerar o acervo cifrado (na sua máquina).**
+
+```
+cd <raiz-do-repositorio>
+node --import tsx scripts/juri/acervo.ts iniciar --originais <pasta-originais> --saida <pasta-saida>
+```
+
+- A pasta de saída não pode existir, ou precisa estar vazia. A pasta pai precisa existir.
+- A ferramenta mostra uma linha, a senha provisória. Guarde essa linha para entregar ao administrador. Ela não aparece de novo. Se for perdida antes da instalação, rode o passo de novo com outra pasta de saída: isso gera outra senha e outro acervo.
+- O `ids.tsv` é criado, ou ganha linhas novas, dentro da pasta de originais. Ele guarda os ids das imagens e é o que permite refazer o acervo depois. Não apague esse arquivo.
+
+**Passo 2: conferir antes de enviar (na sua máquina).**
+
+Desligue o histórico do shell durante a chamada. A senha vai na linha de comando.
+
+```
+set +o history
+node --import tsx scripts/juri/acervo.ts conferir --saida <pasta-saida> --senha <senha-provisoria>; echo "codigo=$?"
+set -o history
+```
+
+Resultado esperado: uma linha `conferido: N imagens decifram com a senha, sem etiqueta de metadado` e `codigo=0`. Se aparecer outro código, não envie nada. Refaça o passo 1.
+
+**Passo 3: preparar a pasta temporária no servidor e enviar o instalador e a credencial.**
+
+```
+ssh hostinger 'mkdir -m 700 $HOME/juri-cli-tmp'
+scp <raiz-do-repositorio>/servidor/cli/juri-instalar.php hostinger:juri-cli-tmp/
+scp <pasta-saida>/credencial-admin.json hostinger:juri-cli-tmp/
+ssh hostinger 'chmod 600 $HOME/juri-cli-tmp/credencial-admin.json'
+```
+
+A credencial vale como a senha provisória até o primeiro acesso. Por isso ela sai do servidor logo depois do passo 4.
+
+**Passo 4: rodar o instalador no servidor.**
+
+```
+ssh hostinger 'D26_NUCLEO=$HOME/domains/<dominio>/public_html/<pasta-do-site>/api/nucleo php $HOME/juri-cli-tmp/juri-instalar.php $HOME/domains/<dominio>/juri2026_privado $HOME/juri-cli-tmp/credencial-admin.json'
+```
+
+Resultado esperado: `Conta da Júri instalada: admin (deve trocar a senha no primeiro acesso)`.
+
+- O caminho do diretório privado precisa terminar em `juri2026_privado` e ficar ao lado de `public_html`, fora do alcance do site. É aí que o site procura: a partir da pasta do código, ele sobe quatro níveis e acrescenta esse nome. Se o nome estiver errado, o instalador recusa e não grava nada.
+- O instalador cria a pasta privada e as subpastas com permissão 700, e os arquivos de controle com 600.
+- Se já existir `usuarios.json`, o instalador recusa. Trocar a conta existente só com a opção `--substituir`, no procedimento de "esqueci a senha".
+
+**Passo 5: enviar acervo, imagens e conteúdo.**
+
+Envie depois do passo 4, porque o instalador é quem cria as pastas com a permissão certa.
+
+```
+scp <pasta-saida>/acervo.json hostinger:domains/<dominio>/juri2026_privado/
+scp <pasta-saida>/imagens/*.juri hostinger:domains/<dominio>/juri2026_privado/imagens/
+scp <caminho-do-juri.json> hostinger:domains/<dominio>/juri2026_privado/conteudo/juri.json
+ssh hostinger 'cd $HOME/domains/<dominio>/juri2026_privado && chmod 600 acervo.json imagens/*.juri conteudo/juri.json'
+```
+
+Confira as permissões:
+
+```
+ssh hostinger 'stat -c "%a %n" $HOME/domains/<dominio>/juri2026_privado $HOME/domains/<dominio>/juri2026_privado/imagens $HOME/domains/<dominio>/juri2026_privado/conteudo $HOME/domains/<dominio>/juri2026_privado/acervo.json $HOME/domains/<dominio>/juri2026_privado/conteudo/juri.json'
+```
+
+Resultado esperado: `700` nas três pastas e `600` nos três arquivos. Se algum número for diferente, corrija com `chmod` antes de seguir.
+
+**Passo 6: apagar as cópias temporárias do servidor.**
+
+Liste antes de apagar. Depois apague pelo caminho exato. Não use curinga.
+
+```
+ssh hostinger 'ls -l $HOME/juri-cli-tmp'
+ssh hostinger 'rm -f $HOME/juri-cli-tmp/credencial-admin.json $HOME/juri-cli-tmp/juri-instalar.php && rmdir $HOME/juri-cli-tmp'
+```
+
+O `rmdir` só remove a pasta se ela estiver vazia. Se ele falhar, sobrou algo lá: leia o `ls` e apague o que for seu.
+
+**Passo 7: apagar a credencial da sua máquina.**
+
+Confira o caminho antes de apagar:
+
+```
+ls -l <pasta-saida>/credencial-admin.json
+rm -f <pasta-saida>/credencial-admin.json
+```
+
+O restante da pasta de saída (`acervo.json`, `imagens/`, `conferencia.tsv`) pode ficar até o passo 8 passar. Depois, apague a pasta inteira pelo caminho exato, com `ls` antes. Nunca apague a pasta de originais nem o `ids.tsv`.
+
+**Passo 8: conferir o ar.**
+
+```
+curl -s -o /dev/null -w '%{http_code}\n' https://<dominio>/api/juri/conteudo.php
+curl -s -o /dev/null -w '%{http_code}\n' "https://<dominio>/api/juri/imagem.php?id=00000000000000000000000000000000"
+curl -sI https://<dominio>/api/juri/conteudo.php | grep -i '^cache-control'
+```
+
+Resultado esperado: `401`, `401` e `Cache-Control: no-store`. O 401 vem antes de qualquer checagem de conteúdo ou de id.
+
+**Login.** Abra `https://<dominio>/p/p1/juri-simulado` no navegador. Entre com o usuário `admin` e a senha provisória. A área pede a troca de senha antes de liberar qualquer conteúdo. A senha nova tem 15 caracteres ou mais, sem regra de tipo de caractere.
+
+Enquanto a cadeira estiver marcada como `em-breve` no código, a página mostra só a entrada. O conteúdo aparece depois que a cadeira for publicada, pelo mesmo roteiro de deploy irreversível.
+
+## Área do Júri: esqueci a senha
+
+Não há chave de recuperação, por decisão do líder. Se a senha do administrador for esquecida, o acervo é cifrado de novo com outra chave, a partir dos originais. Os ids das imagens são reusados, por isso o `juri.json` não muda.
+
+**O que precisa existir:** a pasta de originais e o arquivo `ids.tsv` dentro dela. Guarde os dois em pelo menos mais um lugar, fora do repositório. Sem eles, veja o último trecho desta seção.
+
+**Janela sem imagens.** Entre o passo 4 e o passo 5 abaixo, a conta antiga já não entra e as imagens antigas não abrem com a conta nova. Esse intervalo dura o tempo de dois comandos. Prepare o passo 3 inteiro antes de começar o passo 4.
+
+**Passo 1: gerar o acervo novo (na sua máquina).** Use o mesmo `--originais` e uma pasta de saída nova, que ainda não exista.
+
+```
+cd <raiz-do-repositorio>
+node --import tsx scripts/juri/acervo.ts iniciar --originais <pasta-originais> --saida <pasta-saida-nova>
+```
+
+Anote a senha provisória. Ela vale até o primeiro acesso.
+
+**Passo 2: conferir (na sua máquina).** Use o passo 2 da instalação, trocando `<pasta-saida>` por `<pasta-saida-nova>`. Só siga com `codigo=0`.
+
+**Passo 3: enviar para a área de troca e preparar a credencial.** Escolha `<data>` no formato `AAAA-MM-DD`.
+
+```
+ssh hostinger 'mkdir -m 700 $HOME/domains/<dominio>/juri2026_privado/troca-<data> $HOME/domains/<dominio>/juri2026_privado/troca-<data>/imagens'
+scp <pasta-saida-nova>/acervo.json hostinger:domains/<dominio>/juri2026_privado/troca-<data>/
+scp <pasta-saida-nova>/imagens/*.juri hostinger:domains/<dominio>/juri2026_privado/troca-<data>/imagens/
+ssh hostinger 'chmod 600 $HOME/domains/<dominio>/juri2026_privado/troca-<data>/acervo.json $HOME/domains/<dominio>/juri2026_privado/troca-<data>/imagens/*.juri'
+ssh hostinger 'mkdir -m 700 $HOME/juri-cli-tmp'
+scp <raiz-do-repositorio>/servidor/cli/juri-instalar.php hostinger:juri-cli-tmp/
+scp <pasta-saida-nova>/credencial-admin.json hostinger:juri-cli-tmp/
+ssh hostinger 'chmod 600 $HOME/juri-cli-tmp/credencial-admin.json'
+```
+
+A pasta `troca-<data>` fica dentro do privado, e não em outro lugar do servidor, para que o `mv` do passo 5 seja uma troca dentro do mesmo sistema de arquivos.
+
+**Passo 4: trocar a conta.** Rode logo depois do passo 3.
+
+```
+ssh hostinger 'D26_NUCLEO=$HOME/domains/<dominio>/public_html/<pasta-do-site>/api/nucleo php $HOME/juri-cli-tmp/juri-instalar.php $HOME/domains/<dominio>/juri2026_privado $HOME/juri-cli-tmp/credencial-admin.json --substituir'
+```
+
+Resultado esperado: `Conta da Júri instalada: admin (deve trocar a senha no primeiro acesso)`.
+
+- Antes de gravar, o instalador copia o `usuarios.json` antigo para `usuarios.json.bak-<data-e-hora>`, em UTC, com permissão 600. Essa cópia guarda a conta antiga. Veja o passo 7.
+- O instalador só troca o arquivo se ele for mesmo o da Júri. Se não for, recusa e não muda nada.
+
+**Passo 5: trocar o acervo e as imagens.** Rode logo depois do passo 4.
+
+```
+ssh hostinger 'cd $HOME/domains/<dominio>/juri2026_privado && mv -f troca-<data>/acervo.json acervo.json && mv -f troca-<data>/imagens/*.juri imagens/ && rmdir troca-<data>/imagens troca-<data>'
+```
+
+O `rmdir` só funciona se a pasta de troca estiver vazia. Ele é a trava de que nada ficou para trás.
+
+**Passo 6: conferir.**
+
+- Confira se `imagens/` tem o mesmo número de arquivos que o índice do acervo:
+
+```
+ssh hostinger 'ls $HOME/domains/<dominio>/juri2026_privado/imagens | wc -l'
+python3 -c "import json,sys; print(len(json.load(open(sys.argv[1]))['indice']))" <pasta-saida-nova>/acervo.json
+```
+
+Os dois números devem ser iguais. Se não forem, sobrou foto de uma troca anterior, ou faltou alguma. Liste com `ls`, decida com calma e apague o que sobrou pelo caminho exato.
+
+- Entre com a senha provisória nova em `https://<dominio>/p/p1/juri-simulado`, troque a senha e abra cada imagem. Todas precisam abrir. Se alguma não abrir, não apague nada. Compare o hash de cada `.juri` do servidor com o da pasta de saída nova, com `md5sum` dos dois lados. Se algum hash não bater, a troca do passo 5 não entrou inteira. Envie de novo só o arquivo que não bate, pelo caminho exato, e confira o hash outra vez.
+
+**Passo 7: apagar o que sobrou.** Só depois do passo 6.
+
+```
+ssh hostinger 'ls -l $HOME/domains/<dominio>/juri2026_privado/usuarios.json.bak-*'
+ssh hostinger 'rm -f $HOME/domains/<dominio>/juri2026_privado/usuarios.json.bak-<data-e-hora-exatos>'
+ssh hostinger 'rm -f $HOME/juri-cli-tmp/credencial-admin.json $HOME/juri-cli-tmp/juri-instalar.php && rmdir $HOME/juri-cli-tmp'
+rm -f <pasta-saida-nova>/credencial-admin.json
+```
+
+- O `usuarios.json.bak-*` guarda a conta antiga, com a senha esquecida. Ele não serve para mais nada depois que a conta nova entrar. Apague pelo nome exato que o `ls` mostrar. Não use curinga no `rm`.
+- Depois de apagar a credencial local, a pasta `<pasta-saida-nova>` pode ser apagada pelo caminho exato, com `ls` antes. A pasta de originais e o `ids.tsv` ficam.
+
+**Se os originais sumirem.** Sem a pasta de originais e o `ids.tsv`, os ids não podem ser reusados. Então o acervo é refeito a partir de novas cópias das imagens, os ids mudam, e o `juri.json` precisa ser refeito com os ids novos (ver `docs/como-adicionar-conteudo.md`, seção 11). Esse é o caso mais caro. Por isso a pasta de originais e o `ids.tsv` devem ter cópia de segurança.
+
+**Cópias temporárias que sobram.** A ferramenta cria uma cópia limpa de cada imagem em pasta temporária com permissão 700, dentro de `TMPDIR` ou de `/var/tmp`, com prefixo `juri-acervo-`. A pasta é apagada quando a ferramenta termina normalmente. Se o processo for morto com `kill -9`, a pasta pode ficar, com as imagens em claro (já sem metadados). Depois de uma saída anormal, liste as pastas com esse prefixo, confira o nome com `ls` e apague a que for sua, pelo caminho exato.

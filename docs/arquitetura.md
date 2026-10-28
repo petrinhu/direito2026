@@ -1427,3 +1427,64 @@ O resumo e o quiz usam `v-html` (os mesmos componentes das outras cadeiras). A r
 ### Identidade, slides e modo adaptado
 
 Os tokens do site são remapeados **só** dentro de `.area-restrita` (fundo `#0d1118`, ouro, creme, azul neon e cores de apoio), então os componentes reaproveitados herdam a identidade sem mexer no resto do site. **Sem modo adaptado nesta área** (ordem do líder, 05/10/2026: "sem modo adaptado para a pagina do interdisciplinar"): `App.vue` suspende o modo nas rotas da cadeira restrita (`store.suspender`, decidido por `caminhoEmAreaRestrita` sobre o currículo), o atributo `data-modo-adaptado` sai do `<html>` e o botão "Leitura ampliada" não aparece; a preferência salva não é apagada e o resto do site volta a respeitá-la ao sair. Ficam o contraste medido, o foco visível, o teclado, os nomes acessíveis e o corte de animação por `prefers-reduced-motion`. O markmap lê as cores do próprio quadro, não da raiz. Os slides são um componente Vue com CSS nativo (container queries, gradientes em camadas, `Transition` desligável), teclado (setas, espaço, PageUp, PageDown, Home, End, N para notas, F para tela cheia, Esc sai da tela cheia por CSS), arrastar no celular, tela cheia (Fullscreen API com fallback por CSS), notas do apresentador, cronômetro opcional de 10 minutos (sem som, `role="timer"` sem `aria-live` por segundo, avisa uma vez ao zerar), impressão por botão ("Imprimir com notas" ou sem): uma página A4 paisagem por slide, slide 16:9 e notas abaixo, montadas só durante a impressão e levadas ao `<body>` para o CSS de impressão esconder o resto do site, e anúncio por região `aria-live`; sem som nem mídia. O slide mora em `SlideConteudo.vue`, reaproveitado na tela e na impressão. Janela de apresentador separada não foi feita (pendência). Pesquisa (L-22): reveal.js e similares trazem runtime e temas próprios que brigam com os tokens e com o modo adaptado, e `scroll-snap` sozinho não tem teclado; por isso ficou nativo, sem dependência nova.
+
+## Área do Júri (28/10/2026)
+
+Quem lê: quem mantém o código da área. Para instalar e operar, veja `docs/publicacao.md`, seção "Área do Júri (servidor)". Para montar o conteúdo, veja `docs/como-adicionar-conteudo.md`, seção 11.
+
+Esta seção só descreve o que muda em relação à área do Interdisciplinar, descrita em "Área restrita (05/10/2026)". O resto é igual.
+
+### O que é diferente
+
+- **Um único usuário, o administrador.** Não há tela nem API para criar, listar ou redefinir contas. A conta nasce pela ferramenta local e pelo instalador no servidor. Depois disso, só muda pela troca de senha da própria conta.
+- **Sem chave de recuperação.** Se a senha for esquecida, o acervo de imagens é refeito a partir dos originais. O procedimento está em `docs/publicacao.md`.
+- **A senha não sai do navegador.** O servidor nunca recebe a senha. Ele recebe uma prova derivada dela, chamada AUTH. Veja o fluxo abaixo.
+- **Imagens cifradas.** As fotos ficam cifradas no servidor e só são decifradas no navegador.
+- **Diretório privado próprio.** A área usa `juri2026_privado`, que fica ao lado de `direito2026_privado` e fora do alcance do site. Sessões, tentativas de login e segredos ficam separados dos do Interdisciplinar. O nome vem do perfil de área em `public/api/nucleo/config.php` (`d26_perfil_area`).
+- **Cookies com nome próprio.** `__Host-juri` (sessão), `__Host-juripre` (pré-sessão de CSRF) e `__Host-juridisp`.
+- **Mesmo núcleo PHP.** Os endpoints ficam em `public/api/juri/`. Cada um define `D26_AREA` como `juri` antes de carregar `public/api/nucleo/`. Sem essa definição, o núcleo se comporta como o do Interdisciplinar.
+
+### Fluxo de login sem senha no servidor
+
+1. `POST /api/juri/sal.php` com o usuário. O servidor devolve o salt de 16 bytes e o número de iterações (600000). Se a conta não existe, devolve um salt falso do mesmo formato, para não revelar quem tem conta.
+2. O navegador deriva uma chave mestra com PBKDF2-HMAC-SHA256 (600 mil iterações). Dela, com HKDF-SHA256 e rótulos fixos, saem duas chaves: o AUTH, que vai ao servidor, e a KEK, que nunca sai do navegador.
+3. `POST /api/juri/entrar.php` com `usuario` e `auth`. O servidor guarda só o Argon2id do AUTH e confere. Se estiver certo, devolve o embrulho da CEK e abre a sessão. Se o corpo trouxer o campo `senha`, responde 400.
+4. O navegador desembrulha a CEK com a KEK (AES-256-GCM). A CEK é a chave que decifra as imagens. Ela fica só na memória da aba.
+5. Ao recarregar a página, a CEK some. Para recuperá-la, o navegador pede `POST /api/juri/destravar.php` com o AUTH de novo, e o administrador digita a senha outra vez. O endpoint usa o mesmo limite de tentativas do login.
+
+A troca de senha (`trocar-senha.php`) grava salt, verificador e embrulho numa única mutação, sob trava. Assim não existe estado em que a senha nova exista sem o embrulho novo.
+
+### Cifra das imagens
+
+- A ferramenta local cifra cada imagem uma vez, com a CEK e AES-256-GCM. O arquivo `.juri` começa com as letras `JURI`, a versão do formato, o tipo da imagem (jpeg, png ou webp), o identificador do acervo (kid) e o id da imagem. Esses 52 primeiros bytes são o dado autenticado: se um deles mudar, a decifração falha.
+- Cada cifragem usa um IV novo de 12 bytes, sorteado pelo navegador ou pelo Node com `getRandomValues`.
+- Antes de cifrar, a ferramenta tira os metadados com `exiftool -all=` e confere que não sobrou nenhuma etiqueta fora de uma lista fixa. Ela não só copia o arquivo.
+- `GET /api/juri/imagem.php?id=<32 caracteres hexadecimais>` devolve os bytes cifrados só se o id estiver em `acervo.json`. Sem sessão, responde 401. Id fora do índice, 404.
+- No navegador, `src/ui/area-juri/ImagemCifrada.vue` busca os bytes, decifra e cria um `Blob` com `URL.createObjectURL`. Ao sair da tela, a URL é revogada com `URL.revokeObjectURL`.
+
+### O que mora onde
+
+| Lugar | O que fica | Vai ao repositório público? |
+|---|---|---|
+| `src/core/juri/` | cifra, senha, formato, validação do JSON | sim, é código |
+| `src/app/juri/`, `src/ui/area-juri/` | cliente, sessão e telas da área | sim, é código |
+| `public/api/juri/` e `public/api/nucleo/` | endpoints e núcleo PHP | sim; entra no pacote publicado |
+| `servidor/cli/juri-instalar.php` | instalador da conta, rodado no servidor | sim, mas não entra no pacote |
+| `scripts/juri/acervo.ts` | ferramenta local de cifragem e conferência | sim |
+| `juri2026_privado/` no servidor (pastas 700, arquivos 600) | `usuarios.json`, `tentativas.json`, `segredo.key`, `sessoes/`, `conteudo/juri.json`, `acervo.json`, `imagens/*.juri`, `erros.log` | não, nunca |
+| Pasta de originais, na máquina do administrador | fotos originais e `ids.tsv` | não, nunca |
+| Pasta de saída da ferramenta, na máquina do administrador | `credencial-admin.json`, `acervo.json`, `imagens/*.juri`, `conferencia.tsv` | não. A credencial e o `conferencia.tsv` nunca sobem |
+
+### O que o service worker nunca guarda
+
+- Toda chamada a `/api/` vai à rede. Essa é a primeira regra de `runtimeCaching` em `vite.config.ts`. `navigateFallbackDenylist` também deixa `/api/` de fora da navegação offline.
+- A área não usa `localStorage`, `sessionStorage`, IndexedDB nem Cache API. Os testes de `tests/unidade/juri.sessao.spec.ts` e `tests/componente/juri/ImagemCifrada.spec.ts` trocam esses armazenamentos por falsos e conferem que nada é gravado neles.
+- Nem a CEK, nem o JSON do conteúdo, nem as imagens decifradas entram em cache.
+- As respostas da API saem com `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, `X-Frame-Options: DENY` e `Content-Security-Policy: default-src 'none'`.
+
+### Limites conhecidos
+
+- **Quem controla a hospedagem pode trocar o código.** Quem altera os arquivos do site pode fazer o navegador enviar a senha ou entregar a CEK a outra pessoa. A cifra protege o que fica guardado no servidor, como arquivos e backups. Ela não protege contra quem muda o código que o navegador executa.
+- **Senha provisória na linha de comando.** O comando `conferir` recebe a senha em `--senha`. Enquanto ele roda, a senha aparece na lista de processos e no histórico do shell. O procedimento em `docs/publicacao.md` desliga o histórico durante a chamada.
+- **A área exige rede.** Nada da área fica guardado no aparelho para uso sem internet.
+- **Outros pontos em aberto** (AAD do embrulho, `Permissions-Policy` ausente, cópias temporárias que sobram após `kill -9`, conferência de kid e índice feita no cliente, falta de validador local do conteúdo) estão na seção INBOX do `TODO.md`. Não são decisões tomadas.

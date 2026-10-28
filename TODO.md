@@ -2,7 +2,7 @@
 
 # TODO: Caderno de Direito
 
-Atualizado em 2026-10-25. Repositório público: nenhum nome de pessoa, de instituição de ensino ou de caminho pessoal entra neste arquivo (portão `scripts/verificar-proibicoes.sh`).
+Atualizado em 2026-10-28. Repositório público: nenhum nome de pessoa, de instituição de ensino ou de caminho pessoal entra neste arquivo (portão `scripts/verificar-proibicoes.sh`).
 
 - Escopo: pendências de conteúdo e de acabamento do site depois da entrega da onda atual. Arquitetura e regras de cada item: `docs/arquitetura.md`.
 - Status usados nesta tabela: ⏳ Pendente e ⛔ Bloqueado. Vocabulário completo: skill `tab_pendencias`.
@@ -18,7 +18,7 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 
 ## INBOX (descobertas não priorizadas)
 
-- 2026-10-28: [INF] Júri C6, lacuna de contrato: `conteudo.php` não entrega o `kid` nem o índice do acervo ao navegador. Por isso `kidDoArquivo` lê o kid do próprio arquivo (checagem de kid vira tautologia; o AES-GCM segue com o cabeçalho inteiro como AAD) e `validarConteudoBruto` usa os ids de `imagens` do próprio conteúdo como índice (a checagem real de id no acervo fica com o 404 do `imagem.php`). Pendente de ratificação pelo líder; alternativa é o contrato entregar kid e índice.
+- 2026-10-28: [INF] Júri C6, lacuna de contrato: `conteudo.php` não entrega o `kid` nem o índice do acervo ao navegador. Por isso `kidDoArquivo` lê o kid do próprio arquivo (checagem de kid vira tautologia; o AES-GCM segue com o cabeçalho inteiro como AAD) e `validarConteudoBruto` usa os ids de `imagens` do próprio conteúdo como índice (a checagem real de id no acervo fica com o 404 do `imagem.php`). Pendente de ratificação pelo líder; alternativa é o contrato entregar kid e índice. A revisão levantou o mesmo ponto: a conferência de kid e de índice no cliente é tautológica (o arquivo confere consigo mesmo).
 - 2026-10-28: [INF] Júri C6, quadro dos mnemônicos: o contrato `MnemonicoJuri` (HTML) não encaixa no `CartaoMnemonico` das páginas de estudo (texto puro, 7 campos), então a Júri tem `MnemonicosJuri.vue` próprio. Reuso só se o cartão compartilhado ganhar suporte a HTML; pendente de decisão.
 - 2026-10-20: aviso de armazenamento cobre o botão Anterior do quiz em 1280px até clicar em Entendi (QA em produção).
 - 2026-10-20: no menu a 1280px, o nome de Português e Redação Jurídica 1 quebra e deixa o 1 sozinho na linha de baixo (QA em produção).
@@ -63,7 +63,13 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-25: ✅ Concluído (v1.3.0.0), PD-07: item direto da AV em Sociologia AV3 (Artigos e ECA Digital, este último em breve) e endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md, seção 1C.
 - 2026-10-25: 🔍 Pendente verificação, scripts/publicar.sh copia os dispositivos.ts para a cópia de publicação mas não apaga os que sobraram de unidade renomeada; a pasta antiga sem meta.ts reprovou o preci (removida à mão na publicação da v1.3.0.0).
 - 2026-10-25: cartão flutuante "Faltam N dias" cobre o texto e as abas em 390 px com Leitura ampliada, mesmo minimizado (QA docs/qa-eca-digital.md, F1); líder decidiu publicar e consertar em rodada separada.
-- 2026-10-28: Júri Simulado no 1º período: segunda área restrita independente (usuários e sessão próprios, admin com senha provisória aleatória e troca obrigatória), imagens cifradas no servidor e decifradas só no navegador, abas Resumo, Mapa mental, Fichamento, Mnemônicos e Quiz de 40 do ponto de vista do perito médico-legal da acusação; QA de fatos inventados no fim. Em pesquisa (onda 1 de 6).
+- 2026-10-28: Júri Simulado no 1º período: segunda área restrita, separada da do Interdisciplinar (um único usuário, o administrador; senha provisória aleatória com troca obrigatória; sem chave de recuperação). Imagens cifradas no servidor e decifradas só no navegador. Estado: código das fatias no repositório (commits com `juri`), cadeira ainda `em-breve`; conteúdo em revisão de fatos, fora do repositório, por decisão do líder; publicação pendente, pelo roteiro de deploy irreversível (L-70). Instalação e "esqueci a senha": `docs/publicacao.md`; formato do conteúdo: `docs/como-adicionar-conteudo.md`, seção 11; arquitetura: `docs/arquitetura.md`, "Área do Júri (28/10/2026)".
+- 2026-10-28: decisão pendente do líder: a AAD do embrulho da CEK é `usuario‖salt‖versão` (provisória, `src/core/juri/aadEmbrulho.ts`); a pesquisa pedia `uid‖kid‖versão`. Mudar a AAD muda todo embrulho, então é versão nova.
+- 2026-10-28: decisão pendente do líder: `conferir --senha` (`scripts/juri/argumentos.ts`) recebe a senha provisória na linha de comando, visível em `ps` e no histórico do shell. O guia pede histórico desligado; decidir se a ferramenta passa a ler a senha sem eco.
+- 2026-10-28: decisão pendente do líder: as cópias limpas das imagens ficam numa pasta temporária 700 (`scripts/juri/metadados.ts`, em `TMPDIR` ou `/var/tmp`); o `rmSync` roda no `finally`, e `kill -9` pula o `finally`, deixando as imagens em claro. O guia manda apagar à mão. Decidir: varredura de sobras no início da ferramenta, ou outro lugar de trabalho.
+- 2026-10-28: decisão pendente do líder: o site não envia `Permissions-Policy` (nenhuma ocorrência em `public/.htaccess` nem em `public/api/nucleo/respostas.php`). Vale para o site inteiro, não só para a Júri.
+- 2026-10-28: trabalho novo: a Júri não tem validador do `juri.json` fora do navegador (`scripts/validar-conteudo-restrito.ts` é só do Interdisciplinar). No navegador, `src/app/juri/conteudo.ts` compara os ids do próprio JSON e a tela não mostra o campo com erro. O guia (`docs/como-adicionar-conteudo.md`, seção 11) usa um comando manual com o acervo real. Decidir se nasce um script de conferência, gêmeo do Interdisciplinar.
+- 2026-10-28: decisão pendente do líder: `src/core/juri/validar.ts` não reprova travessão (U+2013 e U+2014), ao contrário do validador de unidades. O guia manda não usar; decidir se a regra entra no validador da Júri.
 ## TABELA UNIFICADA
 
 | WSJF | ID | Onda | Grupo | Descrição Técnica | Prioridade | Pré-requisito | Dificuldade | Status | Estado Auditado |

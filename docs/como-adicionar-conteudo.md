@@ -345,3 +345,89 @@ Ordem obrigatória sempre que você acrescentou conteúdo (unidade, cadeira, per
 4. Faça o commit em Conventional Commits, por exemplo `feat(conteudo): unidade 2 de Introdução ao Direito`. Inclua no mesmo commit os arquivos regravados em `tests/caracterizacao/`.
 5. Não envie para o GitHub sem combinar com o líder.
 6. Para publicar no servidor, veja [publicacao.md](publicacao.md).
+
+## 11. Júri Simulado: JSON e imagens (área restrita)
+
+Quem lê: quem monta o conteúdo da área do Júri. Essa área é separada da do Interdisciplinar, e o formato é outro. Não copie o formato de uma para a outra.
+
+### Onde o JSON mora
+
+- O arquivo é `conteudo/juri.json`, dentro do diretório privado do servidor, ao lado de `acervo.json`. Ele não entra no repositório nem no pacote publicado.
+- Você escreve o arquivo na sua máquina, numa pasta fora do repositório. Depois envia pelo passo 5 de [publicacao.md](publicacao.md).
+- Só o navegador do administrador lê o arquivo, depois do login, pelo `GET /api/juri/conteudo.php`.
+
+### Forma do arquivo
+
+Campos da raiz: `titulo`, `resumo`, `quadroTermos`, `notaQuadroHtml` (opcional), `fichamento`, `respostasDefesa`, `mnemonicos`, `mapa`, `quiz`, `imagens` e `referencias` (opcional).
+
+| Campo | Regra |
+|---|---|
+| `titulo` | texto puro, não vazio |
+| `resumo` | 1 ou mais blocos, cada um com `id`, `titulo`, `corpoHtml` e `fontes`. `linhaA` e `linhaB` vêm juntos ou não vêm |
+| `quadroTermos` | 3 ou mais itens, cada um com `termo`, `definicaoHtml`, `regiao` e `fontes` |
+| `notaQuadroHtml` | opcional, HTML |
+| `fichamento` | 1 ou mais, cada um com `id`, `titulo`, `oQueEHtml`, `fonteDizHtml`, `acusacaoUsaHtml`, `acusacaoNeutralizaHtml` e `fontes`. O campo `defesaAtacaHtml` reprova |
+| `respostasDefesa` | 1 ou mais, cada um com `id`, `teseHtml`, `respostaHtml` e `fontes`. O campo `limiteHtml` reprova |
+| `mnemonicos` | 1 ou mais, cada um com `id`, `dicaHtml`, `respostaHtml` e `fontes` |
+| `mapa` | árvore com `rotulo` e `filhos` (opcional). A raiz precisa de pelo menos um filho. A árvore vai até 4 níveis abaixo da raiz |
+| `quiz` | exatamente 40 perguntas |
+| `imagens` | lista, que pode ser vazia. Cada item tem `id`, `legenda` e `fontes` |
+| `referencias` | opcional. Se existir, 1 ou mais textos puros |
+
+Todo item que tem `fontes` precisa de pelo menos uma fonte, em texto não vazio.
+
+Dois tipos de texto:
+
+- **Texto puro**: `titulo`, `id`, `termo`, `regiao`, `legenda`, `categoria`, `rotulo`, `fontes` e `referencias`. Sem `<` nem `>`, e sem caractere de controle.
+- **HTML**: todo campo que termina em `Html`, e `corpoHtml`. Só estas tags, em minúscula e sem atributo: `p`, `strong`, `em`, `ul`, `ol`, `li`, `br`, `blockquote`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `h3` e `h4`. Para `&`, só estas entidades: `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&#39;` e `&nbsp;`. Comentário, link, tag em maiúscula e tag pela metade reprovam.
+
+Exemplo de um item de resumo, só para mostrar a forma:
+
+```json
+{ "id": "bloco-1", "titulo": "Primeiro bloco", "corpoHtml": "<p>Texto do bloco.</p>", "fontes": ["Fonte um"] }
+```
+
+### Quiz
+
+- Cada pergunta tem `id` igual à posição: a primeira é 1 e a última é 40.
+- Campos: `categoria` (texto puro), `enunciadoHtml`, `explicacaoHtml` (HTML) e `fontes`.
+- **Múltipla escolha** (é o padrão; pode escrever `"tipo": "multipla-escolha"`): `alternativasHtml` com 4 ou 5 textos, e `correta` com a posição da resposta certa, contando a partir de 0. Todas as perguntas de múltipla escolha têm o mesmo número de alternativas: todas com 4, ou todas com 5.
+- **Verdadeiro ou falso**: `"tipo": "verdadeiro-ou-falso"`, `correta` com `true` ou `false`, e sem `alternativasHtml`.
+- Exemplo de uma pergunta de múltipla escolha, com a resposta certa na posição 2 (a terceira alternativa):
+
+```json
+{ "id": 1, "categoria": "Tema", "enunciadoHtml": "<p>Enunciado.</p>", "explicacaoHtml": "<p>Explicação.</p>", "alternativasHtml": ["Primeira", "Segunda", "Terceira", "Quarta"], "correta": 2, "fontes": ["Fonte"] }
+```
+
+- Não cite letra (A a E) nem "alternativa B" no enunciado ou na explicação. O motor embaralha as respostas, então a letra muda a cada rodada.
+- Na explicação, não use "acima" nem "abaixo" para apontar resposta. A expressão "acima do homem" é exceção.
+- O campo `fonteExtra` reprova. A fonte fica sempre em `fontes`.
+
+### Imagens
+
+- Cada imagem é referida pelo `id` do acervo: 32 caracteres hexadecimais minúsculos (de 0 a 9 e de a a f). O `id` é o nome do arquivo `imagens/<id>.juri`.
+- De onde vem o id: da coluna `id` do `ids.tsv`, na pasta de originais, ou da lista `indice` do `acervo.json`, na pasta de saída.
+- Não copie a coluna `nome` do `ids.tsv` para o JSON. O nome do arquivo original pode identificar pessoas.
+- A legenda diz o que a imagem mostra, em texto puro.
+- Um id digitado errado passa pelo formato, mas o servidor responde 404 e a imagem aparece quebrada. A conferência abaixo pega esse erro antes do envio.
+
+### Conferência antes de enviar
+
+A área não mostra o campo com erro. Quando o conteúdo reprova, a página não mostra nada do conteúdo, e o navegador não diz qual campo falhou. Por isso, confira antes de enviar. O comando abaixo usa a mesma função de validação do navegador, mas confere os ids contra o `acervo.json` real. No navegador, a conferência de ids é mais fraca: ela compara os ids do próprio JSON.
+
+```
+cd <raiz-do-repositorio>
+node --import tsx --input-type=module -e "
+import { readFileSync } from 'node:fs';
+import { validarConteudoJuri } from './src/core/juri/validar.ts';
+const [juri, acervo] = process.argv.slice(1).map((c) => JSON.parse(readFileSync(c, 'utf8')));
+const r = validarConteudoJuri(juri, new Set(acervo.indice.map((e) => e.id)));
+console.log(r.ok ? 'JSON da Júri: ok' : 'JSON da Júri: ' + r.erros.length + ' erro(s): ' + JSON.stringify(r.erros.slice(0, 10)));
+process.exitCode = r.ok ? 0 : 1;
+" <caminho-do-juri.json> <pasta-saida>/acervo.json
+```
+
+- `JSON da Júri: ok` e código de saída 0: o formato está certo e todos os ids existem no acervo.
+- Erros: a saída traz o código e o caminho do campo, por exemplo `quiz` ou `imagens[0].id`. Ela nunca traz o texto do campo.
+
+**O que esse comando não cobre.** O validador da área não reprova travessão (U+2013 e U+2014). Não use travessão no conteúdo: a conferência é manual até existir uma regra para isso. Confira também o texto de cada aba, depois do envio.

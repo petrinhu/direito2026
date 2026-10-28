@@ -39,6 +39,7 @@ export function criarServidorJuriFalso() {
   let contadorCsrf = 0;
   let csrf = 'csrf-inicial';
   let offline = false;
+  let conflitoConta = false;
   let iter: number = ITERACOES_PBKDF2;
 
   function novoCsrf(): string {
@@ -120,6 +121,13 @@ export function criarServidorJuriFalso() {
           return erro(400, 'invalido', 'Requisição inválida.');
         }
         if (pedido.auth !== conta.auth) return erro(401, 'credenciais', 'A senha não confere.');
+        if (conflitoConta) {
+          return erro(
+            409,
+            'conta-alterada',
+            'A conta foi alterada enquanto a senha era conferida. Entre de novo.'
+          );
+        }
         return resposta(200, { ok: true, embrulho: { ...conta.embrulho } });
       }
       case 'trocar-senha.php': {
@@ -205,6 +213,10 @@ export function criarServidorJuriFalso() {
     },
     definirOffline(valor: boolean): void {
       offline = valor;
+    },
+    /** Simula a conta mudando entre a conferência do AUTH e a leitura do embrulho (409 no destravar). */
+    definirConflitoConta(valor: boolean): void {
+      conflitoConta = valor;
     },
     definirIter(valor: number): void {
       iter = valor;

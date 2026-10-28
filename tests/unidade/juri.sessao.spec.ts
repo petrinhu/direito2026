@@ -176,6 +176,23 @@ describe('recarregar a página (travada)', () => {
     );
   });
 
+  it('409 conta-alterada no destravar: continua travada, sem CEK, e manda entrar de novo', async () => {
+    const servidor = criarServidorJuriFalso();
+    await servidor.criarConta(USUARIO, SENHA);
+    const antes = montar(servidor);
+    await antes.iniciar();
+    await antes.entrar(USUARIO, SENHA);
+    const depois = montar(servidor);
+    await depois.iniciar();
+    servidor.definirConflitoConta(true);
+    await expect(depois.destravar(SENHA)).resolves.toBe(false);
+    expect(depois.fase.value).toBe('travada');
+    expect(depois.mensagem.value).toBe('A conta mudou em outro aparelho. Entre de novo.');
+    await expect(depois.decifrarImagem(new Uint8Array(0), KID, ID)).rejects.toBeInstanceOf(
+      ErroSessaoJuri
+    );
+  });
+
   it('destravar com troca pendente leva a troca-pendente, não a aberta', async () => {
     const servidor = criarServidorJuriFalso();
     await servidor.criarConta(USUARIO, SENHA, true);

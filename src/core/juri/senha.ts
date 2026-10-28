@@ -25,6 +25,14 @@ export function contarCaracteres(senha: string): number {
   return [...normalizarSenha(senha)].length;
 }
 
+/**
+ * Mesma senha depois de NFC. Senha igual escrita de outro jeito (acento composto
+ * ou não) não conta como troca: o AUTH sairia igual para o mesmo texto.
+ */
+export function senhasIguais(a: string, b: string): boolean {
+  return normalizarSenha(a) === normalizarSenha(b);
+}
+
 /** Só o tamanho: a regra da senha nova não impõe composição (SP 800-63B-4 §3.1.1.2). */
 export function validarSenhaNova(senha: string): ResultadoValidacaoSenha {
   const caracteres = contarCaracteres(senha);

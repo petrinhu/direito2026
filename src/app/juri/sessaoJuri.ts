@@ -20,7 +20,7 @@ import {
   type Embrulho,
   type ImagemDecifrada
 } from '@/core/juri/cifra';
-import { MINIMO_SENHA, validarSenhaNova } from '@/core/juri/senha';
+import { MINIMO_SENHA, senhasIguais, validarSenhaNova } from '@/core/juri/senha';
 import { ErroDeApi, type ClienteJuri, type RespostaSal } from './clienteJuri';
 
 /** CryptoKey do WebCrypto. Alias local porque o lint do projeto não conhece o tipo global. */
@@ -49,6 +49,7 @@ const MENSAGEM_CONTEUDO = 'Não foi possível abrir o conteúdo. Avise quem admi
 const MENSAGEM_LOGIN = 'Usuário ou senha incorretos.';
 const MENSAGEM_SENHA = 'A senha não confere.';
 const MENSAGEM_SENHA_ATUAL = 'A senha atual não confere.';
+const MENSAGEM_SENHA_REPETIDA = 'A nova senha precisa ser diferente da atual.';
 const MENSAGEM_SAIDA_SEM_SERVIDOR =
   'Sessão encerrada neste aparelho. O servidor não confirmou: verifique a conexão.';
 
@@ -131,6 +132,10 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
     }
     if (erro.codigo === 'rede') {
       mensagem.value = MENSAGEM_REDE;
+      return;
+    }
+    if (erro.codigo === 'senha-repetida') {
+      mensagem.value = MENSAGEM_SENHA_REPETIDA;
       return;
     }
     if (erro.status === 401) {
@@ -258,6 +263,11 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
         mensagem.value = `A senha nova precisa ter ${MINIMO_SENHA} caracteres ou mais.`;
         return false;
       }
+      // Antes da derivação: a mesma senha não gasta PBKDF2 nem chega ao servidor.
+      if (senhasIguais(senhaAtual, senhaNova)) {
+        mensagem.value = MENSAGEM_SENHA_REPETIDA;
+        return false;
+      }
 
       const login = usuario.value;
       try {
@@ -324,6 +334,15 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
     }
   }
 
+  /**
+   * Ao sair da página sem clicar em Sair: a CEK sai da memória e a sessão continua no
+   * servidor (a próxima visita pede só a senha). Não fala com o servidor.
+   */
+  function descartar(): void {
+    encerrarLocal();
+    mensagem.value = '';
+  }
+
   return {
     fase,
     usuario,
@@ -334,6 +353,7 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
     destravar,
     trocarSenha,
     sair,
+    descartar,
     decifrarImagem
   };
 }

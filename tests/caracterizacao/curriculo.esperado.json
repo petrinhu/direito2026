@@ -126,6 +126,14 @@
         "restrita": true,
         "atalhoUnidade": null,
         "unidades": []
+      },
+      {
+        "id": "juri-simulado",
+        "nome": "Júri Simulado",
+        "estado": "em-breve",
+        "restrita": true,
+        "atalhoUnidade": null,
+        "unidades": []
       }
     ]
   },

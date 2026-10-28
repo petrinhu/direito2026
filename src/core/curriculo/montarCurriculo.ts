@@ -2,6 +2,7 @@ import { agruparPorUnidade, type UnidadeDescoberta } from './agruparPorUnidade';
 import { ErroDeConteudo } from './erroDeConteudo';
 import { lerIdDeUnidade, rotuloDaAv } from './idDeUnidade';
 import type {
+  AreaRestrita,
   AtalhoUnidade,
   Cadeira,
   Curriculo,
@@ -21,6 +22,7 @@ export interface DescricaoCadeira {
   readonly ordem: number;
   readonly estado: EstadoPublicacao;
   readonly restrita?: true;
+  readonly area?: AreaRestrita;
   readonly atalhoUnidade?: AtalhoUnidade;
   readonly grupos?: readonly GrupoDeTopicos[];
 }
@@ -152,12 +154,16 @@ function montarCadeira(
       throw new ErroDeConteudo(`cadeira publicada sem unidade publicada: ${chave}`);
     }
   }
+  if (descricao.area !== undefined && !descricao.restrita) {
+    throw new ErroDeConteudo(`área ${descricao.area} sem cadeira restrita: ${chave}`);
+  }
 
   return {
     id,
     nome: descricao.nome,
     estado: descricao.estado,
     ...(descricao.restrita ? { restrita: true as const } : {}),
+    ...(descricao.area ? { area: descricao.area } : {}),
     unidades,
     ...(descricao.atalhoUnidade ? { atalhoUnidade: descricao.atalhoUnidade } : {}),
     ...(descricao.grupos ? { grupos: descricao.grupos } : {})

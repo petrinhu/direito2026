@@ -8,7 +8,7 @@ import {
   CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
 } from '@/app/chaves';
-import { caminhoEmAreaRestrita } from '@/app/curriculo/areaRestrita';
+import { caminhoSuspendeModoAdaptado } from '@/app/curriculo/areaRestrita';
 import LayoutBase from '@/ui/layout/LayoutBase.vue';
 
 const curriculo = inject(CHAVE_CURRICULO)!;
@@ -19,10 +19,11 @@ const storeModoAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO)!;
 const route = useRoute();
 const router = useRouter();
 
-// Ordem do líder: sem modo adaptado na área restrita. A preferência salva
-// fica como está; só o efeito é suspenso enquanto a rota for da área.
-const emAreaRestrita = computed(() => caminhoEmAreaRestrita(curriculo, route.path));
-watch(emAreaRestrita, (valor) => storeModoAdaptado.suspender(valor), { immediate: true });
+// Ordem do líder: sem modo adaptado na área restrita do Interdisciplinar. A Júri
+// mantém o modo (decisão do CTO). A preferência salva fica como está; só o efeito
+// é suspenso enquanto a rota for da área que suspende.
+const suspendeModo = computed(() => caminhoSuspendeModoAdaptado(curriculo, route.path));
+watch(suspendeModo, (valor) => storeModoAdaptado.suspender(valor), { immediate: true });
 
 function aoBuscar(termo: string): void {
   router.push({ path: '/busca', query: { q: termo } });

@@ -49,6 +49,12 @@ export interface GrupoDeTopicos {
   readonly direto?: true;
 }
 
+/**
+ * Área restrita com página e login próprios. Ausente = o Interdisciplinar
+ * (a área original). Cada área tem usuário, sessão e API separados.
+ */
+export type AreaRestrita = 'juri';
+
 export interface Cadeira {
   /** Slug usado na URL. Ex.: 'intr-direito'. */
   readonly id: string;
@@ -60,6 +66,8 @@ export interface Cadeira {
    * pede tudo à API depois do login e a busca só conhece o título.
    */
   readonly restrita?: true;
+  /** Área restrita que tem página própria. Só existe com `restrita`. */
+  readonly area?: AreaRestrita;
   readonly unidades: readonly ReferenciaUnidade[];
   /** Atalho opcional no menu lateral para outra cadeira (só o menu o lê). */
   readonly atalhoUnidade?: AtalhoUnidade;

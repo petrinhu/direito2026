@@ -7,6 +7,9 @@ import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
 
 // Só a cadeira restrita carrega esta página (e o CSS dela), em chunk à parte.
 const AreaRestrita = defineAsyncComponent(() => import('./AreaRestrita.vue'));
+// Área da Júri: login próprio, em chunk próprio. Vem ANTES da restrita genérica
+// (as duas são restritas; o campo area escolhe).
+const AreaJuri = defineAsyncComponent(() => import('./AreaJuri.vue'));
 
 const props = defineProps<{ periodo: string; cadeira: string }>();
 const curriculo = inject(CHAVE_CURRICULO)!;
@@ -16,7 +19,8 @@ const cadeira = computed(() => periodo.value?.cadeiras.find((c) => c.id === prop
 </script>
 
 <template>
-  <AreaRestrita v-if="cadeira?.restrita" />
+  <AreaJuri v-if="cadeira?.area === 'juri'" />
+  <AreaRestrita v-else-if="cadeira?.restrita" />
   <div v-else-if="cadeira" class="pagina-cadeira">
     <h1>{{ rotuloSemViuva(cadeira.nome) }}</h1>
     <section class="pagina-cadeira__lista">

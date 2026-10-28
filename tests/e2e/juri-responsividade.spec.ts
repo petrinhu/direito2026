@@ -47,6 +47,8 @@ function conteudoComTabelaELongaPalavra(): Record<string, unknown> {
   resumo[0] = {
     ...resumo[0],
     corpoHtml: [
+      '<h3>TituloFicticioSemEspacoQueNaoQuebraSozinhoNoResumo</h3>',
+      '<blockquote>CitacaoFicticiaSemEspacoQueNaoQuebraSozinhaNaCitacao</blockquote>',
       '<p>Texto fictício do bloco um com tabela comparativa.</p>',
       '<table><thead><tr><th>Critério fictício</th><th>Descrição fictícia</th><th>Referência</th>',
       '<th>Observação fictícia do critério</th></tr></thead><tbody>',
@@ -55,10 +57,16 @@ function conteudoComTabelaELongaPalavra(): Record<string, unknown> {
       '</tbody></table>'
     ].join('')
   };
+  const mnemonicos = base.mnemonicos as Array<Record<string, unknown>>;
+  mnemonicos[0] = {
+    ...mnemonicos[0],
+    dicaHtml: '<h3>DicaFicticiaSemEspacoQueNaoQuebraSozinhaNoMnemonico</h3>'
+  };
   const termos = base.quadroTermos as Array<Record<string, unknown>>;
   termos[0] = {
     ...termos[0],
-    definicaoHtml: '<p>DefinicaoFicticiaSemEspacoQueNaoQuebraSozinhaNoQuadroDeTermos.</p>'
+    definicaoHtml:
+      '<h3>DefinicaoFicticiaSemEspacoQueNaoQuebraSozinhaNoQuadroDeTermos</h3><blockquote>CitacaoFicticiaSemEspacoNoQuadroDeTermos</blockquote>'
   };
   return base;
 }

@@ -139,8 +139,9 @@
   gap: var(--esp-4, 1rem);
 }
 
-/* Palavra sem espaço quebra dentro da caixa (sem isto, ela empurra a página para o lado). */
-.juri-visor :where(p, li, dd, dt, td, th) {
+/* Palavra sem espaço quebra dentro da caixa, em qualquer bloco do conteúdo (título, citação,
+   dica, célula): sem isto, ela empurra a página para o lado. As abas ficam de fora. */
+.juri-visor .ar-abas__painel {
   overflow-wrap: anywhere;
 }
 

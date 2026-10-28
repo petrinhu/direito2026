@@ -125,3 +125,58 @@ describe('ImagemCifrada', () => {
     expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 });
+
+/** Depósito de Storage espionado: todos os métodos que gravam ou leem. */
+function depositoEspionado() {
+  return { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn(), clear: vi.fn(), key: vi.fn() };
+}
+
+describe('nada gravado em armazenamento do navegador', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    // Remove a propriedade própria de document.cookie: volta o acessor do protótipo.
+    delete (document as unknown as { cookie?: string }).cookie;
+  });
+
+  it('abrir e mostrar a imagem não toca Storage, IndexedDB, Cache API nem cookies', async () => {
+    const local = depositoEspionado();
+    const sessaoStorage = depositoEspionado();
+    const indexed = { open: vi.fn(), deleteDatabase: vi.fn() };
+    const cache = { open: vi.fn(), match: vi.fn(), keys: vi.fn() };
+    const cookieLido = vi.fn(() => '');
+    const cookieGravado = vi.fn();
+    vi.stubGlobal('localStorage', local);
+    vi.stubGlobal('sessionStorage', sessaoStorage);
+    vi.stubGlobal('indexedDB', indexed);
+    vi.stubGlobal('caches', cache);
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      get: cookieLido,
+      set: cookieGravado
+    });
+
+    const abrir = vi.fn(async (): Promise<ImagemAbertaFalsa> => ({
+      mime: 'image/png',
+      bytes: BYTES
+    }));
+    montar({ id: 'ab'.repeat(16), legenda: 'Legenda fictícia', abrir });
+    await flushPromises();
+    expect(w!.get('img').attributes('src')).toBe('blob:falso-1');
+    w!.unmount();
+    w = undefined;
+
+    for (const deposito of [local, sessaoStorage]) {
+      for (const metodo of Object.values(deposito)) {
+        expect(metodo).not.toHaveBeenCalled();
+      }
+    }
+    for (const metodo of Object.values(indexed)) {
+      expect(metodo).not.toHaveBeenCalled();
+    }
+    for (const metodo of Object.values(cache)) {
+      expect(metodo).not.toHaveBeenCalled();
+    }
+    expect(cookieLido).not.toHaveBeenCalled();
+    expect(cookieGravado).not.toHaveBeenCalled();
+  });
+});

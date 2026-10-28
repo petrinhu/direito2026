@@ -433,14 +433,24 @@ describe('nada gravado em armazenamento do navegador', () => {
     expect(indexed.open).not.toHaveBeenCalled();
   });
 
-  it('o código de src/app/juri não menciona localStorage, sessionStorage, indexedDB nem caches', () => {
-    const pasta = new URL('../../src/app/juri/', import.meta.url);
-    const arquivos = readdirSync(pasta).filter((nome) => nome.endsWith('.ts'));
-    // Piso não vazio: zero arquivos seria varredura quebrada, não código limpo (L-36).
-    expect(arquivos.length).toBeGreaterThanOrEqual(2);
-    for (const nome of arquivos) {
-      const fonte = readFileSync(new URL(nome, pasta), 'utf8');
-      expect(fonte, nome).not.toMatch(/localStorage|sessionStorage|indexedDB|caches\./);
+  it('a área do júri (app, core e UI) não menciona armazenamento do navegador', () => {
+    // Revisão R2 (I3): a varredura antiga só via src/app/juri; a UI gravava em sessionStorage e IndexedDB sem falhar.
+    const pastas = [
+      { pasta: new URL('../../src/app/juri/', import.meta.url), extensoes: ['.ts'] },
+      { pasta: new URL('../../src/core/juri/', import.meta.url), extensoes: ['.ts'] },
+      { pasta: new URL('../../src/ui/area-juri/', import.meta.url), extensoes: ['.ts', '.vue'] }
+    ];
+    const proibido = /localStorage|sessionStorage|indexedDB|caches\.|document\.cookie/;
+    for (const { pasta, extensoes } of pastas) {
+      const arquivos = readdirSync(pasta).filter((nome) =>
+        extensoes.some((extensao) => nome.endsWith(extensao))
+      );
+      // Piso não vazio por pasta: zero arquivos seria varredura quebrada, não código limpo (L-36).
+      expect(arquivos.length, pasta.pathname).toBeGreaterThanOrEqual(2);
+      for (const nome of arquivos) {
+        const fonte = readFileSync(new URL(nome, pasta), 'utf8');
+        expect(fonte, nome).not.toMatch(proibido);
+      }
     }
   });
 });

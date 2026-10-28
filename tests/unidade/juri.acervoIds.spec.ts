@@ -111,6 +111,26 @@ describe('ids.tsv: resolução entre rodadas', () => {
     );
     expect(r.idPorSha.get(SHA_C)).toBe(ID_2);
   });
+
+  it('gerador que só devolve ids já usados recusa com erro limpo, sem laço infinito', () => {
+    let chamadas = 0;
+    // Teto só do teste: sem o limite do código, o laço nunca termina e a suíte trava (revisão R2, C2).
+    const geradorPreso = () => {
+      chamadas += 1;
+      if (chamadas > 100_000) throw new Error('laço sem limite: gerador chamado demais');
+      return ID_1;
+    };
+    // a.png entra para a linha existente ter imagem correspondente: sem ela, o erro seria outro.
+    let erro: unknown;
+    try {
+      resolverIds([original('a.png', SHA_A), original('n.png', SHA_C)], existente, geradorPreso);
+    } catch (falha) {
+      erro = falha;
+    }
+    expect(erro).toBeInstanceOf(ErroFerramenta);
+    expect((erro as Error).message).toMatch(/id único/);
+    expect(chamadas).toBeLessThan(100_000);
+  });
 });
 
 describe('ids.tsv: escrita', () => {

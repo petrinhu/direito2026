@@ -63,6 +63,22 @@ export function lerIds(texto: string): LinhaId[] {
   });
 }
 
+/** Teto de sorteios de id novo: com 128 bits de id, colisão em 1000 tentativas só vem de gerador quebrado. */
+const LIMITE_TENTATIVAS_ID = 1000;
+
+/** Sorteia um id que não está em uso. Gerador que só repete id usado recusa, em vez de laçar sem fim. */
+function gerarIdNovo(gerarId: () => string, usados: ReadonlySet<string>): string {
+  for (let tentativa = 0; tentativa < LIMITE_TENTATIVAS_ID; tentativa++) {
+    const id = gerarId();
+    if (!usados.has(id)) {
+      return id;
+    }
+  }
+  throw new ErroFerramenta(
+    `não foi possível gerar um id único em ${LIMITE_TENTATIVAS_ID} tentativas`
+  );
+}
+
 /**
  * Regras da segunda rodada (e de qualquer rodada): nome igual com conteúdo diferente recusa
  * (servir foto diferente sob id antigo); linha sem imagem correspondente recusa (imagem sumiu);
@@ -106,10 +122,7 @@ export function resolverIds(
       idPorSha.set(original.sha256, porConteudo.id);
       continue;
     }
-    let id = gerarId();
-    while (idsUsados.has(id)) {
-      id = gerarId();
-    }
+    const id = gerarIdNovo(gerarId, idsUsados);
     idsUsados.add(id);
     idPorSha.set(original.sha256, id);
     novas.push({ id, sha256: original.sha256, nome: original.nome });

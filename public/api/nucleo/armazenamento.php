@@ -202,10 +202,17 @@ function d26_segredo(string $priv): string
     }
 }
 
-/** Cria o diretório privado e subpastas (700). Usado pelo CLI; o web nunca cria. */
+/**
+ * Cria o diretório privado e as subpastas da área (700): sessoes/ e conteudo/
+ * em todas, e imagens/ só na Júri (D26_AREA_PERFIL). Usado pelo CLI; o web nunca cria.
+ */
 function d26_garantir_estrutura(string $priv): void
 {
-    foreach ([$priv, $priv . '/sessoes', $priv . '/conteudo'] as $d) {
+    $dirs = [$priv];
+    foreach (D26_AREA_PERFIL['subpastas'] as $sub) {
+        $dirs[] = $priv . '/' . $sub;
+    }
+    foreach ($dirs as $d) {
         if (!is_dir($d) && !mkdir($d, 0700, true)) {
             throw new RuntimeException('não consegui criar ' . basename($d));
         }

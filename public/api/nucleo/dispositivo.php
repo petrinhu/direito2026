@@ -8,7 +8,8 @@ if (!defined('D26_API')) {
 
 /**
  * Dispositivo confiável (aparelho): depois de um login bem-sucedido o navegador
- * recebe o cookie __Host-d26disp com um token ALEATÓRIO por aparelho
+ * recebe o cookie do dispositivo da área (D26_DISP_NOME, __Host-d26disp no
+ * Interdisciplinar; ver config.php) com um token ALEATÓRIO por aparelho
  * (random_bytes(32), base64url). O servidor guarda na conta só o sha256 dele,
  * com criadoEm, expiraEm (30 dias) e a versaoSessao vigente. Quem apresenta um
  * token válido DAQUELA conta não é barrado pela chave de conta do limite de
@@ -21,7 +22,6 @@ if (!defined('D26_API')) {
  * versaoSessao (derruba as sessões do alvo); (3) comparação em tempo constante,
  * sem curto-circuito.
  */
-const D26_DISP_NOME = '__Host-d26disp';
 const D26_DISP_VIDA = 30 * 86400;
 const D26_DISP_MAXIMO = 5;
 

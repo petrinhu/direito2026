@@ -100,7 +100,7 @@ teste('juri: AUTH errado, usuário inexistente e login malformado dão a MESMA r
     igual(401, $malformado->status, 'malformado: status');
 });
 
-teste('juri: conta inexistente gasta UMA verificação de Argon2id, como a conta real (sem atalho de tempo)', function (): void {
+teste('juri: conta inexistente gasta UMA verificação de Argon2id (contagem de marcadores em verificacoes.log)', function (): void {
     $a = juriAmbiente();
     $c = juriAnonimo($a);
     $n0 = count($a->verificacoes());
@@ -109,6 +109,20 @@ teste('juri: conta inexistente gasta UMA verificação de Argon2id, como a conta
     igual($n0 + 1, $n1, 'inexistente: uma verificação');
     $c->post('/api/juri/entrar.php', juriCorpoLogin([], JURI_LOGIN_TESTE, juriAuthErrado()));
     igual($n1 + 1, count($a->verificacoes()), 'conta real com AUTH errado: uma verificação');
+});
+
+teste('juri (R1-C2): conta inexistente leva tempo comparável ao da conta real (sem atalho de tempo, medido como entrar.teste.php:72)', function (): void {
+    $a = juriAmbiente();
+    $c = juriAnonimo($a);
+    $medir = static function (string $login) use ($c): float {
+        $t = microtime(true);
+        $c->post('/api/juri/entrar.php', juriCorpoLogin([], $login, juriAuthErrado()));
+        return microtime(true) - $t;
+    };
+    $real = $medir(JURI_LOGIN_TESTE);
+    $fantasma = $medir('fantasma');
+    // Sem o Argon2id fictício o inexistente leva poucos ms contra ~150 ms da conta real (M19 medido: 6 ms x 155 ms).
+    verdadeiro($fantasma > $real * 0.5, sprintf('inexistente %.3fs vs conta real %.3fs', $fantasma, $real));
 });
 
 teste('juri: conta desativada com AUTH certo responde 401 credenciais', function (): void {

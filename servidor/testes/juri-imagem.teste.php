@@ -114,3 +114,23 @@ teste('juri (R1-C1): imagem.php com conta sem embrulho válido responde 503 e n�
     igual('indisponivel', $r->json()['erro'] ?? null, 'código do erro');
     naoContem($bytes, $r->corpo, 'nenhum byte da imagem com a conta quebrada');
 });
+
+teste('juri (R1-C4): imagem.php recusa id com maiúsculas mesmo quando o índice o contém (404), e o id minúsculo indexado sai', function (): void {
+    $a = juriAmbiente();
+    $bytes = 'imagem sintética de id em maiúsculas';
+    $idMinusculo = juriSemearImagem($a, 'imagem sintética de id minúsculo');
+    // Id em maiúsculas gravado à mão no índice: juriSemearImagem só gera hex minúsculo.
+    $idMaiusculo = strtoupper(bin2hex(random_bytes(16)));
+    file_put_contents($a->privJuri . '/imagens/' . $idMaiusculo . '.juri', $bytes);
+    $arq = $a->privJuri . '/acervo.json';
+    $acervo = json_decode((string) file_get_contents($arq), true, 16, JSON_THROW_ON_ERROR);
+    $acervo['indice'][] = ['id' => $idMaiusculo, 'tipo' => 'png', 'bytes' => strlen($bytes)];
+    file_put_contents($arq, json_encode($acervo, JSON_THROW_ON_ERROR));
+
+    $c = juriCliente($a);
+    $r = $c->get('/api/juri/imagem.php?id=' . $idMaiusculo);
+    igual(404, $r->status, 'id em maiúsculas, mesmo indexado: 404 (formato estrito de minúsculas)');
+    igual('nao-encontrada', $r->json()['erro'] ?? null, 'código do erro');
+    naoContem($bytes, $r->corpo, 'nenhum byte sai pelo id em maiúsculas');
+    igual(200, $c->get('/api/juri/imagem.php?id=' . $idMinusculo)->status, 'controle: o id minúsculo indexado sai');
+});

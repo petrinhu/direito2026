@@ -32,6 +32,7 @@ teste('compatibilidade 8.3: nenhum recurso de PHP 8.4+ no código do servidor', 
     $proibidos = ['array_find(', 'array_find_key(', 'array_any(', 'array_all(', 'array_first(', 'array_last(', 'mb_trim(', 'mb_ltrim(', 'mb_rtrim(', 'mb_ucfirst(', 'mb_lcfirst(', '|>', 'bcdivmod(', 'grapheme_str_split('];
     $arqs = array_merge(
         glob(RAIZ_REPO . '/public/api/*.php') ?: [],
+        glob(RAIZ_REPO . '/public/api/juri/*.php') ?: [],
         arquivosPhpDoNucleo(),
         glob(RAIZ_REPO . '/servidor/cli/*.php') ?: [],
         glob(RAIZ_REPO . '/servidor/dev/*.php') ?: [],
@@ -54,6 +55,7 @@ teste('compatibilidade 8.3: nenhum recurso de PHP 8.4+ no código do servidor', 
 teste('nenhum login, senha, hash ou termo reservado fixo no código do servidor', function (): void {
     $arqs = array_merge(
         glob(RAIZ_REPO . '/public/api/*.php') ?: [],
+        glob(RAIZ_REPO . '/public/api/juri/*.php') ?: [],
         arquivosPhpDoNucleo(),
         glob(RAIZ_REPO . '/servidor/cli/*.php') ?: []
     );

@@ -5,8 +5,8 @@ declare(strict_types=1);
  * Roteador do servidor embutido do PHP (`php -S`), só para desenvolvimento e
  * testes. Reproduz o que o .htaccess de produção faz:
  *  - /api/nucleo/* é negado (404);
- *  - /api/<arquivo>.php existente é executado; qualquer outro /api/... é 404
- *    (nunca cai na SPA);
+ *  - /api/<arquivo>.php e /api/juri/<arquivo>.php existentes são executados;
+ *    qualquer outro /api/... é 404 (nunca cai na SPA);
  *  - arquivo estático existente é servido; o resto cai em index.html (SPA),
  *    ou 404 quando o docroot não tem index.html.
  *
@@ -42,7 +42,8 @@ if ($caminho === '/api' || str_starts_with($caminho, '/api/')) {
         http_response_code(404);
         return true;
     }
-    if (preg_match('#^/api/[a-z0-9-]+\.php$#D', $caminho) === 1 && is_file($raiz . $caminho)) {
+    // Subpasta só a da Júri (api/juri/): nucleo/ nunca passa aqui (negado acima).
+    if (preg_match('#^/api/(juri/)?[a-z0-9-]+\.php$#D', $caminho) === 1 && is_file($raiz . $caminho)) {
         return false;
     }
     http_response_code(404);

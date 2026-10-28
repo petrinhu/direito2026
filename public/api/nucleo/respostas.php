@@ -29,6 +29,26 @@ function d26_enviar_json_bruto(int $status, string $json): never
     exit;
 }
 
+/**
+ * Resposta de bytes (imagem cifrada da área da Júri). Os cabeçalhos de segurança
+ * são os de toda resposta da API; só o tipo muda para application/octet-stream
+ * (sem charset e sem Content-Disposition), e o cache continua o no-store de
+ * d26_cabecalhos(), sozinho. Só para endpoint binário: as respostas JSON seguem
+ * em d26_enviar_json_bruto, sem alteração.
+ */
+function d26_enviar_binario(int $status, string $bytes): never
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    d26_cabecalhos();
+    header('Content-Type: application/octet-stream');
+    header('Content-Length: ' . strlen($bytes));
+    http_response_code($status);
+    echo $bytes;
+    exit;
+}
+
 /** @param array<string, mixed> $dados */
 function d26_responder(int $status, array $dados): never
 {

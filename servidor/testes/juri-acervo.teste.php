@@ -42,7 +42,8 @@ function juriAcervoPng(): string
 }
 
 teste('juri (ferramenta): a senha impressa pela ferramenta, derivada em PHP, entra pelo login real e devolve o embrulho', function (): void {
-    $a = Ambiente::novo(['admin' => false]);
+    // Layout de produção: o CLI só instala no irmão juri2026_privado (R1-A2).
+    $a = Ambiente::novo(['admin' => false, 'layout' => 'producao']);
     $origem = $a->raiz . '/originais';
     mkdir($origem, 0700);
     file_put_contents($origem . '/foto.png', juriAcervoPng());

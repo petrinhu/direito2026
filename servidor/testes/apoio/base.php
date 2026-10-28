@@ -258,7 +258,10 @@ final class Ambiente
     public const SENHA_ADMIN = 'ProvisoriaTeste1';
 
     public string $raiz;
+    /** Diretório privado do Interdisciplinar (direito2026_privado no layout de produção). */
     public string $priv;
+    /** Diretório privado da Júri. No layout de teste é o MESMO de $priv (um processo, um D26_PRIVADO). */
+    public string $privJuri;
     public string $docroot;
     public string $base = '';
     public int $porta = 0;
@@ -266,18 +269,31 @@ final class Ambiente
     private $processo = null;
 
     private int $workers = 0;
+    private bool $producao = false;
 
-    /** @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes */
+    /**
+     * layout 'producao': uma só app em <dominio>/public_html/site, com os privados
+     * como IRMÃOS dela em <dominio>/ (direito2026_privado e juri2026_privado), sem
+     * D26_PRIVADO: o caminho sai do cálculo real de d26_dir_privado.
+     *
+     * @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int, layout?:string} $opcoes
+     */
     public static function novo(array $opcoes = []): self
     {
         $a = new self();
         $a->raiz = rtrim(getenv('TMPDIR') ?: '/var/tmp', '/') . '/d26-testes-' . bin2hex(random_bytes(6));
         mkdir($a->raiz, 0700, true);
         $a->priv = $a->raiz . '/privado';
-        foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
-            mkdir($d, 0700, true);
-        }
+        $a->privJuri = $a->priv;
         $a->docroot = RAIZ_REPO . '/public';
+        if (($opcoes['layout'] ?? '') === 'producao') {
+            $a->producao = true;
+            $a->montarLayoutProducao();
+        } else {
+            foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
+                mkdir($d, 0700, true);
+            }
+        }
         if (($opcoes['docroot'] ?? '') === 'copia') {
             $a->docroot = $a->raiz . '/site';
             copiarArvore(RAIZ_REPO . '/public/api', $a->docroot . '/api');
@@ -366,6 +382,26 @@ final class Ambiente
         return $c;
     }
 
+    /**
+     * Espelha a hospedagem: public/ inteiro copiado para <dominio>/public_html/site
+     * e os dois privados irmãos do public_html, nos nomes do perfil de cada área.
+     * Um só processo atende as duas áreas, como em produção.
+     */
+    private function montarLayoutProducao(): void
+    {
+        $dominio = $this->raiz . '/dominio';
+        $this->docroot = $dominio . '/public_html/site';
+        copiarArvore(RAIZ_REPO . '/public', $this->docroot);
+        file_put_contents($this->docroot . '/index.html', '<!doctype html><title>spa</title>');
+        $this->priv = $dominio . '/direito2026_privado';
+        $this->privJuri = $dominio . '/juri2026_privado';
+        foreach ([$this->priv, $this->privJuri] as $p) {
+            foreach ([$p, $p . '/sessoes', $p . '/conteudo', $p . '/imagens'] as $d) {
+                mkdir($d, 0700, true);
+            }
+        }
+    }
+
     private function iniciar(bool $semRoteador): void
     {
         $sock = stream_socket_server('tcp://127.0.0.1:0', $codigo, $msg);
@@ -381,7 +417,11 @@ final class Ambiente
             $cmd[] = RAIZ_REPO . '/servidor/dev/roteador.php';
         }
         $env = getenv();
-        $env['D26_PRIVADO'] = $this->priv;
+        if ($this->producao) {
+            unset($env['D26_PRIVADO']); // produção: o caminho sai de d26_dir_privado, nunca do ambiente
+        } else {
+            $env['D26_PRIVADO'] = $this->priv;
+        }
         if ($this->workers > 1) {
             $env['PHP_CLI_SERVER_WORKERS'] = (string) $this->workers;
         }

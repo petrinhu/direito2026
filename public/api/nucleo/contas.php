@@ -151,6 +151,9 @@ function d26_teste_pausar(string $ponto, string $chave = ''): void
  * corrompido) é D26Indisponivel, fechado: `1`/"true" nunca passam por booleano.
  * uid ausente é aceito aqui (a sessão e o login recusam conta sem uid); presente,
  * tem de ser string. `aparelhos` ausente vale [].
+ * `salt` (string) e `embrulho` (array) são campos OPCIONAIS da área da Júri: ausentes
+ * valem como sempre (Interdisciplinar); presentes com tipo errado são D26Indisponivel.
+ * A forma exata do salt e do embrulho é conferida no núcleo da Júri (nucleo/juri.php).
  *
  * @param array<mixed> $c
  * @return array<string, mixed>
@@ -166,7 +169,9 @@ function d26_conta_validar(array $c): array
         && is_string($c['criadoEm'] ?? null)
         && (($c['ultimoLogin'] ?? null) === null || is_string($c['ultimoLogin']))
         && (!array_key_exists('uid', $c) || is_string($c['uid']))
-        && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']));
+        && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']))
+        && (!array_key_exists('salt', $c) || is_string($c['salt']))
+        && (!array_key_exists('embrulho', $c) || is_array($c['embrulho']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }

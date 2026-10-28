@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/apoio/juri.php';
 
 teste('juri: imagem.php sem sessão responde 401, mesmo com id que existe no índice', function (): void {
-    $a = Ambiente::novo();
+    $a = juriAmbiente();
     $id = juriSemearImagem($a, "\x00\xff" . random_bytes(64));
     $r = $a->cliente()->get('/api/juri/imagem.php?id=' . $id);
     igual(401, $r->status, 'status');
@@ -12,7 +12,7 @@ teste('juri: imagem.php sem sessão responde 401, mesmo com id que existe no ín
 });
 
 teste('juri: imagem.php com a troca de senha pendente responde 403 e não entrega bytes', function (): void {
-    $a = Ambiente::novo(['deveTrocar' => true]);
+    $a = juriAmbiente(['deveTrocar' => true]);
     $bytes = "\x00\xff" . random_bytes(64);
     $id = juriSemearImagem($a, $bytes);
     $r = juriCliente($a)->get('/api/juri/imagem.php?id=' . $id);
@@ -22,7 +22,7 @@ teste('juri: imagem.php com a troca de senha pendente responde 403 e não entreg
 });
 
 teste('juri: imagem.php entrega os bytes do índice com cabeçalhos exatos (octet-stream, no-store sozinho, nosniff, sem Content-Disposition)', function (): void {
-    $a = Ambiente::novo();
+    $a = juriAmbiente();
     $bytes = "\x00\xff" . random_bytes(256) . "\r\n\0";
     $id = juriSemearImagem($a, $bytes);
     $r = juriCliente($a)->get('/api/juri/imagem.php?id=' . $id);
@@ -37,11 +37,11 @@ teste('juri: imagem.php entrega os bytes do índice com cabeçalhos exatos (octe
 });
 
 teste('juri: imagem.php recusa travessia, formato inválido e id fora do índice com 404 e sem byte de fora', function (): void {
-    $a = Ambiente::novo();
+    $a = juriAmbiente();
     $marca = 'MARCA-FORA-DO-INDICE-' . bin2hex(random_bytes(8));
     $outraImagem = juriSemearImagem($a, 'imagem indexada sintética');
-    file_put_contents($a->priv . '/fora.juri', $marca);
-    file_put_contents($a->priv . '/conteudo/fora.juri', $marca);
+    file_put_contents($a->privJuri . '/fora.juri', $marca);
+    file_put_contents($a->privJuri . '/conteudo/fora.juri', $marca);
     $c = juriCliente($a);
 
     $ruins = [
@@ -73,7 +73,7 @@ teste('juri: imagem.php recusa travessia, formato inválido e id fora do índice
 });
 
 teste('juri: imagem.php sem acervo.json responde 404 para qualquer id, inclusive o que estava indexado', function (): void {
-    $a = Ambiente::novo();
+    $a = juriAmbiente();
     $bytes = 'imagem sintética do acervo';
     $id = juriSemearImagem($a, $bytes);
     $c = juriCliente($a);
@@ -81,23 +81,23 @@ teste('juri: imagem.php sem acervo.json responde 404 para qualquer id, inclusive
     igual(200, $antes->status, 'com o acervo, o id indexado é entregue (o teste prova o endpoint vivo)');
     igual($bytes, $antes->corpo, 'bytes do acervo');
 
-    unlink($a->priv . '/acervo.json');
+    unlink($a->privJuri . '/acervo.json');
     igual(404, $c->get('/api/juri/imagem.php?id=' . $id)->status, 'sem acervo.json, o mesmo id vira 404');
     igual(404, $c->get('/api/juri/imagem.php?id=' . bin2hex(random_bytes(16)))->status, 'e qualquer outro id também');
 });
 
 teste('juri: imagem.php com id indexado e arquivo ausente responde 503 indisponivel, nunca 200 vazio', function (): void {
-    $a = Ambiente::novo();
+    $a = juriAmbiente();
     $id = juriSemearImagem($a, 'imagem sintética');
-    unlink($a->priv . '/imagens/' . $id . '.juri');
+    unlink($a->privJuri . '/imagens/' . $id . '.juri');
     $r = juriCliente($a)->get('/api/juri/imagem.php?id=' . $id);
     igual(503, $r->status, 'status');
     igual('indisponivel', $r->json()['erro'] ?? null, 'código do erro');
 });
 
 teste('juri: imagem.php com acervo.json corrompido responde 503 indisponivel', function (): void {
-    $a = Ambiente::novo();
-    file_put_contents($a->priv . '/acervo.json', '{isto não é json');
+    $a = juriAmbiente();
+    file_put_contents($a->privJuri . '/acervo.json', '{isto não é json');
     $r = juriCliente($a)->get('/api/juri/imagem.php?id=' . bin2hex(random_bytes(16)));
     igual(503, $r->status, 'status');
     igual('indisponivel', $r->json()['erro'] ?? null, 'código do erro');

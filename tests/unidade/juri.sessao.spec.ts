@@ -159,6 +159,23 @@ describe('recarregar a página (travada)', () => {
     expect(await decifraAbre(depois, await imagemCifrada(cek))).toBe(true);
   });
 
+  it('destravar desembrulha a CEK como NÃO extraível: a chave em memória não exporta', async () => {
+    const servidor = criarServidorJuriFalso();
+    await servidor.criarConta(USUARIO, SENHA);
+    const antes = montar(servidor);
+    await antes.iniciar();
+    await antes.entrar(USUARIO, SENHA);
+    const depois = montar(servidor);
+    await depois.iniciar();
+    const prototipo = Object.getPrototypeOf(globalThis.crypto.subtle) as object;
+    const espiao = vi.spyOn(prototipo as { unwrapKey: (...a: unknown[]) => unknown }, 'unwrapKey');
+    await expect(depois.destravar(SENHA)).resolves.toBe(true);
+    // unwrapKey(format, wrapped, kek, algoritmo, algoritmoChave, extractable, usages): extractable é o 6o argumento.
+    expect(espiao.mock.calls.map((c) => c[5])).toEqual([false]);
+    const chave = (await espiao.mock.results[0]!.value) as globalThis.CryptoKey;
+    await expect(globalThis.crypto.subtle.exportKey('raw', chave)).rejects.toThrow();
+  });
+
   it('destravar com senha errada continua travada, sem CEK', async () => {
     const servidor = criarServidorJuriFalso();
     await servidor.criarConta(USUARIO, SENHA);

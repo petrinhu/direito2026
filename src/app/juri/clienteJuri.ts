@@ -102,7 +102,11 @@ function tamanhoBase64Confere(texto: string, bytes: number): boolean {
   }
 }
 
-/** Só {v:1, iv, ct}, sem campo extra, com os tamanhos do contrato. Qualquer desvio é resposta-invalida. */
+/**
+ * Só {v, iv, ct}, sem campo extra, com os tamanhos do contrato. A versão passa como veio:
+ * quem recusa versão que não seja a do contrato é o núcleo (cifra.ts), e assim a recusa
+ * acontece no ponto que a conhece. Aqui basta que seja número.
+ */
 function embrulhoDe(corpo: Corpo): EmbrulhoRemoto {
   const bruto = corpo.embrulho;
   if (typeof bruto !== 'object' || bruto === null || Array.isArray(bruto))
@@ -111,7 +115,11 @@ function embrulhoDe(corpo: Corpo): EmbrulhoRemoto {
   if (JSON.stringify(Object.keys(campos).sort()) !== JSON.stringify(['ct', 'iv', 'v'])) {
     return respostaInvalida();
   }
-  if (campos.v !== 1 || typeof campos.iv !== 'string' || typeof campos.ct !== 'string') {
+  if (
+    typeof campos.v !== 'number' ||
+    typeof campos.iv !== 'string' ||
+    typeof campos.ct !== 'string'
+  ) {
     return respostaInvalida();
   }
   if (
@@ -120,7 +128,7 @@ function embrulhoDe(corpo: Corpo): EmbrulhoRemoto {
   ) {
     return respostaInvalida();
   }
-  return { v: 1, iv: campos.iv, ct: campos.ct };
+  return { v: campos.v, iv: campos.iv, ct: campos.ct };
 }
 
 export function criarClienteJuri(opcoes: OpcoesClienteJuri = {}): ClienteJuri {

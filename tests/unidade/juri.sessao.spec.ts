@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { criarClienteJuri } from '@/app/juri/clienteJuri';
+import { criarClienteJuri, type Buscador } from '@/app/juri/clienteJuri';
 import { criarSessaoJuri, ErroSessaoJuri, type SessaoJuri } from '@/app/juri/sessaoJuri';
 import { cifrarImagem } from '@/core/juri/cifra';
 import { utf8 } from './apoio/cifraJuri';
@@ -18,6 +18,20 @@ const FORMATO_SALT_PADDED = /^[A-Za-z0-9+/]{22}==$/;
 
 function montar(servidor: ServidorJuriFalso): SessaoJuri {
   return criarSessaoJuri({ cliente: criarClienteJuri({ buscar: servidor.buscar }) });
+}
+
+/** Reescreve a versão do embrulho que um endpoint devolve. O servidor falso só entrega a versão 1. */
+function comVersaoDoEmbrulho(buscar: Buscador, endpoint: string, versao: number): Buscador {
+  return async (url, init) => {
+    const resposta = await buscar(url, init);
+    if (!url.endsWith(endpoint)) return resposta;
+    const corpo = (await resposta.json()) as Record<string, unknown>;
+    const embrulho = corpo.embrulho as Record<string, unknown>;
+    return new Response(JSON.stringify({ ...corpo, embrulho: { ...embrulho, v: versao } }), {
+      status: resposta.status,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  };
 }
 
 /** Imagem de teste cifrada com a CEK da conta, como o acervo faria. */
@@ -97,6 +111,21 @@ describe('login correto (entrar)', () => {
     await expect(sessao.entrar(USUARIO, SENHA)).resolves.toBe(false);
     expect(servidor.chamadasPara('entrar.php')).toHaveLength(0);
     expect(sessao.fase.value).toBe('deslogado');
+  });
+
+  it('embrulho com versão 2 vindo do servidor é recusado pelo núcleo antes do unwrap', async () => {
+    const servidor = criarServidorJuriFalso();
+    await servidor.criarConta(USUARIO, SENHA);
+    const sessao = criarSessaoJuri({
+      cliente: criarClienteJuri({ buscar: comVersaoDoEmbrulho(servidor.buscar, 'entrar.php', 2) })
+    });
+    await sessao.iniciar();
+    const prototipo = Object.getPrototypeOf(globalThis.crypto.subtle) as object;
+    const espiao = vi.spyOn(prototipo as { unwrapKey: (...a: unknown[]) => unknown }, 'unwrapKey');
+    await expect(sessao.entrar(USUARIO, SENHA)).resolves.toBe(false);
+    expect(espiao).not.toHaveBeenCalled();
+    expect(sessao.fase.value).toBe('deslogado');
+    expect(sessao.mensagem.value).toMatch(/Não foi possível abrir o conteúdo/);
   });
 });
 

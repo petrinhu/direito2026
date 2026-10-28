@@ -174,6 +174,26 @@ describe('clienteJuri: sessão e erros', () => {
     await expect(comExtra.destravar(AUTH)).rejects.toMatchObject({ codigo: 'resposta-invalida' });
   });
 
+  it('embrulho com versão 2 é repassado como veio: quem recusa a versão é o núcleo', async () => {
+    const { cliente } = clienteComFila({
+      json: {
+        ok: true,
+        usuario: 'admin',
+        deveTrocarSenha: false,
+        csrf: 'c',
+        embrulho: { ...EMBRULHO, v: 2 }
+      }
+    });
+    await expect(cliente.entrar('admin', AUTH)).resolves.toMatchObject({ embrulho: { v: 2 } });
+  });
+
+  it('embrulho com versão que não é número é resposta-invalida', async () => {
+    const { cliente } = clienteComFila({
+      json: { ok: true, embrulho: { ...EMBRULHO, v: '1' } }
+    });
+    await expect(cliente.destravar(AUTH)).rejects.toMatchObject({ codigo: 'resposta-invalida' });
+  });
+
   it('resposta de sucesso sem embrulho é resposta-invalida, nunca um embrulho vazio', async () => {
     const { cliente } = clienteComFila({
       json: { ok: true, usuario: 'admin', deveTrocarSenha: false, csrf: 'c' }

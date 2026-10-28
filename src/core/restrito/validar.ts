@@ -11,6 +11,7 @@ import type {
   NoMapa,
   ResultadoValidacaoRestrita
 } from './tipos';
+import { htmlRejeitado } from './allowlist';
 
 export const QUANTIDADE_PERGUNTAS = 40;
 export const QUANTIDADE_ALTERNATIVAS = 4;
@@ -50,9 +51,6 @@ const MAXIMO_ERROS = 100;
 
 const CATEGORIAS: readonly CategoriaQuiz[] = ['conceitos', 'aplicacao', 'fundamentos'];
 
-const TAG_PERMITIDA =
-  /<\/?(?:p|strong|em|ul|ol|li|blockquote|table|thead|tbody|tr|th|td|h3|h4)>|<br ?\/?>/g;
-const ENTIDADE_PERMITIDA = /&(?:amp|lt|gt|quot|#39|nbsp);/g;
 // eslint-disable-next-line no-control-regex
 const CONTROLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
@@ -67,18 +65,6 @@ class Coletor {
   erro(codigo: CodigoErroRestrito, caminho: string): void {
     if (this.erros.length < MAXIMO_ERROS) this.erros.push({ codigo, caminho });
   }
-}
-
-/**
- * Allowlist por remoção: tira cada tag permitida (minúscula, sem nenhum
- * atributo) e exige que o resto não tenha `<` nem `>`. Comentário, CDATA,
- * maiúscula, atributo e tag pela metade sobram como `<` e reprovam.
- */
-function htmlRejeitado(texto: string): CodigoErroRestrito | undefined {
-  const semTags = texto.replace(TAG_PERMITIDA, '');
-  if (semTags.includes('<') || semTags.includes('>')) return 'html-proibido';
-  if (semTags.replace(ENTIDADE_PERMITIDA, '').includes('&')) return 'entidade-proibida';
-  return undefined;
 }
 
 /**

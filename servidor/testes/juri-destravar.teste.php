@@ -75,3 +75,30 @@ teste('juri: destravar com a conta trocada entre a conferência e a leitura resp
     igual('conta-alterada', $corpo['erro'] ?? null, 'código');
     verdadeiro(!array_key_exists('embrulho', $corpo), 'nenhum embrulho para uma conta que mudou');
 });
+
+teste('juri (R1-A1): destravar.php sem X-CSRF-Token responde 403 e não devolve o embrulho, mesmo com sessão e AUTH certo', function (): void {
+    $a = juriAmbiente();
+    $c = juriCliente($a);
+    $c->csrf = null;
+    $r = $c->post('/api/juri/destravar.php', ['auth' => juriAuthTeste()]);
+    igual(403, $r->status, 'status');
+    igual('csrf', $r->json()['erro'] ?? null, 'código');
+    naoContem((string) juriLerConta($a)['embrulho']['ct'], $r->corpo, 'o embrulho não sai sem CSRF');
+});
+
+teste('juri (R1-A1, R1-C3): destravar.php recusa Content-Type fora de application/json, Origin estranha e Sec-Fetch-Site cross-site, e não devolve o embrulho', function (): void {
+    $a = juriAmbiente();
+    $c = juriCliente($a);
+    $corpo = json_encode(['auth' => juriAuthTeste()], JSON_THROW_ON_ERROR);
+    $casos = [
+        'text/plain' => [['Content-Type' => 'text/plain'], 400, 'tipo-conteudo'],
+        'Origin de outro site' => [['Origin' => 'http://evil.example'], 403, 'origem'],
+        'Sec-Fetch-Site cross-site' => [['Sec-Fetch-Site' => 'cross-site'], 403, 'origem'],
+    ];
+    foreach ($casos as $nome => [$cabecalhos, $status, $erro]) {
+        $r = $c->post('/api/juri/destravar.php', $corpo, $cabecalhos);
+        igual($status, $r->status, "$nome: status");
+        igual($erro, $r->json()['erro'] ?? null, "$nome: código");
+        naoContem((string) juriLerConta($a)['embrulho']['ct'], $r->corpo, "$nome: sem embrulho");
+    }
+});

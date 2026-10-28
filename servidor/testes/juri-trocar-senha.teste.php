@@ -264,3 +264,33 @@ teste('juri: trocar-senha com a conta gravada sem embrulho válido responde 503 
     igual('indisponivel', $r->json()['erro'] ?? null, 'código');
     igual($disco, trocaFotoDisco($a), 'conta intacta');
 });
+
+teste('juri (R1-A1): trocar-senha.php sem X-CSRF-Token responde 403 e não troca a senha nem o embrulho, mesmo com sessão e AUTH atual certo', function (): void {
+    $a = juriAmbiente(['deveTrocar' => true]);
+    $c = juriCliente($a);
+    $antes = trocaFotoDisco($a);
+    $c->csrf = null;
+    $r = $c->post(TROCA_ROTA, trocaCorpo());
+    igual(403, $r->status, 'status');
+    igual('csrf', $r->json()['erro'] ?? null, 'código');
+    igual($antes, trocaFotoDisco($a), 'usuarios.json byte a byte igual: nada gravado');
+    igual(true, $c->get('/api/juri/sessao.php')->json()['deveTrocarSenha'] ?? null, 'a troca continua pendente');
+});
+
+teste('juri (R1-A1, R1-C3): trocar-senha.php recusa Content-Type fora de application/json, Origin estranha e Sec-Fetch-Site cross-site, sem gravar nada', function (): void {
+    $a = juriAmbiente(['deveTrocar' => true]);
+    $c = juriCliente($a);
+    $antes = trocaFotoDisco($a);
+    $corpo = json_encode(trocaCorpo(), JSON_THROW_ON_ERROR);
+    $casos = [
+        'text/plain' => [['Content-Type' => 'text/plain'], 400, 'tipo-conteudo'],
+        'Origin de outro site' => [['Origin' => 'http://evil.example'], 403, 'origem'],
+        'Sec-Fetch-Site cross-site' => [['Sec-Fetch-Site' => 'cross-site'], 403, 'origem'],
+    ];
+    foreach ($casos as $nome => [$cabecalhos, $status, $erro]) {
+        $r = $c->post(TROCA_ROTA, $corpo, $cabecalhos);
+        igual($status, $r->status, "$nome: status");
+        igual($erro, $r->json()['erro'] ?? null, "$nome: código");
+        igual($antes, trocaFotoDisco($a), "$nome: usuarios.json intacto");
+    }
+});

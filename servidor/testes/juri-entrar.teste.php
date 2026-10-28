@@ -169,3 +169,31 @@ teste('juri: corpo que não é objeto JSON com usuario e auth responde 400', fun
         igual(400, $c->post('/api/juri/entrar.php', $corpo)->status, $nome);
     }
 });
+
+teste('juri (R1-A1): entrar.php sem X-CSRF-Token responde 403 e não abre sessão, mesmo com AUTH certo', function (): void {
+    $a = juriAmbiente();
+    $c = juriAnonimo($a);
+    $c->csrf = null;
+    $r = $c->post('/api/juri/entrar.php', juriCorpoLogin());
+    igual(403, $r->status, 'status');
+    igual('csrf', $r->json()['erro'] ?? null, 'código');
+    igual(false, $c->get('/api/juri/sessao.php')->json()['autenticado'], 'não entrou');
+});
+
+teste('juri (R1-A1, R1-C3): entrar.php recusa Content-Type fora de application/json, Origin estranha e Sec-Fetch-Site cross-site, e não entra', function (): void {
+    $a = juriAmbiente();
+    $c = juriAnonimo($a);
+    $corpo = json_encode(juriCorpoLogin(), JSON_THROW_ON_ERROR);
+    $casos = [
+        'text/plain' => [['Content-Type' => 'text/plain'], 400, 'tipo-conteudo'],
+        'form-urlencoded' => [['Content-Type' => 'application/x-www-form-urlencoded'], 400, 'tipo-conteudo'],
+        'Origin de outro site' => [['Origin' => 'http://evil.example'], 403, 'origem'],
+        'Sec-Fetch-Site cross-site' => [['Sec-Fetch-Site' => 'cross-site'], 403, 'origem'],
+    ];
+    foreach ($casos as $nome => [$cabecalhos, $status, $erro]) {
+        $r = $c->post('/api/juri/entrar.php', $corpo, $cabecalhos);
+        igual($status, $r->status, "$nome: status");
+        igual($erro, $r->json()['erro'] ?? null, "$nome: código");
+    }
+    igual(false, $c->get('/api/juri/sessao.php')->json()['autenticado'], 'nenhum caso entrou');
+});

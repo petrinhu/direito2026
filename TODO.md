@@ -61,6 +61,7 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 - 2026-10-25: ✅ Concluído (v1.3.0.0), PD-07: item direto da AV em Sociologia AV3 (Artigos e ECA Digital, este último em breve) e endereço antigo redirecionado; especificação em docs/como-adicionar-conteudo.md, seção 1C.
 - 2026-10-25: 🔍 Pendente verificação, scripts/publicar.sh copia os dispositivos.ts para a cópia de publicação mas não apaga os que sobraram de unidade renomeada; a pasta antiga sem meta.ts reprovou o preci (removida à mão na publicação da v1.3.0.0).
 - 2026-10-25: cartão flutuante "Faltam N dias" cobre o texto e as abas em 390 px com Leitura ampliada, mesmo minimizado (QA docs/qa-eca-digital.md, F1); líder decidiu publicar e consertar em rodada separada.
+- 2026-10-28: Júri Simulado no 1º período: segunda área restrita independente (usuários e sessão próprios, admin com senha provisória aleatória e troca obrigatória), imagens cifradas no servidor e decifradas só no navegador, abas Resumo, Mapa mental, Fichamento, Mnemônicos e Quiz de 40 do ponto de vista do perito médico-legal da acusação; QA de fatos inventados no fim. Em pesquisa (onda 1 de 6).
 ## TABELA UNIFICADA
 
 | WSJF | ID | Onda | Grupo | Descrição Técnica | Prioridade | Pré-requisito | Dificuldade | Status | Estado Auditado |

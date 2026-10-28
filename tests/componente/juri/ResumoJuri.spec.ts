@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
+/* global Element */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import ResumoJuri from '@/ui/area-juri/ResumoJuri.vue';
-import { conteudoJuriValidadoFalso } from '../../unidade/apoio/conteudoJuriFalso';
+import { validarConteudoJuri } from '@/core/juri/validar';
+import {
+  conteudoJuriFalso,
+  conteudoJuriValidadoFalso,
+  idsFalsos
+} from '../../unidade/apoio/conteudoJuriFalso';
 
 let w: VueWrapper | undefined;
 afterEach(() => {
@@ -62,5 +68,35 @@ describe('ResumoJuri', () => {
     expect(quadro.text()).toContain('Legenda fictícia da imagem um');
     expect(quadro.text()).toContain('Legenda fictícia da imagem dois');
     expect(abrirQueNaoChega).toHaveBeenCalledWith('0'.repeat(31) + '0');
+  });
+});
+
+describe('ResumoJuri: ids únicos com mais de um bloco com linhas A e B', () => {
+  it('nenhum id se repete no DOM, e cada aria-labelledby aponta para um único alvo', () => {
+    const bruto = conteudoJuriFalso() as { resumo: Record<string, unknown>[] };
+    bruto.resumo[1] = {
+      ...bruto.resumo[1],
+      linhaA: '<p>Linha A fictícia do bloco dois.</p>',
+      linhaB: '<p>Linha B fictícia do bloco dois.</p>'
+    };
+    const resultado = validarConteudoJuri(bruto, idsFalsos());
+    if (!resultado.ok) throw new Error(JSON.stringify(resultado.erros));
+    w = mount(ResumoJuri, {
+      props: { conteudo: resultado.conteudo, abrirImagem: abrirQueNaoChega },
+      attachTo: document.body
+    });
+
+    const raiz = w.element as HTMLElement;
+    const ids = Array.from(raiz.querySelectorAll('[id]'), (el: Element) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    // Dois blocos com linhas: quatro rótulos de coluna (laudo e caso, em cada bloco).
+    const rotulos = Array.from(raiz.querySelectorAll('[aria-labelledby]'), (el: Element) =>
+      el.getAttribute('aria-labelledby')
+    ).filter((id): id is string => id !== null && /^juri-(laudo|caso)-/.test(id));
+    expect(rotulos).toHaveLength(4);
+    for (const id of rotulos) {
+      expect(raiz.querySelectorAll(`#${id}`)).toHaveLength(1);
+    }
   });
 });

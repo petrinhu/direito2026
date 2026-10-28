@@ -36,12 +36,12 @@ function fontesDe(id: string): readonly string[] {
     <VisorResumo :blocos="blocos">
       <template #depois-do-corpo="{ bloco }">
         <div v-if="linhasDe(bloco.id)" class="juri-linhas">
-          <section class="juri-linhas__coluna" aria-labelledby="juri-laudo-titulo">
-            <h3 id="juri-laudo-titulo">Laudo dos autos</h3>
+          <section class="juri-linhas__coluna" :aria-labelledby="`juri-laudo-${bloco.id}`">
+            <h3 :id="`juri-laudo-${bloco.id}`">Laudo dos autos</h3>
             <div v-html="linhasDe(bloco.id)!.a" />
           </section>
-          <section class="juri-linhas__coluna" aria-labelledby="juri-caso-titulo">
-            <h3 id="juri-caso-titulo">Elementos do caso real</h3>
+          <section class="juri-linhas__coluna" :aria-labelledby="`juri-caso-${bloco.id}`">
+            <h3 :id="`juri-caso-${bloco.id}`">Elementos do caso real</h3>
             <div v-html="linhasDe(bloco.id)!.b" />
           </section>
         </div>

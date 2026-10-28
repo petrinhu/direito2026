@@ -2,14 +2,24 @@
 
 .area-juri {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-5, 1.5rem);
   max-width: 34rem;
   margin-inline: auto;
   padding: var(--esp-6, 2rem) var(--esp-4, 1rem);
 }
 
+/* A coluna tem a largura da tela, nunca a do conteúdo mais largo: sem isto, uma tabela
+   do acervo estica a página inteira e as abas acompanham (achado do QA visual da Júri). */
+.area-juri > *,
+.juri-conteudo > *,
+.juri-visor > * {
+  min-width: 0;
+}
+
 .juri-cabecalho {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-2, 0.5rem);
 }
 
@@ -21,6 +31,7 @@
 
 .juri-cartao {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-4, 1rem);
   padding: var(--esp-5, 1.5rem);
   background: var(--cor-fundo-elevado);
@@ -43,10 +54,13 @@
 
 .juri-campo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-2, 0.5rem);
 }
 
 .juri-campo input {
+  width: 100%;
+  min-width: 0;
   min-height: 2.75rem;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
   font: inherit;
@@ -73,9 +87,11 @@
   min-width: 2.75rem;
   padding-inline: var(--esp-4, 1rem);
   font: inherit;
+  /* --cor-primaria-escura e --cor-texto-invertido viram o mesmo #0b1a2c no tema escuro:
+     texto e fundo iguais (1,00:1). Par do botão primário da área restrita: primária + invertido. */
   color: var(--cor-texto-invertido);
-  background: var(--cor-primaria-escura);
-  border: 1px solid var(--cor-primaria-escura);
+  background: var(--cor-primaria);
+  border: 1px solid var(--cor-primaria);
   border-radius: 0.375rem;
   cursor: pointer;
 }
@@ -86,7 +102,7 @@
 }
 
 .juri-botao--secundario {
-  color: var(--cor-primaria-escura);
+  color: var(--cor-primaria);
   background: var(--cor-fundo-elevado);
   border-color: var(--cor-borda-forte);
 }
@@ -119,11 +135,50 @@
 
 .juri-visor {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-4, 1rem);
+}
+
+/* Palavra sem espaço quebra dentro da caixa (sem isto, ela empurra a página para o lado). */
+.juri-visor :where(p, li, dd, dt, td, th) {
+  overflow-wrap: anywhere;
+}
+
+/* Tabela do acervo: quadro com rolagem própria, que recebe foco pelo teclado. */
+.juri-tabela-rolavel {
+  max-width: 100%;
+  margin-block: var(--esp-3, 0.75rem);
+  overflow-x: auto;
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.375rem;
+}
+
+.juri-tabela-rolavel:focus-visible {
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco);
+  outline-offset: var(--foco-deslocamento, 2px);
+}
+
+.juri-tabela-rolavel table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+.juri-tabela-rolavel :is(th, td) {
+  padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  border-top: 1px solid var(--cor-borda);
+  text-align: start;
+  vertical-align: top;
+}
+
+.juri-tabela-rolavel th {
+  color: var(--cor-texto-suave);
+  font-weight: 700;
 }
 
 .juri-erro {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: start;
   gap: var(--esp-3, 0.75rem);
   padding: var(--esp-4, 1rem);
@@ -144,6 +199,7 @@
 
 .juri-termos__lista {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-3, 0.75rem);
   margin: 0;
 }
@@ -188,6 +244,7 @@
 /* Linha A e B lado a lado a partir de 40rem; no celular empilham, na ordem A depois B. */
 .juri-linhas {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-4, 1rem);
   margin-block: var(--esp-4, 1rem);
 }
@@ -283,6 +340,14 @@
 .juri-quiz,
 .juri-mapa {
   margin-block: var(--esp-3, 0.75rem);
+}
+
+/* O mapa das páginas de estudo estica a lista para a margem da página (1,5rem); a Júri
+   tem margem de 1rem, então a lista passava da tela em 8px de cada lado. */
+@media (max-width: 639px) {
+  .area-juri .juri-mapa .mapa-mental-lista {
+    margin-inline: calc(-1 * var(--esp-4, 1rem));
+  }
 }
 
 /* Só para o leitor de tela: o texto existe no DOM, não aparece na tela. */

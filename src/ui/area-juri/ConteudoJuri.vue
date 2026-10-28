@@ -7,6 +7,7 @@ import MapaJuri from './MapaJuri.vue';
 import MnemonicosJuri from './MnemonicosJuri.vue';
 import QuizJuri from './QuizJuri.vue';
 import ResumoJuri from './ResumoJuri.vue';
+import { envolverTabelasNoConteudo } from './tabelaRolavel';
 
 const props = defineProps<{
   carregar: () => Promise<ResultadoConteudoJuri>;
@@ -31,8 +32,9 @@ type Estado =
 const estado = shallowRef<Estado>({ fase: 'carregando' });
 const aba = ref('resumo');
 
+// Tabelas do acervo ganham quadro com rolagem própria antes de chegar às abas (ver tabelaRolavel.ts).
 const conteudo = computed(() =>
-  estado.value.fase === 'pronto' ? estado.value.conteudo : undefined
+  estado.value.fase === 'pronto' ? envolverTabelasNoConteudo(estado.value.conteudo) : undefined
 );
 const motivoErro = computed(() => (estado.value.fase === 'erro' ? estado.value.motivo : undefined));
 

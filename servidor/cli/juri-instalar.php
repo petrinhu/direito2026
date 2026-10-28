@@ -12,8 +12,12 @@ declare(strict_types=1);
  * mesmo que entrar.php confere; o salt e o embrulho entram como vieram, depois de
  * validados pela forma. A conta nasce admin, ativa e com deveTrocarSenha=true.
  *
- * Recusa se usuarios.json já existe, salvo --substituir (troca a conta da Júri).
- * Fail-closed: qualquer campo fora do formato recusa antes de gravar nada. Nunca
+ * Recusa se usuarios.json já existe, salvo --substituir. Fail-closed (R1-A2):
+ * - o diretório precisa se chamar juri2026_privado (o nome do perfil da Júri);
+ * - --substituir só troca um usuarios.json que seja da Júri (uma conta com salt
+ *   e embrulho); conta do Interdisciplinar ou arquivo corrompido recusa;
+ * - a troca grava antes uma cópia usuarios.json.bak-<data> (600) do anterior.
+ * Qualquer campo fora do formato recusa antes de gravar nada. Nunca
  * imprime o auth, o hash, o salt nem o embrulho; a mensagem de erro nomeia o campo,
  * nunca o valor. A credencial equivale à senha provisória até a troca: quem a
  * instala apaga o arquivo depois (o CLI não apaga o que não criou).
@@ -115,6 +119,71 @@ function juriContaDaCredencial(array $cred): array
     return $conta;
 }
 
+/**
+ * Confere o nome do diretório: precisa ser o do perfil da Júri (juri2026_privado,
+ * vindo de D26_AREA_PERFIL). Com a pasta existente vale o caminho real, então um
+ * link com outro nome não engana a conferência (R1-A2).
+ */
+function juriDiretorioConferido(string $priv): void
+{
+    $real = is_dir($priv) ? realpath($priv) : false;
+    $nome = basename($real !== false ? $real : rtrim($priv, '/'));
+    if ($nome !== D26_AREA_PERFIL['privNome']) {
+        falha('o diretório privado precisa se chamar ' . D26_AREA_PERFIL['privNome'] . ' (nada foi criado nem alterado)');
+    }
+}
+
+/** Forma da conta da Júri no usuarios.json: exatamente uma conta, com salt de 16 B e embrulho v1. */
+function juriArquivoEhDaJuri(array $dados): bool
+{
+    $usuarios = $dados['usuarios'] ?? null;
+    if (($dados['versao'] ?? null) !== 1 || !is_array($usuarios) || !array_is_list($usuarios) || count($usuarios) !== 1 || !is_array($usuarios[0])) {
+        return false;
+    }
+    $conta = $usuarios[0];
+    return d26_juri_b64_bytes($conta['salt'] ?? null, D26_JURI_SALT_BYTES) !== null
+        && d26_juri_embrulho_valido($conta['embrulho'] ?? null);
+}
+
+/** Lê o usuarios.json que --substituir vai trocar: só se for da Júri. Devolve os bytes exatos. */
+function juriLerParaSubstituir(string $arquivo): string
+{
+    $bruto = file_get_contents($arquivo);
+    if ($bruto === false) {
+        falha('usuarios.json existente ilegível (nada foi alterado)');
+    }
+    try {
+        $dados = json_decode($bruto, true, 16, JSON_THROW_ON_ERROR);
+    } catch (JsonException) {
+        $dados = null;
+    }
+    if (!is_array($dados) || !juriArquivoEhDaJuri($dados)) {
+        falha('usuarios.json existente não é o da Júri (conta sem salt ou embrulho da Júri, ou corrompido): recusado, nada foi alterado');
+    }
+    return $bruto;
+}
+
+/**
+ * Cópia de segurança do usuarios.json anterior: usuarios.json.bak-<data>, 600, criada
+ * com fopen 'x' (nunca sobrescreve uma cópia existente). Só vale se os bytes conferirem.
+ */
+function juriCopiaDeSeguranca(string $arquivo, string $bruto): string
+{
+    $destino = $arquivo . '.bak-' . gmdate('Ymd-His');
+    $h = @fopen($destino, 'xb');
+    if ($h === false) {
+        falha('cópia de segurança não criada (nome já existe ou sem permissão): nada foi alterado');
+    }
+    $gravou = fwrite($h, $bruto) === strlen($bruto) && fflush($h);
+    fclose($h);
+    if (!$gravou || file_get_contents($destino) !== $bruto) {
+        @unlink($destino); // cópia criada por esta execução, removida pelo caminho exato
+        falha('cópia de segurança incompleta: nada foi alterado');
+    }
+    chmod($destino, 0600);
+    return $destino;
+}
+
 /** Ponto de entrada: sem efeito colateral antes de tudo estar validado (exceto a estrutura, só ao gravar). */
 function juriInstalar(array $argv): void
 {
@@ -129,9 +198,13 @@ function juriInstalar(array $argv): void
         falha('uso: php juri-instalar.php <dir-privado-da-juri> <credencial-admin.json> [--substituir]');
     }
     [$priv, $arquivoCredencial] = $posicionais;
+    juriDiretorioConferido($priv);
     $arquivoUsuarios = rtrim($priv, '/') . '/usuarios.json';
-    if (is_file($arquivoUsuarios) && !$substituir) {
-        falha('usuarios.json já existe; use --substituir para trocar a conta da Júri por esta');
+    if (is_file($arquivoUsuarios)) {
+        if (!$substituir) {
+            falha('usuarios.json já existe; use --substituir para trocar a conta da Júri por esta');
+        }
+        juriLerParaSubstituir($arquivoUsuarios); // recusa antes de qualquer gravação se não for da Júri
     }
 
     $cred = juriCredencialValidar(juriCredencialLer($arquivoCredencial));
@@ -141,8 +214,11 @@ function juriInstalar(array $argv): void
     // Confere de novo SOB a trava: dois CLIs ao mesmo tempo não sobrescrevem a conta um do outro.
     $trava = d26_travar($arquivoUsuarios);
     try {
-        if (is_file($arquivoUsuarios) && !$substituir) {
-            falha('usuarios.json já existe; use --substituir para trocar a conta da Júri por esta');
+        if (is_file($arquivoUsuarios)) {
+            if (!$substituir) {
+                falha('usuarios.json já existe; use --substituir para trocar a conta da Júri por esta');
+            }
+            juriCopiaDeSeguranca($arquivoUsuarios, juriLerParaSubstituir($arquivoUsuarios));
         }
         d26_gravar_atomico($arquivoUsuarios, ['versao' => 1, 'usuarios' => [$conta]]);
     } finally {

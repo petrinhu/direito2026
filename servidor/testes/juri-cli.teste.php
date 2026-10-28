@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/apoio/juri.php';
+require_once __DIR__ . '/apoio/nucleo.php';
 
 /**
  * CLI da Júri (servidor/cli/juri-instalar.php): instala a conta única a partir da
@@ -23,12 +24,13 @@ function juriCliRodar(array $args): array
     return [$rc, (string) $out, (string) $err];
 }
 
-/** Diretório temporário da suíte (apagado pelo próprio teste, prefixo d26-testes-). */
+/**
+ * Diretório temporário da suíte, registrado em dirTemporario(): a limpeza do runner
+ * o apaga mesmo quando o teste falha antes do apagarArvore do fim (R1-C7).
+ */
 function juriCliDir(): string
 {
-    $dir = rtrim(getenv('TMPDIR') ?: '/var/tmp', '/') . '/d26-testes-' . bin2hex(random_bytes(6));
-    mkdir($dir, 0700, true);
-    return $dir;
+    return dirTemporario();
 }
 
 /** Salt de fixture: 16 bytes em base64 padrão, derivado de $semente. */
@@ -86,9 +88,41 @@ function juriCliLerUsuarios(string $dir): array
     return json_decode((string) file_get_contents($dir . '/usuarios.json'), true, 16, JSON_THROW_ON_ERROR);
 }
 
+/** Diretório privado da Júri dentro de $base, com o nome que o CLI exige (o do perfil juri). */
+function juriCliDirPrivada(string $base): string
+{
+    return $base . '/' . d26_perfil_area('juri')['privNome'];
+}
+
+/** usuarios.json no formato do Interdisciplinar (sem salt nem embrulho): fixture sintética, senha inventada. */
+function juriCliUsuariosInterdisciplinar(): string
+{
+    return json_encode(['versao' => 1, 'usuarios' => [[
+        'usuario' => 'chefe-sintetico',
+        'uid' => bin2hex(random_bytes(16)),
+        'hash' => Ambiente::hashPadrao('senha-sintetica-interdisciplinar'),
+        'admin' => true,
+        'ativo' => true,
+        'deveTrocarSenha' => false,
+        'versaoSessao' => 123456,
+        'criadoEm' => gmdate('c'),
+        'ultimoLogin' => null,
+        'aparelhos' => [],
+    ]]], JSON_THROW_ON_ERROR);
+}
+
+/** Nomes das cópias de segurança usuarios.json.bak-* de $dir (leitura por scandir, nunca glob). @return list<string> */
+function juriCliBackups(string $dir): array
+{
+    return array_values(array_filter(
+        scandir($dir) ?: [],
+        static fn (string $nome): bool => str_starts_with($nome, 'usuarios.json.bak-')
+    ));
+}
+
 teste('juri (cli): instala a conta com salt e embrulho da credencial, Argon2id(AUTH), admin, troca obrigatória, 700/600 e pastas da Júri', function (): void {
     $base = juriCliDir();
-    $dir = $base . '/privado';
+    $dir = juriCliDirPrivada($base);
     $cred = juriCliGravarCredencial($base, juriCliCredencial());
     [$rc, $out, $err] = juriCliRodar([$dir, $cred]);
     igual(0, $rc, "saída: $out $err");
@@ -125,9 +159,9 @@ teste('juri (cli): instala a conta com salt e embrulho da credencial, Argon2id(A
 }, false);
 
 teste('juri (cli): o login real (sal.php e entrar.php) aceita o mesmo AUTH, devolve o salt e o embrulho da credencial e exige troca', function (): void {
-    $a = Ambiente::novo(['admin' => false]);
+    $a = Ambiente::novo(['admin' => false, 'layout' => 'producao']);
     $cred = juriCliGravarCredencial($a->raiz, juriCliCredencial());
-    [$rc, $out, $err] = juriCliRodar([$a->priv, $cred]);
+    [$rc, $out, $err] = juriCliRodar([$a->privJuri, $cred]);
     igual(0, $rc, "saída: $out $err");
 
     $c = juriAnonimo($a);
@@ -144,7 +178,7 @@ teste('juri (cli): o login real (sal.php e entrar.php) aceita o mesmo AUTH, devo
 
 teste('juri (cli): recusa se usuarios.json existe sem --substituir, e o arquivo fica byte a byte igual', function (): void {
     $base = juriCliDir();
-    $dir = $base . '/privado';
+    $dir = juriCliDirPrivada($base);
     [$rc0, $out0, $err0] = juriCliRodar([$dir, juriCliGravarCredencial($base, juriCliCredencial())]);
     igual(0, $rc0, "primeira instalação: $out0 $err0");
     $antes = (string) file_get_contents($dir . '/usuarios.json');
@@ -189,7 +223,7 @@ teste('juri (cli): credencial malformada recusa e não cria usuarios.json (fail-
     ];
     foreach ($casos as $nome => $conteudo) {
         $base = juriCliDir();
-        $dir = $base . '/privado';
+        $dir = juriCliDirPrivada($base);
         $cred = $conteudo === null
             ? $base . '/inexistente.json'
             : juriCliEscrever($base, 'credencial-admin.json', $conteudo);
@@ -203,7 +237,7 @@ teste('juri (cli): credencial malformada recusa e não cria usuarios.json (fail-
 
 teste('juri (cli): argumentos faltando ou flag desconhecida falham sem criar usuarios.json', function (): void {
     $base = juriCliDir();
-    $dir = $base . '/privado';
+    $dir = juriCliDirPrivada($base);
     $cred = juriCliGravarCredencial($base, juriCliCredencial());
     foreach ([[], [$dir], [$cred], [$dir, $cred, '--forcar']] as $args) {
         [$rc, , $err] = juriCliRodar($args);
@@ -216,7 +250,7 @@ teste('juri (cli): argumentos faltando ou flag desconhecida falham sem criar usu
 
 teste('juri (cli): a saída do processo (stdout e stderr) nunca contém AUTH, hash, salt, embrulho nem o valor rejeitado', function (): void {
     $base = juriCliDir();
-    $dir = $base . '/privado';
+    $dir = juriCliDirPrivada($base);
     $cred = juriCliCredencial();
 
     [$rc, $out, $err] = juriCliRodar([$dir, juriCliGravarCredencial($base, $cred)]);
@@ -234,9 +268,60 @@ teste('juri (cli): a saída do processo (stdout e stderr) nunca contém AUTH, ha
 
     $valorRejeitado = 'ZZ-rejeitado-' . str_repeat('q', 30);
     $ruim = juriCliEscrever($base, 'ruim.json', json_encode(juriCliCredencial(['auth' => $valorRejeitado]), JSON_THROW_ON_ERROR));
-    [$rc3, $out3, $err3] = juriCliRodar([$base . '/outro', $ruim]);
+    [$rc3, $out3, $err3] = juriCliRodar([juriCliDirPrivada($base . '/outra'), $ruim]);
     verdadeiro($rc3 !== 0, 'credencial malformada recusada');
     naoContem($valorRejeitado, $out3 . $err3, 'o valor rejeitado não volta na mensagem');
     naoContem(juriAuthTeste(), $out3 . $err3, 'AUTH válido de outra credencial não aparece');
+    apagarArvore($base);
+}, false);
+
+teste('juri (cli, R1-A2): diretório que não se chama juri2026_privado é recusado, com ou sem --substituir, e nada é criado nem alterado', function (): void {
+    $base = juriCliDir();
+    $dirInter = $base . '/direito2026_privado';
+    mkdir($dirInter, 0700);
+    $contaInter = juriCliUsuariosInterdisciplinar();
+    juriCliEscrever($dirInter, 'usuarios.json', $contaInter);
+    $cred = juriCliGravarCredencial($base, juriCliCredencial());
+    foreach ([[$dirInter, $cred], [$dirInter, $cred, '--substituir'], [$base . '/outro-nome', $cred, '--substituir']] as $args) {
+        [$rc, , $err] = juriCliRodar($args);
+        verdadeiro($rc !== 0, 'recusa: ' . $args[0] . ' ' . ($args[2] ?? ''));
+        contem('juri-instalar:', $err, 'mensagem do CLI');
+    }
+    igual($contaInter, (string) file_get_contents($dirInter . '/usuarios.json'), 'a conta do Interdisciplinar ficou byte a byte igual');
+    verdadeiro(!is_dir($dirInter . '/imagens'), 'nenhuma subpasta criada no diretório errado');
+    verdadeiro(!is_dir($base . '/outro-nome'), 'diretório com outro nome não é criado');
+    apagarArvore($base);
+}, false);
+
+teste('juri (cli, R1-A2): na pasta da Júri, --substituir recusa usuarios.json que não é da Júri (sem salt e embrulho, ou corrompido) e não grava', function (): void {
+    foreach (['conta do Interdisciplinar' => juriCliUsuariosInterdisciplinar(), 'JSON quebrado' => '{quebrado'] as $nome => $antes) {
+        $base = juriCliDir();
+        $dir = juriCliDirPrivada($base);
+        mkdir($dir, 0700);
+        juriCliEscrever($dir, 'usuarios.json', $antes);
+        $cred = juriCliGravarCredencial($base, juriCliCredencial());
+        [$rc, , $err] = juriCliRodar([$dir, $cred, '--substituir']);
+        verdadeiro($rc !== 0, "$nome: recusa");
+        contem('juri-instalar:', $err, "$nome: mensagem do CLI");
+        igual($antes, (string) file_get_contents($dir . '/usuarios.json'), "$nome: usuarios.json intacto");
+        igual([], juriCliBackups($dir), "$nome: nenhuma cópia de segurança, nada foi trocado");
+        apagarArvore($base);
+    }
+}, false);
+
+teste('juri (cli, R1-A2): --substituir na pasta da Júri grava cópia de segurança do usuarios.json anterior (600, bytes iguais) antes de trocar', function (): void {
+    $base = juriCliDir();
+    $dir = juriCliDirPrivada($base);
+    [$rc0, $out0, $err0] = juriCliRodar([$dir, juriCliGravarCredencial($base, juriCliCredencial())]);
+    igual(0, $rc0, "primeira instalação: $out0 $err0");
+    $anterior = (string) file_get_contents($dir . '/usuarios.json');
+    $cred2 = juriCliGravarCredencial($base, juriCliCredencial(['salt' => juriCliSalt('outro'), 'auth' => juriCliAuthNovo()]), 'outra.json');
+    [$rc, $out, $err] = juriCliRodar([$dir, $cred2, '--substituir']);
+    igual(0, $rc, "--substituir: $out $err");
+    $bak = juriCliBackups($dir);
+    igual(1, count($bak), 'uma cópia de segurança');
+    igual($anterior, (string) file_get_contents($dir . '/' . $bak[0]), 'a cópia tem os bytes do usuarios.json anterior');
+    igual(0600, fileperms($dir . '/' . $bak[0]) & 0777, 'a cópia sai 600');
+    igual(juriCliSalt('outro'), juriCliLerUsuarios($dir)['usuarios'][0]['salt'], 'a conta nova entrou');
     apagarArvore($base);
 }, false);

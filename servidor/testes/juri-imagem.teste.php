@@ -102,3 +102,15 @@ teste('juri: imagem.php com acervo.json corrompido responde 503 indisponivel', f
     igual(503, $r->status, 'status');
     igual('indisponivel', $r->json()['erro'] ?? null, 'código do erro');
 });
+
+teste('juri (R1-C1): imagem.php com conta sem embrulho válido responde 503 e não entrega bytes, mesmo com o id indexado', function (): void {
+    $a = juriAmbiente();
+    $bytes = "\x00\xff" . random_bytes(64);
+    $id = juriSemearImagem($a, $bytes);
+    $c = juriCliente($a);
+    juriAlterarConta($a, static fn (array $conta): array => array_diff_key($conta, ['embrulho' => 1]));
+    $r = $c->get('/api/juri/imagem.php?id=' . $id);
+    igual(503, $r->status, 'status');
+    igual('indisponivel', $r->json()['erro'] ?? null, 'código do erro');
+    naoContem($bytes, $r->corpo, 'nenhum byte da imagem com a conta quebrada');
+});

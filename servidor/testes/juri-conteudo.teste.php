@@ -50,3 +50,20 @@ teste('juri: /api/juri/ inexistente é 404 e nunca cai na SPA; POST em conteudo.
     }
     igual(405, juriCliente($a)->post('/api/juri/conteudo.php', [])->status, 'POST');
 });
+
+teste('juri (R1-C1): conteudo.php com conta sem embrulho ou sem salt válido responde 503 indisponivel e não entrega o conteúdo', function (): void {
+    $casos = [
+        'sem embrulho' => static fn (array $conta): array => array_diff_key($conta, ['embrulho' => 1]),
+        'sem salt' => static fn (array $conta): array => array_diff_key($conta, ['salt' => 1]),
+    ];
+    foreach ($casos as $nome => $quebrar) {
+        $a = juriAmbiente();
+        juriSemearConteudo($a, '{"titulo":"fixture sintética"}');
+        $c = juriCliente($a); // o login exige conta válida; a quebra vem depois, com a sessão já aberta
+        juriAlterarConta($a, $quebrar);
+        $r = $c->get('/api/juri/conteudo.php');
+        igual(503, $r->status, "$nome: status");
+        igual('indisponivel', $r->json()['erro'] ?? null, "$nome: código do erro");
+        naoContem('fixture sintética', $r->corpo, "$nome: o conteúdo não sai");
+    }
+});

@@ -177,7 +177,15 @@ const PARES: ReadonlyArray<{ nome: string; texto: string; fundo: string }> = [
   // próprio, na mesma família do menu lateral (azul-marinho e dourado).
   { nome: 'mapa mental, era', texto: '--cor-mapa-era-texto', fundo: '--cor-mapa-era-fundo' },
   { nome: 'mapa mental, fase', texto: '--cor-mapa-fase-texto', fundo: '--cor-mapa-fase-fundo' },
-  { nome: 'mapa mental, folha e ficha', texto: '--cor-texto', fundo: '--cor-fundo-sutil' }
+  { nome: 'mapa mental, folha e ficha', texto: '--cor-texto', fundo: '--cor-fundo-sutil' },
+  // Botão secundário da Júri (Sair, Mapa, Mnemônicos): o texto usa a cor primária
+  // sobre o cartão. No tema escuro, a primária tem de ficar clara; se voltar a
+  // colapsar no #0b1a2c do fundo escuro, o botão some (medido 1,06:1 antes).
+  {
+    nome: 'botão secundário da Júri, texto primário sobre cartão',
+    texto: '--cor-primaria',
+    fundo: '--cor-fundo-elevado'
+  }
 ];
 
 describe('contraste dos tokens de design', () => {

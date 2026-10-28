@@ -29,6 +29,9 @@ function d26_dev_cabecalhos(bool $pagina): void
     }
 }
 
+// Os 404 e 400 que o próprio roteador responde também não podem dizer a versão do PHP (R1-C6).
+header_remove('X-Powered-By');
+
 $raiz = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
 $caminho = rawurldecode((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH));
 

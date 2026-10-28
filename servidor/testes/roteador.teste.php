@@ -51,3 +51,13 @@ teste('C-3: nenhuma resposta da API expõe X-Powered-By', function (): void {
     igual(null, $c->post('/api/entrar.php', ['usuario' => 'x', 'senha' => 'y'])->cabecalho('x-powered-by'), 'erro 401');
     igual(null, $c->get('/api/entrar.php')->cabecalho('x-powered-by'), 'erro 405');
 });
+
+teste('C-3 (R1-C6): nem os 404 do próprio roteador de dev expõem X-Powered-By', function (): void {
+    $a = Ambiente::novo();
+    $c = $a->cliente();
+    foreach (['/api/nucleo/config.php', '/api/nao-existe.php', '/api/juri/nao-existe.php'] as $caminho) {
+        $r = $c->get($caminho);
+        igual(404, $r->status, "$caminho: status");
+        igual(null, $r->cabecalho('x-powered-by'), "$caminho: sem X-Powered-By");
+    }
+});

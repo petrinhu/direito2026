@@ -66,6 +66,7 @@ export function conteudoJuriFalso(): Record<string, unknown> {
       regiao: `Região fictícia ${n}`,
       fontes: [`Fonte fictícia do termo ${n}`]
     })),
+    notaQuadroHtml: '<p>Nota fictícia do quadro.</p><p>Segunda nota fictícia do quadro.</p>',
     fichamento: [
       {
         id: 'ficha-1',
@@ -73,7 +74,7 @@ export function conteudoJuriFalso(): Record<string, unknown> {
         oQueEHtml: '<p>Conceito fictício.</p>',
         fonteDizHtml: '<p>Fonte fictícia diz isto.</p>',
         acusacaoUsaHtml: '<p>Uso fictício na acusação.</p>',
-        defesaAtacaHtml: '<p>Ataque fictício da defesa.</p>',
+        acusacaoNeutralizaHtml: '<p>Neutralização fictícia da defesa.</p>',
         fontes: ['Fonte fictícia da ficha']
       }
     ],
@@ -82,7 +83,6 @@ export function conteudoJuriFalso(): Record<string, unknown> {
         id: 'defesa-1',
         teseHtml: '<p>Tese fictícia da defesa.</p>',
         respostaHtml: '<p>Resposta fictícia ao ataque.</p>',
-        limiteHtml: '<p>Limite fictício da resposta.</p>',
         fontes: ['Fonte fictícia da defesa']
       }
     ],
@@ -116,6 +116,10 @@ export function conteudoJuriFalso(): Record<string, unknown> {
         legenda: 'Legenda fictícia da imagem dois',
         fontes: ['Fonte fictícia da imagem dois']
       }
+    ],
+    referencias: [
+      'AUTOR FICTÍCIO, A. Obra inventada para teste. Editora fictícia, 2026.',
+      'OUTRO AUTOR FICTÍCIO, B. Artigo inventado. Revista fictícia, v. 1, n. 1, 2026.'
     ]
   };
 }

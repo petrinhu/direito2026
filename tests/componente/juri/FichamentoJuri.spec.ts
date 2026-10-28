@@ -22,7 +22,7 @@ describe('FichamentoJuri', () => {
     expect(fichas[0]!.get('summary').text()).toBe('Ficha fictícia um');
   });
 
-  it('dentro da ficha: conceito, o que a fonte diz, uso da acusação, ataque da defesa e fontes', () => {
+  it('dentro da ficha: conceito, o que a fonte diz, uso da acusação, neutralização da defesa e fontes', () => {
     w = mount(FichamentoJuri, {
       props: { fichamento: conteudoJuriValidadoFalso().fichamento },
       attachTo: document.body
@@ -31,7 +31,16 @@ describe('FichamentoJuri', () => {
     expect(texto).toContain('Conceito fictício.');
     expect(texto).toContain('Fonte fictícia diz isto.');
     expect(texto).toContain('Uso fictício na acusação.');
-    expect(texto).toContain('Ataque fictício da defesa.');
+    expect(texto).toContain('Como a acusação neutraliza a defesa');
+    expect(texto).toContain('Neutralização fictícia da defesa.');
     expect(texto).toContain('Fonte fictícia da ficha');
+  });
+
+  it('o 4º campo não usa mais o rótulo de defesa', () => {
+    w = mount(FichamentoJuri, {
+      props: { fichamento: conteudoJuriValidadoFalso().fichamento },
+      attachTo: document.body
+    });
+    expect(w.text()).not.toContain('Como a defesa ataca');
   });
 });

@@ -6,6 +6,7 @@ import VisorResumo from '../componentes/VisorResumo.vue';
 import FontesJuri from './FontesJuri.vue';
 import ImagemCifrada from './ImagemCifrada.vue';
 import QuadroTermosJuri from './QuadroTermosJuri.vue';
+import ReferenciasJuri from './ReferenciasJuri.vue';
 import RespostasDefesaJuri from './RespostasDefesaJuri.vue';
 
 const props = defineProps<{
@@ -31,7 +32,7 @@ function fontesDe(id: string): readonly string[] {
 
 <template>
   <div class="juri-resumo">
-    <QuadroTermosJuri :termos="conteudo.quadroTermos" />
+    <QuadroTermosJuri :termos="conteudo.quadroTermos" :nota="conteudo.notaQuadroHtml" />
 
     <VisorResumo :blocos="blocos">
       <template #depois-do-corpo="{ bloco }">
@@ -62,5 +63,7 @@ function fontesDe(id: string): readonly string[] {
         <FontesJuri :fontes="imagem.fontes" />
       </div>
     </section>
+
+    <ReferenciasJuri :itens="conteudo.referencias" />
   </div>
 </template>

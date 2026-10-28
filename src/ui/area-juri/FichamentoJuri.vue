@@ -17,7 +17,7 @@ defineProps<{ fichamento: readonly FichaJuri[] }>();
         { rotulo: 'O que é', html: ficha.oQueEHtml },
         { rotulo: 'O que a fonte diz', html: ficha.fonteDizHtml },
         { rotulo: 'Como a acusação usa', html: ficha.acusacaoUsaHtml },
-        { rotulo: 'Como a defesa ataca', html: ficha.defesaAtacaHtml }
+        { rotulo: 'Como a acusação neutraliza a defesa', html: ficha.acusacaoNeutralizaHtml }
       ]"
       :fontes="ficha.fontes"
     />

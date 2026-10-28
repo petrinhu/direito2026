@@ -147,6 +147,11 @@ function lerLinhaTermo(c: Coletor, bruto: unknown, caminho: string): LinhaQuadro
   };
 }
 
+/** Nome antigo de um campo que saiu do formato: reprova, sem compatibilidade. */
+function proibirCampo(c: Coletor, obj: Objeto, chave: string, caminho: string): void {
+  if (chave in obj) c.erro('campo-proibido', `${caminho}.${chave}`);
+}
+
 function lerFicha(c: Coletor, bruto: unknown, caminho: string): FichaJuri {
   const vazia: FichaJuri = {
     id: '',
@@ -154,18 +159,19 @@ function lerFicha(c: Coletor, bruto: unknown, caminho: string): FichaJuri {
     oQueEHtml: '',
     fonteDizHtml: '',
     acusacaoUsaHtml: '',
-    defesaAtacaHtml: '',
+    acusacaoNeutralizaHtml: '',
     fontes: []
   };
   const obj = lerObjeto(c, bruto, caminho);
   if (!obj) return vazia;
+  proibirCampo(c, obj, 'defesaAtacaHtml', caminho);
   return {
     id: lerTexto(c, obj, 'id', caminho, 'puro'),
     titulo: lerTexto(c, obj, 'titulo', caminho, 'puro'),
     oQueEHtml: lerTexto(c, obj, 'oQueEHtml', caminho, 'html'),
     fonteDizHtml: lerTexto(c, obj, 'fonteDizHtml', caminho, 'html'),
     acusacaoUsaHtml: lerTexto(c, obj, 'acusacaoUsaHtml', caminho, 'html'),
-    defesaAtacaHtml: lerTexto(c, obj, 'defesaAtacaHtml', caminho, 'html'),
+    acusacaoNeutralizaHtml: lerTexto(c, obj, 'acusacaoNeutralizaHtml', caminho, 'html'),
     fontes: lerFontes(c, obj, caminho)
   };
 }
@@ -175,18 +181,29 @@ function lerRespostaDefesa(c: Coletor, bruto: unknown, caminho: string): ItemRes
     id: '',
     teseHtml: '',
     respostaHtml: '',
-    limiteHtml: '',
     fontes: []
   };
   const obj = lerObjeto(c, bruto, caminho);
   if (!obj) return vazio;
+  proibirCampo(c, obj, 'limiteHtml', caminho);
   return {
     id: lerTexto(c, obj, 'id', caminho, 'puro'),
     teseHtml: lerTexto(c, obj, 'teseHtml', caminho, 'html'),
     respostaHtml: lerTexto(c, obj, 'respostaHtml', caminho, 'html'),
-    limiteHtml: lerTexto(c, obj, 'limiteHtml', caminho, 'html'),
     fontes: lerFontes(c, obj, caminho)
   };
+}
+
+/** Referências: lista opcional. Quando o campo vem, traz ao menos uma; cada item é texto puro. */
+function lerReferencias(c: Coletor, bruto: unknown): string[] {
+  if (bruto === undefined) return [];
+  return lerLista(c, bruto, 'referencias', { minimo: 1 }, (item, _i, caminho) => {
+    if (typeof item !== 'string') {
+      c.erro('tipo-invalido', caminho);
+      return '';
+    }
+    return validarTexto(c, item, caminho, 'puro');
+  });
 }
 
 function lerMnemonico(c: Coletor, bruto: unknown, caminho: string): MnemonicoJuri {
@@ -375,6 +392,9 @@ export function validarConteudoJuri(
       { minimo: QUADRO_TERMOS_MINIMO },
       (l, _i, cam) => lerLinhaTermo(c, l, cam)
     ),
+    ...(raiz.notaQuadroHtml !== undefined
+      ? { notaQuadroHtml: lerTexto(c, raiz, 'notaQuadroHtml', '', 'html') }
+      : {}),
     fichamento: lerLista(c, raiz.fichamento, 'fichamento', { minimo: 1 }, (f, _i, cam) =>
       lerFicha(c, f, cam)
     ),
@@ -392,7 +412,8 @@ export function validarConteudoJuri(
     quiz,
     imagens: lerLista(c, raiz.imagens, 'imagens', { minimo: 0 }, (img, _i, cam) =>
       lerImagem(c, img, cam, idsDoAcervo)
-    )
+    ),
+    referencias: lerReferencias(c, raiz.referencias)
   };
 
   if (c.erros.length > 0) return { ok: false, erros: c.erros };

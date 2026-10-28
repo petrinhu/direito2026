@@ -168,6 +168,23 @@
   color: var(--cor-texto-suave);
 }
 
+.juri-termos__nota {
+  margin: var(--esp-3, 0.75rem) 0 0;
+}
+
+/* ABNT NBR 6023: sem marcador, com recuo francês (a primeira linha sai, o resto recua). */
+.juri-referencias__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.juri-referencias__lista li {
+  margin: 0 0 var(--esp-2, 0.5rem);
+  padding-left: 2.5rem;
+  text-indent: -2.5rem;
+}
+
 /* Linha A e B lado a lado a partir de 40rem; no celular empilham, na ordem A depois B. */
 .juri-linhas {
   display: grid;

@@ -2,7 +2,8 @@
 import type { LinhaQuadroTermos } from '@/core/juri/tipos';
 import FontesJuri from './FontesJuri.vue';
 
-defineProps<{ termos: readonly LinhaQuadroTermos[] }>();
+/** `nota` é o html de análise que vem logo depois do quadro; quando não há, a seção não mostra nada. */
+defineProps<{ termos: readonly LinhaQuadroTermos[]; nota?: string }>();
 </script>
 
 <template>
@@ -18,5 +19,6 @@ defineProps<{ termos: readonly LinhaQuadroTermos[] }>();
         </dd>
       </div>
     </dl>
+    <div v-if="nota" class="juri-termos__nota" v-html="nota" />
   </section>
 </template>

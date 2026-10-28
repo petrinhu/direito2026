@@ -223,6 +223,8 @@ describe('HTML proibido reprova o payload inteiro', () => {
     ['quadroTermos.definicaoHtml', (x, h) => (x.quadroTermos[0].definicaoHtml = h)],
     ['fichamento.oQueEHtml', (x, h) => (x.fichamento[0].oQueEHtml = h)],
     ['respostasDefesa.teseHtml', (x, h) => (x.respostasDefesa[0].teseHtml = h)],
+    ['fichamento.acusacaoNeutralizaHtml', (x, h) => (x.fichamento[0].acusacaoNeutralizaHtml = h)],
+    ['notaQuadroHtml', (x, h) => (x.notaQuadroHtml = h)],
     ['mnemonicos.dicaHtml', (x, h) => (x.mnemonicos[0].dicaHtml = h)],
     ['quiz.enunciadoHtml', (x, h) => (x.quiz[0].enunciadoHtml = h)],
     ['quiz.explicacaoHtml', (x, h) => (x.quiz[0].explicacaoHtml = h)],
@@ -238,5 +240,102 @@ describe('HTML proibido reprova o payload inteiro', () => {
 
   it('texto puro com marcação reprova', () => {
     expect(codigos(com((x) => (x.titulo = '<b>Título</b>')))).toContain('texto-com-marcacao');
+  });
+});
+
+describe('respostas à defesa: sem campo de limite', () => {
+  it('reprova limiteHtml, que saiu do formato', () => {
+    const c = com((x) => {
+      x.respostasDefesa[0].limiteHtml = '<p>Limite qualquer.</p>';
+    });
+    expect(codigos(c)).toContain('campo-proibido');
+  });
+
+  it('aceita item só com tese da defesa e resposta da acusação', () => {
+    const c = com((x) => {
+      delete x.respostasDefesa[0].limiteHtml;
+    });
+    expect(aceita(c)).toBe(true);
+  });
+});
+
+describe('fichamento: o 4º campo é acusacaoNeutralizaHtml', () => {
+  it('reprova ficha sem acusacaoNeutralizaHtml', () => {
+    const c = com((x) => {
+      delete x.fichamento[0].acusacaoNeutralizaHtml;
+    });
+    expect(codigos(c)).toContain('campo-ausente');
+  });
+
+  it('reprova o nome antigo defesaAtacaHtml: sem compatibilidade com o formato anterior', () => {
+    const c = com((x) => {
+      x.fichamento[0].defesaAtacaHtml = '<p>Ataque qualquer.</p>';
+    });
+    expect(codigos(c)).toContain('campo-proibido');
+  });
+
+  it('devolve a neutralização no campo novo', () => {
+    const r = validarConteudoJuri(conteudoJuriFalso(), idsFalsos());
+    if (!r.ok) throw new Error(JSON.stringify(r.erros));
+    expect(r.conteudo.fichamento[0]!.acusacaoNeutralizaHtml).toBe(
+      '<p>Neutralização fictícia da defesa.</p>'
+    );
+  });
+});
+
+describe('nota do quadro de termos: campo opcional, html validado', () => {
+  it('aceita o conteúdo sem nota', () => {
+    const c = com((x) => {
+      delete x.notaQuadroHtml;
+    });
+    expect(aceita(c)).toBe(true);
+  });
+
+  it('devolve a nota quando ela vem', () => {
+    const r = validarConteudoJuri(conteudoJuriFalso(), idsFalsos());
+    if (!r.ok) throw new Error(JSON.stringify(r.erros));
+    expect(r.conteudo.notaQuadroHtml).toBe(
+      '<p>Nota fictícia do quadro.</p><p>Segunda nota fictícia do quadro.</p>'
+    );
+  });
+
+  it('nota vazia reprova', () => {
+    expect(codigos(com((x) => (x.notaQuadroHtml = '')))).toContain('campo-ausente');
+  });
+});
+
+describe('referências: lista opcional de texto puro', () => {
+  it('sem o campo, o conteúdo sai com lista vazia', () => {
+    const c = com((x) => {
+      delete x.referencias;
+    });
+    const r = validarConteudoJuri(c, idsFalsos());
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.conteudo.referencias).toEqual([]);
+  });
+
+  it('devolve cada referência como texto, na ordem', () => {
+    const r = validarConteudoJuri(conteudoJuriFalso(), idsFalsos());
+    if (!r.ok) throw new Error(JSON.stringify(r.erros));
+    expect(r.conteudo.referencias).toEqual(conteudoJuriFalso().referencias);
+  });
+
+  it('lista presente e vazia reprova: quando o campo vem, traz conteúdo', () => {
+    expect(codigos(com((x) => (x.referencias = [])))).toContain('quantidade');
+  });
+
+  it('referência vazia reprova', () => {
+    const c = com((x) => {
+      x.referencias = ['   '];
+    });
+    expect(codigos(c)).toContain('campo-ausente');
+  });
+
+  it('referência com marcação reprova: é texto puro', () => {
+    expect(codigos(com((x) => (x.referencias = ['<i>Obra</i>'])))).toContain('texto-com-marcacao');
+  });
+
+  it('string solta no lugar da lista reprova', () => {
+    expect(codigos(com((x) => (x.referencias = 'Obra')))).toContain('tipo-invalido');
   });
 });

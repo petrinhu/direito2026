@@ -43,15 +43,16 @@ export interface FichaJuri {
   readonly oQueEHtml: string;
   readonly fonteDizHtml: string;
   readonly acusacaoUsaHtml: string;
-  readonly defesaAtacaHtml: string;
+  /** Como a acusação neutraliza a tese da defesa sobre este item. */
+  readonly acusacaoNeutralizaHtml: string;
   readonly fontes: readonly string[];
 }
 
+/** Tese da defesa e resposta da acusação. Não há campo de limite: a peça é de acusação. */
 export interface ItemRespostaDefesa {
   readonly id: string;
   readonly teseHtml: string;
   readonly respostaHtml: string;
-  readonly limiteHtml: string;
   readonly fontes: readonly string[];
 }
 
@@ -80,12 +81,16 @@ export interface ConteudoJuri {
   readonly titulo: string;
   readonly resumo: readonly BlocoResumoJuri[];
   readonly quadroTermos: readonly LinhaQuadroTermos[];
+  /** Análise que vem logo depois do quadro. Opcional; quando vem, é html validado. */
+  readonly notaQuadroHtml?: string;
   readonly fichamento: readonly FichaJuri[];
   readonly respostasDefesa: readonly ItemRespostaDefesa[];
   readonly mnemonicos: readonly MnemonicoJuri[];
   readonly mapa: NoMapa;
   readonly quiz: readonly PerguntaJuri[];
   readonly imagens: readonly ImagemJuri[];
+  /** Referências ABNT, cada item é texto puro. Sem o campo no JSON, vem como lista vazia. */
+  readonly referencias: readonly string[];
 }
 
 declare const marcaValidado: unique symbol;

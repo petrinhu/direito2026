@@ -57,10 +57,34 @@ describe('ResumoJuri', () => {
     expect(quadro.get('#bloco-2').text()).toContain('Fonte fictícia dois');
   });
 
-  it('mostra as perguntas da defesa com tese, resposta e limite', () => {
-    const texto = montar().text();
+  it('mostra as perguntas da defesa com a tese da defesa e a resposta da acusação', () => {
+    const quadro = montar();
+    expect(quadro.get('#juri-defesa-titulo').text()).toBe('Respostas à defesa');
+    const texto = quadro.text();
+    expect(texto).toContain('Tese da defesa');
     expect(texto).toContain('Tese fictícia da defesa.');
-    expect(texto).toContain('Limite fictício da resposta.');
+    expect(texto).toContain('Resposta da acusação');
+    expect(texto).toContain('Resposta fictícia ao ataque.');
+  });
+
+  it('não mostra campo de limite da resposta', () => {
+    expect(montar().text()).not.toContain('Limite');
+  });
+
+  it('a nota do quadro aparece logo depois dos termos', () => {
+    const termos = montar().get('.juri-termos');
+    const nota = termos.get('.juri-termos__nota');
+    expect(nota.text()).toContain('Nota fictícia do quadro.');
+    expect(termos.element.lastElementChild).toBe(nota.element);
+  });
+
+  it('as referências fecham o resumo, um item de texto por referência', () => {
+    const quadro = montar();
+    const refs = quadro.get('.juri-referencias');
+    expect(refs.get('h2').text()).toBe('Referências');
+    const itens = refs.findAll('li').map((li) => li.text());
+    expect(itens).toEqual(conteudoJuriValidadoFalso().referencias);
+    expect(quadro.element.lastElementChild).toBe(refs.element);
   });
 
   it('mostra as imagens cifradas com a legenda, pedindo cada uma ao abrir', () => {

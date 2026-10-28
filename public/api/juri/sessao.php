@@ -15,10 +15,11 @@ $priv = d26_priv();
 $conta = d26_sessao_iniciar($priv);
 $csrf = d26_csrf_token($priv);
 if ($conta === null) {
-    d26_responder(200, ['autenticado' => false, 'usuario' => null, 'deveTrocarSenha' => null, 'csrf' => $csrf]);
+    d26_responder(200, ['ok' => true, 'autenticado' => false, 'usuario' => null, 'deveTrocarSenha' => null, 'csrf' => $csrf]);
 }
 $conta = d26_juri_conta_validar($conta);
 d26_responder(200, [
+    'ok' => true,
     'autenticado' => true,
     'usuario' => $conta['usuario'],
     'deveTrocarSenha' => $conta['deveTrocarSenha'],

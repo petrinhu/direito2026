@@ -28,6 +28,7 @@ $salt = $conta === null
     : d26_juri_salt_da_conta($conta);
 
 d26_responder(200, [
+    'ok' => true,
     'salt' => base64_encode($salt),
     'iter' => D26_JURI_ITER,
     'v' => D26_JURI_VERSAO,

@@ -16,7 +16,7 @@ teste('juri: destravar com sessão e AUTH certo responde 200 com SÓ o embrulho,
     $c = juriCliente($a);
     $r = $c->post('/api/juri/destravar.php', ['auth' => juriAuthTeste()]);
     igual(200, $r->status, 'status');
-    igual(['embrulho'], array_keys($r->json()), 'chaves exatas: só o embrulho');
+    igual(['ok', 'embrulho'], array_keys($r->json()), 'chaves exatas: ok e o embrulho');
     igual(juriLerConta($a)['embrulho'], $r->json()['embrulho'], 'embrulho idêntico ao gravado');
 });
 

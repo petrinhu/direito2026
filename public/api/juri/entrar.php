@@ -64,6 +64,7 @@ if ($token !== null) {
 }
 
 d26_responder(200, [
+    'ok' => true,
     'usuario' => $usuario,
     'deveTrocarSenha' => $conta['deveTrocarSenha'],
     'csrf' => $_SESSION['csrf'],

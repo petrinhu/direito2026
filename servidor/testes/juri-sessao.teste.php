@@ -8,7 +8,7 @@ teste('juri: sessao.php anônimo responde EXATAMENTE autenticado false, usuario 
     $r = $a->cliente()->get('/api/juri/sessao.php');
     igual(200, $r->status, 'status');
     $j = $r->json();
-    igual(['autenticado', 'csrf', 'deveTrocarSenha', 'usuario'], juriChaves($j), 'chaves exatas');
+    igual(['autenticado', 'csrf', 'deveTrocarSenha', 'ok', 'usuario'], juriChaves($j), 'chaves exatas');
     igual(false, $j['autenticado'], 'autenticado');
     igual(null, $j['usuario'], 'usuario');
     igual(null, $j['deveTrocarSenha'], 'deveTrocarSenha');
@@ -22,7 +22,7 @@ teste('juri: sessao.php logado responde EXATAMENTE autenticado, usuario, deveTro
     $r = $c->get('/api/juri/sessao.php');
     $j = $r->json();
     igual(200, $r->status, 'status');
-    igual(['autenticado', 'csrf', 'deveTrocarSenha', 'usuario'], juriChaves($j), 'chaves exatas: nada além disso');
+    igual(['autenticado', 'csrf', 'deveTrocarSenha', 'ok', 'usuario'], juriChaves($j), 'chaves exatas: nada além disso');
     igual(true, $j['autenticado'], 'autenticado');
     igual(JURI_LOGIN_TESTE, $j['usuario'], 'usuario');
     igual(false, $j['deveTrocarSenha'], 'deveTrocarSenha');

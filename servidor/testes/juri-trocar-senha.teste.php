@@ -75,7 +75,7 @@ teste('juri: trocar-senha com a senha certa responde 200 com EXATAMENTE csrf nov
     $idAntes = $c->cookies['__Host-juri'] ?? '';
     $r = $c->post(TROCA_ROTA, trocaCorpo());
     igual(200, $r->status, 'status');
-    igual(['csrf'], juriChaves($r->json()), 'chaves exatas: só csrf');
+    igual(['csrf', 'ok'], juriChaves($r->json()), 'chaves exatas: csrf e ok');
     verdadeiro(is_string($r->json()['csrf']) && $r->json()['csrf'] !== $csrfAntes, 'csrf novo');
     verdadeiro(($c->cookies['__Host-juri'] ?? '') !== $idAntes, 'id de sessão novo (anti-fixação)');
     naoContem(trocaAuthNovo(), $r->corpo, 'o AUTH novo não volta');

@@ -16,7 +16,7 @@ teste('juri: sal.php devolve o salt real da conta (16 B em base64), iter 600000 
     $a = juriAmbiente();
     $r = juriAnonimo($a)->post('/api/juri/sal.php', ['usuario' => JURI_LOGIN_TESTE]);
     igual(200, $r->status, 'status');
-    igual(['salt', 'iter', 'v'], array_keys($r->json()), 'chaves exatas');
+    igual(['ok', 'salt', 'iter', 'v'], array_keys($r->json()), 'chaves exatas');
     igual(600000, $r->json()['iter'], 'iter');
     igual(1, $r->json()['v'], 'v');
     igual(juriLerConta($a)['salt'], $r->json()['salt'], 'é o salt gravado na conta, não um falso');
@@ -29,7 +29,7 @@ teste('juri: login inexistente recebe salt FALSO do mesmo formato (16 B, mesmas 
     $primeiro = $c->post('/api/juri/sal.php', ['usuario' => 'fantasma']);
     $segundo = $c->post('/api/juri/sal.php', ['usuario' => 'fantasma']);
     igual(200, $primeiro->status, 'status');
-    igual(['salt', 'iter', 'v'], array_keys($primeiro->json()), 'mesmas chaves do real');
+    igual(['ok', 'salt', 'iter', 'v'], array_keys($primeiro->json()), 'mesmas chaves do real');
     igual(600000, $primeiro->json()['iter'], 'iter');
     igual(1, $primeiro->json()['v'], 'v');
     igual($primeiro->json()['salt'], $segundo->json()['salt'], 'mesmo login, mesmo salt falso em duas chamadas');

@@ -24,7 +24,7 @@ teste('juri: login certo responde 200 com EXATAMENTE usuario, deveTrocarSenha, c
     $r = $c->post('/api/juri/entrar.php', juriCorpoLogin());
     igual(200, $r->status, 'status');
     $j = $r->json();
-    igual(['csrf', 'deveTrocarSenha', 'embrulho', 'usuario'], juriChaves($j), 'chaves exatas da resposta');
+    igual(['csrf', 'deveTrocarSenha', 'embrulho', 'ok', 'usuario'], juriChaves($j), 'chaves exatas da resposta');
     igual(JURI_LOGIN_TESTE, $j['usuario'], 'usuario');
     igual(false, $j['deveTrocarSenha'], 'deveTrocarSenha');
     igual(juriLerConta($a)['embrulho'], $j['embrulho'], 'embrulho idêntico ao gravado');

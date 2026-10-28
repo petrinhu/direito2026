@@ -70,4 +70,4 @@ if ($versao === 0) {
 d26_sessao_autenticar($priv, $login, (string) $conta['uid'], $versao, false);
 // A troca esvaziou os aparelhos; este navegador acabou de provar a senha. Preso à versão e ao uid da troca.
 d26_dispositivo_emitir($priv, $login, $versao, (string) $conta['uid']);
-d26_responder(200, ['csrf' => $_SESSION['csrf']]);
+d26_responder(200, ['ok' => true, 'csrf' => $_SESSION['csrf']]);

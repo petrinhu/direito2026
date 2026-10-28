@@ -51,4 +51,4 @@ if ($atual === null || !d26_conta_igual_lida($atual, $conta)) {
     d26_erro(409, 'conta-alterada', 'A conta foi alterada enquanto a senha era conferida. Entre de novo.');
 }
 
-d26_responder(200, ['embrulho' => d26_juri_embrulho_saida(d26_juri_conta_validar($atual))]);
+d26_responder(200, ['ok' => true, 'embrulho' => d26_juri_embrulho_saida(d26_juri_conta_validar($atual))]);

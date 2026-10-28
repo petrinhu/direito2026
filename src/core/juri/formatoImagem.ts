@@ -54,10 +54,15 @@ export function montarCabecalho(campos: CamposCabecalho): Uint8Array<ArrayBuffer
   return cabecalho;
 }
 
-/** Valida o arquivo inteiro contra o formato v1 e o kid esperado; não decifra nada. */
+/**
+ * Valida o arquivo inteiro contra o formato v1, o kid e o id pedidos; não decifra nada.
+ * O id é checado aqui porque o AAD sozinho não basta: um arquivo de outra imagem do mesmo
+ * acervo traz cabeçalho próprio e consistente consigo mesmo.
+ */
 export function lerArquivo(
   arquivo: Uint8Array<ArrayBuffer>,
-  kidEsperado: Uint8Array<ArrayBuffer>
+  kidEsperado: Uint8Array<ArrayBuffer>,
+  idEsperado: Uint8Array<ArrayBuffer>
 ): ArquivoLido {
   if (arquivo.byteLength < TAMANHO_CABECALHO + TAMANHO_TAG) {
     throw new ErroCifra('tamanho');
@@ -81,6 +86,9 @@ export function lerArquivo(
   }
   if (!iguais(cabecalho.subarray(8, 24), kidEsperado)) {
     throw new ErroCifra('kid');
+  }
+  if (!iguais(cabecalho.subarray(24, 40), idEsperado)) {
+    throw new ErroCifra('id');
   }
   return {
     tipo,

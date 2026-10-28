@@ -214,13 +214,14 @@ export async function cifrarImagem(
 export async function decifrarImagem(
   arquivo: Uint8Array<ArrayBuffer>,
   cek: ChaveAesGcm,
-  kidEsperado: Uint8Array<ArrayBuffer>
+  kidEsperado: Uint8Array<ArrayBuffer>,
+  idEsperado: Uint8Array<ArrayBuffer>
 ): Promise<ImagemDecifrada> {
-  if (kidEsperado.byteLength !== TAMANHO_KID) {
+  if (kidEsperado.byteLength !== TAMANHO_KID || idEsperado.byteLength !== TAMANHO_ID) {
     throw new ErroCifra('entrada');
   }
   // Tudo que pode ser checado sem chave é checado aqui, antes de qualquer decrypt.
-  const lido = lerArquivo(arquivo, kidEsperado);
+  const lido = lerArquivo(arquivo, kidEsperado, idEsperado);
   try {
     const claro = await SUBTLE.decrypt(
       { name: 'AES-GCM', iv: lido.iv, additionalData: lido.cabecalho, tagLength: BITS_TAG },

@@ -265,7 +265,7 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
   ] as const)('ida e volta do tipo %s (byte de tipo %i)', async (tipo, byteTipo) => {
     const { cek, arquivo } = await cifrarTeste(tipo);
     expect(arquivo[6]).toBe(byteTipo);
-    const decifrada = await decifrarImagem(arquivo, cek, KID);
+    const decifrada = await decifrarImagem(arquivo, cek, KID, ID);
     expect(decifrada.tipo).toBe(tipo);
     expect(decifrada.bytes).toEqual(CLARO);
   });
@@ -310,7 +310,7 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
     doNode.set(cabecalho, 0);
     doNode.set(ctNode, 52);
     doNode.set(tagNode, 52 + ctNode.byteLength);
-    const lidaPeloModulo = await decifrarImagem(doNode, cekNode, KID);
+    const lidaPeloModulo = await decifrarImagem(doNode, cekNode, KID, ID);
     expect(lidaPeloModulo.bytes).toEqual(CLARO);
 
     // O módulo cifra e o Node decifra com a tag separada no fim.
@@ -332,12 +332,14 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
       ['tipo desconhecido', 6, 0x04, 'tipo'],
       ['reservado', 7, 0x01, 'reservado']
     ] as const)(
-      '%s adulterado (byte %i) dá código %s e não chama decrypt',
+      '%s, byte %i, valor %i: código %s, sem chamar decrypt',
       async (_nome, indice, valor, codigo) => {
         const { cek, arquivo } = await cifrarTeste('png');
         const espiao = vi.spyOn(SUBTLE, 'decrypt');
 
-        const erro = await erroCifraDe(decifrarImagem(comByte(arquivo, indice, valor), cek, KID));
+        const erro = await erroCifraDe(
+          decifrarImagem(comByte(arquivo, indice, valor), cek, KID, ID)
+        );
         expect(erro.codigo).toBe(codigo);
         expect(espiao).not.toHaveBeenCalled();
       }
@@ -348,16 +350,44 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
       const espiao = vi.spyOn(SUBTLE, 'decrypt');
       const outroKid = hexParaBytes('ff'.repeat(16));
 
-      const erro = await erroCifraDe(decifrarImagem(arquivo, cek, outroKid));
+      const erro = await erroCifraDe(decifrarImagem(arquivo, cek, outroKid, ID));
       expect(erro.codigo).toBe('kid');
       expect(espiao).not.toHaveBeenCalled();
+    });
+
+    // Servidor entrega o arquivo de OUTRA imagem com o mesmo kid. Sem checar o id,
+    // o AAD (que é o próprio cabeçalho dela) confere e o arquivo decifra sem erro.
+    it('arquivo válido da imagem B pedido como imagem A dá código id e não chama decrypt', async () => {
+      const cek = await gerarCek();
+      const arquivoB = await cifrarImagem(CLARO, cek, { kid: KID, id: ID, tipo: 'png' });
+      const idA = hexParaBytes('a1'.repeat(16));
+      const espiao = vi.spyOn(SUBTLE, 'decrypt');
+
+      const erro = await erroCifraDe(decifrarImagem(arquivoB, cek, KID, idA));
+      expect(erro.codigo).toBe('id');
+      expect(espiao).not.toHaveBeenCalled();
+    });
+
+    it('1 bit do id no arquivo, com o id pedido original, dá código id e não chama decrypt', async () => {
+      const { cek, arquivo } = await cifrarTeste('png');
+      const espiao = vi.spyOn(SUBTLE, 'decrypt');
+
+      const erro = await erroCifraDe(decifrarImagem(bitInvertido(arquivo, 30), cek, KID, ID));
+      expect(erro.codigo).toBe('id');
+      expect(espiao).not.toHaveBeenCalled();
+    });
+
+    it('idEsperado com tamanho errado é recusado como entrada', async () => {
+      const { cek, arquivo } = await cifrarTeste('png');
+      const erro = await erroCifraDe(decifrarImagem(arquivo, cek, KID, new Uint8Array(15)));
+      expect(erro.codigo).toBe('entrada');
     });
 
     it('arquivo menor que cabeçalho mais tag é recusado como tamanho, sem decifrar', async () => {
       const { cek, arquivo } = await cifrarTeste('png');
       const espiao = vi.spyOn(SUBTLE, 'decrypt');
 
-      const erro = await erroCifraDe(decifrarImagem(arquivo.subarray(0, 67), cek, KID));
+      const erro = await erroCifraDe(decifrarImagem(arquivo.subarray(0, 67), cek, KID, ID));
       expect(erro.codigo).toBe('tamanho');
       expect(espiao).not.toHaveBeenCalled();
     });
@@ -367,7 +397,6 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
     // Campos com valores válidos: só o AAD (cabeçalho inteiro) e a tag acusam.
     it.each([
       ['tipo trocado de png para jpeg (valor válido)', 6, 0x01],
-      ['1 bit do id', 30, null],
       ['1 bit do IV', 45, null],
       ['1 bit do primeiro byte do ciphertext', 52, null],
       ['1 bit do último byte da tag', -1, null]
@@ -378,7 +407,7 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
         valor === null ? bitInvertido(arquivo, alvo) : comByte(arquivo, alvo, valor);
       const espiao = vi.spyOn(SUBTLE, 'decrypt');
 
-      const erro = await erroCifraDe(decifrarImagem(adulterado, cek, KID));
+      const erro = await erroCifraDe(decifrarImagem(adulterado, cek, KID, ID));
       expect(erro.codigo).toBe('integridade');
       expect(espiao).toHaveBeenCalledTimes(1);
     });
@@ -388,7 +417,7 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
       const adulterado = bitInvertido(arquivo, 8);
       const kidAdulterado = adulterado.slice(8, 24);
 
-      const erro = await erroCifraDe(decifrarImagem(adulterado, cek, kidAdulterado));
+      const erro = await erroCifraDe(decifrarImagem(adulterado, cek, kidAdulterado, ID));
       expect(erro.codigo).toBe('integridade');
     });
 
@@ -396,17 +425,16 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
       const { arquivo } = await cifrarTeste('png');
       const outraCek = await gerarCek();
 
-      const erro = await erroCifraDe(decifrarImagem(arquivo, outraCek, KID));
+      const erro = await erroCifraDe(decifrarImagem(arquivo, outraCek, KID, ID));
       expect(erro.codigo).toBe('integridade');
     });
 
-    it('troca do id da imagem por outro id válido do mesmo acervo falha como integridade', async () => {
-      const cek = await gerarCek();
-      const arquivo = await cifrarImagem(CLARO, cek, { kid: KID, id: ID, tipo: 'png' });
-      const outroId = hexParaBytes('a0'.repeat(16));
-      const trocado = comByte(arquivo, 24, outroId[0] ?? 0);
+    it('id adulterado com idEsperado igual ao adulterado: passa a checagem de id e o AAD acusa', async () => {
+      const { cek, arquivo } = await cifrarTeste('png');
+      const adulterado = bitInvertido(arquivo, 30);
+      const idAdulterado = adulterado.slice(24, 40);
 
-      const erro = await erroCifraDe(decifrarImagem(trocado, cek, KID));
+      const erro = await erroCifraDe(decifrarImagem(adulterado, cek, KID, idAdulterado));
       expect(erro.codigo).toBe('integridade');
     });
   });
@@ -425,7 +453,7 @@ describe('cifra de imagem, formato v1 (plano §4.2 da pesquisa)', () => {
 
   it('kidEsperado com tamanho errado é recusado como entrada', async () => {
     const { cek, arquivo } = await cifrarTeste('png');
-    const erro = await erroCifraDe(decifrarImagem(arquivo, cek, new Uint8Array(8)));
+    const erro = await erroCifraDe(decifrarImagem(arquivo, cek, new Uint8Array(8), ID));
     expect(erro.codigo).toBe('entrada');
   });
 

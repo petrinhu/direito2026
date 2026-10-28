@@ -10,6 +10,7 @@ export type CodigoErroCifra =
   | 'tipo'
   | 'reservado'
   | 'kid'
+  | 'id'
   | 'integridade'
   | 'entrada';
 

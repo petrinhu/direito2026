@@ -48,7 +48,7 @@ test.describe('Júri Simulado: entrada, troca obrigatória, destravar e sair', (
     await page.getByLabel('Nova senha', { exact: true }).fill(QUINZE);
     await page.getByLabel('Confirmar nova senha').fill(QUINZE);
     await page.getByRole('button', { name: 'Salvar nova senha' }).click();
-    await expect(page.getByText('Conteúdo em preparação')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Resumo' })).toBeVisible();
     expect(servidor.chamadasPara('trocar-senha.php')).toHaveLength(1);
 
     // Recarregar a página: a sessão continua no servidor, mas a chave sai da memória.
@@ -57,7 +57,7 @@ test.describe('Júri Simulado: entrada, troca obrigatória, destravar e sair', (
     await expect(page.getByLabel('Usuário')).toHaveCount(0);
     await page.getByLabel('Senha', { exact: true }).fill(QUINZE);
     await page.getByRole('button', { name: 'Destravar' }).click();
-    await expect(page.getByText('Conteúdo em preparação')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Resumo' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.getByRole('heading', { name: 'Entrar' })).toBeVisible();

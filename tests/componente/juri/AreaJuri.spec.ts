@@ -135,7 +135,7 @@ describe('AreaJuri: aberta, recarregar e sair', () => {
     await assentar();
     await entrar(USUARIO, PROVISORIA);
     expect(fase()).toBe('aberta');
-    expect(w!.text()).toContain('Conteúdo em preparação');
+    await vi.waitFor(() => expect(w!.findAll('[role="tab"]')).toHaveLength(5));
     expect(w!.find('button[data-acao="sair"]').exists()).toBe(true);
   });
 

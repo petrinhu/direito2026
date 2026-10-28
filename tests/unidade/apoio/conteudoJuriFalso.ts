@@ -5,6 +5,9 @@
  * posição de alternativa, para o caminho feliz passar pelas regras do quiz.
  */
 
+import { validarConteudoJuri } from '@/core/juri/validar';
+import type { ConteudoJuriValidado } from '@/core/juri/tipos';
+
 /** Id de imagem de 32 hex minúsculos, determinístico. */
 export function idFalso(n: number): string {
   return n.toString(16).padStart(32, '0');
@@ -115,4 +118,13 @@ export function conteudoJuriFalso(): Record<string, unknown> {
       }
     ]
   };
+}
+
+/** A fixture já passada pelo validador (o tipo que a interface recebe). Falha alto se a fixture quebrar. */
+export function conteudoJuriValidadoFalso(): ConteudoJuriValidado {
+  const resultado = validarConteudoJuri(conteudoJuriFalso(), idsFalsos());
+  if (!resultado.ok) {
+    throw new Error(`fixture falsa da Júri inválida: ${JSON.stringify(resultado.erros)}`);
+  }
+  return resultado.conteudo;
 }

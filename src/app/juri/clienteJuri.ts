@@ -6,6 +6,7 @@
  */
 import { criarTransporte, ErroDeApi, type Buscador, type Corpo } from '../restrito/transporte';
 import { base64ParaBytes } from '@/core/juri/base64';
+import { criarBuscadorImagemJuri } from './buscadorImagem';
 
 export { ErroDeApi } from '../restrito/transporte';
 export type { Buscador } from '../restrito/transporte';
@@ -52,6 +53,10 @@ export interface PedidoTrocarSenhaJuri {
 }
 
 export interface ClienteJuri {
+  /** JSON cru do conteúdo (`conteudo` do envelope). Quem chama valida antes de usar. */
+  conteudo(): Promise<unknown>;
+  /** Bytes binários da imagem cifrada (formato v1), tal como o servidor entregou. */
+  imagem(id: string): Promise<Uint8Array<ArrayBuffer>>;
   sal(usuario: string): Promise<RespostaSal>;
   entrar(usuario: string, auth: string): Promise<RespostaEntrarJuri>;
   destravar(auth: string): Promise<RespostaDestravarJuri>;
@@ -125,8 +130,22 @@ export function criarClienteJuri(opcoes: OpcoesClienteJuri = {}): ClienteJuri {
     ...(opcoes.tempoLimiteMs !== undefined ? { tempoLimiteMs: opcoes.tempoLimiteMs } : {})
   });
   const { ler, enviar } = transporte;
+  const buscarImagem = criarBuscadorImagemJuri({
+    base: opcoes.base ?? BASE_PADRAO,
+    ...(opcoes.buscar ? { buscar: opcoes.buscar } : {}),
+    ...(opcoes.tempoLimiteMs !== undefined ? { tempoLimiteMs: opcoes.tempoLimiteMs } : {})
+  });
 
   return {
+    async conteudo() {
+      const corpo = await ler('conteudo.php');
+      const conteudo = corpo.conteudo;
+      if (typeof conteudo !== 'object' || conteudo === null || Array.isArray(conteudo)) {
+        return respostaInvalida();
+      }
+      return conteudo;
+    },
+    imagem: buscarImagem,
     async sal(usuario) {
       const corpo = await enviar('sal.php', { usuario });
       return {

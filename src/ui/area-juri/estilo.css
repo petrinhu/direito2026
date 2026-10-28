@@ -112,12 +112,160 @@
   margin: 0;
 }
 
-.juri-conteudo__aviso {
-  margin: 0;
+/* Depois de aberta, a área ganha a largura das abas; o login continua estreito. */
+.area-juri[data-fase='aberta'] {
+  max-width: 60rem;
+}
+
+.juri-visor {
+  display: grid;
+  gap: var(--esp-4, 1rem);
+}
+
+.juri-erro {
+  display: grid;
+  justify-items: start;
+  gap: var(--esp-3, 0.75rem);
   padding: var(--esp-4, 1rem);
-  color: var(--cor-texto-suave);
-  background: var(--cor-fundo-sutil);
+  border: 1px solid var(--cor-borda);
   border-radius: 0.5rem;
+}
+
+.juri-ajuda {
+  max-width: var(--largura-leitura, 68ch);
+  color: var(--cor-texto-suave);
+}
+
+.juri-fontes {
+  margin: var(--esp-2, 0.5rem) 0 0;
+  font-size: var(--escala-xs, 0.8125rem);
+  color: var(--cor-texto-suave);
+}
+
+.juri-termos__lista {
+  display: grid;
+  gap: var(--esp-3, 0.75rem);
+  margin: 0;
+}
+
+.juri-termos__item {
+  padding: var(--esp-3, 0.75rem);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+}
+
+.juri-termos__item dt {
+  font-weight: 700;
+}
+
+.juri-termos__item dd {
+  margin: var(--esp-1, 0.25rem) 0 0;
+}
+
+.juri-termos__regiao {
+  margin: 0;
+  font-size: var(--escala-sm, 0.9375rem);
+  color: var(--cor-texto-suave);
+}
+
+/* Linha A e B lado a lado a partir de 40rem; no celular empilham, na ordem A depois B. */
+.juri-linhas {
+  display: grid;
+  gap: var(--esp-4, 1rem);
+  margin-block: var(--esp-4, 1rem);
+}
+
+.juri-linhas__coluna {
+  padding: var(--esp-3, 0.75rem);
+  border-inline-start: 3px solid var(--cor-acento, #7c621c);
+}
+
+.juri-linhas__coluna h3 {
+  margin: 0 0 var(--esp-2, 0.5rem);
+  font-size: var(--escala-sm, 0.9375rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 40rem) {
+  .juri-linhas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.juri-defesa__item,
+.juri-imagens__item,
+.juri-cartao {
+  padding: var(--esp-3, 0.75rem) 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.juri-defesa__item dt {
+  font-weight: 700;
+  margin-top: var(--esp-2, 0.5rem);
+}
+
+.juri-defesa__item dd {
+  margin: var(--esp-1, 0.25rem) 0 0;
+}
+
+.juri-imagem {
+  margin: 0;
+}
+
+.juri-imagem__foto {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.juri-imagem__estado,
+.juri-imagem__legenda {
+  margin: var(--esp-2, 0.5rem) 0 0;
+  font-size: var(--escala-sm, 0.9375rem);
+}
+
+.juri-ficha {
+  margin-block: var(--esp-2, 0.5rem);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+  background: var(--cor-fundo-elevado);
+}
+
+.juri-ficha__titulo {
+  min-height: 44px;
+  padding: var(--esp-3, 0.75rem) var(--esp-4, 1rem);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.juri-ficha__campos {
+  margin: 0;
+  padding: 0 var(--esp-4, 1rem) var(--esp-3, 0.75rem);
+}
+
+.juri-ficha__campo {
+  margin-top: var(--esp-3, 0.75rem);
+}
+
+.juri-ficha__campo dt {
+  font-size: var(--escala-xs, 0.8125rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+.juri-ficha__campo dd {
+  margin: var(--esp-1, 0.25rem) 0 0;
+  max-width: var(--largura-leitura, 68ch);
+}
+
+.juri-mnemonicos .juri-botao,
+.juri-quiz,
+.juri-mapa {
+  margin-block: var(--esp-3, 0.75rem);
 }
 
 /* Só para o leitor de tela: o texto existe no DOM, não aparece na tela. */

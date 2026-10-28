@@ -88,6 +88,7 @@ function anterior(): void {
         :letras="letras"
         @responder="(indice) => emit('responder', rodada.perguntas[indiceAtual]!.id, indice)"
       />
+      <slot name="apos-pergunta" :pergunta="rodada.perguntas[indiceAtual]" />
       <div class="motor-quiz__navegacao">
         <button type="button" :disabled="indiceAtual === 0" @click="anterior">Anterior</button>
         <button type="button" @click="proxima">

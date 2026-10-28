@@ -8,6 +8,8 @@
 import { ref } from 'vue';
 import { aadDoEmbrulho } from '@/core/juri/aadEmbrulho';
 import { base64ParaBytes, bytesParaBase64, bytesParaBase64Url } from '@/core/juri/base64';
+import { MIME_DO_TIPO } from '@/core/juri/formatoImagem';
+import { idDeHex, kidDoArquivo } from '@/core/juri/idImagem';
 import {
   ErroCifra,
   ITERACOES_PBKDF2,
@@ -22,6 +24,7 @@ import {
 } from '@/core/juri/cifra';
 import { MINIMO_SENHA, senhasIguais, validarSenhaNova } from '@/core/juri/senha';
 import { ErroDeApi, type ClienteJuri, type RespostaSal } from './clienteJuri';
+import { validarConteudoBruto, type ResultadoConteudoJuri } from './conteudo';
 
 /** CryptoKey do WebCrypto. Alias local porque o lint do projeto não conhece o tipo global. */
 type ChaveAesGcm = globalThis.CryptoKey;
@@ -30,6 +33,12 @@ type ChaveAesGcm = globalThis.CryptoKey;
 const VERSAO_CONTRATO = 1;
 
 export type FaseSessaoJuri = 'carregando' | 'deslogado' | 'travada' | 'troca-pendente' | 'aberta';
+
+/** Imagem pronta para a tela: bytes decifrados e o tipo MIME do formato. */
+export interface ImagemAberta {
+  readonly mime: string;
+  readonly bytes: Uint8Array<ArrayBuffer>;
+}
 
 export class ErroSessaoJuri extends Error {
   readonly codigo: 'sem-chave';
@@ -323,6 +332,54 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
     return decifrarImagemCifrada(arquivo, cek, kid, id);
   }
 
+  /** 401 é sessão perdida: a CEK sai da memória e a tela volta à entrada. Devolve se foi isso. */
+  function sessaoPerdida(erro: unknown): boolean {
+    if (erro instanceof ErroDeApi && erro.status === 401) {
+      encerrarLocal();
+      mensagem.value = MENSAGEM_SESSAO_ACABOU;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Conteúdo para a tela, já validado (o JSON cru não sai daqui). Fora da fase aberta não
+   * há o que pedir. Um 401 aqui é sessão perdida e descarta a CEK.
+   */
+  async function carregarConteudo(): Promise<ResultadoConteudoJuri> {
+    if (fase.value !== 'aberta') return { ok: false, motivo: 'indisponivel' };
+    try {
+      return validarConteudoBruto(await cliente.conteudo());
+    } catch (erro) {
+      sessaoPerdida(erro);
+      return { ok: false, motivo: 'indisponivel' };
+    }
+  }
+
+  /**
+   * Imagem do acervo decifrada com a CEK da sessão. Sem CEK recusa antes de pedir a imagem.
+   * Se a CEK foi descartada enquanto os bytes vinham (sair, travar), não entrega nada. O
+   * kid vem do próprio arquivo (ver kidDoArquivo); o id pedido é o que o AAD confere.
+   */
+  async function abrirImagem(id: string): Promise<ImagemAberta> {
+    const chave = cek;
+    if (chave === undefined) throw new ErroSessaoJuri('sem-chave');
+    try {
+      const arquivo = await cliente.imagem(id);
+      if (cek !== chave) throw new ErroSessaoJuri('sem-chave');
+      const decifrada = await decifrarImagemCifrada(
+        arquivo,
+        chave,
+        kidDoArquivo(arquivo),
+        idDeHex(id)
+      );
+      return { mime: MIME_DO_TIPO[decifrada.tipo], bytes: decifrada.bytes };
+    } catch (erro) {
+      sessaoPerdida(erro);
+      throw erro;
+    }
+  }
+
   /** Apaga a CEK neste aparelho antes de falar com o servidor: sair nunca depende da rede. */
   async function sair(): Promise<void> {
     encerrarLocal();
@@ -354,7 +411,9 @@ export function criarSessaoJuri({ cliente }: OpcoesSessaoJuri) {
     trocarSenha,
     sair,
     descartar,
-    decifrarImagem
+    decifrarImagem,
+    carregarConteudo,
+    abrirImagem
   };
 }
 

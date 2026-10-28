@@ -6,6 +6,7 @@ import { criarSessaoJuri } from '@/app/juri/sessaoJuri';
 import DestravarJuri from '../area-juri/DestravarJuri.vue';
 import EntradaJuri from '../area-juri/EntradaJuri.vue';
 import TrocaSenhaJuri from '../area-juri/TrocaSenhaJuri.vue';
+import ConteudoJuri from '../area-juri/ConteudoJuri.vue';
 import '../area-juri/estilo.css';
 
 // Só a cadeira da Júri carrega esta página (e o CSS dela), em chunk à parte.
@@ -75,7 +76,7 @@ watch(fase, async (nova, antiga) => {
       @trocar="sessao.trocarSenha"
     />
     <section v-else-if="fase === 'aberta'" class="juri-conteudo">
-      <p class="juri-conteudo__aviso">Conteúdo em preparação.</p>
+      <ConteudoJuri :carregar="sessao.carregarConteudo" :abrir-imagem="sessao.abrirImagem" />
     </section>
   </div>
 </template>

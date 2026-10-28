@@ -42,9 +42,11 @@ onBeforeUnmount(() => observador?.disconnect());
       <span v-if="bloco.badge" class="bloco-teorico__badge">{{ bloco.badge }}</span>
     </header>
     <h2 class="bloco-teorico__titulo">{{ bloco.titulo }}</h2>
-    <p class="bloco-teorico__fonte">{{ bloco.fonte }}</p>
+    <p v-if="bloco.fonte.length > 0" class="bloco-teorico__fonte">{{ bloco.fonte }}</p>
     <!-- v-html só recebe corpoHtml, que vem de src/conteudo/ (seção 4.4). -->
     <div class="bloco-teorico__corpo" v-html="bloco.corpoHtml" />
+    <!-- Extensão opcional (Área da Júri: linhas A e B, fontes). Sem conteúdo no slot, nada muda. -->
+    <slot name="depois-do-corpo" />
     <ChecklistArt319
       v-if="bloco.componenteExtra === 'checklist-art-319'"
       :marcados="itensChecklistMarcados"

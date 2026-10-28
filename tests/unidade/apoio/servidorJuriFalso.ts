@@ -9,11 +9,18 @@ import { base64ParaBytes, bytesParaBase64, bytesParaBase64Url } from '@/core/jur
 import {
   ITERACOES_PBKDF2,
   TAMANHO_SALT,
+  cifrarImagem,
   derivar,
   embrulharCek,
   gerarCek,
   type Embrulho
 } from '@/core/juri/cifra';
+import type { TipoImagem } from '@/core/juri/formatoImagem';
+import { conteudoJuriFalso } from './conteudoJuriFalso';
+import { hexParaBytes } from './cifraJuri';
+
+/** kid fixo do acervo falso: 16 bytes de 7. Só teste. */
+const KID_FALSO = new Uint8Array(16).fill(7);
 
 export interface ChamadaFalsa {
   readonly metodo: string;
@@ -41,6 +48,11 @@ export function criarServidorJuriFalso() {
   let offline = false;
   let conflitoConta = false;
   let iter: number = ITERACOES_PBKDF2;
+  /** Conteúdo que conteudo.php devolve (default: a fixture sintética). */
+  let conteudo: unknown = conteudoJuriFalso();
+  /** Bytes que imagem.php devolve, por id. Guardados como o servidor os guardaria. */
+  const imagens = new Map<string, Uint8Array<ArrayBuffer>>();
+  let cekDaConta: globalThis.CryptoKey | undefined;
 
   function novoCsrf(): string {
     contadorCsrf += 1;
@@ -68,6 +80,29 @@ export function criarServidorJuriFalso() {
     const achadas = Object.keys(corpo).sort();
     const esperadas = [...chaves].sort();
     return JSON.stringify(achadas) === JSON.stringify(esperadas) ? corpo : undefined;
+  }
+
+  /** GET conteudo.php: sem sessão 401; troca pendente 403; senão o JSON guardado. */
+  function conteudoJson(): Response {
+    if (!sessaoAberta || conta === undefined) {
+      return erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
+    }
+    if (conta.deveTrocarSenha) return erro(403, 'troca-pendente', 'Troque a senha primeiro.');
+    return resposta(200, { ok: true, conteudo });
+  }
+
+  /** GET imagem.php?id=: bytes binários, com as mesmas barreiras de sessão e troca. */
+  function imagemBinaria(id: string | null): Response {
+    if (!sessaoAberta || conta === undefined) {
+      return erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
+    }
+    if (conta.deveTrocarSenha) return erro(403, 'troca-pendente', 'Troque a senha primeiro.');
+    const bytes = id === null ? undefined : imagens.get(id);
+    if (bytes === undefined) return erro(404, 'nao-encontrada', 'Imagem não encontrada.');
+    return new Response(bytes, {
+      status: 200,
+      headers: { 'Content-Type': 'application/octet-stream' }
+    });
   }
 
   function sessaoJson(): Response {
@@ -171,9 +206,12 @@ export function criarServidorJuriFalso() {
     chamadas.push({ metodo, caminho, corpo, csrfEnviado });
 
     if (metodo === 'GET') {
-      return caminho === 'sessao.php'
-        ? sessaoJson()
-        : erro(404, 'inexistente', 'Caminho inexistente.');
+      if (caminho === 'sessao.php') return sessaoJson();
+      if (caminho === 'conteudo.php') return conteudoJson();
+      if (caminho === 'imagem.php') {
+        return imagemBinaria(new URL(url, 'http://servidor.local').searchParams.get('id'));
+      }
+      return erro(404, 'inexistente', 'Caminho inexistente.');
     }
     if (corpo !== undefined && 'senha' in corpo) {
       return erro(400, 'senha-no-corpo', 'A senha não vai ao servidor. Use o navegador.');
@@ -200,7 +238,27 @@ export function criarServidorJuriFalso() {
       embrulho,
       deveTrocarSenha
     };
+    cekDaConta = cek;
     return cek;
+  }
+
+  /**
+   * Cifra a imagem com a CEK da conta criada e guarda como imagem.php entregaria.
+   * Devolve os bytes cifrados, para o teste poder trocar de id e ver o erro.
+   */
+  async function definirImagemCifrada(
+    id: string,
+    claro: Uint8Array<ArrayBuffer>,
+    tipo: TipoImagem
+  ): Promise<Uint8Array<ArrayBuffer>> {
+    if (cekDaConta === undefined) throw new Error('criarConta antes de cifrar imagem falsa');
+    const cifrada = await cifrarImagem(claro, cekDaConta, {
+      kid: KID_FALSO,
+      id: hexParaBytes(id),
+      tipo
+    });
+    imagens.set(id, cifrada);
+    return cifrada;
   }
 
   return {
@@ -228,7 +286,16 @@ export function criarServidorJuriFalso() {
     },
     chamadasPara(caminho: string): ChamadaFalsa[] {
       return chamadas.filter((c) => c.caminho === caminho);
-    }
+    },
+    /** Troca o conteúdo que conteudo.php devolve (ex.: um JSON inválido, para o teste de erro). */
+    definirConteudo(valor: unknown): void {
+      conteudo = valor;
+    },
+    /** Entrega estes bytes exatos para o id (ex.: imagem de OUTRO id, para provar a checagem de id). */
+    definirImagem(id: string, bytes: Uint8Array<ArrayBuffer>): void {
+      imagens.set(id, bytes);
+    },
+    definirImagemCifrada
   };
 }
 

@@ -18,6 +18,8 @@ Sem valor calculado nesta versão. O status de trabalho vive só na tabela únic
 
 ## INBOX (descobertas não priorizadas)
 
+- 2026-10-28: [INF] Júri C6, lacuna de contrato: `conteudo.php` não entrega o `kid` nem o índice do acervo ao navegador. Por isso `kidDoArquivo` lê o kid do próprio arquivo (checagem de kid vira tautologia; o AES-GCM segue com o cabeçalho inteiro como AAD) e `validarConteudoBruto` usa os ids de `imagens` do próprio conteúdo como índice (a checagem real de id no acervo fica com o 404 do `imagem.php`). Pendente de ratificação pelo líder; alternativa é o contrato entregar kid e índice.
+- 2026-10-28: [INF] Júri C6, quadro dos mnemônicos: o contrato `MnemonicoJuri` (HTML) não encaixa no `CartaoMnemonico` das páginas de estudo (texto puro, 7 campos), então a Júri tem `MnemonicosJuri.vue` próprio. Reuso só se o cartão compartilhado ganhar suporte a HTML; pendente de decisão.
 - 2026-10-20: aviso de armazenamento cobre o botão Anterior do quiz em 1280px até clicar em Entendi (QA em produção).
 - 2026-10-20: no menu a 1280px, o nome de Português e Redação Jurídica 1 quebra e deixa o 1 sozinho na linha de baixo (QA em produção).
 - 2026-10-20: calendário (rota /calendario): conferir em fonte oficial as datas nacionais (Planalto estava inacessível na sessão) e os feriados municipais do Recife de 16/07 e 08/12 (lei e decreto não localizados; fonte atual é o TRT6 e a imprensa).

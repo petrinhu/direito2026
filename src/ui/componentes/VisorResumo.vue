@@ -25,7 +25,11 @@ const emit = defineEmits<{ 'bloco-lido': [string]; 'alternar-item-checklist': [s
       :itens-checklist-marcados="itensChecklistMarcados"
       @lido="emit('bloco-lido', $event)"
       @alternar-item-checklist="emit('alternar-item-checklist', $event)"
-    />
+    >
+      <template #depois-do-corpo>
+        <slot name="depois-do-corpo" :bloco="bloco" />
+      </template>
+    </BlocoTeorico>
   </div>
 </template>
 

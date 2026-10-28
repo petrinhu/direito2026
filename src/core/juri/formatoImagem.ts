@@ -21,6 +21,13 @@ const ALGORITMO_AES_256_GCM = 1;
 const RESERVADO = 0;
 
 const BYTE_DO_TIPO: Record<TipoImagem, number> = { jpeg: 1, png: 2, webp: 3 };
+
+/** Tipo MIME de cada formato: o Blob da imagem decifrada leva este tipo. */
+export const MIME_DO_TIPO: Record<TipoImagem, string> = {
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp'
+};
 const TIPO_DO_BYTE = new Map<number, TipoImagem>(
   (Object.entries(BYTE_DO_TIPO) as [TipoImagem, number][]).map(([tipo, byte]) => [byte, tipo])
 );

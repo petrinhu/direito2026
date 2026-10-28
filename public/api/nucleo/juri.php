@@ -101,6 +101,21 @@ function d26_juri_salt_da_conta(array $conta): string
 }
 
 /**
+ * Forma exata do embrulho {v: 1, iv: 12 B, ct: 48 B} (base64 padrão canônico, só
+ * esses três campos). Vale para o que vem na requisição (400) e para o que está
+ * gravado (503): quem chama decide o código, a forma é uma só.
+ */
+function d26_juri_embrulho_valido(mixed $e): bool
+{
+    return is_array($e)
+        && count($e) === 3
+        && isset($e['v'], $e['iv'], $e['ct'])
+        && $e['v'] === D26_JURI_VERSAO
+        && d26_juri_b64_bytes($e['iv'], D26_JURI_IV_BYTES) !== null
+        && d26_juri_b64_bytes($e['ct'], D26_JURI_CT_BYTES) !== null;
+}
+
+/**
  * Recusa fechada da conta da Júri: salt de 16 B e embrulho exato {v: 1, iv: 12 B,
  * ct: 48 B} (campos v, iv e ct, e nenhum outro). Devolve a própria conta.
  *
@@ -110,17 +125,50 @@ function d26_juri_salt_da_conta(array $conta): string
 function d26_juri_conta_validar(array $conta): array
 {
     d26_juri_salt_da_conta($conta);
-    $e = $conta['embrulho'] ?? null;
-    $forma = is_array($e)
-        && count($e) === 3
-        && isset($e['v'], $e['iv'], $e['ct'])
-        && $e['v'] === D26_JURI_VERSAO
-        && d26_juri_b64_bytes($e['iv'], D26_JURI_IV_BYTES) !== null
-        && d26_juri_b64_bytes($e['ct'], D26_JURI_CT_BYTES) !== null;
-    if (!$forma) {
+    if (!d26_juri_embrulho_valido($conta['embrulho'] ?? null)) {
         throw new D26Indisponivel('conta da Júri sem embrulho válido');
     }
     return $conta;
+}
+
+/** Os dois campos do embrulho são iguais aos da leitura (comparação em tempo constante). */
+function d26_juri_embrulho_igual(mixed $a, mixed $b): bool
+{
+    return is_array($a) && is_array($b)
+        && hash_equals((string) ($a['iv'] ?? ''), (string) ($b['iv'] ?? ''))
+        && hash_equals((string) ($a['ct'] ?? ''), (string) ($b['ct'] ?? ''));
+}
+
+/**
+ * Troca de senha da Júri numa ÚNICA mutação sob lock (compare-and-swap, mesmo
+ * formato de d26_contas_trocar_senha). Só grava se a conta ainda é a lida: ativa,
+ * mesmo uid, versaoSessao, hash, salt e embrulho. Grava JUNTOS o verificador do
+ * AUTH novo, o salt novo e o embrulho novo; zera deveTrocarSenha, sobe versaoSessao
+ * (derruba as sessões) e esvazia os aparelhos. Devolve a versaoSessao nova, ou 0 se
+ * a conta mudou: nada é gravado e quem chamou responde 409.
+ *
+ * @param array<string, mixed> $lida conta validada, lida antes do Argon2id
+ * @param array{v: int, iv: string, ct: string} $embrulho já validado pela forma
+ */
+function d26_juri_contas_trocar_senha(string $priv, string $login, string $hash, string $salt, array $embrulho, array $lida): int
+{
+    $versao = 0;
+    d26_contas_mutar($priv, $login, static function (array &$c) use ($hash, $salt, $embrulho, $lida, &$versao): string {
+        if (!d26_conta_igual_lida($c, $lida)
+            || !hash_equals((string) ($lida['salt'] ?? ''), (string) ($c['salt'] ?? ''))
+            || !d26_juri_embrulho_igual($lida['embrulho'] ?? null, $c['embrulho'] ?? null)) {
+            return 'divergente';
+        }
+        $c['hash'] = $hash;
+        $c['salt'] = $salt;
+        $c['embrulho'] = ['v' => D26_JURI_VERSAO, 'iv' => $embrulho['iv'], 'ct' => $embrulho['ct']];
+        $c['deveTrocarSenha'] = false;
+        $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+        $c['aparelhos'] = [];
+        $versao = (int) $c['versaoSessao'];
+        return 'ok';
+    });
+    return $versao;
 }
 
 /**

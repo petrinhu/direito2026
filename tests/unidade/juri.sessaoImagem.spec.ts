@@ -56,6 +56,31 @@ describe('abrirImagem: decifra com a CEK da sessão', () => {
     expect(sessao.fase.value).toBe('deslogado');
     await expect(sessao.abrirImagem(ID)).rejects.toMatchObject({ codigo: 'sem-chave' });
   });
+
+  it('CEK descartada enquanto a imagem baixava: a imagem que chega depois não é entregue', async () => {
+    const servidor = criarServidorJuriFalso();
+    await servidor.criarConta('admin', SENHA);
+    let chegou: () => void = () => {};
+    const imagemLiberada = new Promise<void>((resolver) => {
+      chegou = resolver;
+    });
+    const sessao = criarSessaoJuri({
+      cliente: criarClienteJuri({
+        buscar: async (url, init) => {
+          if (url.includes('imagem.php')) await imagemLiberada;
+          return servidor.buscar(url, init);
+        }
+      })
+    });
+    await sessao.iniciar();
+    await sessao.entrar('admin', SENHA);
+    await servidor.definirImagemCifrada(ID, PNG, 'png');
+    // Sair da página (descartar) com o download em curso: a CEK em memória já não existe.
+    const pendente = sessao.abrirImagem(ID);
+    sessao.descartar();
+    chegou();
+    await expect(pendente).rejects.toMatchObject({ codigo: 'sem-chave' });
+  });
 });
 
 describe('carregarConteudo: conteúdo validado antes da interface', () => {

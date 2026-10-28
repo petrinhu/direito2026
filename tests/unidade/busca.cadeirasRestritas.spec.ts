@@ -6,7 +6,7 @@ import type { Curriculo } from '@/core/curriculo/tipos';
 describe('busca e cadeira restrita: só o título navegável', () => {
   it('gera um documento com o título e o endereço, e nenhum conteúdo', () => {
     const docs = montarDocumentosCadeirasRestritas(curriculo);
-    expect(docs).toHaveLength(1);
+    expect(docs).toHaveLength(2);
     const d = docs[0]!;
     expect(d.url).toBe('/p/p1/interdisciplinar');
     expect(d.titulo).toBe('Interdisciplinar');

@@ -49,10 +49,10 @@ describe('Júri Simulado no currículo real', () => {
   const ids = p1?.cadeiras.map((c) => c.id) ?? [];
   const juri = p1?.cadeiras.find((c) => c.id === 'juri-simulado');
 
-  it('está no 1º período, restrita, em breve, na área juri, sem unidade', () => {
+  it('está no 1º período, restrita, publicada, na área juri, sem unidade', () => {
     expect(juri).toMatchObject({
       nome: 'Júri Simulado',
-      estado: 'em-breve',
+      estado: 'publicado',
       restrita: true,
       area: 'juri',
       unidades: []

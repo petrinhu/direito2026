@@ -47,7 +47,9 @@ describe('Home com o currículo real', () => {
     const links = wrapper
       .findAll('a')
       .filter((a) => a.attributes('href') === '/p/p1/interdisciplinar');
-    expect(links).toHaveLength(cadeirasComAtalho.length + restritasPublicadas.length);
+    // A restrita publicada que leva ao Interdisciplinar; a Júri leva à própria página.
+    const entradaDoInterdisciplinar = restritasPublicadas.filter((c) => c.id === 'interdisciplinar');
+    expect(links).toHaveLength(cadeirasComAtalho.length + entradaDoInterdisciplinar.length);
   });
 
   it('a Filosofia Jurídica mostra a Unidade 3 e não oferece petição', () => {

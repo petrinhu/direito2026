@@ -46,10 +46,10 @@ describe('Home e a cadeira restrita', () => {
     expect(montar(sintetico).findAll('article.placa')).toHaveLength(1);
   });
 
-  it('no currículo real, o Interdisciplinar tem uma só placa restrita, sem conteúdo vazado', () => {
+  it('no currículo real, cada cadeira restrita publicada tem uma placa restrita, sem conteúdo vazado', () => {
     const w = montar(curriculo);
     const restritas = w.findAll('article.placa--restrita');
-    expect(restritas).toHaveLength(1);
+    expect(restritas).toHaveLength(2);
     expect(restritas[0]!.get('a.linha').attributes('href')).toBe('/p/p1/interdisciplinar');
     expect(restritas[0]!.text()).not.toMatch(/Resumo|Quiz|Unidade 1|Petição/);
   });

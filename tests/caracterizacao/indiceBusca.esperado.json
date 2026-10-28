@@ -1,5 +1,5 @@
 {
-  "documentosEncontrados": 225,
+  "documentosEncontrados": 226,
   "documentos": [
     {
       "id": "p1/filosofia-juridica/u1#bloco-0",
@@ -528,6 +528,10 @@
     {
       "id": "p1/intr-direito/u3-material-norma-interpretacao/quiz",
       "url": "/p/p1/intr-direito/u3-material-norma-interpretacao/quiz"
+    },
+    {
+      "id": "p1/juri-simulado",
+      "url": "/p/p1/juri-simulado"
     },
     {
       "id": "p1/redacao-juridica-1/u1#bloco-0",

@@ -276,6 +276,13 @@
       "nome": "Interdisciplinar",
       "tipo": "cadeira",
       "restrita": true
+    },
+    {
+      "caminho": "/p/p1/juri-simulado",
+      "h1": "Área restrita ao grupo Fronteiras da Inteligência Artificial",
+      "nome": "Júri Simulado",
+      "tipo": "cadeira",
+      "restrita": true
     }
   ],
   "rotasDeUnidades": [

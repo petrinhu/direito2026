@@ -120,7 +120,10 @@ describe('rotasDoCurriculo e a cadeira restrita', () => {
 
   it('rotas comuns não levam a marca de restrita', () => {
     const marcadas = rotasDoCurriculo(curriculo).filter((r) => r.restrita);
-    expect(marcadas.map((r) => r.caminho)).toEqual(['/p/p1/interdisciplinar']);
+    expect(marcadas.map((r) => r.caminho)).toEqual([
+      '/p/p1/interdisciplinar',
+      '/p/p1/juri-simulado'
+    ]);
   });
 });
 

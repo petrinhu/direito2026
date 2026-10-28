@@ -130,7 +130,7 @@
       {
         "id": "juri-simulado",
         "nome": "Júri Simulado",
-        "estado": "em-breve",
+        "estado": "publicado",
         "restrita": true,
         "atalhoUnidade": null,
         "unidades": []

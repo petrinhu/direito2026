@@ -48,7 +48,9 @@ describe('Home com o currículo real', () => {
       .findAll('a')
       .filter((a) => a.attributes('href') === '/p/p1/interdisciplinar');
     // A restrita publicada que leva ao Interdisciplinar; a Júri leva à própria página.
-    const entradaDoInterdisciplinar = restritasPublicadas.filter((c) => c.id === 'interdisciplinar');
+    const entradaDoInterdisciplinar = restritasPublicadas.filter(
+      (c) => c.id === 'interdisciplinar'
+    );
     expect(links).toHaveLength(cadeirasComAtalho.length + entradaDoInterdisciplinar.length);
   });
 

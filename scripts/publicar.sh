@@ -13,8 +13,8 @@
 # --seco: confere e imprime o plano, sem alterar nada.
 # Se o preci falhar, desfaz SÓ o que este script fez (tag e commit de release
 # locais). Depois do rsync não desfaz nada: remoto não tem desfazer automático.
-# Nunca imprime segredo nem o conteúdo de CADERNO_RESTRITO. Sem --no-verify,
-# sem force, sem amend (GODS_LAWS L-24, L-25).
+# Nunca imprime segredo nem o conteúdo de CADERNO_RESTRITO nem de
+# CADERNO_RESTRITO_JURI. Sem --no-verify, sem force, sem amend (GODS_LAWS L-24, L-25).
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -30,6 +30,9 @@ CONTEUDO_RESTRITO_PADRAO=/home/petrus/IDrive/Documentos/direito/site_direito2026
 PRECI_TMPDIR=/var/tmp/preci-pub
 WT="$RAIZ/.worktrees/pub"
 CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-$CONTEUDO_RESTRITO_PADRAO}"
+# JSON privado da Júri: sem padrão de propósito. Cadeira publicada sem ele
+# reprova o preci (falha fechada); string vazia conta como ausente.
+CADERNO_RESTRITO_JURI="${CADERNO_RESTRITO_JURI:-}"
 
 # Funções de cópia dos dispositivos.ts (biblioteca sem efeito ao ser carregada).
 # shellcheck source=scripts/apoio/dispositivos-publicacao.sh
@@ -167,7 +170,8 @@ publicar: plano (--seco, nada foi alterado)
      etapa 2: index.html, sw.js, 404.html, manifest.webmanifest (sem apagar nada)
      dados do servidor (usuarios.json, sessoes/, conteudo/ etc.) ficam protegidos
   6. conferência: md5 de cada arquivo do dist, api/saude.php, api/conteudo.php (401),
-     raiz $RAIZ_PRINCIPAL (md5 $MD5_RAIZ_PRINCIPAL), scripts/verificar-publicacao.sh
+     api/juri/conteudo.php (401), raiz $RAIZ_PRINCIPAL (md5 $MD5_RAIZ_PRINCIPAL),
+     scripts/verificar-publicacao.sh
   7. só com 6 verde: git push $REMOTO $BRANCH_PUBLICA e git push $REMOTO v$VERSAO_NOVA,
      provados por git ls-remote
 PLANO
@@ -251,7 +255,8 @@ rodar_preci() {
   local log="$ESPACO/preci.log" rc=0
   mkdir -p "$PRECI_TMPDIR"
   echo "publicar: preci em $WT (saída em arquivo privado; não é exibida, pode citar trechos do conteúdo restrito)"
-  (cd "$WT" && CADERNO_RESTRITO="$CONTEUDO_RESTRITO" TMPDIR="$PRECI_TMPDIR" bash scripts/preci.sh) \
+  (cd "$WT" && CADERNO_RESTRITO="$CONTEUDO_RESTRITO" CADERNO_RESTRITO_JURI="$CADERNO_RESTRITO_JURI" \
+    TMPDIR="$PRECI_TMPDIR" bash scripts/preci.sh) \
     > "$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ]; then
     grep -E '^FALHOU' "$log" | sed 's/^/publicar: /' >&2 || true
@@ -281,6 +286,15 @@ P conteudo/
 # manifestos da própria higiene
 P .publicacao-manifesto.txt
 P .publicacao-manifesto-anterior.txt
+# Júri (public/api/nucleo/config.php, d26_dir_privado): o diretório privado é
+# juri2026_privado, irmão de public_html, logo FORA de public_html/direito2026/ e
+# fora do alcance deste rsync. Mesmo assim, por cinto de segurança, acervo.json
+# e imagens/ ficam protegidos: se algum dia caírem no destino, a próxima publicação
+# não os apaga. Os demais arquivos da Júri
+# (usuarios.json, tentativas.json, segredo.key, sessoes/, conteudo/) já estão
+# acima, em comum com o Interdisciplinar.
+P /acervo.json
+P /imagens/
 # arquivos que a hospedagem põe no diretório
 P error_log
 P cgi-bin/
@@ -496,6 +510,14 @@ conferir_api_e_raiz() {
   else
     DIVERGENCIAS=$((DIVERGENCIAS + 1))
     echo "[DIVERGE] api/conteudo.php respondeu $codigo, esperado 401" >&2
+  fi
+
+  codigo="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$DOMINIO/api/juri/conteudo.php" || true)"
+  if [ "$codigo" = 401 ]; then
+    echo "[PASSOU] api/juri/conteudo.php responde 401 sem sessão"
+  else
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] api/juri/conteudo.php respondeu $codigo, esperado 401" >&2
   fi
 
   md5_raiz="$( (curl -sf --max-time 30 "$RAIZ_PRINCIPAL" || true) | md5sum | cut -c1-12)"

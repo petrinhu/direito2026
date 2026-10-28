@@ -34,6 +34,7 @@ passo "construção completa (inclui o portão de pacote publicável)" npm run b
 passo "regra de cache dos pedaços de conteúdo casa o build" node --import tsx scripts/verificar-cache-conteudo.ts
 passo "termos proibidos (R3), dist" bash scripts/verificar-proibicoes.sh dist
 passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --import tsx scripts/verificar-conteudo-restrito.ts
+passo "vazamento do conteúdo da Júri (dist; sem JSON, só com a cadeira publicada)" node --import tsx scripts/verificar-conteudo-restrito-juri.ts
 passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
 
 if [ "$falhou" -ne 0 ]; then

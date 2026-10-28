@@ -43,7 +43,7 @@ function textosDe(valor: unknown): string[] {
   return typeof valor === 'string' ? [valor] : [];
 }
 
-function trechosDe(html: string): string[] {
+export function trechosDe(html: string): string[] {
   return html
     .split(/<[^>]*>/)
     .map((pedaco) => normalizarParaBusca(decodificar(pedaco)))

@@ -152,6 +152,18 @@ describe('derivação da chave do usuário (derivar)', () => {
     expect(bytesParaHex(bytesRecuperados)).toBe(bytesParaHex(bytesOriginais));
   });
 
+  it('mesma senha em NFC e em NFD gera o mesmo AUTH e a mesma KEK (normalização antes de derivar)', async () => {
+    const nfc = 'senha-com-é-sintetica-do-teste';
+    const nfd = 'senha-com-é-sintetica-do-teste';
+    expect(nfd).not.toBe(nfc);
+    const porNfc = await derivar(nfc, SALT);
+    const porNfd = await derivar(nfd, SALT);
+    expect(porNfd.auth).toEqual(porNfc.auth);
+    const cek = await gerarCek();
+    const embrulho = await embrulharCek(cek, porNfc.kek, AAD);
+    await expect(desembrulharCek(embrulho, porNfd.kek, AAD)).resolves.toBeDefined();
+  });
+
   it('a KEK não é extraível e só serve para embrulhar (usages wrapKey e unwrapKey)', async () => {
     const { kek } = await derivar(SENHA, SALT);
     expect(kek.extractable).toBe(false);

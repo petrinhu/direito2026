@@ -1,5 +1,6 @@
 import { base64ParaBytes, bytesParaBase64 } from './base64';
 import { ErroCifra } from './erroCifra';
+import { normalizarSenha } from './senha';
 import {
   TAMANHO_ID,
   TAMANHO_IV,
@@ -103,7 +104,7 @@ export async function derivar(
     throw new ErroCifra('entrada');
   }
   const mestre = await pbkdf2Bits(
-    new Uint8Array(new globalThis.TextEncoder().encode(senha)),
+    new Uint8Array(new globalThis.TextEncoder().encode(normalizarSenha(senha))),
     salt,
     ITERACOES_PBKDF2,
     256

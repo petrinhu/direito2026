@@ -12,9 +12,17 @@ export interface ResultadoValidacaoSenha {
   minimo: number;
 }
 
-/** Conta code points (não unidades UTF-16 nem grafemas). */
+/**
+ * NFC antes de tudo que toca a senha (NIST SP 800-63B): o mesmo texto digitado em
+ * aparelhos que compõem o acento de jeito diferente vira os mesmos bytes e o mesmo AUTH.
+ */
+export function normalizarSenha(senha: string): string {
+  return senha.normalize('NFC');
+}
+
+/** Conta code points após NFC (não unidades UTF-16 nem grafemas). */
 export function contarCaracteres(senha: string): number {
-  return [...senha].length;
+  return [...normalizarSenha(senha)].length;
 }
 
 /** Só o tamanho: a regra da senha nova não impõe composição (SP 800-63B-4 §3.1.1.2). */

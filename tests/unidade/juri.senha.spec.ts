@@ -4,6 +4,7 @@ import {
   LIMITE_SEM_VIES,
   MINIMO_SENHA,
   TAMANHO_PROVISORIA,
+  normalizarSenha,
   contarCaracteres,
   gerarSenhaProvisoria,
   indiceSemVies,
@@ -55,11 +56,17 @@ describe('validarSenhaNova (15 ou mais, sem regra de composição)', () => {
     expect(validarSenhaNova('á'.repeat(15)).valida).toBe(true);
   });
 
-  it('acento decomposto conta por code point, não por grafema (7 pares e + combinação = 14 code points)', () => {
-    const decomposto = 'é'.repeat(7);
-    expect(contarCaracteres(decomposto)).toBe(14);
+  it('acento decomposto (NFD) conta como o precomposto: a senha é normalizada em NFC antes de contar', () => {
+    const decomposto = 'e\u0301'.repeat(7);
+    expect(decomposto.length).toBe(14);
+    expect(contarCaracteres(decomposto)).toBe(7);
     expect(validarSenhaNova(decomposto).valida).toBe(false);
-    expect(validarSenhaNova('é'.repeat(8)).valida).toBe(true);
+    expect(validarSenhaNova('e\u0301'.repeat(15)).valida).toBe(true);
+  });
+
+  it('NFD e NFC da mesma letra viram a mesma string em normalizarSenha', () => {
+    expect(normalizarSenha('e\u0301')).toBe('\u00e9');
+    expect(normalizarSenha('\u00e9')).toBe('\u00e9');
   });
 
   it('não impõe composição: só letras, só dígitos e com espaços passam', () => {

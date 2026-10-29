@@ -215,7 +215,7 @@ Esta seção instala a conta, o acervo de imagens e o conteúdo da área do Júr
 
 | Marcador | O que é |
 |---|---|
-| `<dominio>` | o domínio do site, como aparece na barra de endereço |
+| `<dominio>` | o domínio raiz da conta de hospedagem, que é o nome da pasta em `~/domains/` (ex.: `domains/<dominio>/juri2026_privado`). Não é o endereço do site: o site fica no subdomínio `direito2026.<dominio>`, e é esse endereço que vai nas URLs deste guia |
 | `<pasta-do-site>` | a pasta dentro de `public_html` onde o pacote foi publicado; dentro dela fica `api/nucleo` |
 | `<raiz-do-repositorio>` | a pasta onde está o clone deste repositório na sua máquina |
 | `<pasta-originais>` | a pasta com as fotos originais, fora do repositório |
@@ -317,17 +317,17 @@ rm -f <pasta-saida>/credencial-admin.json
 
 O restante da pasta de saída (`acervo.json`, `imagens/`, `conferencia.tsv`) pode ficar até o passo 8 passar. Depois, apague a pasta inteira pelo caminho exato, com `ls` antes. Nunca apague a pasta de originais nem o `ids.tsv`.
 
-**Passo 8: conferir o ar.**
+**Passo 8: conferir o ar.** As URLs abaixo usam o subdomínio do site, `direito2026.<dominio>`. A raiz do domínio não serve a API da Júri e responde 404 para `/api/juri`.
 
 ```
-curl -s -o /dev/null -w '%{http_code}\n' https://<dominio>/api/juri/conteudo.php
-curl -s -o /dev/null -w '%{http_code}\n' "https://<dominio>/api/juri/imagem.php?id=00000000000000000000000000000000"
-curl -sI https://<dominio>/api/juri/conteudo.php | grep -i '^cache-control'
+curl -s -o /dev/null -w '%{http_code}\n' https://direito2026.<dominio>/api/juri/conteudo.php
+curl -s -o /dev/null -w '%{http_code}\n' "https://direito2026.<dominio>/api/juri/imagem.php?id=00000000000000000000000000000000"
+curl -sI https://direito2026.<dominio>/api/juri/conteudo.php | grep -i '^cache-control'
 ```
 
 Resultado esperado: `401`, `401` e `Cache-Control: no-store`. O 401 vem antes de qualquer checagem de conteúdo ou de id.
 
-**Login.** Abra `https://<dominio>/p/p1/juri-simulado` no navegador. Entre com o usuário `admin` e a senha provisória. A área pede a troca de senha antes de liberar qualquer conteúdo. A senha nova tem 15 caracteres ou mais, sem regra de tipo de caractere.
+**Login.** Abra `https://direito2026.<dominio>/p/p1/juri-simulado` no navegador. Entre com o usuário `admin` e a senha provisória. A área pede a troca de senha antes de liberar qualquer conteúdo. A senha nova tem 15 caracteres ou mais, sem regra de tipo de caractere.
 
 Enquanto a cadeira estiver marcada como `em-breve` no código, a página mostra só a entrada. O conteúdo aparece depois que a cadeira for publicada, pelo mesmo roteiro de deploy irreversível.
 
@@ -395,7 +395,7 @@ python3 -c "import json,sys; print(len(json.load(open(sys.argv[1]))['indice']))"
 
 Os dois números devem ser iguais. Se não forem, sobrou foto de uma troca anterior, ou faltou alguma. Liste com `ls`, decida com calma e apague o que sobrou pelo caminho exato.
 
-- Entre com a senha provisória nova em `https://<dominio>/p/p1/juri-simulado`, troque a senha e abra cada imagem. Todas precisam abrir. Se alguma não abrir, não apague nada. Compare o hash de cada `.juri` do servidor com o da pasta de saída nova, com `md5sum` dos dois lados. Se algum hash não bater, a troca do passo 5 não entrou inteira. Envie de novo só o arquivo que não bate, pelo caminho exato, e confira o hash outra vez.
+- Entre com a senha provisória nova em `https://direito2026.<dominio>/p/p1/juri-simulado`, troque a senha e abra cada imagem. Todas precisam abrir. Se alguma não abrir, não apague nada. Compare o hash de cada `.juri` do servidor com o da pasta de saída nova, com `md5sum` dos dois lados. Se algum hash não bater, a troca do passo 5 não entrou inteira. Envie de novo só o arquivo que não bate, pelo caminho exato, e confira o hash outra vez.
 
 **Passo 7: apagar o que sobrou.** Só depois do passo 6.
 

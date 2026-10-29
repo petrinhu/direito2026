@@ -4,7 +4,7 @@ import FontesJuri from './FontesJuri.vue';
 /** Ficha genérica: um título recolhível e campos com HTML já validado. */
 defineProps<{
   titulo: string;
-  campos: readonly { readonly rotulo: string; readonly html: string }[];
+  campos: readonly { readonly rotulo: string; readonly conteudoHtml: string }[];
   fontes: readonly string[];
 }>();
 </script>
@@ -15,7 +15,7 @@ defineProps<{
     <dl class="juri-ficha__campos">
       <div v-for="campo in campos" :key="campo.rotulo" class="juri-ficha__campo">
         <dt>{{ campo.rotulo }}</dt>
-        <dd v-html="campo.html" />
+        <dd v-html="campo.conteudoHtml" />
       </div>
     </dl>
     <FontesJuri :fontes="fontes" />

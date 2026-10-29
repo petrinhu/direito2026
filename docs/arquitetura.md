@@ -392,6 +392,8 @@ export type IndiceDispositivos = Readonly<Record<string, DispositivoLegal>>;
 
 [FATO] o piloto injeta HTML por `v-html` em três pontos (linhas 445, 452, 462). [INFERÊNCIA] isso é aceitável enquanto a origem é um arquivo `.ts` do próprio repositório, e é injeção de script no dia em que a origem mudar. A regra que fica: **`v-html` só recebe valor vindo de `src/conteudo/`**, e um gate ESLint reprova `v-html` ligado a qualquer outra expressão. Conteúdo vindo de URL, de `localStorage` ou de consulta de busca nunca entra por `v-html`.
 
+**Exceção registrada (28/10/2026, decisão do líder por AskUserQuestion):** o HTML da Júri vem de `/api/juri/conteudo.php` e só chega às cinco telas de `src/ui/area-juri/` (`CartaoFichamentoJuri`, `QuadroTermosJuri`, `ResumoJuri`, `MnemonicosJuri` e `RespostasDefesaJuri`) depois de `validarConteudoJuri`, via `validarConteudoBruto` (`src/app/juri/conteudo.ts:29`), que usa `htmlRejeitado` de `src/core/restrito/allowlist.ts`. É o mesmo filtro do conteúdo restrito do Interdisciplinar. A exceção é nominal: vale só para essas cinco telas, listadas na allowlist de `scripts/verificar-v-html.sh`. Qualquer outro `v-html` continua proibido pela regra acima.
+
 ---
 
 ## 5. Roteamento e URLs
@@ -1254,7 +1256,7 @@ Todas as cadeiras dos dez períodos cadastradas, com `em-breve` onde não há ma
 | RI2 | O `.htaccess` não sobe (arquivo oculto) ou o host ignora `AllowOverride`, e todo deep link dá 404. | V2 detecta na primeira publicação. Plano B já desenhado: `404.html` cópia do `index.html` (seção 5). |
 | RI3 | Service worker mal configurado prende o leitor numa versão velha. | `registerType: 'autoUpdate'` (skipWaiting + clientsClaim incondicionais no service worker gerado, seção 9), `no-cache` em `index.html` e `sw.js`, checagem agendada em `src/main.ts`, e procedimento de limpeza documentado no runbook para o caso residual. |
 | RI4 | Converter cada HTML antigo à mão não escala e erra acento e aspas tipográficas. | A onda 3 constrói a ferramenta de conversão em vez de repetir o trabalho manual. |
-| RI5 | `v-html` deixa de receber só conteúdo próprio e vira injeção de script. | Regra escrita mais gate ESLint que reprova `v-html` ligado a expressão que não venha de `src/conteudo/` (seção 4.4). |
+| RI5 | `v-html` deixa de receber só conteúdo próprio e vira injeção de script. | Regra escrita mais gate ESLint que reprova `v-html` ligado a expressão que não venha de `src/conteudo/` (seção 4.4). Exceções nominais, cada uma depois de validação: conteúdo restrito do Interdisciplinar (`validarConteudoRestrito`) e conteúdo da Júri (`validarConteudoJuri`, 28/10/2026). |
 | RI6 | O índice de busca cresce com o currículo e vira um download pesado. | Teto de 300 KB comprimido fixado antes de existir a medição; ultrapassado, fatia por período; ultrapassado de novo, migra para Pagefind atrás da interface `MotorBusca`. |
 | RI7 | `localStorage` bloqueado apaga o progresso sem o leitor entender por quê. | Fallback em memória com a mesma interface, coberto por teste de componente com mock que lança. |
 | RI8 | R3 é violada por descuido num commit futuro (comentário, metadado, nome de pasta). | `verificar-proibicoes.sh` no pré-CI, no CI e na verificação pós-publicação, com `exit 1` e piso de varredura não vazio. |
@@ -1443,6 +1445,7 @@ Esta seção só descreve o que muda em relação à área do Interdisciplinar, 
 - **Diretório privado próprio.** A área usa `juri2026_privado`, que fica ao lado de `direito2026_privado` e fora do alcance do site. Sessões, tentativas de login e segredos ficam separados dos do Interdisciplinar. O nome vem do perfil de área em `public/api/nucleo/config.php` (`d26_perfil_area`).
 - **Cookies com nome próprio.** `__Host-juri` (sessão), `__Host-juripre` (pré-sessão de CSRF) e `__Host-juridisp`.
 - **Mesmo núcleo PHP.** Os endpoints ficam em `public/api/juri/`. Cada um define `D26_AREA` como `juri` antes de carregar `public/api/nucleo/`. Sem essa definição, o núcleo se comporta como o do Interdisciplinar.
+- **HTML validado antes da tela.** O conteúdo da Júri passa por `validarConteudoJuri` antes de chegar à interface. As cinco telas que usam `v-html` são exceção nominal da seção 4.4, decisão do líder de 28/10/2026: o HTML delas é o campo validado, com o mesmo filtro (`htmlRejeitado`) do conteúdo restrito do Interdisciplinar.
 
 ### Fluxo de login sem senha no servidor
 

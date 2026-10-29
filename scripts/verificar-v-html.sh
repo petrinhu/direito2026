@@ -28,10 +28,20 @@ RAIZ_SRC="$(dirname "$RAIZ_UI")"
 #                                      restrito, este SÓ depois de validarConteudoRestrito
 #   componentes/CartaoPergunta.vue     enunciado, alternativas e explicação: idem
 #   componentes/PecaComentadaVisor.vue petição comentada: src/conteudo
+#   area-juri/CartaoFichamentoJuri.vue conteúdo da Júri, SÓ depois de validarConteudoJuri (decisão do líder em 28/10/2026)
+#   area-juri/MnemonicosJuri.vue       conteúdo da Júri, SÓ depois de validarConteudoJuri (decisão do líder em 28/10/2026)
+#   area-juri/QuadroTermosJuri.vue     conteúdo da Júri, SÓ depois de validarConteudoJuri (decisão do líder em 28/10/2026)
+#   area-juri/RespostasDefesaJuri.vue  conteúdo da Júri, SÓ depois de validarConteudoJuri (decisão do líder em 28/10/2026)
+#   area-juri/ResumoJuri.vue           conteúdo da Júri, SÓ depois de validarConteudoJuri (decisão do líder em 28/10/2026)
 ALLOWLIST_V_HTML=(
   "componentes/BlocoTeorico.vue"
   "componentes/CartaoPergunta.vue"
   "componentes/PecaComentadaVisor.vue"
+  "area-juri/CartaoFichamentoJuri.vue"
+  "area-juri/MnemonicosJuri.vue"
+  "area-juri/QuadroTermosJuri.vue"
+  "area-juri/RespostasDefesaJuri.vue"
+  "area-juri/ResumoJuri.vue"
 )
 
 ARQUIVOS_VUE=0

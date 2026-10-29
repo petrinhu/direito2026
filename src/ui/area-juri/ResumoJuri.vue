@@ -19,10 +19,10 @@ const blocos = computed(() => paraBlocosResumo(props.conteudo.resumo));
 const blocoPorId = computed(() => new Map(props.conteudo.resumo.map((bloco) => [bloco.id, bloco])));
 
 /** Linha A e B só existem em par; sem o par, o bloco não tem a comparação e não mostra nada. */
-function linhasDe(id: string): { readonly a: string; readonly b: string } | undefined {
+function linhasDe(id: string): { readonly aHtml: string; readonly bHtml: string } | undefined {
   const bloco = blocoPorId.value.get(id);
   if (bloco?.linhaA === undefined || bloco.linhaB === undefined) return undefined;
-  return { a: bloco.linhaA, b: bloco.linhaB };
+  return { aHtml: bloco.linhaA, bHtml: bloco.linhaB };
 }
 
 function fontesDe(id: string): readonly string[] {
@@ -32,18 +32,18 @@ function fontesDe(id: string): readonly string[] {
 
 <template>
   <div class="juri-resumo">
-    <QuadroTermosJuri :termos="conteudo.quadroTermos" :nota="conteudo.notaQuadroHtml" />
+    <QuadroTermosJuri :termos="conteudo.quadroTermos" :nota-html="conteudo.notaQuadroHtml" />
 
     <VisorResumo :blocos="blocos">
       <template #depois-do-corpo="{ bloco }">
         <div v-if="linhasDe(bloco.id)" class="juri-linhas">
           <section class="juri-linhas__coluna" :aria-labelledby="`juri-laudo-${bloco.id}`">
             <h3 :id="`juri-laudo-${bloco.id}`">Laudo dos autos</h3>
-            <div v-html="linhasDe(bloco.id)!.a" />
+            <div v-html="linhasDe(bloco.id)!.aHtml" />
           </section>
           <section class="juri-linhas__coluna" :aria-labelledby="`juri-caso-${bloco.id}`">
             <h3 :id="`juri-caso-${bloco.id}`">Elementos do caso real</h3>
-            <div v-html="linhasDe(bloco.id)!.b" />
+            <div v-html="linhasDe(bloco.id)!.bHtml" />
           </section>
         </div>
         <FontesJuri :fontes="fontesDe(bloco.id)" />

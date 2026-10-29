@@ -14,10 +14,13 @@ defineProps<{ fichamento: readonly FichaJuri[] }>();
       :key="ficha.id"
       :titulo="ficha.titulo"
       :campos="[
-        { rotulo: 'O que é', html: ficha.oQueEHtml },
-        { rotulo: 'O que a fonte diz', html: ficha.fonteDizHtml },
-        { rotulo: 'Como a acusação usa', html: ficha.acusacaoUsaHtml },
-        { rotulo: 'Como a acusação neutraliza a defesa', html: ficha.acusacaoNeutralizaHtml }
+        { rotulo: 'O que é', conteudoHtml: ficha.oQueEHtml },
+        { rotulo: 'O que a fonte diz', conteudoHtml: ficha.fonteDizHtml },
+        { rotulo: 'Como a acusação usa', conteudoHtml: ficha.acusacaoUsaHtml },
+        {
+          rotulo: 'Como a acusação neutraliza a defesa',
+          conteudoHtml: ficha.acusacaoNeutralizaHtml
+        }
       ]"
       :fontes="ficha.fontes"
     />

@@ -206,10 +206,12 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
    fluxo do documento: reserva a própria altura no fim da página, como o aviso
    fazia sozinho antes. pointer-events: none deixa passar o clique pelo vão
    transparente; os filhos reativam o próprio toque. */
+/* z-index 50: abaixo da barra do topo (60), do véu da gaveta (80) e da gaveta (90). Com 70, o
+   aviso de armazenamento, que é alto em Leitura ampliada, cobria o botão da gaveta (QA F5.1). */
 .layout-base__inferior {
   position: sticky;
   bottom: var(--esp-4, 1rem);
-  z-index: 70;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   gap: var(--esp-3, 0.75rem);

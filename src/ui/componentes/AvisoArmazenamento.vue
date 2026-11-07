@@ -30,7 +30,7 @@ function apagar(): void {
 
 <template>
   <div v-if="visivel" class="aviso-armazenamento" role="status" aria-live="polite">
-    <p class="aviso-armazenamento__texto">
+    <p class="aviso-armazenamento__texto" tabindex="0">
       Neste navegador ficam o login, o progresso, o tema e a Leitura ampliada. Há um cookie de
       sessão, apagado ao sair, e um que reconhece este aparelho por 30 dias. O Sair não apaga esse
       segundo cookie, nem o botão Apagar os dados guardados.
@@ -56,10 +56,14 @@ function apagar(): void {
   bottom: var(--esp-4, 1rem);
   z-index: 70;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--esp-4, 1rem);
   width: min(100% - 2 * var(--esp-4, 1rem), 640px);
+  /* Teto de 30% da janela (QA F5.1, item 1). Com Leitura ampliada a faixa passava de 500 px a
+     360 px e tampava a gaveta e o cabeçalho. Quem rola é o texto, por dentro; os botões ficam. */
+  max-height: 30vh;
+  max-height: 30dvh;
   margin-inline: auto;
   padding: var(--esp-4, 1rem) var(--esp-5, 1.5rem);
   border-radius: var(--raio-md, 10px);
@@ -72,18 +76,26 @@ function apagar(): void {
   box-shadow: var(--sombra-elevada, 0 8px 24px rgba(13, 36, 64, 0.12));
 }
 
-/* Texto em largura total, com os botões na linha de baixo: ao lado deles o texto
-   ficava estreito e a faixa subia sobre o campo de busca. Entrelinha 1.5 para a
-   faixa caber em 187 px a 1280px, a altura da v1.5.0.0. */
+/* Texto acima dos botões, em largura total. Com o teto de altura da faixa, o texto encolhe e
+   rola por dentro (min-height: 0), e pode receber foco do teclado para rolar sem mouse. Entrelinha
+   1.5 para a faixa caber em 187 px a 1280px, a altura da v1.5.0.0. */
 .aviso-armazenamento__texto {
-  flex: 1 1 100%;
+  flex: 0 1 auto;
+  min-height: 0;
   margin: 0;
+  overflow-y: auto;
   font-size: var(--escala-sm, 0.9375rem);
   line-height: 1.5;
 }
 
+.aviso-armazenamento__texto:focus-visible {
+  outline: 2px solid var(--cor-primaria, #163a5f);
+  outline-offset: -2px;
+}
+
 .aviso-armazenamento__acoes {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--esp-3, 0.75rem);
   flex-shrink: 0;
 }
@@ -123,8 +135,6 @@ function apagar(): void {
   .aviso-armazenamento {
     bottom: var(--esp-2, 0.5rem);
     width: min(100% - 2 * var(--esp-2, 0.5rem), 640px);
-    flex-direction: column;
-    align-items: stretch;
     /* Folga menor no celular: a faixa precisa caber na altura que a v1.5.0.0
        tinha em 360x640 (238 px), senão sobe mais que ela sobre o conteúdo. */
     padding: var(--esp-3, 0.75rem);

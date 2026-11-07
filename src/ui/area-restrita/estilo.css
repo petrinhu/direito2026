@@ -146,6 +146,9 @@
 }
 
 .ar-campo input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
   border: 1px solid var(--ar-campo-borda, var(--cor-borda-forte));
@@ -245,6 +248,7 @@
 /* Administração */
 .ar-admin {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-4, 1rem);
 }
 
@@ -256,6 +260,8 @@
 .ar-admin__criar {
   display: grid;
   gap: var(--esp-3, 0.75rem);
+  width: 100%;
+  min-width: 0;
   max-width: 30rem;
 }
 

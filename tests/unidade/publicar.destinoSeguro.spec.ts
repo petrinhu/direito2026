@@ -48,6 +48,7 @@ function rodar(corpo: string, antes: string[] = []): { status: number | null; sa
     "DESTINO_HOST=''",
     `DESTINO_RAIZ='${raiz}'`,
     `DESTINO_WEBROOT='${raiz}/public_html/direito2026'`,
+    `DESTINO_WEBROOT_NOVO='${raiz}/public_html/direito2026_webroot_novo'`,
     `DESTINO_APP='${raiz}/direito2026_app'`,
     `DESTINO_PRIVADO='${raiz}/direito2026_privado'`,
     "SSH_OPCOES='ssh -o BatchMode=yes -o ConnectTimeout=20'",
@@ -60,6 +61,7 @@ function rodar(corpo: string, antes: string[] = []): { status: number | null; sa
       'validar_host_destino',
       'no_destino',
       'conferir_destino_seguro',
+      'conferir_destinos',
       'conferir_md5_pasta'
     ].map(funcao),
     ...antes,
@@ -175,5 +177,40 @@ describe('publicar.sh: destino seguro (revisão F5.2)', () => {
     );
     expect(r.saida).toContain('symlink');
     expect(r.saida).not.toContain('DIVERGENCIAS=0');
+  });
+
+  it('S5: componente da raiz (domains/drpetrus.top) como symlink é recusado, mesmo com realpath coincidente', () => {
+    const real = join(tmp, 'fora', 'domains', 'drpetrus.top');
+    mkdirSync(join(real, 'public_html', 'direito2026'), { recursive: true });
+    mkdirSync(join(real, 'direito2026_app', 'atual'), { recursive: true });
+    mkdirSync(join(real, 'direito2026_privado'), { recursive: true });
+    rmSync(raiz, { recursive: true });
+    symlinkSync(real, raiz);
+    const r = rodar(`conferir_destino_seguro '${raiz}/public_html/direito2026'`);
+    expect(r.status, r.saida).not.toBe(0);
+    expect(r.saida).toContain('destino com symlink');
+    expect(r.saida).not.toContain('passou');
+  });
+
+  it('S10: subpasta do webroot (public_html/direito2026/sub) é recusada pelo nome do webroot', () => {
+    mkdirSync(join(raiz, 'public_html', 'direito2026', 'sub'), { recursive: true });
+    const r = rodar(`DESTINO_WEBROOT='${raiz}/public_html/direito2026/sub'; conferir_destinos`);
+    expect(r.status, r.saida).not.toBe(0);
+    expect(r.saida).toContain('tem de se chamar direito2026');
+  });
+
+  it('S4: host de ssh com "-" inicial e sem outro caractere especial é recusado', () => {
+    const r = rodar(`DESTINO_HOST='-oBatchMode'; validar_host_destino`);
+    expect(r.status, r.saida).not.toBe(0);
+    expect(r.saida).toContain('fora do formato de alias ssh');
+  });
+
+  it('S12: aspas e comando na cauda do caminho, sob sufixo permitido, são recusados antes de qualquer comando', () => {
+    const marca = join(tmp, 'MARCA-CAUDA');
+    const caminho = `${raiz}/direito2026_app/versoes/v1'; touch ${marca}; echo '`;
+    const r = rodar(`conferir_destino_seguro "${caminho}"`);
+    expect(existsSync(marca), 'o comando injetado na cauda não pode rodar').toBe(false);
+    expect(r.status, r.saida).not.toBe(0);
+    expect(r.saida).toContain('caminho do destino fora de');
   });
 });

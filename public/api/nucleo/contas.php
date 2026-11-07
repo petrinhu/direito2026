@@ -17,6 +17,12 @@ if (!defined('D26_API')) {
  * O papel de admin vem só do arquivo. Comparação de login é EXATA.
  */
 const D26_CONTAS_PADRAO = ['versao' => 1, 'usuarios' => []];
+/**
+ * Teto de caracteres de uma senha que se CONFERE (login, senha atual da troca e senha nova).
+ * Nenhuma senha válida passa do teto (CLI, troca e redefinição recusam acima dele), então
+ * uma senha maior não tem conta correspondente: é recusada antes do Argon2id (X9).
+ */
+const D26_SENHA_MAXIMA = 128;
 const D26_ALFABETO_PROVISORIA = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 
 function d26_contas_arquivo(string $priv): string
@@ -39,7 +45,7 @@ function d26_validar_senha_nova(string $nova, string $login, string $atual): ?st
     if ($tamanho < 15) {
         return 'A senha precisa ter pelo menos 15 caracteres.';
     }
-    if ($tamanho > 128) {
+    if ($tamanho > D26_SENHA_MAXIMA) {
         return 'A senha pode ter no máximo 128 caracteres.';
     }
     if ($nova === $login) {
@@ -63,7 +69,7 @@ function d26_senha_provisoria_valida(string $senha, int $minimo = 1): bool
         return false;
     }
     $n = mb_strlen($senha, 'UTF-8');
-    return $n >= $minimo && $n <= 128;
+    return $n >= $minimo && $n <= D26_SENHA_MAXIMA;
 }
 
 function d26_gerar_senha_provisoria(): string
@@ -85,9 +91,15 @@ function d26_hash_senha(string $senha): string
  * Confere a senha. Conta inexistente gasta o mesmo custo de um Argon2id
  * (hash descartado), para o tempo não revelar se o usuário existe. Nenhum
  * hash fictício fica gravado no repositório.
+ * Senha acima de D26_SENHA_MAXIMA é recusada ANTES de qualquer hash e sem olhar a conta:
+ * o resultado é o mesmo para conta existente e inexistente (sem enumeração) e não há custo
+ * de Argon2id que um atacante possa multiplicar com um corpo de 1 MiB.
  */
 function d26_senha_confere(?array $conta, string $senha): bool
 {
+    if (mb_strlen($senha, 'UTF-8') > D26_SENHA_MAXIMA) {
+        return false;
+    }
     d26_teste_marcar('i');
     try {
         if ($conta === null) {

@@ -2,7 +2,7 @@
 
 Regras deste projeto para quem trabalha nele, seja pessoa ou agente de IA.
 
-Última revisão: 2026-10-28. Dono: líder do projeto.
+Última revisão: 2026-11-07. Dono: líder do projeto.
 
 ## Para que serve este arquivo
 
@@ -14,7 +14,7 @@ Onde este arquivo não fala de um assunto, valem as leis gerais. Se uma regra da
 
 Uma mudança é irreversível quando não dá para desfazê-la com um clique. Neste site, ela se aplica a:
 
-- área com login (Interdisciplinar e Júri Simulado);
+- todo o site, que passa a exigir login. Qualquer mudança em `public/api/**`, `public/.htaccess` ou `public/sw.js` também conta como mudança de autorização;
 - geração de chave ou segredo no servidor;
 - mudança de autorização (quem pode ver o quê).
 

@@ -1,12 +1,12 @@
 # Caderno de Direito
 
-Site estático de estudo: resumo teórico, petição comentada e quiz, organizado por período e cadeira. Stack: Vite + Vue 3 + TypeScript, publicado como HTML/CSS/JS estático numa hospedagem compartilhada.
+Site de estudo: resumo teórico, petição comentada e quiz, organizado por período e cadeira. Stack: Vite + Vue 3 + TypeScript. Publicado numa hospedagem compartilhada, com um portão em PHP: o site inteiro exige login.
 
 Este README é o hub: aponta para a documentação, não a repete.
 
 ## Documentação
 
-- [`docs/arquitetura.md`](docs/arquitetura.md): a especificação. Estrutura de pastas, modelo de dados, roteamento, componentes, busca, progresso, offline, impressão, acessibilidade, citação legal, testes, publicação e o fatiamento em ondas.
+- [`docs/arquitetura.md`](docs/arquitetura.md): a especificação. Estrutura de pastas, modelo de dados, roteamento, componentes, busca, progresso, impressão, acesso com login, acessibilidade, citação legal, testes, publicação e o fatiamento em ondas.
 - [`docs/como-adicionar-conteudo.md`](docs/como-adicionar-conteudo.md): roteiro para acrescentar unidade, cadeira, período, pergunta de quiz, calendário e aviso legal, caso por caso.
 - [`docs/compatibilidade-navegadores.md`](docs/compatibilidade-navegadores.md): fonte única das regras de navegador (Chrome, Firefox, Safari, Edge).
 - [`docs/design-visual.md`](docs/design-visual.md): paleta, tipografia, componentes visuais.
@@ -25,6 +25,8 @@ git-crypt unlock <caminho-da-chave>
 ```
 
 Substitua `<caminho-da-chave>` pelo caminho do arquivo de chave, guardado fora do repositório. O arquivo de chave nunca entra no repositório.
+
+A cifra vale só para os commits feitos a partir do commit que cifrou o conteúdo. Os commits anteriores continuam legíveis no histórico público do GitHub, com o texto em claro. Ver `docs/arquitetura.md`, seção 15.
 
 ## Comandos
 

@@ -52,6 +52,8 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
    * administrador que abre /usuarios direto veria "não encontrado" por um instante.
    */
   const pronta = ref(false);
+  /** Verdadeiro quando a última leitura da sessão falhou (rede): a página mostra "Tentar de novo". */
+  const falhou = ref(false);
 
   function guardarSessao(s: { usuario?: string; admin?: boolean }): void {
     usuario.value = s.usuario ?? '';
@@ -65,9 +67,15 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
 
   /** Lê quem está logado no início da página. Sem sessão, não faz nada: o portão já mostra a entrada. */
   async function iniciar(): Promise<void> {
-    const s = await cliente.sessao();
-    if (s.autenticado) guardarSessao(s);
-    pronta.value = true;
+    falhou.value = false;
+    try {
+      const s = await cliente.sessao();
+      if (s.autenticado) guardarSessao(s);
+      pronta.value = true;
+    } catch {
+      // Sem conexão agora: a página oferece tentar de novo (LU-F3.2).
+      falhou.value = true;
+    }
   }
 
   /** Chamadas de administração; senha provisória leva ao formulário de troca, em /conta. */
@@ -116,6 +124,7 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
     usuario,
     admin,
     pronta,
+    falhou,
     iniciar,
     conferirAoVoltar,
     sair,

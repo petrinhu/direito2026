@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import axe from 'axe-core';
@@ -104,6 +106,15 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
     const sair = w.findAll('button').find((b) => b.text() === 'Sair');
     await sair!.trigger('click');
     expect(w.emitted('sair')).toHaveLength(1);
+  });
+
+  it('o botão Sair recebe o anel de foco da lateral (regra de seletor, não o global)', () => {
+    // O axe em jsdom não enxerga o anel de foco: a regra é conferida no CSS do próprio menu.
+    const fonte = readFileSync(
+      resolve(process.cwd(), 'src/ui/componentes/MenuCurriculo.vue'),
+      'utf8'
+    );
+    expect(fonte).toContain('.menu-curriculo__sair:focus-visible');
   });
 
   it('o bloco da conta, com administrador, não tem violação de axe', async () => {

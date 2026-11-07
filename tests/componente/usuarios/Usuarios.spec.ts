@@ -63,4 +63,19 @@ describe('página /usuarios', () => {
     expect(w.text()).not.toContain('Administração de usuários');
     expect(cliente.listarUsuarios).not.toHaveBeenCalled();
   });
+
+  it('se a sessão não pode ser lida, mostra o erro com Tentar de novo, e a tentativa refaz a leitura', async () => {
+    const cliente = criarClienteFalso(true);
+    cliente.sessao.mockRejectedValueOnce(new Error('rede'));
+    const sessao = criarSessaoGlobal({ cliente, navegador: navegadorFalso });
+    await sessao.iniciar();
+    const w = montar(sessao);
+    await flushPromises();
+    expect(w.get('[role="alert"]').text()).toContain('Não foi possível confirmar a sua sessão');
+    expect(w.text()).not.toContain('Página não encontrada');
+    expect(w.text()).not.toContain('Carregando');
+    await w.get('button').trigger('click');
+    await flushPromises();
+    expect(w.get('h1').text()).toBe('Gerenciar usuários');
+  });
 });

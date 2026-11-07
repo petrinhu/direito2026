@@ -471,6 +471,7 @@ provide(ESTADO_MENU, {
 
 .menu-curriculo__botao:focus-visible,
 .menu-curriculo a:focus-visible,
+.menu-curriculo__sair:focus-visible,
 .menu-curriculo__toggle:focus-visible {
   /* Par dedicado da lateral (achado do líder, 22/09/2026): o menu vive
      sempre sobre --cor-sidebar-fundo, nunca sobre --cor-fundo, então o

@@ -63,6 +63,15 @@ describe('criarAdministrar, tradução de erro da administração', () => {
 });
 
 describe('criarSessaoGlobal, sessão conhecida e troca de senha', () => {
+  it('se a leitura da sessão falha, iniciar não lança: fica não pronta e marca a falha', async () => {
+    const cliente = criarClienteFalso();
+    cliente.sessao.mockRejectedValueOnce(new Error('rede'));
+    const sessao = criarSessaoGlobal({ cliente, navegador: criarNavegadorFalso() });
+    await expect(sessao.iniciar()).resolves.toBeUndefined();
+    expect(sessao.pronta.value).toBe(false);
+    expect(sessao.falhou.value).toBe(true);
+  });
+
   it('pronta é falso até a sessão ser lida, e verdadeiro depois, mesmo sem login', async () => {
     const cliente = criarClienteFalso();
     cliente.sessao.mockResolvedValueOnce({ autenticado: false } as never);

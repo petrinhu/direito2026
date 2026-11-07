@@ -23,7 +23,11 @@ function criarClienteFalso(
 ) {
   return {
     sessao: vi.fn(async () => resposta),
-    sair: vi.fn(async () => undefined)
+    sair: vi.fn(async () => undefined),
+    // Administração e troca de senha (LU-F3.2): a sessão global agora as usa.
+    trocarSenha: vi.fn(async () => undefined),
+    listarUsuarios: vi.fn(async () => []),
+    acaoUsuario: vi.fn(async () => ({}))
   };
 }
 
@@ -81,7 +85,10 @@ describe('criarSessaoGlobal', () => {
       sessao: vi.fn(async () => {
         throw new Error('rede');
       }),
-      sair: vi.fn(async () => undefined)
+      sair: vi.fn(async () => undefined),
+      trocarSenha: vi.fn(async () => undefined),
+      listarUsuarios: vi.fn(async () => []),
+      acaoUsuario: vi.fn(async () => ({}))
     };
     const sessao = criarSessaoGlobal({ cliente, navegador });
 

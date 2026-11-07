@@ -86,6 +86,18 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Calendario.vue')
   },
   {
+    // Gerenciar usuários (LU-F3.2): a página só mostra o painel a administrador.
+    path: '/usuarios',
+    name: 'usuarios',
+    component: () => import('@/ui/paginas/Usuarios.vue')
+  },
+  {
+    // Trocar senha (LU-F3.2): para todo usuário logado, pelo bloco da conta do menu.
+    path: '/conta',
+    name: 'conta',
+    component: () => import('@/ui/paginas/Conta.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'nao-encontrado',
     component: () => import('@/ui/paginas/NaoEncontrado.vue')

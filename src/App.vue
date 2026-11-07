@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   CHAVE_CURRICULO,
   CHAVE_REPOSITORIO,
+  CHAVE_SESSAO,
   CHAVE_STORE_BUSCA,
   CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
@@ -16,6 +17,11 @@ const repositorio = inject(CHAVE_REPOSITORIO)!;
 const storeTema = inject(CHAVE_STORE_TEMA)!;
 const storeBusca = inject(CHAVE_STORE_BUSCA)!;
 const storeModoAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO)!;
+// Em produção a sessão sempre é provida (main.ts). Sem ela (App montado sem o
+// cliente, em teste), o bloco da conta do menu simplesmente não aparece.
+const sessao = inject(CHAVE_SESSAO, null);
+const usuario = computed(() => sessao?.usuario.value ?? '');
+const admin = computed(() => sessao?.admin.value ?? false);
 const route = useRoute();
 const router = useRouter();
 
@@ -39,7 +45,10 @@ function aoBuscar(termo: string): void {
     :store-busca="storeBusca"
     :store-modo-adaptado="storeModoAdaptado"
     :com-faixa="route.meta.faixaDeTopo === true"
+    :usuario="usuario"
+    :admin="admin"
     @buscar="aoBuscar"
+    @sair="sessao?.sair()"
   >
     <router-view />
   </LayoutBase>

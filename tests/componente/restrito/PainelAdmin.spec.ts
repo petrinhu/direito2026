@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import PainelAdmin from '@/ui/area-restrita/PainelAdmin.vue';
-import type { ClienteApi, UsuarioAdmin } from '@/app/restrito/clienteApi';
-import type { ResultadoAdministracao } from '@/app/restrito/sessaoRestrita';
+import PainelAdmin from '@/ui/usuarios/PainelAdmin.vue';
+import type { ClienteApi, UsuarioAdmin } from '@/app/sessao/administracao';
+import type { ResultadoAdministracao } from '@/app/sessao/administracao';
 
 const usuarios: UsuarioAdmin[] = [
   {

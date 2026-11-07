@@ -10,12 +10,22 @@ import MenuUnidadeComAbas from './MenuUnidadeComAbas.vue';
 import { ESTADO_MENU } from './menuEstado';
 import { cadeiaDoCaminho } from './cadeiaDoCaminho';
 import IconeCalendario from './IconeCalendario.vue';
+import MenuSessao from './MenuSessao.vue';
 
-const props = defineProps<{
-  curriculo: Curriculo;
-  /** Caminho da rota atual (sem barra inicial), para aria-current. */
-  caminhoAtual: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    curriculo: Curriculo;
+    /** Caminho da rota atual (sem barra inicial), para aria-current. */
+    caminhoAtual: string;
+    /** Login de quem está logado; vazio = ninguém, e o bloco da conta não aparece. */
+    usuario?: string;
+    /** Administrador vê Gerenciar usuários. */
+    admin?: boolean;
+  }>(),
+  { usuario: '', admin: false }
+);
+
+const emit = defineEmits<{ sair: [] }>();
 
 // Disclosure aninhado (seção 11 da arquitetura), não menubar ARIA: é o
 // padrão que o leitor de tela já espera para navegação hierárquica.
@@ -148,6 +158,7 @@ provide(ESTADO_MENU, {
         </RouterLink>
       </li>
     </ul>
+    <MenuSessao v-if="usuario" :admin="admin" :caminho-atual="caminhoAtual" @sair="emit('sair')" />
     <ul class="menu-curriculo__nivel-1">
       <li v-for="periodo in curriculo" :key="periodo.id">
         <button
@@ -356,6 +367,23 @@ provide(ESTADO_MENU, {
   padding-bottom: var(--esp-2, 0.5rem);
   margin-bottom: var(--esp-2, 0.5rem);
   border-bottom: 1px solid rgba(184, 192, 204, 0.35);
+}
+/* Bloco da conta (LU-F3.2): mesmo separador do topo. O Sair é botão, então zera o
+   estilo nativo para parecer com os links do bloco. */
+.menu-curriculo__sessao {
+  padding-bottom: var(--esp-2, 0.5rem);
+  margin-bottom: var(--esp-2, 0.5rem);
+  border-bottom: 1px solid rgba(184, 192, 204, 0.35);
+}
+.menu-curriculo__sair {
+  appearance: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  width: 100%;
 }
 
 /* Guia de árvore: linha vertical ligando cada nível ao seu pai, decorativa

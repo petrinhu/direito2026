@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import type { ClienteApi } from '@/app/restrito/clienteApi';
+import { criarAdministrar, mensagemDeErro } from './administracao';
 
 /**
  * Sessão do site inteiro (plano do CTO do login único, seção 3 e 2.2). Quem
@@ -10,7 +11,10 @@ import type { ClienteApi } from '@/app/restrito/clienteApi';
  */
 
 /** O que a sessão global precisa do cliente da API. */
-export type ClienteSessao = Pick<ClienteApi, 'sessao' | 'sair'>;
+export type ClienteSessao = Pick<
+  ClienteApi,
+  'sessao' | 'sair' | 'trocarSenha' | 'listarUsuarios' | 'acaoUsuario'
+>;
 
 /** Tudo que mexe com o navegador passa por aqui, para o teste rodar sem janela (L-50). */
 export interface Navegador {
@@ -42,6 +46,12 @@ export function criarAoNaoAutorizado(
 export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
   const usuario = ref('');
   const admin = ref(false);
+  /**
+   * Verdadeiro só depois de a sessão ter sido lida com sucesso (logado ou não).
+   * Enquanto falso, a página de administração não decide nada: sem isso, um
+   * administrador que abre /usuarios direto veria "não encontrado" por um instante.
+   */
+  const pronta = ref(false);
 
   function guardarSessao(s: { usuario?: string; admin?: boolean }): void {
     usuario.value = s.usuario ?? '';
@@ -57,6 +67,23 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
   async function iniciar(): Promise<void> {
     const s = await cliente.sessao();
     if (s.autenticado) guardarSessao(s);
+    pronta.value = true;
+  }
+
+  /** Chamadas de administração; senha provisória leva ao formulário de troca, em /conta. */
+  const administrar = criarAdministrar(cliente, () => navegador.substituir('/conta'));
+
+  /** Troca a própria senha. Erro vira mensagem; a página fica aberta para corrigir. */
+  async function trocarSenha(
+    atual: string,
+    nova: string
+  ): Promise<{ readonly ok: true } | { readonly ok: false; readonly mensagem: string }> {
+    try {
+      await cliente.trocarSenha(atual, nova);
+      return { ok: true };
+    } catch (erro) {
+      return { ok: false, mensagem: mensagemDeErro(erro) };
+    }
   }
 
   /** Aba que volta ao primeiro plano: sem sessão, recarrega (o portão mostra a entrada). Falha de rede não é sessão vencida. */
@@ -85,7 +112,16 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
     navegador.substituir('/');
   }
 
-  return { usuario, admin, iniciar, conferirAoVoltar, sair };
+  return {
+    usuario,
+    admin,
+    pronta,
+    iniciar,
+    conferirAoVoltar,
+    sair,
+    administrar,
+    trocarSenha
+  };
 }
 
 export type SessaoGlobal = ReturnType<typeof criarSessaoGlobal>;

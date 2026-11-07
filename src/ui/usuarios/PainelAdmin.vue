@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, useId } from 'vue';
-import { loginValido, type Administrar, type ClienteApi, type UsuarioAdmin } from '@/app/restrito';
+import {
+  loginValido,
+  type Administrar,
+  type ClienteApi,
+  type UsuarioAdmin
+} from '@/app/sessao/administracao';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */

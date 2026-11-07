@@ -1,0 +1,104 @@
+import { describe, expect, it, vi } from 'vitest';
+import { criarAdministrar } from '@/app/sessao/administracao';
+import { criarSessaoGlobal, type Navegador } from '@/app/sessao/sessaoGlobal';
+import { ErroDeApi } from '@/app/restrito';
+
+function criarNavegadorFalso(): Navegador {
+  return {
+    caminhoAtual: () => '/usuarios',
+    substituir: vi.fn(),
+    recarregar: vi.fn(),
+    limparCachesESW: vi.fn(async () => undefined)
+  };
+}
+
+function criarClienteFalso() {
+  return {
+    sessao: vi.fn(async () => ({ autenticado: true, usuario: 'admin-teste', admin: true })),
+    sair: vi.fn(async () => undefined),
+    trocarSenha: vi.fn(async () => undefined),
+    listarUsuarios: vi.fn(async () => []),
+    acaoUsuario: vi.fn(async () => ({}))
+  };
+}
+
+describe('criarAdministrar, tradução de erro da administração', () => {
+  it('chamada que dá certo vira resultado ok com o valor', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => 42);
+    expect(r).toEqual({ ok: true, valor: 42 });
+  });
+
+  it('falha de rede vira mensagem em pt-br, sem vazar o código', async () => {
+    const cliente = criarClienteFalso();
+    const administrar = criarAdministrar(cliente, vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(0, 'rede');
+    });
+    expect(r).toEqual({
+      ok: false,
+      mensagem: 'Sem conexão com o servidor. Verifique a internet e tente de novo.'
+    });
+  });
+
+  it('403 de troca obrigatória avisa quem leva ao formulário de troca e devolve a mensagem do servidor', async () => {
+    const aoTrocaObrigatoria = vi.fn();
+    const administrar = criarAdministrar(criarClienteFalso(), aoTrocaObrigatoria);
+    const r = await administrar(async () => {
+      throw new ErroDeApi(403, 'troca-obrigatoria');
+    });
+    expect(aoTrocaObrigatoria).toHaveBeenCalledTimes(1);
+    expect(r).toEqual({ ok: false, mensagem: 'É preciso trocar a senha antes de continuar.' });
+  });
+
+  it('401 de sessão vencida avisa a sessão e não chama a troca obrigatória', async () => {
+    const aoTrocaObrigatoria = vi.fn();
+    const administrar = criarAdministrar(criarClienteFalso(), aoTrocaObrigatoria);
+    const r = await administrar(async () => {
+      throw new ErroDeApi(401, 'sem-sessao');
+    });
+    expect(aoTrocaObrigatoria).not.toHaveBeenCalled();
+    expect(r).toEqual({ ok: false, mensagem: 'Sua sessão terminou. Entre de novo.' });
+  });
+});
+
+describe('criarSessaoGlobal, sessão conhecida e troca de senha', () => {
+  it('pronta é falso até a sessão ser lida, e verdadeiro depois, mesmo sem login', async () => {
+    const cliente = criarClienteFalso();
+    cliente.sessao.mockResolvedValueOnce({ autenticado: false } as never);
+    const sessao = criarSessaoGlobal({ cliente, navegador: criarNavegadorFalso() });
+
+    expect(sessao.pronta.value).toBe(false);
+    await sessao.iniciar();
+    expect(sessao.pronta.value).toBe(true);
+    expect(sessao.admin.value).toBe(false);
+  });
+
+  it('trocarSenha dá certo e devolve ok', async () => {
+    const cliente = criarClienteFalso();
+    const sessao = criarSessaoGlobal({ cliente, navegador: criarNavegadorFalso() });
+    const r = await sessao.trocarSenha('senha-antiga-longa', 'senha-nova-bem-longa');
+    expect(cliente.trocarSenha).toHaveBeenCalledWith('senha-antiga-longa', 'senha-nova-bem-longa');
+    expect(r).toEqual({ ok: true });
+  });
+
+  it('trocarSenha com senha atual errada devolve a mensagem, sem sair da página', async () => {
+    const cliente = criarClienteFalso();
+    cliente.trocarSenha.mockRejectedValueOnce(new ErroDeApi(401, 'senha-atual'));
+    const navegador = criarNavegadorFalso();
+    const sessao = criarSessaoGlobal({ cliente, navegador });
+    const r = await sessao.trocarSenha('errada', 'senha-nova-bem-longa');
+    expect(r).toEqual({ ok: false, mensagem: 'A senha atual não confere.' });
+    expect(navegador.substituir).not.toHaveBeenCalled();
+  });
+
+  it('403 de troca obrigatória em qualquer chamada leva a /conta', async () => {
+    const cliente = criarClienteFalso();
+    cliente.listarUsuarios.mockRejectedValueOnce(new ErroDeApi(403, 'troca-obrigatoria'));
+    const navegador = criarNavegadorFalso();
+    const sessao = criarSessaoGlobal({ cliente, navegador });
+    const r = await sessao.administrar((c) => c.listarUsuarios());
+    expect(r.ok).toBe(false);
+    expect(navegador.substituir).toHaveBeenCalledWith('/conta');
+  });
+});

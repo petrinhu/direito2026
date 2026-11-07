@@ -28,8 +28,12 @@ const props = withDefaults(
      * da coluna da barra lateral. Sem a faixa, o layout fica como sempre.
      */
     comFaixa?: boolean;
+    /** Login de quem está logado (bloco da conta do menu); vazio = ninguém. */
+    usuario?: string;
+    /** Administrador vê Gerenciar usuários no menu. */
+    admin?: boolean;
   }>(),
-  { comFaixa: false }
+  { comFaixa: false, usuario: '', admin: false }
 );
 
 // O aviso diz que o site não usa cookies nem servidor: na área restrita isso é falso
@@ -43,7 +47,7 @@ const naPaginaInicial = computed(() => props.caminhoAtual === '');
 // gravada (ordem do orquestrador, para ratificação do líder, 20/10/2026).
 const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario');
 
-const emit = defineEmits<{ buscar: [string] }>();
+const emit = defineEmits<{ buscar: [string]; sair: [] }>();
 
 const gavetaAberta = ref(false);
 const gavetaRef = ref<HTMLElement | undefined>();
@@ -122,7 +126,13 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
       :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"
       @keydown="aoTeclaNaGaveta"
     >
-      <MenuCurriculo :curriculo="curriculo" :caminho-atual="caminhoAtual" />
+      <MenuCurriculo
+        :curriculo="curriculo"
+        :caminho-atual="caminhoAtual"
+        :usuario="usuario"
+        :admin="admin"
+        @sair="emit('sair')"
+      />
     </aside>
     <main id="conteudo-principal" tabindex="-1" class="layout-base__conteudo">
       <slot />

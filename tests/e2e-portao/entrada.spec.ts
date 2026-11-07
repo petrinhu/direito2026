@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { chaveAssetJs, resetarPrivado } from './apoio/ambiente';
 import { capturar, esperarEntrada } from './apoio/acoes';
 import { DESTINO_INTERDISCIPLINAR, DESTINO_JURI, ORIGEM } from './apoio/constantes';
+import { calcularContraste } from '../../src/core/design/contraste';
 
 test.beforeEach(() => resetarPrivado());
 
@@ -59,4 +60,64 @@ test('a tela de entrada não carrega script e sai com CSP fechada (default-src n
   expect(resposta?.headers()['content-security-policy']).toContain("default-src 'none'");
   expect(resposta?.headers()['x-frame-options']).toBe('DENY');
   await expect(page.locator('script')).toHaveCount(0);
+});
+
+/** Cor computada do navegador (rgb ou rgba) para hex. Transparente (alfa 0) vira null. */
+function paraHex(cor: string): string | null {
+  const m = cor.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+  if (!m) return null;
+  if (m[4] !== undefined && Number(m[4]) === 0) return null;
+  return `#${[m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('')}`;
+}
+
+test.describe('tela de entrada com o sistema em tema escuro', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('o fundo é escuro e texto, campo, botão e foco passam o contraste AA contra o fundo real', async ({
+    page
+  }) => {
+    await page.goto('/');
+    await esperarEntrada(page);
+    const medidas = await page.evaluate(() => {
+      const campo = document.querySelector<HTMLInputElement>('#usuario')!;
+      campo.focus();
+      return {
+        fundo: getComputedStyle(document.body).backgroundColor,
+        textoCorpo: getComputedStyle(document.body).color,
+        textoTitulo: getComputedStyle(document.querySelector('h1')!).color,
+        rotulo: getComputedStyle(document.querySelector('label')!).color,
+        campoTexto: getComputedStyle(campo).color,
+        campoFundo: getComputedStyle(campo).backgroundColor,
+        botaoTexto: getComputedStyle(document.querySelector('button')!).color,
+        botaoFundo: getComputedStyle(document.querySelector('button')!).backgroundColor,
+        foco: getComputedStyle(campo).outlineColor,
+        focoVisivel: campo.matches(':focus-visible')
+      };
+    });
+
+    const fundo = paraHex(medidas.fundo);
+    expect(fundo, 'fundo do corpo, que não pode ser branco no tema escuro').not.toBe('#ffffff');
+    expect(medidas.focoVisivel, 'pré-condição: o campo está com foco visível').toBe(true);
+
+    const razoes = {
+      'texto do corpo': calcularContraste(paraHex(medidas.textoCorpo)!, fundo!),
+      título: calcularContraste(paraHex(medidas.textoTitulo)!, fundo!),
+      rótulo: calcularContraste(paraHex(medidas.rotulo)!, fundo!),
+      'texto do campo': calcularContraste(
+        paraHex(medidas.campoTexto)!,
+        paraHex(medidas.campoFundo) ?? fundo!
+      ),
+      'texto do botão': calcularContraste(
+        paraHex(medidas.botaoTexto)!,
+        paraHex(medidas.botaoFundo) ?? fundo!
+      )
+    };
+    for (const [nome, razao] of Object.entries(razoes)) {
+      expect(razao, `contraste de ${nome} (mínimo 4,5)`).toBeGreaterThanOrEqual(4.5);
+    }
+    expect(
+      calcularContraste(paraHex(medidas.foco)!, fundo!),
+      'contraste do foco contra o fundo (mínimo 3, WCAG 1.4.11)'
+    ).toBeGreaterThanOrEqual(3);
+  });
 });

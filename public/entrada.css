@@ -1,4 +1,9 @@
 /* Tela de entrada e de troca: público, sem conteúdo de estudo e sem imagem. */
+/* Cores do sistema, sem JS: a tela não lê o tema salvo no app, só o do sistema. Contraste medido
+   contra o fundo real em tests/e2e-portao/entrada.spec.ts. */
+:root {
+  color-scheme: light dark;
+}
 html {
   font-size: 112.5%;
 }
@@ -39,4 +44,22 @@ button {
 :focus-visible {
   outline: 3px solid #1a4f8b;
   outline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #161a20;
+    color: #ecebe6;
+  }
+  input {
+    background: #222831;
+    color: #ecebe6;
+    border: 1px solid #7d8794;
+  }
+  button {
+    background: #8ab4f8;
+    color: #0f1419;
+  }
+  :focus-visible {
+    outline-color: #8ab4f8;
+  }
 }

@@ -1,20 +1,13 @@
 import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
- * Faixa do aviso de armazenamento na primeira visita (sem a chave de "já visto").
+ * Bloco do aviso de armazenamento na primeira visita (sem a chave de "já visto").
  *
- * A faixa fica no fluxo, presa à base da janela, e a pilha inferior (faixa, quadro
- * de prova, botão Home) sobe junto com ela. Faixa alta demais cobre o campo de
- * busca logo na primeira visita (regressão medida em 07/11/2026: no HEAD a faixa
- * tinha 391 px e cobria o centro do campo; na v1.5.0.0 tinha 187 px).
- *
- * Referência medida na v1.5.0.0, mesmo critério:
- * - 1280x720: faixa de 187 px, topo em 232 px; campo de busca em 20 a 64 px, sem cobertura.
- * - 360x640: faixa de 238 px, topo em 101 px; já cobria o campo (113 a 157 px). A regra
- *   aqui é não subir além disso.
+ * Decisão do líder (07/11/2026): o aviso é um bloco no topo do conteúdo, que rola com a página. Não
+ * é fixo nem sticky, então não cobre o campo de busca nem o menu. A regra de 187 px a 1280 vem da
+ * v1.5.0.0 e continua valendo para a altura do bloco.
  */
 const ALTURA_MAXIMA_1280 = 187;
-const TOPO_MINIMO_360 = 101;
 
 test('1280x720: a faixa não cobre o campo de busca na primeira visita e não passa de 187 px', async ({
   page
@@ -39,12 +32,21 @@ test('1280x720: a faixa não cobre o campo de busca na primeira visita e não pa
   expect(caixa!.height).toBeLessThanOrEqual(ALTURA_MAXIMA_1280);
 });
 
-test('360x640: a faixa não sobe além do topo que tinha na v1.5.0.0', async ({ page }) => {
+test('360x640: o aviso é bloco do fluxo, antes do campo de busca, e rola com a página', async ({
+  page
+}) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await page.goto('/busca');
   await page.locator('#campo-busca-input').waitFor({ state: 'visible' });
   await page.evaluate(() => document.fonts.ready);
-  const caixa = await page.locator('.aviso-armazenamento').boundingBox();
-  expect(caixa).not.toBeNull();
-  expect(caixa!.y).toBeGreaterThanOrEqual(TOPO_MINIMO_360);
+  const faixa = page.locator('.aviso-armazenamento');
+  await expect(faixa).toBeVisible();
+  const posicao = await faixa.evaluate((el) => getComputedStyle(el).position);
+  expect(['static', 'relative']).toContain(posicao);
+  const antesDoCampo = await page.evaluate(() => {
+    const aviso = document.querySelector('.aviso-armazenamento');
+    const campo = document.querySelector('#campo-busca-input');
+    return Boolean(aviso && campo && aviso.compareDocumentPosition(campo) & 4);
+  });
+  expect(antesDoCampo).toBe(true);
 });

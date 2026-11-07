@@ -4,15 +4,13 @@ import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
 
 /**
- * Faixa de aviso de armazenamento (ordem do líder, 22/09/2026: aviso de
- * cookies; a resposta foi a faixa discreta, não o banner, porque o site
- * guardava só armazenamento local para tema e progresso). Desde o login
- * único (LU-F3.5, 07/11/2026), o login guarda um cookie de sessão e um cookie
- * do aparelho (30 dias, que o Sair não apaga), e a faixa diz isso em todo o site.
- * Mostrada só na primeira visita: repositorio decide sozinho se a marca
- * de "já visto" sobrevive a um recarregamento (localStorage) ou dura só
- * esta sessão (armazenamento indisponível, RepositorioMemoria): este
- * componente não sabe nem precisa saber qual das duas está por trás.
+ * Bloco de aviso de armazenamento, no topo do conteúdo (decisão do líder, 07/11/2026: "O aviso vira
+ * um bloco no alto da página e rola junto com ela. O texto aparece inteiro, nunca cobre campo nem
+ * menu, e some ao clicar Entendi."). Não é fixo nem sticky: rola com a página. Desde o login único
+ * (LU-F3.5), o login guarda um cookie de sessão e um cookie do aparelho (30 dias, que o Sair não
+ * apaga), e o bloco diz isso em todo o site. Mostrado só na primeira visita: repositorio decide
+ * sozinho se a marca de "já visto" sobrevive a um recarregamento (localStorage) ou dura só esta
+ * sessão (armazenamento indisponível, RepositorioMemoria).
  */
 const props = defineProps<{ repositorio: RepositorioProgresso }>();
 
@@ -30,7 +28,7 @@ function apagar(): void {
 
 <template>
   <div v-if="visivel" class="aviso-armazenamento" role="status" aria-live="polite">
-    <p class="aviso-armazenamento__texto" tabindex="0">
+    <p class="aviso-armazenamento__texto">
       Neste navegador ficam o login, o progresso, o tema e a Leitura ampliada. Há um cookie de
       sessão, apagado ao sair, e um que reconhece este aparelho por 30 dias. O Sair não apaga esse
       segundo cookie, nem o botão Apagar os dados guardados.
@@ -45,26 +43,15 @@ function apagar(): void {
 </template>
 
 <style scoped>
-/* Faixa no FLUXO do documento, não position: fixed. Fixa, ela cobria o
-   conteúdo do fim da página (QA em produção: botão "Anterior" do quiz, 1280px)
-   até o aluno clicar em "Entendi". Sticky reserva a altura real da faixa no
-   fim do conteúdo (mesma lógica do padding-top de LayoutBase.vue, que reserva
-   espaço para a BarraTopo) e, enquanto a página é mais alta que a janela, a
-   faixa continua visível colada na base da janela. */
+/* Bloco no fluxo do documento, logo abaixo da barra do topo: rola com a página e não cobre nada
+   (decisão do líder). Sem position fixed nem sticky. */
 .aviso-armazenamento {
-  position: sticky;
-  bottom: var(--esp-4, 1rem);
-  z-index: 70;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--esp-4, 1rem);
   width: min(100% - 2 * var(--esp-4, 1rem), 640px);
-  /* Teto de 30% da janela (QA F5.1, item 1). Com Leitura ampliada a faixa passava de 500 px a
-     360 px e tampava a gaveta e o cabeçalho. Quem rola é o texto, por dentro; os botões ficam. */
-  max-height: 30vh;
-  max-height: 30dvh;
-  margin-inline: auto;
+  margin: var(--esp-4, 1rem) auto;
   padding: var(--esp-4, 1rem) var(--esp-5, 1.5rem);
   border-radius: var(--raio-md, 10px);
   border: 1px solid var(--cor-borda-forte, #c3bca4);
@@ -76,28 +63,17 @@ function apagar(): void {
   box-shadow: var(--sombra-elevada, 0 8px 24px rgba(13, 36, 64, 0.12));
 }
 
-/* Texto acima dos botões, em largura total. Com o teto de altura da faixa, o texto encolhe e
-   rola por dentro (min-height: 0), e pode receber foco do teclado para rolar sem mouse. Entrelinha
-   1.5 para a faixa caber em 187 px a 1280px, a altura da v1.5.0.0. */
+/* Texto inteiro, sem teto de altura nem rolagem interna, em qualquer largura e na Leitura ampliada. */
 .aviso-armazenamento__texto {
-  flex: 0 1 auto;
-  min-height: 0;
   margin: 0;
-  overflow-y: auto;
   font-size: var(--escala-sm, 0.9375rem);
   line-height: 1.5;
-}
-
-.aviso-armazenamento__texto:focus-visible {
-  outline: 2px solid var(--cor-primaria, #163a5f);
-  outline-offset: -2px;
 }
 
 .aviso-armazenamento__acoes {
   display: flex;
   flex-wrap: wrap;
   gap: var(--esp-3, 0.75rem);
-  flex-shrink: 0;
 }
 
 .aviso-armazenamento__apagar {
@@ -133,10 +109,7 @@ function apagar(): void {
 
 @media (max-width: 640px) {
   .aviso-armazenamento {
-    bottom: var(--esp-2, 0.5rem);
     width: min(100% - 2 * var(--esp-2, 0.5rem), 640px);
-    /* Folga menor no celular: a faixa precisa caber na altura que a v1.5.0.0
-       tinha em 360x640 (238 px), senão sobe mais que ela sobre o conteúdo. */
     padding: var(--esp-3, 0.75rem);
     gap: var(--esp-3, 0.75rem);
   }

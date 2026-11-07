@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { caminhoEmAreaRestrita } from '@/app/curriculo/areaRestrita';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
@@ -101,6 +101,39 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     primeiro.focus();
   }
 }
+
+/**
+ * Recuo de rolagem pela pilha inferior (quadro de contagem e botão Home). A pilha é sticky e
+ * fica 16 px acima da base da janela (--esp-4), então cobre a altura dela mais essa folga. O
+ * recuo de 8 px a mais é o respiro. Assim o campo focado, rolado para a vista, nunca fica
+ * escondido atrás da pilha (WCAG 2.4.11, técnica C43). Decisão do líder: "nunca cobre campo nem
+ * menu" (07/11/2026), executada como opção A, para ratificação (L-15).
+ */
+const FOLGA_DE_BAIXO_PX = 16;
+const RESPIRO_PX = 8;
+const pilhaRef = ref<HTMLElement>();
+let observadorPilha: InstanceType<typeof window.ResizeObserver> | undefined;
+
+function publicarRecuoDaPilha(altura: number): void {
+  document.documentElement.style.scrollPaddingBottom =
+    altura > 0 ? `${altura + FOLGA_DE_BAIXO_PX + RESPIRO_PX}px` : '';
+}
+
+onMounted(() => {
+  const pilha = pilhaRef.value;
+  if (!pilha) return;
+  publicarRecuoDaPilha(pilha.offsetHeight);
+  if (typeof window.ResizeObserver === 'function') {
+    observadorPilha = new window.ResizeObserver(() => publicarRecuoDaPilha(pilha.offsetHeight));
+    observadorPilha.observe(pilha);
+  }
+});
+
+onBeforeUnmount(() => {
+  observadorPilha?.disconnect();
+  observadorPilha = undefined;
+  document.documentElement.style.removeProperty('scroll-padding-bottom');
+});
 </script>
 
 <template>
@@ -135,6 +168,9 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
       />
     </aside>
     <main id="conteudo-principal" tabindex="-1" class="layout-base__conteudo">
+      <!-- Aviso de armazenamento: bloco no topo do conteúdo, rola com a página (decisão do líder,
+           07/11/2026). Não fica na pilha fixa, para não cobrir campo nem menu. -->
+      <AvisoArmazenamento :repositorio="repositorio" />
       <slot />
     </main>
   </div>
@@ -147,13 +183,11 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   <AvisoLegal v-if="!emAreaRestrita" />
   <Rodape :repositorio="repositorio" />
   <!--
-    Pilha inferior: aviso de armazenamento, quadro de contagem e botão Home. Os
-    três são sticky dentro desta caixa (que é sticky no fim do documento), então
-    ficam empilhados e nunca se sobrepõem nem cobrem o conteúdo do fim da página.
-    O botão Home vai por último, no canto inferior direito, abaixo do quadro.
+    Pilha inferior: quadro de contagem e botão Home. Os dois são sticky dentro desta caixa (que é
+    sticky no fim do documento), então ficam empilhados e nunca se sobrepõem nem cobrem o conteúdo
+    do fim da página. O botão Home vai por último, no canto inferior direito, abaixo do quadro.
   -->
-  <div class="layout-base__inferior">
-    <AvisoArmazenamento :repositorio="repositorio" />
+  <div ref="pilhaRef" class="layout-base__inferior">
     <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
     <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
     <BotaoHome v-if="!naPaginaInicial" />
@@ -202,12 +236,11 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   min-width: 0;
 }
 
-/* Pilha inferior (aviso de armazenamento + quadro de contagem). Sticky e no
-   fluxo do documento: reserva a própria altura no fim da página, como o aviso
-   fazia sozinho antes. pointer-events: none deixa passar o clique pelo vão
+/* Pilha inferior (quadro de contagem + botão Home). Sticky e no fluxo do documento: reserva a
+   própria altura no fim da página. pointer-events: none deixa passar o clique pelo vão
    transparente; os filhos reativam o próprio toque. */
-/* z-index 50: abaixo da barra do topo (60), do véu da gaveta (80) e da gaveta (90). Com 70, o
-   aviso de armazenamento, que é alto em Leitura ampliada, cobria o botão da gaveta (QA F5.1). */
+/* z-index 50: abaixo da barra do topo (60), do véu da gaveta (80) e da gaveta (90), para que a
+   pilha nunca cubra os controles do cabeçalho e do menu (QA F5.1). */
 .layout-base__inferior {
   position: sticky;
   bottom: var(--esp-4, 1rem);

@@ -11,11 +11,9 @@ import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
 /**
- * Quadro de contagem em todas as páginas (ordem do líder, 20/10/2026), e
- * sem sobreposição com o aviso de armazenamento: os dois ficam numa mesma
- * pilha inferior com position: sticky (mesma técnica do aviso, sem
- * cobrir o conteúdo do fim da página). A regra do aviso não muda: o
- * teste dele continua exigindo position: sticky na própria faixa.
+ * Quadro de contagem em todas as páginas (ordem do líder, 20/10/2026), na pilha inferior com
+ * position: sticky. O aviso de armazenamento não fica mais nessa pilha: é um bloco no topo do
+ * conteúdo que rola com a página (decisão do líder, 07/11/2026).
  */
 let montado: VueWrapper | undefined;
 
@@ -51,12 +49,14 @@ afterEach(() => {
 });
 
 describe('LayoutBase, quadro de contagem em todas as páginas', () => {
-  it('o quadro aparece na pilha inferior, junto com o aviso de armazenamento', () => {
+  it('o quadro aparece na pilha inferior, e o aviso de armazenamento fica no topo do conteúdo', () => {
     montado = montarLayout();
     const pilha = document.querySelector('.layout-base__inferior');
     expect(pilha).not.toBeNull();
     expect(pilha?.querySelector('.quadro-prova')).not.toBeNull();
-    expect(pilha?.querySelector('.aviso-armazenamento')).not.toBeNull();
+    expect(pilha?.querySelector('.aviso-armazenamento')).toBeNull();
+    const principal = document.querySelector('#conteudo-principal');
+    expect(principal?.querySelector('.aviso-armazenamento')).not.toBeNull();
   });
 
   it('a pilha inferior é sticky, não fixed (não cobre o fim da página)', () => {

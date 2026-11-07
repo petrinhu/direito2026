@@ -61,11 +61,24 @@ function d26_tela_entrada(string $token, string $destino, ?string $erro = null):
         . '</form>');
 }
 
-/** Tela de troca obrigatória: nada do app sai antes dela. O formulário é ligado na F2.5. */
-function d26_tela_troca(): string
+/**
+ * Tela de troca obrigatória: nada do app sai antes dela. O formulário vai para troca.php e
+ * leva o token do cookie pré, como a tela de entrada. Com $erro, a mensagem vai em role="alert".
+ */
+function d26_tela_troca(string $token, ?string $erro = null): string
 {
-    return d26_tela_documento('Caderno de Direito', '<h1>Caderno de Direito</h1>'
-        . '<p>Troca de senha obrigatória antes de continuar.</p>');
+    $titulo = $erro ?? 'Caderno de Direito';
+    $aviso = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    return d26_tela_documento($titulo, '<h1>Caderno de Direito</h1>'
+        . '<p>Troca de senha obrigatória antes de continuar.</p>' . $aviso
+        . '<form method="post" action="/api/troca.php">'
+        . '<label for="senhaAtual">Senha atual</label>'
+        . '<input id="senhaAtual" name="senhaAtual" type="password" autocomplete="current-password" required>'
+        . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
+        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required>'
+        . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'
+        . '<button type="submit">Trocar senha</button>'
+        . '</form>');
 }
 
 /** Tela de serviço indisponível, em navegação (503 fechado). */

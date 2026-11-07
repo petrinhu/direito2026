@@ -165,7 +165,7 @@ function d26_portao_decidir(): never
 
     if ($conta['deveTrocarSenha'] !== false) {
         if ($navegacao) {
-            d26_portao_tela(200, d26_tela_troca(), PORTAO_CSP_TELA);
+            d26_portao_tela(200, d26_tela_troca(d26_csrf_pre_atual($priv)), PORTAO_CSP_TELA);
         }
         d26_portao_vazio(403);
     }

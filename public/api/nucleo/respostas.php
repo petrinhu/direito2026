@@ -30,22 +30,30 @@ function d26_enviar_json_bruto(int $status, string $json): never
 }
 
 /**
- * Resposta de bytes (imagem cifrada da área da Júri). Os cabeçalhos de segurança
- * são os de toda resposta da API; só o tipo muda para application/octet-stream
- * (sem charset e sem Content-Disposition), e o cache continua o no-store de
- * d26_cabecalhos(), sozinho. Só para endpoint binário: as respostas JSON seguem
- * em d26_enviar_json_bruto, sem alteração.
+ * Resposta de arquivo binário (imagem da Júri, em claro, só com sessão válida). Os
+ * cabeçalhos de segurança são os de toda resposta da API; por cima vêm o Content-Type
+ * de $tipo (sempre do índice, nunca do pedido), o Content-Length, Content-Disposition
+ * inline e Cross-Origin-Resource-Policy same-origin. O cache continua o no-store de
+ * d26_cabecalhos(), sozinho. O arquivo sai com readfile, sem carregar tudo na memória;
+ * os buffers são esvaziados antes (T15). Quem chama confere que o arquivo existe:
+ * depois do primeiro byte não há mais código de erro possível.
  */
-function d26_enviar_binario(int $status, string $bytes): never
+function d26_enviar_arquivo(int $status, string $caminho, string $tipo): never
 {
+    $tamanho = filesize($caminho);
+    if ($tamanho === false) {
+        throw new D26Indisponivel('arquivo binário ilegível antes do envio');
+    }
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
     d26_cabecalhos();
-    header('Content-Type: application/octet-stream');
-    header('Content-Length: ' . strlen($bytes));
+    header('Content-Type: ' . $tipo);
+    header('Content-Length: ' . $tamanho);
+    header('Content-Disposition: inline');
+    header('Cross-Origin-Resource-Policy: same-origin');
     http_response_code($status);
-    echo $bytes;
+    readfile($caminho);
     exit;
 }
 

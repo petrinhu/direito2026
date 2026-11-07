@@ -7,9 +7,11 @@ declare(strict_types=1);
  * e a sessão do privado único, o login é o do Interdisciplinar (Ambiente::entrar),
  * e os arquivos de conteúdo e imagem ficam em direito2026_privado.
  *
- * Sai junto com o último teste que o usa (F2.3): require_once de arquivo ausente
- * derruba o runner inteiro.
+ * Sai junto com o último teste que o usa: require_once de arquivo ausente derruba o
+ * runner inteiro. Hoje ainda o usam juri-ok (fora das listas) e juri-cabecalhos.
  */
+
+require_once __DIR__ . '/imagensSinteticas.php';
 
 /** Cliente anônimo, para provar que o endpoint recusa sem sessão. */
 function juriAnonimo(Ambiente $a): Cliente
@@ -57,27 +59,8 @@ function juriSemearConteudo(Ambiente $a, string $json): void
     chmod($arq, 0600);
 }
 
-/**
- * Fixture de imagem: grava PRIV/imagens/<id>.juri e acrescenta o id ao índice
- * PRIV/acervo.json. Formato antigo, que a F2.3 troca; os bytes são sintéticos.
- */
+/** Fixture de imagem PNG sintética no formato do índice atual (imagensSinteticas.php). */
 function juriSemearImagem(Ambiente $a, string $bytes): string
 {
-    $id = bin2hex(random_bytes(16));
-    $dir = $a->priv . '/imagens';
-    if (!is_dir($dir)) {
-        mkdir($dir, 0700);
-    }
-    $arqImagem = $dir . '/' . $id . '.juri';
-    file_put_contents($arqImagem, $bytes);
-    chmod($arqImagem, 0600);
-
-    $arq = $a->priv . '/acervo.json';
-    $acervo = is_file($arq)
-        ? json_decode((string) file_get_contents($arq), true, 16, JSON_THROW_ON_ERROR)
-        : ['kid' => bin2hex(random_bytes(16)), 'indice' => []];
-    $acervo['indice'][] = ['id' => $id, 'tipo' => 'png', 'bytes' => strlen($bytes)];
-    file_put_contents($arq, json_encode($acervo, JSON_THROW_ON_ERROR));
-    chmod($arq, 0600);
-    return $id;
+    return imagensSinteticasSemear($a, $bytes, 'png');
 }

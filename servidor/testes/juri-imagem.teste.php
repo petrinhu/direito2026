@@ -27,7 +27,7 @@ teste('juri: imagem.php com a troca de senha pendente responde 403 e não entreg
     naoContem($bytes, $r->corpo, 'nenhum byte da imagem antes da troca');
 });
 
-teste('juri: imagem.php entrega os bytes em claro com Content-Type do índice, nosniff, no-store sozinho, CORP same-origin e inline', function (): void {
+teste('juri: imagem.php entrega os bytes em claro com Content-Type do índice, nosniff, private, no-store sozinho, CORP same-origin e inline', function (): void {
     $a = juriAmbiente();
     $bytes = "\x89PNG\r\n\x1a\n" . random_bytes(256) . "\r\n\0";
     $id = imagensSinteticasSemear($a, $bytes, 'png');
@@ -36,7 +36,7 @@ teste('juri: imagem.php entrega os bytes em claro com Content-Type do índice, n
     igual($bytes, $r->corpo, 'bytes idênticos, sem transformar');
     igual('image/png', $r->cabecalho('content-type'), 'Content-Type vem do índice');
     igual(1, count($r->cabecalhos['cache-control'] ?? []), 'um único Cache-Control');
-    igual('no-store', $r->cabecalho('cache-control'), 'Cache-Control exato: no-store, sozinho');
+    igual('private, no-store', $r->cabecalho('cache-control'), 'Cache-Control exato: private, no-store, sozinho');
     igual('nosniff', $r->cabecalho('x-content-type-options'), 'nosniff');
     igual('same-origin', $r->cabecalho('cross-origin-resource-policy'), 'Cross-Origin-Resource-Policy same-origin');
     igual('inline', $r->cabecalho('content-disposition'), 'Content-Disposition inline');

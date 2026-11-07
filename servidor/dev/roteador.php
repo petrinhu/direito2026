@@ -25,9 +25,20 @@ header_remove('X-Powered-By');
 $raiz = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
 $caminho = rawurldecode((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH));
 
-if (str_contains($caminho, "\0") || str_contains($caminho, '..')) {
-    http_response_code(400);
+/**
+ * Resposta de recusa do próprio roteador (400, 403 e 404). Leva o mesmo Cache-Control do portão e da
+ * API, "private, no-store" (plano 1.6; revisão de segurança, achado BAIXO). Os arquivos públicos
+ * servidos direto pelo php -S não passam por aqui: saem sem este cabeçalho, como antes.
+ */
+function roteadorRecusar(int $status): bool
+{
+    header('Cache-Control: private, no-store');
+    http_response_code($status);
     return true;
+}
+
+if (str_contains($caminho, "\0") || str_contains($caminho, '..')) {
+    return roteadorRecusar(400);
 }
 
 // Mesma forma que o Apache vê: caminho sem a barra inicial. As strings são as do .htaccess.
@@ -36,29 +47,25 @@ $publicos = ['sw.js', 'robots.txt', 'entrada.css', 'icones/favicon.svg'];
 $padraoApi = '^api/[a-z0-9/-]+\.php$';
 
 if (preg_match('#^api/nucleo(/|$)#D', $relativo) === 1) {
-    http_response_code(403);
-    return true;
+    return roteadorRecusar(403);
 }
 
 if (preg_match('#' . $padraoApi . '#D', $relativo) === 1) {
     if (is_file($raiz . '/' . $relativo)) {
         return false;
     }
-    http_response_code(404);
-    return true;
+    return roteadorRecusar(404);
 }
 
 if (in_array($relativo, $publicos, true)) {
     if (is_file($raiz . '/' . $relativo)) {
         return false;
     }
-    http_response_code(404);
-    return true;
+    return roteadorRecusar(404);
 }
 
 if ($relativo === 'api' || str_starts_with($relativo, 'api/')) {
-    http_response_code(404);
-    return true;
+    return roteadorRecusar(404);
 }
 
 // Todo o resto passa pelo portão: sem sessão válida, nenhum byte do app sai.

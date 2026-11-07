@@ -6,12 +6,16 @@ if (!defined('D26_API')) {
     exit;
 }
 
-/** Cabeçalhos de toda resposta da API (sucesso ou erro). */
+/**
+ * Cabeçalhos de toda resposta da API (sucesso ou erro). Cache-Control "private, no-store": toda
+ * resposta da API tem sessão ou é a tela de entrada (plano 1.6). "private" mantém a resposta fora
+ * de cache compartilhado (CDN) mesmo se alguém tirar o no-store depois.
+ */
 function d26_cabecalhos(): void
 {
     header_remove('X-Powered-By');
     header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
+    header('Cache-Control: private, no-store');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: same-origin');
     header('X-Frame-Options: DENY');
@@ -33,8 +37,8 @@ function d26_enviar_json_bruto(int $status, string $json): never
  * Resposta de arquivo binário (imagem da Júri, em claro, só com sessão válida). Os
  * cabeçalhos de segurança são os de toda resposta da API; por cima vêm o Content-Type
  * de $tipo (sempre do índice, nunca do pedido), o Content-Length, Content-Disposition
- * inline e Cross-Origin-Resource-Policy same-origin. O cache continua o no-store de
- * d26_cabecalhos(), sozinho. O arquivo sai com readfile, sem carregar tudo na memória;
+ * inline e Cross-Origin-Resource-Policy same-origin. O cache continua o de d26_cabecalhos(),
+ * "private, no-store", sozinho. O arquivo sai com readfile, sem carregar tudo na memória;
  * os buffers são esvaziados antes (T15). Quem chama confere que o arquivo existe:
  * depois do primeiro byte não há mais código de erro possível.
  */

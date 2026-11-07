@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 const CABECALHOS_SEGURANCA = [
     'content-type' => 'application/json; charset=utf-8',
-    'cache-control' => 'no-store',
+    'cache-control' => 'private, no-store',
     'x-content-type-options' => 'nosniff',
     'referrer-policy' => 'same-origin',
     'x-frame-options' => 'DENY',

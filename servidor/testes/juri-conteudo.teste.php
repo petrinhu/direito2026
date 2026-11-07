@@ -27,7 +27,7 @@ teste('juri: conteudo.php com sessão do login único responde 200 com o JSON fi
     igual(200, $r->status, 'status');
     igual(['ok' => true, 'conteudo' => json_decode($json, true)], $r->json(), 'corpo');
     igual('application/json; charset=utf-8', $r->cabecalho('content-type'), 'tipo');
-    igual('no-store', $r->cabecalho('cache-control'), 'cache');
+    igual('private, no-store', $r->cabecalho('cache-control'), 'cache: privado (com sessão) e sem armazenar');
 });
 
 teste('juri: conteudo.php ignora parâmetros da requisição (arquivo fixo, nunca escolhido pelo cliente)', function (): void {

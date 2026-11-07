@@ -67,6 +67,12 @@ source "$RAIZ/scripts/apoio/dispositivos-publicacao.sh"
 TETO_APAGAR_WEBROOT=50
 TETO_VERSOES=5
 SSH_OPCOES="ssh -o BatchMode=yes -o ConnectTimeout=20"
+# Lista fechada de destinos que este script escreve, relativos a PUBLICAR_DESTINO_RAIZ (revisão F5.2,
+# C-1). A raiz da hospedagem (public_html, com .htaccess e arquivos da raiz) nunca entra aqui, nem
+# juri2026_privado (E15 c, em conferir_destinos).
+DESTINOS_PERMITIDOS=(public_html/direito2026 direito2026_webroot_novo direito2026_app direito2026_privado)
+FORMATO_CAMINHO='^[A-Za-z0-9_./-]+$'
+FORMATO_HOST='^[A-Za-z0-9][A-Za-z0-9_.-]*$'
 
 MODO=normal
 TIPO=""
@@ -175,6 +181,12 @@ calcular_versoes() {
   fi
   VERSAO_NOVA="$(node --import tsx scripts/apoio/versao-cli.ts "${argumentos[@]}")" ||
     recusar "cálculo da versão falhou (mensagem acima)"
+  validar_versao "$VERSAO_NOVA"
+}
+
+# A versão vai para comando remoto (ln -sfn versoes/vX): só números e pontos (F5.2, I-2).
+validar_versao() {
+  [[ "$1" =~ ^[0-9]+(\.[0-9]+)*$ ]] || recusar "versão fora do formato numérico: '$1' (nada foi executado)"
 }
 
 conferir_tag_local() {
@@ -233,6 +245,7 @@ conferir_remoto() {
 # Destino: falha fechada. Um destino local com ':' seria lido pelo rsync como host remoto; e a Júri
 # antiga (juri2026_privado) e a raiz public_html nunca são alvo deste script (E15 c).
 conferir_destinos() {
+  validar_host_destino
   if [ -z "$DESTINO_HOST" ]; then
     case "$DESTINO_RAIZ$DESTINO_WEBROOT$DESTINO_WEBROOT_NOVO$DESTINO_APP$DESTINO_PRIVADO" in
       *:*) recusar "destino local com ':' (o rsync lê como host remoto); use caminho sem ':'" ;;
@@ -249,6 +262,73 @@ conferir_destinos() {
     recusar "a pasta do app tem de se chamar direito2026_app"
   [ "$(basename -- "$DESTINO_PRIVADO")" = direito2026_privado ] ||
     recusar "a pasta privada tem de se chamar direito2026_privado"
+  conferir_destino_seguro "$DESTINO_WEBROOT"
+  conferir_destino_seguro "$DESTINO_WEBROOT_NOVO"
+  conferir_destino_seguro "$DESTINO_APP"
+  conferir_destino_seguro "$DESTINO_PRIVADO"
+}
+
+# Formato do caminho antes de ele entrar em comando (I-2): só letras, números, _ . / -, sem '..'.
+validar_formato_caminho() {
+  [[ "$1" =~ $FORMATO_CAMINHO ]] && [[ "$1" != *..* ]] ||
+    recusar "caminho do destino fora de [A-Za-z0-9_./-] ou com '..' (nada foi executado): $1"
+}
+
+# Host de ssh antes de qualquer execução (I-3): alias simples, nunca opção de ssh (sem '-' inicial).
+validar_host_destino() {
+  if [ -n "$DESTINO_HOST" ] && ! [[ "$DESTINO_HOST" =~ $FORMATO_HOST ]]; then
+    recusar "PUBLICAR_DESTINO_HOST fora do formato de alias ssh (nada foi executado): não pode começar com '-'"
+  fi
+}
+
+# Confere o destino ANTES de tocá-lo (revisão F5.2, C-1, C-2, I-2). Recebe o caminho completo
+# (PUBLICAR_DESTINO_RAIZ/sufixo[/sub]) e recusa: raiz vazia ou que não termina em domains/drpetrus.top
+# (C-2); sufixo fora da lista fechada; formato inválido; qualquer componente, do pai da raiz até o
+# destino, que seja symlink; realpath do destino diferente de realpath(raiz)/sufixo. Chamada em todo
+# ponto que escreve, lê ou apaga no destino. Não se aplica a atual (ponteiro do app, link por desenho).
+conferir_destino_seguro() {
+  local caminho="${1%/}" resto="" sufixo permitido=0 pai acumulado="" parte cmd saida
+  local -a partes=() checar=()
+  [ -n "$DESTINO_RAIZ" ] ||
+    recusar "PUBLICAR_DESTINO_RAIZ vazio: a raiz da hospedagem não pode ser o destino (C-2); nada foi tocado"
+  case "$DESTINO_RAIZ" in
+    */domains/drpetrus.top | domains/drpetrus.top) ;;
+    *) recusar "PUBLICAR_DESTINO_RAIZ tem de terminar em domains/drpetrus.top: $DESTINO_RAIZ" ;;
+  esac
+  validar_formato_caminho "$DESTINO_RAIZ"
+  validar_formato_caminho "$caminho"
+  case "$caminho" in
+    "$DESTINO_RAIZ"/*) resto="${caminho#"$DESTINO_RAIZ"/}" ;;
+    *) recusar "destino fora da raiz do Caderno ($DESTINO_RAIZ): $caminho" ;;
+  esac
+  for sufixo in "${DESTINOS_PERMITIDOS[@]}"; do
+    if [ "$resto" = "$sufixo" ] || [[ "$resto" == "$sufixo"/* ]]; then
+      permitido=1
+    fi
+  done
+  [ "$permitido" = 1 ] || recusar "destino fora da lista fechada: $resto"
+  if [ -z "$DESTINO_HOST" ]; then
+    case "$DESTINO_RAIZ" in
+      /*) ;;
+      *) recusar "destino local exige PUBLICAR_DESTINO_RAIZ absoluto: $DESTINO_RAIZ" ;;
+    esac
+  fi
+  validar_host_destino
+  # Componentes do pai da raiz até o destino (cada um é testado com test ! -L).
+  pai="$(dirname -- "$DESTINO_RAIZ")"
+  IFS=/ read -r -a partes <<< "${caminho#"$pai"/}"
+  for parte in "${partes[@]}"; do
+    acumulado="${acumulado:+$acumulado/}$parte"
+    checar+=("$pai/$acumulado")
+  done
+  cmd=""
+  for parte in "${checar[@]}"; do
+    cmd+="test ! -L '$parte' && "
+  done
+  cmd+="[ \"\$(realpath -m -- '$caminho')\" = \"\$(realpath -e -- '$DESTINO_RAIZ')/$resto\" ] && echo SEGURO"
+  saida="$(no_destino "$cmd" 2>/dev/null || true)"
+  grep -qx SEGURO <<< "$saida" ||
+    recusar "destino com symlink, fora do caminho esperado ou inacessível: $caminho (nada foi tocado)"
 }
 
 gravar_e_commitar() {
@@ -475,26 +555,31 @@ preparar_regras() {
 
 # Pasta de versão no destino: a anterior, a mais nova que não é esta. Vazio se não há.
 anterior_no_destino() {
+  conferir_destino_seguro "$DESTINO_APP"
   no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
     grep -E '^v[0-9.]+$' | grep -v -x "v$VERSAO_NOVA" | sort -V | tail -n 1 || true
 }
 
 # Executa um comando de shell no destino: ssh em produção, local no ensaio.
 no_destino() {
+  validar_host_destino
   if [ -n "$DESTINO_HOST" ]; then
     # shellcheck disable=SC2086
-    $SSH_OPCOES "$DESTINO_HOST" "$1"
+    $SSH_OPCOES -- "$DESTINO_HOST" "$1"
   else
     bash -c "$1"
   fi
 }
 
 # rsync para o destino: origem local, destino no caminho do destino (ssh em produção, local no ensaio).
+# Todo rsync passa pelo destino seguro antes de rodar, inclusive a simulação e o --delete (F5.2, C-1).
 rsync_destino() {
   local origem="$1" destino="$2"
   shift 2
   local -a rsh=()
   local alvo="$destino"
+  validar_host_destino
+  conferir_destino_seguro "$destino"
   if [ -n "$DESTINO_HOST" ]; then
     rsh=(-e "$SSH_OPCOES")
     alvo="$DESTINO_HOST:$destino"
@@ -508,19 +593,39 @@ rsync_destino() {
 conferir_md5_pasta() {
   local origem="$1" remoto="$2" rotulo="$3"
   local arquivo_local="$ESPACO/md5-$rotulo-local.txt" arquivo_ar="$ESPACO/md5-$rotulo-ar.txt"
-  local hash nome encontrados=0 analisados=0 conferidos=0 divergencias=0
+  local hash nome encontrados=0 analisados=0 conferidos=0 divergencias=0 seguro links
   declare -A esperado=() ar=()
 
-  (cd "$origem" && find . -type f -print0 | sort -z | xargs -0 md5sum) > "$arquivo_local"
-  if ! no_destino "cd '$remoto' && find . -type f -print0 | sort -z | xargs -0 md5sum" > "$arquivo_ar" 2> "$ESPACO/md5-$rotulo-ar.err"; then
+  # xargs -r: origem sem arquivo não vira md5 de entrada vazia (revisão F5.2, item 6).
+  (cd "$origem" && find . -type f -print0 | sort -z | xargs -0 -r md5sum) > "$arquivo_local"
+  [ -s "$arquivo_local" ] ||
+    recusar "$rotulo: pasta local sem arquivos (origem vazia; zero é varredura quebrada, L-36)"
+  # A pasta do app (atual) é ponteiro por symlink de propósito: confere-se a pasta que o contém.
+  seguro="$remoto"
+  if [ "$(basename -- "$seguro")" = atual ]; then
+    seguro="$(dirname -- "$seguro")"
+  fi
+  conferir_destino_seguro "$seguro"
+  if ! no_destino "cd '$remoto' && find . -type f -print0 | sort -z | xargs -0 -r md5sum" > "$arquivo_ar" 2> "$ESPACO/md5-$rotulo-ar.err"; then
     DIVERGENCIAS=$((DIVERGENCIAS + 1))
     echo "[DIVERGE] $rotulo: não consegui listar o destino (rede, chave SSH ou pasta ausente)" >&2
     return 0
   fi
+  # Symlink no destino reprova (I-1): find -type f ignora link, então procura-se o link à parte.
+  links="$(no_destino "cd '$remoto' && find . -type l -print" 2>/dev/null || true)"
+  if [ -n "$links" ]; then
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] $rotulo: symlink no destino, fora do pacote: $(echo "$links" | tr '\n' ' ')" >&2
+  fi
+  if [ ! -s "$arquivo_ar" ]; then
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] $rotulo: destino sem arquivos" >&2
+  fi
   while read -r hash nome; do esperado["${nome#./}"]="$hash"; done < "$arquivo_local"
   while read -r hash nome; do ar["${nome#./}"]="$hash"; done < "$arquivo_ar"
   encontrados=${#esperado[@]}
-  [ "$encontrados" -gt 0 ] || recusar "$rotulo: pasta local sem arquivos (zero é varredura quebrada)"
+  [ "$encontrados" -gt 0 ] ||
+    recusar "$rotulo: pasta local sem arquivos (zero é varredura quebrada)"
 
   for nome in "${!esperado[@]}"; do
     analisados=$((analisados + 1))
@@ -554,6 +659,7 @@ conferir_md5_pasta() {
 conferir_md5_arquivo() {
   local local_arq="$1" remoto="$2" rotulo="$3" esperado ar
   esperado="$(md5sum < "$local_arq" | cut -c1-32)"
+  conferir_destino_seguro "$(dirname -- "$remoto")"
   ar="$(no_destino "md5sum < '$remoto' | cut -c1-32" 2>/dev/null || true)"
   if [ "$esperado" = "$ar" ] && [ -n "$ar" ]; then
     echo "[PASSOU] $rotulo: md5 confere no destino"
@@ -568,6 +674,8 @@ baixar_do_destino() {
   local origem="$1" destino="$2"
   local -a rsh=()
   local alvo="$origem"
+  validar_host_destino
+  conferir_destino_seguro "$(dirname -- "$origem")"
   if [ -n "$DESTINO_HOST" ]; then
     rsh=(-e "$SSH_OPCOES")
     alvo="$DESTINO_HOST:$origem"
@@ -578,6 +686,7 @@ baixar_do_destino() {
 # Envia o app para uma pasta nova de versão. Nunca apaga nada.
 enviar_app() {
   local destino="$DESTINO_APP/versoes/v$VERSAO_NOVA"
+  conferir_destino_seguro "$DESTINO_APP"
   DEPLOY_INICIADO=1
   no_destino "mkdir -p -m 700 '$DESTINO_APP/versoes' && mkdir -p '$destino'" ||
     recusar "não consegui criar $destino (nada publicado no ponteiro)"
@@ -588,6 +697,9 @@ enviar_app() {
 
 # Troca o ponteiro atual de forma atômica: link em nome temporário e mv -T.
 trocar_ponteiro() {
+  validar_versao "$VERSAO_NOVA"
+  # Conferido de novo logo antes do ln e do mv (F5.2, C-1): o destino pode ter mudado desde o início.
+  conferir_destino_seguro "$DESTINO_APP"
   no_destino "cd '$DESTINO_APP' && ln -sfn 'versoes/v$VERSAO_NOVA' atual.tmp && mv -T atual.tmp atual" ||
     recusar "troca do ponteiro atual falhou: o ar pode estar na versão anterior"
   echo "publicar: ponteiro atual aponta para versoes/v$VERSAO_NOVA"
@@ -598,6 +710,7 @@ enviar_webroot() {
   local destino="$1" origem="$PACOTE_LOCAL/webroot/" simulacao="$ESPACO/simulacao-webroot.txt"
   local -a apagar=()
   local total
+  conferir_destino_seguro "$destino"
   no_destino "mkdir -p -- '$destino'" || recusar "não consegui criar $destino"
   rsync_destino "$origem" "$destino/" -rlt --checksum --delete -n -i --filter=". $REGRAS" \
     > "$simulacao" 2>&1 || recusar "simulação do envio do webroot falhou (nada foi apagado)"
@@ -620,6 +733,7 @@ enviar_webroot() {
 podar_versoes() {
   local -a versoes=() apagar=()
   local versao
+  conferir_destino_seguro "$DESTINO_APP"
   mapfile -t versoes < <(no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
     grep -E '^v[0-9.]+$' | sort -V -r || true)
   if [ "${#versoes[@]}" -le 2 ]; then
@@ -632,6 +746,7 @@ podar_versoes() {
   echo "publicar: poda: apagando por nome exato: ${apagar[*]}"
   for versao in "${apagar[@]}"; do
     [[ "$versao" =~ ^v[0-9.]+$ ]] || recusar "nome de versão fora do padrão: não apago"
+    conferir_destino_seguro "$DESTINO_APP/versoes/$versao"
     no_destino "rm -rf -- '$DESTINO_APP/versoes/$versao'" || recusar "poda de $versao falhou"
   done
 }
@@ -678,8 +793,10 @@ for chave in arquivos:
 # O conferir-portao roda no PHP do servidor, sem HTTP e sem conta (7.1 b). O CLI vai junto para um
 # diretório temporário de 700, e sai ao fim, por caminho exato (E15 c).
 conferir_portao_no_destino() {
-  local nucleo="$1" atual="$2" pasta="$DESTINO_RAIZ/d26_cli_tmp" saida rc=0
+  # O CLI temporário fica dentro da pasta do app (LU-F4.3, F5.2): nunca na raiz da hospedagem.
+  local nucleo="$1" atual="$2" pasta="$DESTINO_APP/d26_cli_tmp" saida rc=0
   saida="$ESPACO/conferir-portao.txt"
+  conferir_destino_seguro "$pasta"
   no_destino "mkdir -p -m 700 '$pasta/apoio'" || recusar "não criei $pasta"
   rsync_destino "$RAIZ/servidor/cli/conferir-portao.php" "$pasta/" -t
   rsync_destino "$RAIZ/servidor/cli/apoio/cli.php" "$pasta/apoio/" -t
@@ -780,6 +897,7 @@ preparar_destinos() {
 # P2: dados da Júri no privado, só aditivo (o v1.5 não lê estes caminhos). Permissões 700 e 600.
 enviar_dados_juri() {
   local privado="$DESTINO_PRIVADO"
+  conferir_destino_seguro "$privado"
   no_destino "mkdir -p -m 700 '$privado/imagens' '$privado/conteudo'" || recusar "não criei as pastas do privado"
   rsync_destino "$CADERNO_ACERVO_JURI/imagens/" "$privado/imagens/" -rlt --checksum --chmod=D700,F600 ||
     recusar "envio das imagens da Júri falhou"
@@ -965,12 +1083,14 @@ concluir() {
   conferir_branch_e_arvore
   VERSAO_NOVA="$(node --import tsx scripts/apoio/versao-cli.ts ler package.json)" ||
     recusar "não consegui ler a versão de package.json"
+  validar_versao "$VERSAO_NOVA"
   SHA_RELEASE="$(git rev-parse HEAD)"
   local tag_commit
   tag_commit="$(git rev-parse -q --verify "refs/tags/v$VERSAO_NOVA^{commit}" || true)"
   [ -n "$tag_commit" ] && [ "$tag_commit" = "$SHA_RELEASE" ] ||
     recusar "a tag local v$VERSAO_NOVA não aponta para HEAD: rode --preparar antes"
   conferir_remoto
+  conferir_destinos
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
   PACOTE_LOCAL="$(destino_do_pacote "$VERSAO_NOVA")"
   [ -d "$PACOTE_LOCAL" ] || recusar "sem o pacote guardado de v$VERSAO_NOVA (rode --preparar antes)"

@@ -74,15 +74,24 @@ function d26_portao_tela(int $status, string $html, string $csp): never
     exit;
 }
 
-/** Arquivo do app, com o tipo que o manifesto declara. Arquivo ausente é 503. */
-function d26_portao_arquivo(string $arquivo, string $tipo): never
+/**
+ * Arquivo do app, com o tipo que o manifesto declara. Só sai o que, depois de resolver symlink,
+ * continua dentro da pasta do app ($raizApp, a versão atual): link para fora dela é 503 sem corpo
+ * (LU-F2.4, revisão F5.2, I-1). Ausente, ilegível ou fora do app é 503.
+ */
+function d26_portao_arquivo(string $arquivo, string $tipo, string $raizApp): never
 {
-    $tamanho = is_file($arquivo) && is_readable($arquivo) ? filesize($arquivo) : false;
+    $real = is_file($arquivo) ? realpath($arquivo) : false;
+    $base = realpath($raizApp);
+    if ($real === false || $base === false || !str_starts_with($real, $base . DIRECTORY_SEPARATOR)) {
+        throw new D26Indisponivel('arquivo do manifesto ausente ou fora do diretório do app');
+    }
+    $tamanho = is_readable($real) ? filesize($real) : false;
     if ($tamanho === false) {
-        throw new D26Indisponivel('arquivo do manifesto ausente no app');
+        throw new D26Indisponivel('arquivo do manifesto ilegível no app');
     }
     d26_portao_cabecalhos(200, $tipo, PORTAO_CSP_SHELL, $tamanho);
-    readfile($arquivo);
+    readfile($real);
     exit;
 }
 
@@ -174,10 +183,10 @@ function d26_portao_decidir(): never
     $manifesto = d26_portao_manifesto($atual);
     $chave = ltrim($caminho, '/');
     if ($chave !== '' && isset($manifesto[$chave])) {
-        d26_portao_arquivo($atual . '/' . $chave, $manifesto[$chave]['tipo']);
+        d26_portao_arquivo($atual . '/' . $chave, $manifesto[$chave]['tipo'], $atual);
     }
     if ($navegacao && isset($manifesto['index.html'])) {
-        d26_portao_arquivo($atual . '/index.html', $manifesto['index.html']['tipo']);
+        d26_portao_arquivo($atual . '/index.html', $manifesto['index.html']['tipo'], $atual);
     }
     d26_portao_vazio(404);
 }

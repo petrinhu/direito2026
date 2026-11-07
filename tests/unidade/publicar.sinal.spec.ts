@@ -135,6 +135,8 @@ function montarFixture(): Fixture {
   git(raiz, ['commit', '-q', '-m', 'teste: base sintetica']);
   git(raiz, ['remote', 'add', 'github', bare]);
   git(raiz, ['push', '-q', 'github', 'main']);
+  // Destino local (ensaio): a raiz da hospedagem falsa existe, para a checagem de destino seguro (F5.2).
+  mkdirSync(join(home, 'domains', 'drpetrus.top'), { recursive: true });
   return { raiz, marcador, caixa, chave, restrito, home };
 }
 
@@ -147,7 +149,10 @@ function ambientePublicar(f: Fixture): Record<string, string | undefined> {
     CADERNO_CAIXA: f.caixa,
     CADERNO_CHAVE_GIT_CRYPT: f.chave,
     CADERNO_RESTRITO: f.restrito,
-    CADERNO_RESTRITO_JURI: ''
+    CADERNO_RESTRITO_JURI: '',
+    // Ensaio local: nenhum ssh para a hospedagem real neste teste (destino vazio = local).
+    PUBLICAR_DESTINO_HOST: '',
+    PUBLICAR_DESTINO_RAIZ: join(f.home, 'domains', 'drpetrus.top')
   };
 }
 

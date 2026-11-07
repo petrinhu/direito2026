@@ -154,3 +154,19 @@ teste('portão: CSP do shell e CSP da tela de entrada são exatas', function ():
     igual(PORTAO_CSP_SHELL, $c->get('/', PORTAO_NAVEGACAO)->cabecalho('content-security-policy'), 'CSP do shell');
     igual(PORTAO_CSP_TELA, $a->cliente()->get('/', PORTAO_NAVEGACAO)->cabecalho('content-security-policy'), 'CSP da tela de entrada');
 });
+
+teste('portão: symlink dentro do app que aponta para fora do diretório do app dá 503 sem corpo (LU-F2.4, F5.2 I-1)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    // O alvo fica FORA de atual/ (a pasta do app), mas dentro de D26_APP: é o caso que o portão tem de recusar.
+    file_put_contents($a->app . '/SEGREDO-FORA-DO-ATUAL.txt', 'SEGREDO-SINTETICO-LINK');
+    symlink($a->app . '/SEGREDO-FORA-DO-ATUAL.txt', $a->app . '/atual/linkfora.txt');
+    $manifesto = json_decode((string) file_get_contents($a->app . '/atual/manifesto.json'), true, 512, JSON_THROW_ON_ERROR);
+    $manifesto['arquivos']['linkfora.txt'] = ['tipo' => 'text/plain; charset=utf-8'];
+    file_put_contents($a->app . '/atual/manifesto.json', json_encode($manifesto, JSON_THROW_ON_ERROR));
+
+    $r = $c->get('/linkfora.txt');
+    naoContem('SEGREDO-SINTETICO-LINK', $r->corpo, 'conteúdo fora do app não pode sair');
+    igual(503, $r->status, 'symlink para fora do app: 503 fechado');
+    igual('', $r->corpo, 'sem corpo');
+});

@@ -116,6 +116,15 @@ describe('PainelAdmin', () => {
     });
   });
 
+  it('campo de senha provisória (texto visível para quem cria) não deixa o navegador guardar nem sugerir', async () => {
+    // LU-F3.2, I5 da revisão da Onda 3: o campo segue type=text (quem cria vê o que digitou),
+    // e o autocomplete desligado é a cobertura contra o navegador guardar a senha.
+    const { w } = montar();
+    await flushPromises();
+    expect(w.get('input[name="provisoriaEscolhida"]').attributes('autocomplete')).toBe('off');
+    expect(w.get('input[name="provisoriaEscolhida"]').attributes('type')).toBe('text');
+  });
+
   it('redefinir mostra a nova provisória', async () => {
     const { w, cliente } = montar({
       acaoUsuario: vi.fn(async () => ({ senhaProvisoria: 'NOVA9999aaaa' }))

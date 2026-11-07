@@ -75,7 +75,8 @@ function d26_tela_troca(string $token, ?string $erro = null): string
         . '<label for="senhaAtual">Senha atual</label>'
         . '<input id="senhaAtual" name="senhaAtual" type="password" autocomplete="current-password" required>'
         . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
-        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required>'
+        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required aria-describedby="senhaNova-ajuda">'
+        . '<p id="senhaNova-ajuda">A senha precisa ter pelo menos 15 caracteres.</p>'
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'
         . '<button type="submit">Trocar senha</button>'
         . '</form>');

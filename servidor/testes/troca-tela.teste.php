@@ -78,3 +78,22 @@ teste('troca: formulário sem token é recusado (403)', function (): void {
     igual(403, trocaTelaEnviar($c, '', Ambiente::SENHA_ADMIN, TROCA_NOVA_VALIDA)->status, 'sem token');
     igual(true, $a->lerUsuarios()['usuarios'][0]['deveTrocarSenha'], 'nada trocou sem o token');
 });
+
+teste('troca: o campo da senha nova liga o texto do mínimo de 15 caracteres por aria-describedby, e a recusa vai em role="alert"', function (): void {
+    $a = Ambiente::novo(['deveTrocar' => true]);
+    $c = trocaTelaEntrar($a);
+    $tela = $c->get('/', PORTAO_NAVEGACAO);
+    verdadeiro(
+        preg_match('/<input id="senhaNova"[^>]*aria-describedby="([^"]+)"/', $tela->corpo, $m) === 1,
+        'o campo da senha nova tem aria-describedby'
+    );
+    $idAjuda = $m[1] ?? '';
+    verdadeiro(
+        preg_match('/<p id="' . preg_quote($idAjuda, '/') . '">[^<]*15 caracteres[^<]*<\/p>/', $tela->corpo) === 1,
+        'o id citado é um texto visível com o mínimo de 15 caracteres'
+    );
+    $curta = trocaTelaEnviar($c, acessoCampo($tela->corpo, 'csrf'), Ambiente::SENHA_ADMIN, 'curta-demais-1');
+    igual(400, $curta->status, 'senha nova com 14 caracteres');
+    contem('role="alert"', $curta->corpo, 'recusa da senha curta anunciada em role=alert');
+    contem('pelo menos 15 caracteres', $curta->corpo, 'texto da recusa do servidor');
+});

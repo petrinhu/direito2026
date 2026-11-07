@@ -35,7 +35,7 @@ const curriculo: Curriculo = [
 
 function montar(cadeira: string) {
   const restrito = {
-    sessao: vi.fn(async () => ({ autenticado: false }))
+    obterConteudo: vi.fn(async () => ({}))
   } as unknown as ClienteApi;
   const servidor = criarServidorJuriFalso();
   const juri = criarClienteJuri({ buscar: servidor.buscar });
@@ -61,7 +61,7 @@ describe('Cadeira.vue e a Júri', () => {
     expect(w.get('h1').text()).toBe('Júri Simulado');
     expect(w.find('.area-restrita').exists()).toBe(false);
     expect(w.find('.pagina-cadeira').exists()).toBe(false);
-    expect(restrito.sessao).not.toHaveBeenCalled();
+    expect(restrito.obterConteudo).not.toHaveBeenCalled();
     w.unmount();
   });
 
@@ -70,7 +70,7 @@ describe('Cadeira.vue e a Júri', () => {
     await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true));
     await flushPromises();
     expect(w.find('.area-juri').exists()).toBe(false);
-    expect(restrito.sessao).toHaveBeenCalled();
+    expect(restrito.obterConteudo).toHaveBeenCalled();
     w.unmount();
   });
 });

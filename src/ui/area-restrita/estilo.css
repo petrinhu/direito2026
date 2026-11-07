@@ -242,21 +242,6 @@
   border: 0;
 }
 
-.ar-sessao {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--esp-3, 0.75rem);
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--esp-4, 1rem);
-  padding-bottom: var(--esp-3, 0.75rem);
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.ar-sessao p {
-  margin: 0;
-}
-
 /* Administração */
 .ar-admin {
   display: grid;

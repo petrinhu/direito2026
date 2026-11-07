@@ -5,6 +5,7 @@ import Cadeira from '@/ui/paginas/Cadeira.vue';
 import { CHAVE_CLIENTE_RESTRITO, CHAVE_CURRICULO } from '@/app/chaves';
 import type { ClienteApi } from '@/app/restrito/clienteApi';
 import type { Curriculo } from '@/core/curriculo/tipos';
+import { conteudoRestritoFalso } from '../unidade/apoio/conteudoRestritoFalso';
 
 const curriculo: Curriculo = [
   {
@@ -19,7 +20,7 @@ const curriculo: Curriculo = [
 ];
 
 const cliente = {
-  sessao: vi.fn(async () => ({ autenticado: false }))
+  obterConteudo: vi.fn(async () => conteudoRestritoFalso())
 } as unknown as ClienteApi;
 
 function montar(cadeira: string) {
@@ -35,11 +36,12 @@ function montar(cadeira: string) {
 }
 
 describe('Cadeira.vue e a cadeira restrita', () => {
-  it('a cadeira restrita abre a área restrita (login), não a lista de unidades', async () => {
+  it('a cadeira restrita abre a área restrita, sem pedir senha, e não a lista de unidades', async () => {
     const w = montar('secreta');
     await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true));
     await flushPromises();
     expect(w.get('h1').text()).toBe('Área restrita ao grupo Fronteiras da Inteligência Artificial');
+    expect(w.find('input[type="password"]').exists()).toBe(false);
     expect(w.find('.pagina-cadeira').exists()).toBe(false);
   });
 

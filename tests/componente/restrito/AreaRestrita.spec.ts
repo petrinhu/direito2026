@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import AreaRestrita from '@/ui/paginas/AreaRestrita.vue';
 import { CHAVE_CLIENTE_RESTRITO } from '@/app/chaves';
-import { ErroDeApi, type ClienteApi } from '@/app/restrito/clienteApi';
+import { criarClienteApi, ErroDeApi, type ClienteApi } from '@/app/restrito/clienteApi';
 import { conteudoRestritoFalso } from '../../unidade/apoio/conteudoRestritoFalso';
 
 vi.mock('markmap-view', () => ({
@@ -21,7 +21,7 @@ vi.mock('markmap-view', () => ({
 
 function clienteFalso(sobrescritas: Partial<ClienteApi> = {}): ClienteApi {
   return {
-    sessao: vi.fn(async () => ({ autenticado: false })),
+    sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u' })),
     entrar: vi.fn(async () => ({ usuario: 'u', admin: false, deveTrocarSenha: false })),
     sair: vi.fn(async () => {}),
     trocarSenha: vi.fn(async () => {}),
@@ -43,146 +43,102 @@ async function montar(cliente: ClienteApi) {
 }
 afterEach(() => {
   w?.unmount();
+  w = undefined;
   document.body.innerHTML = '';
 });
 
 const TITULO = 'Área restrita ao grupo Fronteiras da Inteligência Artificial';
 
 describe('AreaRestrita', () => {
-  it('splash: título exato num único h1, formulário de login, nada do conteúdo', async () => {
-    await montar(clienteFalso());
-    expect(w!.findAll('h1')).toHaveLength(1);
-    expect(w!.get('h1').text()).toBe(TITULO);
-    expect(w!.find('form input[name="usuario"]').exists()).toBe(true);
-    expect(w!.text()).not.toContain('Instituição Fictícia');
-    expect(w!.find('[role="tablist"]').exists()).toBe(false);
+  it('monta e pede o conteúdo sem pedir senha, mesmo sem sessão local: sem formulário e com o conteúdo na tela', async () => {
+    const cliente = clienteFalso({ sessao: vi.fn(async () => ({ autenticado: false })) });
+    await montar(cliente);
+    expect(cliente.obterConteudo).toHaveBeenCalledTimes(1);
+    expect(cliente.sessao).not.toHaveBeenCalled();
+    expect(w!.find('form').exists()).toBe(false);
+    expect(w!.find('input[type="password"]').exists()).toBe(false);
+    expect(w!.get('.ar-visor__equipe').text()).toContain('Instituição Fictícia');
   });
 
-  it('enquanto verifica a sessão mostra um estado e já tem o título', async () => {
-    let liberar: (v: { autenticado: boolean }) => void = () => {};
-    const cliente = clienteFalso({ sessao: () => new Promise((r) => (liberar = r)) });
+  it('enquanto carrega mostra um estado e já tem o título num único h1', async () => {
+    let liberar: (v: unknown) => void = () => {};
+    const cliente = clienteFalso({
+      obterConteudo: () => new Promise((r) => (liberar = r))
+    });
     w = mount(AreaRestrita, {
       global: { provide: { [CHAVE_CLIENTE_RESTRITO as unknown as symbol]: cliente } }
     });
-    expect(w.get('[role="status"]').text()).toMatch(/verificando/i);
+    expect(w.get('[role="status"]').text()).toMatch(/carregando/i);
+    expect(w.findAll('h1')).toHaveLength(1);
     expect(w.get('h1').text()).toBe(TITULO);
-    liberar({ autenticado: false });
+    liberar(conteudoRestritoFalso());
+    await flushPromises();
+    expect(w.find('[role="status"]').exists()).toBe(false);
   });
 
-  it('login normal leva ao conteúdo, com a equipe e as abas', async () => {
-    const cliente = clienteFalso();
-    await montar(cliente);
-    await w!.get('input[name="usuario"]').setValue('u');
-    await w!.get('input[name="senha"]').setValue('s');
-    await w!.get('form').trigger('submit');
-    await flushPromises();
-    expect(cliente.entrar).toHaveBeenCalledWith('u', 's');
-    expect(w!.get('.ar-visor__equipe').text()).toContain('Instituição Fictícia');
-    expect(w!.findAll('[role="tab"]').length).toBe(4);
-    expect(w!.get('.ar-sessao').text()).toContain('u');
+  it('abas: Resumo, Mapa mental, Quiz e Slides, sem aba de administração', async () => {
+    await montar(clienteFalso());
+    expect(w!.findAll('[role="tab"]').map((t) => t.text())).toEqual([
+      'Resumo',
+      'Mapa mental',
+      'Quiz',
+      'Slides'
+    ]);
   });
 
-  it('senha provisória leva à troca obrigatória, e o conteúdo só vem depois dela', async () => {
-    const cliente = clienteFalso({
-      entrar: vi.fn(async () => ({ usuario: 'u', admin: true, deveTrocarSenha: true }))
-    });
-    await montar(cliente);
-    await w!.get('input[name="usuario"]').setValue('u');
-    await w!.get('input[name="senha"]').setValue('provisoria');
-    await w!.get('form').trigger('submit');
-    await flushPromises();
-    expect(w!.get('h2').text()).toMatch(/troque a senha/i);
-    expect(cliente.obterConteudo).not.toHaveBeenCalled();
-    expect(w!.text()).not.toContain('Instituição Fictícia');
-
-    await w!.get('input[name="senhaAtual"]').setValue('provisoria');
-    await w!.get('input[name="senhaNova"]').setValue('uma frase longa de senha');
-    await w!.get('input[name="confirmacao"]').setValue('uma frase longa de senha');
-    await w!.get('form').trigger('submit');
-    await flushPromises();
-    expect(cliente.trocarSenha).toHaveBeenCalledWith('provisoria', 'uma frase longa de senha');
-    expect(w!.find('.ar-visor__equipe').exists()).toBe(true);
-    expect(w!.findAll('[role="tab"]').map((t) => t.text())).toContain('Admin');
-  });
-
-  it('login errado mostra o erro e continua na splash', async () => {
-    const cliente = clienteFalso({
-      entrar: vi.fn(async () => {
-        throw new ErroDeApi(401, 'credenciais');
-      })
-    });
-    await montar(cliente);
-    await w!.get('input[name="usuario"]').setValue('u');
-    await w!.get('input[name="senha"]').setValue('x');
-    await w!.get('form').trigger('submit');
-    await flushPromises();
-    expect(w!.get('[role="alert"]').text()).toMatch(/usuário ou senha/i);
-    expect(w!.find('.ar-visor').exists()).toBe(false);
-  });
-
-  it('sair apaga o conteúdo da tela e volta à splash', async () => {
-    const cliente = clienteFalso({
-      sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u' }))
-    });
-    await montar(cliente);
-    expect(w!.find('.ar-visor').exists()).toBe(true);
-    await w!.get('button[data-acao="sair"]').trigger('click');
-    await flushPromises();
-    expect(cliente.sair).toHaveBeenCalled();
-    expect(w!.find('.ar-visor').exists()).toBe(false);
-    expect(w!.text()).not.toContain('Instituição Fictícia');
-    expect(w!.find('input[name="usuario"]').exists()).toBe(true);
+  it('a página não tem saída própria: a saída fica no menu da área global', async () => {
+    await montar(clienteFalso());
+    expect(w!.find('button[data-acao="sair"]').exists()).toBe(false);
   });
 
   it('conteúdo inválido não é renderizado e oferece tentar de novo', async () => {
     const ruim = conteudoRestritoFalso() as { resumo: Record<string, unknown>[] };
     ruim.resumo[0]!.corpoHtml = '<script>alert(1)</script>';
-    const cliente = clienteFalso({
-      sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u' })),
-      obterConteudo: vi.fn(async () => ruim)
-    });
-    await montar(cliente);
+    await montar(clienteFalso({ obterConteudo: vi.fn(async () => ruim) }));
     expect(w!.find('.ar-visor').exists()).toBe(false);
     expect(w!.get('[role="alert"]').text()).toMatch(/não foi possível exibir/i);
     expect(w!.html()).not.toContain('alert(1)');
     expect(w!.find('button[data-acao="tentar-de-novo"]').exists()).toBe(true);
   });
 
-  it('administrador com conteúdo inválido ainda alcança a administração', async () => {
-    const cliente = clienteFalso({
-      sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u', admin: true })),
-      obterConteudo: vi.fn(async () => ({}))
-    });
-    await montar(cliente);
-    expect(w!.find('.ar-admin').exists()).toBe(true);
+  it('tentar de novo refaz a carga e mostra o conteúdo quando dá certo', async () => {
+    const obterConteudo = vi
+      .fn()
+      .mockRejectedValueOnce(new ErroDeApi(0, 'rede'))
+      .mockResolvedValueOnce(conteudoRestritoFalso());
+    await montar(clienteFalso({ obterConteudo }));
+    expect(w!.find('.ar-visor').exists()).toBe(false);
+    await w!.get('button[data-acao="tentar-de-novo"]').trigger('click');
+    await flushPromises();
+    expect(obterConteudo).toHaveBeenCalledTimes(2);
+    expect(w!.find('.ar-visor').exists()).toBe(true);
   });
 
-  it('ao sair da página o conteúdo é descartado da memória', async () => {
-    const cliente = clienteFalso({
-      sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u' }))
+  it('401 na carga chama o aviso de sessão vencida, que leva à tela de entrada', async () => {
+    const aoNaoAutorizado = vi.fn();
+    const buscar = vi.fn(async (url: string) =>
+      url.endsWith('conteudo.php')
+        ? new Response('{"ok":false,"erro":"sem-sessao"}', {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        : new Response('{}', { status: 500 })
+    );
+    const cliente = criarClienteApi({ buscar, aoNaoAutorizado });
+    w = mount(AreaRestrita, {
+      attachTo: document.body,
+      global: { provide: { [CHAVE_CLIENTE_RESTRITO as unknown as symbol]: cliente } }
     });
+    await flushPromises();
+    expect(aoNaoAutorizado).toHaveBeenCalledOnce();
+    expect(w!.find('.ar-visor').exists()).toBe(false);
+  });
+
+  it('ao sair da página o conteúdo é descartado da memória, sem encerrar a sessão', async () => {
+    const cliente = clienteFalso();
     await montar(cliente);
     w!.unmount();
     w = undefined;
     expect(cliente.sair).not.toHaveBeenCalled();
-  });
-
-  it('o foco que vai para o título na troca de tela (login) não rola a página', async () => {
-    await montar(clienteFalso());
-    const focar = vi.spyOn(HTMLElement.prototype, 'focus');
-    try {
-      const titulo = w!.get('h1').element;
-      await w!.get('input[name="usuario"]').setValue('u');
-      await w!.get('input[name="senha"]').setValue('s');
-      await w!.get('form').trigger('submit');
-      await flushPromises();
-      const chamadasNoTitulo = focar.mock.calls.filter(
-        (_argumentos, indice) => focar.mock.contexts[indice] === titulo
-      );
-      expect(chamadasNoTitulo.length).toBeGreaterThan(0);
-      expect(chamadasNoTitulo).toEqual(chamadasNoTitulo.map(() => [{ preventScroll: true }]));
-    } finally {
-      focar.mockRestore();
-    }
   });
 });

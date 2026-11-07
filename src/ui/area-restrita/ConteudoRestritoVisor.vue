@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { usarSemMovimento, type Administrar } from '@/app/restrito';
+import { ref } from 'vue';
+import { usarSemMovimento } from '@/app/restrito';
 import type { IndiceAlternativa } from '@/core/unidade/tipos';
 import type { ConteudoRestritoValidado } from '@/core/restrito/tipos';
 import VisorResumo from '../componentes/VisorResumo.vue';
@@ -8,24 +8,19 @@ import MotorQuiz from '../componentes/MotorQuiz.vue';
 import AbasRestritas from './AbasRestritas.vue';
 import MapaRestritoVisor from './MapaRestritoVisor.vue';
 import SlidesVisor from './SlidesVisor.vue';
-import PainelAdmin from './PainelAdmin.vue';
 
-const props = defineProps<{
+defineProps<{
   conteudo: ConteudoRestritoValidado;
-  usuario: string;
-  admin: boolean;
-  administrar: Administrar;
 }>();
 
 const semMovimento = usarSemMovimento();
 
-const abas = computed(() => [
+const abas = [
   { id: 'resumo', rotulo: 'Resumo' },
   { id: 'mapa', rotulo: 'Mapa mental' },
   { id: 'quiz', rotulo: 'Quiz' },
-  { id: 'slides', rotulo: 'Slides' },
-  ...(props.admin ? [{ id: 'admin', rotulo: 'Admin' }] : [])
-]);
+  { id: 'slides', rotulo: 'Slides' }
+];
 
 const aba = ref('resumo');
 
@@ -85,11 +80,6 @@ function reiniciarQuiz(): void {
         :slides="conteudo.slides"
         :equipe="conteudo.equipe"
         :reduzir-movimento="semMovimento"
-      />
-      <PainelAdmin
-        v-else-if="aba === 'admin' && admin"
-        :usuario-atual="usuario"
-        :administrar="administrar"
       />
     </AbasRestritas>
   </div>

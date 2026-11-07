@@ -5,12 +5,7 @@ export { criarClienteApi, ErroDeApi } from './clienteApi';
 export type { ClienteApi, UsuarioAdmin } from './clienteApi';
 export { criarSessaoRestrita } from './sessaoRestrita';
 export { usarSemMovimento } from './semMovimento';
-export type {
-  Administrar,
-  ResultadoAdministracao,
-  SessaoRestrita,
-  FaseSessao
-} from './sessaoRestrita';
+export type { Administrar, ResultadoAdministracao, SessaoRestrita } from './sessaoRestrita';
 export {
   LIMITE_MAXIMO_SENHA,
   LIMITE_MINIMO_SENHA,

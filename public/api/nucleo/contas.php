@@ -100,13 +100,23 @@ function d26_senha_confere(?array $conta, string $senha): bool
     if (mb_strlen($senha, 'UTF-8') > D26_SENHA_MAXIMA) {
         return false;
     }
+    if ($conta === null) {
+        d26_argon_marcado(static fn (): string => d26_hash_senha($senha));
+        return false;
+    }
+    return d26_argon_marcado(static fn (): bool => password_verify($senha, (string) $conta['hash']));
+}
+
+/**
+ * Roda UMA operação Argon2id entre as marcas de teste. As marcas envolvem a operação, não a
+ * função de quem chama: assim a contagem de verificacoes() prova que o hash rodou de verdade
+ * (um atalho que pule o hash deixa de gerar marca). Sem efeito fora de php -S com D26_PRIVADO.
+ */
+function d26_argon_marcado(callable $operacao): mixed
+{
     d26_teste_marcar('i');
     try {
-        if ($conta === null) {
-            d26_hash_senha($senha);
-            return false;
-        }
-        return password_verify($senha, (string) $conta['hash']);
+        return $operacao();
     } finally {
         d26_teste_marcar('f');
     }

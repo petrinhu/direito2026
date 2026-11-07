@@ -6,6 +6,7 @@ import type { StoreBusca } from './stores/busca';
 import type { StoreModoAdaptado } from './stores/modoAdaptado';
 import type { ClienteApi } from './restrito/clienteApi';
 import type { ClienteJuri } from './juri/clienteJuri';
+import type { SessaoGlobal } from './sessao/sessaoGlobal';
 
 /** Chaves de injeção do composition root (main.ts). Ver App.vue. */
 export const CHAVE_CURRICULO: InjectionKey<Curriculo> = Symbol('curriculo');
@@ -19,3 +20,6 @@ export const CHAVE_STORE_MODO_ADAPTADO: InjectionKey<StoreModoAdaptado> =
 export const CHAVE_CLIENTE_RESTRITO: InjectionKey<ClienteApi> = Symbol('clienteRestrito');
 /** Opcional, como a anterior: testes injetam a API falsa da Júri; em produção a página cria a real. */
 export const CHAVE_CLIENTE_JURI: InjectionKey<ClienteJuri> = Symbol('clienteJuri');
+
+/** Sessão do site inteiro (usuário, admin, sair). Criada em main.ts. */
+export const CHAVE_SESSAO: InjectionKey<SessaoGlobal> = Symbol('sessao');

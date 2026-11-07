@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nomeDoPedaco, opcoesWorkbox } from '../../vite.config';
-
-type Regra = {
-  urlPattern: RegExp | ((ctx: { url: URL }) => boolean);
-  options?: { cacheName?: string };
-};
+import { nomeDoPedaco } from '../../vite.config';
 
 /**
  * Nome dos pedaços do build (L-35, TDD: estes testes nasceram vermelhos, antes
@@ -52,24 +47,5 @@ describe('nome dos pedaços do build', () => {
     expect(nomeDoPedaco({ name: 'chunk', facadeModuleId: null, moduleIds: [] })).toBe(
       'assets/[name]-[hash].js'
     );
-  });
-
-  it('o nome gerado casa a regra de cache conteudo-unidades do service worker', () => {
-    const modelo = nomeDoPedaco({
-      name: 'resumo',
-      facadeModuleId: DE_CONTEUDO,
-      moduleIds: [DE_CONTEUDO]
-    });
-    const nomeReal = modelo.replace('[name]', 'resumo').replace('[hash]', 'C8yUCqet');
-    const regra = (opcoesWorkbox.runtimeCaching as unknown as Regra[]).find(
-      (r) => r.options?.cacheName === 'conteudo-unidades'
-    );
-    expect(regra, 'regra conteudo-unidades').toBeDefined();
-    const url = new URL(`https://exemplo.test/${nomeReal}`);
-    const casa =
-      regra!.urlPattern instanceof RegExp
-        ? regra!.urlPattern.test(url.href)
-        : regra!.urlPattern({ url });
-    expect(casa, nomeReal).toBe(true);
   });
 });

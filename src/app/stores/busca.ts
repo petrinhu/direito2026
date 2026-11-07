@@ -16,7 +16,7 @@ export interface StoreBusca {
  * líder, 22/09/2026: um destino public/busca/ virava pasta dist/busca/ no
  * pacote e colidia com a ROTA /busca da SPA, 403 no Apache).
  */
-export function criarStoreBusca(): StoreBusca {
+export function criarStoreBusca(aoNaoAutorizado: () => void = () => undefined): StoreBusca {
   const termo = ref('');
   const resultados = ref<readonly DocumentoBusca[]>([]);
   const carregando = ref(false);
@@ -32,6 +32,11 @@ export function criarStoreBusca(): StoreBusca {
         import('@/app/busca/criarMotorBuscaMiniSearch'),
         fetch(`${import.meta.env.BASE_URL}assets/busca-indice.json`)
       ]);
+      if (!resposta.ok) {
+        // 401 é sessão vencida: o índice vem do mesmo portão que o resto do site.
+        if (resposta.status === 401) aoNaoAutorizado();
+        throw new Error(`índice da busca indisponível (HTTP ${resposta.status})`);
+      }
       const json = await resposta.text();
       motor = carregarMotorBuscaDeJson(json);
     })().finally(() => {

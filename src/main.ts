@@ -1,5 +1,4 @@
 import { createApp } from 'vue';
-import { registerSW } from 'virtual:pwa-register';
 import App from './App.vue';
 import { criarRouter } from '@/app/router';
 import { carregarCurriculo } from '@/app/carregamento/carregarCurriculo';
@@ -8,17 +7,18 @@ import { criarStoreTema } from '@/app/stores/tema';
 import { criarStoreBusca } from '@/app/stores/busca';
 import { criarStoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import {
+  CHAVE_CLIENTE_RESTRITO,
   CHAVE_CURRICULO,
   CHAVE_REPOSITORIO,
+  CHAVE_SESSAO,
   CHAVE_STORE_BUSCA,
   CHAVE_STORE_MODO_ADAPTADO,
   CHAVE_STORE_TEMA
 } from '@/app/chaves';
-import type { Router } from 'vue-router';
-import {
-  agendarVerificacoesAtualizacao,
-  type FonteAgendamentoSW
-} from '@/app/atualizacaoSW/agendarVerificacoesAtualizacao';
+import { criarClienteApi } from '@/app/restrito/clienteApi';
+import { criarAoNaoAutorizado, criarSessaoGlobal } from '@/app/sessao/sessaoGlobal';
+import { criarNavegadorReal } from '@/app/sessao/navegador';
+import { vigiarVolta, type FonteVolta } from '@/app/sessao/vigiarVolta';
 import {
   criarTratadorFalhaModulo,
   type ArmazenamentoRecarga
@@ -29,44 +29,7 @@ import '@/ui/estilos/base.css';
 import '@/ui/estilos/impressao.css';
 
 /**
- * Onda anterior deixou o registro do service worker pendente de política
- * de atualização (comentário removido nesta correção, ver histórico do
- * git). Onda de 23/09/2026 (pedido do líder, verbatim: "pode dar comando
- * na página para o conteúdo ser recarregado sempre? Muita gente entra na
- * página nova e só ve a antiga e reclama que não apareceu nada") resolveu
- * isto: vite.config.ts agora usa registerType 'autoUpdate', que liga
- * skipWaiting + clientsClaim no service worker gerado. Com isso, quando o
- * navegador encontra uma versão nova, ela assume sozinha - sem esperar
- * todas as abas fecharem, que era a causa raiz de o leitor ficar preso na
- * versão antiga (no celular, "todas as abas fecharem" quase nunca
- * acontece). Uma vez ativa, essa versão nova recarrega automaticamente a
- * aba (comportamento embutido do plugin para este registerType); o que
- * falta a nós é só CHECAR por versão nova nos momentos certos, porque a
- * checagem automática do navegador não cobre bem um SPA (o usuário pode
- * ficar horas numa unidade sem disparar navegação nenhuma). Ver
- * docs/arquitetura.md, seção 9, para o raciocínio completo.
- */
-function criarFonteAgendamentoSW(router: Router): FonteAgendamentoSW {
-  return {
-    definirIntervalo(callback, intervaloMs) {
-      const id = window.setInterval(callback, intervaloMs);
-      return () => window.clearInterval(id);
-    },
-    aoFicarVisivel(callback) {
-      const ouvinte = () => {
-        if (document.visibilityState === 'visible') callback();
-      };
-      document.addEventListener('visibilitychange', ouvinte);
-      return () => document.removeEventListener('visibilitychange', ouvinte);
-    },
-    aoTrocarRota(callback) {
-      return router.afterEach(() => callback());
-    }
-  };
-}
-
-/**
- * Complemento ao caso acima (mesmo pedido do líder, 23/09/2026): uma aba
+ * Módulo de versão velha (mesmo pedido do líder, 23/09/2026): uma aba
  * que já estava aberta na versão A, ao navegar para uma seção ainda não
  * visitada, pede um pedaço de código com hash da versão A que a
  * publicação da B apagou do servidor. A regra de fallback do `.htaccess`
@@ -114,12 +77,40 @@ window.addEventListener(
   criarTratadorFalhaModulo(criarArmazenamentoRecargaReal(), () => window.location.reload())
 );
 
+/**
+ * Fonte real dos dois gatilhos de volta (plano 2.2): pageshow (com `persisted`
+ * quando a página vem do cache de navegação, o caso do botão Voltar depois de
+ * sair) e aba que volta a ficar visível.
+ */
+function criarFonteVoltaReal(): FonteVolta {
+  return {
+    aoMostrarPagina(callback) {
+      const ouvinte = (evento: { readonly persisted: boolean }) => callback(evento.persisted);
+      window.addEventListener('pageshow', ouvinte);
+      return () => window.removeEventListener('pageshow', ouvinte);
+    },
+    aoFicarVisivel(callback) {
+      const ouvinte = () => {
+        if (document.visibilityState === 'visible') callback();
+      };
+      document.addEventListener('visibilitychange', ouvinte);
+      return () => document.removeEventListener('visibilitychange', ouvinte);
+    }
+  };
+}
+
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();
   const repositorio = criarRepositorioProgresso();
   const storeTema = criarStoreTema(repositorio);
-  const storeBusca = criarStoreBusca();
   const storeModoAdaptado = criarStoreModoAdaptado(repositorio);
+
+  // Um único cliente da API para o site inteiro: a 401 de qualquer chamada leva à tela de entrada.
+  const navegador = criarNavegadorReal();
+  const aoNaoAutorizado = criarAoNaoAutorizado(navegador);
+  const cliente = criarClienteApi({ aoNaoAutorizado });
+  const sessao = criarSessaoGlobal({ cliente, navegador });
+  const storeBusca = criarStoreBusca(aoNaoAutorizado);
 
   const app = createApp(App);
   app.provide(CHAVE_CURRICULO, curriculo);
@@ -127,23 +118,18 @@ async function bootstrap(): Promise<void> {
   app.provide(CHAVE_STORE_TEMA, storeTema);
   app.provide(CHAVE_STORE_BUSCA, storeBusca);
   app.provide(CHAVE_STORE_MODO_ADAPTADO, storeModoAdaptado);
+  app.provide(CHAVE_CLIENTE_RESTRITO, cliente);
+  app.provide(CHAVE_SESSAO, sessao);
 
   const router = criarRouter();
   app.use(router);
 
-  registerSW({
-    immediate: true,
-    onRegisteredSW(_swUrl, registration) {
-      if (!registration) return;
-      const verificar = () => {
-        registration.update().catch(() => {
-          // Falha de rede na checagem não é erro do leitor: a próxima
-          // tentativa (intervalo, visibilidade ou rota) resolve sozinha.
-        });
-      };
-      agendarVerificacoesAtualizacao(verificar, criarFonteAgendamentoSW(router));
-    }
+  vigiarVolta(criarFonteVoltaReal(), {
+    recarregar: navegador.recarregar,
+    conferir: () => void sessao.conferirAoVoltar()
   });
+  // Lê usuário e admin sem bloquear a tela; falha aqui não derruba a página.
+  void sessao.iniciar().catch(() => undefined);
 
   await router.isReady();
   app.mount('#app');

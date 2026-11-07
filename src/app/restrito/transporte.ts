@@ -15,7 +15,15 @@ export interface OpcoesTransporte {
   readonly buscar?: Buscador;
   readonly base?: string;
   readonly tempoLimiteMs?: number;
+  /**
+   * Chamado quando a API responde 401 numa chamada que não é de login nem de
+   * troca de senha: a sessão venceu e a página deve voltar à tela de entrada.
+   */
+  readonly aoNaoAutorizado?: () => void;
 }
+
+/** 401 que fica na tela (senha errada não é sessão vencida). */
+const CODIGOS_401_NA_TELA = new Set(['credenciais', 'senha-atual']);
 
 export interface Transporte {
   ler(caminho: string): Promise<Corpo>;
@@ -48,6 +56,10 @@ export function criarTransporte(opcoes: OpcoesTransporte = {}): Transporte {
   const tempoLimite = opcoes.tempoLimiteMs ?? 20_000;
   let csrf: string | undefined;
 
+  function avisarSeSessaoVencida(status: number, codigo: string): void {
+    if (status === 401 && !CODIGOS_401_NA_TELA.has(codigo)) opcoes.aoNaoAutorizado?.();
+  }
+
   async function requisitar(caminho: string, init: RequestInit): Promise<Corpo> {
     const controle = new AbortController();
     const relogio = setTimeout(() => controle.abort(), tempoLimite);
@@ -68,10 +80,17 @@ export function criarTransporte(opcoes: OpcoesTransporte = {}): Transporte {
     try {
       corpo = await resposta.json();
     } catch {
+      // O portão responde 401 sem corpo: é sessão vencida, não JSON inválido.
+      avisarSeSessaoVencida(resposta.status, 'resposta-invalida');
       throw new ErroDeApi(resposta.status, 'resposta-invalida');
     }
-    if (!ehObjeto(corpo)) throw new ErroDeApi(resposta.status, 'resposta-invalida');
+    if (!ehObjeto(corpo)) {
+      avisarSeSessaoVencida(resposta.status, 'resposta-invalida');
+      throw new ErroDeApi(resposta.status, 'resposta-invalida');
+    }
     if (!resposta.ok || corpo.ok !== true) {
+      const codigo = typeof corpo.erro === 'string' ? corpo.erro : 'resposta-invalida';
+      avisarSeSessaoVencida(resposta.status, codigo);
       if (typeof corpo.erro !== 'string') throw new ErroDeApi(resposta.status, 'resposta-invalida');
       throw new ErroDeApi(
         resposta.status,

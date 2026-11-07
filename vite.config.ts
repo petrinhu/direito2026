@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { VitePWA } from 'vite-plugin-pwa';
 
 /**
  * Versão do site (campo "version" do package.json) entra no código como
@@ -61,7 +60,10 @@ function removerFonteIconesDoCalendario(): Plugin {
   };
 }
 
-/** Prefixo dos pedaços de conteúdo: é o padrão que a regra conteudo-unidades procura. */
+/**
+ * Prefixo dos pedaços de conteúdo. Nenhuma regra de cache o usa mais (o service
+ * worker saiu, plano 2.1); fica até o portão verificar-cache-conteudo sair (F4.5).
+ */
 export const PREFIXO_PEDACO_CONTEUDO = 'conteudo-';
 
 const ORIGEM_DO_CONTEUDO = /[\\/]src[\\/]conteudo[\\/]/;
@@ -91,62 +93,10 @@ export function nomeDoPedaco(pedaco: PedacoDoBuild): string {
   return `assets/${prefixo}[name]-[hash].js`;
 }
 
-/**
- * Exportado para o teste tests/unidade/sw.areaRestrita.spec.ts conferir a
- * regra da API da área restrita sem rodar o build.
- */
-export const opcoesWorkbox = {
-  // Nunca mapa de código no service worker gerado: mesma razão do
-  // build.sourcemap abaixo, e o Workbox tem opção própria, separada
-  // da do Vite (achado real, 22/09/2026: sw.js.map e workbox-*.js.map
-  // vazavam caminho absoluto da máquina mesmo com sourcemap:false no
-  // Vite, porque o Workbox gera o dele por conta própria).
-  sourcemap: false,
-  globPatterns: ['**/*.{js,css,html,woff2,svg,png,json}'],
-  navigateFallback: '/index.html',
-  // A API PHP da área restrita nunca vira index.html: uma navegação direta
-  // a /api/... vai à rede (e o servidor responde 404/405 em JSON).
-  navigateFallbackDenylist: [/^\/api\//],
-  runtimeCaching: [
-    // PRIMEIRA, de propósito: o Workbox usa a primeira regra que casa. Conteúdo
-    // restrito e sessão nunca passam por cache do service worker.
-    {
-      urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
-      handler: 'NetworkOnly' as const
-    },
-    {
-      urlPattern: /\/assets\/conteudo-.*\.js$/,
-      handler: 'CacheFirst' as const,
-      options: { cacheName: 'conteudo-unidades' }
-    },
-    {
-      urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
-      handler: 'NetworkFirst' as const,
-      options: { cacheName: 'navegacao' }
-    }
-  ]
-};
-
-// Onda 2 ligou o service worker de verdade (seção 9 da arquitetura). Onda
-// seguinte (23/09/2026, pedido do líder) trocou 'prompt' por 'autoUpdate':
-// o service worker novo assume sozinho (skipWaiting + clientsClaim, que o
-// plugin liga automaticamente para este registerType) em vez de esperar
-// todas as abas fecharem - era essa espera que deixava leitor preso na
-// versão antiga. Ver docs/arquitetura.md, seção 9, para o raciocínio
-// completo e a ordem do líder verbatim.
 export default defineConfig({
   base: '/',
   define: definicoesDeVersao,
-  plugins: [
-    vue(),
-    removerFonteIconesDoCalendario(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: null,
-      manifest: false, // manifest.webmanifest é escrito à mão em public/, não gerado
-      workbox: opcoesWorkbox
-    })
-  ],
+  plugins: [vue(), removerFonteIconesDoCalendario()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

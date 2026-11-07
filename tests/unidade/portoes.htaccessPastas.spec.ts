@@ -130,6 +130,16 @@ describe('portão do .htaccess e das pastas do pacote', () => {
     expect(saida(r)).toContain('api/nucleo/.htaccess');
   });
 
+  it.each(['api/mal_nomeado.php', 'api/Maiuscula.php', 'api/juri/Imagem.php'])(
+    'endpoint %s fora de api/nucleo reprova: nome fora da regex não pode virar 404 calado',
+    (endpoint) => {
+      plantar(endpoint, 'endpoint sintetico');
+      const r = rodar();
+      expect(r.status).toBe(1);
+      expect(saida(r)).toContain(endpoint);
+    }
+  );
+
   it('o build chama o verificador', () => {
     const pacote = JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf-8')) as {
       scripts: Record<string, string>;

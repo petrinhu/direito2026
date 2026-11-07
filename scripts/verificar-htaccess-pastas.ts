@@ -57,9 +57,15 @@ function listarArquivos(pasta: string, base: string = pasta): string[] {
   });
 }
 
-/** Endpoint da API: .php fora de api/nucleo/ (a pasta interna nunca é passagem). */
+/**
+ * Endpoint da API: qualquer .php sob api/, fora de api/nucleo/. A checagem não usa a
+ * regex da regra de passagem: um nome fora dela (maiúscula, underscore) tem de
+ * reprovar aqui, não virar 404 calado em produção.
+ */
 function ehEndpoint(caminho: string): boolean {
-  return /^api\/[a-z0-9/-]+\.php$/.test(caminho) && !caminho.startsWith('api/nucleo/');
+  return (
+    caminho.startsWith('api/') && caminho.endsWith('.php') && !caminho.startsWith('api/nucleo/')
+  );
 }
 
 function principal(): number {

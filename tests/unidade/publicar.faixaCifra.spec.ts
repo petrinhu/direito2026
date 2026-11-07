@@ -92,7 +92,7 @@ describe('prova de cifra da faixa de envio (LU-F4.3, revisão de segurança)', (
     const tip = commit({ 'src/conteudo/b.ts': CIFRADO }, 'dois');
     const r = checar(base, tip);
     expect(r.status, r.saida).toBe(0);
-    expect(r.saida).toMatch(/encontrados=2 analisados=2 falharam=0/);
+    expect(r.saida).toMatch(/encontrados=3 analisados=3 falharam=0/);
   });
 
   it('SABOTAGEM: commit do meio em claro entre dois cifrados, com a ponta cifrada, reprova', () => {
@@ -145,7 +145,8 @@ describe('prova de cifra da faixa de envio (LU-F4.3, revisão de segurança)', (
   it('zero caminho cifrado na ponta é varredura quebrada: reprova', () => {
     repo = join(tmp, 'sem-cifra');
     spawnSync('git', ['init', '-q', '-b', 'main', repo]);
-    const base = commit({ 'README.md': 'x\n' }, 'base sem cifra');
+    // .gitattributes presente, sem nenhuma regra de cifra: zero caminho protegido, não 'sem .gitattributes'.
+    const base = commit({ '.gitattributes': '# sem cifra\n', 'README.md': 'x\n' }, 'base sem cifra');
     const tip = commit({ 'README.md': 'y\n' }, 'sem cifra');
     const r = checar(base, tip);
     expect(r.status).toBe(1);
@@ -222,5 +223,73 @@ describe('refs antes do envio: main e a tag apontam para o commit de release', (
     const r = refsCom('release', 'outro');
     expect(r.status).toBe(1);
     expect(r.saida).toContain('refs/tags/v9.9.9.9');
+  });
+});
+
+/**
+ * Revisão automática de segurança (LU-F4.3): regra do git da fonte certa (check-attr --source), merge,
+ * nome com espaço, acento e aspas, regra removida no meio e restaurada na ponta, .gitattributes
+ * aninhado contrário, commit sem .gitattributes e faixa vazia. Todos têm de reprovar.
+ */
+describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () => {
+  const CIFRADO_B = Buffer.concat([MAGIA, Buffer.from('versao do lado\n')]);
+  const CIFRADO_C = Buffer.concat([MAGIA, Buffer.from('versao principal\n')]);
+
+  it('merge com resolução em claro reprova (a árvore do merge é inspecionada)', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    git(['checkout', '-q', '-b', 'lado']);
+    commit({ 'docs/x.md': CIFRADO_B }, 'lado');
+    git(['checkout', '-q', 'main']);
+    commit({ 'docs/x.md': CIFRADO_C }, 'principal');
+    spawnSync('git', ['-C', repo, '-c', 'user.name=teste', '-c', 'user.email=teste@exemplo.invalido', 'merge', '-q', '--no-edit', 'lado']);
+    writeFileSync(join(repo, 'docs/x.md'), 'resolvido em claro\n');
+    git(['add', '-A']);
+    git(['commit', '-q', '--no-edit']);
+    const tip = git(['rev-parse', 'HEAD']);
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain(`EM CLARO: ${tip.slice(0, 12)} docs/x.md`);
+  });
+
+  it('caminho com espaço, acento e aspas é conferido e aparece íntegro na falha', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit({ 'docs/nota "é" x.md': 'claro\n' }, 'nome estranho');
+    const r = checar(base, tip);
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('EM CLARO');
+    expect(r.saida).toContain('docs/nota "é" x.md');
+  });
+
+  it('regra removida no meio e restaurada na ponta: o blob em claro do meio reprova', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const meio = commit({ '.gitattributes': 'TODO.md filter=git-crypt\n', 'docs/a.md': 'claro\n' }, 'sem regra de docs');
+    const tip = commit({ '.gitattributes': ATRIBUTOS, 'docs/a.md': CIFRADO }, 'regra de volta');
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain(`EM CLARO: ${meio.slice(0, 12)} docs/a.md`);
+  });
+
+  it('.gitattributes aninhado que desliga a cifra de um caminho já protegido reprova', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit({ 'docs/sub/.gitattributes': '*.md !filter\n', 'docs/sub/a.md': 'claro\n' }, 'aninhado contrario');
+    const r = checar(base, tip);
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('docs/sub/a.md');
+  });
+
+  it('commit da faixa sem .gitattributes reprova', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    git(['rm', '-q', '.gitattributes']);
+    const tip = commit({ 'docs/b.md': CIFRADO }, 'sem atributos');
+    const r = checar(base, tip);
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('sem .gitattributes');
+  });
+
+  it('faixa vazia (zero commits a enviar) é dita com clareza e recusada', () => {
+    const tip = git(['rev-parse', 'HEAD']);
+    const r = checar(tip, tip);
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('faixa vazia');
   });
 });

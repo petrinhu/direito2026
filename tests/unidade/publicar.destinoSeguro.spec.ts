@@ -1,5 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -122,7 +130,9 @@ describe('publicar.sh: destino seguro (revisão F5.2)', () => {
   });
 
   it('a raiz precisa terminar em domains/drpetrus.top', () => {
-    const r = rodar(`DESTINO_RAIZ='${tmp}/home/outro-produto'; conferir_destino_seguro '${tmp}/home/outro-produto/public_html/direito2026'`);
+    const r = rodar(
+      `DESTINO_RAIZ='${tmp}/home/outro-produto'; conferir_destino_seguro '${tmp}/home/outro-produto/public_html/direito2026'`
+    );
     expect(r.status, r.saida).not.toBe(0);
     expect(r.saida).toContain('RECUSADO');
   });

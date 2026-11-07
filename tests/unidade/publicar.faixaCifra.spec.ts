@@ -18,6 +18,19 @@ const SCRIPT = join(RAIZ, 'scripts/apoio/cifra-faixa.py');
 
 const MAGIA = Buffer.from([0x00, 0x47, 0x49, 0x54, 0x43, 0x52, 0x59, 0x50, 0x54, 0x00]);
 const CIFRADO = Buffer.concat([MAGIA, Buffer.from('corpo cifrado sintetico\n')]);
+
+/** Bytes pseudoaleatórios e determinísticos (hash em cadeia, semente por índice): imitam a carga cifrada. */
+function cargaAleatoria(semente: number, n: number): Buffer {
+  const partes: Buffer[] = [];
+  let estado = Buffer.from(`semente-f2-${semente}`);
+  let total = 0;
+  while (total < n) {
+    estado = createHash('sha256').update(estado).digest();
+    partes.push(estado);
+    total += estado.length;
+  }
+  return Buffer.concat(partes).subarray(0, n);
+}
 const ATRIBUTOS =
   [
     'src/conteudo/** filter=git-crypt diff=git-crypt',
@@ -141,6 +154,20 @@ describe('prova de cifra da faixa de envio (LU-F4.3, revisão de segurança)', (
     const r = checar(base, tip);
     expect(r.status, r.saida).toBe(0);
     expect(r.saida).not.toContain('publico/x.md');
+  });
+
+  it('F2: 200 cifrados com carga pseudoaleatória (cota DESVIOS) passam, sem falso positivo', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const arquivos: Record<string, Buffer> = {};
+    for (let i = 0; i < 200; i += 1) {
+      const nome = `docs/aleatorio-${String(i).padStart(3, '0')}.md`;
+      arquivos[nome] = Buffer.concat([MAGIA, cargaAleatoria(i, 12), cargaAleatoria(1000 + i, 300)]);
+    }
+    const tip = commit(arquivos, 'duzentos cifrados de carga aleatoria');
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(0);
+    // 201 = 200 da faixa + docs/base.md: cifra-faixa.py confere a árvore inteira de cada commit (por desenho).
+    expect(r.saida).toMatch(/encontrados=201 analisados=201 falharam=0/);
   });
 
   it('zero caminho cifrado na ponta é varredura quebrada: reprova', () => {

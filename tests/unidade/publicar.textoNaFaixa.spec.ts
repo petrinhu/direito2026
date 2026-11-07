@@ -185,4 +185,32 @@ describe('I-4: texto de estudo em claro na faixa, em qualquer caminho (LU-F5.2)'
     expect(r.status).toBe(1);
     expect(r.saida).toContain('faixa vazia');
   });
+
+  it('T11: cópia que aparece só no resultado de um merge (em nenhum dos pais) reprova', () => {
+    const base = repositorio();
+    git(['checkout', '-q', '-b', 'lateral']);
+    commit({ 'docs/lateral.md': 'trabalho do ramo lateral\n' }, 'lateral');
+    git(['checkout', '-q', 'main']);
+    commit({ 'docs/principal.md': 'trabalho do ramo principal\n' }, 'principal');
+    git(['merge', '--no-ff', '--no-commit', '-q', 'lateral']);
+    const merge = commit(
+      { 'notas/copia-do-merge.md': `${TRECHO_ESTUDO}\n` },
+      'merge com copia so no resultado'
+    );
+    const r = checar(base, merge);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain(
+      `TEXTO DE ESTUDO EM CLARO: ${merge.slice(0, 12)} notas/copia-do-merge.md`
+    );
+  });
+
+  it('T8: blob introduzido que sumiu do armazenamento reprova por varredura incompleta, sem verde falso', () => {
+    const base = repositorio();
+    const ponta = commit({ 'notas/ok.md': 'texto sem estudo\n' }, 'benigno');
+    const sha = git(['rev-parse', `${ponta}:notas/ok.md`]);
+    rmSync(join(repo, '.git', 'objects', sha.slice(0, 2), sha.slice(2)));
+    const r = checar(base, ponta);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain('varredura incompleta');
+  });
 });

@@ -2,7 +2,6 @@
 src/conteudo/** filter=git-crypt diff=git-crypt
 src/dados/** filter=git-crypt diff=git-crypt
 docs/** filter=git-crypt diff=git-crypt
-site/** filter=git-crypt diff=git-crypt
 mockups/** filter=git-crypt diff=git-crypt
 tests/caracterizacao/*.esperado.json filter=git-crypt diff=git-crypt
 src/ui/area-restrita/emblema/** filter=git-crypt diff=git-crypt

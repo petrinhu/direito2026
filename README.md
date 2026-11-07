@@ -16,7 +16,7 @@ Este README é o hub: aponta para a documentação, não a repete.
 
 ## Como destravar o conteúdo cifrado
 
-Parte do conteúdo de estudo e da documentação (os caminhos listados em `.gitattributes`, como `src/conteudo/`, `src/dados/`, `docs/`, `site/` e `TODO.md`) é guardada cifrada com git-crypt. Sem a chave, esses arquivos aparecem como dado binário ilegível. Os nomes dos arquivos continuam visíveis.
+Parte do conteúdo de estudo e da documentação (os caminhos listados em `.gitattributes`, como `src/conteudo/`, `src/dados/`, `docs/` e `TODO.md`) é guardada cifrada com git-crypt. Sem a chave, esses arquivos aparecem como dado binário ilegível. Os nomes dos arquivos continuam visíveis.
 
 Para destravar uma cópia do repositório, com a chave em mãos, rode dentro da pasta do projeto:
 

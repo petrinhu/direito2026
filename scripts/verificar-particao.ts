@@ -38,7 +38,7 @@
  * cifrado sem classe reprova (falha fechada). Cifrado fora da fonte não é
  * varrido como fonte e não reprova; é contado em fora_da_fonte.
  *
- * Limite declarado (L-18): cópia que só existe nas classes FORA (docs/, site/,
+ * Limite declarado (L-18): cópia que só existe nas classes FORA (docs/,
  * mockups/, src/dados/) não é pega. meta.ts, index.ts e dispositivos.ts não são
  * fonte (títulos curtos).
  *

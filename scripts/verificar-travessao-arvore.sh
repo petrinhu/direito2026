@@ -4,8 +4,8 @@
 # CIFRADO que varre, lido da working tree destravada. Os caminhos vêm do
 # .gitattributes real (git check-attr), não de uma lista copiada.
 #
-# Classes (E7). VARRE: conteúdo de estudo e voz pública, src/conteudo/, src/dados/,
-# site/ e mockups/. INTERNO: docs/, TODO.md, tests/caracterizacao/ e
+# Classes (E7). VARRE: conteúdo de estudo e voz pública, src/conteudo/, src/dados/
+# e mockups/. INTERNO: docs/, TODO.md, tests/caracterizacao/ e
 # src/ui/area-restrita/emblema/, que não chegam ao leitor pelo site e não varrem.
 # Caminho cifrado que não cai em nenhuma das duas reprova (falha fechada, L-17): uma
 # classe nova exige decisão escrita antes de entrar aqui. docs/ fica fora de propósito:
@@ -31,7 +31,7 @@ if ! cd "$RAIZ"; then
   exit 1
 fi
 
-VARRE='^(src/conteudo/|src/dados/|site/|mockups/)'
+VARRE='^(src/conteudo/|src/dados/|mockups/)'
 INTERNO='^(docs/|TODO\.md$|tests/caracterizacao/|src/ui/area-restrita/emblema/)'
 
 # Dois processos no total (ls-files, check-attr), nenhum por arquivo (L-11 item 6).

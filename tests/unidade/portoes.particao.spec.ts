@@ -57,12 +57,12 @@ function git(cwd: string, args: string[]): void {
 }
 
 /** Repositório descartável: git-crypt com chave gerada aqui, arquivos e atributos escritos, um commit. */
-function fixture(arquivos: Record<string, string>, atributos: string = ATRIBUTOS): string {
+function fixture(arquivos: Record<string, string | Buffer>, atributos: string = ATRIBUTOS): string {
   const raiz = mkdtempSync(join(tmpdir(), 'portao-particao-'));
   temporarios.push(raiz);
   git(raiz, ['init', '-q', '.']);
   execFileSync('git-crypt', ['init'], { cwd: raiz, stdio: 'ignore' });
-  const todos: Record<string, string> = { ...arquivos, '.gitattributes': atributos };
+  const todos: Record<string, string | Buffer> = { ...arquivos, '.gitattributes': atributos };
   for (const [caminho, conteudo] of Object.entries(todos)) {
     mkdirSync(dirname(join(raiz, caminho)), { recursive: true });
     writeFileSync(join(raiz, caminho), conteudo);
@@ -407,5 +407,14 @@ describe('verificar-particao: NUL em extensão textual é falha, nunca saída si
     );
     expect(rc, saida).toBe(0);
     expect(saida).toMatch(/nul=0/);
+  });
+
+  it('texto de estudo em UTF-16LE com BOM, em .md em claro: sai 1 pela regra de NUL (LU-F4.3, preci)', () => {
+    const trecho =
+      'A cadeira estuda a função social da propriedade urbana e seus limites legais na prática.\n';
+    const utf16 = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(trecho, 'utf16le')]);
+    const { rc, saida } = rodar(fixture({ ...PADRAO, 'LEIA.md': utf16 }));
+    expect(rc, saida).toBe(1);
+    expect(saida).toMatch(/CAMINHO COM NUL.*LEIA\.md/);
   });
 });

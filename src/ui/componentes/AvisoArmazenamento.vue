@@ -31,11 +31,9 @@ function apagar(): void {
 <template>
   <div v-if="visivel" class="aviso-armazenamento" role="status" aria-live="polite">
     <p class="aviso-armazenamento__texto">
-      Este site guarda, só neste navegador e neste aparelho, o tema escolhido, o progresso de
-      leitura e de quiz e a preferência de Leitura ampliada. Ao entrar com o seu login, o navegador
-      também guarda um cookie de sessão, que é apagado quando você sai, e um cookie que reconhece
-      este aparelho por 30 dias. Sair não apaga esse segundo cookie, nem o botão Apagar os dados
-      guardados: ele vale até expirar ou ser revogado.
+      Neste navegador ficam o login, o progresso, o tema e a Leitura ampliada. Há um cookie de
+      sessão, apagado ao sair, e um que reconhece este aparelho por 30 dias. O Sair não apaga esse
+      segundo cookie, nem o botão Apagar os dados guardados.
     </p>
     <div class="aviso-armazenamento__acoes">
       <button type="button" class="aviso-armazenamento__apagar" @click="apagar">
@@ -74,11 +72,14 @@ function apagar(): void {
   box-shadow: var(--sombra-elevada, 0 8px 24px rgba(13, 36, 64, 0.12));
 }
 
+/* Texto em largura total, com os botões na linha de baixo: ao lado deles o texto
+   ficava estreito e a faixa subia sobre o campo de busca. Entrelinha 1.5 para a
+   faixa caber em 187 px a 1280px, a altura da v1.5.0.0. */
 .aviso-armazenamento__texto {
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 100%;
   margin: 0;
   font-size: var(--escala-sm, 0.9375rem);
+  line-height: 1.5;
 }
 
 .aviso-armazenamento__acoes {
@@ -124,6 +125,10 @@ function apagar(): void {
     width: min(100% - 2 * var(--esp-2, 0.5rem), 640px);
     flex-direction: column;
     align-items: stretch;
+    /* Folga menor no celular: a faixa precisa caber na altura que a v1.5.0.0
+       tinha em 360x640 (238 px), senão sobe mais que ela sobre o conteúdo. */
+    padding: var(--esp-3, 0.75rem);
+    gap: var(--esp-3, 0.75rem);
   }
 }
 

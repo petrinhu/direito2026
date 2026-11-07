@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -311,5 +312,72 @@ describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () 
     const r = checar(tip, tip);
     expect(r.status).toBe(1);
     expect(r.saida).toContain('faixa vazia');
+  });
+});
+
+/**
+ * I-5 (LU-F5.2, revisão de segurança): a magia de 10 bytes não basta. O cabeçalho do git-crypt tem
+ * magia e nonce (22 bytes); o corpo depois dele é cifra, e cifra tem fração imprimível perto do acaso
+ * (0,383 medido em 192 blobs reais; 0,347 a 0,427). Texto em claro depois da magia tem de reprovar.
+ * Carga menor que 32 bytes não se mede: é contada em curtos e não reprova (limite declarado).
+ */
+function pseudoAleatorio(n: number): Buffer {
+  const partes: Buffer[] = [];
+  let estado = Buffer.from('semente-sintetica');
+  while (Buffer.concat(partes).length < n) {
+    estado = createHash('sha256').update(estado).digest();
+    partes.push(estado);
+  }
+  return Buffer.concat(partes).subarray(0, n);
+}
+
+describe('I-5: magia seguida de texto em claro reprova (LU-F5.2)', () => {
+  const NONCE = pseudoAleatorio(12);
+  const CARGA_CIFRADA = Buffer.concat([MAGIA, NONCE, pseudoAleatorio(200)]);
+  const CLARO_DEPOIS_DA_MAGIA = Buffer.concat([
+    MAGIA,
+    NONCE,
+    Buffer.from(
+      'texto de estudo em claro depois da magia, sintetico, com mais de trinta e dois bytes\n'
+    )
+  ]);
+
+  it('blob só com a magia (10 bytes, sem nonce) reprova: cabeçalho incompleto', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit({ 'docs/a.md': MAGIA }, 'so magia');
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain('cabeçalho incompleto');
+  });
+
+  it('magia seguida de texto em claro (60 bytes) reprova e nomeia a carga em claro', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit({ 'docs/a.md': CLARO_DEPOIS_DA_MAGIA }, 'magia e claro');
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain(`EM CLARO: ${tip.slice(0, 12)} docs/a.md`);
+    expect(r.saida).toContain('carga em claro');
+    expect(r.saida).not.toContain('texto de estudo em claro');
+  });
+
+  it('magia com carga de bytes cifrados (200 bytes) passa sem reprovar', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit({ 'docs/a.md': CARGA_CIFRADA }, 'cifra de verdade');
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(0);
+    // curtos=1: só o blob-base da fixture (carga de 12 bytes), que também está na árvore da faixa.
+    expect(r.saida).toMatch(/curtos=1/);
+  });
+
+  it('carga curta (10 bytes depois do nonce) não reprova e aparece em curtos=2', () => {
+    const base = git(['rev-parse', 'HEAD']);
+    const tip = commit(
+      { 'docs/a.md': Buffer.concat([MAGIA, NONCE, Buffer.from('dez bytes!')]) },
+      'curta'
+    );
+    const r = checar(base, tip);
+    expect(r.status, r.saida).toBe(0);
+    // curtos=2: o blob-base da fixture (12 bytes) e este (10 bytes).
+    expect(r.saida).toMatch(/curtos=2/);
   });
 });

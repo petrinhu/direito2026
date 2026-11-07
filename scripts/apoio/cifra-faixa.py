@@ -12,17 +12,47 @@ Conteúdo: para cada commit da faixa, git ls-tree -r -z da árvore inteira (cobr
 Cada par (caminho, blob) de um caminho protegido tem de começar com a magia do git-crypt. Tudo é lido em
 bytes e separado por NUL: espaço, acento e aspas no nome não quebram nada.
 
-Reprova: faixa sem commit; commit da faixa sem .gitattributes; zero caminho protegido; blob sem magia.
+Reprova: faixa sem commit; commit da faixa sem .gitattributes; zero caminho protegido; blob sem magia;
+blob com magia mas sem o nonce inteiro (menos de 22 bytes); carga depois do cabeçalho com cara de texto em claro
+(I-5, LU-F5.2). Carga com menos de 32 bytes não se mede: é contada em curtos e não reprova (limite declarado).
 Processos git: rev-list (1), ls-tree (um por commit), check-attr (um por fonte), cat-file --batch (1).
 Saída: commits, caminhos protegidos, encontrados (pares a conferir), analisados (lidos de fato) e falharam.
 Sai 0 se tudo confere; 1 se algo falha; 2 se o uso estiver errado.
 """
 
+import math
 import subprocess
 import sys
 
 MAGIA = b"\x00GITCRYPT\x00"
+NONCE = 12
+CABECALHO = len(MAGIA) + NONCE  # 22 bytes: magia e nonce (medido, plano 6.2)
+CARGA_MINIMA = 32  # abaixo disso a fração imprimível não se mede: conta em curtos
+P_ACASO = 98 / 256  # fração imprimível de bytes uniformes: 0x20 a 0x7E, \t, \n, \r
+DESVIOS = 5  # cota binomial: acima disso o corpo não parece aleatório
 ZERO = b"0" * 40
+# Bytes que NÃO são imprimíveis (0x20-0x7E, \t, \n, \r): o translate apaga os imprimíveis, sobra a contagem.
+NAO_IMPRIMIVEIS = bytes(b for b in range(256) if not (0x20 <= b <= 0x7E or b in (0x09, 0x0A, 0x0D)))
+
+
+def limite_imprimiveis(n):
+    """Contagem de imprimíveis acima da qual n bytes não parecem cifra: média + DESVIOS desvios binomiais."""
+    return n * P_ACASO + DESVIOS * math.sqrt(n * P_ACASO * (1 - P_ACASO))
+
+
+def motivo_corpo(corpo):
+    """(motivo, curta). motivo é None se o blob passa; curta marca carga pequena demais para medir."""
+    if corpo[: len(MAGIA)] != MAGIA:
+        return "sem magia do git-crypt", False
+    if len(corpo) < CABECALHO:
+        return "cabeçalho incompleto (menos de 22 bytes: magia e nonce)", False
+    carga = corpo[CABECALHO:]
+    if len(carga) < CARGA_MINIMA:
+        return None, True
+    imprimiveis = len(carga.translate(None, NAO_IMPRIMIVEIS))
+    if imprimiveis > limite_imprimiveis(len(carga)):
+        return "carga em claro depois da magia (imprimíveis acima do acaso)", False
+    return None, False
 
 
 def git(repo, args, entrada=None):
@@ -130,21 +160,27 @@ def main(argv):
     conteudo = ler_blobs(repo, sorted({sha for _, sha in alvo}))
     encontrados = len(alvo)
     analisados = 0
+    curtos = 0
     falharam = []
     for (caminho, sha), commit in alvo.items():
         corpo = conteudo.get(sha)
-        analisados += 1 if corpo is not None else 0
-        if corpo is None or corpo[: len(MAGIA)] != MAGIA:
-            falharam.append((commit[:12], caminho))
+        if corpo is None:
+            falharam.append((commit[:12], caminho, "blob ilegível"))
+            continue
+        analisados += 1
+        motivo, curta = motivo_corpo(corpo)
+        curtos += 1 if curta else 0
+        if motivo is not None:
+            falharam.append((commit[:12], caminho, motivo))
 
-    for commit12, caminho in falharam:
+    for commit12, caminho, motivo in falharam:
         print(
-            f"EM CLARO: {commit12} {caminho.decode('utf-8', 'surrogateescape')}",
+            f"EM CLARO: {commit12} {caminho.decode('utf-8', 'surrogateescape')} ({motivo})",
             file=sys.stderr,
         )
     print(
         f"cifra da faixa: commits={len(commits)} caminhos_protegidos={len(protegidos)} "
-        f"encontrados={encontrados} analisados={analisados} falharam={len(falharam)}"
+        f"encontrados={encontrados} analisados={analisados} falharam={len(falharam)} curtos={curtos}"
     )
     if analisados != encontrados:
         print("cifra da faixa: varredura incompleta (analisados diferente de encontrados)", file=sys.stderr)

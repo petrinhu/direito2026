@@ -951,8 +951,10 @@ conferir_refs_antes_do_envio() {
 
 # Prova de cifra da faixa que vai ao remoto: cada commit de main_remota..release, com o .gitattributes
 # de cada um (scripts/apoio/cifra-faixa.py). Um commit do meio em claro reprova, mesmo com a ponta limpa.
+# Segunda prova (LU-F5.2, I-4): nenhum blob que a faixa introduz, em caminho nenhum, tem janela de texto
+# de estudo cifrado (scripts/apoio/textoEmClaroNaFaixa.ts). Cópia sem filtro que some depois também reprova.
 conferir_cifra_da_faixa() {
-  local base saida="$ESPACO/cifra-faixa.txt" rc=0
+  local base saida="$ESPACO/cifra-faixa.txt" rc=0 saida_texto="$ESPACO/texto-na-faixa.txt" rc_texto=0
   base="$(ler_main_remota)"
   if [ -n "$base" ]; then
     git cat-file -e "$base^{commit}" 2>/dev/null ||
@@ -966,7 +968,10 @@ conferir_cifra_da_faixa() {
   cat "$saida"
   sed 's/^/publicar: /' "$saida.err" >&2 || true
   [ "$rc" -eq 0 ] || recusar "prova de cifra da faixa reprovou (código $rc); nada foi enviado ao git"
-  echo "publicar: prova de cifra da faixa conferiu (base=${base:0:12})"
+  (cd "$RAIZ" && node --import tsx scripts/apoio/textoEmClaroNaFaixa.ts "$RAIZ" "$base" "$SHA_RELEASE") > "$saida_texto" 2>&1 || rc_texto=$?
+  cat "$saida_texto"
+  [ "$rc_texto" -eq 0 ] || recusar "prova de texto de estudo na faixa reprovou (código $rc_texto); nada foi enviado ao git"
+  echo "publicar: prova de cifra da faixa conferiu (base=${base:0:12}); texto de estudo na faixa conferiu"
 }
 
 # Depois do envio ao git: o clone novo, sem chave, confere a mesma prova no remoto (6.2).

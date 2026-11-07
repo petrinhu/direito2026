@@ -7,8 +7,9 @@ declare(strict_types=1);
  * e a sessão do privado único, o login é o do Interdisciplinar (Ambiente::entrar),
  * e os arquivos de conteúdo e imagem ficam em direito2026_privado.
  *
- * Sai junto com o último teste que o usa: require_once de arquivo ausente derruba o
- * runner inteiro. Hoje ainda o usam juri-ok (fora das listas) e juri-cabecalhos.
+ * Usado hoje por juri-cabecalhos, juri-conteudo, juri-imagem e juri-acervo. Só sai
+ * depois que esses helpers forem para outro lugar: require_once de arquivo ausente
+ * derruba o runner inteiro.
  */
 
 require_once __DIR__ . '/imagensSinteticas.php';
@@ -33,13 +34,6 @@ function juriCliente(Ambiente $a): Cliente
 function juriAmbiente(array $opcoes = []): Ambiente
 {
     return Ambiente::novo($opcoes);
-}
-
-/** @return array<string, mixed> a conta única como está gravada agora */
-function juriLerConta(Ambiente $a): array
-{
-    $d = json_decode((string) file_get_contents($a->priv . '/usuarios.json'), true, 16, JSON_THROW_ON_ERROR);
-    return $d['usuarios'][0];
 }
 
 /** Altera a conta gravada (fixture de cenário: conta editada à mão, desativada, redefinida). @param callable(array<string, mixed>): array<string, mixed> $fn */

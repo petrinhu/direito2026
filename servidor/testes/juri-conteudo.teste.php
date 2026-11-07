@@ -51,10 +51,10 @@ teste('juri: /api/juri/ inexistente é 404 e nunca cai na SPA; POST em conteudo.
     igual(405, juriCliente($a)->post('/api/juri/conteudo.php', [])->status, 'POST');
 });
 
-teste('juri: salt e embrulho da conta são ignorados (campos da cifra que saíram): conta editada à mão com tipo errado ou sem eles entra e lê o conteúdo', function (): void {
+teste('juri: campos desconhecidos da conta são ignorados: conta editada à mão com campos de tipo errado ou sem eles entra e lê o conteúdo', function (): void {
     $casos = [
-        'salt e embrulho de tipo errado' => static fn (array $conta): array => $conta + ['salt' => 123, 'embrulho' => 'texto'],
-        'sem salt nem embrulho' => static fn (array $conta): array => array_diff_key($conta, ['salt' => 1, 'embrulho' => 1]),
+        'campos desconhecidos de tipo errado' => static fn (array $conta): array => $conta + ['campoAntigo1' => 123, 'campoAntigo2' => 'texto'],
+        'sem campos desconhecidos' => static fn (array $conta): array => $conta,
     ];
     foreach ($casos as $nome => $alterar) {
         $a = juriAmbiente();

@@ -7,8 +7,8 @@ require_once __DIR__ . '/apoio/nucleo.php';
  * Portão estático da área da Júri, depois da unificação (plano do CTO do login
  * único, seção 3): não existe mais perfil por área. Todo arquivo de public/api/juri/
  * precisa, nesta ordem, de define('D26_API', true) ANTES do require de inicio.php,
- * e nenhum pode definir D26_AREA (o nome saiu do núcleo; defini-lo seria voltar ao
- * perfil antigo). A varredura é por tokens PHP: comentário e espaço não contam.
+ * e nenhum pode definir a variável de perfil que existia antes da unificação (ela
+ * não existe mais). A varredura é por tokens PHP: comentário e espaço não contam.
  */
 
 /** Código PHP sem espaço nem comentário, para comparar trechos com segurança. */

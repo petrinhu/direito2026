@@ -5,8 +5,9 @@
 #   npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco]
 #
 # Ordem: confere branch e árvore; calcula a versão pela regra A.B.C.D; grava
-# package.json e commita chore(release); cria a tag anotada; prepara
-# .worktrees/pub no commit da tag e roda o preci; publica por rsync em duas
+# package.json e commita chore(release); cria a tag anotada; prepara um clone
+# descartável em .worktrees/ no commit da tag (git clone + git-crypt unlock) e
+# roda o preci nele; publica por rsync em duas
 # etapas; confere o ar (md5 de cada arquivo, API, raiz intacta e
 # scripts/verificar-publicacao.sh); só então envia branch e tag ao GitHub.
 #
@@ -28,7 +29,11 @@ RAIZ_PRINCIPAL=https://drpetrus.top/
 MD5_RAIZ_PRINCIPAL=6e66aeb03564
 CONTEUDO_RESTRITO_PADRAO=/home/petrus/IDrive/Documentos/direito/site_direito2026_restrito/conteudo/interdisciplinar.json
 PRECI_TMPDIR=/var/tmp/preci-pub
-WT="$RAIZ/.worktrees/pub"
+# Clone descartável do preci (L-55: subpasta do projeto, ignorada pelo git).
+# CLONE é criado e apagado só por este script (ver apagar_clone).
+PASTA_CLONES="$RAIZ/.worktrees"
+CLONE=""
+CHAVE_GIT_CRYPT="${CADERNO_CHAVE_GIT_CRYPT:-$HOME/.config/gusworld/git-crypt-key}"
 CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-$CONTEUDO_RESTRITO_PADRAO}"
 # JSON privado da Júri: sem padrão de propósito. Cadeira publicada sem ele
 # reprova o preci (falha fechada); string vazia conta como ausente.
@@ -150,9 +155,12 @@ conferir_tag_local() {
 }
 
 imprimir_plano() {
-  local restrito=AUSENTE
+  local restrito=AUSENTE chave=AUSENTE
   if [ -f "$CONTEUDO_RESTRITO" ]; then
     restrito=presente
+  fi
+  if [ -f "$CHAVE_GIT_CRYPT" ]; then
+    chave=presente
   fi
   cat <<PLANO
 publicar: plano (--seco, nada foi alterado)
@@ -161,8 +169,8 @@ publicar: plano (--seco, nada foi alterado)
   versão nova:                 $VERSAO_NOVA
   1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json)
   2. cria a tag anotada v$VERSAO_NOVA
-  3. prepara $WT no commit da tag, apaga os dispositivos.ts que sobraram de geração anterior e copia os atuais
-  4. preci em $WT (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito)
+  3. clone descartável em $PASTA_CLONES/pub-clone.* no commit da tag (git clone, git-crypt unlock com a chave: $chave), apaga os dispositivos.ts que sobraram de geração anterior e copia os atuais
+  4. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-nenhuma})
   5. rsync em 2 etapas para $DESTINO_RSYNC
      etapa 1: tudo menos index.html, sw.js, 404.html, manifest.webmanifest; apaga no
               servidor só assets/ e workbox-*.js fora do pacote e do manifesto anterior
@@ -226,37 +234,67 @@ criar_tag() {
   TAG_CRIADA=1
 }
 
-preparar_worktree() {
-  if [ -e "$WT" ]; then
-    local topo registrada sujo
-    topo="$(git -C "$WT" rev-parse --show-toplevel 2>/dev/null || true)"
-    [ "$topo" = "$WT" ] || recusar "$WT existe e não é worktree deste repositório: não mexo nele"
-    registrada="$(git worktree list --porcelain)"
-    grep -qxF "worktree $WT" <<<"$registrada" ||
-      recusar "$WT não aparece em git worktree list: não mexo nele"
-    sujo="$(git -C "$WT" status --porcelain --untracked-files=no)"
-    [ -z "$sujo" ] || recusar "$WT tem mudanças rastreadas; não sobrescrevo (sem reset --hard)"
-    git -C "$WT" checkout -q --detach "$SHA_RELEASE"
-  else
-    git worktree add -q --detach "$WT" "$SHA_RELEASE"
+# Clone do commit de release, com a árvore destravada pela chave do git-crypt.
+# O clone é cópia própria (não é worktree): worktree não aceita o filtro do
+# git-crypt (medido: git worktree add falha com rc=128).
+preparar_clone() {
+  mkdir -p "$PASTA_CLONES"
+  CLONE="$(mktemp -d "$PASTA_CLONES/pub-clone.XXXXXX")" ||
+    recusar "não criei a pasta do clone em $PASTA_CLONES"
+  git clone -q "$RAIZ" "$CLONE" || recusar "git clone do repositório falhou (mensagem acima)"
+  git -C "$CLONE" checkout -q --detach "$SHA_RELEASE" ||
+    recusar "não consegui pôr o clone no commit de release"
+  (cd "$CLONE" && git-crypt unlock "$CHAVE_GIT_CRYPT") > "$ESPACO/unlock.log" 2>&1 ||
+    recusar "git-crypt unlock falhou no clone (log privado em $ESPACO/unlock.log)"
+  if [ -e "$CLONE/node_modules" ] && [ ! -L "$CLONE/node_modules" ]; then
+    recusar "$CLONE/node_modules é diretório real: não sobrescrevo"
   fi
-  if [ -e "$WT/node_modules" ] && [ ! -L "$WT/node_modules" ]; then
-    recusar "$WT/node_modules é diretório real: não sobrescrevo"
+  ln -sfn "$RAIZ/node_modules" "$CLONE/node_modules"
+}
+
+# Apaga o clone deste script, por caminho exato. Nunca apaga nada fora de
+# $PASTA_CLONES/pub-clone.*. Apagar o clone também apaga a cópia da chave do
+# git-crypt que o unlock grava em .git/git-crypt/keys.
+apagar_clone() {
+  [ -n "$CLONE" ] || return 0
+  if [ "$(dirname -- "$CLONE")" != "$PASTA_CLONES" ] ||
+    [[ "$(basename -- "$CLONE")" != pub-clone.* ]]; then
+    echo "publicar: AVISO: caminho do clone fora do padrão; não apago nada: $CLONE" >&2
+    return 1
   fi
-  ln -sfn ../../node_modules "$WT/node_modules"
+  if [ -L "$CLONE" ] || [ ! -d "$CLONE" ]; then
+    CLONE=""
+    return 0
+  fi
+  rm -rf -- "$CLONE"
+  CLONE=""
+}
+
+# Antes de criar release: insumos presentes. Falha aqui não deixa commit nem tag.
+conferir_insumos() {
+  [ -f "$CHAVE_GIT_CRYPT" ] ||
+    recusar "chave do git-crypt ausente (caminho padrão ou CADERNO_CHAVE_GIT_CRYPT); nada foi commitado"
+  if [ -n "${CADERNO_CAIXA:-}" ] && [ ! -x "$CADERNO_CAIXA" ]; then
+    recusar "CADERNO_CAIXA não é executável; nada foi commitado"
+  fi
 }
 
 copiar_dispositivos() {
-  copiar_dispositivos_gerados "$RAIZ" "$WT" ||
-    recusar "não copiei os dispositivos.ts para $WT (motivo acima)"
+  copiar_dispositivos_gerados "$RAIZ" "$CLONE" ||
+    recusar "não copiei os dispositivos.ts para o clone (motivo acima)"
 }
 
 rodar_preci() {
   local log="$ESPACO/preci.log" rc=0
+  local -a envoltorio=()
   mkdir -p "$PRECI_TMPDIR"
-  echo "publicar: preci em $WT (saída em arquivo privado; não é exibida, pode citar trechos do conteúdo restrito)"
-  (cd "$WT" && CADERNO_RESTRITO="$CONTEUDO_RESTRITO" CADERNO_RESTRITO_JURI="$CADERNO_RESTRITO_JURI" \
-    TMPDIR="$PRECI_TMPDIR" bash scripts/preci.sh) \
+  # CADERNO_CAIXA (L-50): preci isolado num bwrap. Vazio = roda direto, na sessão.
+  if [ -n "${CADERNO_CAIXA:-}" ]; then
+    envoltorio=("$CADERNO_CAIXA")
+  fi
+  echo "publicar: preci no clone (saída em arquivo privado; não é exibida, pode citar trechos do conteúdo restrito)"
+  (cd "$CLONE" && CADERNO_RESTRITO="$CONTEUDO_RESTRITO" CADERNO_RESTRITO_JURI="$CADERNO_RESTRITO_JURI" \
+    TMPDIR="$PRECI_TMPDIR" "${envoltorio[@]}" bash scripts/preci.sh) \
     > "$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ]; then
     grep -E '^FALHOU' "$log" | sed 's/^/publicar: /' >&2 || true
@@ -383,7 +421,7 @@ montar_regras_protecao() {
 # apagaria, separa o que está dentro do escopo (assets/ e workbox-*.js) e aborta
 # se passar do teto ou se houver algo fora do escopo sem --apagar-fora-de-assets.
 calcular_apagamentos() {
-  local origem="$WT/dist/" simulacao="$ESPACO/simulacao.txt" lista="$ESPACO/apagar.txt"
+  local origem="$CLONE/dist/" simulacao="$ESPACO/simulacao.txt" lista="$ESPACO/apagar.txt"
   local total fora assets workbox
   timeout 300 rsync -n -i -rlt --checksum --delete --timeout=60 -e "$SSH_OPCOES" \
     --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
@@ -410,7 +448,7 @@ calcular_apagamentos() {
 publicar_manifestos() {
   local novo="$ESPACO/manifestos-enviar"
   mkdir -p "$novo"
-  (cd "$WT/dist" && find . -type f -printf '%P\n' | sort) > "$novo/$MANIFESTO_ATUAL"
+  (cd "$CLONE/dist" && find . -type f -printf '%P\n' | sort) > "$novo/$MANIFESTO_ATUAL"
   if [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" ]; then
     cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$novo/$MANIFESTO_ANTERIOR"
   elif [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR" ]; then
@@ -422,7 +460,7 @@ publicar_manifestos() {
 }
 
 publicar_arquivos() {
-  local origem="$WT/dist/"
+  local origem="$CLONE/dist/"
   local -a apagar=()
   ler_manifestos_remotos
   montar_regras_protecao
@@ -449,7 +487,7 @@ conferir_md5_dos_arquivos() {
   local -a arquivos=()
   declare -A md5_local=() md5_remoto=()
 
-  (cd "$WT/dist" && find . -type f ! -name '*.png' ! -name '*.jpg' ! -name '.htaccess' \
+  (cd "$CLONE/dist" && find . -type f ! -name '*.png' ! -name '*.jpg' ! -name '.htaccess' \
     ! -path './api/*' -printf '%P\n' | sort) > "$lista"
   mapfile -t arquivos < "$lista"
   total=${#arquivos[@]}
@@ -473,7 +511,7 @@ conferir_md5_dos_arquivos() {
     echo "publicar: curl terminou com código $curl_rc (arquivos que não vieram aparecem como divergência)" >&2
   fi
 
-  (cd "$WT/dist" && md5sum -- "${arquivos[@]}") > "$ESPACO/md5-local.txt"
+  (cd "$CLONE/dist" && md5sum -- "${arquivos[@]}") > "$ESPACO/md5-local.txt"
   (cd "$remoto" && md5sum -- "${arquivos[@]}") > "$ESPACO/md5-remoto.txt" 2>/dev/null || true
   while read -r hash nome; do md5_local["$nome"]="$hash"; done < "$ESPACO/md5-local.txt"
   while read -r hash nome; do md5_remoto["$nome"]="$hash"; done < "$ESPACO/md5-remoto.txt"
@@ -530,7 +568,7 @@ conferir_api_e_raiz() {
 }
 
 conferir_com_verificador_existente() {
-  if bash "$WT/scripts/verificar-publicacao.sh" "$DOMINIO" > "$ESPACO/verificar.log" 2>&1; then
+  if bash "$CLONE/scripts/verificar-publicacao.sh" "$DOMINIO" > "$ESPACO/verificar.log" 2>&1; then
     echo "[PASSOU] scripts/verificar-publicacao.sh"
   else
     DIVERGENCIAS=$((DIVERGENCIAS + 1))
@@ -608,6 +646,8 @@ desfazer_release() {
 
 ao_sair() {
   local codigo=$?
+  # Incondicional: sucesso ou falha, o clone (com a chave do git-crypt) sai.
+  apagar_clone || echo "publicar: AVISO: não consegui apagar o clone; apague por caminho exato: $CLONE" >&2
   if [ "$codigo" -ne 0 ]; then
     if [ "$DEPLOY_INICIADO" = 1 ]; then
       echo "publicar: ABORTADO após iniciar o deploy (código $codigo). O remoto pode estar parcial." >&2
@@ -655,12 +695,18 @@ principal() {
     exit 0
   fi
   conferir_remoto
+  conferir_insumos
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
   gravar_e_commitar
   criar_tag
-  preparar_worktree
+  preparar_clone
   copiar_dispositivos
   rodar_preci
+  if [ "${CADERNO_PARAR_APOS_PRECI:-0}" = 1 ]; then
+    # Ensaio: sai com código 4 de propósito, para que ao_sair desfaça o commit e a tag.
+    echo "publicar: ensaio (CADERNO_PARAR_APOS_PRECI=1): parou após o preci; nada foi subido. Log: $ESPACO/preci.log" >&2
+    exit 4
+  fi
   publicar_arquivos
   conferir_ar
   enviar_ao_git

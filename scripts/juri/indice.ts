@@ -1,4 +1,4 @@
-import type { TipoImagem } from '../../src/core/juri/formatoImagem';
+import type { TipoImagem } from '../../src/core/juri/tipoImagem';
 import { ehIdImagem } from '../../src/core/juri/idImagem';
 import { ErroFerramenta } from './erro';
 

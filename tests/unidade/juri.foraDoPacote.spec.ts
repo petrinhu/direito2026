@@ -6,31 +6,39 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 /**
- * Portão de build da Júri (scripts/verificar-juri-fora-do-pacote.ts): nenhum
- * arquivo privado da Júri pode estar em dist/. Cada caso planta um arquivo
- * sintético e prova que o portão reprova pelo critério certo: a extensão
- * `.juri` sozinha, o magic "JURI" sozinho e o nome proibido sozinho. Assim,
- * sabotar um critério só fica vermelho se o caso dele existir.
+ * Portão da Júri fora do pacote (scripts/verificar-juri-fora-do-pacote.ts, E13 e
+ * 5.5). A imagem da Júri agora vai em claro: a magia JURI saiu. O portão olha
+ * dois alvos, a árvore rastreada (só nomes, git ls-files) e a pasta de build
+ * (dist). Cada caso planta um nome sintético e prova o critério (L-36). O id
+ * abaixo é de zeros e nomes hex: nenhuma imagem real, nenhum conteúdo.
  */
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const VERIFICADOR = join(RAIZ, 'scripts/verificar-juri-fora-do-pacote.ts');
-const MAGIC = Buffer.from('JURI', 'ascii');
+const ID_SINTETICO = '0123456789abcdef0123456789abcdef';
 
 let tmp: string;
 let dist: string;
+let arvore: string;
 
 function rodar(distCaminho: string = dist) {
   return spawnSync(process.execPath, ['--import', 'tsx', VERIFICADOR], {
     cwd: RAIZ,
     encoding: 'utf-8',
-    env: { ...process.env, DIST_PATH: distCaminho }
+    env: { ...process.env, DIST_PATH: distCaminho, VERIFICAR_JURI_RAIZ: arvore }
   });
 }
 
-function plantar(nome: string, conteudo: string | Buffer): void {
+function plantar(nome: string, conteudo: string = 'sintetico'): void {
   const caminho = join(dist, nome);
   mkdirSync(dirname(caminho), { recursive: true });
   writeFileSync(caminho, conteudo);
+}
+
+function rastrear(nome: string): void {
+  const caminho = join(arvore, nome);
+  mkdirSync(dirname(caminho), { recursive: true });
+  writeFileSync(caminho, 'sintetico');
+  spawnSync('git', ['add', '--', nome], { cwd: arvore });
 }
 
 function saidaCompleta(r: { stdout: string; stderr: string }): string {
@@ -40,7 +48,11 @@ function saidaCompleta(r: { stdout: string; stderr: string }): string {
 beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), 'juri-fora-do-pacote-'));
   dist = join(tmp, 'dist');
+  arvore = join(tmp, 'arvore');
   mkdirSync(dist);
+  mkdirSync(arvore);
+  spawnSync('git', ['init', '-q'], { cwd: arvore });
+  rastrear('README.md');
   plantar('index.html', '<!doctype html><title>site</title>');
   plantar('assets/app.js', 'console.log("pacote publico");');
 });
@@ -50,35 +62,71 @@ afterEach(() => {
 });
 
 describe('portão da Júri fora do pacote', () => {
-  it('dist limpo passa e imprime encontrados/analisados/falharam', () => {
+  it('árvore e dist limpos passam e imprimem encontrados/analisados/falharam', () => {
     const r = rodar();
     expect(r.status).toBe(0);
     expect(saidaCompleta(r)).toContain('encontrados=2 analisados=2 falharam=0');
+    expect(saidaCompleta(r)).toContain('[dist]');
+    expect(saidaCompleta(r)).toContain('[arvore]');
   });
 
-  it('arquivo .juri reprova pela extensão, mesmo sem o magic', () => {
-    plantar('assets/x.juri', 'conteudo qualquer sem magic');
+  it('arquivo .juri reprova pela extensão', () => {
+    plantar('assets/x.juri');
     const r = rodar();
     expect(r.status).toBe(1);
-    expect(saidaCompleta(r)).toContain('falharam=1');
-  });
-
-  it('arquivo com magic JURI reprova pelo conteúdo, mesmo com extensão inocente', () => {
-    plantar('imagens/foto.png', Buffer.concat([MAGIC, Buffer.from([1, 1, 0, 0])]));
-    const r = rodar();
-    expect(r.status).toBe(1);
-    expect(saidaCompleta(r)).toContain('falharam=1');
+    expect(saidaCompleta(r)).toContain('extensão .juri');
   });
 
   it.each(['acervo.json', 'credencial-admin.json', 'ids.tsv', 'conferencia.tsv', 'juri.json'])(
-    'nome proibido %s reprova, mesmo sem o magic',
+    'nome proibido %s reprova no dist',
     (nome) => {
-      plantar(`sub/${nome}`, '{"sem":"magic"}');
+      plantar(`sub/${nome}`, '{"sintetico":true}');
       const r = rodar();
       expect(r.status).toBe(1);
-      expect(saidaCompleta(r)).toContain('falharam=1');
+      expect(saidaCompleta(r)).toContain('nome proibido');
     }
   );
+
+  it('pasta originais/ no dist reprova, em qualquer nível', () => {
+    plantar('originais/recorte.webp');
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('pasta originais');
+  });
+
+  it('nome de id (32 hex) no dist reprova', () => {
+    plantar(`assets/${ID_SINTETICO}`);
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('nome de id');
+  });
+
+  it('imagens/<id> sem extensão no dist reprova (a foto em claro não pode sair assim)', () => {
+    plantar(`imagens/${ID_SINTETICO}`);
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('imagem sem extensão');
+  });
+
+  it('arquivo com extensão dentro de imagens/ passa (formato em claro com nome legível)', () => {
+    plantar('imagens/exemplo.webp');
+    const r = rodar();
+    expect(r.status).toBe(0);
+  });
+
+  it('nome de id na árvore rastreada reprova', () => {
+    rastrear(`public/${ID_SINTETICO}`);
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('[arvore]');
+  });
+
+  it('pasta imagens/ rastreada sem extensão reprova na árvore', () => {
+    rastrear('public/imagens/cabecalho');
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('imagem sem extensão');
+  });
 
   it('dist sem arquivo algum reprova (varredura vazia é falha, L-36)', () => {
     rmSync(join(dist, 'index.html'));

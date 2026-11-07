@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { TipoImagem } from '../../src/core/juri/formatoImagem';
+import type { TipoImagem } from '../../src/core/juri/tipoImagem';
 import { sha256Hex } from './codigos';
 import { ErroFerramenta } from './erro';
 import { NOME_IDS } from './idsTsv';

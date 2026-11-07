@@ -1,117 +1,69 @@
 /**
- * Portão pós-build (achado do líder, medido no site JÁ PUBLICADO,
- * 22/09/2026): o conserto das fontes (scripts/gerar-fontes.sh) não
- * chegava a quem já tinha visitado o site. Medido por ele, no ar:
- * inter-400/700 e lora-700 continuavam respondendo com o tamanho ANTIGO
- * (o do recorte quebrado), enquanto o mesmo endereço com um parâmetro
- * qualquer na consulta (que ignora o cache) já respondia com o tamanho
- * novo. Cabeçalho real: `Cache-Control: public, max-age=31536000,
- * immutable`, e resposta vinda de acerto de cache (CDN/navegador) com
- * idade de milhares de segundos.
+ * Portão de cache, invertido em 07/11/2026 (plano do CTO, 7.3; LU-F4.5).
  *
- * Causa: público/.htaccess marca `*.js|*.css|*.woff2|*.png|*.svg|*.webp`
- * como `immutable` por um ANO inteiro - seguro só quando o NOME do
- * arquivo muda sempre que o conteúdo muda (fingerprint/hash de
- * conteúdo). Arquivo em `public/`, copiado cru pelo Vite sem passar pelo
- * empacotador, mantém nome fixo - o par "nome fixo" + "cache imutável de
- * um ano" é o defeito, em QUALQUER arquivo nessa condição, não só fonte.
+ * Antes, o portão aceitava `immutable` com nome de arquivo com hash, por um ano.
+ * Agora o pacote não tem cache de longa duração nem compartilhável: nenhum
+ * cabeçalho pode ter `immutable` nem `public`. A regra é a mesma do gêmeo em
+ * servidor/testes/estatico.teste.php (linhas 73 e 95): filtra primeiro as linhas
+ * do cabeçalho de cache, e só então procura o termo. Sem o filtro, `public function`
+ * em PHP viraria falso positivo.
  *
- * Este portão varre TODO dist/ (não só fontes): para cada arquivo, deduz
- * o Cache-Control que o public/.htaccess de fato aplicaria (mod_headers
- * processa `<FilesMatch>` na ordem em que aparecem no arquivo, e
- * "Header set" substitui o valor anterior do mesmo cabeçalho - por isso
- * o bloco que corresponde por ÚLTIMO no arquivo é o que vale, não o
- * primeiro) e reprova se o resultado tiver "immutable" e o nome do
- * arquivo não trouxer uma marca de versão (hash) plausível.
+ * Três pontos, cada um reprova sozinho:
+ *  1. linhas `Header` de public/.htaccess;
+ *  2. linhas com cache-control dos PHP da API (public/api/**, servidor/dev/*.php);
+ *  3. o Cache-Control efetivo de cada arquivo de dist (blocos FilesMatch em ordem,
+ *     o último que casa vale, como o mod_headers).
  *
- * Piso de varredura (L-36): imprime sempre "arquivos analisados: N /
- * com cache imutável: M / sem impressão digital: F", nunca silencioso.
+ * Piso (L-36): zero linha Header, zero PHP de API ou zero arquivo em dist é falha.
+ *
+ * Variáveis (opcionais): VERIFICAR_CACHE_FINGERPRINT_RAIZ (raiz do repositório, para
+ * provar vermelho numa cópia), VERIFICAR_CACHE_FINGERPRINT_DIST (padrão RAIZ/dist).
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
-const RAIZ = resolve(AQUI, '..');
-const DIST = process.env.VERIFICAR_CACHE_FINGERPRINT_DIST
-  ? resolve(process.env.VERIFICAR_CACHE_FINGERPRINT_DIST)
-  : resolve(RAIZ, 'dist');
-const HTACCESS = resolve(RAIZ, 'public/.htaccess');
+const RAIZ = resolve(process.env.VERIFICAR_CACHE_FINGERPRINT_RAIZ ?? resolve(AQUI, '..'));
+const DIST = resolve(process.env.VERIFICAR_CACHE_FINGERPRINT_DIST ?? join(RAIZ, 'dist'));
+const HTACCESS = join(RAIZ, 'public/.htaccess');
+
+/** Gêmeo: servidor/testes/estatico.teste.php:73. Mesma palavra-chave, mesmo critério. */
+const PROIBIDO = /immutable|\bpublic\b/i;
 
 interface BlocoFilesMatch {
   readonly padrao: RegExp;
   readonly cacheControl: string;
 }
 
-/**
- * Lê public/.htaccess e extrai, na ordem em que aparecem, os pares
- * (padrão do FilesMatch, valor do Header set Cache-Control). Fonte única:
- * nunca duplicar a lista de extensões aqui, sempre ler do arquivo real -
- * uma cópia hardcoded divergiria do .htaccess de verdade sem avisar.
- */
-function lerBlocosDoHtaccess(caminho: string): BlocoFilesMatch[] {
-  const texto = readFileSync(caminho, 'utf-8');
+function listarArquivos(pasta: string, base: string = pasta): string[] {
+  return readdirSync(pasta, { withFileTypes: true }).flatMap((entrada) => {
+    const caminho = join(pasta, entrada.name);
+    if (entrada.isDirectory()) return listarArquivos(caminho, base);
+    return [relative(base, caminho).split(sep).join('/')];
+  });
+}
+
+/** Blocos FilesMatch com Header set Cache-Control, na ordem em que aparecem. */
+function lerBlocos(texto: string): BlocoFilesMatch[] {
   const blocos: BlocoFilesMatch[] = [];
   const regexBloco = /<FilesMatch\s+"([^"]+)">([\s\S]*?)<\/FilesMatch>/g;
   let m: RegExpExecArray | null;
   while ((m = regexBloco.exec(texto))) {
     const padraoTexto = m[1];
-    const corpo = m[2];
-    if (!padraoTexto || !corpo) continue;
-    const cacheControlMatch = corpo.match(/Header set Cache-Control\s+"([^"]+)"/);
-    const cacheControl = cacheControlMatch?.[1];
-    if (!cacheControl) continue;
-    blocos.push({
-      padrao: new RegExp(padraoTexto),
-      cacheControl
-    });
+    const corpo = m[2] ?? '';
+    const cacheControl = corpo.match(/Header set Cache-Control\s+"([^"]+)"/)?.[1];
+    if (!padraoTexto || !cacheControl) continue;
+    blocos.push({ padrao: new RegExp(padraoTexto), cacheControl });
   }
   return blocos;
 }
 
-/**
- * mod_headers processa os blocos na ordem do arquivo; "Header set"
- * substitui o valor anterior do MESMO cabeçalho. O último bloco que
- * casar com o nome do arquivo é o que decide o Cache-Control final.
- */
-function cacheControlEfetivo(
-  nomeArquivo: string,
-  blocos: readonly BlocoFilesMatch[]
-): string | undefined {
+/** O último bloco que casa com o nome decide o Cache-Control final (mod_headers). */
+function cacheEfetivo(nome: string, blocos: readonly BlocoFilesMatch[]): string | undefined {
   let resultado: string | undefined;
   for (const bloco of blocos) {
-    if (bloco.padrao.test(nomeArquivo)) resultado = bloco.cacheControl;
-  }
-  return resultado;
-}
-
-/**
- * Marca de versão plausível: um hífen seguido de EXATAMENTE 8 caracteres
- * do alfabeto base64url (A-Z a-z 0-9 - _), logo antes da extensão final.
- * Medido nos nomes que o próprio pacote já produz - Vite/Rollup
- * (ex. "Unidade-DEbo9-IJ.js", "index-B9JGuWy5.css") e o pacote workbox
- * (ex. "workbox-5824ddf3.js") usam os dois o mesmo comprimento fixo de 8,
- * nunca variável - por isso o comprimento exato é o sinal mais confiável
- * disponível, mais do que "tem algum dígito" (um hash de 8 caracteres
- * aleatórios do alfabeto base64url tem cerca de 1 em 4 chances de sair
- * só com letras, e um "-fallback"/"-legacy" comum quase nunca tem 8
- * caracteres exatos do alfabeto certo).
- */
-const TEM_FINGERPRINT = /-[A-Za-z0-9_-]{8}\.[a-z0-9.]+$/;
-
-function temFingerprint(nomeArquivo: string): boolean {
-  return TEM_FINGERPRINT.test(nomeArquivo);
-}
-
-function listarArquivos(diretorio: string): string[] {
-  const resultado: string[] = [];
-  for (const entrada of readdirSync(diretorio, { withFileTypes: true })) {
-    const caminho = join(diretorio, entrada.name);
-    if (entrada.isDirectory()) {
-      resultado.push(...listarArquivos(caminho));
-    } else if (entrada.isFile()) {
-      resultado.push(caminho);
-    }
+    if (bloco.padrao.test(nome)) resultado = bloco.cacheControl;
   }
   return resultado;
 }
@@ -128,44 +80,62 @@ function principal(): number {
     return 1;
   }
 
-  const blocos = lerBlocosDoHtaccess(HTACCESS);
-  if (blocos.length === 0) {
-    console.error(
-      'verificar-cache-fingerprint: nenhum bloco FilesMatch com Cache-Control encontrado no .htaccess'
-    );
-    return 1;
+  let reprovas = 0;
+  const reprovar = (mensagem: string): void => {
+    reprovas += 1;
+    console.error(`verificar-cache-fingerprint: ${mensagem}`);
+  };
+
+  // 1. .htaccess: linhas Header
+  const htaccess = readFileSync(HTACCESS, 'utf-8');
+  const linhasHeader = htaccess.match(/^\s*Header[^\n]*$/gm) ?? [];
+  for (const linha of linhasHeader) {
+    if (PROIBIDO.test(linha)) reprovar(`cabeçalho proibido em public/.htaccess: ${linha.trim()}`);
   }
 
-  const arquivos = listarArquivos(DIST);
-  let analisados = 0;
-  let comCacheImutavel = 0;
-  let semFingerprint = 0;
-
-  for (const caminho of arquivos) {
-    analisados += 1;
-    const nome = caminho.split('/').pop()!;
-    const cacheControl = cacheControlEfetivo(nome, blocos);
-    if (!cacheControl || !cacheControl.includes('immutable')) continue;
-
-    comCacheImutavel += 1;
-    if (!temFingerprint(nome)) {
-      semFingerprint += 1;
-      console.error(
-        `sem impressão digital: ${caminho} (Cache-Control efetivo: "${cacheControl}", nome fixo por até 1 ano)`
-      );
+  // 2. PHP da API e do servidor de dev: linhas de cache-control
+  const arquivosPhp = [
+    ...listarArquivos(join(RAIZ, 'public/api'))
+      .filter((rel) => rel.endsWith('.php'))
+      .map((rel) => join(RAIZ, 'public/api', rel)),
+    ...(statSync(join(RAIZ, 'servidor/dev'), { throwIfNoEntry: false })?.isDirectory()
+      ? readdirSync(join(RAIZ, 'servidor/dev'))
+          .filter((nome) => nome.endsWith('.php'))
+          .map((nome) => join(RAIZ, 'servidor/dev', nome))
+      : [])
+  ];
+  let linhasCacheNaApi = 0;
+  for (const arquivo of arquivosPhp) {
+    for (const linha of readFileSync(arquivo, 'utf-8').split('\n')) {
+      if (!/cache-control/i.test(linha)) continue;
+      linhasCacheNaApi += 1;
+      if (PROIBIDO.test(linha)) {
+        reprovar(`cache proibido em ${relative(RAIZ, arquivo)}: ${linha.trim()}`);
+      }
     }
   }
 
-  console.log(
-    `arquivos analisados: ${analisados} / com cache imutável: ${comCacheImutavel} / sem impressão digital: ${semFingerprint}`
-  );
-
-  if (analisados === 0) {
-    console.error('verificar-cache-fingerprint: zero arquivo analisado, portão quebrado');
-    return 1;
+  // 3. Cache-Control efetivo de cada arquivo de dist
+  const blocos = lerBlocos(htaccess);
+  const arquivos = listarArquivos(DIST);
+  let comCacheProibido = 0;
+  for (const rel of arquivos) {
+    const efetivo = cacheEfetivo(rel.split('/').pop() ?? rel, blocos);
+    if (efetivo && PROIBIDO.test(efetivo)) {
+      comCacheProibido += 1;
+      reprovar(`dist/${rel} sairia com cache proibido: "${efetivo}"`);
+    }
   }
 
-  return semFingerprint > 0 ? 1 : 0;
+  // Piso de varredura (L-36): nunca silencioso
+  if (linhasHeader.length === 0) reprovar('zero linha Header no .htaccess: portão quebrado');
+  if (arquivosPhp.length === 0) reprovar('zero PHP de API varrido: portão quebrado');
+  if (arquivos.length === 0) reprovar('zero arquivo em dist: portão quebrado');
+
+  console.log(
+    `cache: cabeçalhos Header no .htaccess: ${linhasHeader.length} / linhas de cache nos PHP: ${linhasCacheNaApi} / arquivos analisados: ${arquivos.length} / com cache imutável ou público: ${comCacheProibido}`
+  );
+  return reprovas > 0 ? 1 : 0;
 }
 
-process.exit(principal());
+process.exitCode = principal();

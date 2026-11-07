@@ -1,6 +1,6 @@
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { TipoImagem } from '../../src/core/juri/formatoImagem';
+import type { TipoImagem } from '../../src/core/juri/tipoImagem';
 import { ErroFerramenta } from './erro';
 import { rodarExiftool } from './exiftool';
 

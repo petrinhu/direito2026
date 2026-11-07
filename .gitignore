@@ -7,3 +7,6 @@ playwright-report/
 test-results/
 public/assets/busca-indice.json
 src/conteudo/**/dispositivos.ts
+# Dado da Júri (L-28): imagem do acervo e original nunca são versionados, em nenhum nível.
+imagens/
+originais/

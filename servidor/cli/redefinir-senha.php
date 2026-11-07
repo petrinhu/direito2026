@@ -26,6 +26,12 @@ function falha(string $mensagem): never
     exit(1);
 }
 
+// Erro inesperado sai em uma linha: a pilha de chamadas mostra argumentos, e a senha pode estar entre eles.
+set_exception_handler(static function (Throwable $e): void {
+    fwrite(STDERR, "redefinir-senha: erro interno ao acessar o arquivo de contas (detalhes omitidos de propósito)\n");
+    exit(1);
+});
+
 $nucleo = getenv('D26_NUCLEO') ?: __DIR__ . '/../../public/api/nucleo';
 define('D26_API', true);
 foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite'] as $modulo) {

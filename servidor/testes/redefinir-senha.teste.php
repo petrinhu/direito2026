@@ -84,3 +84,19 @@ teste('cli redefinir-senha: conta inexistente (ou de outra caixa), login inváli
     igual($arquivo, (string) file_get_contents($priv . '/usuarios.json'), 'usuarios.json intocado');
     apagarArvore($dir);
 }, false);
+
+teste('cli redefinir-senha (servidor): a sessão HTTP aberta morre, e a senha provisória curta entra e obriga a troca', function (): void {
+    $a = Ambiente::novo(['admin' => true]);
+    $a->semearUsuario('bia', 'SenhaBia1234567890', false, false);
+    $aberta = $a->entrar('bia', 'SenhaBia1234567890');
+    igual(true, $aberta->get('/api/sessao.php')->json()['autenticado'], 'sessão aberta antes da redefinição');
+    [$rc, $out, $err] = rodarRedefinir([$a->priv, 'bia'], "Curta\n");
+    igual(0, $rc, "saída: $out $err");
+    igual(false, $aberta->get('/api/sessao.php')->json()['autenticado'], 'a sessão aberta não vale mais');
+    verdadeiro($a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'bia', 'senha' => 'SenhaBia1234567890'])->status !== 200, 'senha antiga recusada');
+    $novo = $a->clienteComSessao();
+    $r = $novo->post('/api/entrar.php', ['usuario' => 'bia', 'senha' => 'Curta']);
+    igual(200, $r->status, 'senha provisória curta entra');
+    igual(true, $r->json()['deveTrocarSenha'], 'troca obrigatória');
+    igual(403, $novo->get('/api/conteudo.php')->status, 'bloqueado até trocar');
+});

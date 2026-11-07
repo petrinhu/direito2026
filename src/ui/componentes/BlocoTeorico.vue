@@ -53,7 +53,10 @@ onBeforeUnmount(() => observador?.disconnect());
       @alternar="emit('alternar-item-checklist', $event)"
     />
     <CartoesCincoPerguntas v-else-if="bloco.componenteExtra === 'cartoes-cinco-perguntas'" />
-    <DicasFormaProfessora v-else-if="bloco.componenteExtra === 'dicas-forma-professora'" />
+    <DicasFormaProfessora
+      v-else-if="bloco.componenteExtra === 'dicas-forma-professora' && bloco.dicasDeForma"
+      :dados="bloco.dicasDeForma"
+    />
     <QuadroResumo :itens="bloco.resumo" />
     <p v-if="bloco.exemploHtml.length > 0" class="bloco-teorico__exemplo">
       <strong>Na prática do operador do direito:</strong>{{ ' '

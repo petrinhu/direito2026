@@ -68,10 +68,16 @@ describe('BlocoTeorico, componenteExtra', () => {
   it("componenteExtra 'dicas-forma-professora' monta as dicas", () => {
     const wrapper = mount(BlocoTeorico, {
       props: {
-        bloco: blocoBase({ componenteExtra: 'dicas-forma-professora' }),
+        bloco: blocoBase({
+          componenteExtra: 'dicas-forma-professora',
+          dicasDeForma: {
+            titulo: 'Titulo sintetico do teste',
+            itens: [{ texto: 'Item sintetico com marca de teste.', destaque: 'marca de teste' }]
+          }
+        }),
         itensChecklistMarcados: []
       }
     });
-    expect(wrapper.text()).toContain('150 linhas');
+    expect(wrapper.text()).toContain('Item sintetico');
   });
 });

@@ -47,6 +47,20 @@ export interface BlocoResumo {
    * maioria dos blocos (é a exceção, não a regra).
    */
   readonly componenteExtra?: ChaveComponenteExtra;
+  /** Dados do extra 'dicas-forma-professora': título e itens. Ausente nos demais blocos. */
+  readonly dicasDeForma?: DicasDeForma;
+}
+
+/** Um item das dicas: o texto inteiro, e o trecho que aparece em negrito (deve estar no texto). */
+export interface ItemDeDica {
+  readonly texto: string;
+  readonly destaque: string;
+}
+
+/** Título e itens das dicas de forma da professora (extra de bloco). */
+export interface DicasDeForma {
+  readonly titulo: string;
+  readonly itens: readonly ItemDeDica[];
 }
 
 /** Uma seção da peça comentada. */

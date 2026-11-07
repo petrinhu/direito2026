@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validarConteudoBruto } from '@/app/juri/conteudo';
-import { criarClienteJuri, ErroDeApi } from '@/app/juri/clienteJuri';
 import { conteudoJuriFalso } from './apoio/conteudoJuriFalso';
-import { criarFetchFalso } from './apoio/fetchFalso';
 
 describe('validarConteudoBruto: o JSON só vira conteúdo depois do validador', () => {
   it('aceita a fixture sintética e devolve o tipo validado', () => {
@@ -34,23 +32,5 @@ describe('validarConteudoBruto: o JSON só vira conteúdo depois do validador', 
     const bruto = conteudoJuriFalso() as { imagens: { id: string }[] };
     bruto.imagens[0] = { ...bruto.imagens[0]!, id: 'nao-e-hex' };
     expect(validarConteudoBruto(bruto)).toEqual({ ok: false, motivo: 'invalido' });
-  });
-});
-
-describe('clienteJuri.conteudo: envelope {ok, conteudo}', () => {
-  it('devolve o objeto conteudo do envelope', async () => {
-    const falso = criarFetchFalso([{ json: { ok: true, conteudo: { titulo: 'x' } } }]);
-    const cliente = criarClienteJuri({ buscar: falso.buscar });
-    await expect(cliente.conteudo()).resolves.toEqual({ titulo: 'x' });
-    expect(falso.chamadas[0]?.url).toBe('/api/juri/conteudo.php');
-    expect(falso.chamadas[0]?.metodo).toBe('GET');
-  });
-
-  it('conteudo que não é objeto é resposta inválida', async () => {
-    const falso = criarFetchFalso([{ json: { ok: true, conteudo: 'texto' } }]);
-    const cliente = criarClienteJuri({ buscar: falso.buscar });
-    const erro = await cliente.conteudo().catch((e: unknown) => e);
-    expect(erro).toBeInstanceOf(ErroDeApi);
-    expect(erro).toMatchObject({ codigo: 'resposta-invalida' });
   });
 });

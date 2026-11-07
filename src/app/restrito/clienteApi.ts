@@ -44,6 +44,8 @@ export interface ClienteApi {
   trocarSenha(senhaAtual: string, senhaNova: string): Promise<void>;
   /** JSON cru: quem chama é obrigado a passar por validarConteudoRestrito. */
   obterConteudo(): Promise<unknown>;
+  /** JSON cru da Júri (juri/conteudo.php): mesma sessão, sem senha; quem chama valida antes de usar. */
+  obterConteudoJuri(): Promise<unknown>;
   listarUsuarios(): Promise<readonly UsuarioAdmin[]>;
   acaoUsuario(pedido: AcaoUsuario): Promise<{ readonly senhaProvisoria?: string }>;
 }
@@ -80,6 +82,10 @@ export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
     },
     async obterConteudo() {
       const c = await ler('conteudo.php');
+      return c.conteudo;
+    },
+    async obterConteudoJuri() {
+      const c = await ler('juri/conteudo.php');
       return c.conteudo;
     },
     async listarUsuarios() {

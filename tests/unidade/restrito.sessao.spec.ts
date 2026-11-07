@@ -10,6 +10,7 @@ function clienteFalso(sobrescritas: Partial<ClienteApi> = {}): ClienteApi {
     sair: vi.fn(async () => {}),
     trocarSenha: vi.fn(async () => {}),
     obterConteudo: vi.fn(async () => conteudoRestritoFalso()),
+    obterConteudoJuri: vi.fn(async () => ({})),
     listarUsuarios: vi.fn(async () => []),
     acaoUsuario: vi.fn(async () => ({})),
     ...sobrescritas

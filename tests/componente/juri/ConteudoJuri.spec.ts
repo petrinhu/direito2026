@@ -17,8 +17,7 @@ const ROTULOS = ['Resumo', 'Mapa mental', 'Fichamento', 'Mnemônicos', 'Quiz'];
 function montar(carregar: () => Promise<ResultadoConteudoJuri>): VueWrapper {
   w = mount(ConteudoJuri, {
     props: {
-      carregar,
-      abrirImagem: () => new Promise<never>(() => {})
+      carregar
     },
     attachTo: document.body
   });

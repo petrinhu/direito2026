@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, shallowRef } from 'vue';
-import type { ConteudoJuriValidado, ImagemAberta, ResultadoConteudoJuri } from '@/app/juri';
+import type { ConteudoJuriValidado, ResultadoConteudoJuri } from '@/app/juri';
 import AbasRestritas from '../area-restrita/AbasRestritas.vue';
 import FichamentoJuri from './FichamentoJuri.vue';
 import MapaJuri from './MapaJuri.vue';
@@ -11,8 +11,6 @@ import { envolverTabelasNoConteudo } from './tabelaRolavel';
 
 const props = defineProps<{
   carregar: () => Promise<ResultadoConteudoJuri>;
-  // eslint-disable-next-line no-unused-vars
-  abrirImagem: (id: string) => Promise<ImagemAberta>;
 }>();
 
 const ABAS = [
@@ -75,7 +73,7 @@ onMounted(() => void buscar());
       rotulo-lista="Seções do conteúdo"
       @trocar="aba = $event"
     >
-      <ResumoJuri v-if="aba === 'resumo'" :conteudo="conteudo" :abrir-imagem="abrirImagem" />
+      <ResumoJuri v-if="aba === 'resumo'" :conteudo="conteudo" />
       <MapaJuri v-else-if="aba === 'mapa'" :mapa="conteudo.mapa" />
       <FichamentoJuri v-else-if="aba === 'fichamento'" :fichamento="conteudo.fichamento" />
       <MnemonicosJuri v-else-if="aba === 'mnemonicos'" :mnemonicos="conteudo.mnemonicos" />

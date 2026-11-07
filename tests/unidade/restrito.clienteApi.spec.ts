@@ -74,6 +74,22 @@ describe('clienteApi', () => {
     });
   });
 
+  it('obterConteudoJuri lê o conteúdo da Júri pela mesma sessão, sem senha', async () => {
+    const f = criarFetchFalso([{ json: { ok: true, conteudo: { versao: 1 } } }]);
+    const cliente = criarClienteApi({ buscar: f.buscar });
+    expect(await cliente.obterConteudoJuri()).toEqual({ versao: 1 });
+    expect(f.chamadas[0]!.url).toBe('/api/juri/conteudo.php');
+    expect(f.chamadas[0]!.metodo).toBe('GET');
+  });
+
+  it('obterConteudoJuri com sessão vencida avisa a volta à entrada', async () => {
+    const f = criarFetchFalso([{ status: 401, textoCru: '' }]);
+    let avisos = 0;
+    const cliente = criarClienteApi({ buscar: f.buscar, aoNaoAutorizado: () => (avisos += 1) });
+    await cliente.obterConteudoJuri().catch(() => undefined);
+    expect(avisos).toBe(1);
+  });
+
   it('conteudo devolve o JSON cru para o validador, nunca confia nele', async () => {
     const f = criarFetchFalso([{ json: { ok: true, conteudo: { versao: 1 } } }]);
     const cliente = criarClienteApi({ buscar: f.buscar });

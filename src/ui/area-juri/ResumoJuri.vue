@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { paraBlocosResumo, type ImagemAberta } from '@/app/juri';
+import { paraBlocosResumo } from '@/app/juri';
 import type { ConteudoJuriValidado } from '@/core/juri/tipos';
 import VisorResumo from '../componentes/VisorResumo.vue';
 import FontesJuri from './FontesJuri.vue';
-import ImagemCifrada from './ImagemCifrada.vue';
+import ImagemJuri from './ImagemJuri.vue';
 import QuadroTermosJuri from './QuadroTermosJuri.vue';
 import ReferenciasJuri from './ReferenciasJuri.vue';
 import RespostasDefesaJuri from './RespostasDefesaJuri.vue';
 
 const props = defineProps<{
   conteudo: ConteudoJuriValidado;
-  // eslint-disable-next-line no-unused-vars
-  abrirImagem: (id: string) => Promise<ImagemAberta>;
 }>();
 
 const blocos = computed(() => paraBlocosResumo(props.conteudo.resumo));
@@ -59,7 +57,7 @@ function fontesDe(id: string): readonly string[] {
     >
       <h2 id="juri-imagens-titulo">Imagens do caso</h2>
       <div v-for="imagem in conteudo.imagens" :key="imagem.id" class="juri-imagens__item">
-        <ImagemCifrada :id="imagem.id" :legenda="imagem.legenda" :abrir="abrirImagem" />
+        <ImagemJuri :id="imagem.id" :legenda="imagem.legenda" />
         <FontesJuri :fontes="imagem.fontes" />
       </div>
     </section>

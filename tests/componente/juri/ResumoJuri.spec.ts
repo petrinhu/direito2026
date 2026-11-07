@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /* global Element */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import ResumoJuri from '@/ui/area-juri/ResumoJuri.vue';
 import { validarConteudoJuri } from '@/core/juri/validar';
@@ -17,12 +17,9 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-/** Imagem que nunca chega: o teste do resumo não decifra nada. */
-const abrirQueNaoChega = vi.fn(() => new Promise<never>(() => {}));
-
 function montar(): VueWrapper {
   w = mount(ResumoJuri, {
-    props: { conteudo: conteudoJuriValidadoFalso(), abrirImagem: abrirQueNaoChega },
+    props: { conteudo: conteudoJuriValidadoFalso() },
     attachTo: document.body
   });
   return w;
@@ -87,11 +84,13 @@ describe('ResumoJuri', () => {
     expect(quadro.element.lastElementChild).toBe(refs.element);
   });
 
-  it('mostra as imagens cifradas com a legenda, pedindo cada uma ao abrir', () => {
+  it('mostra as imagens do caso como img comum, pela rota com sessão, com a legenda', () => {
     const quadro = montar();
     expect(quadro.text()).toContain('Legenda fictícia da imagem um');
     expect(quadro.text()).toContain('Legenda fictícia da imagem dois');
-    expect(abrirQueNaoChega).toHaveBeenCalledWith('0'.repeat(31) + '0');
+    const srcs = quadro.findAll('img').map((img) => img.attributes('src'));
+    expect(srcs[0]).toBe(`/api/juri/imagem.php?id=${'0'.repeat(32)}`);
+    expect(srcs.every((src) => src?.startsWith('/api/juri/imagem.php?id='))).toBe(true);
   });
 });
 
@@ -106,7 +105,7 @@ describe('ResumoJuri: ids únicos com mais de um bloco com linhas A e B', () => 
     const resultado = validarConteudoJuri(bruto, idsFalsos());
     if (!resultado.ok) throw new Error(JSON.stringify(resultado.erros));
     w = mount(ResumoJuri, {
-      props: { conteudo: resultado.conteudo, abrirImagem: abrirQueNaoChega },
+      props: { conteudo: resultado.conteudo },
       attachTo: document.body
     });
 

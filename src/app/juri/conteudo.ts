@@ -1,8 +1,8 @@
 /**
  * Validação do JSON da Júri no lado do app: o conteúdo só vira o tipo validado aqui, e a
  * interface nunca recebe o JSON cru. O índice de imagens é o próprio `imagens` do
- * conteúdo: a API não entrega o índice do acervo (o imagem.php checa o id no acervo e
- * responde 404). Lacuna de contrato registrada no TODO.md.
+ * conteúdo: a API não entrega o acervo ao navegador, e o imagem.php confere o id contra o
+ * acervo (quem não está no índice recebe 404).
  */
 import { validarConteudoJuri } from '@/core/juri/validar';
 import type { ConteudoJuriValidado } from '@/core/juri/tipos';
@@ -31,4 +31,21 @@ export function validarConteudoBruto(bruto: unknown): ResultadoConteudoJuri {
   return resultado.ok
     ? { ok: true, conteudo: resultado.conteudo }
     : { ok: false, motivo: 'invalido' };
+}
+
+/**
+ * Carga única do conteúdo da Júri: pede o JSON, valida, e devolve o resultado. Falha de
+ * rede ou de servidor vira `indisponivel`; a sessão vencida (401) já avisa a volta à
+ * entrada pelo transporte, então aqui ela também só cai em `indisponivel`.
+ */
+export async function carregarConteudoJuri(
+  obter: () => Promise<unknown>
+): Promise<ResultadoConteudoJuri> {
+  let bruto: unknown;
+  try {
+    bruto = await obter();
+  } catch {
+    return { ok: false, motivo: 'indisponivel' };
+  }
+  return validarConteudoBruto(bruto);
 }

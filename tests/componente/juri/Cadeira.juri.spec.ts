@@ -2,11 +2,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import Cadeira from '@/ui/paginas/Cadeira.vue';
-import { CHAVE_CLIENTE_JURI, CHAVE_CLIENTE_RESTRITO, CHAVE_CURRICULO } from '@/app/chaves';
-import { criarClienteJuri } from '@/app/juri/clienteJuri';
+import { CHAVE_CLIENTE_RESTRITO, CHAVE_CURRICULO } from '@/app/chaves';
 import type { ClienteApi } from '@/app/restrito/clienteApi';
 import type { Curriculo } from '@/core/curriculo/tipos';
-import { criarServidorJuriFalso } from '../../unidade/apoio/servidorJuriFalso';
 
 const curriculo: Curriculo = [
   {
@@ -35,18 +33,16 @@ const curriculo: Curriculo = [
 
 function montar(cadeira: string) {
   const restrito = {
-    obterConteudo: vi.fn(async () => ({}))
+    obterConteudo: vi.fn(async () => ({})),
+    obterConteudoJuri: vi.fn(async () => ({}))
   } as unknown as ClienteApi;
-  const servidor = criarServidorJuriFalso();
-  const juri = criarClienteJuri({ buscar: servidor.buscar });
   const w = mount(Cadeira, {
     props: { periodo: 'p1', cadeira },
     attachTo: document.body,
     global: {
       provide: {
         [CHAVE_CURRICULO as unknown as symbol]: curriculo,
-        [CHAVE_CLIENTE_RESTRITO as unknown as symbol]: restrito,
-        [CHAVE_CLIENTE_JURI as unknown as symbol]: juri
+        [CHAVE_CLIENTE_RESTRITO as unknown as symbol]: restrito
       }
     }
   });
@@ -54,13 +50,14 @@ function montar(cadeira: string) {
 }
 
 describe('Cadeira.vue e a Júri', () => {
-  it('a cadeira da Júri abre a própria área, mesmo em breve, e não a área do Interdisciplinar', async () => {
+  it('a cadeira da Júri abre a própria área e pede o conteúdo direto, sem login', async () => {
     const { w, restrito } = montar('juri-simulado');
     await vi.waitFor(() => expect(w.find('.area-juri').exists()).toBe(true));
     await flushPromises();
     expect(w.get('h1').text()).toBe('Júri Simulado');
     expect(w.find('.area-restrita').exists()).toBe(false);
     expect(w.find('.pagina-cadeira').exists()).toBe(false);
+    expect(restrito.obterConteudoJuri).toHaveBeenCalledTimes(1);
     expect(restrito.obterConteudo).not.toHaveBeenCalled();
     w.unmount();
   });

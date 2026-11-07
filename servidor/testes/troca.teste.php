@@ -50,7 +50,7 @@ teste('trocar-senha: regras de senha nova (400 senha-fraca com mensagem)', funct
         'longa (129)' => str_repeat('x', 129),
         'igual ao login' => 'aluno1',
         'igual à provisória/atual' => 'ProvisoriaAluno1',
-        '9 caracteres de 2 bytes' => str_repeat('ç', 9),
+        '14 caracteres de 2 bytes' => str_repeat('ç', 14),
     ];
     foreach ($casos as $nome => $nova) {
         $r = $c->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => $nova]);
@@ -58,7 +58,7 @@ teste('trocar-senha: regras de senha nova (400 senha-fraca com mensagem)', funct
         igual('senha-fraca', $r->json()['erro'], $nome);
         verdadeiro(is_string($r->json()['mensagem']) && $r->json()['mensagem'] !== '', "mensagem em $nome");
     }
-    igual(200, $c->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => str_repeat('ç', 10)])->status, '10 caracteres de 2 bytes valem');
+    igual(200, $c->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => str_repeat('ç', 15)])->status, '15 caracteres de 2 bytes valem');
 });
 
 teste('trocar-senha: sucesso regenera o id, libera o conteúdo e invalida a senha antiga', function (): void {

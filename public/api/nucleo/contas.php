@@ -36,8 +36,8 @@ function d26_validar_senha_nova(string $nova, string $login, string $atual): ?st
         return 'A senha contém caracteres inválidos.';
     }
     $tamanho = mb_strlen($nova, 'UTF-8');
-    if ($tamanho < 10) {
-        return 'A senha precisa ter pelo menos 10 caracteres.';
+    if ($tamanho < 15) {
+        return 'A senha precisa ter pelo menos 15 caracteres.';
     }
     if ($tamanho > 128) {
         return 'A senha pode ter no máximo 128 caracteres.';

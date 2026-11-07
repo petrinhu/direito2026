@@ -74,21 +74,57 @@ function d26_origem_propria(): string
     return ($https ? 'https' : 'http') . '://' . strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
 }
 
-function d26_exigir_post_seguro(): void
+/** Origin e Sec-Fetch-Site, quando vierem, têm de ser a própria origem. */
+function d26_exigir_origem_propria(): void
 {
-    $tipo = strtolower(trim(explode(';', (string) ($_SERVER['CONTENT_TYPE'] ?? ''))[0]));
-    if ($tipo !== 'application/json') {
-        d26_erro(400, 'tipo-conteudo', 'Requisição inválida.');
-    }
     if (isset($_SERVER['HTTP_ORIGIN']) && strtolower((string) $_SERVER['HTTP_ORIGIN']) !== d26_origem_propria()) {
         d26_erro(403, 'origem', 'Origem não permitida.');
     }
     if (isset($_SERVER['HTTP_SEC_FETCH_SITE']) && $_SERVER['HTTP_SEC_FETCH_SITE'] !== 'same-origin') {
         d26_erro(403, 'origem', 'Origem não permitida.');
     }
+}
+
+function d26_exigir_post_seguro(): void
+{
+    $tipo = strtolower(trim(explode(';', (string) ($_SERVER['CONTENT_TYPE'] ?? ''))[0]));
+    if ($tipo !== 'application/json') {
+        d26_erro(400, 'tipo-conteudo', 'Requisição inválida.');
+    }
+    d26_exigir_origem_propria();
     $esperado = d26_csrf_esperado();
     $enviado = (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
     if ($esperado === '' || !hash_equals($esperado, $enviado)) {
+        d26_erro(403, 'csrf', 'Sessão inválida. Recarregue a página e tente de novo.');
+    }
+}
+
+/** Token do cookie pré para formulário; emite o cookie pré se o navegador não tiver um. */
+function d26_csrf_pre_atual(string $priv): string
+{
+    $nonce = d26_pre_nonce();
+    if ($nonce === '') {
+        $nonce = d26_pre_emitir();
+    }
+    return d26_csrf_pre_token($nonce, d26_segredo($priv));
+}
+
+/**
+ * Defesa de POST de formulário (tela de entrada e de troca, plano seção 1.4 e T24).
+ * O token vem do campo oculto e é comparado SEMPRE com o HMAC do cookie pré, mesmo com
+ * sessão aberta: o POST da tela leva o cookie de sessão (same-site), e o token da sessão
+ * não é o que a tela entregou. d26_exigir_post_seguro não muda.
+ */
+function d26_exigir_formulario_seguro(string $priv): void
+{
+    $tipo = strtolower(trim(explode(';', (string) ($_SERVER['CONTENT_TYPE'] ?? ''))[0]));
+    if ($tipo !== 'application/x-www-form-urlencoded') {
+        d26_erro(400, 'tipo-conteudo', 'Requisição inválida.');
+    }
+    d26_exigir_origem_propria();
+    $nonce = d26_pre_nonce();
+    $enviado = $_POST['csrf'] ?? '';
+    if ($nonce === '' || !is_string($enviado) || !hash_equals(d26_csrf_pre_token($nonce, d26_segredo($priv)), $enviado)) {
         d26_erro(403, 'csrf', 'Sessão inválida. Recarregue a página e tente de novo.');
     }
 }

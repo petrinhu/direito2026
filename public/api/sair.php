@@ -8,4 +8,5 @@ d26_metodo(['POST']);
 d26_sessao_iniciar(d26_priv());
 d26_exigir_post_seguro();
 d26_sessao_encerrar();
+header('Clear-Site-Data: ' . D26_CLEAR_SITE_DATA);
 d26_responder(200, ['ok' => true]);

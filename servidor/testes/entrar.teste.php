@@ -39,7 +39,7 @@ teste('senha errada: 401 credenciais com mensagem genérica', function (): void 
     $j = $r->json();
     igual(false, $j['ok']);
     igual('credenciais', $j['erro']);
-    verdadeiro(is_string($j['mensagem']) && $j['mensagem'] !== '', 'mensagem em pt-br presente');
+    igual('Site exclusivo para público seleto!', $j['mensagem'], 'frase do líder, igual em todos os casos de falha');
     igual(false, $c->get('/api/sessao.php')->json()['autenticado']);
 });
 
@@ -83,13 +83,14 @@ teste('usuário inexistente leva tempo comparável ao de senha errada (sem atalh
     verdadeiro($inexistente > $existente * 0.5, sprintf('inexistente %.3fs vs existente %.3fs', $inexistente, $existente));
 });
 
-teste('corpo com campos ausentes ou de tipo errado: 400, nunca 500', function (): void {
+teste('corpo com campos ausentes ou de tipo errado: 401 com a frase, sem atalho (plano seção 1.5, LU-F2.5)', function (): void {
     $a = Ambiente::novo();
     $c = $a->clienteComSessao();
     foreach ([[], ['usuario' => 'x'], ['usuario' => ['a'], 'senha' => 'b'], ['usuario' => 'x', 'senha' => 12345]] as $corpo) {
         $r = $c->post('/api/entrar.php', $corpo);
-        igual(400, $r->status, json_encode($corpo));
-        igual('invalido', $r->json()['erro']);
+        igual(401, $r->status, json_encode($corpo));
+        igual('credenciais', $r->json()['erro'], json_encode($corpo));
+        igual('Site exclusivo para público seleto!', $r->json()['mensagem'], json_encode($corpo));
     }
     igual(400, $c->post('/api/entrar.php', '{quebrado')->status, 'JSON quebrado');
     igual(400, $c->post('/api/entrar.php', '[1,2]')->status, 'JSON que não é objeto');

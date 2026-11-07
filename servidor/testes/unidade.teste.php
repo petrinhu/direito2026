@@ -18,19 +18,20 @@ teste('config: D26_PRIVADO só vale no cli-server', function (): void {
     igual('/a/b/direito2026_privado', d26_dir_privado($nucleo, 'cli', '/x/y'));
 }, false);
 
-teste('senha nova: 10 a 128 caracteres contados em caracteres, não bytes', function (): void {
-    igual('senha-curta', null === d26_validar_senha_nova('123456789', 'ana', 'x') ? null : 'senha-curta');
-    igual(null, d26_validar_senha_nova('1234567890', 'ana', 'x'));
+teste('senha nova: 15 a 128 caracteres contados em caracteres, não bytes (LU-F2.5, plano seção 3)', function (): void {
+    verdadeiro(is_string(d26_validar_senha_nova(str_repeat('a', 14), 'ana', 'x')), '14 caracteres recusados');
+    igual(null, d26_validar_senha_nova(str_repeat('a', 15), 'ana', 'x'));
     igual(null, d26_validar_senha_nova(str_repeat('a', 128), 'ana', 'x'));
     verdadeiro(is_string(d26_validar_senha_nova(str_repeat('a', 129), 'ana', 'x')), '129 caracteres recusados');
-    igual(null, d26_validar_senha_nova(str_repeat('ç', 10), 'ana', 'x'));
-    verdadeiro(is_string(d26_validar_senha_nova(str_repeat('ç', 9), 'ana', 'x')), '9 caracteres de 2 bytes recusados');
+    igual(null, d26_validar_senha_nova(str_repeat('ç', 15), 'ana', 'x'));
+    verdadeiro(is_string(d26_validar_senha_nova(str_repeat('ç', 14), 'ana', 'x')), '14 caracteres de 2 bytes recusados');
+    contem('15 caracteres', d26_validar_senha_nova('123456789', 'ana', 'x') ?? '', 'mensagem com o mínimo novo');
 }, false);
 
 teste('senha nova: diferente do login e da senha atual; UTF-8 inválido recusado', function (): void {
-    verdadeiro(is_string(d26_validar_senha_nova('usuario.longo', 'usuario.longo', 'x')), 'igual ao login');
-    verdadeiro(is_string(d26_validar_senha_nova('SenhaAtual123', 'ana', 'SenhaAtual123')), 'igual à atual');
-    igual(null, d26_validar_senha_nova('SenhaAtual124', 'ana', 'SenhaAtual123'));
+    verdadeiro(is_string(d26_validar_senha_nova('usuario.longo.teste', 'usuario.longo.teste', 'x')), 'igual ao login');
+    verdadeiro(is_string(d26_validar_senha_nova('SenhaAtualDeTeste1', 'ana', 'SenhaAtualDeTeste1')), 'igual à atual');
+    igual(null, d26_validar_senha_nova('SenhaAtualDeTeste2', 'ana', 'SenhaAtualDeTeste1'));
     verdadeiro(is_string(d26_validar_senha_nova("\xff\xfe\xfd\xfc\xfb\xfa\xf9\xf8\xf7\xf6", 'ana', 'x')), 'UTF-8 inválido');
 }, false);
 

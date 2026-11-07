@@ -31,7 +31,17 @@ function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tam
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
+    // header_remove() sem nome apaga também os Set-Cookie já emitidos (setcookie usa a mesma
+    // lista de cabeçalhos). Sem reaplicá-los, a tela de entrada sairia sem o cookie pré e o
+    // login pelo formulário daria 403 (LU-F2.4, LU-F2.5): guarda e devolve os cookies.
+    $cookies = array_values(array_filter(
+        headers_list(),
+        static fn (string $linha): bool => stripos($linha, 'set-cookie:') === 0
+    ));
     header_remove();
+    foreach ($cookies as $cookie) {
+        header($cookie, false);
+    }
     http_response_code($status);
     header('Content-Type: ' . $tipo);
     header('Cache-Control: private, no-store');

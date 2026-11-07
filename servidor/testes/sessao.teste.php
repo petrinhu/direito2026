@@ -34,7 +34,10 @@ teste('cookie de sessão: nome __Host-d26, Secure, HttpOnly, SameSite=Strict, pa
     $c = $a->clienteComSessao();
     $r = $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
     igual(200, $r->status, 'o cookie de sessão só nasce no login (anônimo usa __Host-d26pre)');
-    igual(2, count($c->ultimoSetCookie), 'Set-Cookie da sessão e do dispositivo confiável');
+    // Login emite a sessão e o dispositivo, e expira os três cookies antigos da Júri (LU-F2.5).
+    $novos = array_values(array_filter($c->ultimoSetCookie, static fn (string $s): bool => !str_starts_with($s, '__Host-juri')));
+    igual(2, count($novos), 'Set-Cookie da sessão e do dispositivo confiável');
+    igual(3, count($c->ultimoSetCookie) - count($novos), 'os três cookies antigos da Júri expirados no login');
     $propios = array_values(array_filter($c->ultimoSetCookie, static fn (string $s): bool => str_starts_with($s, '__Host-d26=')));
     igual(1, count($propios), 'um único cookie de sessão');
     $sc = $propios[0];

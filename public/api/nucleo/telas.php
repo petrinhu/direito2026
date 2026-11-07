@@ -42,11 +42,14 @@ function d26_tela_documento(string $titulo, string $corpo): string
 
 /**
  * Tela de entrada: usuário, senha, token CSRF (HMAC do cookie pré) e destino oculto.
- * O formulário vai para acesso.php, que a F2.5 implementa.
+ * Com $erro, a mensagem vai em role="alert" e repetida no título: é o único jeito de um
+ * leitor de tela anunciar o erro depois de um POST sem JavaScript (plano, seção 1.4).
  */
-function d26_tela_entrada(string $token, string $destino): string
+function d26_tela_entrada(string $token, string $destino, ?string $erro = null): string
 {
-    return d26_tela_documento('Caderno de Direito', '<h1>Caderno de Direito</h1>'
+    $titulo = $erro ?? 'Caderno de Direito';
+    $aviso = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    return d26_tela_documento($titulo, '<h1>Caderno de Direito</h1>' . $aviso
         . '<form method="post" action="/api/acesso.php">'
         . '<label for="usuario">Usuário</label>'
         . '<input id="usuario" name="usuario" type="text" autocomplete="username" autofocus required>'

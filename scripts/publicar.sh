@@ -170,7 +170,7 @@ publicar: plano (--seco, nada foi alterado)
   1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json)
   2. cria a tag anotada v$VERSAO_NOVA
   3. clone descartável em $PASTA_CLONES/pub-clone.* no commit da tag (git clone, git-crypt unlock com a chave: $chave), apaga os dispositivos.ts que sobraram de geração anterior e copia os atuais
-  4. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-nenhuma})
+  4. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-AUSENTE, a publicação real recusa})
   5. rsync em 2 etapas para $DESTINO_RSYNC
      etapa 1: tudo menos index.html, sw.js, 404.html, manifest.webmanifest; apaga no
               servidor só assets/ e workbox-*.js fora do pacote e do manifesto anterior
@@ -274,7 +274,10 @@ apagar_clone() {
 conferir_insumos() {
   [ -f "$CHAVE_GIT_CRYPT" ] ||
     recusar "chave do git-crypt ausente (caminho padrão ou CADERNO_CHAVE_GIT_CRYPT); nada foi commitado"
-  if [ -n "${CADERNO_CAIXA:-}" ] && [ ! -x "$CADERNO_CAIXA" ]; then
+  # L-50 e E9: o preci não roda na sessão viva. Sem caixa, recusa antes de qualquer commit.
+  [ -n "${CADERNO_CAIXA:-}" ] ||
+    recusar "CADERNO_CAIXA vazio: o preci não roda na sessão viva (L-50). Passe a caixa: CADERNO_CAIXA=/var/tmp/site-login-unico/caixa.sh npm run publicar -- <tipo>; nada foi commitado"
+  if [ ! -x "$CADERNO_CAIXA" ]; then
     recusar "CADERNO_CAIXA não é executável; nada foi commitado"
   fi
 }

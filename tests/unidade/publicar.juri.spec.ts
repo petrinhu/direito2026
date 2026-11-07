@@ -173,3 +173,65 @@ describe('publicar.sh e a Júri', () => {
     expect(privadoDe('juri2026_privado').startsWith(`${destino}/`)).toBe(false);
   });
 });
+
+/**
+ * O preci roda na caixa (L-50, E9). Sem CADERNO_CAIXA, a publicação real recusa
+ * antes de qualquer commit, tag ou clone. Só a função conferir_insumos é extraída,
+ * com chave de mentira que existe, para isolar a regra da caixa.
+ */
+describe('conferir_insumos: o preci só roda na caixa (L-50, E9)', () => {
+  function conferirComCaixa(
+    caixa: string | undefined,
+    modoCaixa: number = 0o755
+  ): { status: number | null; saida: string } {
+    const chave = join(tmp, 'chave-git-crypt');
+    writeFileSync(chave, '');
+    const arquivoCaixa = join(tmp, 'caixa.sh');
+    writeFileSync(arquivoCaixa, '#!/usr/bin/env bash\nexec "$@"\n', { mode: modoCaixa });
+    const ambiente: Record<string, string | undefined> = { ...process.env };
+    delete ambiente.CADERNO_CAIXA;
+    if (caixa !== undefined) ambiente.CADERNO_CAIXA = caixa === '' ? '' : arquivoCaixa;
+    const r = spawnSync(
+      'bash',
+      [
+        '-c',
+        [
+          'set -euo pipefail',
+          funcao('recusar'),
+          funcao('conferir_insumos'),
+          `CHAVE_GIT_CRYPT=${chave}`,
+          'conferir_insumos',
+          'echo passou'
+        ].join('\n')
+      ],
+      { encoding: 'utf-8', env: ambiente }
+    );
+    return { status: r.status, saida: `${r.stdout}${r.stderr}` };
+  }
+
+  it('sem CADERNO_CAIXA recusa com rc 1 e a mensagem diz como passar a caixa', () => {
+    const r = conferirComCaixa(undefined);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain('CADERNO_CAIXA');
+    expect(r.saida).toContain('L-50');
+    expect(r.saida).not.toContain('passou');
+  });
+
+  it('CADERNO_CAIXA vazio recusa do mesmo jeito', () => {
+    const r = conferirComCaixa('');
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).not.toContain('passou');
+  });
+
+  it('com caixa executável, a conferência passa (rc 0)', () => {
+    const r = conferirComCaixa('caixa');
+    expect(r.status, r.saida).toBe(0);
+    expect(r.saida).toContain('passou');
+  });
+
+  it('caixa que não é executável continua recusada', () => {
+    const r = conferirComCaixa('caixa', 0o644);
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('não é executável');
+  });
+});

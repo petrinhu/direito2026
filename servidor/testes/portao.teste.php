@@ -11,13 +11,18 @@ const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self
 const PORTAO_CSP_TELA = "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 const PORTAO_NAVEGACAO = ['Sec-Fetch-Mode' => 'navigate'];
 
-/** App sintético em D26_APP/atual, com manifesto de dois arquivos. */
+/**
+ * App sintético no layout de PRODUÇÃO (LU-F2.4, revisão F5.2, mutante P2): atual é link relativo para
+ * versoes/v1, e o manifesto e os arquivos moram na versão. Com atual de diretório real, o portão sem
+ * realpath passaria na suíte e seria recusado em produção.
+ */
 function portaoSemearApp(Ambiente $a): void
 {
-    $dir = $a->app . '/atual';
+    $dir = $a->app . '/versoes/v1';
     mkdir($dir . '/assets', 0700, true);
     file_put_contents($dir . '/index.html', '<!doctype html><title>app sintético</title><p>CONTEUDO-SINTETICO-APP</p><script src="assets/app.js"></script>');
     file_put_contents($dir . '/assets/app.js', 'var x = "CONTEUDO-SINTETICO-JS";');
+    symlink('versoes/v1', $a->app . '/atual');
     file_put_contents($dir . '/manifesto.json', json_encode([
         'versao' => 'teste',
         'arquivos' => [
@@ -171,6 +176,28 @@ teste('portão: symlink dentro do app que aponta para fora do diretório do app 
     igual('', $r->corpo, 'sem corpo');
 });
 
+teste('portão: a fixture usa o layout de produção, atual é link relativo para versoes/v1 (LU-F2.4, mutante P2)', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    verdadeiro(is_link($a->app . '/atual'), 'atual precisa ser link, como em produção');
+    igual('versoes/v1', readlink($a->app . '/atual'), 'destino do link');
+});
+
+teste('portão: irmão de prefixo (versoes/v1-evil) não sai por link de dentro da versão servida (LU-F2.4, mutante P3)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    mkdir($a->app . '/versoes/v1-evil', 0700, true);
+    file_put_contents($a->app . '/versoes/v1-evil/segredo.txt', 'SEGREDO-SINTETICO-IRMAO');
+    symlink('../v1-evil/segredo.txt', $a->app . '/versoes/v1/irmao.txt');
+    $manifesto = json_decode((string) file_get_contents($a->app . '/atual/manifesto.json'), true, 512, JSON_THROW_ON_ERROR);
+    $manifesto['arquivos']['irmao.txt'] = ['tipo' => 'text/plain; charset=utf-8'];
+    file_put_contents($a->app . '/atual/manifesto.json', json_encode($manifesto, JSON_THROW_ON_ERROR));
+
+    $r = $c->get('/irmao.txt');
+    igual(503, $r->status, 'irmão de prefixo: 503 fechado');
+    igual('', $r->corpo, 'sem corpo');
+    naoContem('SEGREDO-SINTETICO-IRMAO', $r->corpo, 'conteúdo do irmão não pode sair');
+});
 
 teste('portão: 503 em navegação traz a tela indisponível (LU-F5.2, mutação M05)', function (): void {
     $a = Ambiente::novo();

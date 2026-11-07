@@ -48,8 +48,9 @@ COMPRESSAO="${PUBLICAR_COMPRESSAO-1}"
 RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
 MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-6e66aeb03564}"
 PRECI_TMPDIR=/var/tmp/preci-pub
-# Pacote de cada versão, guardado para --concluir (700). Sai do /var/tmp, nunca de dentro do repositório.
-PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES:-/var/tmp/publicar-pacote}"
+# Pacote de cada versão, guardado entre --preparar e --concluir. Fica em pasta do usuário (700), fora
+# do IDrive e fora de /var/tmp (caminho previsível em diretório compartilhado é risco: LU-F4.3).
+PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES-${XDG_STATE_HOME:-$HOME/.local/state}/caderno-publicar}"
 # Clone descartável do preci (L-55: subpasta do projeto, ignorada pelo git).
 PASTA_CLONES="$RAIZ/.worktrees"
 CLONE=""
@@ -363,15 +364,81 @@ conferir_pacote_local() {
     recusar "o preci não deixou dist-pacote/ no clone (webroot e app); nada foi publicado"
 }
 
+# Recusa pasta que não seja diretório real, do usuário atual, em 700, sem symlink no caminho.
+# Symlink, dono de outro usuário ou modo aberto mudam o pacote guardado: nada é usado nem escrito.
+conferir_pasta_segura() {
+  local pasta="$1" dono modo fisico logico
+  if [ -L "$pasta" ]; then
+    recusar "$pasta é symlink: não uso caminho de pacote por symlink"
+  fi
+  if [ ! -d "$pasta" ]; then
+    recusar "$pasta não é diretório"
+  fi
+  fisico="$(cd -P -- "$pasta" && pwd -P)"
+  logico="$(cd -- "$pasta" && pwd)"
+  if [ "$fisico" != "$logico" ]; then
+    recusar "$pasta tem symlink no caminho (real: $fisico): recuso"
+  fi
+  dono="$(stat -c %u -- "$pasta")"
+  if [ "$dono" != "$(id -u)" ]; then
+    recusar "$pasta não é do usuário atual (dono uid $dono)"
+  fi
+  modo="$(stat -c %a -- "$pasta")"
+  if [ "$modo" != 700 ]; then
+    recusar "$pasta com modo $modo; esperado 700"
+  fi
+}
+
+# Cria a pasta dos pacotes (700) se faltar, e confere antes de qualquer uso.
+preparar_pasta_pacotes() {
+  if [ ! -e "$PASTA_PACOTES" ] && [ ! -L "$PASTA_PACOTES" ]; then
+    mkdir -p -m 700 -- "$PASTA_PACOTES" || recusar "não criei $PASTA_PACOTES"
+  fi
+  conferir_pasta_segura "$PASTA_PACOTES"
+}
+
+# Pasta de um pacote de versão: a mesma regra, para a pasta da versão.
+destino_do_pacote() {
+  printf '%s/v%s' "$PASTA_PACOTES" "$1"
+}
+
+# Apaga o pacote de uma versão por caminho exato, depois de conferir que é a pasta esperada (L-53).
+apagar_pacote_versao() {
+  local destino
+  destino="$(destino_do_pacote "$1")"
+  [[ "$1" =~ ^[0-9.]+$ ]] || recusar "versão fora do padrão: não apago pacote"
+  if [ -L "$destino" ] || [ ! -d "$destino" ]; then
+    recusar "$destino não é pasta de pacote: não apago"
+  fi
+  conferir_pasta_segura "$PASTA_PACOTES"
+  rm -rf -- "$destino"
+  echo "publicar: pacote da v$1 apagado ($destino)"
+}
+
 # Guarda o pacote desta versão, para --concluir conferir e enviar sem refazer o preci (700).
 guardar_pacote() {
-  local destino="$PASTA_PACOTES/v$VERSAO_NOVA"
-  mkdir -p -m 700 "$PASTA_PACOTES"
-  rm -rf -- "$destino"
-  mkdir -p -m 700 "$destino"
+  local destino
+  preparar_pasta_pacotes
+  destino="$(destino_do_pacote "$VERSAO_NOVA")"
+  if [ -e "$destino" ] || [ -L "$destino" ]; then
+    apagar_pacote_versao "$VERSAO_NOVA"
+  fi
+  mkdir -m 700 -- "$destino" || recusar "não criei $destino"
   cp -a "$PACOTE_LOCAL/app" "$PACOTE_LOCAL/webroot" "$destino/"
+  conferir_pacote_guardado "$destino"
   PACOTE_LOCAL="$destino"
   echo "publicar: pacote da v$VERSAO_NOVA guardado em $destino (700)"
+}
+
+# O pacote guardado: pasta real, sem symlink dentro, com o app e o webroot. Conferido antes de usar.
+conferir_pacote_guardado() {
+  local destino="$1"
+  conferir_pasta_segura "$destino"
+  if [ -n "$(find "$destino" -type l -print -quit)" ]; then
+    recusar "$destino tem symlink dentro do pacote: não uso"
+  fi
+  [ -f "$destino/app/manifesto.json" ] && [ -f "$destino/webroot/api/portao.php" ] ||
+    recusar "pacote guardado incompleto em $destino"
 }
 
 # Regras de proteção do envio: o que o servidor escreve sozinho e o que não é do pacote. Nunca apagado.
@@ -858,14 +925,16 @@ concluir() {
     recusar "a tag local v$VERSAO_NOVA não aponta para HEAD: rode --preparar antes"
   conferir_remoto
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
-  PACOTE_LOCAL="$PASTA_PACOTES/v$VERSAO_NOVA"
-  [ -f "$PACOTE_LOCAL/app/manifesto.json" ] && [ -f "$PACOTE_LOCAL/webroot/api/portao.php" ] ||
-    recusar "sem o pacote guardado de v$VERSAO_NOVA em $PASTA_PACOTES (rode --preparar antes)"
+  PACOTE_LOCAL="$(destino_do_pacote "$VERSAO_NOVA")"
+  [ -d "$PACOTE_LOCAL" ] || recusar "sem o pacote guardado de v$VERSAO_NOVA (rode --preparar antes)"
+  preparar_pasta_pacotes
+  conferir_pacote_guardado "$PACOTE_LOCAL"
   DEPLOY_INICIADO=1
   montar_caminhos_protegidos
   conferir_ar
   enviar_ao_git
   provar_clone_fresco
+  apagar_pacote_versao "$VERSAO_NOVA"
   echo "concluído: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 
@@ -909,6 +978,7 @@ principal() {
   montar_caminhos_protegidos
   conferir_ar
   enviar_ao_git
+  apagar_pacote_versao "$VERSAO_NOVA"
   echo "publicado: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 

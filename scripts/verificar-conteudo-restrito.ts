@@ -3,7 +3,8 @@
  * extrai integrantes, instituição e trechos distintivos (>= 40 caracteres,
  * sem tags) do resumo e do quiz, e procura cada um, sem diferenciar
  * maiúsculas nem acentos, em: todos os arquivos de dist/, todos os arquivos
- * rastreados pelo git e o histórico inteiro (`git log --all -p`).
+ * rastreados pelo git e o histórico inteiro (`git log --all -p --no-textconv`,
+ * ver scripts/apoio/varrerHistorico.ts: E2, sem travar com stderr cheio).
  *
  * Imprime SÓ contagens (analisados/encontrados), nunca um termo. O nome do
  * grupo é público e fica fora da busca. Falha fechada: JSON ausente, zero
@@ -16,7 +17,7 @@
  *   DIST_PATH         pasta do pacote (padrão dist/ da raiz)
  *   REPO_RAIZ         raiz do repositório git a varrer (padrão: a deste script)
  */
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +26,7 @@ import {
   extrairTermosDeVazamento,
   normalizarParaBusca
 } from '../src/core/restrito/termosVazamento';
+import { varrerHistorico } from './apoio/varrerHistorico';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(process.env.REPO_RAIZ ?? join(AQUI, '..'));
@@ -59,31 +61,6 @@ function varrerArquivos(caminhos: readonly string[], termos: readonly string[]):
     analisados += 1;
   }
   return { analisados, encontrados: achados };
-}
-
-function varrerHistorico(termos: readonly string[]): Promise<Varredura> {
-  return new Promise((resolver, rejeitar) => {
-    const achados = new Set<number>();
-    const maior = Math.max(...termos.map((t) => t.length));
-    // Só os diffs (formato vazio): o cabeçalho de autor repetiria nome real em todo commit.
-    const git = spawn('git', ['log', '--all', '-p', '--format='], { cwd: RAIZ });
-    git.stdout.setEncoding('utf-8');
-    let cauda = '';
-    let bytes = 0;
-    git.stdout.on('data', (pedaco: string) => {
-      bytes += Buffer.byteLength(pedaco);
-      // Tira o marcador de diff (+, - ou espaço) do começo de cada linha para
-      // um trecho quebrado em várias linhas ainda casar.
-      const alvo = normalizarParaBusca(cauda + pedaco.replace(/\n[+ -]/g, '\n'));
-      procurar(alvo, termos, achados);
-      cauda = alvo.slice(-maior);
-    });
-    git.on('error', rejeitar);
-    git.on('close', (codigo) => {
-      if (codigo !== 0) rejeitar(new Error(`git log saiu com ${codigo}`));
-      else resolver({ analisados: bytes, encontrados: achados });
-    });
-  });
 }
 
 async function principal(): Promise<number> {
@@ -125,7 +102,8 @@ async function principal(): Promise<number> {
   const arvore = varrerArquivos(rastreados, termos);
   let historico: Varredura;
   try {
-    historico = await varrerHistorico(termos);
+    const lido = await varrerHistorico(termos, { cwd: RAIZ });
+    historico = { analisados: lido.bytes, encontrados: lido.encontrados };
   } catch {
     console.error('verificar-conteudo-restrito: histórico do git ilegível (falha fechada)');
     return 1;

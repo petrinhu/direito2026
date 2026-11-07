@@ -16,6 +16,16 @@ passo() {
   fi
 }
 
+# Portões da cifra (plano do CTO do login único, 6.2 a 6.3; L-36). Primeiro: se o git-crypt
+# falhar, nenhum portão seguinte roda sobre ciphertext (T7). Desvio declarado do padrão
+# "passo" (que segue até o fim): aqui a saída é imediata, de propósito.
+passo "cifra: árvore destravada, blobs com magia, sem nome proibido" node --import tsx scripts/verificar-git-crypt.ts
+if [ "$falhou" -ne 0 ]; then
+  echo "preci: cifra falhou, portões seguintes não rodam sobre ciphertext" >&2
+  exit 1
+fi
+passo "partição: nenhum trecho de cifrado em arquivo em claro (janela de 40)" node --import tsx scripts/verificar-particao.ts
+passo "travessão na árvore cifrada (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
 passo "tipos (vue-tsc)" npx vue-tsc --noEmit
 passo "lint" npx eslint . --max-warnings 0
 passo "formatação" npx prettier --check .

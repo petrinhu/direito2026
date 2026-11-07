@@ -31,8 +31,6 @@ export function mensagemDeErro(erro: unknown): string {
   switch (erro.codigo) {
     case 'senha-atual':
       return 'A senha atual não confere.';
-    case 'credenciais':
-      return 'Usuário ou senha incorretos.';
     case 'rede':
       return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
     case 'troca-obrigatoria':

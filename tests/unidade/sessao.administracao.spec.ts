@@ -60,6 +60,14 @@ describe('criarAdministrar, tradução de erro da administração', () => {
     expect(aoTrocaObrigatoria).not.toHaveBeenCalled();
     expect(r).toEqual({ ok: false, mensagem: 'Sua sessão terminou. Entre de novo.' });
   });
+
+  it('401 de credenciais (código só da entrada, que o site não chama mais) não mostra a frase de login', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(401, 'credenciais');
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'Não foi possível concluir a ação.' });
+  });
 });
 
 describe('criarSessaoGlobal, sessão conhecida e troca de senha', () => {

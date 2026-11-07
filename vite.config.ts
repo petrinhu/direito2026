@@ -61,8 +61,8 @@ function removerFonteIconesDoCalendario(): Plugin {
 }
 
 /**
- * Prefixo dos pedaços de conteúdo. Nenhuma regra de cache o usa mais (o service
- * worker saiu, plano 2.1); fica até o portão verificar-cache-conteudo sair (F4.5).
+ * Prefixo do nome do arquivo de pedaço de conteúdo (nomeDoPedaco). Nenhuma regra
+ * de cache o usa mais: o service worker saiu (plano 2.1, LU-F3.1).
  */
 export const PREFIXO_PEDACO_CONTEUDO = 'conteudo-';
 

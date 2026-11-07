@@ -1,5 +1,5 @@
 /**
- * Apoio dos testes da ferramenta do acervo: roda a CLI de verdade (node + tsx),
+ * Apoio dos testes da ferramenta do acervo da Júri: roda a CLI de verdade (node + tsx),
  * cria diretórios temporários SÓ sob /var/tmp com prefixo próprio e apaga só o que
  * este apoio criou, por caminho exato (L-53). Nenhum dado real passa por aqui.
  */
@@ -7,9 +7,6 @@ import { execFile } from 'node:child_process';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { aadDoEmbrulho } from '@/core/juri/aadEmbrulho';
-import { base64ParaBytes } from '@/core/juri/base64';
-import { derivar, desembrulharCek } from '@/core/juri/cifra';
 
 export const RAIZ_REPO = fileURLToPath(new URL('../../..', import.meta.url));
 const CLI = join(RAIZ_REPO, 'scripts/juri/acervo.ts');
@@ -68,24 +65,4 @@ export function escreverArquivos(
 
 export function lerJson(caminho: string): Record<string, any> {
   return JSON.parse(readFileSync(caminho, 'utf8')) as Record<string, any>;
-}
-
-export interface CredencialLida {
-  login: string;
-  salt: string;
-  auth: string;
-  embrulho: { v: number; iv: string; ct: string };
-}
-
-/** Abre a saída com a senha como a área faz: derivar, desembrulhar a CEK. */
-export async function abrirSaida(saida: string, senha: string) {
-  const cred = lerJson(join(saida, 'credencial-admin.json')) as CredencialLida;
-  const acervo = lerJson(join(saida, 'acervo.json')) as {
-    kid: string;
-    indice: { id: string; tipo: string; bytes: number }[];
-  };
-  const salt = base64ParaBytes(cred.salt);
-  const { kek } = await derivar(senha, salt);
-  const cek = await desembrulharCek(cred.embrulho, kek, aadDoEmbrulho('admin', salt));
-  return { cred, acervo, cek };
 }

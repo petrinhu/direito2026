@@ -1,25 +1,24 @@
 import { ErroUso } from './erro';
 
 /*
- * Linha de comando: dois comandos, flags com valor. A senha provisória entra por --senha
- * (contrato fixado no plano); fica visível em `ps` por instantes, o que se declara no relatório.
+ * Linha de comando: dois comandos, flags com valor. Não há senha: a ferramenta só limpa e
+ * confere; o acervo sai em claro e a proteção dele é o portão do site (LU-F4.1).
  */
 
 export type Comando =
-  | { nome: 'iniciar'; originais: string; saida: string }
-  | { nome: 'conferir'; saida: string; senha: string };
+  { nome: 'preparar'; originais: string; saida: string } | { nome: 'conferir'; saida: string };
 
 const USO =
-  'uso: acervo.ts iniciar --originais <pasta> --saida <pasta-nova> | acervo.ts conferir --saida <pasta> --senha <provisória>';
+  'uso: acervo.ts preparar --originais <pasta> --saida <pasta-nova> | acervo.ts conferir --saida <pasta>';
 
 const FLAGS = {
-  iniciar: ['--originais', '--saida'],
-  conferir: ['--saida', '--senha']
+  preparar: ['--originais', '--saida'],
+  conferir: ['--saida']
 } as const;
 
 export function lerArgumentos(argv: readonly string[]): Comando {
   const [nome, ...resto] = argv;
-  if (nome !== 'iniciar' && nome !== 'conferir') {
+  if (nome !== 'preparar' && nome !== 'conferir') {
     throw new ErroUso(USO);
   }
   const permitidas: readonly string[] = FLAGS[nome];
@@ -45,8 +44,8 @@ export function lerArgumentos(argv: readonly string[]): Comando {
     }
     return valor;
   };
-  if (nome === 'iniciar') {
+  if (nome === 'preparar') {
     return { nome, originais: obter('--originais'), saida: obter('--saida') };
   }
-  return { nome, saida: obter('--saida'), senha: obter('--senha') };
+  return { nome, saida: obter('--saida') };
 }

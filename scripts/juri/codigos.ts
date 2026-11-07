@@ -6,15 +6,11 @@ export function bytesParaHex(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('hex');
 }
 
-export function hexParaBytes(hex: string): Uint8Array<ArrayBuffer> {
-  return new Uint8Array(Buffer.from(hex, 'hex'));
-}
-
 export function sha256Hex(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-/** Bytes aleatórios do CSPRNG do sistema (kid, salt, id). */
+/** Bytes aleatórios do CSPRNG do sistema (id). */
 export function aleatorios(tamanho: number): Uint8Array<ArrayBuffer> {
   return new Uint8Array(randomBytes(tamanho));
 }

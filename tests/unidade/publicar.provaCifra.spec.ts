@@ -26,7 +26,15 @@ function funcao(nome: string): string {
 function git(cwd: string, args: string[]): void {
   spawnSync(
     'git',
-    ['-c', 'user.name=teste', '-c', 'user.email=teste@exemplo.invalido', '-c', 'commit.gpgSign=false', ...args],
+    [
+      '-c',
+      'user.name=teste',
+      '-c',
+      'user.email=teste@exemplo.invalido',
+      '-c',
+      'commit.gpgSign=false',
+      ...args
+    ],
     { cwd, encoding: 'utf-8' }
   );
 }
@@ -51,7 +59,13 @@ function contar(dir: string, ref: string): { status: number | null; saida: strin
     'bash',
     [
       '-c',
-      ['set -euo pipefail', funcao('recusar'), funcao('contar_cifra'), `contar_cifra '${dir}' '${ref}'`, 'echo passou'].join('\n')
+      [
+        'set -euo pipefail',
+        funcao('recusar'),
+        funcao('contar_cifra'),
+        `contar_cifra '${dir}' '${ref}'`,
+        'echo passou'
+      ].join('\n')
     ],
     { encoding: 'utf-8' }
   );

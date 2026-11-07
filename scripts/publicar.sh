@@ -815,10 +815,40 @@ contar_cifra() {
   [ "$claros" -eq 0 ] || recusar "$claros arquivo(s) cifrado(s) em claro em $ref; nada foi enviado"
 }
 
-# Antes de qualquer envio ao git (nos dois modos): o commit de release não pode levar arquivo cifrado em
-# claro. Olha os objetos do próprio repositório, antes do push, para o conteúdo nunca sair.
-conferir_cifra_antes_do_envio() {
-  contar_cifra "$RAIZ" "$SHA_RELEASE"
+# Ponta de main no remoto, agora: é dela que sai a faixa de commits que vai subir.
+ler_main_remota() {
+  git ls-remote "$REMOTO" "refs/heads/$BRANCH_PUBLICA" | awk -v r="refs/heads/$BRANCH_PUBLICA" '$2==r{print $1}'
+}
+
+# As refs locais que vão subir têm de apontar para o commit de release (e não para um nome que mudou).
+conferir_refs_antes_do_envio() {
+  local ref_main ref_tag
+  ref_main="$(git rev-parse -q --verify "refs/heads/$BRANCH_PUBLICA^{commit}" || true)"
+  ref_tag="$(git rev-parse -q --verify "refs/tags/v$VERSAO_NOVA^{commit}" || true)"
+  [ "$ref_main" = "$SHA_RELEASE" ] ||
+    recusar "refs/heads/$BRANCH_PUBLICA aponta para '${ref_main:-nada}', não para o commit de release $SHA_RELEASE; nada foi enviado"
+  [ "$ref_tag" = "$SHA_RELEASE" ] ||
+    recusar "refs/tags/v$VERSAO_NOVA aponta para '${ref_tag:-nada}', não para o commit de release $SHA_RELEASE; nada foi enviado"
+}
+
+# Prova de cifra da faixa que vai ao remoto: cada commit de main_remota..release, com o .gitattributes
+# de cada um (scripts/apoio/cifra-faixa.py). Um commit do meio em claro reprova, mesmo com a ponta limpa.
+conferir_cifra_da_faixa() {
+  local base saida="$ESPACO/cifra-faixa.txt" rc=0
+  base="$(ler_main_remota)"
+  if [ -n "$base" ]; then
+    git cat-file -e "$base^{commit}" 2>/dev/null ||
+      recusar "$REMOTO/$BRANCH_PUBLICA tem commit que não existe aqui; nada foi enviado"
+    git merge-base --is-ancestor "$base" "$SHA_RELEASE" ||
+      recusar "$REMOTO/$BRANCH_PUBLICA divergiu do commit de release; nada foi enviado"
+  else
+    base="-"
+  fi
+  python3 "$RAIZ/scripts/apoio/cifra-faixa.py" "$RAIZ" "$base" "$SHA_RELEASE" > "$saida" 2> "$saida.err" || rc=$?
+  cat "$saida"
+  sed 's/^/publicar: /' "$saida.err" >&2 || true
+  [ "$rc" -eq 0 ] || recusar "prova de cifra da faixa reprovou (código $rc); nada foi enviado ao git"
+  echo "publicar: prova de cifra da faixa conferiu (base=${base:0:12})"
 }
 
 # Depois do envio ao git: o clone novo, sem chave, confere a mesma prova no remoto (6.2).
@@ -860,10 +890,12 @@ provar_envio() {
 }
 
 enviar_ao_git() {
-  conferir_cifra_antes_do_envio
-  git push "$REMOTO" "$BRANCH_PUBLICA"
+  conferir_refs_antes_do_envio
+  conferir_cifra_da_faixa
+  # Envia o objeto validado (SHA), não o nome móvel da branch: o que foi conferido é o que sobe.
+  git push "$REMOTO" "$SHA_RELEASE:refs/heads/$BRANCH_PUBLICA"
   PUSH_MAIN_FEITO=1
-  git push "$REMOTO" "v$VERSAO_NOVA"
+  git push "$REMOTO" "refs/tags/v$VERSAO_NOVA:refs/tags/v$VERSAO_NOVA"
   PUSH_TAG_FEITO=1
   provar_envio || recusar "prova do envio falhou (mensagem acima); confira com git ls-remote antes de agir"
 }

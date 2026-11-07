@@ -18,7 +18,10 @@ import {
 import { criarClienteApi } from '@/app/restrito/clienteApi';
 import { criarAoNaoAutorizado, criarSessaoGlobal } from '@/app/sessao/sessaoGlobal';
 import { criarNavegadorReal } from '@/app/sessao/navegador';
-import { vigiarVolta, type FonteVolta } from '@/app/sessao/vigiarVolta';
+import {
+  criarFonteVoltaNavegador,
+  iniciarVigiaVoltaNavegador
+} from '@/app/sessao/vigiaVoltaNavegador';
 import {
   criarTratadorFalhaModulo,
   type ArmazenamentoRecarga
@@ -77,28 +80,6 @@ window.addEventListener(
   criarTratadorFalhaModulo(criarArmazenamentoRecargaReal(), () => window.location.reload())
 );
 
-/**
- * Fonte real dos dois gatilhos de volta (plano 2.2): pageshow (com `persisted`
- * quando a página vem do cache de navegação, o caso do botão Voltar depois de
- * sair) e aba que volta a ficar visível.
- */
-function criarFonteVoltaReal(): FonteVolta {
-  return {
-    aoMostrarPagina(callback) {
-      const ouvinte = (evento: { readonly persisted: boolean }) => callback(evento.persisted);
-      window.addEventListener('pageshow', ouvinte);
-      return () => window.removeEventListener('pageshow', ouvinte);
-    },
-    aoFicarVisivel(callback) {
-      const ouvinte = () => {
-        if (document.visibilityState === 'visible') callback();
-      };
-      document.addEventListener('visibilitychange', ouvinte);
-      return () => document.removeEventListener('visibilitychange', ouvinte);
-    }
-  };
-}
-
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();
   const repositorio = criarRepositorioProgresso();
@@ -124,10 +105,8 @@ async function bootstrap(): Promise<void> {
   const router = criarRouter();
   app.use(router);
 
-  vigiarVolta(criarFonteVoltaReal(), {
-    recarregar: navegador.recarregar,
-    conferir: () => void sessao.conferirAoVoltar()
-  });
+  // Volta do cache (botão Voltar depois de sair) e aba que volta: fiação em vigiaVoltaNavegador.ts.
+  iniciarVigiaVoltaNavegador(criarFonteVoltaNavegador(window, document), { navegador, sessao });
   // Lê usuário e admin sem bloquear a tela; falha aqui não derruba a página.
   void sessao.iniciar().catch(() => undefined);
 

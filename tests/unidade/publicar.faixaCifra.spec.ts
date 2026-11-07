@@ -146,7 +146,10 @@ describe('prova de cifra da faixa de envio (LU-F4.3, revisão de segurança)', (
     repo = join(tmp, 'sem-cifra');
     spawnSync('git', ['init', '-q', '-b', 'main', repo]);
     // .gitattributes presente, sem nenhuma regra de cifra: zero caminho protegido, não 'sem .gitattributes'.
-    const base = commit({ '.gitattributes': '# sem cifra\n', 'README.md': 'x\n' }, 'base sem cifra');
+    const base = commit(
+      { '.gitattributes': '# sem cifra\n', 'README.md': 'x\n' },
+      'base sem cifra'
+    );
     const tip = commit({ 'README.md': 'y\n' }, 'sem cifra');
     const r = checar(base, tip);
     expect(r.status).toBe(1);
@@ -241,7 +244,18 @@ describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () 
     commit({ 'docs/x.md': CIFRADO_B }, 'lado');
     git(['checkout', '-q', 'main']);
     commit({ 'docs/x.md': CIFRADO_C }, 'principal');
-    spawnSync('git', ['-C', repo, '-c', 'user.name=teste', '-c', 'user.email=teste@exemplo.invalido', 'merge', '-q', '--no-edit', 'lado']);
+    spawnSync('git', [
+      '-C',
+      repo,
+      '-c',
+      'user.name=teste',
+      '-c',
+      'user.email=teste@exemplo.invalido',
+      'merge',
+      '-q',
+      '--no-edit',
+      'lado'
+    ]);
     writeFileSync(join(repo, 'docs/x.md'), 'resolvido em claro\n');
     git(['add', '-A']);
     git(['commit', '-q', '--no-edit']);
@@ -262,7 +276,10 @@ describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () 
 
   it('regra removida no meio e restaurada na ponta: o blob em claro do meio reprova', () => {
     const base = git(['rev-parse', 'HEAD']);
-    const meio = commit({ '.gitattributes': 'TODO.md filter=git-crypt\n', 'docs/a.md': 'claro\n' }, 'sem regra de docs');
+    const meio = commit(
+      { '.gitattributes': 'TODO.md filter=git-crypt\n', 'docs/a.md': 'claro\n' },
+      'sem regra de docs'
+    );
     const tip = commit({ '.gitattributes': ATRIBUTOS, 'docs/a.md': CIFRADO }, 'regra de volta');
     const r = checar(base, tip);
     expect(r.status, r.saida).toBe(1);
@@ -271,7 +288,10 @@ describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () 
 
   it('.gitattributes aninhado que desliga a cifra de um caminho já protegido reprova', () => {
     const base = git(['rev-parse', 'HEAD']);
-    const tip = commit({ 'docs/sub/.gitattributes': '*.md !filter\n', 'docs/sub/a.md': 'claro\n' }, 'aninhado contrario');
+    const tip = commit(
+      { 'docs/sub/.gitattributes': '*.md !filter\n', 'docs/sub/a.md': 'claro\n' },
+      'aninhado contrario'
+    );
     const r = checar(base, tip);
     expect(r.status).toBe(1);
     expect(r.saida).toContain('docs/sub/a.md');

@@ -19,7 +19,7 @@ teste('juri: conteudo.php com a troca de senha pendente responde 403 troca-obrig
     naoContem('fixture sintética', $r->corpo, 'o conteúdo não sai antes da troca');
 });
 
-teste('juri: conteudo.php com sessão da Júri responde 200 com o JSON fixo de conteudo/juri.json', function (): void {
+teste('juri: conteudo.php com sessão do login único responde 200 com o JSON fixo de conteudo/juri.json', function (): void {
     $a = juriAmbiente();
     $json = '{"titulo":"fixture sintética","perguntas":[1,2]}';
     juriSemearConteudo($a, $json);
@@ -51,19 +51,18 @@ teste('juri: /api/juri/ inexistente é 404 e nunca cai na SPA; POST em conteudo.
     igual(405, juriCliente($a)->post('/api/juri/conteudo.php', [])->status, 'POST');
 });
 
-teste('juri (R1-C1): conteudo.php com conta sem embrulho ou sem salt válido responde 503 indisponivel e não entrega o conteúdo', function (): void {
+teste('juri: salt e embrulho da conta são ignorados (campos da cifra que saíram): conta editada à mão com tipo errado ou sem eles entra e lê o conteúdo', function (): void {
     $casos = [
-        'sem embrulho' => static fn (array $conta): array => array_diff_key($conta, ['embrulho' => 1]),
-        'sem salt' => static fn (array $conta): array => array_diff_key($conta, ['salt' => 1]),
+        'salt e embrulho de tipo errado' => static fn (array $conta): array => $conta + ['salt' => 123, 'embrulho' => 'texto'],
+        'sem salt nem embrulho' => static fn (array $conta): array => array_diff_key($conta, ['salt' => 1, 'embrulho' => 1]),
     ];
-    foreach ($casos as $nome => $quebrar) {
+    foreach ($casos as $nome => $alterar) {
         $a = juriAmbiente();
-        juriSemearConteudo($a, '{"titulo":"fixture sintética"}');
-        $c = juriCliente($a); // o login exige conta válida; a quebra vem depois, com a sessão já aberta
-        juriAlterarConta($a, $quebrar);
-        $r = $c->get('/api/juri/conteudo.php');
-        igual(503, $r->status, "$nome: status");
-        igual('indisponivel', $r->json()['erro'] ?? null, "$nome: código do erro");
-        naoContem('fixture sintética', $r->corpo, "$nome: o conteúdo não sai");
+        $json = '{"titulo":"fixture sintética"}';
+        juriSemearConteudo($a, $json);
+        juriAlterarConta($a, $alterar);
+        $r = juriCliente($a)->get('/api/juri/conteudo.php');
+        igual(200, $r->status, "$nome: status");
+        igual(['ok' => true, 'conteudo' => json_decode($json, true)], $r->json(), "$nome: corpo");
     }
 });

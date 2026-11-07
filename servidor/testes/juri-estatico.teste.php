@@ -4,11 +4,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/apoio/nucleo.php';
 
 /**
- * Portão estático da área da Júri (B1 deixou a lacuna: nada impede um endpoint
- * novo de carregar o núcleo sem a área e cair no perfil do Interdisciplinar em
- * silêncio). Todo arquivo de public/api/juri/ precisa, nesta ordem, de
- * define('D26_API', true) e define('D26_AREA', 'juri') ANTES do require de
- * inicio.php. A varredura é por tokens PHP: comentário e espaço não contam.
+ * Portão estático da área da Júri, depois da unificação (plano do CTO do login
+ * único, seção 3): não existe mais perfil por área. Todo arquivo de public/api/juri/
+ * precisa, nesta ordem, de define('D26_API', true) ANTES do require de inicio.php,
+ * e nenhum pode definir D26_AREA (o nome saiu do núcleo; defini-lo seria voltar ao
+ * perfil antigo). A varredura é por tokens PHP: comentário e espaço não contam.
  */
 
 /** Código PHP sem espaço nem comentário, para comparar trechos com segurança. */
@@ -29,8 +29,8 @@ function juriCodigoCompacto(string $arquivo): string
 }
 
 /**
- * Nomes dos arquivos de $dir que NÃO carregam a área antes do núcleo, em ordem
- * alfabética. Diretório sem nenhum .php é erro: varredura vazia não é "limpo" (L-36).
+ * Nomes dos arquivos de $dir que NÃO passam no portão, em ordem alfabética.
+ * Diretório sem nenhum .php é erro: varredura vazia não é "limpo" (L-36).
  *
  * @return list<string>
  */
@@ -45,11 +45,10 @@ function juriPortaoEstatico(string $dir): array
     foreach ($arquivos as $arquivo) {
         $codigo = juriCodigoCompacto($arquivo);
         $posApi = strpos($codigo, "define('D26_API',true)");
-        $posArea = strpos($codigo, "define('D26_AREA','juri')");
         $posNucleo = strpos($codigo, "require__DIR__.'/../nucleo/inicio.php'");
         $ok = $posNucleo !== false
             && $posApi !== false && $posApi < $posNucleo
-            && $posArea !== false && $posArea < $posNucleo;
+            && strpos($codigo, "define('D26_AREA'") === false;
         if (!$ok) {
             $faltas[] = basename($arquivo);
         }
@@ -57,23 +56,21 @@ function juriPortaoEstatico(string $dir): array
     return $faltas;
 }
 
-teste('juri: portão estático, todo public/api/juri/*.php define D26_API e D26_AREA antes do inicio.php', function (): void {
+teste('juri: portão estático, todo public/api/juri/*.php define D26_API antes do inicio.php e nenhum define D26_AREA', function (): void {
     igual([], juriPortaoEstatico(RAIZ_REPO . '/public/api/juri'), 'arquivos da Júri fora da regra');
 }, false);
 
-teste('juri: o portão reprova, em diretório temporário, arquivo sem a área, sem a API, com a área depois do núcleo ou só em comentário', function (): void {
+teste('juri: o portão reprova, em diretório temporário, arquivo sem a API, com a API depois do núcleo ou com D26_AREA de código', function (): void {
     $dir = dirTemporario();
     try {
-        $ok = "<?php\ndefine('D26_API', true);\ndefine('D26_AREA', 'juri');\nrequire __DIR__ . '/../nucleo/inicio.php';\n";
-        file_put_contents($dir . '/bom.php', $ok);
-        file_put_contents($dir . '/sem-area.php', "<?php\ndefine('D26_API', true);\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
-        file_put_contents($dir . '/sem-api.php', "<?php\ndefine('D26_AREA', 'juri');\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
-        file_put_contents($dir . '/area-depois.php', "<?php\ndefine('D26_API', true);\nrequire __DIR__ . '/../nucleo/inicio.php';\ndefine('D26_AREA', 'juri');\n");
-        file_put_contents($dir . '/so-comentario.php', "<?php\ndefine('D26_API', true);\n// define('D26_AREA', 'juri');\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
+        file_put_contents($dir . '/bom.php', "<?php\ndefine('D26_API', true);\n// define('D26_AREA', 'juri');\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
+        file_put_contents($dir . '/sem-api.php', "<?php\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
+        file_put_contents($dir . '/api-depois.php', "<?php\nrequire __DIR__ . '/../nucleo/inicio.php';\ndefine('D26_API', true);\n");
+        file_put_contents($dir . '/com-area.php', "<?php\ndefine('D26_API', true);\ndefine('D26_AREA', 'juri');\nrequire __DIR__ . '/../nucleo/inicio.php';\n");
         igual(
-            ['area-depois.php', 'sem-api.php', 'sem-area.php', 'so-comentario.php'],
+            ['api-depois.php', 'com-area.php', 'sem-api.php'],
             juriPortaoEstatico($dir),
-            'arquivos reprovados'
+            'arquivos reprovados (bom.php passa: comentário com D26_AREA não conta)'
         );
     } finally {
         apagarArvore($dir);

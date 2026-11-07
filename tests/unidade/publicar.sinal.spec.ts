@@ -40,7 +40,19 @@ afterEach(() => {
 });
 
 function ambienteGit(): Record<string, string | undefined> {
-  return { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
+  const ambiente: Record<string, string | undefined> = {
+    ...process.env,
+    GIT_CONFIG_GLOBAL: '/dev/null',
+    GIT_CONFIG_NOSYSTEM: '1'
+  };
+  // Config passada pelo ambiente (GIT_CONFIG_COUNT e pares KEY_n/VALUE_n) também entra no git do teste:
+  // sem limpar, um remoto de fora (um ensaio com a árvore real) redirecionava o push da fixture.
+  for (const chave of Object.keys(ambiente)) {
+    if (/^GIT_CONFIG_(COUNT|KEY_\d+|VALUE_\d+)$/.test(chave)) {
+      delete ambiente[chave];
+    }
+  }
+  return ambiente;
 }
 
 function git(cwd: string, args: string[]): string {

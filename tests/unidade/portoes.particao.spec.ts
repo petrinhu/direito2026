@@ -328,3 +328,77 @@ describe('verificar-particao: classificação fechada (L-17)', () => {
     expect(saida).toMatch(/fontes=1 permitidas=2 fora_da_fonte=2 sem_classe=0/);
   });
 });
+
+describe('verificar-particao: literais concatenados no claro (LU-F1.2, bypass A)', () => {
+  it('trecho de 40 caracteres partido em dois literais com +, cada um abaixo de 40, em .ts claro: sai 1', () => {
+    const literais = ['A cadeira estuda a função social da ', 'propriedade urbana e seus limites'];
+    // Pré-condição do caso: cada literal abaixo de 40, e a junção acima de 40.
+    expect(literais.every((l) => l.length < 40)).toBe(true);
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'src/ui/x.ts': `export const x = '${literais[0]}' + '${literais[1]}';\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('src/ui/x.ts');
+  });
+
+  it('o mesmo trecho em .vue, dentro do bloco script, partido em dois literais: sai 1', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'src/ui/X.vue':
+          "<template><p>oi</p></template>\n<script setup lang=\"ts\">\nconst x = 'A cadeira estuda a função social da ' + 'propriedade urbana e seus limites';\n</script>\n"
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('src/ui/X.vue');
+  });
+});
+
+describe('verificar-particao: NUL em extensão textual é falha, nunca saída silenciosa (LU-F1.2, bypass B)', () => {
+  it('NUL no byte inicial de .md em claro: sai 1 pela regra de NUL, com o caminho', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'LEIA.md': `\u0000Anotação: A FUNCAO SOCIAL DA PROPRIEDADE URBANA e seus limites legais, copiado.\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toMatch(/CAMINHO COM NUL.*LEIA\.md/);
+  });
+
+  it('NUL depois dos 8000 primeiros bytes de .md em claro: sai 1 pela regra de NUL', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'LEIA.md': `${'x'.repeat(9000)}\u0000\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toMatch(/CAMINHO COM NUL.*LEIA\.md/);
+  });
+
+  it('extensão fora da lista de binários, com NUL: sai 1 (fechado por padrão)', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'src/ui/dados.bin': `\u0000Anotação: A FUNCAO SOCIAL DA PROPRIEDADE URBANA e seus limites.\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toMatch(/CAMINHO COM NUL.*dados\.bin/);
+  });
+
+  it('imagem PNG com NUL e trecho copiado: sai 0, binário de verdade fica fora por extensão', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        'src/ui/img.png': `\u0000A FUNCAO SOCIAL DA PROPRIEDADE URBANA e seus limites\n`
+      })
+    );
+    expect(rc, saida).toBe(0);
+    expect(saida).toMatch(/nul=0/);
+  });
+});

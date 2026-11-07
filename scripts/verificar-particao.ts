@@ -18,7 +18,16 @@
  * Lado claro: todo arquivo textual rastreado que não é cifrado, inteiro, com
  * comentário. Cada arquivo é varrido em duas formas: o texto cru normalizado, e
  * o texto com as tags tiradas e as entidades decodificadas, normalizado do mesmo
- * jeito que a fonte.
+ * jeito que a fonte. Em .ts, .tsx, .js, .jsx (e nos blocos `<script>` de .vue),
+ * entra uma terceira forma: os literais que se juntam por `+` no AST, unidos
+ * (`'a ' + 'b'` vira `a b`). Sem AST: .md, .html, .css, .json, e as expressões
+ * de template do .vue (limite declarado, L-18). Literais em statements, arrays
+ * ou `.join()` separados não se juntam (limite declarado).
+ *
+ * NUL em arquivo em claro: se a extensão estiver em BINARIAS_POR_EXTENSAO
+ * (medido: 20 arquivos rastreados com NUL, todos destas extensões), o arquivo
+ * sai por extensão. Qualquer outro com NUL, em qualquer lugar do arquivo, é
+ * falha (CAMINHO COM NUL), nunca saída silenciosa.
  *
  * Exceção por frase, nunca por arquivo: uma janela cujo núcleo (sem espaço nas
  * pontas) está contido numa das FRASES_PERMITIDAS não entra no índice. Teto de
@@ -36,14 +45,15 @@
  * Saída: encontrados = arquivos em claro com ao menos uma janela casada;
  * analisados = arquivos em claro textuais lidos; falharam = encontrados; fontes =
  * arquivos cifrados lidos como fonte; permitidas = frases permitidas;
- * fora_da_fonte = cifrados em classe FORA; sem_classe = cifrados sem classe (falha).
+ * fora_da_fonte = cifrados em classe FORA; sem_classe = cifrados sem classe (falha);
+ * nul = arquivos em claro com NUL fora de binário por extensão (falha).
  * Piso: zero fonte ou zero claro analisado é falha.
  *
  * Variável: REPO_RAIZ (padrão: a raiz deste repositório).
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { normalizarParaBusca } from '../src/core/restrito/termosVazamento';
@@ -91,6 +101,27 @@ const FRASES_PERMITIDAS = [
   'Procure a legislação aplicável a cada fato.'
 ];
 const FRASES_NORMALIZADAS = FRASES_PERMITIDAS.map((frase) => normalizarParaBusca(frase));
+/** Binários por extensão: os únicos que podem ter NUL e sair do claro sem falha (medido em 07/11/2026). */
+const BINARIAS_POR_EXTENSAO: ReadonlySet<string> = new Set([
+  '.woff2',
+  '.avif',
+  '.jpg',
+  '.webp',
+  '.png'
+]);
+/** Tipo de script por extensão, para o parser do compilador (claro, com AST). */
+const TIPO_DE_SCRIPT: ReadonlyMap<string, ts.ScriptKind> = new Map([
+  ['.ts', ts.ScriptKind.TS],
+  ['.mts', ts.ScriptKind.TS],
+  ['.cts', ts.ScriptKind.TS],
+  ['.tsx', ts.ScriptKind.TSX],
+  ['.js', ts.ScriptKind.JS],
+  ['.mjs', ts.ScriptKind.JS],
+  ['.cjs', ts.ScriptKind.JS],
+  ['.jsx', ts.ScriptKind.JSX]
+]);
+/** Bloco `<script>` de um .vue: o conteúdo entre a abertura e o fechamento. */
+const BLOCO_SCRIPT_VUE = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
 
 function git(args: string[]): Buffer {
   return execFileSync('git', args, { cwd: RAIZ, maxBuffer: 1 << 28 });
@@ -113,15 +144,93 @@ function caminhosCifrados(caminhos: string[]): Set<string> {
   return achados;
 }
 
-/** Texto bruto do arquivo da working tree, ou undefined se for binário (byte nulo nos 8000 primeiros) ou ilegível. */
-function lerTexto(caminho: string): string | undefined {
+/** Bytes do arquivo da working tree, ou undefined se ilegível. */
+function lerBytes(caminho: string): Buffer | undefined {
   try {
-    const bruto = readFileSync(join(RAIZ, caminho));
-    if (bruto.subarray(0, 8000).includes(0)) return undefined;
-    return bruto.toString('utf-8');
+    return readFileSync(join(RAIZ, caminho));
   } catch {
     return undefined;
   }
+}
+
+/** Texto da FONTE: undefined se houver byte nulo nos 8000 primeiros (árvore trancada) ou se ilegível. */
+function lerTexto(caminho: string): string | undefined {
+  const bruto = lerBytes(caminho);
+  if (bruto === undefined || bruto.subarray(0, 8000).includes(0)) return undefined;
+  return bruto.toString('utf-8');
+}
+
+/** Trechos de código que o AST percorre: o arquivo inteiro, ou os blocos `<script>` de .vue. */
+function trechosCompilados(
+  caminho: string,
+  codigo: string
+): { codigo: string; tipo: ts.ScriptKind }[] {
+  const extensao = extname(caminho).toLowerCase();
+  if (extensao === '.vue') {
+    return [...codigo.matchAll(BLOCO_SCRIPT_VUE)].map((m) => ({
+      codigo: m[1] ?? '',
+      tipo: ts.ScriptKind.TS
+    }));
+  }
+  const tipo = TIPO_DE_SCRIPT.get(extensao);
+  return tipo === undefined ? [] : [{ codigo, tipo }];
+}
+
+/** Operandos de uma cadeia `+`, achatada à esquerda e à direita; parênteses saem. */
+function operandosDeMais(no: ts.Expression): ts.Expression[] {
+  if (ts.isParenthesizedExpression(no)) return operandosDeMais(no.expression);
+  if (ts.isBinaryExpression(no) && no.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+    return [...operandosDeMais(no.left), ...operandosDeMais(no.right)];
+  }
+  return [no];
+}
+
+/** Sequências contíguas de literais da cadeia, unidas. Operando que não é literal (variável, número) quebra a sequência. */
+function sequenciasDeLiterais(operandos: ts.Expression[]): string[] {
+  const sequencias: string[] = [];
+  let atual: string[] = [];
+  const fechar = (): void => {
+    if (atual.length > 0) sequencias.push(atual.join(''));
+    atual = [];
+  };
+  for (const operando of operandos) {
+    if (ts.isStringLiteralLike(operando)) atual.push(operando.text);
+    else fechar();
+  }
+  fechar();
+  return sequencias;
+}
+
+/** Literais unidos pela raiz de cada cadeia `+` do trecho (a raiz é o `+` cujo pai não é `+`). */
+function literaisUnidosDoTrecho(trecho: { codigo: string; tipo: ts.ScriptKind }): string[] {
+  const arquivo = ts.createSourceFile(
+    'trecho.ts',
+    trecho.codigo,
+    ts.ScriptTarget.Latest,
+    true,
+    trecho.tipo
+  );
+  const unidos: string[] = [];
+  const visitar = (no: ts.Node): void => {
+    if (ts.isBinaryExpression(no) && no.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+      const pai = no.parent;
+      const ehRaiz =
+        pai === undefined ||
+        !ts.isBinaryExpression(pai) ||
+        pai.operatorToken.kind !== ts.SyntaxKind.PlusToken;
+      if (ehRaiz) unidos.push(...sequenciasDeLiterais(operandosDeMais(no)));
+    }
+    ts.forEachChild(no, visitar);
+  };
+  visitar(arquivo);
+  return unidos;
+}
+
+/** Formas normalizadas dos literais unidos do claro (cru sem tags e com tags tiradas), como a fonte. */
+function formasDeLiteraisUnidos(caminho: string, codigo: string): string[] {
+  return trechosCompilados(caminho, codigo)
+    .flatMap((trecho) => literaisUnidosDoTrecho(trecho))
+    .flatMap((valor) => [normalizarParaBusca(valor), formaSemTags(valor)]);
 }
 
 /** Import e nome de chave de objeto não são texto de estudo. */
@@ -254,13 +363,20 @@ function principal(): number {
 
   let analisados = 0;
   const reprovados: { caminho: string; fontes: Set<string> }[] = [];
+  const comNul: string[] = [];
   for (const caminho of rastreados) {
     if (cifrados.has(caminho)) continue;
-    const codigo = lerTexto(caminho);
-    if (codigo === undefined) continue;
+    const bruto = lerBytes(caminho);
+    if (bruto === undefined) continue;
+    if (bruto.includes(0)) {
+      if (!BINARIAS_POR_EXTENSAO.has(extname(caminho).toLowerCase())) comNul.push(caminho);
+      continue;
+    }
+    const codigo = bruto.toString('utf-8');
     analisados += 1;
     const origens = new Set<string>();
-    for (const forma of formasDoClaro(codigo)) {
+    const formas = [...formasDoClaro(codigo), ...formasDeLiteraisUnidos(caminho, codigo)];
+    for (const forma of formas) {
       for (let i = 0; i + TAMANHO_JANELA <= forma.length; i += 1) {
         const origem = janelas.get(forma.slice(i, i + TAMANHO_JANELA));
         if (origem !== undefined) origens.add(origem);
@@ -273,7 +389,7 @@ function principal(): number {
   console.log(
     `verificar-particao: encontrados=${reprovados.length} analisados=${analisados} ` +
       `falharam=${reprovados.length} fontes=${fontes} permitidas=${FRASES_PERMITIDAS.length} ` +
-      `fora_da_fonte=${foraDaFonte} sem_classe=${semClasse.length}`
+      `fora_da_fonte=${foraDaFonte} sem_classe=${semClasse.length} nul=${comNul.length}`
   );
   if (pisoQuebrado) {
     console.log(
@@ -283,10 +399,15 @@ function principal(): number {
   for (const caminho of semClasse) {
     console.log(`  CAMINHO CIFRADO SEM CLASSE (falha fechada): ${caminho}`);
   }
+  for (const caminho of comNul) {
+    console.log(`  CAMINHO COM NUL EM EXTENSÃO TEXTUAL (falha fechada): ${caminho}`);
+  }
   for (const { caminho, fontes: origens } of reprovados) {
     console.log(`  EM CLARO com trecho de ${origens.size} fonte(s) cifrada(s): ${caminho}`);
   }
-  return reprovados.length === 0 && !pisoQuebrado && semClasse.length === 0 ? 0 : 1;
+  const limpo =
+    reprovados.length === 0 && !pisoQuebrado && semClasse.length === 0 && comNul.length === 0;
+  return limpo ? 0 : 1;
 }
 
 try {

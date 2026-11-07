@@ -52,8 +52,6 @@ Quatro camadas com dependência num sentido só (`docs/arquitetura.md`, seção 
 
 O portão `npm run camadas` (dependency-cruiser) prova essa direção mecanicamente.
 
-## Estado desta onda (onda 1: home e unidade piloto)
+## Estado
 
-Fechado: as quatro camadas com o portão de dependência provado vermelho e depois verde; roteamento com as sete rotas e `.htaccess` para hospedagem compartilhada; componentes da home e da unidade (menu de três níveis, abas, resumo, petição comentada, quiz, balão de citação legal, indicador de progresso, fundo animado); persistência de progresso e tema com fallback em memória quando o `localStorage` falha; busca com índice gerado no build; portões de conteúdo (citação órfã, termos proibidos); build real gerando `dist/` funcional; 75 testes unitários e de componente, mais 5 testes e2e, todos verdes.
-
-Não fechado nesta onda: fontes próprias recortadas (seção 10, o site ainda não serve `.woff2`; `scripts/verificar-fontes.sh` reprova corretamente por isso); publicação real no servidor (`scripts/publicar.sh` e a verificação V1 a V10 da seção 15); conferência manual em Firefox, Safari, iPhone/iPad e na VM do Windows (seção 14); a11y automatizada com `@axe-core/playwright`; foco preso (`inert`) na gaveta de navegação em tela estreita.
+Em desenvolvimento: o login único está em implantação. O que falta e o que já está pronto fica no `TODO.md`.

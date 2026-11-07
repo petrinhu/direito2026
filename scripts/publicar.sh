@@ -716,5 +716,12 @@ principal() {
   echo "publicado: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 
+# Sinal durante o preci (LU-F1.3, L-25): sai com o código do próprio sinal, para
+# que ao_sair leia código diferente de 0 e desfaça o commit e a tag locais. Sem
+# isto o EXIT trap lia 0 e não desfazia nada. Bash só trata o sinal depois que o
+# filho em primeiro plano (o preci) termina.
+trap 'exit 143' TERM
+trap 'exit 130' INT
+trap 'exit 129' HUP
 trap ao_sair EXIT
 principal "$@"

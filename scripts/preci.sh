@@ -24,7 +24,7 @@ if [ "$falhou" -ne 0 ]; then
   echo "preci: cifra falhou, portões seguintes não rodam sobre ciphertext" >&2
   exit 1
 fi
-passo "partição: nenhum trecho de cifrado em arquivo em claro (janela de 40)" node --import tsx scripts/verificar-particao.ts
+passo "partição: trecho de texto de estudo cifrado (fonte: strings das unidades de src/conteudo, janela de 40) em arquivo em claro; caminho cifrado sem classe reprova" node --import tsx scripts/verificar-particao.ts
 passo "travessão no que chega ao leitor (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
 passo "tipos (vue-tsc)" npx vue-tsc --noEmit
 passo "lint" npx eslint . --max-warnings 0

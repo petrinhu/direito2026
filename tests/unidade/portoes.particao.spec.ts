@@ -244,3 +244,87 @@ describe('verificar-particao: sabotagens vermelhas (L-36)', () => {
     expect(saida).toMatch(/fontes=0/);
   });
 });
+
+// Texto sintético, sem relação com conteúdo de estudo: só serve para medir marcação e entidade.
+const DENSO =
+  '<p>Frase <strong>sintetica</strong> com <em>marcacao</em> inline <strong>densa</strong> para o <em>teste</em> do portao de particao.</p>';
+const SOLTO =
+  'Regra sintetica: quando o prazo e < 30 dias e a janela de teste segue aberta, aplica-se a regra > fim.';
+const PLANA = 'Frase sintetica sem marcas para o teste de entidade do portao de particao.';
+
+describe('verificar-particao: marcação inline e entidade (F1.2c, E6)', () => {
+  it('parágrafo denso em tags inline, copiado com as mesmas tags em claro: sai 1', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        [`${UNIDADE}/resumo.ts`]: `export const r = ['${DENSO}'];\n`,
+        'LEIA.md': `Anotação: ${DENSO}\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('LEIA.md');
+  });
+
+  it('o mesmo parágrafo denso, copiado sem as tags, em claro: sai 1', () => {
+    const semTags = DENSO.replace(/<\/?[a-z][^<>]*>/gi, '');
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        [`${UNIDADE}/resumo.ts`]: `export const r = ['${DENSO}'];\n`,
+        'LEIA.md': `Anotação: ${semTags}\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('LEIA.md');
+  });
+
+  it('sinal de menor solto no cifrado não engole o texto até o próximo maior: sai 1', () => {
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        [`${UNIDADE}/resumo.ts`]: `export const r = ['${SOLTO}'];\n`,
+        'LEIA.md': 'Anotação: a janela de teste segue aberta, aplica-se a regra.\n'
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('LEIA.md');
+  });
+
+  it('entidade HTML no claro (&nbsp;) é decodificada antes de comparar: sai 1', () => {
+    const copia = PLANA.replace(/ /g, '&nbsp;');
+    const { rc, saida } = rodar(
+      fixture({
+        ...PADRAO,
+        [`${UNIDADE}/resumo.ts`]: `export const r = ['${PLANA}'];\n`,
+        'LEIA.md': `Anotação: ${copia}\n`
+      })
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toContain('LEIA.md');
+  });
+});
+
+describe('verificar-particao: classificação fechada (L-17)', () => {
+  it('caminho cifrado sem classe reprova, sai 1 e aponta o caminho', () => {
+    const { rc, saida } = rodar(
+      fixture(
+        { ...PADRAO, 'novo/x.md': 'Arquivo sintetico cifrado sem classe declarada.\n' },
+        `${ATRIBUTOS}novo/** filter=git-crypt diff=git-crypt\n`
+      )
+    );
+    expect(rc, saida).toBe(1);
+    expect(saida).toMatch(/SEM CLASSE.*novo\/x\.md/);
+  });
+
+  it('docs/ cifrado fica fora da fonte com classe declarada: sai 0 e imprime fora_da_fonte=1', () => {
+    const { rc, saida } = rodar(
+      fixture(
+        { ...PADRAO, 'docs/nota.md': 'Nota interna sintetica, sem trecho de estudo.\n' },
+        `${ATRIBUTOS}docs/** filter=git-crypt diff=git-crypt\n`
+      )
+    );
+    expect(rc, saida).toBe(0);
+    // resumo.ts é fonte; meta.ts (do PADRAO) e docs/nota.md são fora da fonte.
+    expect(saida).toMatch(/fontes=1 permitidas=2 fora_da_fonte=2 sem_classe=0/);
+  });
+});

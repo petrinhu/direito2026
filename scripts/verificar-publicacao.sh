@@ -8,8 +8,10 @@
 #   lista_caminhos    um caminho do app por linha (manifesto atual e anterior); zero é falha
 #   pasta_webroot     webroot local do pacote (sw.js e .htaccess conferidos contra ele)
 #
-# Variáveis: VERIFICAR_HOST_PUBLICO (padrão: o host de URL_ENDERECO), VERIFICAR_COMPRESSAO
-# (padrão 1; 0 só em ensaio local, que não tem a compressão do LiteSpeed, e sai como "não coberto").
+# Variáveis: VERIFICAR_HOST_PUBLICO (padrão: o host de URL_ENDERECO), VERIFICAR_BORDA (padrão 1).
+# Com 1, mede no ar os cabeçalhos que vêm da borda (X-Robots-Tag e compressão). Com 0, só no ensaio
+# local (php -S não lê .htaccess nem tem LiteSpeed): esses cabeçalhos saem como "não medidos", e o
+# arquivo do pacote continua conferido (conferir_htaccess).
 #
 # Cada checagem imprime [PASSOU] ou [FALHOU]. Zero conferência executada é falha (L-36).
 # Não prova entrega com login: esse caminho sai da publicação (7.1.1) e aparece na última linha.
@@ -27,7 +29,7 @@ fi
 URL_BASE="${URL_BASE%/}"
 URL_PAI="${URL_PAI%/}"
 HOST_PUBLICO="${VERIFICAR_HOST_PUBLICO:-$(printf '%s' "$URL_BASE" | sed -E 's#^https?://##; s#/.*$##')}"
-COMPRESSAO="${VERIFICAR_COMPRESSAO:-1}"
+BORDA="${VERIFICAR_BORDA:-1}"
 TMP="$(mktemp -d "${TMPDIR:-/var/tmp}/verificar-publicacao.XXXXXX")"
 trap 'rm -rf -- "$TMP"' EXIT
 
@@ -63,7 +65,9 @@ conferir_tela_de_entrada() {
   if [ "$codigo" = 200 ]; then passou "GET / anônimo de navegação dá a tela de entrada (200)"
   else falhou "GET / anônimo respondeu '$codigo', esperado 200 (tela de entrada)"; fi
 
-  if grep -qi '^x-robots-tag:.*noindex.*nofollow' "$TMP/raiz.h"; then
+  if [ "$BORDA" = 0 ]; then
+    echo "X-Robots-Tag no ar: não medido (VERIFICAR_BORDA=0, ensaio local sem .htaccess); conferido no arquivo do pacote"
+  elif grep -qi '^x-robots-tag:.*noindex.*nofollow' "$TMP/raiz.h"; then
     passou "X-Robots-Tag: noindex, nofollow em GET /"
   else falhou "X-Robots-Tag: noindex, nofollow AUSENTE em GET /"; fi
 
@@ -155,8 +159,9 @@ conferir_sw_matador() {
   fi
 }
 
-# 6. .htaccess do pacote recusa outro host (o domínio-pai). php -S não lê .htaccess (T12): a checagem
-#    é do arquivo, e o md5 do ar contra o pacote (publicar.sh) prova que o servidor tem este arquivo.
+# 6. .htaccess do pacote: recusa outro host (o domínio-pai) e manda X-Robots-Tag. É conferido no
+#    arquivo sempre, porque php -S não lê .htaccess (T12); o md5 do ar contra o pacote (publicar.sh)
+#    prova que o servidor tem este arquivo.
 conferir_htaccess_host() {
   local host_re
   host_re="$(printf '%s' "$HOST_PUBLICO" | sed 's/\./\\./g')"
@@ -165,13 +170,18 @@ conferir_htaccess_host() {
   else
     falhou ".htaccess do pacote sem a regra de host: o domínio-pai não fica recusado"
   fi
+  if [ -f "$WEBROOT/.htaccess" ] && grep -qF 'Header always set X-Robots-Tag "noindex, nofollow"' "$WEBROOT/.htaccess"; then
+    passou ".htaccess do pacote manda X-Robots-Tag: noindex, nofollow"
+  else
+    falhou ".htaccess do pacote sem X-Robots-Tag: noindex, nofollow"
+  fi
 }
 
-# 7. Compressão em / (LiteSpeed). Só no ar; no ensaio local (VERIFICAR_COMPRESSAO=0) não é medida.
+# 7. Compressão em / (LiteSpeed). Só no ar; no ensaio local (VERIFICAR_BORDA=0) não é medida.
 conferir_compressao() {
   local cabecalhos
-  if [ "$COMPRESSAO" = 0 ]; then
-    echo "compressão: não medida (VERIFICAR_COMPRESSAO=0, ensaio local sem LiteSpeed)"
+  if [ "$BORDA" = 0 ]; then
+    echo "compressão: não medida (VERIFICAR_BORDA=0, ensaio local sem LiteSpeed)"
     return 0
   fi
   cabecalhos="$(curl -sI --max-time 30 -H 'Accept-Encoding: gzip, br' "${NAVEGACAO[@]}" "$URL_BASE/" || true)"

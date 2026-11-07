@@ -44,7 +44,7 @@ DESTINO_PRIVADO="${PUBLICAR_DESTINO_PRIVADO-$DESTINO_RAIZ/direito2026_privado}"
 DOMINIO="${PUBLICAR_DOMINIO-https://direito2026.drpetrus.top}"
 DOMINIO_PAI="${PUBLICAR_DOMINIO_PAI-https://drpetrus.top}"
 HOST_PUBLICO="${PUBLICAR_HOST_PUBLICO-direito2026.drpetrus.top}"
-COMPRESSAO="${PUBLICAR_COMPRESSAO-1}"
+BORDA="${PUBLICAR_BORDA-1}"
 RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
 MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-6e66aeb03564}"
 PRECI_TMPDIR=/var/tmp/preci-pub
@@ -734,7 +734,7 @@ conferir_api_e_raiz() {
 # Conferência anônima (7.2): roda o verificador deste repositório contra os dois hosts.
 conferir_anonimo() {
   local saida="$ESPACO/verificar.log" rc=0
-  VERIFICAR_HOST_PUBLICO="$HOST_PUBLICO" VERIFICAR_COMPRESSAO="$COMPRESSAO" \
+  VERIFICAR_HOST_PUBLICO="$HOST_PUBLICO" VERIFICAR_BORDA="$BORDA" \
     bash "$RAIZ/scripts/verificar-publicacao.sh" "$DOMINIO" "$DOMINIO_PAI" "$CAMINHOS" "$PACOTE_LOCAL/webroot" \
     > "$saida" 2>&1 || rc=$?
   cat "$saida"

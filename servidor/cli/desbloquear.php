@@ -24,6 +24,12 @@ function falha(string $mensagem): never
     exit(1);
 }
 
+// Erro inesperado sai em uma linha: a pilha de chamadas mostra argumentos, e nenhum deles deve sair no terminal.
+set_exception_handler(static function (Throwable $e): void {
+    fwrite(STDERR, "desbloquear: erro interno ao acessar o arquivo de contadores (detalhes omitidos de propósito)\n");
+    exit(1);
+});
+
 $nucleo = getenv('D26_NUCLEO') ?: __DIR__ . '/../../public/api/nucleo';
 define('D26_API', true);
 foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite'] as $modulo) {

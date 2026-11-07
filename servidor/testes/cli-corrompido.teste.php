@@ -58,3 +58,11 @@ teste('cli corrompido: redefinir-senha dá erro interno curto, sem pilha e sem s
     afirmaErroCurto('redefinir-senha', $rc, $out, $err);
     apagarArvore($dir);
 }, false);
+
+teste('cli corrompido: desbloquear dá erro interno curto, sem pilha (contadores corrompidos)', function (): void {
+    [$dir, $priv] = cliPrivComContas(['bia' => ['admin' => false]]);
+    file_put_contents($priv . '/tentativas.json', '{corrompido');
+    [$rc, $out, $err] = rodarCliScript('desbloquear.php', [$priv, 'bia'], '');
+    afirmaErroCurto('desbloquear', $rc, $out, $err);
+    apagarArvore($dir);
+}, false);

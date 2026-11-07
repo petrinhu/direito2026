@@ -170,3 +170,31 @@ teste('portão: symlink dentro do app que aponta para fora do diretório do app 
     igual(503, $r->status, 'symlink para fora do app: 503 fechado');
     igual('', $r->corpo, 'sem corpo');
 });
+
+
+teste('portão: 503 em navegação traz a tela indisponível (LU-F5.2, mutação M05)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    unlink($a->app . '/atual/manifesto.json');
+    $tela = $c->get('/', PORTAO_NAVEGACAO);
+    igual(503, $tela->status, 'navegação: status');
+    contem('Serviço indisponível no momento', $tela->corpo, 'navegação recebe a tela indisponível');
+    igual('text/html; charset=utf-8', $tela->cabecalho('content-type'), 'a tela é HTML');
+});
+
+teste('portão: 503 fora de navegação é sem corpo (LU-F5.2, mutação M05)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    unlink($a->app . '/atual/manifesto.json');
+    $fora = $c->get('/assets/app.js');
+    igual(503, $fora->status, 'fora de navegação: status');
+    igual('', $fora->corpo, 'fora de navegação: sem corpo');
+});
+
+teste('portão: resposta de arquivo do app traz Content-Length igual ao tamanho do corpo (LU-F5.2, mutação M32)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    $r = $c->get('/assets/app.js');
+    igual(200, $r->status, 'arquivo: status');
+    igual((string) strlen($r->corpo), $r->cabecalho('content-length'), 'Content-Length igual ao corpo');
+});

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
  * Critério 3 da especificação (docs/modo-adaptado.md, seção 8; WCAG 1.4.12

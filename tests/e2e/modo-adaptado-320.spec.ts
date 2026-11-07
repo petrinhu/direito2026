@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
  * Critério 2 da especificação (docs/modo-adaptado.md, seção 8): em 320px de

@@ -13,6 +13,7 @@
     "test:unit": "vitest run tests/unidade tests/componente",
     "test:unit:watch": "vitest tests/unidade tests/componente",
     "test:e2e": "playwright test",
+    "test:e2e:portao": "playwright test --config=playwright.portao.config.ts",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './apoio/sessaoDoEstudo';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 import { curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
 

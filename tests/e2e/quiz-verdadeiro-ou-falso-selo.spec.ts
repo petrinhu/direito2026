@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './apoio/sessaoDoEstudo';
 import { calcularContraste } from '../../src/core/design/contraste';
 import { quiz as quizIntr } from '../../src/conteudo/p1/intr-direito/u1/quiz';
 import { quiz as quizRedacao } from '../../src/conteudo/p1/redacao-juridica-1/u1/quiz';

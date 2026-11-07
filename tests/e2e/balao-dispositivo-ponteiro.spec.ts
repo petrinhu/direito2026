@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
  * Ordem do líder, 22/09/2026, verbatim: "o balao está abrindo num local

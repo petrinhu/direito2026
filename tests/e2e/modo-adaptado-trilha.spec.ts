@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
  * CRÍTICOS 1 e 2 do QA (docs/qa-modo-adaptado.md): com o modo adaptado

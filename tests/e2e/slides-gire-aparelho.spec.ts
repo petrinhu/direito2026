@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './apoio/sessaoDoEstudo';
 import { abrirAbaSlides, prepararAreaRestritaFalsa } from './apoio/areaRestritaFalsa';
 
 // Escrito, não executado nesta máquina (L-50): roda no CI/ambiente isolado.

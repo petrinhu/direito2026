@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 /**
  * IMPORTANTE 3 do QA (docs/qa-modo-adaptado.md): o h1 "Caderno de

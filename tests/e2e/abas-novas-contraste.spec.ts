@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './apoio/sessaoDoEstudo';
 import { calcularContraste } from '../../src/core/design/contraste';
 import { mapaFichamento } from '../../src/conteudo/p1/filosofia-juridica/u1/mapaFichamento';
 import { prepararEstadoInicial } from './apoio/estadoInicial';

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './apoio/sessaoDoEstudo';
 import { abrirAbaSlides, prepararAreaRestritaFalsa } from './apoio/areaRestritaFalsa';
 
 // "Mostrar animações" desligado no Windows = prefers-reduced-motion: reduce.

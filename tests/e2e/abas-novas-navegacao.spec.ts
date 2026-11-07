@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './apoio/sessaoDoEstudo';
 import { prepararEstadoInicial } from './apoio/estadoInicial';
 import { abrirMapaEmLista, abrirSeFechado } from './apoio/elementos';
 import { filtrarFichas } from '../../src/core/fichamento/filtrarFichas';

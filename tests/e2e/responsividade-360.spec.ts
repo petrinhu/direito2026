@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 import { calcularContraste } from '../../src/core/design/contraste';
 import {
   caminhosParaCabecalho,

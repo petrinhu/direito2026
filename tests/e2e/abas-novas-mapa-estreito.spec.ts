@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './apoio/sessaoDoEstudo';
 import { esperarLayoutAssentar, prepararEstadoInicial } from './apoio/estadoInicial';
 import { abrirMapaEmLista, todosOsPresentes } from './apoio/elementos';
 

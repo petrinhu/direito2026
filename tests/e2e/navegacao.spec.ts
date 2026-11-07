@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './apoio/sessaoDoEstudo';
 
 // Seção 14 da arquitetura, "Ponta a ponta": deep link direto na unidade
 // piloto carrega a página certa (prova o fallback de history mode), tema

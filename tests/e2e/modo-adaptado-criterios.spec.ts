@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './apoio/sessaoDoEstudo';
 
 /**
  * Prova, contra o build real (vite preview), os quatro critérios da seção 8

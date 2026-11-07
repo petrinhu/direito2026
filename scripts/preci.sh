@@ -39,8 +39,9 @@ passo "termos proibidos (R3), fonte" bash scripts/verificar-proibicoes.sh src
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
 passo "testes unitários, de componente e de caracterização" npx vitest run tests/unidade tests/componente tests/caracterizacao
 # npm run build já encadeia geração de índice/dispositivos, typecheck,
-# vite build, 404.html e o portão de pacote publicável (package.json).
+# vite build, o pacote separado (dist-pacote) e o portão de pacote publicável (package.json).
 passo "construção completa (inclui o portão de pacote publicável)" npm run build
+passo "webroot separado: só a lista fechada, sem termo e sem trecho de src/conteudo" node --import tsx scripts/verificar-webroot-sem-conteudo.ts
 passo "termos proibidos (R3), dist" bash scripts/verificar-proibicoes.sh dist
 passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --import tsx scripts/verificar-conteudo-restrito.ts
 passo "vazamento do conteúdo da Júri (dist; sem JSON, só com a cadeira publicada)" node --import tsx scripts/verificar-conteudo-restrito-juri.ts

@@ -24,6 +24,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extrairRegras, veredito } from '../src/core/rotas/regrasHtaccess';
+import { LITERAIS, PASSAGENS_ESPERADAS } from './apoio/pacotePublico';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, '..');
@@ -32,12 +33,6 @@ const REFERENCIA = resolve(
   process.env.VERIFICAR_HTACCESS_REFERENCIA ?? join(RAIZ, 'public/.htaccess')
 );
 
-/** Lista fechada: o texto exato das regras de passagem. Mudar exige mudar aqui, de propósito. */
-const PASSAGENS_ESPERADAS = [
-  '^(sw\\.js|robots\\.txt|entrada\\.css|icones/favicon\\.svg)$',
-  '^api/[a-z0-9/-]+\\.php$'
-];
-const LITERAIS = ['sw.js', 'robots.txt', 'entrada.css', 'icones/favicon.svg'];
 const OBRIGATORIOS = ['api/portao.php', 'api/saude.php', 'api/nucleo/.htaccess'];
 const PASTAS_CONHECIDAS = new Set(['api', 'assets', 'icones']);
 

@@ -148,3 +148,63 @@ describe('portão da Júri fora do pacote', () => {
     expect(pacote.scripts.build).toContain('scripts/verificar-juri-fora-do-pacote.ts');
   });
 });
+
+/**
+ * Alvo pacote (D-h3, LU-F4.2): webroot/ e app/ entram por VERIFICAR_JURI_PACOTES.
+ * Cada caso põe um pacote sintético em tmp; nada aqui é imagem ou conteúdo real.
+ */
+describe('alvo pacote do portão da Júri (webroot e app)', () => {
+  let pacoteWebroot: string;
+  let pacoteApp: string;
+
+  function rodarComPacotes(lista: string) {
+    return spawnSync(process.execPath, ['--import', 'tsx', VERIFICADOR], {
+      cwd: RAIZ,
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        DIST_PATH: dist,
+        VERIFICAR_JURI_RAIZ: arvore,
+        VERIFICAR_JURI_PACOTES: lista
+      }
+    });
+  }
+
+  beforeEach(() => {
+    pacoteWebroot = join(tmp, 'pacote', 'webroot');
+    pacoteApp = join(tmp, 'pacote', 'app');
+    mkdirSync(join(pacoteWebroot, 'api'), { recursive: true });
+    mkdirSync(join(pacoteApp, 'assets'), { recursive: true });
+    writeFileSync(join(pacoteWebroot, 'api/saude.php'), '<?php echo "sintetico";');
+    writeFileSync(join(pacoteApp, 'index.html'), '<!doctype html>');
+    writeFileSync(join(pacoteApp, 'assets/app.js'), 'sintetico');
+  });
+
+  it('pacote limpo passa e aparece como alvo próprio', () => {
+    const r = rodarComPacotes(`${pacoteWebroot},${pacoteApp}`);
+    expect(r.status).toBe(0);
+    expect(saidaCompleta(r)).toContain(`[${pacoteWebroot}]`);
+    expect(saidaCompleta(r)).toContain(`[${pacoteApp}]`);
+    expect(saidaCompleta(r)).toContain('encontrados=2 analisados=2 falharam=0');
+  });
+
+  it('arquivo .juri dentro do webroot reprova no alvo do pacote', () => {
+    writeFileSync(join(pacoteWebroot, 'api/x.juri'), 'sintetico');
+    const r = rodarComPacotes(`${pacoteWebroot},${pacoteApp}`);
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('extensão .juri');
+  });
+
+  it('id de 32 hex no app reprova', () => {
+    writeFileSync(join(pacoteApp, `assets/${ID_SINTETICO}`), 'sintetico');
+    const r = rodarComPacotes(`${pacoteWebroot},${pacoteApp}`);
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('nome de id');
+  });
+
+  it('pasta de pacote ausente reprova (falha fechada)', () => {
+    const r = rodarComPacotes(join(tmp, 'pacote', 'nao-existe'));
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('não foi possível listar');
+  });
+});

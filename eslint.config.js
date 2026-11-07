@@ -62,7 +62,13 @@ const GLOBAIS_NODE = {
 export default [
   js.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', 'public/**', '.dependency-cruiser.cjs']
+    ignores: [
+      'dist/**',
+      'dist-pacote/**',
+      'node_modules/**',
+      'public/**',
+      '.dependency-cruiser.cjs'
+    ]
   },
   {
     files: ['**/*.ts'],

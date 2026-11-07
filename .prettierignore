@@ -8,3 +8,4 @@ src/dados
 public/busca
 src/ui/estilos/tokens.css
 *.md
+dist-pacote

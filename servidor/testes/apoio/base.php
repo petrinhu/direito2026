@@ -272,6 +272,8 @@ final class Ambiente
     public string $raiz;
     /** Diretório privado único (direito2026_privado no layout de produção). */
     public string $priv;
+    /** Diretório do app (direito2026_app, com atual/manifesto.json); sob php -S vai por D26_APP. */
+    public string $app;
     public string $docroot;
     public string $base = '';
     public int $porta = 0;
@@ -289,6 +291,8 @@ final class Ambiente
         $a->raiz = rtrim(getenv('TMPDIR') ?: '/var/tmp', '/') . '/d26-testes-' . bin2hex(random_bytes(6));
         mkdir($a->raiz, 0700, true);
         $a->priv = $a->raiz . '/privado';
+        $a->app = $a->raiz . '/app';
+        mkdir($a->app, 0700, true);
         $a->docroot = RAIZ_REPO . '/public';
         foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
             mkdir($d, 0700, true);
@@ -397,6 +401,7 @@ final class Ambiente
         }
         $env = getenv();
         $env['D26_PRIVADO'] = $this->priv;
+        $env['D26_APP'] = $this->app;
         if ($this->workers > 1) {
             $env['PHP_CLI_SERVER_WORKERS'] = (string) $this->workers;
         }

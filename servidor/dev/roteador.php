@@ -3,31 +3,16 @@ declare(strict_types=1);
 
 /**
  * Roteador do servidor embutido do PHP (`php -S`), só para desenvolvimento e
- * testes. Reproduz o que o .htaccess de produção faz:
+ * testes. Reproduz o que o .htaccess de produção faz (plano do CTO do login único,
+ * seção 1.2):
  *  - /api/nucleo/* é negado (404);
  *  - /api/<arquivo>.php e /api/juri/<arquivo>.php existentes são executados;
- *    qualquer outro /api/... é 404 (nunca cai na SPA);
- *  - arquivo estático existente é servido; o resto cai em index.html (SPA),
- *    ou 404 quando o docroot não tem index.html.
+ *    qualquer outro /api/... é 404 (nunca cai no portão);
+ *  - só os públicos sem conteúdo são servidos direto (sw.js, robots.txt,
+ *    entrada.css, ícone): todo o resto passa pelo portão, api/portao.php.
  *
- * Uso: php -S 127.0.0.1:8080 -t dist servidor/dev/roteador.php
+ * Uso: php -S 127.0.0.1:8080 -t public servidor/dev/roteador.php
  */
-
-/**
- * Cabeçalhos de segurança, os mesmos de public/.htaccess (a API emite os
- * próprios e não passa por aqui). Só para o QA local enxergar o efeito.
- * $pagina: index.html, 404.html e sw.js também recebem a CSP das páginas.
- */
-function d26_dev_cabecalhos(bool $pagina): void
-{
-    header('X-Content-Type-Options: nosniff');
-    header('X-Frame-Options: DENY');
-    header('Referrer-Policy: same-origin');
-    header('Strict-Transport-Security: max-age=31536000');
-    if ($pagina) { // a CSP só vai nas páginas, como o FilesMatch do .htaccess
-        header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
-    }
-}
 
 // Os 404 e 400 que o próprio roteador responde também não podem dizer a versão do PHP (R1-C6).
 header_remove('X-Powered-By');
@@ -53,27 +38,12 @@ if ($caminho === '/api' || str_starts_with($caminho, '/api/')) {
     return true;
 }
 
-// O servidor embutido descarta cabeçalhos de quem devolve "false" (arquivo estático),
-// então as páginas que o .htaccess cobre com a CSP são servidas por aqui mesmo.
-$paginas = ['/index.html' => 'text/html; charset=utf-8', '/404.html' => 'text/html; charset=utf-8', '/sw.js' => 'text/javascript; charset=utf-8'];
-if (isset($paginas[$caminho]) && is_file($raiz . $caminho)) {
-    header('Content-Type: ' . $paginas[$caminho]);
-    d26_dev_cabecalhos(true);
-    readfile($raiz . $caminho);
-    return true;
-}
-
-if ($caminho !== '/' && is_file($raiz . $caminho)) {
+// Públicos sem conteúdo: o ícone, o matador do service worker, o robots e o CSS de entrada.
+$publicos = ['/sw.js', '/robots.txt', '/entrada.css', '/icones/favicon.svg'];
+if (in_array($caminho, $publicos, true) && is_file($raiz . $caminho)) {
     return false;
 }
 
-$indice = $raiz . '/index.html';
-if (is_file($indice)) {
-    header('Content-Type: text/html; charset=utf-8');
-    d26_dev_cabecalhos(true);
-    readfile($indice);
-    return true;
-}
-
-http_response_code(404);
+// Todo o resto passa pelo portão: sem sessão válida, nenhum byte do app sai.
+require $raiz . '/api/portao.php';
 return true;

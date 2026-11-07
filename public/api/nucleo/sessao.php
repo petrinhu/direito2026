@@ -27,8 +27,11 @@ function d26_sessao_configurar(string $priv): void
     ]);
 }
 
-/** @return bool true se a sessão foi aberta */
-function d26_sessao_abrir(): bool
+/**
+ * @return bool true se a sessão foi aberta. Com $somenteLeitura, a trava do arquivo
+ * sai logo (read_and_close): quem só lê não serializa os pedidos da mesma sessão.
+ */
+function d26_sessao_abrir(bool $somenteLeitura = false): bool
 {
     return session_start([
         'use_strict_mode' => 1,
@@ -36,7 +39,7 @@ function d26_sessao_abrir(): bool
         'use_trans_sid' => 0,
         'cache_limiter' => '',
         'gc_maxlifetime' => D26_SESSAO_VALIDADE + 3600,
-    ]);
+    ] + ($somenteLeitura ? ['read_and_close' => true] : []));
 }
 
 function d26_cookie_sessao_expirar(): void
@@ -67,6 +70,20 @@ function d26_sessao_iniciar(string $priv): ?array
         throw new D26Indisponivel('session_start falhou');
     }
     $agora = time();
+    $conta = d26_sessao_conta_valida($priv, $agora);
+    if ($conta === null) {
+        d26_sessao_encerrar();
+        return null;
+    }
+    $_SESSION['atividade'] = $agora;
+    return $conta;
+}
+
+/**
+ * Conta da sessão já aberta, se a sessão ainda vale. Não grava nada.
+ */
+function d26_sessao_conta_valida(string $priv, int $agora): ?array
+{
     $conta = isset($_SESSION['usuario']) && is_string($_SESSION['usuario'])
         ? d26_contas_buscar($priv, $_SESSION['usuario'])
         : null;
@@ -77,12 +94,33 @@ function d26_sessao_iniciar(string $priv): ?array
         && (int) $conta['versaoSessao'] === (int) ($_SESSION['versao'] ?? -1)
         && $agora - (int) ($_SESSION['atividade'] ?? 0) <= D26_SESSAO_OCIOSIDADE
         && $agora - (int) ($_SESSION['criada'] ?? 0) <= D26_SESSAO_VALIDADE;
-    if (!$valida) {
-        d26_sessao_encerrar();
+    return $valida ? $conta : null;
+}
+
+/** Atividade mais velha que isto (segundos) é regravada, com trava: o resto é leitura. */
+const D26_SESSAO_ATIVIDADE_GRAVACAO = 60;
+
+/**
+ * Leitura de sessão do portão (A4): abre com read_and_close, então a trava sai logo e
+ * nada é gravado. Só reabre com trava quando a atividade passou de
+ * D26_SESSAO_ATIVIDADE_GRAVACAO segundos, para gravar a atividade nova. Anônimo: null,
+ * sem sessão criada e sem arquivo novo.
+ */
+function d26_sessao_ler(string $priv): ?array
+{
+    $id = $_COOKIE[D26_SESSAO_NOME] ?? null;
+    if (!is_string($id) || preg_match('/^[A-Za-z0-9,-]{22,128}$/D', $id) !== 1 || !is_file($priv . '/sessoes/sess_' . $id)) {
         return null;
     }
-    $_SESSION['atividade'] = $agora;
-    return $conta;
+    d26_sessao_configurar($priv);
+    if (!d26_sessao_abrir(true)) {
+        throw new D26Indisponivel('session_start falhou');
+    }
+    $agora = time();
+    if ($agora - (int) ($_SESSION['atividade'] ?? 0) > D26_SESSAO_ATIVIDADE_GRAVACAO) {
+        return d26_sessao_iniciar($priv);
+    }
+    return d26_sessao_conta_valida($priv, $agora);
 }
 
 /**

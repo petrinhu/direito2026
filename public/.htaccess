@@ -1,74 +1,29 @@
-# -Indexes: nenhuma pasta (api/, assets/...) lista seus arquivos.
+# Webroot sem conteúdo: o app mora fora daqui e só sai por api/portao.php.
 Options -MultiViews -Indexes
-
-# Achado do líder, 22/09/2026: mod_dir do Apache acrescenta barra final por
-# redirecionamento (301) sempre que o caminho pedido bate um diretório
-# físico no servidor, mesmo sem listagem habilitada. Isso incluía /busca,
-# porque em algum momento existiu um diretório com esse nome no destino
-# (o índice de busca antes ficava em dist/busca/). Desligado aqui para
-# nenhuma rota da SPA correr esse risco, agora ou no futuro.
 <IfModule mod_dir.c>
   DirectorySlash Off
 </IfModule>
 
 RewriteEngine On
 RewriteBase /
-# Lista explícita das pastas que este pacote realmente serve direto (hoje
-# assets/, icones/ e api/), mais robusta que a condição genérica de diretório
-# ("-d", qualquer pasta que exista no disco do servidor):
-# scripts/verificar-htaccess-pastas.ts confere que esta lista bate com as
-# pastas reais de todo build, e reprova se divergir.
-# api/ é uma pasta do pacote (endpoints PHP da área restrita): arquivo que
-# existe é executado e o que não existe é 404 do servidor, nunca o index da
-# SPA. A biblioteca interna api/nucleo/ é negada aqui e também por um
-# .htaccess próprio e pela guarda D26_API em cada arquivo (3 camadas).
+# Porta única: o caminho pelo domínio-pai é recusado (medido aberto em 06/11/2026).
+RewriteCond %{HTTP_HOST} !^direito2026\.drpetrus\.top$ [NC]
+RewriteRule ^ - [F,L]
 RewriteRule ^api/nucleo(/|$) - [F,L]
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_URI} ^/(assets|icones|api)(/|$)
-RewriteRule ^ - [L]
-RewriteRule ^ index.html [L]
+# Únicos caminhos servidos sem portão: endpoints e o visual da tela de entrada.
+RewriteRule ^api/[a-z0-9/-]+\.php$ - [L]
+RewriteRule ^(sw\.js|robots\.txt|entrada\.css|icones/favicon\.svg)$ - [L]
+RewriteRule ^api(/|$) - [R=404,L]
+# Todo o resto passa pelo portão.
+RewriteRule ^ api/portao.php [L]
 
 <IfModule mod_headers.c>
-  <FilesMatch "\.(js|css|woff2|png|svg|webp)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </FilesMatch>
-  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest)$">
-    Header set Cache-Control "no-cache"
-  </FilesMatch>
-  # Achado do líder, medido no site já publicado, 22/09/2026: cache
-  # imutável de um ano só é seguro quando o NOME muda a cada mudança
-  # de conteúdo (scripts/verificar-cache-fingerprint.ts é o portão que
-  # prova isso para o pacote inteiro). Todo outro .svg/.png/.woff2/.js
-  # /.css do pacote passa pelo Vite e ganha nome com hash de conteúdo
-  # - mas o favicon precisa de um endereço ESTÁVEL, sem hash, porque
-  # manifest.webmanifest e agentes externos (navegador, motor de
-  # busca) o referenciam por um caminho fixo por convenção. Cache mais
-  # curto aqui, não imutável: o preço de um favicon raramente
-  # reaproveitado por até um dia é muito menor que o risco de uma
-  # troca de ícone não chegar a ninguém por um ano. Precisa vir DEPOIS
-  # do bloco genérico acima: "Header set" substitui o valor anterior
-  # do mesmo cabeçalho, e o FilesMatch mais específico por nome só
-  # vale se processado por último.
-  <FilesMatch "^favicon\.svg$">
-    Header set Cache-Control "public, max-age=86400, must-revalidate"
-  </FilesMatch>
-  Header set X-Robots-Tag "noindex, nofollow"
-
-  # Cabeçalhos de segurança de TODA resposta, inclusive as de erro do próprio
-  # servidor (403, 404, 500), que "Header set" não alcança: por isso "always".
-  # A API já os envia com os mesmos valores ("set" substitui, não duplica). HSTS só
-  # para este host (sem estender a subdomínios nem à lista de pré-carga): o
-  # domínio-pai hospeda outro produto.
+  Header always set X-Robots-Tag "noindex, nofollow"
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "same-origin"
   Header always set Strict-Transport-Security "max-age=31536000"
-  # CSP das PÁGINAS (e do service worker). Escopada por nome de arquivo: a API
-  # (PHP) emite a sua, mais restrita ("default-src 'none'"), e esta NÃO pode
-  # sobrescrevê-la. Fica de fora tudo que não é página. O dist não tem script
-  # inline nem eval: script-src 'self' basta; style-src precisa de 'unsafe-inline'
-  # por causa dos atributos style que o Vue gera.
-  <FilesMatch "^(index\.html|404\.html|sw\.js)$">
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  <FilesMatch "^sw\.js$">
+    Header set Cache-Control "no-store"
   </FilesMatch>
 </IfModule>

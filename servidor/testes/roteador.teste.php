@@ -1,7 +1,38 @@
 <?php
 declare(strict_types=1);
 
-teste('roteador: rota sem sessão cai na tela de entrada do portão, público sem conteúdo é servido direto, /api inexistente é 404 e nucleo negado', function (): void {
+/** @return list<string> Públicos que o .htaccess serve direto, sem barra inicial (regra do grupo `- [L]`). */
+function publicosDoHtaccess(): array
+{
+    $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
+    verdadeiro(preg_match('#^RewriteRule \^\(([^)]*)\)\$ - \[L\]$#m', $t, $m) === 1, 'regra dos públicos presente no .htaccess');
+    return array_map(static fn (string $p): string => str_replace('\\', '', $p), explode('|', $m[1]));
+}
+
+/** @return list<string> Públicos que o roteador de dev serve direto, na mesma forma. */
+function publicosDoRoteador(): array
+{
+    $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
+    verdadeiro(preg_match('#\$publicos = \[([^\]]*)\];#', $src, $m) === 1, 'lista $publicos presente no roteador');
+    preg_match_all("#'([^']+)'#", $m[1], $itens);
+    return $itens[1];
+}
+
+teste('lista fechada: .htaccess e roteador de dev servem direto os mesmos públicos e usam o mesmo padrão de API', function (): void {
+    $htaccess = publicosDoHtaccess();
+    $roteador = publicosDoRoteador();
+    sort($htaccess);
+    sort($roteador);
+    igual(['entrada.css', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
+    igual($htaccess, $roteador, 'públicos: .htaccess e roteador');
+    $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
+    $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
+    verdadeiro(preg_match('#^RewriteRule (\^api/[^ ]+) - \[L\]$#m', $t, $a) === 1, 'padrão de API do .htaccess');
+    verdadeiro(preg_match("#\\\$padraoApi = '([^']+)';#", $src, $b) === 1, 'padrão de API do roteador');
+    igual($a[1], $b[1], 'mesmo padrão de API nos dois');
+}, false);
+
+teste('roteador: rota sem sessão cai na tela de entrada do portão, público sem conteúdo é servido direto, /api inexistente é 404 e nucleo é 403', function (): void {
     $a = Ambiente::novo(['docroot' => 'copia']);
     $c = $a->cliente();
     $tela = $c->get('/algum/caminho/da/spa', ['Sec-Fetch-Mode' => 'navigate']);
@@ -10,12 +41,29 @@ teste('roteador: rota sem sessão cai na tela de entrada do portão, público se
     naoContem('<title>spa</title>', $tela->corpo, 'nunca o index do docroot');
     $publico = Ambiente::novo();
     contem('font-size', $publico->cliente()->get('/entrada.css')->corpo, 'público sem conteúdo é servido direto');
-    foreach (['/api/', '/api/nao-existe.php', '/api/nao-existe', '/api/nucleo/contas.php', '/api/nucleo/'] as $caminho) {
+    foreach (['/api/', '/api/nao-existe.php', '/api/nao-existe', '/api/nucleo-x.php', '/api/nucleo.php'] as $caminho) {
         $r = $c->get($caminho);
         igual(404, $r->status, $caminho);
         naoContem('<title>spa</title>', $r->corpo, "$caminho não cai na SPA");
     }
+    foreach (['/api/nucleo', '/api/nucleo/', '/api/nucleo/contas.php'] as $caminho) {
+        igual(403, $c->get($caminho)->status, "$caminho: negado como o .htaccess ([F,L])");
+    }
     igual(['ok' => true], $c->get('/api/saude.php')->json(), 'endpoint existente executa');
+});
+
+teste('roteador: público presente sai direto; público ausente é 404 e não cai no portão; o resto passa pelo portão', function (): void {
+    $c = Ambiente::novo()->cliente();
+    $robots = $c->get('/robots.txt');
+    igual(200, $robots->status, 'robots.txt direto');
+    contem('User-agent', $robots->corpo, 'corpo do robots.txt');
+    igual(200, $c->get('/icones/favicon.svg')->status, 'favicon direto');
+    igual(401, $c->get('/manifest.webmanifest')->status, 'manifesto não é público: vai ao portão, anônimo 401');
+    igual(401, $c->get('/assets/busca-indice.json')->status, 'índice de busca vai ao portão, anônimo 401');
+    $copia = Ambiente::novo(['docroot' => 'copia'])->cliente();
+    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/icones/favicon.svg'] as $caminho) {
+        igual(404, $copia->get($caminho)->status, "$caminho ausente: 404 do roteador, sem portão");
+    }
 });
 
 /** CSP das telas do portão sem sessão (seção 1.3). */
@@ -53,12 +101,12 @@ teste('C-3: nenhuma resposta da API expõe X-Powered-By', function (): void {
     igual(null, $c->get('/api/entrar.php')->cabecalho('x-powered-by'), 'erro 405');
 });
 
-teste('C-3 (R1-C6): nem os 404 do próprio roteador de dev expõem X-Powered-By', function (): void {
+teste('C-3 (R1-C6): nem os 404 nem os 403 do próprio roteador de dev expõem X-Powered-By', function (): void {
     $a = Ambiente::novo();
     $c = $a->cliente();
-    foreach (['/api/nucleo/config.php', '/api/nao-existe.php', '/api/juri/nao-existe.php'] as $caminho) {
+    foreach (['/api/nao-existe.php' => 404, '/api/juri/nao-existe.php' => 404, '/api/nucleo/config.php' => 403] as $caminho => $status) {
         $r = $c->get($caminho);
-        igual(404, $r->status, "$caminho: status");
+        igual($status, $r->status, "$caminho: status");
         igual(null, $r->cabecalho('x-powered-by'), "$caminho: sem X-Powered-By");
     }
 });

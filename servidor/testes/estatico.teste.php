@@ -67,11 +67,18 @@ teste('nenhum login, senha, hash ou termo reservado fixo no código do servidor'
     }
 }, false);
 
-teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_headers.c>, CSP só nas páginas', function (): void {
+/** Linha de cabeçalho que carrega cache de longa duração ou compartilhável: proibida no .htaccess e na API. */
+function temCacheProibido(string $linha): bool
+{
+    return preg_match('/immutable|\bpublic\b/i', $linha) === 1;
+}
+
+teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_headers.c> e não carrega CSP (1.2: a CSP das páginas é do portão PHP)', function (): void {
     $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
     $dentro = preg_match('#<IfModule mod_headers\.c>(.*?)</IfModule>#s', $t, $m) === 1 ? $m[1] : '';
     verdadeiro($dentro !== '', 'bloco mod_headers presente');
     foreach ([
+        'Header always set X-Robots-Tag "noindex, nofollow"',
         'Header always set X-Content-Type-Options "nosniff"',
         'Header always set X-Frame-Options "DENY"',
         'Header always set Referrer-Policy "same-origin"',
@@ -82,15 +89,35 @@ teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_
     naoContem('Header set X-Content-Type-Options ', $dentro, 'sem "Header set" simples: não valeria em resposta de erro');
     naoContem('includeSubDomains', $t, 'HSTS sem includeSubDomains');
     naoContem('preload', $t, 'HSTS sem preload');
-    $csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
-    contem('Header set Content-Security-Policy "' . $csp . '"', $dentro, 'CSP exata');
-    // A CSP das páginas só pode valer para as páginas, nunca para a API (que tem a sua, mais restrita).
-    verdadeiro(preg_match('#<FilesMatch "([^"]+)">\s*Header set Content-Security-Policy#', $dentro, $f) === 1, 'CSP dentro de um FilesMatch');
-    $re = '#' . str_replace('#', '\#', $f[1]) . '#';
-    foreach (['index.html', '404.html', 'sw.js'] as $pagina) {
-        verdadeiro(preg_match($re, $pagina) === 1, "$pagina recebe a CSP das páginas");
+    naoContem('Content-Security-Policy', $t, 'a CSP das páginas saiu do .htaccess: quem a põe é o portão PHP (1.2, A11)');
+}, false);
+
+teste('cache: nenhum cabeçalho do .htaccess nem da API com immutable ou public; o sw.js sai com no-store', function (): void {
+    $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
+    contem('<FilesMatch "^sw\.js$">', $t, 'bloco do sw.js');
+    contem('Header set Cache-Control "no-store"', $t, 'sw.js sai com no-store');
+    preg_match_all('#^\s*Header[^\n]*$#m', $t, $cabecalhos);
+    verdadeiro(count($cabecalhos[0]) >= 5, 'varredura não-vazia das linhas Header do .htaccess (veio ' . count($cabecalhos[0]) . ')');
+    foreach ($cabecalhos[0] as $linha) {
+        verdadeiro(!temCacheProibido($linha), '.htaccess com cache proibido: ' . trim($linha));
     }
-    foreach (['saude.php', 'entrar.php', 'sessao.php', 'conteudo.php'] as $api) {
-        verdadeiro(preg_match($re, $api) !== 1, "$api (API) não recebe a CSP das páginas");
+    $arquivos = array_merge(
+        glob(RAIZ_REPO . '/public/api/*.php') ?: [],
+        glob(RAIZ_REPO . '/public/api/nucleo/*.php') ?: [],
+        glob(RAIZ_REPO . '/public/api/juri/*.php') ?: [],
+        glob(RAIZ_REPO . '/servidor/dev/*.php') ?: []
+    );
+    verdadeiro(count($arquivos) > 10, 'varredura de PHP não-vazia (veio ' . count($arquivos) . ')');
+    foreach ($arquivos as $arquivo) {
+        foreach (preg_grep('/cache-control/i', file($arquivo) ?: []) ?: [] as $linha) {
+            verdadeiro(!temCacheProibido($linha), basename($arquivo) . ': cache proibido: ' . trim($linha));
+        }
     }
+}, false);
+
+teste('robots.txt: nenhum Disallow e nenhuma frase de site aberto (canon: noindex pelo cabeçalho e pela marcação)', function (): void {
+    $r = (string) file_get_contents(RAIZ_REPO . '/public/robots.txt');
+    naoContem('Disallow', $r, 'sem Disallow: bloquear impediria de ler o noindex');
+    naoContem('aberto a quem tem o link', $r, 'a frase de site aberto saiu');
+    contem('User-agent: *', $r, 'regra para todos os agentes');
 }, false);

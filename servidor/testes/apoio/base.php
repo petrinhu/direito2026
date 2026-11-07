@@ -270,10 +270,8 @@ final class Ambiente
     public const SENHA_ADMIN = 'ProvisoriaTeste1';
 
     public string $raiz;
-    /** Diretório privado do Interdisciplinar (direito2026_privado no layout de produção). */
+    /** Diretório privado único (direito2026_privado no layout de produção). */
     public string $priv;
-    /** Diretório privado da Júri. No layout de teste é o MESMO de $priv (um processo, um D26_PRIVADO). */
-    public string $privJuri;
     public string $docroot;
     public string $base = '';
     public int $porta = 0;
@@ -284,9 +282,9 @@ final class Ambiente
     private bool $producao = false;
 
     /**
-     * layout 'producao': uma só app em <dominio>/public_html/site, com os privados
-     * como IRMÃOS dela em <dominio>/ (direito2026_privado e juri2026_privado), sem
-     * D26_PRIVADO: o caminho sai do cálculo real de d26_dir_privado.
+     * layout 'producao': uma só app em <dominio>/public_html/site, com o privado
+     * como IRMÃO dela em <dominio>/ (direito2026_privado), sem D26_PRIVADO: o
+     * caminho sai do cálculo real de d26_dir_privado.
      *
      * @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int, layout?:string} $opcoes
      */
@@ -296,7 +294,6 @@ final class Ambiente
         $a->raiz = rtrim(getenv('TMPDIR') ?: '/var/tmp', '/') . '/d26-testes-' . bin2hex(random_bytes(6));
         mkdir($a->raiz, 0700, true);
         $a->priv = $a->raiz . '/privado';
-        $a->privJuri = $a->priv;
         $a->docroot = RAIZ_REPO . '/public';
         if (($opcoes['layout'] ?? '') === 'producao') {
             $a->producao = true;
@@ -396,8 +393,7 @@ final class Ambiente
 
     /**
      * Espelha a hospedagem: public/ inteiro copiado para <dominio>/public_html/site
-     * e os dois privados irmãos do public_html, nos nomes do perfil de cada área.
-     * Um só processo atende as duas áreas, como em produção.
+     * e o privado único irmão do public_html (direito2026_privado).
      */
     private function montarLayoutProducao(): void
     {
@@ -406,11 +402,8 @@ final class Ambiente
         copiarArvore(RAIZ_REPO . '/public', $this->docroot);
         file_put_contents($this->docroot . '/index.html', '<!doctype html><title>spa</title>');
         $this->priv = $dominio . '/direito2026_privado';
-        $this->privJuri = $dominio . '/juri2026_privado';
-        foreach ([$this->priv, $this->privJuri] as $p) {
-            foreach ([$p, $p . '/sessoes', $p . '/conteudo', $p . '/imagens'] as $d) {
-                mkdir($d, 0700, true);
-            }
+        foreach ([$this->priv, $this->priv . '/sessoes', $this->priv . '/conteudo', $this->priv . '/imagens'] as $d) {
+            mkdir($d, 0700, true);
         }
     }
 

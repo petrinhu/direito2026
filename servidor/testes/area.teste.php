@@ -14,8 +14,8 @@ function areaNucleoReal(): string
 }
 
 /**
- * Sobe apoio/area.php num PHP novo: D26_AREA é constante de processo, então a
- * fiação real só se prova com um processo por caso.
+ * Sobe apoio/area.php num PHP novo, para provar a fiação real do núcleo (cookies,
+ * privado e estrutura) por caso, sem depender de constante de outro processo.
  *
  * @return array{int, string, string} [código, stdout, stderr]
  */
@@ -59,63 +59,50 @@ function areaSubpastas(string $dir): array
     return $itens;
 }
 
-teste('area: sem D26_AREA, os 4 valores são os de sempre (Interdisciplinar, literal byte a byte)', function (): void {
-    igual('__Host-d26', D26_SESSAO_NOME, 'cookie de sessão');
-    igual('__Host-d26pre', D26_PRE_NOME, 'cookie de pré-sessão');
-    igual('__Host-d26disp', D26_DISP_NOME, 'cookie de dispositivo');
-    igual(
-        '/a/b/direito2026_privado',
-        d26_dir_privado('/a/b/public_html/direito2026/api/nucleo', 'litespeed', null),
-        'diretório privado'
-    );
+teste('area: D26_AREA deixou de mudar o perfil: com ou sem D26_AREA=juri, cookies e privado são os mesmos', function (): void {
+    [$codigoSem, $saidaSem, $erroSem] = areaRodarProcesso('AUSENTE');
+    igual(0, $codigoSem, "processo sem D26_AREA: $erroSem");
+    $sem = areaDecodificar($saidaSem);
 
-    [$codigo, $saida, $erro] = areaRodarProcesso('AUSENTE');
-    igual(0, $codigo, "processo sem D26_AREA: $erro");
+    [$codigoJuri, $saidaJuri, $erroJuri] = areaRodarProcesso('juri');
+    igual(0, $codigoJuri, "processo com D26_AREA=juri: $erroJuri");
+
     igual(
         ['sessao' => '__Host-d26', 'pre' => '__Host-d26pre', 'disp' => '__Host-d26disp', 'privado' => '/a/b/direito2026_privado'],
-        areaDecodificar($saida),
-        'processo sem D26_AREA'
+        $sem,
+        'valores fixos do Interdisciplinar, sem D26_AREA'
     );
+    igual($sem, areaDecodificar($saidaJuri), 'D26_AREA=juri não troca nenhum valor');
 }, false);
 
-teste('area: D26_AREA=juri troca os 4 valores (cookies __Host-juri*, juri2026_privado irmão do privado)', function (): void {
-    [$codigo, $saida, $erro] = areaRodarProcesso('juri');
-    igual(0, $codigo, "processo com D26_AREA=juri: $erro");
-    igual(
-        ['sessao' => '__Host-juri', 'pre' => '__Host-juripre', 'disp' => '__Host-juridisp', 'privado' => '/a/b/juri2026_privado'],
-        areaDecodificar($saida),
-        'processo com D26_AREA=juri'
-    );
-}, false);
-
-teste('area: valor desconhecido de D26_AREA falha fechado, nunca cai no Interdisciplinar em silêncio', function (): void {
-    foreach (['d26', 'JURI', ' juri', 'outra', ''] as $ruim) {
-        try {
-            d26_perfil_area($ruim);
-        } catch (InvalidArgumentException) {
-            continue;
-        }
-        falhar("d26_perfil_area aceitou '$ruim'");
-    }
-    foreach (['outra', ''] as $ruim) {
-        [$codigo, $saida, $erro] = areaRodarProcesso($ruim);
-        verdadeiro($codigo !== 0, "processo com D26_AREA='$ruim' devia falhar (código $codigo)");
-        contem('área desconhecida', $saida . $erro, "D26_AREA='$ruim' falha pelo motivo certo");
-        naoContem('__Host-', $saida . $erro, "D26_AREA='$ruim' não pode vazar nome de cookie");
-    }
-}, false);
-
-teste('area: estrutura da Júri cria imagens/ (700) e a do Interdisciplinar não cria', function (): void {
+teste('area: estrutura única do privado: direito2026_privado tem sessoes, conteudo e imagens (700), com ou sem D26_AREA', function (): void {
     $raiz = dirTemporario();
     try {
-        d26_garantir_estrutura($raiz . '/padrao');
-        igual(['conteudo', 'sessoes'], areaSubpastas($raiz . '/padrao'), 'Interdisciplinar sem imagens/');
-
-        [$codigo, $saida, $erro] = areaRodarProcesso('juri', $raiz . '/juri');
-        igual(0, $codigo, "processo com D26_AREA=juri: $erro");
-        igual(['conteudo', 'imagens', 'sessoes'], areaDecodificar($saida)['subpastas'] ?? null, 'Júri com imagens/');
-        igual(0700, fileperms($raiz . '/juri/imagens') & 0777, 'imagens/ fica 700');
+        foreach (['AUSENTE' => 'padrao', 'juri' => 'juri'] as $area => $pasta) {
+            [$codigo, $saida, $erro] = areaRodarProcesso($area, $raiz . '/' . $pasta);
+            igual(0, $codigo, "processo $area: $erro");
+            igual(['conteudo', 'imagens', 'sessoes'], areaDecodificar($saida)['subpastas'] ?? null, "$area: subpastas");
+            igual(0700, fileperms($raiz . '/' . $pasta . '/imagens') & 0777, "$area: imagens/ fica 700");
+        }
     } finally {
         apagarArvore($raiz);
     }
 }, false);
+
+teste('area: juri/conteudo.php e juri/imagem.php não definem D26_AREA nem carregam nucleo/juri.php', function (): void {
+    foreach (['conteudo.php', 'imagem.php'] as $arquivo) {
+        $codigo = (string) file_get_contents(RAIZ_REPO . '/public/api/juri/' . $arquivo);
+        naoContem('D26_AREA', $codigo, "$arquivo: sem D26_AREA");
+        naoContem('nucleo/juri.php', $codigo, "$arquivo: sem nucleo/juri.php");
+        naoContem('d26_juri_conta_validar', $codigo, "$arquivo: sem validação de salt e embrulho");
+    }
+}, false);
+
+teste('area: juri/conteudo.php lê conteudo/juri.json do direito2026_privado, no layout de produção', function (): void {
+    $a = Ambiente::novo(['layout' => 'producao']);
+    $json = '{"titulo":"fixture sintética de área"}';
+    file_put_contents($a->priv . '/conteudo/juri.json', $json);
+    $r = $a->entrar()->get('/api/juri/conteudo.php');
+    igual(200, $r->status, 'status com a sessão unificada');
+    igual(['ok' => true, 'conteudo' => json_decode($json, true)], $r->json(), 'conteúdo lido do privado unificado');
+});

@@ -793,27 +793,41 @@ enviar_dados_juri() {
   echo "publicar: dados da Júri enviados ao privado (aditivo, 700/600)"
 }
 
-# Depois do envio ao git: o clone novo, sem chave, prova que nenhum arquivo cifrado foi para o remoto
-# em claro (6.2). Zero arquivo cifrado analisado é falha.
-provar_clone_fresco() {
-  local url clone="$ESPACO/prova-clone" f magia n=0 claros=0
+# Prova de cifra (6.2): em DIR, no commit REF, todo arquivo com filter=git-crypt tem a magia do
+# git-crypt no blob. A magia é lida em hexadecimal, sem pipe com status: com pipefail, o head que
+# fecha cedo dava SIGPIPE e reprovava arquivo cifrado grande (falso positivo, LU-F4.3).
+# Zero arquivo cifrado é falha (varredura quebrada).
+contar_cifra() {
+  local dir="$1" ref="$2" f magia encontrados=0 claros=0
   local -a arquivos=()
-  url="$(git remote get-url "$REMOTO")" || recusar "remoto $REMOTO sem URL"
-  git clone -q "$url" "$clone" || recusar "clone fresco do remoto falhou"
-  mapfile -d '' -t arquivos < <(git -C "$clone" ls-files -z)
+  mapfile -d '' -t arquivos < <(git -C "$dir" ls-tree -r -z --name-only "$ref")
   for f in "${arquivos[@]}"; do
-    [ "$(git -C "$clone" check-attr filter -- "$f" | awk '{print $NF}')" = git-crypt ] || continue
-    n=$((n + 1))
-    if git -C "$clone" cat-file blob "HEAD:$f" | head -c 10 | cmp -s - <(printf '\0GITCRYPT\0'); then
-      :
-    else
+    [ "$(git -C "$dir" check-attr filter -- "$f" | awk '{print $NF}')" = git-crypt ] || continue
+    encontrados=$((encontrados + 1))
+    magia="$(git -C "$dir" cat-file blob "$ref:$f" | head -c 10 | od -An -tx1 | tr -d ' \n')" || true
+    if [ "$magia" != 00474954435259505400 ]; then
       claros=$((claros + 1))
-      echo "publicar: EM CLARO no remoto: $f" >&2
+      echo "publicar: EM CLARO: $f" >&2
     fi
   done
-  echo "prova do clone fresco (sem chave): encontrados=$n analisados=$n em_claro=$claros"
-  [ "$n" -gt 0 ] || recusar "clone fresco sem arquivo cifrado: varredura quebrada (zero é falha)"
-  [ "$claros" -eq 0 ] || recusar "$claros arquivo(s) cifrado(s) chegaram em claro ao remoto"
+  echo "cifra em $ref: encontrados=$encontrados analisados=$encontrados em_claro=$claros"
+  [ "$encontrados" -gt 0 ] || recusar "sem arquivo cifrado em $ref: varredura quebrada (zero é falha)"
+  [ "$claros" -eq 0 ] || recusar "$claros arquivo(s) cifrado(s) em claro em $ref; nada foi enviado"
+}
+
+# Antes de qualquer envio ao git (nos dois modos): o commit de release não pode levar arquivo cifrado em
+# claro. Olha os objetos do próprio repositório, antes do push, para o conteúdo nunca sair.
+conferir_cifra_antes_do_envio() {
+  contar_cifra "$RAIZ" "$SHA_RELEASE"
+}
+
+# Depois do envio ao git: o clone novo, sem chave, confere a mesma prova no remoto (6.2).
+provar_clone_fresco() {
+  local url clone="$ESPACO/prova-clone"
+  url="$(git remote get-url "$REMOTO")" || recusar "remoto $REMOTO sem URL"
+  git clone -q "$url" "$clone" || recusar "clone fresco do remoto falhou"
+  contar_cifra "$clone" HEAD
+  echo "prova do clone fresco (sem chave): OK"
 }
 
 # Commit para onde a tag remota aponta. Tag anotada: o ls-remote devolve o objeto da tag em
@@ -846,6 +860,7 @@ provar_envio() {
 }
 
 enviar_ao_git() {
+  conferir_cifra_antes_do_envio
   git push "$REMOTO" "$BRANCH_PUBLICA"
   PUSH_MAIN_FEITO=1
   git push "$REMOTO" "v$VERSAO_NOVA"

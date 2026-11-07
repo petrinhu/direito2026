@@ -375,6 +375,13 @@ provide(ESTADO_MENU, {
   margin-bottom: var(--esp-2, 0.5rem);
   border-bottom: 1px solid rgba(184, 192, 204, 0.35);
 }
+/* Itens do bloco da conta começam na coluna do Calendário (padding de .menu-curriculo a, esp-4).
+   A regra de link de árvore zera o padding-left, e sem este recuo os itens encostavam na borda
+   (QA F5.1, item 4). Seletor com uma classe a mais para vencer .menu-curriculo a.menu-curriculo__link-unidade. */
+.menu-curriculo .menu-curriculo__sessao a.menu-curriculo__link-unidade,
+.menu-curriculo .menu-curriculo__sessao .menu-curriculo__sair {
+  padding-left: var(--esp-4, 1rem);
+}
 .menu-curriculo__sair {
   appearance: none;
   background: none;

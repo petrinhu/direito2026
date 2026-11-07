@@ -14,6 +14,18 @@ Este README é o hub: aponta para a documentação, não a repete.
 - [`docs/dispositivos-legais.md`](docs/dispositivos-legais.md): procedência do catálogo de dispositivos legais.
 - [`docs/publicacao.md`](docs/publicacao.md): runbook de deploy.
 
+## Como destravar o conteúdo cifrado
+
+Parte do conteúdo de estudo e da documentação (os caminhos listados em `.gitattributes`, como `src/conteudo/`, `src/dados/`, `docs/`, `site/` e `TODO.md`) é guardada cifrada com git-crypt. Sem a chave, esses arquivos aparecem como dado binário ilegível. Os nomes dos arquivos continuam visíveis.
+
+Para destravar uma cópia do repositório, com a chave em mãos, rode dentro da pasta do projeto:
+
+```bash
+git-crypt unlock <caminho-da-chave>
+```
+
+Substitua `<caminho-da-chave>` pelo caminho do arquivo de chave, guardado fora do repositório. O arquivo de chave nunca entra no repositório.
+
 ## Comandos
 
 ```bash

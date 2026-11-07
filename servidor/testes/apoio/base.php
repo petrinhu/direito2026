@@ -279,14 +279,9 @@ final class Ambiente
     private $processo = null;
 
     private int $workers = 0;
-    private bool $producao = false;
 
     /**
-     * layout 'producao': uma só app em <dominio>/public_html/site, com o privado
-     * como IRMÃO dela em <dominio>/ (direito2026_privado), sem D26_PRIVADO: o
-     * caminho sai do cálculo real de d26_dir_privado.
-     *
-     * @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int, layout?:string} $opcoes
+     * @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes
      */
     public static function novo(array $opcoes = []): self
     {
@@ -295,13 +290,8 @@ final class Ambiente
         mkdir($a->raiz, 0700, true);
         $a->priv = $a->raiz . '/privado';
         $a->docroot = RAIZ_REPO . '/public';
-        if (($opcoes['layout'] ?? '') === 'producao') {
-            $a->producao = true;
-            $a->montarLayoutProducao();
-        } else {
-            foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
-                mkdir($d, 0700, true);
-            }
+        foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
+            mkdir($d, 0700, true);
         }
         if (($opcoes['docroot'] ?? '') === 'copia') {
             $a->docroot = $a->raiz . '/site';
@@ -391,22 +381,6 @@ final class Ambiente
         return $c;
     }
 
-    /**
-     * Espelha a hospedagem: public/ inteiro copiado para <dominio>/public_html/site
-     * e o privado único irmão do public_html (direito2026_privado).
-     */
-    private function montarLayoutProducao(): void
-    {
-        $dominio = $this->raiz . '/dominio';
-        $this->docroot = $dominio . '/public_html/site';
-        copiarArvore(RAIZ_REPO . '/public', $this->docroot);
-        file_put_contents($this->docroot . '/index.html', '<!doctype html><title>spa</title>');
-        $this->priv = $dominio . '/direito2026_privado';
-        foreach ([$this->priv, $this->priv . '/sessoes', $this->priv . '/conteudo', $this->priv . '/imagens'] as $d) {
-            mkdir($d, 0700, true);
-        }
-    }
-
     private function iniciar(bool $semRoteador): void
     {
         $sock = stream_socket_server('tcp://127.0.0.1:0', $codigo, $msg);
@@ -422,11 +396,7 @@ final class Ambiente
             $cmd[] = RAIZ_REPO . '/servidor/dev/roteador.php';
         }
         $env = getenv();
-        if ($this->producao) {
-            unset($env['D26_PRIVADO']); // produção: o caminho sai de d26_dir_privado, nunca do ambiente
-        } else {
-            $env['D26_PRIVADO'] = $this->priv;
-        }
+        $env['D26_PRIVADO'] = $this->priv;
         if ($this->workers > 1) {
             $env['PHP_CLI_SERVER_WORKERS'] = (string) $this->workers;
         }

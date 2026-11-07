@@ -151,8 +151,7 @@ function d26_teste_pausar(string $ponto, string $chave = ''): void
  * corrompido) é D26Indisponivel, fechado: `1`/"true" nunca passam por booleano.
  * uid ausente é aceito aqui (a sessão e o login recusam conta sem uid); presente,
  * tem de ser string. `aparelhos` ausente vale [].
- * Campos `salt` e `embrulho` da cifra da Júri saíram do modelo (plano do CTO do login
- * único, seção 5): não são lidos, então ficam fora da validação e não causam erro.
+ * Chave desconhecida no arquivo da conta é ignorada: só os campos listados são validados.
  *
  * @param array<mixed> $c
  * @return array<string, mixed>

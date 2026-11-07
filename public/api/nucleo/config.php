@@ -11,8 +11,7 @@ const D26_ARGON = ['memory_cost' => 65536, 'time_cost' => 4, 'threads' => 1];
 
 /**
  * Uma conta, uma sessão, um privado (plano do CTO do login único, seção 3). Não há
- * mais perfil por área: a Júri usa os mesmos cookies e o mesmo privado do
- * Interdisciplinar. D26_AREA, se alguém definir, não muda nada.
+ * perfil por área: todas as rotas usam os mesmos cookies e o mesmo privado.
  */
 const D26_SESSAO_NOME = '__Host-d26';
 const D26_PRE_NOME = '__Host-d26pre';

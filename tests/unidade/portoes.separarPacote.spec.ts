@@ -25,6 +25,7 @@ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const SEPARADOR = join(RAIZ, 'scripts/separar-pacote.ts');
 const BUILD = JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf-8')) as {
   scripts: Record<string, string>;
+  version: string;
 };
 
 let tmp: string;
@@ -80,19 +81,23 @@ describe('separador do pacote', () => {
   it('manifesto cobre só o app, sem ele mesmo, com tipo, bytes e md5 certos', () => {
     const r = rodar();
     expect(r.status).toBe(0);
-    const manifesto = JSON.parse(
-      readFileSync(join(saida, 'app/manifesto.json'), 'utf-8')
-    ) as Record<string, { tipo: string; bytes: number; md5: string }>;
-    expect(Object.keys(manifesto).sort()).toEqual([...APP_ESPERADO].sort());
+    // Formato que o portão lê (portao.php, d26_portao_manifesto): {"versao", "arquivos": {...}} (LU-F4.3, L-15).
+    const manifesto = JSON.parse(readFileSync(join(saida, 'app/manifesto.json'), 'utf-8')) as {
+      versao: string;
+      arquivos: Record<string, { tipo: string; bytes: number; md5: string }>;
+    };
+    expect(manifesto.versao).toBe(BUILD.version);
+    const arquivos = manifesto.arquivos;
+    expect(Object.keys(arquivos).sort()).toEqual([...APP_ESPERADO].sort());
     for (const caminho of APP_ESPERADO) {
-      const entrada = manifesto[caminho];
+      const entrada = arquivos[caminho];
       expect(Object.keys(entrada ?? {}).sort()).toEqual(['bytes', 'md5', 'tipo']);
       expect(entrada?.md5).toBe(md5(join(saida, 'app', caminho)));
       expect(entrada?.bytes).toBe(statSync(join(saida, 'app', caminho)).size);
     }
-    expect(manifesto['index.html']?.tipo).toBe('text/html');
-    expect(manifesto['assets/busca-indice.json']?.tipo).toBe('application/json');
-    expect(manifesto['assets/fonte-abc123.woff2']?.tipo).toBe('font/woff2');
+    expect(arquivos['index.html']?.tipo).toBe('text/html');
+    expect(arquivos['assets/busca-indice.json']?.tipo).toBe('application/json');
+    expect(arquivos['assets/fonte-abc123.woff2']?.tipo).toBe('font/woff2');
   });
 
   it('saída informa a contagem da varredura e falharam=0', () => {

@@ -4,8 +4,9 @@
  * Saída (SAIDA = PACOTE_SAIDA, padrão dist-pacote/):
  *   SAIDA/webroot/   só a lista fechada de ehDoWebroot (sem conteúdo, sem app)
  *   SAIDA/app/       o resto do dist, com extensão prevista
- *   SAIDA/app/manifesto.json  {"<caminho>":{"tipo","bytes","md5"}} de cada arquivo do app,
- *                    exceto o próprio manifesto (o portão PHP lê `tipo` como Content-Type)
+ *   SAIDA/app/manifesto.json  {"versao", "arquivos": {"<caminho>":{"tipo","bytes","md5"}}} de cada
+ *                    arquivo do app, exceto o próprio manifesto. Mesmo formato que o portão PHP lê
+ *                    (portao.php, d26_portao_manifesto): `tipo` é o Content-Type (LU-F4.3, L-15).
  *
  * Falha fechada: dist ausente ou vazio, arquivo sem lista (extensão, api fora da regra,
  * 404.html, nome reservado), item obrigatório ausente, saída que engole o dist. A saída
@@ -14,7 +15,15 @@
  *
  * Variáveis (opcionais): DIST_PATH (padrão dist/), PACOTE_SAIDA (padrão dist-pacote/).
  */
-import { copyFileSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -48,6 +57,17 @@ function faltantes(obrigatorios: readonly string[], previstos: readonly string[]
   return obrigatorios.filter((caminho) => !previstos.includes(caminho));
 }
 
+/** Versão do package.json, gravada no manifesto (rastreio: qual release está no ar). */
+function versaoDoPacote(): string {
+  const pacote = JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf-8')) as {
+    version?: unknown;
+  };
+  if (typeof pacote.version !== 'string' || pacote.version === '') {
+    throw new Error('package.json sem version: o manifesto não tem como dizer qual release é');
+  }
+  return pacote.version;
+}
+
 function escreverPacote(webroot: readonly string[], app: readonly string[]): void {
   rmSync(join(SAIDA, 'webroot'), { recursive: true, force: true });
   rmSync(join(SAIDA, 'app'), { recursive: true, force: true });
@@ -55,18 +75,19 @@ function escreverPacote(webroot: readonly string[], app: readonly string[]): voi
     mkdirSync(dirname(join(SAIDA, 'webroot', caminho)), { recursive: true });
     copyFileSync(join(DIST, caminho), join(SAIDA, 'webroot', caminho));
   }
-  const manifesto: Record<string, { tipo: string; bytes: number; md5: string }> = {};
+  const arquivos: Record<string, { tipo: string; bytes: number; md5: string }> = {};
   for (const caminho of app) {
     const origem = join(DIST, caminho);
     const destino = join(SAIDA, 'app', caminho);
     mkdirSync(dirname(destino), { recursive: true });
     copyFileSync(origem, destino);
-    manifesto[caminho] = {
+    arquivos[caminho] = {
       tipo: tipoDoApp(caminho) ?? '',
       bytes: statSync(origem).size,
       md5: md5Do(origem)
     };
   }
+  const manifesto = { versao: versaoDoPacote(), arquivos };
   writeFileSync(join(SAIDA, 'app', 'manifesto.json'), `${JSON.stringify(manifesto, null, 2)}\n`);
 }
 

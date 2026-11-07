@@ -189,7 +189,7 @@ describe('mnemônicos de Filosofia Jurídica', () => {
     ]);
   });
 
-  it('o da tripartição romana avisa que a classificação do ius gentium é discutida', () => {
+  it('o da tripartição romana avisa que a classificação é discutida', () => {
     const romana = mnemonicos.find((x) => x.titulo.toLowerCase().includes('ius civile'))!;
     expect(romana.ressalva).toContain('Bobbio');
     expect(romana.ressalva).toContain('Del Vecchio');

@@ -6,8 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 /**
- * Portão verificar-travessao-arvore (plano do CTO, 6.3 e F1.2). Reprova U+2014 e
- * U+2013 em todo arquivo cifrado, lido da working tree destravada. Isenção única:
+ * Portão verificar-travessao-arvore (plano do CTO, 6.3, E7 e F1.2b). Reprova
+ * U+2014 e U+2013 no que chega ao leitor: arquivo cifrado das classes que
+ * varrem (src/conteudo, src/dados, site, mockups), lido da working tree
+ * destravada. Caminho cifrado sem classe reprova (falha fechada). Isenção única:
  * o campo "blocos" do texto integral (src/core/conteudo/semTextoFiel.ts:10-13).
  *
  * Os caracteres de travessão aparecem aqui só como escape (\u2014, \u2013), para
@@ -19,8 +21,13 @@ const RAIZ_REPO = resolve(AQUI, '../..');
 const SCRIPT = join(RAIZ_REPO, 'scripts/verificar-travessao-arvore.sh');
 const EM = '\u2014';
 const EN = '\u2013';
+const SINTETICO = 'src/conteudo/sintetico';
 const ATRIBUTOS =
-  'docs/** filter=git-crypt diff=git-crypt\nsrc/conteudo/** filter=git-crypt diff=git-crypt\n.gitattributes !filter !diff\n';
+  'docs/** filter=git-crypt diff=git-crypt\n' +
+  'src/conteudo/** filter=git-crypt diff=git-crypt\n' +
+  'novo/** filter=git-crypt diff=git-crypt\n' +
+  '.gitattributes !filter !diff\n';
+const RESUMO_LIMPO = 'Texto sintetico sem travessao.\n';
 
 const TEXTO_INTEGRAL_COM_BLOCO = (travessaoNoTitulo: string, travessaoNoBloco: string): string =>
   'export const textoIntegral: TextoIntegral = {\n' +
@@ -54,22 +61,25 @@ function git(cwd: string, args: string[]): void {
   );
 }
 
-/** Fixture com git-crypt destravado: docs/nota.md limpo, texto integral com travessões onde se pede. */
-function fixture(docs: string, textoIntegral: string | undefined): string {
+/**
+ * Fixture com git-crypt destravado. Por padrão há um resumo limpo em src/conteudo
+ * (para o piso de varredura ter o que analisar); `arquivos` acrescenta ou troca.
+ */
+function fixture(arquivos: Record<string, string>, atributos: string = ATRIBUTOS): string {
   const raiz = mkdtempSync(join(tmpdir(), 'portao-travessao-'));
   temporarios.push(raiz);
   git(raiz, ['init', '-q', '.']);
   execFileSync('git-crypt', ['init'], { cwd: raiz, stdio: 'ignore' });
-  writeFileSync(join(raiz, '.gitattributes'), ATRIBUTOS);
-  mkdirSync(join(raiz, 'docs'));
-  writeFileSync(join(raiz, 'docs/nota.md'), docs);
-  const arquivos = ['.gitattributes', 'docs/nota.md'];
-  if (textoIntegral !== undefined) {
-    mkdirSync(join(raiz, 'src/conteudo/sintetico'), { recursive: true });
-    writeFileSync(join(raiz, 'src/conteudo/sintetico/textoIntegral.ts'), textoIntegral);
-    arquivos.push('src/conteudo/sintetico/textoIntegral.ts');
+  const todos: Record<string, string> = {
+    [`${SINTETICO}/resumo.ts`]: RESUMO_LIMPO,
+    ...arquivos,
+    '.gitattributes': atributos
+  };
+  for (const [caminho, conteudo] of Object.entries(todos)) {
+    mkdirSync(dirname(join(raiz, caminho)), { recursive: true });
+    writeFileSync(join(raiz, caminho), conteudo);
   }
-  git(raiz, ['add', ...arquivos]);
+  git(raiz, ['add', ...Object.keys(todos)]);
   git(raiz, ['commit', '-q', '-m', 'teste: travessao']);
   return raiz;
 }
@@ -91,39 +101,55 @@ function rodar(raiz: string): { rc: number; saida: string } {
 }
 
 describe('verificar-travessao-arvore: caminho verde', () => {
-  it('cifrados sem travessão e travessão só dentro de "blocos" do texto integral: sai 0', () => {
-    const raiz = fixture('Texto sintetico sem travessao.\n', TEXTO_INTEGRAL_COM_BLOCO('sem', EM));
+  it('cifrados que varrem sem travessão e travessão só dentro de "blocos" do texto integral: sai 0', () => {
+    const raiz = fixture({
+      [`${SINTETICO}/textoIntegral.ts`]: TEXTO_INTEGRAL_COM_BLOCO('sem', EM)
+    });
     const { rc, saida } = rodar(raiz);
     expect(rc, saida).toBe(0);
-    expect(saida).toMatch(/falharam=0/);
+    expect(saida).toMatch(/encontrados=0 analisados=\d+ falharam=0 sem_classe=0/);
+  });
+
+  it('U+2014 em arquivo interno (docs/, não varre): sai 0 (caso novo)', () => {
+    const raiz = fixture({ 'docs/nota.md': `Texto com ${EM} interno.\n` });
+    const { rc, saida } = rodar(raiz);
+    expect(rc, saida).toBe(0);
+    expect(saida).toMatch(/encontrados=0/);
   });
 });
 
 describe('verificar-travessao-arvore: sabotagens vermelhas (L-36)', () => {
-  it('U+2014 em arquivo cifrado de docs/: sai 1 e aponta o arquivo', () => {
-    const raiz = fixture(`Texto com ${EM} plantado.\n`, undefined);
+  it('U+2014 em arquivo cifrado que varre (src/conteudo): sai 1 e aponta o arquivo', () => {
+    const raiz = fixture({ [`${SINTETICO}/resumo.ts`]: `Texto com ${EM} plantado.\n` });
     const { rc, saida } = rodar(raiz);
     expect(rc).toBe(1);
-    expect(saida).toContain('docs/nota.md');
+    expect(saida).toContain(`${SINTETICO}/resumo.ts`);
   });
 
-  it('U+2013 (en-dash) em arquivo cifrado de docs/: sai 1', () => {
-    const raiz = fixture(`Texto com ${EN} plantado.\n`, undefined);
+  it('U+2013 (en-dash) em arquivo cifrado que varre: sai 1', () => {
+    const raiz = fixture({ [`${SINTETICO}/resumo.ts`]: `Texto com ${EN} plantado.\n` });
     const { rc } = rodar(raiz);
     expect(rc).toBe(1);
   });
 
   it('travessão no título do texto integral, fora de "blocos": sai 1 (a isenção não cobre o título)', () => {
-    const raiz = fixture('Texto sintetico sem travessao.\n', TEXTO_INTEGRAL_COM_BLOCO(EM, 'sem'));
+    const raiz = fixture({
+      [`${SINTETICO}/textoIntegral.ts`]: TEXTO_INTEGRAL_COM_BLOCO(EM, 'sem')
+    });
     const { rc, saida } = rodar(raiz);
     expect(rc).toBe(1);
-    expect(saida).toContain('src/conteudo/sintetico/textoIntegral.ts');
+    expect(saida).toContain(`${SINTETICO}/textoIntegral.ts`);
   });
 
-  it('piso: nenhum arquivo cifrado analisado é varredura quebrada, sai 1', () => {
-    const raiz = fixture('texto sintetico\n', undefined);
-    writeFileSync(join(raiz, '.gitattributes'), '.gitattributes !filter !diff\n');
-    git(raiz, ['commit', '-q', '-am', 'teste: sem cifrados']);
+  it('caminho cifrado sem classe (novo/x.md): sai 1 e cita o caminho (falha fechada)', () => {
+    const raiz = fixture({ 'novo/x.md': 'texto sintetico sem travessao.\n' });
+    const { rc, saida } = rodar(raiz);
+    expect(rc).toBe(1);
+    expect(saida).toContain('novo/x.md');
+  });
+
+  it('piso: nenhum arquivo que varre é varredura quebrada, sai 1', () => {
+    const raiz = fixture({}, '.gitattributes !filter !diff\n');
     const { rc, saida } = rodar(raiz);
     expect(rc).toBe(1);
     expect(saida).toMatch(/analisados=0/);

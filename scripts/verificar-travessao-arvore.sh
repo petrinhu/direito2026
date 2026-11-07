@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
-# Portão de travessão na árvore (plano do CTO do login único, 6.3 e F1.2; L-36).
+# Portão de travessão no que chega ao leitor (plano do CTO do login único, 6.3, E7 e
+# F1.2b; L-32, L-36). Reprova U+2014 (em-dash) e U+2013 (en-dash) em todo arquivo
+# CIFRADO que varre, lido da working tree destravada. Os caminhos vêm do
+# .gitattributes real (git check-attr), não de uma lista copiada.
 #
-# Reprova U+2014 (em-dash) e U+2013 (en-dash) em todo arquivo CIFRADO, lido da
-# working tree destravada. Os caminhos vêm do .gitattributes real (git check-attr),
-# não de uma lista copiada. Escopo: TODO cifrado. O hook global
-# (~/.claude/hooks/no_mdash.py, is_user_facing) marca só uma parte deles como voz
-# pública; o plano 6.3 pede "nos caminhos cifrados", e essa diferença de escopo é
-# decisão do líder, registrada no relatório da F1.2.
+# Classes (E7). VARRE: conteúdo de estudo e voz pública, src/conteudo/, src/dados/,
+# site/ e mockups/. INTERNO: docs/, TODO.md, tests/caracterizacao/ e
+# src/ui/area-restrita/emblema/, que não chegam ao leitor pelo site e não varrem.
+# Caminho cifrado que não cai em nenhuma das duas reprova (falha fechada, L-17): uma
+# classe nova exige decisão escrita antes de entrar aqui. docs/ fica fora de propósito:
+# os achados de docs/ ficam como estão, sem reescrever nota interna.
 #
 # Isenção única: o campo "blocos" do texto integral (transcrição fiel de obra de
-# terceiro), que é a faixa entre a linha '"blocos": [' e o fechamento '  ]' de
-# cada textoIntegral.ts. Base: src/core/conteudo/semTextoFiel.ts:10-13, ordem do
-# líder de 21/10/2026 (GODS_LAWS.md, L-32). Título e fonte do mesmo arquivo
-# continuam sob a regra. A exceção do rodapé foi REVOGADA em 20/10/2026
-# (tests/unidade/design.semTravessao.spec.ts:13-17) e não existe mais.
+# terceiro), a faixa entre a linha '"blocos": [' e o fechamento '  ]' de cada
+# textoIntegral.ts (base: src/core/conteudo/semTextoFiel.ts:10-13; L-32). Título e
+# fonte do mesmo arquivo continuam sob a regra.
 #
-# Saída: encontrados = linhas com travessão fora da isenção; analisados = arquivos
-# cifrados lidos; falharam = arquivos com ao menos um achado. Piso: zero arquivo
-# cifrado é varredura quebrada (falha fechada). Os achados saem como arquivo:linha,
-# sem o conteúdo da linha.
+# Saída: encontrados = linhas com travessão fora da isenção; analisados = arquivos que
+# varrem, lidos; falharam = arquivos com ao menos um achado; sem_classe = caminhos
+# cifrados fora das duas classes. Piso: zero arquivo que varre é varredura quebrada
+# (falha fechada). Os achados saem como arquivo:linha, sem o conteúdo da linha.
 #
 # Variável: REPO_RAIZ (padrão: a raiz deste repositório), para provar o vermelho
 # numa cópia descartável.
@@ -30,22 +31,41 @@ if ! cd "$RAIZ"; then
   exit 1
 fi
 
+VARRE='^(src/conteudo/|src/dados/|site/|mockups/)'
+INTERNO='^(docs/|TODO\.md$|tests/caracterizacao/|src/ui/area-restrita/emblema/)'
+
 # Dois processos no total (ls-files, check-attr), nenhum por arquivo (L-11 item 6).
-arquivos=()
+cifrados=()
 while IFS= read -r -d '' caminho && IFS= read -r -d '' _atributo && IFS= read -r -d '' valor; do
   if [ "$valor" = "git-crypt" ]; then
-    arquivos+=("$caminho")
+    cifrados+=("$caminho")
   fi
 done < <(git ls-files -z | git check-attr -z --stdin filter)
 
-if [ "${#arquivos[@]}" -eq 0 ]; then
-  echo "verificar-travessao-arvore: encontrados=0 analisados=0 falharam=0"
-  echo "  ZERO arquivo cifrado analisado: varredura quebrada (falha fechada)" >&2
+varre=()
+sem_classe=()
+for caminho in "${cifrados[@]}"; do
+  if [[ "$caminho" =~ $VARRE ]]; then
+    varre+=("$caminho")
+  elif [[ "$caminho" =~ $INTERNO ]]; then
+    :
+  else
+    sem_classe+=("$caminho")
+  fi
+done
+
+for caminho in "${sem_classe[@]}"; do
+  echo "verificar-travessao-arvore: CAMINHO CIFRADO SEM CLASSE (falha fechada): $caminho"
+done
+
+if [ "${#varre[@]}" -eq 0 ]; then
+  echo "verificar-travessao-arvore: encontrados=0 analisados=0 falharam=0 sem_classe=${#sem_classe[@]}"
+  echo "  ZERO arquivo que varre: varredura quebrada (falha fechada)" >&2
   exit 1
 fi
 
 # LC_ALL=C: awk compara bytes. U+2014 = E2 80 94; U+2013 = E2 80 93.
-LC_ALL=C awk -v analisados="${#arquivos[@]}" '
+LC_ALL=C awk -v analisados="${#varre[@]}" -v sem_classe="${#sem_classe[@]}" '
   BEGIN { EM = "\342\200\224"; EN = "\342\200\223"; encontrados = 0; falharam = 0 }
   FNR == 1 {
     dentro = 0
@@ -64,7 +84,7 @@ LC_ALL=C awk -v analisados="${#arquivos[@]}" '
     }
   }
   END {
-    printf "verificar-travessao-arvore: encontrados=%d analisados=%d falharam=%d\n", encontrados, analisados, falharam
-    exit (encontrados > 0 ? 1 : 0)
+    printf "verificar-travessao-arvore: encontrados=%d analisados=%d falharam=%d sem_classe=%d\n", encontrados, analisados, falharam, sem_classe
+    exit (encontrados > 0 || sem_classe > 0 ? 1 : 0)
   }
-' "${arquivos[@]}"
+' "${varre[@]}"

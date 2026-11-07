@@ -25,7 +25,7 @@ if [ "$falhou" -ne 0 ]; then
   exit 1
 fi
 passo "partição: nenhum trecho de cifrado em arquivo em claro (janela de 40)" node --import tsx scripts/verificar-particao.ts
-passo "travessão na árvore cifrada (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
+passo "travessão no que chega ao leitor (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
 passo "tipos (vue-tsc)" npx vue-tsc --noEmit
 passo "lint" npx eslint . --max-warnings 0
 passo "formatação" npx prettier --check .

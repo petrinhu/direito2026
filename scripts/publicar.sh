@@ -1,64 +1,73 @@
 #!/usr/bin/env bash
-# Comando único de publicação do Caderno de Direito (npm run publicar).
+# Publicação do Caderno de Direito (plano do CTO do login único, 7.1, 7.1.1 e 8; LU-F4.3).
 #
 # Uso:
 #   npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco]
+#   npm run publicar -- --preparar <recurso|correcao|construcao> [--versao A.B.C.D]
+#   npm run publicar -- --concluir
 #
-# Ordem: confere branch e árvore; calcula a versão pela regra A.B.C.D; grava
-# package.json e commita chore(release); cria a tag anotada; prepara um clone
-# descartável em .worktrees/ no commit da tag (git clone + git-crypt unlock) e
-# roda o preci nele; publica por rsync em duas
-# etapas; confere o ar (md5 de cada arquivo, API, raiz intacta e
-# scripts/verificar-publicacao.sh); só então envia branch e tag ao GitHub.
+# Modo normal: commit de release (só package.json), tag anotada, clone descartável em .worktrees/
+# com git-crypt destravado e preci. Depois do preci: pacote separado (dist-pacote/webroot e
+# dist-pacote/app), app em versoes/v<versão> (fora do webroot), webroot, ponteiro atual trocado
+# com ln -sfn em nome temporário e mv -T (atômico), poda (guarda 2 versões: a nova e a anterior, que
+# é o rollback). Conferência do ar: md5 de cada arquivo no disco (webroot e app, inclusive .htaccess
+# e api/), conferir-portao no PHP do servidor, e a conferência anônima de verificar-publicacao.sh
+# nos dois hosts. Só com tudo verde envia branch e tag ao git, e prova com git ls-remote.
+#
+# --preparar: a mesma sequência até o preci e P1 a P3 (app em versoes/, dados da Júri no privado
+# aditivo, webroot em direito2026_webroot_novo). Não troca o que o público vê e não envia nada ao git.
+# --concluir: depois da virada manual (V2 a V8 do plano), confere o ar, envia branch e tag e prova
+# no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
 # --seco: confere e imprime o plano, sem alterar nada.
-# Se o preci falhar, desfaz SÓ o que este script fez (tag e commit de release
-# locais). Depois do rsync não desfaz nada: remoto não tem desfazer automático.
-# Nunca imprime segredo nem o conteúdo de CADERNO_RESTRITO nem de
-# CADERNO_RESTRITO_JURI. Sem --no-verify, sem force, sem amend (GODS_LAWS L-24, L-25).
+# Se o preci falhar, desfaz SÓ o que este script fez (tag e commit de release locais). Depois do
+# primeiro escrito no destino não desfaz nada: o remoto não tem desfazer automático.
+# Nunca imprime segredo, nem conteúdo de CADERNO_RESTRITO, de CADERNO_RESTRITO_JURI nem da Júri.
+# Sem --no-verify, sem force, sem amend (GODS_LAWS L-24, L-25).
+#
+# Variáveis de destino (PUBLICAR_*): padrão = produção (alias ssh hostinger). Vazio em
+# PUBLICAR_DESTINO_HOST = destino local, só para ensaio (rsync local, sem ssh). Ver docs/publicacao.md.
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$RAIZ"
 
 BRANCH_PUBLICA=main
-REMOTO=github
-DOMINIO=https://direito2026.drpetrus.top
-DESTINO_RSYNC=hostinger:domains/drpetrus.top/public_html/direito2026/
-RAIZ_PRINCIPAL=https://drpetrus.top/
-MD5_RAIZ_PRINCIPAL=6e66aeb03564
-CONTEUDO_RESTRITO_PADRAO=/home/petrus/IDrive/Documentos/direito/site_direito2026_restrito/conteudo/interdisciplinar.json
+REMOTO="${PUBLICAR_REMOTO:-github}"
+# Destino. DESTINO_HOST vazio = local (só ensaio). DESTINO_RAIZ é relativo ao home do destino.
+DESTINO_HOST="${PUBLICAR_DESTINO_HOST-hostinger}"
+DESTINO_RAIZ="${PUBLICAR_DESTINO_RAIZ-domains/drpetrus.top}"
+DESTINO_WEBROOT="${PUBLICAR_DESTINO_WEBROOT-$DESTINO_RAIZ/public_html/direito2026}"
+DESTINO_WEBROOT_NOVO="${PUBLICAR_DESTINO_WEBROOT_NOVO-$DESTINO_RAIZ/direito2026_webroot_novo}"
+DESTINO_APP="${PUBLICAR_DESTINO_APP-$DESTINO_RAIZ/direito2026_app}"
+DESTINO_PRIVADO="${PUBLICAR_DESTINO_PRIVADO-$DESTINO_RAIZ/direito2026_privado}"
+DOMINIO="${PUBLICAR_DOMINIO-https://direito2026.drpetrus.top}"
+DOMINIO_PAI="${PUBLICAR_DOMINIO_PAI-https://drpetrus.top}"
+HOST_PUBLICO="${PUBLICAR_HOST_PUBLICO-direito2026.drpetrus.top}"
+COMPRESSAO="${PUBLICAR_COMPRESSAO-1}"
+RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
+MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-6e66aeb03564}"
 PRECI_TMPDIR=/var/tmp/preci-pub
+# Pacote de cada versão, guardado para --concluir (700). Sai do /var/tmp, nunca de dentro do repositório.
+PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES:-/var/tmp/publicar-pacote}"
 # Clone descartável do preci (L-55: subpasta do projeto, ignorada pelo git).
-# CLONE é criado e apagado só por este script (ver apagar_clone).
 PASTA_CLONES="$RAIZ/.worktrees"
 CLONE=""
 CHAVE_GIT_CRYPT="${CADERNO_CHAVE_GIT_CRYPT:-$HOME/.config/gusworld/git-crypt-key}"
-CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-$CONTEUDO_RESTRITO_PADRAO}"
-# JSON privado da Júri: sem padrão de propósito. Cadeira publicada sem ele
-# reprova o preci (falha fechada); string vazia conta como ausente.
+CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-/home/petrus/IDrive/Documentos/direito/site_direito2026_restrito/conteudo/interdisciplinar.json}"
+# JSON privado da Júri e pasta do acervo (imagens/ e acervo.json): sem padrão de propósito.
 CADERNO_RESTRITO_JURI="${CADERNO_RESTRITO_JURI:-}"
+CADERNO_ACERVO_JURI="${CADERNO_ACERVO_JURI:-}"
 
 # Funções de cópia dos dispositivos.ts (biblioteca sem efeito ao ser carregada).
 # shellcheck source=scripts/apoio/dispositivos-publicacao.sh
 source "$RAIZ/scripts/apoio/dispositivos-publicacao.sh"
 
-# Higiene da produção, com uma geração de folga. Só apaga o que não está no
-# pacote atual, nem no manifesto publicado antes (que está no ar), e nunca fora
-# de assets/ e workbox-*.js sem --apagar-fora-de-assets. Teto por publicação:
-TETO_APAGAR=500
-MANIFESTO_ATUAL=.publicacao-manifesto.txt
-MANIFESTO_ANTERIOR=.publicacao-manifesto-anterior.txt
+TETO_APAGAR_WEBROOT=50
+TETO_VERSOES=5
 SSH_OPCOES="ssh -o BatchMode=yes -o ConnectTimeout=20"
-# Etapa 1: tudo menos os arquivos de entrada (que sobem por último, na etapa 2).
-ETAPA1_EXCLUI=(--exclude=/index.html --exclude=/sw.js --exclude=/404.html --exclude=/manifest.webmanifest)
-ETAPA2_INCLUI=(--include=/index.html --include=/sw.js --include=/404.html --include=/manifest.webmanifest --exclude='*')
-APAGAR_FORA=0
-APAGAR_HABILITADO=1
-MANIFESTO_ATUAL_EXISTE=0
-PUSH_MAIN_FEITO=0
-PUSH_TAG_FEITO=0
 
+MODO=normal
 TIPO=""
 VERSAO_FORCADA=""
 FORCADA_DEFINIDA=0
@@ -67,6 +76,9 @@ VERSAO_ATUAL=""
 VERSAO_NOVA=""
 SHA_RELEASE=""
 ESPACO=""
+PACOTE_LOCAL=""
+REGRAS=""
+CAMINHOS=""
 
 # Estado para desfazer só o que foi criado aqui (lido pelo trap de saída).
 PACKAGE_ALTERADO=0
@@ -74,6 +86,8 @@ RELEASE_FEITO=0
 TAG_CRIADA=0
 DEPLOY_INICIADO=0
 DIVERGENCIAS=0
+PUSH_MAIN_FEITO=0
+PUSH_TAG_FEITO=0
 
 recusar() {
   echo "publicar: RECUSADO: $*" >&2
@@ -81,7 +95,9 @@ recusar() {
 }
 
 uso() {
-  echo "uso: npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco] [--apagar-fora-de-assets]" >&2
+  echo "uso: npm run publicar -- <recurso|correcao|construcao> [--versao A.B.C.D] [--seco]" >&2
+  echo "     npm run publicar -- --preparar <recurso|correcao|construcao> [--versao A.B.C.D]" >&2
+  echo "     npm run publicar -- --concluir" >&2
   exit 1
 }
 
@@ -90,6 +106,16 @@ ler_argumentos() {
     case "$1" in
       --seco)
         SECO=1
+        shift
+        ;;
+      --preparar)
+        [ "$MODO" = normal ] || uso
+        MODO=preparar
+        shift
+        ;;
+      --concluir)
+        [ "$MODO" = normal ] || uso
+        MODO=concluir
         shift
         ;;
       --versao)
@@ -103,10 +129,6 @@ ler_argumentos() {
         FORCADA_DEFINIDA=1
         shift
         ;;
-      --apagar-fora-de-assets)
-        APAGAR_FORA=1
-        shift
-        ;;
       -*)
         echo "publicar: opção desconhecida: $1" >&2
         uso
@@ -118,6 +140,12 @@ ler_argumentos() {
         ;;
     esac
   done
+  if [ "$MODO" = concluir ]; then
+    [ -z "$TIPO" ] || recusar "--concluir não recebe tipo: a versão vem do package.json do HEAD"
+    [ "$SECO" = 0 ] || recusar "--seco não se aplica a --concluir"
+    [ "$FORCADA_DEFINIDA" = 0 ] || recusar "--concluir não recebe --versao"
+    return 0
+  fi
   [ -n "$TIPO" ] || uso
   case "$TIPO" in
     recurso | correcao | construcao) ;;
@@ -163,25 +191,22 @@ imprimir_plano() {
     chave=presente
   fi
   cat <<PLANO
-publicar: plano (--seco, nada foi alterado)
+publicar: plano (--seco, nada foi alterado; modo: $MODO)
   tipo:                        $TIPO
   versão atual (package.json): $VERSAO_ATUAL
   versão nova:                 $VERSAO_NOVA
-  1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json)
-  2. cria a tag anotada v$VERSAO_NOVA
-  3. clone descartável em $PASTA_CLONES/pub-clone.* no commit da tag (git clone, git-crypt unlock com a chave: $chave), apaga os dispositivos.ts que sobraram de geração anterior e copia os atuais
-  4. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-AUSENTE, a publicação real recusa})
-  5. rsync em 2 etapas para $DESTINO_RSYNC
-     etapa 1: tudo menos index.html, sw.js, 404.html, manifest.webmanifest; apaga no
-              servidor só assets/ e workbox-*.js fora do pacote e do manifesto anterior
-              (teto $TETO_APAGAR; fora disso aborta, salvo --apagar-fora-de-assets)
-     etapa 2: index.html, sw.js, 404.html, manifest.webmanifest (sem apagar nada)
-     dados do servidor (usuarios.json, sessoes/, conteudo/ etc.) ficam protegidos
-  6. conferência: md5 de cada arquivo do dist, api/saude.php, api/conteudo.php (401),
-     api/juri/conteudo.php (401), raiz $RAIZ_PRINCIPAL (md5 $MD5_RAIZ_PRINCIPAL),
-     scripts/verificar-publicacao.sh
-  7. só com 6 verde: git push $REMOTO $BRANCH_PUBLICA e git push $REMOTO v$VERSAO_NOVA,
-     provados por git ls-remote
+  destino:                     ${DESTINO_HOST:-LOCAL (ensaio)}${DESTINO_HOST:+:}$DESTINO_RAIZ
+  1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json); tag anotada v$VERSAO_NOVA
+  2. clone descartável em $PASTA_CLONES/pub-clone.* no commit da tag (git-crypt unlock com a chave: $chave)
+  3. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-AUSENTE, a publicação real recusa})
+     o preci roda o build, que separa o pacote em dist-pacote/webroot e dist-pacote/app
+  4. app: $DESTINO_APP/versoes/v$VERSAO_NOVA (rsync), ponteiro atual com ln -sfn e mv -T
+  5. webroot: $DESTINO_WEBROOT (rsync; apaga só o que não está no pacote, teto $TETO_APAGAR_WEBROOT)
+  6. poda: guarda 2 versões em $DESTINO_APP/versoes (a nova e a anterior, que é o rollback)
+  7. conferir o ar: md5 de cada arquivo do webroot e do app, conferir-portao no PHP do servidor,
+     verificar-publicacao.sh anônimo nos dois hosts ($DOMINIO e $DOMINIO_PAI), raiz principal
+  8. só com 7 verde: git push $REMOTO $BRANCH_PUBLICA e git push $REMOTO v$VERSAO_NOVA, provados por git ls-remote
+  Em --preparar: 4 e 5 vão a versoes/ e a $DESTINO_WEBROOT_NOVO, com o ponteiro, sem trocar o webroot público; 7 e 8 ficam para --concluir.
 PLANO
 }
 
@@ -202,6 +227,27 @@ conferir_remoto() {
   fi
   [ -f "$CONTEUDO_RESTRITO" ] ||
     recusar "CADERNO_RESTRITO aponta para arquivo inexistente (o conteúdo não é mostrado)"
+}
+
+# Destino: falha fechada. Um destino local com ':' seria lido pelo rsync como host remoto; e a Júri
+# antiga (juri2026_privado) e a raiz public_html nunca são alvo deste script (E15 c).
+conferir_destinos() {
+  if [ -z "$DESTINO_HOST" ]; then
+    case "$DESTINO_RAIZ$DESTINO_WEBROOT$DESTINO_WEBROOT_NOVO$DESTINO_APP$DESTINO_PRIVADO" in
+      *:*) recusar "destino local com ':' (o rsync lê como host remoto); use caminho sem ':'" ;;
+    esac
+  fi
+  case "$DESTINO_WEBROOT$DESTINO_WEBROOT_NOVO$DESTINO_APP$DESTINO_PRIVADO" in
+    *juri2026*) recusar "destino aponta para juri2026_privado: fora do escopo deste script (E15 c)" ;;
+  esac
+  [ "$(basename -- "$DESTINO_WEBROOT")" = direito2026 ] ||
+    recusar "o webroot de destino tem de se chamar direito2026 (nunca a raiz public_html)"
+  [ "$(basename -- "$DESTINO_WEBROOT_NOVO")" = direito2026_webroot_novo ] ||
+    recusar "o webroot de preparo tem de se chamar direito2026_webroot_novo"
+  [ "$(basename -- "$DESTINO_APP")" = direito2026_app ] ||
+    recusar "a pasta do app tem de se chamar direito2026_app"
+  [ "$(basename -- "$DESTINO_PRIVADO")" = direito2026_privado ] ||
+    recusar "a pasta privada tem de se chamar direito2026_privado"
 }
 
 gravar_e_commitar() {
@@ -235,8 +281,7 @@ criar_tag() {
 }
 
 # Clone do commit de release, com a árvore destravada pela chave do git-crypt.
-# O clone é cópia própria (não é worktree): worktree não aceita o filtro do
-# git-crypt (medido: git worktree add falha com rc=128).
+# O clone é cópia própria (não é worktree): worktree não aceita o filtro do git-crypt (T5).
 preparar_clone() {
   mkdir -p "$PASTA_CLONES"
   CLONE="$(mktemp -d "$PASTA_CLONES/pub-clone.XXXXXX")" ||
@@ -252,9 +297,8 @@ preparar_clone() {
   ln -sfn "$RAIZ/node_modules" "$CLONE/node_modules"
 }
 
-# Apaga o clone deste script, por caminho exato. Nunca apaga nada fora de
-# $PASTA_CLONES/pub-clone.*. Apagar o clone também apaga a cópia da chave do
-# git-crypt que o unlock grava em .git/git-crypt/keys.
+# Apaga o clone deste script, por caminho exato. Nunca apaga nada fora de $PASTA_CLONES/pub-clone.*.
+# Apagar o clone também apaga a cópia da chave do git-crypt que o unlock grava em .git/git-crypt/keys.
 apagar_clone() {
   [ -n "$CLONE" ] || return 0
   if [ "$(dirname -- "$CLONE")" != "$PASTA_CLONES" ] ||
@@ -279,6 +323,12 @@ conferir_insumos() {
     recusar "CADERNO_CAIXA vazio: o preci não roda na sessão viva (L-50). Passe a caixa: CADERNO_CAIXA=/var/tmp/site-login-unico/caixa.sh npm run publicar -- <tipo>; nada foi commitado"
   if [ ! -x "$CADERNO_CAIXA" ]; then
     recusar "CADERNO_CAIXA não é executável; nada foi commitado"
+  fi
+  if [ "${MODO:-normal}" = preparar ]; then
+    [ -d "${CADERNO_ACERVO_JURI:-/nao-definido}/imagens" ] && [ -f "${CADERNO_ACERVO_JURI:-/nao-definido}/acervo.json" ] ||
+      recusar "--preparar precisa de CADERNO_ACERVO_JURI (pasta com imagens/ e acervo.json); nada foi commitado"
+    [ -f "${CADERNO_RESTRITO_JURI:-/nao-definido}" ] ||
+      recusar "--preparar precisa de CADERNO_RESTRITO_JURI (JSON da Júri); nada foi commitado"
   fi
 }
 
@@ -306,11 +356,27 @@ rodar_preci() {
   echo "publicar: preci verde"
 }
 
-# Regras de proteção fixas: o que o servidor escreve sozinho. Hoje isso fica
-# FORA de direito2026/ (public/api/nucleo/config.php:32-37 resolve $priv como
-# irmão de public_html; armazenamento.php:208-216 e respostas.php:83 gravam lá).
-# Estas regras são cinto de segurança: se algum dia caírem dentro do destino,
-# nunca são apagadas.
+# O pacote que o preci acabou de separar. Ausência é falha: nada foi publicado ainda.
+conferir_pacote_local() {
+  PACOTE_LOCAL="$CLONE/dist-pacote"
+  [ -f "$PACOTE_LOCAL/app/manifesto.json" ] && [ -f "$PACOTE_LOCAL/webroot/api/portao.php" ] ||
+    recusar "o preci não deixou dist-pacote/ no clone (webroot e app); nada foi publicado"
+}
+
+# Guarda o pacote desta versão, para --concluir conferir e enviar sem refazer o preci (700).
+guardar_pacote() {
+  local destino="$PASTA_PACOTES/v$VERSAO_NOVA"
+  mkdir -p -m 700 "$PASTA_PACOTES"
+  rm -rf -- "$destino"
+  mkdir -p -m 700 "$destino"
+  cp -a "$PACOTE_LOCAL/app" "$PACOTE_LOCAL/webroot" "$destino/"
+  PACOTE_LOCAL="$destino"
+  echo "publicar: pacote da v$VERSAO_NOVA guardado em $destino (700)"
+}
+
+# Regras de proteção do envio: o que o servidor escreve sozinho e o que não é do pacote. Nunca apagado.
+# Dados do Caderno ficam no privado, fora deste envio. As linhas da Júri (P /acervo.json, P /imagens/)
+# são cinto de segurança (LU-F2.2): se algum dia caírem no destino, a publicação não os apaga.
 regras_fixas_protecao() {
   cat <<'REGRAS'
 # dados gravados pelo PHP (public/api/nucleo/contas.php:24, limite.php:51,
@@ -324,16 +390,7 @@ P pausado-*
 P *.lock
 P sessoes/
 P conteudo/
-# manifestos da própria higiene
-P .publicacao-manifesto.txt
-P .publicacao-manifesto-anterior.txt
-# Júri (public/api/nucleo/config.php, d26_dir_privado): o diretório privado é
-# juri2026_privado, irmão de public_html, logo FORA de public_html/direito2026/ e
-# fora do alcance deste rsync. Mesmo assim, por cinto de segurança, acervo.json
-# e imagens/ ficam protegidos: se algum dia caírem no destino, a próxima publicação
-# não os apaga. Os demais arquivos da Júri
-# (usuarios.json, tentativas.json, segredo.key, sessoes/, conteudo/) já estão
-# acima, em comum com o Interdisciplinar.
+# Júri (public/api/nucleo/config.php, d26_dir_privado): cinto de segurança, LU-F2.2.
 P /acervo.json
 P /imagens/
 # arquivos que a hospedagem põe no diretório
@@ -344,195 +401,232 @@ P .user.ini
 REGRAS
 }
 
-# Baixa do destino os manifestos publicados (atual e anterior). Antes, lista o
-# destino: se a listagem falhar, aborta (não tratar falha de rede como "sem
-# manifesto", que liberaria apagar a geração que está no ar).
-ler_manifestos_remotos() {
-  local listagem="$ESPACO/listagem-destino.txt" nome
-  APAGAR_HABILITADO=1
-  MANIFESTO_ATUAL_EXISTE=0
-  mkdir -p "$ESPACO/manifestos-remotos"
-  rsync --list-only -e "$SSH_OPCOES" "$DESTINO_RSYNC" > "$listagem" ||
-    recusar "não consegui listar o destino (rede ou chave SSH); nada foi apagado nem enviado"
-  for nome in "$MANIFESTO_ATUAL" "$MANIFESTO_ANTERIOR"; do
-    if awk -v n="$nome" '$NF==n{achou=1} END{exit !achou}' "$listagem"; then
-      rsync -e "$SSH_OPCOES" "$DESTINO_RSYNC$nome" "$ESPACO/manifestos-remotos/" ||
-        recusar "$nome existe no destino mas não foi baixado"
-      if [ "$nome" = "$MANIFESTO_ATUAL" ]; then
-        MANIFESTO_ATUAL_EXISTE=1
-      fi
-    fi
-  done
-  if [ "$MANIFESTO_ATUAL_EXISTE" = 0 ]; then
-    protege_versao_no_ar
-  fi
-}
-
-# Primeira publicação com este comando (sem manifesto no servidor): a versão no
-# ar é lida da lista de precache do sw.js publicado, que é o que o navegador já
-# tem em cache. Se não der para ler, NÃO se apaga nada nesta publicação.
-protege_versao_no_ar() {
-  local sw="$ESPACO/sw-no-ar.js" lista="$ESPACO/versao-no-ar.txt" qtd
-  if ! curl -sf --max-time 30 -o "$sw" "$DOMINIO/sw.js"; then
-    avisar_sem_apagar "não consegui baixar $DOMINIO/sw.js"
-    return 0
-  fi
-  qtd=$(grep -o -E "url *: *[\"'][^\"']+[\"']" "$sw" | wc -l || true)
-  if [ "${qtd:-0}" -eq 0 ]; then
-    avisar_sem_apagar "o sw.js publicado não tem lista de precache legível"
-    return 0
-  fi
-  {
-    printf '%s\n' index.html sw.js 404.html manifest.webmanifest
-    grep -o -E "url *: *[\"'][^\"']+[\"']" "$sw" | sed -E "s/^url *: *[\"']//; s/[\"']\$//" || true
-    grep -o -E '\./workbox-[A-Za-z0-9_-]+' "$sw" | sed -E 's|^\./||; s|$|.js|' || true
-  } | sed -E 's|^\./||; s|^/||' | sort -u > "$lista"
-  if grep -q -v -E '^[A-Za-z0-9._/-]+$' "$lista"; then
-    avisar_sem_apagar "a lista de precache tem nome fora do padrão seguro"
-    return 0
-  fi
-  cp -- "$lista" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"
-  echo "publicar: primeira publicação: versão no ar protegida por $(grep -c . "$lista") caminho(s) lidos do sw.js"
-}
-
-avisar_sem_apagar() {
-  APAGAR_HABILITADO=0
-  echo "publicar: AVISO: $1. Esta publicação segue SEM apagar nada no servidor." >&2
-}
-
-# Regras de proteção = fixas + tudo que está nos dois manifestos remotos.
-montar_regras_protecao() {
-  local arq
+preparar_regras() {
   REGRAS="$ESPACO/protecao.rules"
-  for arq in "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"; do
-    if [ -f "$arq" ] && grep -q -v -E '^([A-Za-z0-9._/-]+)?$' "$arq"; then
-      recusar "manifesto remoto com nome fora do padrão seguro: $arq"
-    fi
-  done
-  {
-    regras_fixas_protecao
-    printf 'P %s\nP %s\n' "$MANIFESTO_ATUAL" "$MANIFESTO_ANTERIOR"
-    for arq in "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR"; do
-      if [ -f "$arq" ]; then
-        sed -n '/./s|^|P /|p' "$arq"
-      fi
-    done
-  } > "$REGRAS"
+  regras_fixas_protecao > "$REGRAS"
 }
 
-# Simula a etapa 1 com --dry-run (-n): não escreve nada no destino. Lista o que
-# apagaria, separa o que está dentro do escopo (assets/ e workbox-*.js) e aborta
-# se passar do teto ou se houver algo fora do escopo sem --apagar-fora-de-assets.
-calcular_apagamentos() {
-  local origem="$CLONE/dist/" simulacao="$ESPACO/simulacao.txt" lista="$ESPACO/apagar.txt"
-  local total fora assets workbox
-  timeout 300 rsync -n -i -rlt --checksum --delete --timeout=60 -e "$SSH_OPCOES" \
-    --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
-    "$origem" "$DESTINO_RSYNC" > "$simulacao" 2>&1 ||
-    recusar "simulação de apagamento falhou (nada foi apagado)"
-  grep -E '^\*deleting' "$simulacao" | sed -E 's/^\*deleting +//; s|/$||' > "$lista" || true
-  total=$(grep -c . "$lista" || true)
-  assets=$(grep -c -E '^assets/' "$lista" || true)
-  workbox=$(grep -c -E '^workbox-[^/]*\.js$' "$lista" || true)
-  fora=$(grep -v -E '^(assets/|workbox-[^/]*\.js$)' "$lista" | grep -c . || true)
-  echo "publicar: apagamento previsto: $total (assets/: $assets, workbox-*.js: $workbox, fora do escopo: $fora)"
-  if [ "$fora" -gt 0 ]; then
-    grep -v -E '^(assets/|workbox-[^/]*\.js$)' "$lista" | head -n 50 | sed 's/^/publicar:   fora do escopo: /' >&2
-  fi
-  [ "$total" -le "$TETO_APAGAR" ] ||
-    recusar "apagamento previsto ($total) passa do teto de $TETO_APAGAR; nada foi apagado"
-  if [ "$fora" -gt 0 ] && [ "$APAGAR_FORA" != 1 ]; then
-    recusar "$fora caminho(s) fora de assets/ e workbox-*.js a apagar; revise a lista acima e rode de novo com --apagar-fora-de-assets"
-  fi
+# Pasta de versão no destino: a anterior, a mais nova que não é esta. Vazio se não há.
+anterior_no_destino() {
+  no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
+    grep -E '^v[0-9.]+$' | grep -v -x "v$VERSAO_NOVA" | sort -V | tail -n 1 || true
 }
 
-# Grava no destino o manifesto deste pacote e move o atual para o anterior.
-# Depois do rsync das duas etapas, para que o manifesto só mude com o pacote no ar.
-publicar_manifestos() {
-  local novo="$ESPACO/manifestos-enviar"
-  mkdir -p "$novo"
-  (cd "$CLONE/dist" && find . -type f -printf '%P\n' | sort) > "$novo/$MANIFESTO_ATUAL"
-  if [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" ]; then
-    cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ATUAL" "$novo/$MANIFESTO_ANTERIOR"
-  elif [ -f "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR" ]; then
-    cp -- "$ESPACO/manifestos-remotos/$MANIFESTO_ANTERIOR" "$novo/$MANIFESTO_ANTERIOR"
-  fi
-  # --checksum: sem ele, rsync compara tamanho e mtime, e dois manifestos de
-  # mesmo tamanho gravados no mesmo segundo parecem iguais e não são atualizados.
-  timeout 300 rsync -rlt --checksum --timeout=60 -e "$SSH_OPCOES" "$novo/" "$DESTINO_RSYNC"
-}
-
-publicar_arquivos() {
-  local origem="$CLONE/dist/"
-  local -a apagar=()
-  ler_manifestos_remotos
-  montar_regras_protecao
-  if [ "$APAGAR_HABILITADO" = 1 ]; then
-    calcular_apagamentos
-    apagar=(--delete --max-delete="$TETO_APAGAR")
+# Executa um comando de shell no destino: ssh em produção, local no ensaio.
+no_destino() {
+  if [ -n "$DESTINO_HOST" ]; then
+    # shellcheck disable=SC2086
+    $SSH_OPCOES "$DESTINO_HOST" "$1"
   else
-    echo "publicar: sem apagamento nesta publicação"
+    bash -c "$1"
   fi
-  DEPLOY_INICIADO=1
-  timeout 900 rsync -rlt --checksum "${apagar[@]}" --timeout=60 \
-    -e "$SSH_OPCOES" --filter=". $REGRAS" "${ETAPA1_EXCLUI[@]}" \
-    "$origem" "$DESTINO_RSYNC"
-  timeout 300 rsync -rlt --checksum --timeout=60 \
-    -e "$SSH_OPCOES" "${ETAPA2_INCLUI[@]}" \
-    "$origem" "$DESTINO_RSYNC"
-  publicar_manifestos
-  echo "publicar: rsync (duas etapas) e manifestos concluídos"
 }
 
-conferir_md5_dos_arquivos() {
-  local lista="$ESPACO/arquivos.txt" cfg="$ESPACO/curl.cfg" remoto="$ESPACO/remoto"
-  local nome hash total analisados=0 conferidos=0 curl_rc=0
-  local -a arquivos=()
-  declare -A md5_local=() md5_remoto=()
-
-  (cd "$CLONE/dist" && find . -type f ! -name '*.png' ! -name '*.jpg' ! -name '.htaccess' \
-    ! -path './api/*' -printf '%P\n' | sort) > "$lista"
-  mapfile -t arquivos < "$lista"
-  total=${#arquivos[@]}
-  [ "$total" -gt 0 ] || recusar "dist sem arquivos para conferir (varredura vazia é falha)"
-  for nome in "${arquivos[@]}"; do
-    [[ "$nome" =~ ^[A-Za-z0-9._/-]+$ ]] ||
-      recusar "nome de arquivo fora do padrão seguro para conferir: $nome"
-  done
-
-  # Uma só chamada de curl para todos os arquivos (config com url/output).
-  mkdir -p "$remoto"
-  {
-    printf 'silent\nshow-error\ncreate-dirs\nmax-time = 60\n'
-    printf 'header = "Cache-Control: no-cache"\n'
-    for nome in "${arquivos[@]}"; do
-      printf 'url = "%s/%s"\noutput = "%s/%s"\n' "$DOMINIO" "$nome" "$remoto" "$nome"
-    done
-  } > "$cfg"
-  curl --config "$cfg" >/dev/null 2>"$ESPACO/curl.err" || curl_rc=$?
-  if [ "$curl_rc" -ne 0 ]; then
-    echo "publicar: curl terminou com código $curl_rc (arquivos que não vieram aparecem como divergência)" >&2
+# rsync para o destino: origem local, destino no caminho do destino (ssh em produção, local no ensaio).
+rsync_destino() {
+  local origem="$1" destino="$2"
+  shift 2
+  local -a rsh=()
+  local alvo="$destino"
+  if [ -n "$DESTINO_HOST" ]; then
+    rsh=(-e "$SSH_OPCOES")
+    alvo="$DESTINO_HOST:$destino"
   fi
+  timeout 900 rsync "${rsh[@]}" --timeout=60 "$@" "$origem" "$alvo"
+}
 
-  (cd "$CLONE/dist" && md5sum -- "${arquivos[@]}") > "$ESPACO/md5-local.txt"
-  (cd "$remoto" && md5sum -- "${arquivos[@]}") > "$ESPACO/md5-remoto.txt" 2>/dev/null || true
-  while read -r hash nome; do md5_local["$nome"]="$hash"; done < "$ESPACO/md5-local.txt"
-  while read -r hash nome; do md5_remoto["$nome"]="$hash"; done < "$ESPACO/md5-remoto.txt"
+# Confere, no destino, o md5 de cada arquivo de uma pasta local: mesmo conjunto, mesmo md5.
+# Arquivo a mais no destino só é tolerado se for protegido (error_log, .user.ini, cgi-bin/, .well-known/).
+# Zero arquivo local é falha (varredura quebrada, L-36).
+conferir_md5_pasta() {
+  local origem="$1" remoto="$2" rotulo="$3"
+  local arquivo_local="$ESPACO/md5-$rotulo-local.txt" arquivo_ar="$ESPACO/md5-$rotulo-ar.txt"
+  local hash nome encontrados=0 analisados=0 conferidos=0 divergencias=0
+  declare -A esperado=() ar=()
 
-  for nome in "${arquivos[@]}"; do
+  (cd "$origem" && find . -type f -print0 | sort -z | xargs -0 md5sum) > "$arquivo_local"
+  if ! no_destino "cd '$remoto' && find . -type f -print0 | sort -z | xargs -0 md5sum" > "$arquivo_ar" 2> "$ESPACO/md5-$rotulo-ar.err"; then
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] $rotulo: não consegui listar o destino (rede, chave SSH ou pasta ausente)" >&2
+    return 0
+  fi
+  while read -r hash nome; do esperado["${nome#./}"]="$hash"; done < "$arquivo_local"
+  while read -r hash nome; do ar["${nome#./}"]="$hash"; done < "$arquivo_ar"
+  encontrados=${#esperado[@]}
+  [ "$encontrados" -gt 0 ] || recusar "$rotulo: pasta local sem arquivos (zero é varredura quebrada)"
+
+  for nome in "${!esperado[@]}"; do
     analisados=$((analisados + 1))
-    if [ -z "${md5_remoto[$nome]:-}" ]; then
-      DIVERGENCIAS=$((DIVERGENCIAS + 1))
-      echo "[DIVERGE] $nome: não obtido do ar" >&2
-    elif [ "${md5_local[$nome]:-x}" = "${md5_remoto[$nome]}" ]; then
+    if [ -z "${ar[$nome]:-}" ]; then
+      divergencias=$((divergencias + 1))
+      echo "[DIVERGE] $rotulo/$nome: ausente no destino" >&2
+    elif [ "${ar[$nome]}" = "${esperado[$nome]}" ]; then
       conferidos=$((conferidos + 1))
     else
-      DIVERGENCIAS=$((DIVERGENCIAS + 1))
-      echo "[DIVERGE] $nome: md5 do ar difere do pacote" >&2
+      divergencias=$((divergencias + 1))
+      echo "[DIVERGE] $rotulo/$nome: md5 do destino difere do pacote" >&2
     fi
   done
-  echo "md5: encontrados=$total analisados=$analisados conferidos=$conferidos divergencias=$DIVERGENCIAS"
-  [ "$analisados" -eq "$total" ] || recusar "varredura incompleta: analisados $analisados de $total"
+  for nome in "${!ar[@]}"; do
+    if [ -z "${esperado[$nome]:-}" ]; then
+      case "$nome" in
+        error_log | .user.ini | cgi-bin/* | .well-known/*) ;;
+        *)
+          divergencias=$((divergencias + 1))
+          echo "[DIVERGE] $rotulo/$nome: sobra no destino, fora do pacote" >&2
+          ;;
+      esac
+    fi
+  done
+  echo "md5 $rotulo: encontrados=$encontrados analisados=$analisados conferidos=$conferidos divergencias=$divergencias"
+  DIVERGENCIAS=$((DIVERGENCIAS + divergencias))
+  [ "$analisados" -eq "$encontrados" ] || recusar "$rotulo: varredura incompleta: analisados $analisados de $encontrados"
+}
+
+# md5 de um arquivo único no destino (dados da Júri, P2).
+conferir_md5_arquivo() {
+  local local_arq="$1" remoto="$2" rotulo="$3" esperado ar
+  esperado="$(md5sum < "$local_arq" | cut -c1-32)"
+  ar="$(no_destino "md5sum < '$remoto' | cut -c1-32" 2>/dev/null || true)"
+  if [ "$esperado" = "$ar" ] && [ -n "$ar" ]; then
+    echo "[PASSOU] $rotulo: md5 confere no destino"
+  else
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] $rotulo: md5 do destino difere do arquivo local" >&2
+  fi
+}
+
+# Baixa um arquivo do destino para uma pasta local (ssh em produção, cópia local no ensaio).
+baixar_do_destino() {
+  local origem="$1" destino="$2"
+  local -a rsh=()
+  local alvo="$origem"
+  if [ -n "$DESTINO_HOST" ]; then
+    rsh=(-e "$SSH_OPCOES")
+    alvo="$DESTINO_HOST:$origem"
+  fi
+  timeout 300 rsync "${rsh[@]}" --timeout=60 -t "$alvo" "$destino"
+}
+
+# Envia o app para uma pasta nova de versão. Nunca apaga nada.
+enviar_app() {
+  local destino="$DESTINO_APP/versoes/v$VERSAO_NOVA"
+  DEPLOY_INICIADO=1
+  no_destino "mkdir -p -m 700 '$DESTINO_APP/versoes' && mkdir -p '$destino'" ||
+    recusar "não consegui criar $destino (nada publicado no ponteiro)"
+  rsync_destino "$PACOTE_LOCAL/app/" "$destino/" -rlt --checksum ||
+    recusar "rsync do app falhou (o ponteiro ainda não mudou)"
+  echo "publicar: app enviado para versoes/v$VERSAO_NOVA"
+}
+
+# Troca o ponteiro atual de forma atômica: link em nome temporário e mv -T.
+trocar_ponteiro() {
+  no_destino "cd '$DESTINO_APP' && ln -sfn 'versoes/v$VERSAO_NOVA' atual.tmp && mv -T atual.tmp atual" ||
+    recusar "troca do ponteiro atual falhou: o ar pode estar na versão anterior"
+  echo "publicar: ponteiro atual aponta para versoes/v$VERSAO_NOVA"
+}
+
+# Envia o webroot por rsync, apagando só o que não é do pacote (com teste de teto e lista antes).
+enviar_webroot() {
+  local destino="$1" origem="$PACOTE_LOCAL/webroot/" simulacao="$ESPACO/simulacao-webroot.txt"
+  local -a apagar=()
+  local total
+  no_destino "mkdir -p -- '$destino'" || recusar "não consegui criar $destino"
+  rsync_destino "$origem" "$destino/" -rlt --checksum --delete -n -i --filter=". $REGRAS" \
+    > "$simulacao" 2>&1 || recusar "simulação do envio do webroot falhou (nada foi apagado)"
+  mapfile -t apagar < <(grep -E '^\*deleting' "$simulacao" | sed -E 's/^\*deleting +//' || true)
+  total="${#apagar[@]}"
+  [ "$total" -le "$TETO_APAGAR_WEBROOT" ] ||
+    recusar "apagamento previsto no webroot ($total) passa do teto de $TETO_APAGAR_WEBROOT; nada foi apagado"
+  echo "publicar: webroot: apagamento previsto: $total"
+  if [ "$total" -gt 0 ]; then
+    printf '%s\n' "${apagar[@]}" | sed 's/^/publicar:   apagar: /'
+  fi
+  DEPLOY_INICIADO=1
+  rsync_destino "$origem" "$destino/" -rlt --checksum --delete --max-delete="$TETO_APAGAR_WEBROOT" \
+    --filter=". $REGRAS" ||
+    recusar "envio do webroot falhou (o ponteiro ainda não mudou)"
+  echo "publicar: webroot enviado para $destino"
+}
+
+# Poda: mantém duas versões (a nova e a anterior, que é o rollback). Apaga por nome exato, listado antes (L-53).
+podar_versoes() {
+  local -a versoes=() apagar=()
+  local versao
+  mapfile -t versoes < <(no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
+    grep -E '^v[0-9.]+$' | sort -V -r || true)
+  if [ "${#versoes[@]}" -le 2 ]; then
+    echo "publicar: poda: ${#versoes[@]} versão(ões) no destino, nada a apagar"
+    return 0
+  fi
+  apagar=("${versoes[@]:2}")
+  [ "${#apagar[@]}" -le "$TETO_VERSOES" ] ||
+    recusar "poda prevista (${#apagar[@]}) passa do teto de $TETO_VERSOES; nada foi apagado"
+  echo "publicar: poda: apagando por nome exato: ${apagar[*]}"
+  for versao in "${apagar[@]}"; do
+    [[ "$versao" =~ ^v[0-9.]+$ ]] || recusar "nome de versão fora do padrão: não apago"
+    no_destino "rm -rf -- '$DESTINO_APP/versoes/$versao'" || recusar "poda de $versao falhou"
+  done
+}
+
+publicar_versao() {
+  local anterior
+  anterior="$(anterior_no_destino)"
+  echo "publicar: versão anterior no destino: ${anterior:-nenhuma (primeira publicação com este comando)}"
+  enviar_app
+  enviar_webroot "$DESTINO_WEBROOT"
+  trocar_ponteiro
+  podar_versoes
+}
+
+# Lista dos caminhos que o anônimo não pode receber: os do app novo e os do anterior.
+montar_caminhos_protegidos() {
+  local anterior manifesto_anterior="$ESPACO/manifesto-anterior.json"
+  CAMINHOS="$ESPACO/caminhos-protegidos.txt"
+  anterior="$(anterior_no_destino)"
+  {
+    chaves_do_manifesto "$PACOTE_LOCAL/app/manifesto.json"
+    if [ -n "$anterior" ]; then
+      baixar_do_destino "$DESTINO_APP/versoes/$anterior/manifesto.json" "$manifesto_anterior" ||
+        recusar "não consegui baixar o manifesto da versão anterior ($anterior)"
+      chaves_do_manifesto "$manifesto_anterior"
+    fi
+  } | sort -u > "$CAMINHOS"
+  echo "publicar: caminhos protegidos a conferir no anônimo: $(grep -c . "$CAMINHOS" || true)"
+}
+
+# Chaves de "arquivos" de um manifesto. Formato inválido é recusa (fail-closed).
+chaves_do_manifesto() {
+  python3 -c '
+import json, sys
+m = json.load(open(sys.argv[1], encoding="utf-8"))
+arquivos = m.get("arquivos") if isinstance(m, dict) else None
+if not isinstance(arquivos, dict) or not arquivos:
+    sys.exit("manifesto sem arquivos")
+for chave in arquivos:
+    print(chave)
+' "$1" || recusar "manifesto ilegível ou sem arquivos: $1"
+}
+
+# O conferir-portao roda no PHP do servidor, sem HTTP e sem conta (7.1 b). O CLI vai junto para um
+# diretório temporário de 700, e sai ao fim, por caminho exato (E15 c).
+conferir_portao_no_destino() {
+  local nucleo="$1" atual="$2" pasta="$DESTINO_RAIZ/d26_cli_tmp" saida rc=0
+  saida="$ESPACO/conferir-portao.txt"
+  no_destino "mkdir -p -m 700 '$pasta/apoio'" || recusar "não criei $pasta"
+  rsync_destino "$RAIZ/servidor/cli/conferir-portao.php" "$pasta/" -t
+  rsync_destino "$RAIZ/servidor/cli/apoio/cli.php" "$pasta/apoio/" -t
+  no_destino "cd '$pasta' && D26_NUCLEO='$nucleo' php conferir-portao.php '$atual'" > "$saida" 2> "$saida.err" || rc=$?
+  cat "$saida"
+  sed 's/^/publicar: /' "$saida.err" >&2 || true
+  no_destino "rm -f -- '$pasta/conferir-portao.php' '$pasta/apoio/cli.php' && rmdir -- '$pasta/apoio' '$pasta'" ||
+    echo "publicar: AVISO: não consegui apagar o CLI temporário em $pasta (apague por caminho exato)" >&2
+  if [ "$rc" -eq 0 ]; then
+    echo "[PASSOU] conferir-portao no PHP do servidor: manifesto e arquivos conferem"
+  else
+    DIVERGENCIAS=$((DIVERGENCIAS + 1))
+    echo "[DIVERGE] conferir-portao reprovou (código $rc)" >&2
+  fi
 }
 
 conferir_api_e_raiz() {
@@ -570,30 +664,94 @@ conferir_api_e_raiz() {
   fi
 }
 
-conferir_com_verificador_existente() {
-  if bash "$CLONE/scripts/verificar-publicacao.sh" "$DOMINIO" > "$ESPACO/verificar.log" 2>&1; then
-    echo "[PASSOU] scripts/verificar-publicacao.sh"
+# Conferência anônima (7.2): roda o verificador deste repositório contra os dois hosts.
+conferir_anonimo() {
+  local saida="$ESPACO/verificar.log" rc=0
+  VERIFICAR_HOST_PUBLICO="$HOST_PUBLICO" VERIFICAR_COMPRESSAO="$COMPRESSAO" \
+    bash "$RAIZ/scripts/verificar-publicacao.sh" "$DOMINIO" "$DOMINIO_PAI" "$CAMINHOS" "$PACOTE_LOCAL/webroot" \
+    > "$saida" 2>&1 || rc=$?
+  cat "$saida"
+  if [ "$rc" -eq 0 ]; then
+    echo "[PASSOU] scripts/verificar-publicacao.sh (anônimo, dois hosts)"
   else
     DIVERGENCIAS=$((DIVERGENCIAS + 1))
-    grep -E '^\[FALHOU\]' "$ESPACO/verificar.log" | sed 's/^/publicar: /' >&2 || true
+    grep -E '^\[FALHOU\]' "$saida" | sed 's/^/publicar: /' >&2 || true
     echo "[DIVERGE] scripts/verificar-publicacao.sh reprovou" >&2
   fi
 }
 
+# Conferência completa do ar (7.1 6 e 7.1.1). Vale para o modo normal e para --concluir.
 conferir_ar() {
-  conferir_md5_dos_arquivos
+  DIVERGENCIAS=0
+  conferir_md5_pasta "$PACOTE_LOCAL/webroot" "$DESTINO_WEBROOT" webroot
+  conferir_md5_pasta "$PACOTE_LOCAL/app" "$DESTINO_APP/atual" app
+  conferir_portao_no_destino "$DESTINO_WEBROOT/api/nucleo" "$DESTINO_APP/atual"
   conferir_api_e_raiz
-  conferir_com_verificador_existente
+  conferir_anonimo
   if [ "$DIVERGENCIAS" -ne 0 ]; then
     echo "publicar: CONFERÊNCIA FALHOU com $DIVERGENCIAS divergência(s). O deploy NÃO foi desfeito (decisão do líder). Nada foi enviado ao git." >&2
     exit 1
   fi
 }
 
-# Commit para onde a tag remota aponta. Tag anotada: o ls-remote devolve o objeto
-# da tag em refs/tags/vX e o commit descascado em refs/tags/vX^{} (só aparece se a
-# consulta pedir o conjunto de tags, não um padrão exato). Tag leve: a própria
-# refs/tags/vX já é o commit. Devolve vazio se a tag não existir.
+# Preparo (--preparar): P1 a P3. Nada que o público vê muda: o webroot novo fica em direito2026_webroot_novo.
+preparar_destinos() {
+  DEPLOY_INICIADO=1
+  DIVERGENCIAS=0
+  enviar_app
+  trocar_ponteiro
+  enviar_dados_juri
+  enviar_webroot "$DESTINO_WEBROOT_NOVO"
+  conferir_md5_pasta "$PACOTE_LOCAL/app" "$DESTINO_APP/versoes/v$VERSAO_NOVA" app-versao
+  conferir_md5_pasta "$PACOTE_LOCAL/webroot" "$DESTINO_WEBROOT_NOVO" webroot-novo
+  conferir_portao_no_destino "$DESTINO_WEBROOT_NOVO/api/nucleo" "$DESTINO_APP/atual"
+  if [ "$DIVERGENCIAS" -ne 0 ]; then
+    recusar "preparo com $DIVERGENCIAS divergência(s); nada foi virado (o público segue na versão atual)"
+  fi
+}
+
+# P2: dados da Júri no privado, só aditivo (o v1.5 não lê estes caminhos). Permissões 700 e 600.
+enviar_dados_juri() {
+  local privado="$DESTINO_PRIVADO"
+  no_destino "mkdir -p -m 700 '$privado/imagens' '$privado/conteudo'" || recusar "não criei as pastas do privado"
+  rsync_destino "$CADERNO_ACERVO_JURI/imagens/" "$privado/imagens/" -rlt --checksum --chmod=D700,F600 ||
+    recusar "envio das imagens da Júri falhou"
+  rsync_destino "$CADERNO_ACERVO_JURI/acervo.json" "$privado/acervo.json" -t --checksum --chmod=F600 ||
+    recusar "envio do acervo.json falhou"
+  rsync_destino "$CADERNO_RESTRITO_JURI" "$privado/conteudo/juri.json" -t --checksum --chmod=F600 ||
+    recusar "envio do juri.json falhou"
+  conferir_md5_pasta "$CADERNO_ACERVO_JURI/imagens" "$privado/imagens" juri-imagens
+  conferir_md5_arquivo "$CADERNO_ACERVO_JURI/acervo.json" "$privado/acervo.json" juri-acervo
+  conferir_md5_arquivo "$CADERNO_RESTRITO_JURI" "$privado/conteudo/juri.json" juri-json
+  echo "publicar: dados da Júri enviados ao privado (aditivo, 700/600)"
+}
+
+# Depois do envio ao git: o clone novo, sem chave, prova que nenhum arquivo cifrado foi para o remoto
+# em claro (6.2). Zero arquivo cifrado analisado é falha.
+provar_clone_fresco() {
+  local url clone="$ESPACO/prova-clone" f magia n=0 claros=0
+  local -a arquivos=()
+  url="$(git remote get-url "$REMOTO")" || recusar "remoto $REMOTO sem URL"
+  git clone -q "$url" "$clone" || recusar "clone fresco do remoto falhou"
+  mapfile -d '' -t arquivos < <(git -C "$clone" ls-files -z)
+  for f in "${arquivos[@]}"; do
+    [ "$(git -C "$clone" check-attr filter -- "$f" | awk '{print $NF}')" = git-crypt ] || continue
+    n=$((n + 1))
+    if git -C "$clone" cat-file blob "HEAD:$f" | head -c 10 | cmp -s - <(printf '\0GITCRYPT\0'); then
+      :
+    else
+      claros=$((claros + 1))
+      echo "publicar: EM CLARO no remoto: $f" >&2
+    fi
+  done
+  echo "prova do clone fresco (sem chave): encontrados=$n analisados=$n em_claro=$claros"
+  [ "$n" -gt 0 ] || recusar "clone fresco sem arquivo cifrado: varredura quebrada (zero é falha)"
+  [ "$claros" -eq 0 ] || recusar "$claros arquivo(s) cifrado(s) chegaram em claro ao remoto"
+}
+
+# Commit para onde a tag remota aponta. Tag anotada: o ls-remote devolve o objeto da tag em
+# refs/tags/vX e o commit descascado em refs/tags/vX^{} (só aparece se a consulta pedir o conjunto
+# de tags). Tag leve: a própria refs/tags/vX já é o commit. Vazio se a tag não existir.
 commit_da_tag_remota() {
   local remoto="$1" tag="$2" linhas
   linhas="$(git ls-remote --tags "$remoto")" || return 1
@@ -663,7 +821,7 @@ ao_sair() {
         if [ "$PUSH_MAIN_FEITO" = 1 ] || [ "$PUSH_TAG_FEITO" = 1 ]; then
           echo "publicar: o script chegou a enviar ao git (branch=$PUSH_MAIN_FEITO, tag=$PUSH_TAG_FEITO). Confirme com git ls-remote antes de agir." >&2
         else
-          echo "publicar: o script NÃO confirmou envio ao git. Confirme com git ls-remote github refs/heads/main e git ls-remote --tags github antes de repetir." >&2
+          echo "publicar: o script NÃO confirmou envio ao git. Confirme com git ls-remote $REMOTO refs/heads/main e git ls-remote --tags $REMOTO antes de repetir." >&2
         fi
         echo "publicar: decida com o líder antes de repetir: rodar de novo calcula outra versão." >&2
       else
@@ -688,8 +846,35 @@ ao_sair() {
   exit "$codigo"
 }
 
+# --concluir: o ar já tem a versão, conferido à mão pelo líder (V7). Confere, envia e prova.
+concluir() {
+  conferir_branch_e_arvore
+  VERSAO_NOVA="$(node --import tsx scripts/apoio/versao-cli.ts ler package.json)" ||
+    recusar "não consegui ler a versão de package.json"
+  SHA_RELEASE="$(git rev-parse HEAD)"
+  local tag_commit
+  tag_commit="$(git rev-parse -q --verify "refs/tags/v$VERSAO_NOVA^{commit}" || true)"
+  [ -n "$tag_commit" ] && [ "$tag_commit" = "$SHA_RELEASE" ] ||
+    recusar "a tag local v$VERSAO_NOVA não aponta para HEAD: rode --preparar antes"
+  conferir_remoto
+  ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
+  PACOTE_LOCAL="$PASTA_PACOTES/v$VERSAO_NOVA"
+  [ -f "$PACOTE_LOCAL/app/manifesto.json" ] && [ -f "$PACOTE_LOCAL/webroot/api/portao.php" ] ||
+    recusar "sem o pacote guardado de v$VERSAO_NOVA em $PASTA_PACOTES (rode --preparar antes)"
+  DEPLOY_INICIADO=1
+  montar_caminhos_protegidos
+  conferir_ar
+  enviar_ao_git
+  provar_clone_fresco
+  echo "concluído: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
+}
+
 principal() {
   ler_argumentos "$@"
+  if [ "$MODO" = concluir ]; then
+    concluir
+    return 0
+  fi
   conferir_branch_e_arvore
   calcular_versoes
   conferir_tag_local
@@ -697,6 +882,7 @@ principal() {
     imprimir_plano
     exit 0
   fi
+  conferir_destinos
   conferir_remoto
   conferir_insumos
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
@@ -710,16 +896,25 @@ principal() {
     echo "publicar: ensaio (CADERNO_PARAR_APOS_PRECI=1): parou após o preci; nada foi subido. Log: $ESPACO/preci.log" >&2
     exit 4
   fi
-  publicar_arquivos
+  conferir_pacote_local
+  guardar_pacote
+  preparar_regras
+  if [ "$MODO" = preparar ]; then
+    preparar_destinos
+    echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O público segue na versão atual."
+    echo "publicar: próximo passo: a virada e a conferência manual (V1 a V8 do plano), depois: npm run publicar -- --concluir"
+    exit 0
+  fi
+  publicar_versao
+  montar_caminhos_protegidos
   conferir_ar
   enviar_ao_git
   echo "publicado: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 
-# Sinal durante o preci (LU-F1.3, L-25): sai com o código do próprio sinal, para
-# que ao_sair leia código diferente de 0 e desfaça o commit e a tag locais. Sem
-# isto o EXIT trap lia 0 e não desfazia nada. Bash só trata o sinal depois que o
-# filho em primeiro plano (o preci) termina.
+# Sinal durante o preci (LU-F1.3, L-25): sai com o código do próprio sinal, para que ao_sair leia
+# código diferente de 0 e desfaça o commit e a tag locais. Bash só trata o sinal depois que o filho
+# em primeiro plano (o preci) termina.
 trap 'exit 143' TERM
 trap 'exit 130' INT
 trap 'exit 129' HUP

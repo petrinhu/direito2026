@@ -158,19 +158,23 @@ describe('publicar.sh e a Júri', () => {
   });
 
   it('o diretório privado da Júri fica fora do destino do rsync (derivação de config.php)', () => {
-    const destinoLinha = FONTE.match(/^DESTINO_RSYNC=(\S+)$/m)?.[1];
+    // LU-F4.3: o destino é a raiz do domínio (padrão de PUBLICAR_DESTINO_RAIZ); o webroot e o app ficam abaixo dela.
+    const destinoLinha = FONTE.match(/^DESTINO_RAIZ="\$\{PUBLICAR_DESTINO_RAIZ-([^}]+)\}"$/m)?.[1];
     expect(destinoLinha).toBeDefined();
-    const destino = destinoLinha!.replace(/^[^:]+:/, '').replace(/\/+$/, '');
+    const destino = destinoLinha!.replace(/\/+$/, '');
     // config.php: dirname($dirNucleo, 4) . '/' . privNome, com $dirNucleo = <destino>/api/nucleo.
     const privadoDe = (nome: string): string => {
-      let base = `${destino}/api/nucleo`;
+      let base = `${destino}/public_html/direito2026/api/nucleo`;
       for (let i = 0; i < 4; i += 1) base = posix.dirname(base);
       return `${base}/${nome}`;
     };
     // Mesmo cálculo do Interdisciplinar, que docs/publicacao.md documenta como
     // ~/domains/drpetrus.top/direito2026_privado. Se este assert falhar, a derivação está errada.
     expect(privadoDe('direito2026_privado')).toBe('domains/drpetrus.top/direito2026_privado');
-    expect(privadoDe('juri2026_privado').startsWith(`${destino}/`)).toBe(false);
+    // A Júri antiga é irmã do public_html, sob a mesma raiz. O que o script nunca toca é o webroot e o app dela.
+    const juriAntiga = privadoDe('juri2026_privado');
+    expect(juriAntiga.startsWith(`${destino}/public_html/direito2026/`)).toBe(false);
+    expect(juriAntiga.startsWith(`${destino}/direito2026_app/`)).toBe(false);
   });
 });
 

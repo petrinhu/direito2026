@@ -1,32 +1,39 @@
 #!/usr/bin/env bash
-# Item 8 da onda: roteiro de conferência pós-publicação (docs/publicacao.md,
-# "O que precisa ser conferido depois do envio ao servidor"), hoje feito à
-# mão pelo líder a cada publicação. Este script executa contra um ENDEREÇO
-# INFORMADO (variável de ambiente ou primeiro argumento) as conferências que
-# dão para provar sem abrir navegador (itens 1, 2, 5 da lista, e uma versão
-# adaptada do item 3 - ver nota abaixo). Reprova com erro se qualquer uma
-# falhar, e o PISO é que zero conferência executada também é falha (L-36):
-# um script que roda e não checa nada não prova publicação nenhuma.
+# Conferência anônima do ar (plano do CTO do login único, 7.2; LU-F4.3). Prova, sem conta e sem
+# sessão, o que a publicação deve garantir na borda: nada do app sai para quem não entrou.
 #
-# Fora do escopo deste script, de propósito, porque exigem navegador real
-# (L-13, observação visual é do qa-engineer): item 4 (abrir nos dois temas
-# e conferir visualmente favicon/quiz/balão) e item 6 (captura de tela em
-# Chrome/Firefox/Safari/Edge) da mesma lista. O item 7 (varredura de nomes
-# proibidos) roda ANTES do envio, contra arquivo local, não depois contra
-# URL publicada - não é uma conferência "pós-publicação" no mesmo sentido.
+# Uso: scripts/verificar-publicacao.sh <URL_ENDERECO> <URL_DOMINIO_PAI> <lista_caminhos> <pasta_webroot>
+#   URL_ENDERECO      endereço do site (ex.: https://direito2026.drpetrus.top)
+#   URL_DOMINIO_PAI   domínio-pai (ex.: https://drpetrus.top); /direito2026/<caminho> tem de dar 403
+#   lista_caminhos    um caminho do app por linha (manifesto atual e anterior); zero é falha
+#   pasta_webroot     webroot local do pacote (sw.js e .htaccess conferidos contra ele)
 #
-# Uso: scripts/verificar-publicacao.sh https://direito2026.drpetrus.top
+# Variáveis: VERIFICAR_HOST_PUBLICO (padrão: o host de URL_ENDERECO), VERIFICAR_COMPRESSAO
+# (padrão 1; 0 só em ensaio local, que não tem a compressão do LiteSpeed, e sai como "não coberto").
+#
+# Cada checagem imprime [PASSOU] ou [FALHOU]. Zero conferência executada é falha (L-36).
+# Não prova entrega com login: esse caminho sai da publicação (7.1.1) e aparece na última linha.
 set -uo pipefail
 
-URL_BASE="${1:-${URL_PUBLICACAO:-}}"
-if [ -z "$URL_BASE" ]; then
-  echo "verificar-publicacao: informe o endereço (argumento ou \$URL_PUBLICACAO)" >&2
+RAIZ="$(cd "$(dirname "$0")/.." && pwd -P)"
+URL_BASE="${1:-}"
+URL_PAI="${2:-}"
+LISTA="${3:-}"
+WEBROOT="${4:-}"
+if [ -z "$URL_BASE" ] || [ -z "$URL_PAI" ] || [ -z "$LISTA" ] || [ -z "$WEBROOT" ]; then
+  echo "verificar-publicacao: uso: <URL_ENDERECO> <URL_DOMINIO_PAI> <lista_caminhos> <pasta_webroot>" >&2
   exit 1
 fi
 URL_BASE="${URL_BASE%/}"
+URL_PAI="${URL_PAI%/}"
+HOST_PUBLICO="${VERIFICAR_HOST_PUBLICO:-$(printf '%s' "$URL_BASE" | sed -E 's#^https?://##; s#/.*$##')}"
+COMPRESSAO="${VERIFICAR_COMPRESSAO:-1}"
+TMP="$(mktemp -d "${TMPDIR:-/var/tmp}/verificar-publicacao.XXXXXX")"
+trap 'rm -rf -- "$TMP"' EXIT
 
 ENCONTRADOS=0
 FALHARAM=0
+ANALISADOS=0
 
 passou() {
   ENCONTRADOS=$((ENCONTRADOS + 1))
@@ -39,68 +46,158 @@ falhou() {
   echo "[FALHOU] $1" >&2
 }
 
-# --- 1. GET / responde 200 e traz X-Robots-Tag: noindex, nofollow --------
-CABECALHOS_RAIZ=$(curl -sI "$URL_BASE/" || true)
-STATUS_RAIZ=$(printf '%s\n' "$CABECALHOS_RAIZ" | head -n1 | grep -o '[0-9][0-9][0-9]' | head -n1)
-if [ "$STATUS_RAIZ" = "200" ]; then
-  passou "GET / responde 200"
-else
-  falhou "GET / respondeu '${STATUS_RAIZ:-sem resposta}', esperado 200"
-fi
+# Pede uma URL sem sessão. Saída: código HTTP na stdout; cabeçalhos em $TMP/$1.h, corpo em $TMP/$1.b.
+# Os argumentos depois da URL são cabeçalhos extras (ex.: navegação).
+pedir() {
+  local nome="$1" url="$2"
+  shift 2
+  curl -s --max-time 30 -D "$TMP/$nome.h" -o "$TMP/$nome.b" -w '%{http_code}' "$@" "$url" 2>/dev/null || true
+}
 
-if printf '%s\n' "$CABECALHOS_RAIZ" | grep -qi 'x-robots-tag:.*noindex.*nofollow'; then
-  passou "cabeçalho X-Robots-Tag: noindex, nofollow presente"
-else
-  falhou "cabeçalho X-Robots-Tag: noindex, nofollow AUSENTE em GET /"
-fi
+NAVEGACAO=(-H 'Sec-Fetch-Mode: navigate' -H 'Accept: text/html')
 
-# --- 2. a marcação <meta name="robots"> está no HTML servido -------------
-CORPO_RAIZ=$(curl -s "$URL_BASE/" || true)
-OCORRENCIAS_META=$(printf '%s' "$CORPO_RAIZ" | grep -c 'name="robots"' || true)
-if [ "${OCORRENCIAS_META:-0}" -gt 0 ]; then
-  passou "meta name=\"robots\" presente no HTML servido ($OCORRENCIAS_META ocorrência(s))"
-else
-  falhou "meta name=\"robots\" AUSENTE no HTML servido"
-fi
+# 1. Tela de entrada na raiz: 200, sem índice, sem script, sem termo proibido, sem cache.
+conferir_tela_de_entrada() {
+  local codigo
+  codigo="$(pedir raiz "$URL_BASE/" "${NAVEGACAO[@]}")"
+  if [ "$codigo" = 200 ]; then passou "GET / anônimo de navegação dá a tela de entrada (200)"
+  else falhou "GET / anônimo respondeu '$codigo', esperado 200 (tela de entrada)"; fi
 
-# --- 3. rota inexistente: fallback da SPA, não erro nu do servidor -------
-# Nota honesta sobre o limite deste teste (docs/publicacao.md, seção do
-# pacote dist/): a aplicação é uma SPA - toda rota devolve 200 com
-# index.html, e é o Vue Router (JavaScript, depois de carregado) quem
-# decide se desenha a página real ou NaoEncontrado.vue. Um script sem
-# motor JS (este aqui) NÃO PROVA que o texto "não encontrada" aparece na
-# tela - isso é prova visual, já coberta por teste e2e com navegador real
-# (tests/e2e/navegacao.spec.ts, tests/e2e/enderecos-diretos.spec.ts, que
-# rodam contra localhost, não contra o domínio publicado). O que ESTE
-# script prova, de fato: a rota inexistente não cai num 404/403 NU do
-# Apache/Hostinger (o que aconteceria se .htaccess/history mode
-# quebrassem), porque devolve o MESMO corpo do app shell que a raiz.
-ROTA_INEXISTENTE="$URL_BASE/rota-que-nao-existe-$(date +%s)"
-STATUS_INEXISTENTE=$(curl -s -o /dev/null -w '%{http_code}' "$ROTA_INEXISTENTE" || true)
-CORPO_INEXISTENTE=$(curl -s "$ROTA_INEXISTENTE" || true)
-if [ "$STATUS_INEXISTENTE" = "200" ] && [ "$CORPO_INEXISTENTE" = "$CORPO_RAIZ" ]; then
-  passou "rota inexistente devolve 200 com o mesmo app shell da SPA (fallback correto, não 404/403 nu do servidor)"
-else
-  falhou "rota inexistente respondeu de forma inesperada (status '$STATUS_INEXISTENTE', corpo ${#CORPO_INEXISTENTE} bytes vs ${#CORPO_RAIZ} da raiz)"
-fi
+  if grep -qi '^x-robots-tag:.*noindex.*nofollow' "$TMP/raiz.h"; then
+    passou "X-Robots-Tag: noindex, nofollow em GET /"
+  else falhou "X-Robots-Tag: noindex, nofollow AUSENTE em GET /"; fi
 
-# --- 5. compressão ativa em pelo menos um arquivo de texto ----------------
-CABECALHOS_COMPRESSAO=$(curl -sI -H 'Accept-Encoding: gzip, br' "$URL_BASE/" || true)
-if printf '%s\n' "$CABECALHOS_COMPRESSAO" | grep -qi 'content-encoding:.*\(gzip\|br\)'; then
-  passou "Content-Encoding (gzip/br) ativo em GET /"
-else
-  falhou "Content-Encoding AUSENTE em GET / (compressão pode estar desligada no servidor)"
-fi
+  if grep -q 'name="robots"' "$TMP/raiz.b"; then passou "meta name=\"robots\" na tela de entrada"
+  else falhou "meta name=\"robots\" AUSENTE na tela de entrada"; fi
 
-echo "conferências executadas: $ENCONTRADOS / falharam: $FALHARAM"
+  if grep -qi '^cache-control:.*no-store' "$TMP/raiz.h"; then passou "Cache-Control contém no-store na tela de entrada"
+  else falhou "Cache-Control sem no-store na tela de entrada (a borda pode guardar resposta anônima)"; fi
+
+  if grep -q '<script' "$TMP/raiz.b"; then falhou "tela de entrada anônima traz <script"
+  else passou "tela de entrada anônima sem <script"; fi
+
+  if bash "$RAIZ/scripts/verificar-proibicoes.sh" - < "$TMP/raiz.b" >/dev/null 2>&1; then
+    passou "tela de entrada anônima sem termo proibido"
+  else
+    falhou "tela de entrada anônima com termo proibido, ou termos não lidos (verificar-proibicoes)"
+  fi
+}
+
+# 2. Rota inexistente: mesma tela da raiz. Token e destino variam por requisição: saem antes de comparar.
+conferir_rota_inexistente() {
+  local codigo sem_var_raiz sem_var_rota
+  codigo="$(pedir rota "$URL_BASE/rota-que-nao-existe-$$-$RANDOM" "${NAVEGACAO[@]}")"
+  sem_var_raiz="$(sed -E 's/value="[^"]*"//g' "$TMP/raiz.b")"
+  sem_var_rota="$(sed -E 's/value="[^"]*"//g' "$TMP/rota.b")"
+  if [ "$codigo" = 200 ] && [ "$sem_var_raiz" = "$sem_var_rota" ]; then
+    passou "rota inexistente dá a mesma tela de entrada da raiz (sem token e destino)"
+  else
+    falhou "rota inexistente respondeu '$codigo', ou corpo diferente da tela da raiz"
+  fi
+}
+
+# 3. Caminhos do app: sem sessão, todo caminho dá 401 sem corpo; a borda não guarda resposta de
+#    logado (HIT); no domínio-pai, o mesmo caminho dá 403. Zero caminho é falha (piso).
+conferir_caminhos_protegidos() {
+  local caminho codigo tamanho cache pai codigo_pai n=0 falhas=0
+  local -a caminhos=()
+  if [ -s "$LISTA" ]; then mapfile -t caminhos < "$LISTA"; fi
+  if [ "${#caminhos[@]}" -eq 0 ]; then
+    falhou "lista de caminhos protegidos vazia: varredura quebrada, não publicação limpa"
+    return 0
+  fi
+  for caminho in "${caminhos[@]}"; do
+    [[ "$caminho" =~ ^[A-Za-z0-9._/-]+$ ]] || { falhou "caminho fora do padrão seguro na lista: (nome omitido)"; continue; }
+    n=$((n + 1))
+    codigo="$(pedir protegido "$URL_BASE/$caminho")"
+    tamanho="$(wc -c < "$TMP/protegido.b" | tr -d ' ')"
+    cache="$(grep -i '^x-hcdn-cache-status:' "$TMP/protegido.h" | tr -d '\r' || true)"
+    if [ "$codigo" != 401 ] || [ "$tamanho" != 0 ]; then
+      falhas=$((falhas + 1)); falhou "$caminho: anônimo recebeu '$codigo' com $tamanho byte(s), esperado 401 sem corpo"
+    elif printf '%s' "$cache" | grep -qi 'HIT'; then
+      falhas=$((falhas + 1)); falhou "$caminho: borda respondeu HIT ($cache)"
+    fi
+    codigo_pai="$(pedir pai "$URL_PAI/direito2026/$caminho")"
+    if [ "$codigo_pai" != 403 ]; then
+      falhas=$((falhas + 1)); falhou "$caminho: domínio-pai respondeu '$codigo_pai', esperado 403"
+    fi
+  done
+  ANALISADOS="$n"
+  if [ "$falhas" -eq 0 ] && [ "$n" -gt 0 ]; then
+    passou "$n caminho(s) do app: anônimo 401 sem corpo, sem HIT, domínio-pai 403"
+  fi
+}
+
+# 4. Telas de navegação anônimas: a mesma tela de entrada, sem script.
+conferir_telas_anonimas() {
+  local rota codigo nome=0
+  for rota in /busca /p/p1/juri-simulado /p/p1/interdisciplinar; do
+    codigo="$(pedir tela "$URL_BASE$rota" "${NAVEGACAO[@]}")"
+    if [ "$codigo" = 200 ] && ! grep -q '<script' "$TMP/tela.b"; then
+      nome=$((nome + 1))
+    else
+      falhou "$rota anônimo: '$codigo', ou com <script>"
+    fi
+  done
+  [ "$nome" -eq 3 ] && passou "/busca, /p/p1/juri-simulado e /p/p1/interdisciplinar dão a tela de entrada, sem script"
+}
+
+# 5. O matador do service worker: o sw.js publicado é o do pacote local (md5).
+conferir_sw_matador() {
+  local codigo md5_ar md5_local
+  codigo="$(pedir sw "$URL_BASE/sw.js")"
+  md5_ar="$(md5sum < "$TMP/sw.b" | cut -c1-32)"
+  md5_local="$(md5sum < "$WEBROOT/sw.js" 2>/dev/null | cut -c1-32)"
+  if [ "$codigo" = 200 ] && [ -n "$md5_local" ] && [ "$md5_ar" = "$md5_local" ]; then
+    passou "/sw.js é o matador do pacote (md5 $md5_local)"
+  else
+    falhou "/sw.js respondeu '$codigo', md5 do ar '$md5_ar' difere do pacote '$md5_local'"
+  fi
+}
+
+# 6. .htaccess do pacote recusa outro host (o domínio-pai). php -S não lê .htaccess (T12): a checagem
+#    é do arquivo, e o md5 do ar contra o pacote (publicar.sh) prova que o servidor tem este arquivo.
+conferir_htaccess_host() {
+  local host_re
+  host_re="$(printf '%s' "$HOST_PUBLICO" | sed 's/\./\\./g')"
+  if [ -f "$WEBROOT/.htaccess" ] && grep -qF "RewriteCond %{HTTP_HOST} !^$host_re\$ [NC]" "$WEBROOT/.htaccess"; then
+    passou ".htaccess do pacote recusa outro host (direito2026.drpetrus.top)"
+  else
+    falhou ".htaccess do pacote sem a regra de host: o domínio-pai não fica recusado"
+  fi
+}
+
+# 7. Compressão em / (LiteSpeed). Só no ar; no ensaio local (VERIFICAR_COMPRESSAO=0) não é medida.
+conferir_compressao() {
+  local cabecalhos
+  if [ "$COMPRESSAO" = 0 ]; then
+    echo "compressão: não medida (VERIFICAR_COMPRESSAO=0, ensaio local sem LiteSpeed)"
+    return 0
+  fi
+  cabecalhos="$(curl -sI --max-time 30 -H 'Accept-Encoding: gzip, br' "${NAVEGACAO[@]}" "$URL_BASE/" || true)"
+  if printf '%s\n' "$cabecalhos" | grep -qi 'content-encoding:.*\(gzip\|br\)'; then
+    passou "Content-Encoding (gzip/br) ativo em GET / de navegação"
+  else
+    falhou "Content-Encoding AUSENTE em GET / (compressão desligada no servidor?)"
+  fi
+}
+
+conferir_tela_de_entrada
+conferir_rota_inexistente
+conferir_caminhos_protegidos
+conferir_telas_anonimas
+conferir_sw_matador
+conferir_htaccess_host
+conferir_compressao
+
+echo "conferências executadas: $ENCONTRADOS / falharam: $FALHARAM / caminhos protegidos analisados: $ANALISADOS"
 
 if [ "$ENCONTRADOS" -eq 0 ]; then
   echo "verificar-publicacao: zero conferência executada é varredura quebrada, não publicação limpa" >&2
   exit 1
 fi
-
 if [ "$FALHARAM" -gt 0 ]; then
   exit 1
 fi
-
+echo "entrega com login: não coberta por esta publicação; confira ao entrar"
 exit 0

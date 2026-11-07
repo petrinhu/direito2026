@@ -283,7 +283,8 @@ final class Ambiente
     private int $workers = 0;
 
     /**
-     * @param array{docroot?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes
+     * @param array{docroot?:string, docrootDir?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes
+     *  docrootDir: pasta absoluta do webroot a servir (ex.: o webroot do pacote, LU-F4.3); tem prioridade sobre docroot.
      */
     public static function novo(array $opcoes = []): self
     {
@@ -296,6 +297,9 @@ final class Ambiente
         $a->docroot = RAIZ_REPO . '/public';
         foreach ([$a->priv, $a->priv . '/sessoes', $a->priv . '/conteudo'] as $d) {
             mkdir($d, 0700, true);
+        }
+        if (($opcoes['docrootDir'] ?? '') !== '') {
+            $a->docroot = (string) $opcoes['docrootDir'];
         }
         if (($opcoes['docroot'] ?? '') === 'copia') {
             $a->docroot = $a->raiz . '/site';

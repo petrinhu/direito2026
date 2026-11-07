@@ -11,8 +11,8 @@ const lista = computed(() => (props.dispositivos ? Object.values(props.dispositi
 <template>
   <!--
     Seção 12.6: o balão não existe no papel. Fica no DOM sempre, escondida
-    em tela (@media screen), para a impressão funcionar offline e sem
-    depender de o leitor ter aberto algum balão antes.
+    em tela (@media screen), para a impressão sair completa, sem depender de
+    o leitor ter aberto algum balão antes.
   -->
   <section v-if="lista.length > 0" class="apendice-dispositivos" aria-label="Dispositivos citados">
     <h2>Dispositivos citados</h2>

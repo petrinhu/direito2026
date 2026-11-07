@@ -18,7 +18,7 @@ async function preencher(w: ReturnType<typeof montar>, atual: string, nova: stri
 }
 
 describe('FormularioTrocaSenha', () => {
-  it('três campos rotulados e a regra de 10 a 128 caracteres explicada e ligada ao campo', () => {
+  it('três campos rotulados e a regra de 15 a 128 caracteres explicada e ligada ao campo', () => {
     const w = montar();
     for (const [nome, rotulo] of [
       ['senhaAtual', 'Senha atual'],
@@ -29,12 +29,19 @@ describe('FormularioTrocaSenha', () => {
       expect(w.get(`label[for="${campo.attributes('id')}"]`).text()).toBe(rotulo);
     }
     const regra = w.get('.ar-formulario__regra');
-    expect(regra.text()).toMatch(/10 a 128 caracteres/);
+    expect(regra.text()).toMatch(/15 a 128 caracteres/);
     expect(w.get('input[name="senhaNova"]').attributes('aria-describedby')).toContain(
       regra.attributes('id')
     );
     expect(w.get('input[name="senhaNova"]').attributes('autocomplete')).toBe('new-password');
     expect(w.get('input[name="senhaAtual"]').attributes('autocomplete')).toBe('current-password');
+  });
+
+  it('texto serve à troca voluntária da página Trocar senha: não diz que é a primeira entrada', () => {
+    const w = montar();
+    expect(w.get('h2').text()).toBe('Escolha a nova senha');
+    expect(w.text()).not.toMatch(/primeira entrada/i);
+    expect(w.text()).toMatch(/Use a nova senha nas próximas entradas/);
   });
 
   it('senha válida emite atual e nova', async () => {
@@ -47,7 +54,7 @@ describe('FormularioTrocaSenha', () => {
     const w = montar();
     await preencher(w, 'provisoria', 'curta', 'curta');
     expect(w.emitted('trocar')).toBeUndefined();
-    expect(w.get('[role="alert"]').text()).toMatch(/pelo menos 10 caracteres/);
+    expect(w.get('[role="alert"]').text()).toMatch(/pelo menos 15 caracteres/);
     expect(w.get('input[name="senhaNova"]').attributes('aria-invalid')).toBe('true');
     expect(document.activeElement).toBe(w.get('input[name="senhaNova"]').element);
 
@@ -79,10 +86,5 @@ describe('FormularioTrocaSenha', () => {
     await preencher(w, 'a', 'uma frase longa de senha', 'uma frase longa de senha');
     expect(w.emitted('trocar')).toBeUndefined();
     expect(w.get('button[type="submit"]').attributes('aria-disabled')).toBe('true');
-  });
-
-  it('o título diz que a troca é obrigatória', () => {
-    const w = montar();
-    expect(w.get('h2').text()).toMatch(/troque a senha/i);
   });
 });

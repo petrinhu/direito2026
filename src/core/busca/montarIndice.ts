@@ -101,7 +101,7 @@ export function montarDocumentosCadeirasRestritas(curriculo: Curriculo): Documen
         aba: 'resumo' as const,
         titulo: cadeira.nome,
         corpo: cadeira.nome,
-        trecho: 'Área restrita: é preciso entrar com usuário e senha.'
+        trecho: 'Conteúdo restrito: entre com o seu usuário e a sua senha para ver.'
       }))
   );
 }

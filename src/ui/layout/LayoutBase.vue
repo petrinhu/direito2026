@@ -36,8 +36,8 @@ const props = withDefaults(
   { comFaixa: false, usuario: '', admin: false }
 );
 
-// O aviso diz que o site não usa cookies nem servidor: na área restrita isso é falso
-// (há cookie de sessão e API), e ele cobriria o login. Lá ele não aparece.
+// Aviso legal e quadro de prova não aparecem na área restrita. O aviso de
+// armazenamento aparece em todo o site: o texto dele vale nas duas áreas (LU-F3.5).
 const emAreaRestrita = computed(() => caminhoEmAreaRestrita(props.curriculo, props.caminhoAtual));
 
 // A página inicial tem caminho vazio (App.vue passa route.path sem a barra inicial).
@@ -141,8 +141,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   <!--
     Aviso legal (ordem do líder, 20/10/2026): fica FORA do Rodape de propósito,
     porque o rodapé some na impressão (display:none em @media print) e o aviso
-    tem de aparecer no papel. Mesmo critério de área restrita do aviso de
-    armazenamento e do quadro: não aparece na cadeira Interdisciplinar.
+    tem de aparecer no papel. Mesmo critério de área restrita do quadro: não
+    aparece na cadeira Interdisciplinar.
   -->
   <AvisoLegal v-if="!emAreaRestrita" />
   <Rodape :repositorio="repositorio" />
@@ -153,8 +153,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
     O botão Home vai por último, no canto inferior direito, abaixo do quadro.
   -->
   <div class="layout-base__inferior">
-    <AvisoArmazenamento v-if="!emAreaRestrita" :repositorio="repositorio" />
-    <!-- Mesmo critério do aviso: o quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
+    <AvisoArmazenamento :repositorio="repositorio" />
+    <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
     <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
     <BotaoHome v-if="!naPaginaInicial" />
   </div>

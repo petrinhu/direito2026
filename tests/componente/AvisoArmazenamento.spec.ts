@@ -21,9 +21,11 @@ describe('AvisoArmazenamento', () => {
     const wrapper = mount(AvisoArmazenamento, { props: { repositorio } });
     expect(wrapper.find('.aviso-armazenamento').exists()).toBe(true);
     expect(wrapper.text().toLowerCase()).toContain('neste navegador');
-    // Diz explicitamente que NÃO usa cookie (linguagem simples, ordem do
-    // líder), então a palavra aparece — negada, nunca afirmando uso.
-    expect(wrapper.text().toLowerCase()).toContain('não usa cookies');
+    // O login único guarda um cookie de sessão: o texto diz isso, e não
+    // promete que o site não usa cookie nem envia nada a servidor.
+    expect(wrapper.text()).toContain('cookie de sessão');
+    expect(wrapper.text().toLowerCase()).not.toContain('não usa cookies');
+    expect(wrapper.text().toLowerCase()).not.toContain('não envia nada');
   });
 
   it('não aparece na segunda visita (já visto)', () => {

@@ -1,4 +1,4 @@
-export const LIMITE_MINIMO_SENHA = 10;
+export const LIMITE_MINIMO_SENHA = 15;
 export const LIMITE_MAXIMO_SENHA = 128;
 
 export type ProblemaSenha = 'atual-vazia' | 'curta' | 'longa' | 'confirmacao' | 'igual-atual';
@@ -11,8 +11,9 @@ export interface DadosTrocaDeSenha {
 
 /**
  * Checagem de conforto antes de enviar (o servidor repete a validação e é
- * quem decide). Regra do NIST SP 800-63B: só tamanho, 10 a 128 caracteres
- * (pontos de código, como o servidor conta), sem regra de composição.
+ * quem decide). Só tamanho, 15 a 128 caracteres (pontos de código, como o
+ * servidor conta, contas.php), sem regra de composição. O 15 é decisão D3 do
+ * líder (07/11/2026); sem MFA, abaixo disso a senha fica fraca.
  */
 export function validarTrocaDeSenha(dados: DadosTrocaDeSenha): ProblemaSenha[] {
   const problemas: ProblemaSenha[] = [];

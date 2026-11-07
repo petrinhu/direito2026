@@ -6,7 +6,6 @@ import { conteudoRestritoFalso } from './apoio/conteudoRestritoFalso';
 function clienteFalso(sobrescritas: Partial<ClienteApi> = {}): ClienteApi {
   return {
     sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u', admin: false })),
-    entrar: vi.fn(async () => ({ usuario: 'u', admin: false, deveTrocarSenha: false })),
     sair: vi.fn(async () => {}),
     trocarSenha: vi.fn(async () => {}),
     obterConteudo: vi.fn(async () => conteudoRestritoFalso()),
@@ -25,7 +24,6 @@ describe('carga do conteúdo restrito', () => {
     await s.carregar();
     expect(cliente.obterConteudo).toHaveBeenCalledTimes(1);
     expect(cliente.sessao).not.toHaveBeenCalled();
-    expect(cliente.entrar).not.toHaveBeenCalled();
     expect(s.conteudo.value?.quiz).toHaveLength(40);
     expect(s.carregando.value).toBe(false);
     expect(s.mensagem.value).toBe('');

@@ -14,12 +14,6 @@ export interface RespostaSessao {
   readonly deveTrocarSenha?: boolean;
 }
 
-export interface RespostaEntrar {
-  readonly usuario: string;
-  readonly admin: boolean;
-  readonly deveTrocarSenha: boolean;
-}
-
 export interface UsuarioAdmin {
   readonly usuario: string;
   readonly admin: boolean;
@@ -39,7 +33,6 @@ export type AcaoUsuario =
 
 export interface ClienteApi {
   sessao(): Promise<RespostaSessao>;
-  entrar(usuario: string, senha: string): Promise<RespostaEntrar>;
   sair(): Promise<void>;
   trocarSenha(senhaAtual: string, senhaNova: string): Promise<void>;
   /** JSON cru: quem chama é obrigado a passar por validarConteudoRestrito. */
@@ -60,15 +53,6 @@ export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
       return {
         autenticado: c.autenticado === true,
         ...(typeof c.usuario === 'string' ? { usuario: c.usuario } : {}),
-        admin: c.admin === true,
-        deveTrocarSenha: c.deveTrocarSenha === true
-      };
-    },
-    async entrar(usuario, senha) {
-      const c = await enviar('entrar.php', { usuario, senha });
-      if (typeof c.usuario !== 'string') throw new ErroDeApi(200, 'resposta-invalida');
-      return {
-        usuario: c.usuario,
         admin: c.admin === true,
         deveTrocarSenha: c.deveTrocarSenha === true
       };

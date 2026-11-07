@@ -22,7 +22,6 @@ vi.mock('markmap-view', () => ({
 function clienteFalso(sobrescritas: Partial<ClienteApi> = {}): ClienteApi {
   return {
     sessao: vi.fn(async () => ({ autenticado: true, usuario: 'u' })),
-    entrar: vi.fn(async () => ({ usuario: 'u', admin: false, deveTrocarSenha: false })),
     sair: vi.fn(async () => {}),
     trocarSenha: vi.fn(async () => {}),
     obterConteudo: vi.fn(async () => conteudoRestritoFalso()),

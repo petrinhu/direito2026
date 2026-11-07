@@ -12,14 +12,14 @@ const ok = {
 };
 
 describe('validarTrocaDeSenha', () => {
-  it('limites são 10 e 128', () => {
-    expect([LIMITE_MINIMO_SENHA, LIMITE_MAXIMO_SENHA]).toEqual([10, 128]);
+  it('limites são 15 e 128 (servidor: contas.php, 15 e 128)', () => {
+    expect([LIMITE_MINIMO_SENHA, LIMITE_MAXIMO_SENHA]).toEqual([15, 128]);
   });
 
-  it('aceita senha entre 10 e 128 caracteres, sem regra de composição', () => {
+  it('aceita senha entre 15 e 128 caracteres, sem regra de composição', () => {
     expect(validarTrocaDeSenha(ok)).toEqual([]);
     expect(
-      validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(10), confirmacao: 'a'.repeat(10) })
+      validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(15), confirmacao: 'a'.repeat(15) })
     ).toEqual([]);
     expect(
       validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(128), confirmacao: 'a'.repeat(128) })
@@ -27,16 +27,16 @@ describe('validarTrocaDeSenha', () => {
   });
 
   it('conta caracteres, não bytes nem unidades UTF-16', () => {
-    const emojis = '😀'.repeat(10);
+    const emojis = '😀'.repeat(15);
     expect(validarTrocaDeSenha({ ...ok, nova: emojis, confirmacao: emojis })).toEqual([]);
     const acentos = 'ççççççççç';
     expect(validarTrocaDeSenha({ ...ok, nova: acentos, confirmacao: acentos })).toEqual(['curta']);
   });
 
-  it('rejeita curta e longa', () => {
-    expect(validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(9), confirmacao: 'a'.repeat(9) })).toEqual(
-      ['curta']
-    );
+  it('rejeita curta (14 caracteres) e longa', () => {
+    expect(
+      validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(14), confirmacao: 'a'.repeat(14) })
+    ).toEqual(['curta']);
     expect(
       validarTrocaDeSenha({ ...ok, nova: 'a'.repeat(129), confirmacao: 'a'.repeat(129) })
     ).toEqual(['longa']);

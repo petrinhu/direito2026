@@ -18,9 +18,10 @@ import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
 import type { Curriculo } from '@/core/curriculo/tipos';
 
 /**
- * O aviso de armazenamento ("não usa cookies ... não envia nada para nenhum
- * servidor") é falso na área restrita (cookie de sessão e API) e cobria o
- * login na primeira visita: lá ele não aparece; no resto do site continua.
+ * Atualizado em 07/11/2026 (LU-F3.5): o aviso passou a dizer que o login guarda
+ * um cookie de sessão, e isso vale em todo o site. Por isso ele aparece também
+ * nas cadeiras restritas. Antes, a regra escondia o aviso lá porque o texto
+ * antigo ("não usa cookies") era falso nessas cadeiras.
  */
 const curriculo: Curriculo = [
   {
@@ -81,21 +82,21 @@ describe('aviso de armazenamento e a área restrita', () => {
     expect(w!.find(AVISO).exists()).toBe(true);
   });
 
-  it('na cadeira restrita, na primeira visita: o aviso não aparece', async () => {
+  it('na cadeira restrita, na primeira visita: o aviso aparece', async () => {
     await montar('/p/p1/secreta', false);
-    expect(w!.find(AVISO).exists()).toBe(false);
+    expect(w!.find(AVISO).exists()).toBe(true);
   });
 
-  it('abaixo da cadeira restrita também não aparece', async () => {
+  it('abaixo da cadeira restrita também aparece', async () => {
     await montar('/p/p1/secreta/qualquer', false);
-    expect(w!.find(AVISO).exists()).toBe(false);
+    expect(w!.find(AVISO).exists()).toBe(true);
   });
 
-  it('entrar na área tira o aviso; sair dela traz de volta (ainda não visto)', async () => {
+  it('trocar de cadeira não some nem volta o aviso (ainda não visto)', async () => {
     const { router, repo } = await montar('/', false);
     await router.push('/p/p1/secreta');
     await flushPromises();
-    expect(w!.find(AVISO).exists()).toBe(false);
+    expect(w!.find(AVISO).exists()).toBe(true);
     await router.push('/p/p1/comum');
     await flushPromises();
     expect(w!.find(AVISO).exists()).toBe(true);

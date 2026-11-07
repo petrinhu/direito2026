@@ -67,10 +67,9 @@ function enviar(): void {
 
 <template>
   <form class="ar-cartao ar-formulario" novalidate @submit.prevent="enviar">
-    <h2 class="ar-formulario__titulo">Troque a senha para continuar</h2>
+    <h2 class="ar-formulario__titulo">Escolha a nova senha</h2>
     <p class="ar-formulario__ajuda">
-      Esta é a sua primeira entrada com uma senha provisória. Escolha uma senha só sua; ela
-      substitui a provisória.
+      Digite a senha atual e escolha uma senha nova, só sua. Use a nova senha nas próximas entradas.
     </p>
 
     <p v-if="textoAlerta" :id="idAlerta" class="ar-alerta ar-alerta--erro" role="alert">

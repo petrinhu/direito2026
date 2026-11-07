@@ -5,6 +5,12 @@ import { criarFetchFalso } from './apoio/fetchFalso';
 const sessaoAnonima = { json: { ok: true, autenticado: false, csrf: 'tok-1' } };
 
 describe('clienteApi', () => {
+  it('não tem login: a entrada é só o formulário do servidor (portão)', () => {
+    const f = criarFetchFalso([]);
+    const cliente = criarClienteApi({ buscar: f.buscar });
+    expect('entrar' in cliente).toBe(false);
+  });
+
   it('GET sessao usa mesma origem, sem cache e guarda o token CSRF', async () => {
     const f = criarFetchFalso([sessaoAnonima]);
     const cliente = criarClienteApi({ buscar: f.buscar });
@@ -26,12 +32,11 @@ describe('clienteApi', () => {
     ]);
     const cliente = criarClienteApi({ buscar: f.buscar });
     await cliente.sessao();
-    const r = await cliente.entrar('u', 'Senha Exata');
-    expect(r.usuario).toBe('u');
+    await cliente.trocarSenha('Senha Exata', 'Senha Nova Bem Longa');
     expect(f.chamadas[1]).toMatchObject({
-      url: '/api/entrar.php',
+      url: '/api/trocar-senha.php',
       metodo: 'POST',
-      corpo: { usuario: 'u', senha: 'Senha Exata' }
+      corpo: { senhaAtual: 'Senha Exata', senhaNova: 'Senha Nova Bem Longa' }
     });
     expect(f.chamadas[1]!.cabecalhos['X-CSRF-Token']).toBe('tok-1');
     expect(f.chamadas[1]!.cabecalhos['Content-Type']).toBe('application/json');
@@ -54,7 +59,7 @@ describe('clienteApi', () => {
     ]);
     const cliente = criarClienteApi({ buscar: f.buscar });
     await cliente.sessao();
-    const erro = await cliente.entrar('u', 's').catch((e: unknown) => e);
+    const erro = await cliente.trocarSenha('u', 's').catch((e: unknown) => e);
     expect(erro).toBeInstanceOf(ErroDeApi);
     expect(erro).toMatchObject({ status: 429, codigo: 'aguarde', segundos: 32 });
   });

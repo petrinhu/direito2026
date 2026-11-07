@@ -4,13 +4,14 @@ import type { RepositorioProgresso } from '@/core/progresso/tipos';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
 
 /**
- * Faixa de aviso de armazenamento (ordem do líder, 22/09/2026: o líder
- * pediu aviso de cookies; verificado que o site não usa cookie nem
- * rastreador, só armazenamento local para tema e progresso — por isso a
- * faixa discreta de aviso de armazenamento, não o banner de cookies).
+ * Faixa de aviso de armazenamento (ordem do líder, 22/09/2026: aviso de
+ * cookies; a resposta foi a faixa discreta, não o banner, porque o site
+ * guardava só armazenamento local para tema e progresso). Desde o login
+ * único (LU-F3.5, 07/11/2026), o login também guarda um cookie de sessão, e
+ * a faixa diz isso em todo o site.
  * Mostrada só na primeira visita: repositorio decide sozinho se a marca
  * de "já visto" sobrevive a um recarregamento (localStorage) ou dura só
- * esta sessão (armazenamento indisponível, RepositorioMemoria) — este
+ * esta sessão (armazenamento indisponível, RepositorioMemoria): este
  * componente não sabe nem precisa saber qual das duas está por trás.
  */
 const props = defineProps<{ repositorio: RepositorioProgresso }>();
@@ -31,7 +32,8 @@ function apagar(): void {
   <div v-if="visivel" class="aviso-armazenamento" role="status" aria-live="polite">
     <p class="aviso-armazenamento__texto">
       Este site guarda, só neste navegador e neste aparelho, o tema escolhido e o progresso de
-      leitura e de quiz. Não usa cookies, não rastreia e não envia nada para nenhum servidor.
+      leitura e de quiz. Ao entrar com o seu login, o navegador também guarda um cookie de sessão,
+      que é apagado quando você sai.
     </p>
     <div class="aviso-armazenamento__acoes">
       <button type="button" class="aviso-armazenamento__apagar" @click="apagar">

@@ -72,27 +72,34 @@ function fixture(arquivos: Record<string, string>, atributos: string = ATRIBUTOS
   return raiz;
 }
 
-/** Cópia do script com seis frases permitidas (teto é 5). A mutação é conferida antes de rodar. */
+/**
+ * Cópia do script com seis frases permitidas (teto é 5). Desde o refactor (LU-F5.2, scripts/apoio/textoDeEstudo.ts),
+ * a lista mora no módulo: a cópia leva o módulo com as seis frases, e o script copiado importa dele.
+ * A mutação é conferida antes de rodar.
+ */
 function scriptComSeisFrases(): string {
   const pasta = mkdtempSync(join(tmpdir(), 'portao-particao-teto-'));
   temporarios.push(pasta);
-  mkdirSync(join(pasta, 'scripts'));
+  mkdirSync(join(pasta, 'scripts', 'apoio'), { recursive: true });
   const extras = Array.from(
     { length: 4 },
     (_, i) => `  'Frase sintetica extra ${i + 1} para estourar o teto.',`
   );
-  const original = readFileSync(SCRIPT, 'utf-8');
-  const cabeca = 'const FRASES_PERMITIDAS = [\n';
-  const codigo = original
+  const modulo = readFileSync(join(RAIZ_REPO, 'scripts/apoio/textoDeEstudo.ts'), 'utf-8');
+  const codigoModulo = modulo
     .replace(
-      "'../src/core/restrito/termosVazamento'",
+      "'../../src/core/restrito/termosVazamento'",
       `'${join(RAIZ_REPO, 'src/core/restrito/termosVazamento')}'`
     )
-    .replace(cabeca, `${cabeca}${extras.join('\n')}\n`);
-  if (!codigo.includes(extras[3] ?? '')) {
-    throw new Error('sabotagem não chegou ao script copiado');
+    .replace(
+      'export const FRASES_PERMITIDAS = [\n',
+      `export const FRASES_PERMITIDAS = [\n${extras.join('\n')}\n`
+    );
+  if (!codigoModulo.includes(extras[3] ?? '')) {
+    throw new Error('sabotagem não chegou ao módulo copiado');
   }
-  writeFileSync(join(pasta, 'scripts/verificar-particao.ts'), codigo);
+  writeFileSync(join(pasta, 'scripts/apoio/textoDeEstudo.ts'), codigoModulo);
+  writeFileSync(join(pasta, 'scripts/verificar-particao.ts'), readFileSync(SCRIPT, 'utf-8'));
   // node_modules só para resolver typescript e tsx na cópia; nada é escrito no repositório.
   symlinkSync(join(RAIZ_REPO, 'node_modules'), join(pasta, 'node_modules'), 'dir');
   return join(pasta, 'scripts/verificar-particao.ts');

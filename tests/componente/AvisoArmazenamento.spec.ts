@@ -10,6 +10,10 @@ import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
  * navegador, sem cookies, sem rastreamento, sem enviar nada a servidor;
  * botão "Entendi" que fecha para sempre; link de apagar dados com
  * confirmação; região anunciada por leitor de tela sem roubar o foco.
+ *
+ * Nota de 07/11/2026 (LU-F3.5): o "sem cookies" acima deixou de valer,
+ * porque o login guarda dois cookies. A faixa diz isso (ver o primeiro
+ * teste). O pedido original de 22/09/2026 fica como foi dado.
  */
 describe('AvisoArmazenamento', () => {
   afterEach(() => {
@@ -21,9 +25,16 @@ describe('AvisoArmazenamento', () => {
     const wrapper = mount(AvisoArmazenamento, { props: { repositorio } });
     expect(wrapper.find('.aviso-armazenamento').exists()).toBe(true);
     expect(wrapper.text().toLowerCase()).toContain('neste navegador');
-    // O login único guarda um cookie de sessão: o texto diz isso, e não
-    // promete que o site não usa cookie nem envia nada a servidor.
+    // O login único guarda dois cookies: o de sessão (apagado no Sair) e o
+    // do aparelho (30 dias, que o Sair não apaga: dispositivo.php:25 e :121-122,
+    // sair.php:10). O texto diz os dois, e não promete que não há cookie.
     expect(wrapper.text()).toContain('cookie de sessão');
+    expect(wrapper.text()).toContain('aparelho');
+    expect(wrapper.text()).toContain('30 dias');
+    expect(wrapper.text()).toMatch(/Sair não apaga esse segundo cookie/);
+    expect(wrapper.text()).toContain('nem o botão Apagar os dados guardados');
+    // A preferência de Leitura ampliada também fica no aparelho (RepositorioLocalStorage, chave modo-adaptado).
+    expect(wrapper.text()).toContain('Leitura ampliada');
     expect(wrapper.text().toLowerCase()).not.toContain('não usa cookies');
     expect(wrapper.text().toLowerCase()).not.toContain('não envia nada');
   });

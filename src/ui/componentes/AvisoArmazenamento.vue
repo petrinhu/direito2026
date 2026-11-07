@@ -7,8 +7,8 @@ import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfir
  * Faixa de aviso de armazenamento (ordem do líder, 22/09/2026: aviso de
  * cookies; a resposta foi a faixa discreta, não o banner, porque o site
  * guardava só armazenamento local para tema e progresso). Desde o login
- * único (LU-F3.5, 07/11/2026), o login também guarda um cookie de sessão, e
- * a faixa diz isso em todo o site.
+ * único (LU-F3.5, 07/11/2026), o login guarda um cookie de sessão e um cookie
+ * do aparelho (30 dias, que o Sair não apaga), e a faixa diz isso em todo o site.
  * Mostrada só na primeira visita: repositorio decide sozinho se a marca
  * de "já visto" sobrevive a um recarregamento (localStorage) ou dura só
  * esta sessão (armazenamento indisponível, RepositorioMemoria): este
@@ -31,9 +31,11 @@ function apagar(): void {
 <template>
   <div v-if="visivel" class="aviso-armazenamento" role="status" aria-live="polite">
     <p class="aviso-armazenamento__texto">
-      Este site guarda, só neste navegador e neste aparelho, o tema escolhido e o progresso de
-      leitura e de quiz. Ao entrar com o seu login, o navegador também guarda um cookie de sessão,
-      que é apagado quando você sai.
+      Este site guarda, só neste navegador e neste aparelho, o tema escolhido, o progresso de
+      leitura e de quiz e a preferência de Leitura ampliada. Ao entrar com o seu login, o navegador
+      também guarda um cookie de sessão, que é apagado quando você sai, e um cookie que reconhece
+      este aparelho por 30 dias. Sair não apaga esse segundo cookie, nem o botão Apagar os dados
+      guardados: ele vale até expirar ou ser revogado.
     </p>
     <div class="aviso-armazenamento__acoes">
       <button type="button" class="aviso-armazenamento__apagar" @click="apagar">

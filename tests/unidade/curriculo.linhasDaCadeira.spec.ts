@@ -52,14 +52,10 @@ describe('linhasDaCadeira, linhas de uma placa da página inicial', () => {
     ]);
     expect(linhas[0]).toMatchObject({
       rotulo: 'Unidade 1',
-      texto: 'Resumo de estudo e quiz',
-      restrita: false
+      texto: 'Resumo de estudo e quiz'
     });
-    expect(linhas[1]).toMatchObject({
-      rotulo: 'Interdisciplinar',
-      texto: 'Acesso restrito',
-      restrita: true
-    });
+    // O atalho mostra só o rótulo da cadeira: sem "Acesso restrito" e sem cadeado.
+    expect(linhas[1]).toEqual({ href: '/p/p1/interdisciplinar', rotulo: 'Interdisciplinar' });
   });
 
   it('unidade em breve não vira linha: nada inventado nem link morto', () => {
@@ -76,7 +72,7 @@ describe('linhasDaCadeira, linhas de uma placa da página inicial', () => {
       atalhoUnidade: { rotulo: 'Interdisciplinar', apos: 'u1', cadeiraId: 'nao-existe' }
     };
     const linhas = linhasDaCadeira(periodo([cadeira]), cadeira);
-    expect(linhas.map((l) => l.restrita)).toEqual([false]);
+    expect(linhas.map((l) => l.href)).toEqual(['/p/p1/c/u1']);
   });
 
   it('atalho cuja unidade de referência não aparece vai para o fim da lista', () => {

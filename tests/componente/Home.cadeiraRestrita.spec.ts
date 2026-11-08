@@ -35,10 +35,11 @@ describe('Home e a cadeira restrita', () => {
     }
   ];
 
-  it('a cadeira restrita vira placa própria, com selo "Área restrita" e link de entrada', () => {
+  it('a cadeira restrita vira placa própria, sem selo, com link "Abrir a cadeira"', () => {
     const placa = montar(sintetico).get('article.placa--restrita');
     expect(placa.find('h3').text()).toBe('Cadeira Secreta');
-    expect(placa.find('.selo').text()).toContain('Área restrita');
+    expect(placa.find('.selo').exists()).toBe(false);
+    expect(placa.get('a.linha').text()).toContain('Abrir a cadeira');
     expect(placa.get('a.linha').attributes('href')).toBe('/p/p1/secreta');
   });
 

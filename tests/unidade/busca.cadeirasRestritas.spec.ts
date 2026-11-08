@@ -11,6 +11,7 @@ describe('busca e cadeira restrita: só o título navegável', () => {
     expect(d.url).toBe('/p/p1/interdisciplinar');
     expect(d.titulo).toBe('Interdisciplinar');
     expect(d.corpo).toBe('Interdisciplinar');
+    expect(d.trecho).toBe('Abra a cadeira para ver o conteúdo.');
     expect(d.unidade).toBe('');
   });
 

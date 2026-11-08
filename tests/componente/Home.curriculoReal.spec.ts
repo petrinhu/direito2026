@@ -29,7 +29,11 @@ describe('Home com o currículo real', () => {
       stubs: { teleport: true }
     }
   });
-  const unidades = wrapper.findAll('a.linha:not(.linha--restrita)');
+  // Link de unidade tem /p/<período>/<cadeira>/<unidade>; o atalho e a entrada
+  // restrita têm /p/<período>/<cadeira>, um segmento a menos. Sem classe visual.
+  const unidades = wrapper
+    .findAll('a.linha')
+    .filter((a) => (a.attributes('href') ?? '').split('/').length === 5);
   const placa = (nome: string) =>
     wrapper.findAll('article.placa').find((p) => p.find('h3').text().includes(nome))!;
 

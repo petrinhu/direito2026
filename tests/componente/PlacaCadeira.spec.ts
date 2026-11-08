@@ -44,12 +44,13 @@ describe('PlacaCadeira, uma placa por cadeira na página inicial', () => {
       '/p/p1/interdisciplinar'
     ]);
     expect(linhas[0]!.text()).toContain('Resumo de estudo e quiz');
-    expect(linhas[1]!.find('svg').attributes('aria-hidden')).toBe('true');
-    expect(linhas[1]!.text()).toContain('Acesso restrito');
+    expect(linhas[1]!.find('svg').exists()).toBe(false);
+    expect(linhas[1]!.find('.linha__rotulo').text()).toBe('Interdisciplinar');
+    expect(linhas[1]!.find('.linha__texto').exists()).toBe(false);
     expect(w.classes()).not.toContain('placa--restrita');
   });
 
-  it('cadeira restrita não lista unidade nem traz o conteúdo, só o selo e a entrada', () => {
+  it('cadeira restrita não lista unidade nem traz o conteúdo, só o título e a entrada', () => {
     const cadeira: Cadeira = {
       id: 'interdisciplinar',
       nome: 'Interdisciplinar',
@@ -59,7 +60,8 @@ describe('PlacaCadeira, uma placa por cadeira na página inicial', () => {
     };
     const w = mount(PlacaCadeira, { props: { periodo, cadeira } });
     expect(w.classes()).toContain('placa--restrita');
-    expect(w.find('.selo').text()).toContain('Área restrita');
+    expect(w.find('.selo').exists()).toBe(false);
+    expect(w.get('a.linha').text()).toContain('Abrir a cadeira');
     expect(w.findAll('a.linha')).toHaveLength(1);
     expect(w.get('a.linha').attributes('href')).toBe('/p/p1/interdisciplinar');
   });

@@ -330,7 +330,7 @@ provide(ESTADO_MENU, {
                         <RouterLink
                           :to="`/p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`"
                           class="menu-curriculo__link-unidade"
-                          :aria-label="`${cadeira.atalhoUnidade.rotulo}, atalho para a área restrita`"
+                          :aria-label="`${cadeira.atalhoUnidade.rotulo} (atalho)`"
                           :aria-current="
                             ehAtual(
                               `p/${periodo.id}/${cadeira.atalhoUnidade.cadeiraId}`,

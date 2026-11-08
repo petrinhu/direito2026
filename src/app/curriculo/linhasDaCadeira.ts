@@ -3,9 +3,8 @@ import type { Cadeira, Periodo } from '@/core/curriculo/tipos';
 export interface LinhaCadeira {
   readonly href: string;
   readonly rotulo: string;
-  readonly texto: string;
-  /** Atalho para cadeira de acesso restrito: mostra o cadeado, não o conteúdo. */
-  readonly restrita: boolean;
+  /** Título da unidade. Ausente no atalho: a linha mostra só o rótulo da cadeira. */
+  readonly texto?: string;
 }
 
 /**
@@ -27,9 +26,7 @@ export function linhasDaCadeira(periodo: Periodo, cadeira: Cadeira): LinhaCadeir
     atalho && destino
       ? {
           href: `/p/${periodo.id}/${destino.id}`,
-          rotulo: atalho.rotulo,
-          texto: 'Acesso restrito',
-          restrita: true
+          rotulo: atalho.rotulo
         }
       : undefined;
 
@@ -39,8 +36,7 @@ export function linhasDaCadeira(periodo: Periodo, cadeira: Cadeira): LinhaCadeir
       linhas.push({
         href: `/p/${periodo.id}/${cadeira.id}/${unidade.id}`,
         rotulo: unidade.rotulo,
-        texto: unidade.titulo,
-        restrita: false
+        texto: unidade.titulo
       });
     }
     if (linhaAtalho && atalho && unidade.id === atalho.apos) {

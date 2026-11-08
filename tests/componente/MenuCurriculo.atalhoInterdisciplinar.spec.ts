@@ -15,7 +15,7 @@ import { lerIdDeUnidade } from '@/core/curriculo/idDeUnidade';
  */
 
 const RotuloAtalho = 'Interdisciplinar';
-const NomeAcessivelAtalho = 'Interdisciplinar, atalho para a área restrita';
+const NomeAcessivelAtalho = 'Interdisciplinar (atalho)';
 
 function curriculoComAtalho(): Curriculo {
   return [

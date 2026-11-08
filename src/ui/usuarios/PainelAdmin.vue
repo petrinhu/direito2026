@@ -189,7 +189,7 @@ onMounted(carregar);
     >
       <table class="ar-tabela">
         <caption>
-          Usuários com acesso à área restrita
+          Usuários com acesso ao site
         </caption>
         <thead>
           <tr>

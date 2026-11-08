@@ -80,6 +80,7 @@ function d26_tela_documento(string $titulo, string $corpo): string
     return '<!doctype html><html lang="pt-br"' . d26_tela_atributo_tema() . '><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<meta name="robots" content="noindex, nofollow">'
+        . '<link rel="icon" href="/icones/favicon.svg" type="image/svg+xml">'
         . '<title>' . d26_tela_e($titulo) . '</title>'
         . '<link rel="stylesheet" href="/entrada.css?v=' . d26_tela_versao_css() . '">'
         . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main></body></html>';

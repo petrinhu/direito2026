@@ -41,6 +41,11 @@ teste('entrada: a marca do topo é a do site (templo do SeloHome) e não traz li
     naoContem('página inicial', $r->corpo, 'sem link para a home antes do login');
 });
 
+teste('entrada: declara o favicon público do site, para o navegador não pedir /favicon.ico ao portão', function (): void {
+    $r = Ambiente::novo()->cliente()->get('/', PORTAO_NAVEGACAO);
+    contem('<link rel="icon" href="/icones/favicon.svg" type="image/svg+xml">', $r->corpo, 'ícone público (plano 1.3)');
+});
+
 teste('entrada: a CSP libera a fonte do próprio site e continua sem script', function (): void {
     $r = Ambiente::novo()->cliente()->get('/', PORTAO_NAVEGACAO);
     $csp = (string) $r->cabecalho('content-security-policy');

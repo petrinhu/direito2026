@@ -110,17 +110,25 @@ afterAll(() => {
 });
 
 describe('publicar.sh: acervo da Júri no formato claro antes do --preparar (LU-C1)', () => {
-  it('recusa acervo cifrado (14 .juri e kid) com "acervo fora do formato claro", sem seguir', () => {
-    const r = rodarConferirInsumos(cifrado);
-    expect(r.status, r.saida).not.toBe(0);
-    expect(r.saida, r.saida).toContain('acervo fora do formato claro');
-    expect(r.saida, r.saida).not.toContain('passou');
-  }, LONGO);
+  it(
+    'recusa acervo cifrado (14 .juri e kid) com "acervo fora do formato claro", sem seguir',
+    () => {
+      const r = rodarConferirInsumos(cifrado);
+      expect(r.status, r.saida).not.toBe(0);
+      expect(r.saida, r.saida).toContain('acervo fora do formato claro');
+      expect(r.saida, r.saida).not.toContain('passou');
+    },
+    LONGO
+  );
 
-  it('aceita acervo claro: roda o conferir da ferramenta local e segue', () => {
-    const r = rodarConferirInsumos(claro);
-    expect(r.status, r.saida).toBe(0);
-    expect(r.saida, r.saida).toContain('conferido: 3 imagens');
-    expect(r.saida, r.saida).toContain('passou');
-  }, LONGO);
+  it(
+    'aceita acervo claro: roda o conferir da ferramenta local e segue',
+    () => {
+      const r = rodarConferirInsumos(claro);
+      expect(r.status, r.saida).toBe(0);
+      expect(r.saida, r.saida).toContain('conferido: 3 imagens');
+      expect(r.saida, r.saida).toContain('passou');
+    },
+    LONGO
+  );
 });

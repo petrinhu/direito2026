@@ -1,6 +1,14 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +36,8 @@ const FUNCOES = [
   'conferir_portao_no_destino'
 ];
 
-const CORPO = 'conferir_portao_no_destino "$DESTINO_WEBROOT/api/nucleo" "$DESTINO_APP/atual"; echo "DIVERGENCIAS=$DIVERGENCIAS"';
+const CORPO =
+  'conferir_portao_no_destino "$DESTINO_WEBROOT/api/nucleo" "$DESTINO_APP/atual"; echo "DIVERGENCIAS=$DIVERGENCIAS"';
 
 let tmp: string;
 let home: string;
@@ -98,7 +107,11 @@ function montarApp(raizRemota: string): void {
   ];
   for (const [caminho, tipo] of tipos) {
     const conteudo = readFileSync(join(atual, caminho));
-    arquivos[caminho] = { tipo, bytes: conteudo.length, md5: createHash('md5').update(conteudo).digest('hex') };
+    arquivos[caminho] = {
+      tipo,
+      bytes: conteudo.length,
+      md5: createHash('md5').update(conteudo).digest('hex')
+    };
   }
   writeFileSync(join(atual, 'manifesto.json'), JSON.stringify({ versao: '0.0.0.0', arquivos }));
 }
@@ -114,7 +127,12 @@ function montarPrivado(raizRemota: string, quantidade: number): void {
     const id = (i + 1).toString(16).padStart(32, '0');
     const conteudo = Buffer.from(`CONTEUDO-SINTETICO-JURI-${i}`);
     writeFileSync(join(privado, 'imagens', id), conteudo);
-    return { id, tipo: 'jpeg', bytes: conteudo.length, sha256: createHash('sha256').update(conteudo).digest('hex') };
+    return {
+      id,
+      tipo: 'jpeg',
+      bytes: conteudo.length,
+      sha256: createHash('sha256').update(conteudo).digest('hex')
+    };
   });
   writeFileSync(join(privado, 'acervo.json'), JSON.stringify({ indice }));
 }
@@ -128,7 +146,9 @@ beforeEach(() => {
   stub = join(tmp, 'ssh-falso');
   writeFileSync(
     stub,
-    ['#!/bin/sh', '[ "$1" = -- ] && shift', 'shift', `cd '${home}' && exec sh -c "$*"`, ''].join('\n')
+    ['#!/bin/sh', '[ "$1" = -- ] && shift', 'shift', `cd '${home}' && exec sh -c "$*"`, ''].join(
+      '\n'
+    )
   );
   chmodSync(stub, 0o755);
   montarNucleo(remota);

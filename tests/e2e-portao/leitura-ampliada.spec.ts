@@ -196,6 +196,39 @@ test('com a pilha inferior presente, o último campo de Gerenciar focado fica in
     .toBe(true);
 });
 
+for (const [rota, ampliada] of [
+  ['/', false],
+  ['/', true],
+  ['/usuarios', false]
+] as const) {
+  const modo = ampliada ? 'Leitura ampliada' : 'normal';
+  test(`o aviso é a primeira coisa sob a barra, antes da faixa, a 360x640 (${rota}, ${modo})`, async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    if (ampliada) await ligarLeituraAmpliada(page);
+    await entrarNoApp(page, CONTA_COMUM, rota);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const medida = await page.evaluate(() => {
+      const barra = document.querySelector('.barra-topo')!.getBoundingClientRect();
+      const aviso = document.querySelector('.aviso-armazenamento')!.getBoundingClientRect();
+      const faixa = document.querySelector('#faixa-do-layout');
+      const antesDaFaixa = faixa
+        ? Boolean(
+            document.querySelector('.aviso-armazenamento')!.compareDocumentPosition(faixa) & 4
+          )
+        : true;
+      return { folgaSobBarra: aviso.top - barra.bottom, antesDaFaixa, scrollY: window.scrollY };
+    });
+    expect(medida.folgaSobBarra, 'topo do aviso abaixo do fim da barra').toBeGreaterThanOrEqual(0);
+    expect(
+      medida.folgaSobBarra,
+      'topo do aviso no máximo 24 px abaixo da barra'
+    ).toBeLessThanOrEqual(24);
+    expect(medida.antesDaFaixa, 'o aviso vem antes da faixa na ordem do DOM').toBe(true);
+  });
+}
+
 test('o aviso é bloco do fluxo: sem position fixed nem sticky, a 360 em Leitura ampliada', async ({
   page
 }) => {

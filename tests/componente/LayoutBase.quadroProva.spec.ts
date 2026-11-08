@@ -49,14 +49,15 @@ afterEach(() => {
 });
 
 describe('LayoutBase, quadro de contagem em todas as páginas', () => {
-  it('o quadro aparece na pilha inferior, e o aviso de armazenamento fica no topo do conteúdo', () => {
+  it('o quadro aparece na pilha inferior, e o aviso de armazenamento fica no topo, sob a barra', () => {
     montado = montarLayout();
     const pilha = document.querySelector('.layout-base__inferior');
     expect(pilha).not.toBeNull();
     expect(pilha?.querySelector('.quadro-prova')).not.toBeNull();
     expect(pilha?.querySelector('.aviso-armazenamento')).toBeNull();
-    const principal = document.querySelector('#conteudo-principal');
-    expect(principal?.querySelector('.aviso-armazenamento')).not.toBeNull();
+    const topo = document.querySelector('.layout-base__topo');
+    expect(topo?.querySelector('.aviso-armazenamento')).not.toBeNull();
+    expect(document.querySelector('#conteudo-principal .aviso-armazenamento')).toBeNull();
   });
 
   it('a pilha inferior é sticky, não fixed (não cobre o fim da página)', () => {

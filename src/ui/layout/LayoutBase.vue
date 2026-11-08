@@ -149,7 +149,15 @@ onBeforeUnmount(() => {
     @abrir-gaveta="abrirGaveta"
     @buscar="(termo) => emit('buscar', termo)"
   />
-  <div v-if="comFaixa" id="faixa-do-layout" class="layout-base__faixa" />
+  <!--
+    Topo do conteúdo, logo abaixo da barra: o aviso de armazenamento vem primeiro (decisão do líder,
+    07/11/2026: bloco no alto da página, que rola com ela), e depois a faixa da página inicial. O
+    recuo do cabeçalho fixo está aqui, não na faixa nem no corpo.
+  -->
+  <div class="layout-base__topo">
+    <AvisoArmazenamento :repositorio="repositorio" />
+    <div v-if="comFaixa" id="faixa-do-layout" class="layout-base__faixa" />
+  </div>
   <div class="layout-base__corpo" :class="{ 'layout-base__corpo--com-faixa': comFaixa }">
     <div v-if="gavetaAberta" class="layout-base__sobreposicao" @click="fecharGaveta" />
     <aside
@@ -168,9 +176,6 @@ onBeforeUnmount(() => {
       />
     </aside>
     <main id="conteudo-principal" tabindex="-1" class="layout-base__conteudo">
-      <!-- Aviso de armazenamento: bloco no topo do conteúdo, rola com a página (decisão do líder,
-           07/11/2026). Não fica na pilha fixa, para não cobrir campo nem menu. -->
-      <AvisoArmazenamento :repositorio="repositorio" />
       <slot />
     </main>
   </div>
@@ -215,7 +220,7 @@ onBeforeUnmount(() => {
      líder, 22/09/2026): sem este respiro o conteúdo nasceria coberto
      pela faixa. A folga extra (esp-2) absorve a onda + o fio de
      progresso, que ficam pendurados um pouco abaixo do cabeçalho. */
-  padding-top: calc(var(--altura-cabecalho, 64px) + var(--esp-2, 0.5rem));
+  padding-top: var(--esp-2, 0.5rem);
 }
 
 .layout-base__gaveta {
@@ -267,16 +272,18 @@ onBeforeUnmount(() => {
   display: none;
 }
 
-/* Faixa de topo (só com comFaixa): a faixa já começa abaixo do cabeçalho, então
-   a grade não precisa do respiro de cima. A barra lateral nasce na base da faixa
-   e fica presa logo abaixo do cabeçalho ao rolar (sticky), como no protótipo
-   aprovado. Só em tela larga: em tela estreita a gaveta continua fixa (regra
-   abaixo, mesmo ponto de quebra de 880px). */
-.layout-base__faixa {
-  /* A faixa começa no topo do documento, por baixo do cabeçalho fixo: o
-     respiro de cima é a altura do cabeçalho, para o conteúdo da página nunca
-     nascer escondido atrás dele. */
+/* Topo do conteúdo: o respiro de cima é a altura do cabeçalho fixo, para o aviso e a faixa
+   nunca nascerem escondidos atrás da barra. Antes, esse respiro ficava no corpo e na faixa. */
+.layout-base__topo {
   padding-top: var(--altura-cabecalho, 64px);
+}
+
+/* Faixa de topo (só com comFaixa): a grade começa logo abaixo dela. A barra lateral nasce na base
+   da faixa e fica presa logo abaixo do cabeçalho ao rolar (sticky), como no protótipo aprovado. Só
+   em tela larga: em tela estreita a gaveta continua fixa (regra abaixo, mesmo ponto de quebra de
+   880px). */
+.layout-base__faixa {
+  min-width: 0;
 }
 
 .layout-base__corpo--com-faixa {

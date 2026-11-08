@@ -250,6 +250,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--esp-4, 1rem);
+  /* Contêiner para a tabela de usuários: a largura dela decide se a linha fica em tabela ou empilhada. */
+  container-type: inline-size;
 }
 
 .ar-admin h2,
@@ -318,6 +320,57 @@
 .ar-tabela thead th {
   color: var(--cor-texto-suave);
   font-size: var(--escala-sm, 0.9375rem);
+}
+
+/* Tabela que não cabe no contêiner (QA rodada 5, achado 2: a 768 em Leitura ampliada, os botões de
+   linha ficavam fora da janela, e o foco não rolava o contêiner). Então cada linha vira um bloco
+   empilhado, com o rótulo de cada coluna. Nada fica fora da janela, e não há rolagem lateral. Em
+   navegador sem consulta de contêiner, fica a tabela com rolagem, como antes. */
+@container (max-width: 56rem) {
+  .ar-tabela-rolavel {
+    overflow-x: visible;
+  }
+
+  .ar-tabela,
+  .ar-tabela tbody,
+  .ar-tabela tr,
+  .ar-tabela th,
+  .ar-tabela td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ar-tabela {
+    min-width: 0;
+  }
+
+  .ar-tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ar-tabela tr {
+    padding: var(--esp-3, 0.75rem) 0;
+    border-top: 1px solid var(--cor-borda);
+  }
+
+  .ar-tabela th,
+  .ar-tabela td {
+    border-top: 0;
+    padding: var(--esp-1, 0.25rem) var(--esp-3, 0.75rem);
+  }
+
+  .ar-tabela td::before {
+    content: attr(data-rotulo);
+    display: block;
+    color: var(--cor-texto-suave);
+    font-size: var(--escala-sm, 0.9375rem);
+  }
 }
 
 /* Impressão dos slides: as páginas vão para o <body> (Teleport) e o resto do site some. */

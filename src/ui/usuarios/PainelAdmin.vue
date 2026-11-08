@@ -203,13 +203,13 @@ onMounted(carregar);
         <tbody>
           <tr v-for="u in usuarios" :key="u.usuario">
             <th scope="row">{{ u.usuario }}</th>
-            <td>{{ u.admin ? 'Administrador' : 'Participante' }}</td>
-            <td>
+            <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
+            <td data-rotulo="Estado">
               {{ u.ativo ? 'Ativo' : 'Desativado' }}
               <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
             </td>
-            <td>{{ formatarData(u.ultimoLogin) }}</td>
-            <td>
+            <td data-rotulo="Último acesso">{{ formatarData(u.ultimoLogin) }}</td>
+            <td data-rotulo="Ações">
               <span v-if="u.usuario === usuarioAtual">Sua conta</span>
               <template v-else>
                 <div

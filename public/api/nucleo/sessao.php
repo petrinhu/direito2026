@@ -12,7 +12,9 @@ if (!defined('D26_API')) {
  * que o servidor restringe). Invariantes: (1) só existe sessão em disco para
  * quem entrou: visita anônima nunca chama session_start (o CSRF dela vive no
  * cookie __Host-d26pre, ver csrf.php); (2) sessão autenticada só vale enquanto
- * a conta existe, está ativa e uid e versaoSessao conferem.
+ * a conta existe, está ativa, uid e versaoSessao conferem e o marcador de sessão única
+ * (sessaoVigente da conta, vigente da sessão) confere: um login novo da conta derruba as
+ * sessões anteriores (ver d26_marcador_confere).
  */
 function d26_sessao_configurar(string $priv): void
 {
@@ -92,6 +94,7 @@ function d26_sessao_conta_valida(string $priv, int $agora): ?array
         && $conta['ativo'] === true
         && hash_equals((string) ($conta['uid'] ?? ''), is_string($_SESSION['uid'] ?? null) ? $_SESSION['uid'] : "\0")
         && (int) $conta['versaoSessao'] === (int) ($_SESSION['versao'] ?? -1)
+        && d26_marcador_confere($conta['sessaoVigente'] ?? null, $_SESSION['vigente'] ?? null)
         && $agora - (int) ($_SESSION['atividade'] ?? 0) <= D26_SESSAO_OCIOSIDADE
         && $agora - (int) ($_SESSION['criada'] ?? 0) <= D26_SESSAO_VALIDADE;
     return $valida ? $conta : null;
@@ -126,8 +129,10 @@ function d26_sessao_ler(string $priv): ?array
 /**
  * Login ou troca de senha: id novo (anti-fixação), csrf novo, versão da conta.
  * No login ainda não há sessão: é aqui que ela passa a existir em disco.
+ * $vigente é o marcador de sessão única da conta (sessaoVigente) no momento da entrada;
+ * null (conta sem marcador, formato antigo) não grava chave nenhuma na sessão.
  */
-function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $versao, bool $novaValidade): void
+function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $versao, bool $novaValidade, ?string $vigente): void
 {
     $agora = time();
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -142,6 +147,11 @@ function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $
     $_SESSION['usuario'] = $usuario;
     $_SESSION['uid'] = $uid;
     $_SESSION['versao'] = $versao;
+    if ($vigente === null) {
+        unset($_SESSION['vigente']);
+    } else {
+        $_SESSION['vigente'] = $vigente;
+    }
     if ($novaValidade || !isset($_SESSION['criada'])) {
         $_SESSION['criada'] = $agora;
     }

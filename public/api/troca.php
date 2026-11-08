@@ -51,6 +51,7 @@ $versao = d26_contas_trocar_senha($priv, $login, $hashNovo, $conta);
 if ($versao === 0) {
     d26_portao_tela(409, d26_tela_troca($token, 'A conta foi alterada enquanto a troca era feita. Entre de novo.'), PORTAO_CSP_TELA);
 }
-d26_sessao_autenticar($priv, $login, (string) $conta['uid'], $versao, false);
+// A troca mantém o marcador da própria sessão (o CAS já conferiu que a conta não mudou).
+d26_sessao_autenticar($priv, $login, (string) $conta['uid'], $versao, false, $conta['sessaoVigente'] ?? null);
 d26_dispositivo_emitir($priv, $login, $versao, (string) $conta['uid']);
 d26_portao_vazio(303, ['Location' => '/']);

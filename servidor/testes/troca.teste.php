@@ -87,13 +87,17 @@ teste('trocar-senha: sucesso regenera o id, libera o conteúdo e invalida a senh
     igual(false, $novo->json()['deveTrocarSenha']);
 });
 
-teste('trocar-senha: sem sessão é 401; sessões antigas do mesmo usuário caem (versaoSessao)', function (): void {
+teste('trocar-senha: sem sessão é 401; o login de outro aparelho derruba a sessão anterior da mesma conta (SU-B1: o último a entrar fica, decisão do líder) e a troca dela é recusada com 403', function (): void {
     $a = Ambiente::novo();
     igual(401, $a->clienteComSessao()->post('/api/trocar-senha.php', ['senhaAtual' => 'a', 'senhaNova' => 'b'])->status);
     $c1 = criarEEntrar($a);
     $c2 = $a->entrar('aluno1', 'ProvisoriaAluno1');
-    igual(200, $c1->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => 'NovaSenhaForte99'])->status);
-    igual(false, $c2->get('/api/sessao.php')->json()['autenticado'], 'a outra sessão do mesmo usuário caiu');
+    // Afirmação antiga, trocada por decisão do líder: antes, as duas sessões da conta coexistiam.
+    // A troca vem ANTES da conferência de sessão: o GET em sessao.php expira o cookie e a troca seguinte sairia 401 (sem cookie), não 403.
+    igual(403, $c1->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => 'NovaSenhaForte99'])->status, 'a troca pela sessão derrubada é recusada (CSRF antes da sessão)');
+    igual(false, $c1->get('/api/sessao.php')->json()['autenticado'], 'a sessão anterior caiu com o login de outro aparelho');
+    igual(true, $c2->get('/api/sessao.php')->json()['autenticado'], 'a sessão do último a entrar segue válida');
+    igual(200, $c2->post('/api/trocar-senha.php', ['senhaAtual' => 'ProvisoriaAluno1', 'senhaNova' => 'NovaSenhaForte99'])->status, 'a troca pela sessão vigente funciona');
 });
 
 teste('conteudo.php: sem sessão é 401 e não devolve conteúdo', function (): void {

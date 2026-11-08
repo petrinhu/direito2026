@@ -94,13 +94,14 @@ function d26_login_executar(string $priv, string $usuario, string $senha): array
     // O aparelho que já é confiável não ocupa outra vaga.
     $token = $res['confiavel'] ? null : d26_dispositivo_gerar_token();
     // Login = UMA mutação sob lock: a conta tem de ser a mesma que foi verificada (ativa, uid, versão e hash).
-    $versao = d26_contas_efetivar_login($priv, $usuario, $conta, $novoHash, $token);
+    $vigente = null;
+    $versao = d26_contas_efetivar_login($priv, $usuario, $conta, $novoHash, $token, null, $vigente);
     if ($versao === null) {
         return ['estado' => 'recusado']; // a reserva fica: conta como tentativa
     }
 
     d26_limite_sucesso($priv, $usuario, $ip, $reserva, $res['inseriu']['c']);
-    d26_sessao_autenticar($priv, $usuario, (string) $conta['uid'], $versao, true);
+    d26_sessao_autenticar($priv, $usuario, (string) $conta['uid'], $versao, true, $vigente);
     if ($token !== null) {
         d26_dispositivo_entregar($token);
     }

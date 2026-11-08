@@ -43,7 +43,8 @@ $versao = d26_contas_trocar_senha($priv, $login, $hashNovo, $conta);
 if ($versao === 0) {
     d26_erro(409, 'conta-alterada', 'A conta foi alterada enquanto a troca era feita. Entre de novo.');
 }
-d26_sessao_autenticar($priv, $login, (string) $conta['uid'], $versao, false);
+// A troca mantém o marcador da própria sessão (o CAS já conferiu que a conta não mudou).
+d26_sessao_autenticar($priv, $login, (string) $conta['uid'], $versao, false, $conta['sessaoVigente'] ?? null);
 // A troca invalidou os aparelhos; este navegador acabou de provar a senha. Preso à versão e ao uid da troca.
 d26_dispositivo_emitir($priv, $login, $versao, (string) $conta['uid']);
 d26_responder(200, ['ok' => true, 'csrf' => $_SESSION['csrf']]);

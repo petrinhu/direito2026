@@ -172,7 +172,8 @@ function d26_teste_pausar(string $ponto, string $chave = ''): void
  * Valida o TIPO de cada campo da conta. Tipo errado (arquivo editado à mão ou
  * corrompido) é D26Indisponivel, fechado: `1`/"true" nunca passam por booleano.
  * uid ausente é aceito aqui (a sessão e o login recusam conta sem uid); presente,
- * tem de ser string. `aparelhos` ausente vale [].
+ * tem de ser string. `aparelhos` ausente vale []. `sessaoVigente` (marcador de sessão
+ * única, ver d26_marcador_confere) é opcional: ausente ou string.
  * Chave desconhecida no arquivo da conta é ignorada: só os campos listados são validados.
  *
  * @param array<mixed> $c
@@ -189,7 +190,8 @@ function d26_conta_validar(array $c): array
         && is_string($c['criadoEm'] ?? null)
         && (($c['ultimoLogin'] ?? null) === null || is_string($c['ultimoLogin']))
         && (!array_key_exists('uid', $c) || is_string($c['uid']))
-        && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']));
+        && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']))
+        && (!array_key_exists('sessaoVigente', $c) || is_string($c['sessaoVigente']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }
@@ -216,6 +218,23 @@ function d26_conta_igual_lida(array $c, array $lida): bool
         && $lida['versaoSessao'] === $c['versaoSessao']
         && is_string($lida['hash'] ?? null)
         && hash_equals($lida['hash'], $c['hash']);
+}
+
+/**
+ * Sessão única (SU-B1): o marcador `sessaoVigente` da conta confere com o do outro lado
+ * (a sessão, em $_SESSION['vigente'], ou a conta lida antes de uma ação). null = ausente.
+ * Os dois ausentes conferem: conta da v1.6.1.0, sem marcador, segue válida até o primeiro
+ * login novo. Um ausente só, valor de tipo errado ou valor diferente NÃO conferem (fechado).
+ * Fica FORA de d26_conta_igual_lida de propósito: o login não a usa (dois logins em voo
+ * passam o compare-and-swap, e o último a gravar é o que vale), mas a troca de senha e as
+ * ações do admin usam, para que um aparelho já substituído não aja.
+ */
+function d26_marcador_confere(mixed $daConta, mixed $doOutro): bool
+{
+    if ($daConta === null || $doOutro === null) {
+        return $daConta === null && $doOutro === null;
+    }
+    return is_string($daConta) && is_string($doOutro) && hash_equals($daConta, $doOutro);
 }
 
 /** @return list<array<string, mixed>> */
@@ -380,7 +399,7 @@ function d26_contas_trocar_senha(string $priv, string $login, string $hash, arra
 {
     $versao = 0;
     d26_contas_mutar($priv, $login, static function (array &$c) use ($hash, $lida, &$versao): string {
-        if (!d26_conta_igual_lida($c, $lida)) {
+        if (!d26_conta_igual_lida($c, $lida) || !d26_marcador_confere($c['sessaoVigente'] ?? null, $lida['sessaoVigente'] ?? null)) {
             return 'divergente';
         }
         $c['hash'] = $hash;
@@ -400,14 +419,18 @@ function d26_contas_trocar_senha(string $priv, string $login, string $hash, arra
  * O Argon2id lento roda ANTES, fora do lock. Devolve a versaoSessao vigente, ou
  * null se a conta divergiu (redefinição, desativação, exclusão/recriação durante
  * a verificação): nada é gravado e o login deve ser recusado (401).
+ * Sessão única (SU-B1): a cada login efetivado a conta ganha um marcador novo
+ * (`sessaoVigente`, sorteado DENTRO do lock) e ele sai em $vigente. O marcador não
+ * entra na conferência do lock: dois logins em voo passam os dois, e vence o que
+ * gravar por último. As sessões de login anterior caem na próxima conferência.
  *
  * @param array<string, mixed> $lida
  */
-function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?string $novoHash, ?string $tokenAparelho, ?int $agora = null): ?int
+function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?string $novoHash, ?string $tokenAparelho, ?int $agora = null, ?string &$vigente = null): ?int
 {
     $versao = null;
     $agora ??= time();
-    d26_contas_mutar($priv, $login, static function (array &$c) use ($lida, $novoHash, $tokenAparelho, $agora, &$versao): string {
+    d26_contas_mutar($priv, $login, static function (array &$c) use ($lida, $novoHash, $tokenAparelho, $agora, &$versao, &$vigente): string {
         if (!d26_conta_igual_lida($c, $lida)) {
             return 'divergente';
         }
@@ -418,6 +441,8 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
         if ($tokenAparelho !== null) {
             d26_dispositivo_anexar($c, $tokenAparelho, $agora);
         }
+        $vigente = bin2hex(random_bytes(16));
+        $c['sessaoVigente'] = $vigente;
         $versao = (int) $c['versaoSessao'];
         return 'ok';
     });
@@ -426,7 +451,7 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
 
 /**
  * Ações do admin sobre contas, TODAS sob um único lock e com o ATOR revalidado
- * dentro dele (admin, ativo, mesmo uid e versaoSessao da sessão): um admin
+ * dentro dele (admin, ativo, mesmo uid, versaoSessao e marcador sessaoVigente da sessão): um admin
  * desativado entre a leitura da sessão e a ação não age mais, e dois admins que
  * se desativam ao mesmo tempo não zeram a administração. Invariante: depois de
  * qualquer ação sobra pelo menos um admin ativo; se não sobrasse, nada é gravado.
@@ -449,7 +474,8 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                     $atorOk = $c['admin'] === true && $c['ativo'] === true
                         && is_string($c['uid'] ?? null) && $c['uid'] !== ''
                         && is_string($ator['uid'] ?? null) && hash_equals($c['uid'], $ator['uid'])
-                        && is_int($ator['versaoSessao'] ?? null) && $c['versaoSessao'] === $ator['versaoSessao'];
+                        && is_int($ator['versaoSessao'] ?? null) && $c['versaoSessao'] === $ator['versaoSessao']
+                        && d26_marcador_confere($c['sessaoVigente'] ?? null, $ator['sessaoVigente'] ?? null);
                     break;
                 }
             }

@@ -66,3 +66,13 @@ teste('cli corrompido: desbloquear dá erro interno curto, sem pilha (contadores
     afirmaErroCurto('desbloquear', $rc, $out, $err);
     apagarArvore($dir);
 }, false);
+
+teste('sessão única R7: auditar-contas com sessaoVigente de tipo errado dá erro interno curto, sem pilha', function (): void {
+    [$dir, $priv] = cliPrivComContas(['bia' => ['admin' => false]]);
+    $d = json_decode((string) file_get_contents($priv . '/usuarios.json'), true, 512, JSON_THROW_ON_ERROR);
+    $d['usuarios'][0]['sessaoVigente'] = 42;
+    file_put_contents($priv . '/usuarios.json', json_encode($d, JSON_THROW_ON_ERROR));
+    [$rc, $out, $err] = rodarCliScript('auditar-contas.php', [$priv], '');
+    afirmaErroCurto('auditar-contas', $rc, $out, $err);
+    apagarArvore($dir);
+}, false);

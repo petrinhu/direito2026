@@ -290,3 +290,281 @@ teste('sessão única R9: sair não grava na conta, nem numa sessão substituíd
     $aparelhoB->post('/api/sair.php', []);
     igual($antes, hash_file('sha256', $a->priv . '/usuarios.json'), 'sair na sessão vigente não grava na conta');
 });
+
+// ---- SU-B2: aviso na tela de entrada quando a conta entra em outro aparelho --------------------
+
+const SU_AVISO_COOKIE = '__Host-d26aviso';
+const SU_AVISO_CODIGO = 'outro-aparelho';
+const SU_AVISO_TEXTO = 'Sua conta foi aberta em outro aparelho. Entre de novo para continuar aqui.';
+
+/** Cabeçalhos de navegação de página (Sec-Fetch-Mode: navigate), como o navegador manda. */
+function suNavegacao(): array
+{
+    return ['Sec-Fetch-Mode' => 'navigate'];
+}
+
+/**
+ * Sessão gravada à mão, com os campos que o teste controla. Padrão: versão e marcador iguais
+ * aos da conta, criada e atividade agora. $campos sobrepõe (vigente, atividade, criada, versao).
+ */
+function suSessaoCom(Ambiente $a, string $login, array $campos = []): string
+{
+    $conta = contaDe($a, $login);
+    $id = bin2hex(random_bytes(16));
+    $agora = time();
+    $c = $campos + ['versao' => $conta['versaoSessao'], 'criada' => $agora, 'atividade' => $agora, 'vigente' => null];
+    $dados = 'usuario|s:' . strlen($login) . ':"' . $login . '";'
+        . 'uid|s:32:"' . $conta['uid'] . '";'
+        . 'versao|i:' . (int) $c['versao'] . ';'
+        . 'criada|i:' . (int) $c['criada'] . ';'
+        . 'atividade|i:' . (int) $c['atividade'] . ';'
+        . 'csrf|s:64:"' . bin2hex(random_bytes(32)) . '";';
+    if ($c['vigente'] !== null) {
+        $dados .= 'vigente|s:' . strlen((string) $c['vigente']) . ':"' . $c['vigente'] . '";';
+    }
+    file_put_contents($a->priv . '/sessoes/sess_' . $id, $dados);
+    return $id;
+}
+
+/** Linha Set-Cookie do aviso (começa pelo nome), ou null. */
+function suCookieAviso(array $setCookies): ?string
+{
+    foreach ($setCookies as $linha) {
+        if (str_starts_with($linha, SU_AVISO_COOKIE . '=')) {
+            return $linha;
+        }
+    }
+    return null;
+}
+
+/** Confere cada atributo, comparado sem distinguir maiúsculas, pelas partes separadas por ";". */
+function suAtributos(string $linha, array $esperados): void
+{
+    $partes = array_map('trim', explode(';', $linha));
+    foreach ($esperados as $esperado) {
+        $achou = false;
+        foreach ($partes as $parte) {
+            $achou = $achou || strcasecmp($parte, $esperado) === 0;
+        }
+        verdadeiro($achou, "atributo \"$esperado\" ausente no cookie de aviso: $linha");
+    }
+}
+
+/** Cookie de aviso com Max-Age=0: é a expiração que o navegador aplica. */
+function suExpirado(string $linha): bool
+{
+    foreach (array_map('trim', explode(';', $linha)) as $parte) {
+        if (strcasecmp($parte, 'Max-Age=0') === 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Tela de entrada com o aviso: role="alert" no parágrafo, o mesmo texto no título e aria-describedby no usuário. */
+function suTelaComAviso(string $corpo): void
+{
+    verdadeiro(
+        preg_match('/<p\b(?=[^>]*\brole="alert")(?=[^>]*\bid="aviso-sessao")[^>]*>' . preg_quote(SU_AVISO_TEXTO, '/') . '<\/p>/', $corpo) === 1,
+        'o aviso sai em role="alert" com id aviso-sessao'
+    );
+    contem('<title>' . SU_AVISO_TEXTO . '</title>', $corpo, 'o aviso vai também ao título');
+    verdadeiro(
+        preg_match('/<input\b(?=[^>]*\bid="usuario")(?=[^>]*\baria-describedby="aviso-sessao")[^>]*>/', $corpo) === 1,
+        'o campo usuário é descrito pelo aviso'
+    );
+}
+
+// ---- R10: navegação com sessão substituída: a tela de entrada com o aviso ---------------------
+
+teste('sessão única R10: sessão substituída em navegação: 200 com a tela de entrada e o aviso, sessão expirada, nada do app, sem cookie de aviso', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $r = $aparelhoA->get('/', suNavegacao());
+    igual(200, $r->status, 'navegação recebe a tela de entrada');
+    suTelaComAviso($r->corpo);
+    naoContem('<script', $r->corpo, 'a tela segue sem JavaScript');
+    naoContem('assets/', $r->corpo, 'nenhum byte do app');
+    verdadeiro(!isset($aparelhoA->cookies[D26_SESSAO_NOME]), 'o cookie de sessão expirou');
+    verdadeiro(suCookieAviso($aparelhoA->ultimoSetCookie) === null, 'a navegação que detecta não emite o cookie de aviso');
+});
+
+// ---- R11: pedido fora de navegação emite o cookie; a navegação seguinte mostra e expira ------
+
+teste('sessão única R11: sessão substituída em pedido de asset: 401 vazio com o cookie de aviso; a navegação seguinte mostra o aviso e expira o cookie; a terceira não mostra', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $asset = $aparelhoA->get('/assets/app.js', ['Sec-Fetch-Mode' => 'no-cors']);
+    igual(401, $asset->status, 'pedido de asset sem navegação recebe 401');
+    igual('', $asset->corpo, 'sem corpo');
+    $cookie = suCookieAviso($aparelhoA->ultimoSetCookie);
+    verdadeiro($cookie !== null, 'o cookie de aviso saiu com o 401');
+    suAtributos($cookie ?? '', ['__Host-d26aviso=outro-aparelho', 'Max-Age=600', 'Path=/', 'Secure', 'HttpOnly', 'SameSite=Strict']);
+    verdadeiro(isset($aparelhoA->cookies[SU_AVISO_COOKIE]), 'o navegador guarda o cookie de aviso');
+    $segunda = $aparelhoA->get('/', suNavegacao());
+    suTelaComAviso($segunda->corpo);
+    $expiracao = suCookieAviso($aparelhoA->ultimoSetCookie);
+    verdadeiro($expiracao !== null && suExpirado($expiracao), 'a navegação seguinte expira o cookie de aviso');
+    verdadeiro(!isset($aparelhoA->cookies[SU_AVISO_COOKIE]), 'o navegador já não guarda o cookie de aviso');
+    $terceira = $aparelhoA->get('/', suNavegacao());
+    naoContem(SU_AVISO_TEXTO, $terceira->corpo, 'a terceira navegação não mostra o aviso');
+});
+
+// ---- R12: endpoints JSON: mesmo corpo de hoje, cookie de aviso junto ------------------------
+
+teste('sessão única R12: sessão substituída em endpoint JSON: 401 sem-sessao com o mesmo corpo do anônimo e o cookie de aviso', function (): void {
+    $a = Ambiente::novo();
+    $a->semearConteudo('{"unidades":[]}');
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $anonimo = $a->cliente()->get('/api/conteudo.php');
+    $r = $aparelhoA->get('/api/conteudo.php');
+    igual(401, $r->status, 'o endpoint recusa');
+    igual('sem-sessao', $r->json()['erro'] ?? null, 'com o código sem-sessao');
+    igual($anonimo->corpo, $r->corpo, 'o corpo é igual ao de quem não entrou');
+    $cookie = suCookieAviso($aparelhoA->ultimoSetCookie);
+    verdadeiro($cookie !== null, 'o cookie de aviso saiu');
+    suAtributos($cookie ?? '', ['__Host-d26aviso=outro-aparelho', 'Max-Age=600', 'Path=/', 'Secure', 'HttpOnly', 'SameSite=Strict']);
+});
+
+teste('sessão única R12: sessão substituída em /api/sessao.php: 200 com autenticado false e o cookie de aviso', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $r = $aparelhoA->get('/api/sessao.php');
+    igual(200, $r->status, 'a consulta de sessão responde 200');
+    igual(false, $r->json()['autenticado'] ?? null, 'sem sessão');
+    verdadeiro(suCookieAviso($aparelhoA->ultimoSetCookie) !== null, 'o cookie de aviso saiu');
+});
+
+// ---- R12c: troca de senha, os dois casos que o contrato aceita (403 com o cookie antigo, 401 sem) ----
+
+teste('sessão única R12c: troca de senha com sessão substituída: 403 de CSRF com o cookie antigo; 401 sem cookie de sessão', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $corpo = ['senhaAtual' => Ambiente::SENHA_ADMIN, 'senhaNova' => SU_SENHA_NOVA_CHEFE];
+    $comCookie = $aparelhoA->post('/api/trocar-senha.php', $corpo);
+    igual(403, $comCookie->status, 'com o cookie antigo: 403, porque o CSRF da sessão já caiu antes da checagem da conta');
+    igual('csrf', $comCookie->json()['erro'] ?? null, 'com o código csrf');
+    verdadeiro(suCookieAviso($aparelhoA->ultimoSetCookie) !== null, 'o cookie de aviso sai também aqui');
+    $semCookie = $a->cliente();
+    $semCookie->get('/api/sessao.php');
+    $r = $semCookie->post('/api/trocar-senha.php', $corpo);
+    igual(401, $r->status, 'sem cookie de sessão: 401');
+    igual('sem-sessao', $r->json()['erro'] ?? null, 'com o código sem-sessao');
+});
+
+// ---- R13: sessão que não foi substituída cai sem aviso (o marcador diverge, mas o resto não confere) ----
+
+teste('sessão única R13: sessão vencida por ociosidade, por 12 h, ou derrubada por redefinição ou desativação, com marcador divergente: tela sem aviso e sem cookie', function (): void {
+    $agora = time();
+    $casos = [
+        'ociosa' => [['atividade' => $agora - D26_SESSAO_OCIOSIDADE - 1], static fn (array &$c): null => null],
+        'doze horas' => [['criada' => $agora - D26_SESSAO_VALIDADE - 1], static fn (array &$c): null => null],
+        'redefinida' => [[], static function (array &$c): void { $c['versaoSessao'] = (int) $c['versaoSessao'] + 1; }],
+        'desativada' => [[], static function (array &$c): void { $c['ativo'] = false; }],
+    ];
+    foreach ($casos as $nome => [$campos, $mudar]) {
+        $a = Ambiente::novo();
+        $id = suSessaoCom($a, Ambiente::LOGIN_ADMIN, $campos + ['vigente' => str_repeat('a', 32)]);
+        d26_contas_mutar($a->priv, Ambiente::LOGIN_ADMIN, static function (array &$c) use ($mudar): string {
+            $c['sessaoVigente'] = str_repeat('b', 32);
+            $mudar($c);
+            return 'ok';
+        });
+        $c = suClienteComSessao($a, $id);
+        $r = $c->get('/', suNavegacao());
+        igual(200, $r->status, "$nome: navegação recebe a tela de entrada");
+        naoContem(SU_AVISO_TEXTO, $r->corpo, "$nome: a tela não traz o aviso");
+        verdadeiro(suCookieAviso($c->ultimoSetCookie) === null, "$nome: nenhum cookie de aviso");
+        Ambiente::limparTudo();
+    }
+});
+
+// ---- R14: Accept text/html sem Sec-Fetch-Mode é navegação, como em R10 ------------------------
+
+teste('sessão única R14: Accept text/html sem Sec-Fetch-Mode se comporta como navegação: tela com o aviso', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $a->entrar();
+    $r = $aparelhoA->get('/', ['Accept' => 'text/html']);
+    igual(200, $r->status, 'a tela de entrada, não 401');
+    suTelaComAviso($r->corpo);
+});
+
+// ---- R15: valor de cookie fora da lista fechada não escreve nada na tela ---------------------
+
+teste('sessão única R15: cookie de aviso com valor fora da lista (inclusive HTML) não escreve nada na tela', function (): void {
+    $a = Ambiente::novo();
+    $c = $a->cliente();
+    $c->cookies[SU_AVISO_COOKIE] = 'x"><b>';
+    $r = $c->get('/', suNavegacao());
+    igual(200, $r->status, 'a tela de entrada comum');
+    naoContem('<b>', $r->corpo, 'o valor não entra no HTML');
+    naoContem('aviso-sessao', $r->corpo, 'nenhum aviso');
+    naoContem(SU_AVISO_TEXTO, $r->corpo, 'o texto do aviso não aparece sem a queda');
+});
+
+// ---- R16: o arquivo da sessão substituída some na primeira detecção ---------------------------
+
+teste('sessão única R16: o arquivo da sessão substituída some no primeiro pedido que a detecta, pelo portão', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $arquivo = $a->priv . '/sessoes/sess_' . $aparelhoA->cookies[D26_SESSAO_NOME];
+    $a->entrar();
+    verdadeiro(is_file($arquivo), 'antes da detecção, o arquivo existe');
+    $aparelhoA->get('/', suNavegacao());
+    clearstatcache(); // is_file é cacheado pelo PHP: sem isto, o "existe" da checagem de antes volta
+    verdadeiro(!is_file($arquivo), 'o portão apagou o arquivo da sessão substituída');
+});
+
+teste('sessão única R16: o arquivo da sessão substituída some no primeiro pedido que a detecta, pela API', function (): void {
+    $a = Ambiente::novo();
+    $aparelhoA = $a->entrar();
+    $arquivo = $a->priv . '/sessoes/sess_' . $aparelhoA->cookies[D26_SESSAO_NOME];
+    $a->entrar();
+    $aparelhoA->get('/api/conteudo.php');
+    clearstatcache();
+    verdadeiro(!is_file($arquivo), 'a API apagou o arquivo da sessão substituída');
+});
+
+// ---- R17: entrar, acesso e sair com o cookie de aviso no pedido o expiram; sem ele, nada sai ----
+
+teste('sessão única R17: login pela API com o cookie de aviso no pedido expira o cookie; sem ele, nenhum Set-Cookie de aviso', function (): void {
+    $a = Ambiente::novo();
+    $c = $a->clienteComSessao();
+    $c->cookies[SU_AVISO_COOKIE] = SU_AVISO_CODIGO;
+    $r = $c->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
+    igual(200, $r->status, 'login pela API');
+    $expiracao = suCookieAviso($c->ultimoSetCookie);
+    verdadeiro($expiracao !== null && suExpirado($expiracao), 'o login expira o cookie de aviso');
+    verdadeiro(!isset($c->cookies[SU_AVISO_COOKIE]), 'o navegador deixa de guardar o cookie');
+    $sem = $a->clienteComSessao();
+    $sem->post('/api/entrar.php', ['usuario' => Ambiente::LOGIN_ADMIN, 'senha' => Ambiente::SENHA_ADMIN]);
+    verdadeiro(suCookieAviso($sem->ultimoSetCookie) === null, 'sem o cookie no pedido, o login não emite nenhum Set-Cookie de aviso');
+});
+
+teste('sessão única R17: login pelo formulário com o cookie de aviso no pedido expira o cookie', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    $c = $a->cliente();
+    [$token] = acessoTela($c);
+    $c->cookies[SU_AVISO_COOKIE] = SU_AVISO_CODIGO;
+    $r = acessoEnviar($c, $token, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN);
+    igual(303, $r->status, 'login certo pelo formulário');
+    $expiracao = suCookieAviso($c->ultimoSetCookie);
+    verdadeiro($expiracao !== null && suExpirado($expiracao), 'o formulário expira o cookie de aviso');
+});
+
+teste('sessão única R17: sair com o cookie de aviso no pedido expira o cookie', function (): void {
+    $a = Ambiente::novo();
+    $c = $a->entrar();
+    $c->cookies[SU_AVISO_COOKIE] = SU_AVISO_CODIGO;
+    $r = $c->post('/api/sair.php', []);
+    igual(200, $r->status, 'sair');
+    $expiracao = suCookieAviso($c->ultimoSetCookie);
+    verdadeiro($expiracao !== null && suExpirado($expiracao), 'sair expira o cookie de aviso');
+});

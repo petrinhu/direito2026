@@ -13,7 +13,8 @@ require_once __DIR__ . '/nucleo/portao.php';
  */
 d26_metodo(['POST']);
 $priv = d26_priv();
-d26_sessao_iniciar($priv); // só abre sessão se já houver uma em disco
+d26_sessao_iniciar($priv, false); // só abre sessão se já houver uma em disco; a queda aqui não avisa (SU-B2)
+d26_aviso_consumir();
 d26_exigir_formulario_seguro($priv);
 
 $usuario = is_string($_POST['usuario'] ?? null) ? $_POST['usuario'] : '';

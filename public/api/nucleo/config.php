@@ -24,6 +24,15 @@ const D26_SESSAO_VALIDADE = 43200;
 const D26_CORPO_MAX = 8192;
 
 /**
+ * Aviso de sessão substituída (SU-B2): quando a conta entra em outro aparelho, a sessão antiga cai
+ * e um cookie de vida curta leva o motivo até a tela de entrada. Valor de lista fechada.
+ */
+const D26_AVISO_NOME = '__Host-d26aviso';
+const D26_AVISO_VALIDADE = 600;
+const D26_AVISO_OUTRO_APARELHO = 'outro-aparelho';
+const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO];
+
+/**
  * Teto de espera por uma trava de arquivo (armazenamento.php). Nunca infinito:
  * lock preso viraria 503 `indisponivel`, não worker pendurado. Os testes de
  * unidade podem definir antes um valor menor.

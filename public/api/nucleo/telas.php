@@ -86,19 +86,32 @@ function d26_tela_documento(string $titulo, string $corpo): string
         . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main></body></html>';
 }
 
+/** Texto do aviso da tela de entrada, por código da lista fechada (D26_AVISOS). */
+function d26_tela_texto_aviso(string $codigo): ?string
+{
+    return match ($codigo) {
+        D26_AVISO_OUTRO_APARELHO => 'Sua conta foi aberta em outro aparelho. Entre de novo para continuar aqui.',
+        default => null,
+    };
+}
+
 /**
  * Tela de entrada: usuário, senha, token CSRF (HMAC do cookie pré) e destino oculto.
  * Com $erro, a mensagem vai em role="alert" e repetida no título: é o único jeito de um
  * leitor de tela anunciar o erro depois de um POST sem JavaScript (plano, seção 1.4).
+ * Com $aviso (SU-B2), vale a mesma regra, em parágrafo próprio com estilo informativo, e o
+ * campo usuário é descrito por ele. Se vierem os dois, o título segue o erro.
  */
-function d26_tela_entrada(string $token, string $destino, ?string $erro = null): string
+function d26_tela_entrada(string $token, string $destino, ?string $erro = null, ?string $aviso = null): string
 {
-    $titulo = $erro ?? 'Caderno de Direito';
-    $aviso = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
-    return d26_tela_documento($titulo, '<h1>Caderno de Direito</h1>' . $aviso
+    $titulo = $erro ?? $aviso ?? 'Caderno de Direito';
+    $avisoHtml = $aviso === null ? '' : '<p class="entrada-aviso" role="alert" id="aviso-sessao">' . d26_tela_e($aviso) . '</p>';
+    $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    $descrito = $aviso === null ? '' : ' aria-describedby="aviso-sessao"';
+    return d26_tela_documento($titulo, '<h1>Caderno de Direito</h1>' . $avisoHtml . $erroHtml
         . '<form method="post" action="/api/acesso.php">'
         . '<label for="usuario">Usuário</label>'
-        . '<input id="usuario" name="usuario" type="text" autocomplete="username" autofocus required>'
+        . '<input id="usuario" name="usuario" type="text" autocomplete="username" autofocus required' . $descrito . '>'
         . '<label for="senha">Senha</label>'
         . '<input id="senha" name="senha" type="password" autocomplete="current-password" required>'
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'

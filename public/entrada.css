@@ -207,3 +207,15 @@ button {
   border: 1px solid var(--cor-erro-borda);
   border-radius: 6px;
 }
+
+/* Aviso informativo (SU-B2), não erro: mesmo papel de leitura (role="alert"), estilo de aviso.
+   Seletor com classe e atributo vence o [role='alert'] de erro acima. */
+.entrada-aviso[role='alert'] {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  color: var(--cor-texto);
+  background: var(--cor-fundo-elevado);
+  border: 1px solid var(--cor-borda-forte);
+  border-left: 4px solid var(--cor-primaria);
+  border-radius: 6px;
+}

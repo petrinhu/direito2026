@@ -143,6 +143,16 @@ function d26_portao_manifesto(string $atual): array
     return $arquivos;
 }
 
+/**
+ * Texto do aviso da tela de entrada: o da queda desta leitura (navegação que detecta, sem cookie)
+ * ou o do cookie do pedido, se estiver na lista fechada (SU-B2). Sem nenhum dos dois, null.
+ */
+function d26_aviso_da_tela(bool $substituida): ?string
+{
+    $codigo = $substituida ? D26_AVISO_OUTRO_APARELHO : d26_aviso_pedido();
+    return $codigo === null ? null : d26_tela_texto_aviso($codigo);
+}
+
 /** Decisão completa do portão. Sempre termina com uma resposta (exit). */
 function d26_portao_decidir(): never
 {
@@ -158,7 +168,8 @@ function d26_portao_decidir(): never
 
     $navegacao = d26_portao_navegacao();
     $priv = d26_priv();
-    $conta = d26_sessao_ler($priv);
+    $substituida = false;
+    $conta = d26_sessao_ler($priv, $substituida);
     d26_teste_pausar('portao-depois-de-ler');
 
     if ($conta === null) {
@@ -167,7 +178,13 @@ function d26_portao_decidir(): never
             if ($nonce === '') {
                 $nonce = d26_pre_emitir();
             }
-            d26_portao_tela(200, d26_tela_entrada(d26_csrf_pre_token($nonce, d26_segredo($priv)), $caminho), PORTAO_CSP_TELA);
+            $aviso = d26_aviso_da_tela($substituida);
+            d26_aviso_consumir();
+            d26_portao_tela(200, d26_tela_entrada(d26_csrf_pre_token($nonce, d26_segredo($priv)), $caminho, null, $aviso), PORTAO_CSP_TELA);
+        }
+        // Pedido que não é navegação não mostra tela: a queda por outro aparelho leva o cookie para a próxima navegação (SU-B2).
+        if ($substituida) {
+            d26_aviso_emitir();
         }
         d26_portao_vazio(401);
     }

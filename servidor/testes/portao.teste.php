@@ -237,10 +237,20 @@ teste('portão: M03, diretório legível listado no manifesto dá 503 sem corpo,
     $manifesto['arquivos']['ausente.txt'] = ['tipo' => 'text/plain; charset=utf-8'];
     file_put_contents($a->app . '/atual/manifesto.json', json_encode($manifesto, JSON_THROW_ON_ERROR));
 
+    // Sem a checagem de arquivo, o 503 sai por acidente de runtime (Notice de readfile() virado ErrorException
+    // pelo set_error_handler de inicio.php), e o corpo e o status ficam iguais aos da recusa deliberada.
+    // Por isso a prova do motivo é o erros.log: a recusa deliberada (D26Indisponivel) tem de ser o registro.
+    $log = $a->priv . '/erros.log';
+    $antes = is_file($log) ? (string) file_get_contents($log) : '';
+    $r = $c->get('/assets');
+    verdadeiro(is_file($log), 'erros.log registrou a recusa do diretório');
+    $novo = substr((string) file_get_contents($log), strlen($antes));
+    igual(503, $r->status, 'diretório listado no manifesto: 503, nunca 200');
+    igual('', $r->corpo, 'fora de navegação, sem corpo');
+    contem('D26Indisponivel', $novo, 'recusa deliberada do portão, não erro de runtime');
+    naoContem('ErrorException', $novo, 'não é Notice de readfile() virado exceção');
+
     $ausente = $c->get('/ausente.txt');
     igual(503, $ausente->status, 'referência: arquivo ausente listado no manifesto dá 503');
-    $r = $c->get('/assets');
-    igual(503, $r->status, 'diretório listado no manifesto: 503, nunca 200');
     igual($ausente->corpo, $r->corpo, 'diretório responde o mesmo corpo que o arquivo ausente');
-    igual('', $r->corpo, 'fora de navegação, sem corpo');
 });

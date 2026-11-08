@@ -800,7 +800,7 @@ conferir_portao_no_destino() {
   no_destino "mkdir -p -m 700 '$pasta/apoio'" || recusar "não criei $pasta"
   rsync_destino "$RAIZ/servidor/cli/conferir-portao.php" "$pasta/" -t
   rsync_destino "$RAIZ/servidor/cli/apoio/cli.php" "$pasta/apoio/" -t
-  no_destino "cd '$pasta' && D26_NUCLEO='$nucleo' php conferir-portao.php '$atual'" > "$saida" 2> "$saida.err" || rc=$?
+  no_destino "D26_NUCLEO='$nucleo' php '$pasta/conferir-portao.php' '$atual'" > "$saida" 2> "$saida.err" || rc=$?
   cat "$saida"
   sed 's/^/publicar: /' "$saida.err" >&2 || true
   no_destino "rm -f -- '$pasta/conferir-portao.php' '$pasta/apoio/cli.php' && rmdir -- '$pasta/apoio' '$pasta'" ||

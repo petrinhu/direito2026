@@ -65,6 +65,7 @@ function rodar(cenario: Cenario, corpo: string): { status: number | null; saida:
     `DESTINO_RAIZ='${cenario.raiz}'`,
     `DESTINO_WEBROOT='${cenario.raiz}/public_html/direito2026'`,
     `DESTINO_APP='${cenario.raiz}/direito2026_app'`,
+    `DESTINO_PRIVADO='${cenario.raiz}/direito2026_privado'`,
     `SSH_OPCOES='${stub}'`,
     linha('DESTINOS_PERMITIDOS'),
     linha('FORMATO_CAMINHO'),
@@ -102,6 +103,22 @@ function montarApp(raizRemota: string): void {
   writeFileSync(join(atual, 'manifesto.json'), JSON.stringify({ versao: '0.0.0.0', arquivos }));
 }
 
+/**
+ * Privado sintético no destino (LU-C1): enviar_dados_juri já criou imagens/ antes do portão.
+ * Imagens de bytes sintéticos; o portão confere só nome e tamanho, nunca o conteúdo.
+ */
+function montarPrivado(raizRemota: string, quantidade: number): void {
+  const privado = join(raizRemota, 'direito2026_privado');
+  mkdirSync(join(privado, 'imagens'), { recursive: true });
+  const indice = Array.from({ length: quantidade }, (_, i) => {
+    const id = (i + 1).toString(16).padStart(32, '0');
+    const conteudo = Buffer.from(`CONTEUDO-SINTETICO-JURI-${i}`);
+    writeFileSync(join(privado, 'imagens', id), conteudo);
+    return { id, tipo: 'jpeg', bytes: conteudo.length, sha256: createHash('sha256').update(conteudo).digest('hex') };
+  });
+  writeFileSync(join(privado, 'acervo.json'), JSON.stringify({ indice }));
+}
+
 beforeEach(() => {
   tmp = mkdtempSync(join(tmpdir(), 'publicar-portao-'));
   home = join(tmp, 'home');
@@ -116,6 +133,7 @@ beforeEach(() => {
   chmodSync(stub, 0o755);
   montarNucleo(remota);
   montarApp(remota);
+  montarPrivado(remota, 2);
 });
 
 afterEach(() => {
@@ -129,6 +147,14 @@ describe('publicar.sh: conferir-portao no destino (PUB-1, LU-F6.1)', () => {
     expect(r.saida, r.saida).not.toContain('núcleo não encontrado');
     expect(r.saida, r.saida).toContain('[PASSOU] conferir-portao');
     expect(r.saida, r.saida).toContain('encontrados=2 analisados=2 falharam=0');
+    expect(r.saida, r.saida).toContain('DIVERGENCIAS=0');
+    expect(r.saida, r.saida).not.toContain('CONTEUDO-SINTETICO');
+  });
+
+  it('LU-C1: o portão do destino também confere o acervo da Júri no privado (--privado)', () => {
+    const r = rodar({ host: 'falso', raiz: 'domains/drpetrus.top' }, CORPO);
+    expect(r.status, r.saida).toBe(0);
+    expect(r.saida, r.saida).toContain('acervo: encontrados=2 analisados=2 falharam=0');
     expect(r.saida, r.saida).toContain('DIVERGENCIAS=0');
     expect(r.saida, r.saida).not.toContain('CONTEUDO-SINTETICO');
   });

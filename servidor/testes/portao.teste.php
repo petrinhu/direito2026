@@ -225,3 +225,22 @@ teste('portão: resposta de arquivo do app traz Content-Length igual ao tamanho 
     igual(200, $r->status, 'arquivo: status');
     igual((string) strlen($r->corpo), $r->cabecalho('content-length'), 'Content-Length igual ao corpo');
 });
+
+teste('portão: M03, diretório legível listado no manifesto dá 503 sem corpo, igual ao arquivo ausente, nunca 200 (LU-F5.2)', function (): void {
+    $a = Ambiente::novo();
+    $c = portaoLogado($a);
+    // atual/assets é diretório legível da fixture. Sem o is_file, o portão serviria um diretório como arquivo.
+    $dir = $a->app . '/atual/assets';
+    verdadeiro(is_dir($dir) && is_readable($dir), 'precondição: atual/assets é diretório legível');
+    $manifesto = json_decode((string) file_get_contents($a->app . '/atual/manifesto.json'), true, 512, JSON_THROW_ON_ERROR);
+    $manifesto['arquivos']['assets'] = ['tipo' => 'text/plain; charset=utf-8'];
+    $manifesto['arquivos']['ausente.txt'] = ['tipo' => 'text/plain; charset=utf-8'];
+    file_put_contents($a->app . '/atual/manifesto.json', json_encode($manifesto, JSON_THROW_ON_ERROR));
+
+    $ausente = $c->get('/ausente.txt');
+    igual(503, $ausente->status, 'referência: arquivo ausente listado no manifesto dá 503');
+    $r = $c->get('/assets');
+    igual(503, $r->status, 'diretório listado no manifesto: 503, nunca 200');
+    igual($ausente->corpo, $r->corpo, 'diretório responde o mesmo corpo que o arquivo ausente');
+    igual('', $r->corpo, 'fora de navegação, sem corpo');
+});

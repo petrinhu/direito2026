@@ -13,6 +13,8 @@ export const WEBROOT_ESPERADO: readonly string[] = [
   'sw.js',
   'entrada.css',
   'icones/favicon.svg',
+  'fontes/inter-400.woff2',
+  'fontes/cormorant-garamond-700.woff2',
   'api/portao.php',
   'api/saude.php',
   'api/nucleo/.htaccess',

@@ -35,6 +35,8 @@ const SO_WEBROOT = new Set([
   'robots.txt',
   'entrada.css',
   'icones/favicon.svg',
+  'fontes/inter-400.woff2',
+  'fontes/cormorant-garamond-700.woff2',
   '.htaccess'
 ]);
 

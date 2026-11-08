@@ -23,7 +23,7 @@ teste('lista fechada: .htaccess e roteador de dev servem direto os mesmos públi
     $roteador = publicosDoRoteador();
     sort($htaccess);
     sort($roteador);
-    igual(['entrada.css', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
+    igual(['entrada.css', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
     igual($htaccess, $roteador, 'públicos: .htaccess e roteador');
     $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
     $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
@@ -61,13 +61,13 @@ teste('roteador: público presente sai direto; público ausente é 404 e não ca
     igual(401, $c->get('/manifest.webmanifest')->status, 'manifesto não é público: vai ao portão, anônimo 401');
     igual(401, $c->get('/assets/busca-indice.json')->status, 'índice de busca vai ao portão, anônimo 401');
     $copia = Ambiente::novo(['docroot' => 'copia'])->cliente();
-    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/icones/favicon.svg'] as $caminho) {
+    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2'] as $caminho) {
         igual(404, $copia->get($caminho)->status, "$caminho ausente: 404 do roteador, sem portão");
     }
 });
 
 /** CSP das telas do portão sem sessão (seção 1.3). */
-const CSP_TELA_PORTAO = "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+const CSP_TELA_PORTAO = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
 teste('I-3: a tela de entrada sai com os cabeçalhos de segurança e a CSP da tela; arquivo fora da navegação não sai', function (): void {
     $a = Ambiente::novo(['docroot' => 'copia']);

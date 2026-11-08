@@ -43,7 +43,7 @@ if (str_contains($caminho, "\0") || str_contains($caminho, '..')) {
 
 // Mesma forma que o Apache vê: caminho sem a barra inicial. As strings são as do .htaccess.
 $relativo = ltrim($caminho, '/');
-$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'icones/favicon.svg'];
+$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'icones/favicon.svg', 'fontes/inter-400.woff2', 'fontes/cormorant-garamond-700.woff2'];
 $padraoApi = '^api/[a-z0-9/-]+\.php$';
 
 if (preg_match('#^api/nucleo(/|$)#D', $relativo) === 1) {

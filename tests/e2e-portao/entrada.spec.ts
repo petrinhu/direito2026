@@ -121,3 +121,49 @@ test.describe('tela de entrada com o sistema em tema escuro', () => {
     ).toBeGreaterThanOrEqual(3);
   });
 });
+
+/** Grava o cookie de tema pela própria página, como o site faz, e recarrega a tela. */
+async function escolherTemaPeloCookie(
+  page: import('@playwright/test').Page,
+  escolha: 'light' | 'dark'
+): Promise<void> {
+  await page.goto('/');
+  await page.evaluate((valor) => {
+    document.cookie = `__Host-d26tema=${valor}; Path=/; Secure; SameSite=Lax`;
+  }, escolha);
+  await page.reload();
+  await esperarEntrada(page);
+}
+
+test.describe('tema do site, guardado no cookie, com o sistema escuro', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('cookie claro vence o sistema escuro: data-theme light e fundo claro', async ({ page }) => {
+    await escolherTemaPeloCookie(page, 'light');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    const fundo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(paraHex(fundo)).toBe('#faf9f5');
+  });
+
+  test('sem cookie, o sistema escuro manda: sem data-theme e fundo escuro', async ({ page }) => {
+    await page.goto('/');
+    await esperarEntrada(page);
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.*/);
+    const fundo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(paraHex(fundo)).toBe('#12161c');
+  });
+});
+
+test.describe('tema do site, guardado no cookie, com o sistema claro', () => {
+  test.use({ colorScheme: 'light' });
+
+  test('cookie escuro vence o sistema claro: data-theme dark, fundo escuro e marca do topo', async ({
+    page
+  }) => {
+    await escolherTemaPeloCookie(page, 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const fundo = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(paraHex(fundo)).toBe('#12161c');
+    await expect(page.locator('header.entrada-cabecalho')).toContainText('Caderno de Direito');
+  });
+});

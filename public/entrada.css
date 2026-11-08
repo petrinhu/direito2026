@@ -1,65 +1,209 @@
-/* Tela de entrada e de troca: público, sem conteúdo de estudo e sem imagem. */
-/* Cores do sistema, sem JS: a tela não lê o tema salvo no app, só o do sistema. Contraste medido
-   contra o fundo real em tests/e2e-portao/entrada.spec.ts. */
+/* Tela de entrada e de troca: público, sem conteúdo de estudo e sem imagem.
+   Sem JavaScript. O tema vem do cookie __Host-d26tema (claro ou escuro), que o servidor
+   põe em data-theme já no HTML; sem escolha, vale a preferência do sistema.
+   As cores são os tokens de src/ui/estilos/tokens.css repetidos com o mesmo valor:
+   tests/unidade/entrada.tokens.spec.ts prova a igualdade e o contraste de cada par.
+   Fontes: os recortes de src/ui/estilos/fontes, em public/fontes com nome fixo.
+   Copyright 2015 The Cormorant Project Authors (Cormorant Garamond), SIL Open Font License 1.1.
+   Copyright 2016 The Inter Project Authors (Inter), SIL Open Font License 1.1. */
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fontes/inter-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fontes/cormorant-garamond-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  --cor-fundo: #faf9f5;
+  --cor-fundo-elevado: #ffffff;
+  --cor-borda: #dcd7c8;
+  --cor-borda-forte: #c3bca4;
+  --cor-texto: #1c1c1c;
+  --cor-texto-suave: #4a4a4a;
+  --cor-texto-invertido: #faf9f5;
+  --cor-primaria: #163a5f;
+  --cor-primaria-escura: #0d2440;
+  --cor-titulo-texto: #0d2440;
+  --cor-sidebar-fundo: #0d2440;
+  --cor-sidebar-texto: #faf9f5;
+  --cor-erro-texto: #611b1b;
+  --cor-erro-bg: #ffebee;
+  --cor-erro-borda: #dd9a98;
+  --cor-friso: #d3b563;
   color-scheme: light dark;
 }
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --cor-fundo: #12161c;
+  --cor-fundo-elevado: #1a1f27;
+  --cor-borda: #2c333d;
+  --cor-borda-forte: #3a4250;
+  --cor-texto: #eceff2;
+  --cor-texto-suave: #b8c0cc;
+  --cor-texto-invertido: #0b1a2c;
+  --cor-primaria: #7fa8d6;
+  --cor-primaria-escura: #0b1a2c;
+  --cor-titulo-texto: #7fa8d6;
+  --cor-sidebar-fundo: #0d2440;
+  --cor-sidebar-texto: #faf9f5;
+  --cor-erro-texto: #f0c6c4;
+  --cor-erro-bg: #3a1a1a;
+  --cor-erro-borda: #9a4a48;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --cor-fundo: #12161c;
+    --cor-fundo-elevado: #1a1f27;
+    --cor-borda: #2c333d;
+    --cor-borda-forte: #3a4250;
+    --cor-texto: #eceff2;
+    --cor-texto-suave: #b8c0cc;
+    --cor-texto-invertido: #0b1a2c;
+    --cor-primaria: #7fa8d6;
+    --cor-primaria-escura: #0b1a2c;
+    --cor-titulo-texto: #7fa8d6;
+    --cor-sidebar-fundo: #0d2440;
+    --cor-sidebar-texto: #faf9f5;
+    --cor-erro-texto: #f0c6c4;
+    --cor-erro-bg: #3a1a1a;
+    --cor-erro-borda: #9a4a48;
+  }
+}
+
 html {
   font-size: 112.5%;
 }
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  line-height: 1.6;
-  background: #ffffff;
-  color: #1a1a1a;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-weight: 400;
+  line-height: 1.7;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
 }
+
+.entrada-cabecalho {
+  padding: 1rem;
+  background: var(--cor-sidebar-fundo);
+  border-bottom: 2px solid var(--cor-friso);
+}
+
+.entrada-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3.75rem;
+  padding: 0 1.1rem 0 1rem;
+  border: 2px solid var(--cor-friso);
+  border-radius: 999px;
+  background: var(--cor-sidebar-fundo);
+  color: var(--cor-sidebar-texto);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.entrada-templo {
+  display: block;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: visible;
+}
+
+.entrada-traco {
+  fill: none;
+  stroke: var(--cor-friso);
+  stroke-width: 1.5px;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.entrada-traco path {
+  vector-effect: non-scaling-stroke;
+}
+
 main {
   max-width: 26rem;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
+
 h1 {
-  font-size: 1.8rem;
-  margin-top: 0;
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 1.2;
+  color: var(--cor-titulo-texto);
 }
+
 label {
   display: block;
   margin-top: 1.25rem;
-  font-weight: 600;
+  color: var(--cor-texto);
 }
+
 input {
   display: block;
   width: 100%;
   box-sizing: border-box;
   margin-top: 0.4rem;
   padding: 0.75rem;
+  font: inherit;
   font-size: 1rem;
+  color: var(--cor-texto);
+  background: var(--cor-fundo-elevado);
+  border: 1px solid var(--cor-texto-suave);
+  border-radius: 6px;
 }
+
 button {
   margin-top: 1.5rem;
   padding: 0.75rem 1.5rem;
+  font: inherit;
   font-size: 1rem;
+  color: var(--cor-texto-invertido);
+  background: var(--cor-primaria);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
 }
+
 :focus-visible {
-  outline: 3px solid #1a4f8b;
+  outline: 3px solid var(--cor-primaria);
   outline-offset: 2px;
 }
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #161a20;
-    color: #ecebe6;
-  }
-  input {
-    background: #222831;
-    color: #ecebe6;
-    border: 1px solid #7d8794;
-  }
-  button {
-    background: #8ab4f8;
-    color: #0f1419;
-  }
-  :focus-visible {
-    outline-color: #8ab4f8;
-  }
+
+[role='alert'] {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  color: var(--cor-erro-texto);
+  background: var(--cor-erro-bg);
+  border: 1px solid var(--cor-erro-borda);
+  border-radius: 6px;
 }

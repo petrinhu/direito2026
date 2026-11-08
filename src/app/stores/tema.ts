@@ -23,6 +23,26 @@ function aplicarAtributoTema(valor: TemaEscolhido): void {
   }
 }
 
+const NOME_COOKIE_TEMA = '__Host-d26tema';
+const UM_ANO_EM_SEGUNDOS = 31536000;
+
+/**
+ * Cookie que a tela de entrada lê no servidor, para acertar o tema já no primeiro paint (OS-F1).
+ * Só diz claro ou escuro, sem dado pessoal. "sistema" apaga o cookie, e a tela volta a seguir o
+ * sistema. O prefixo __Host- exige Secure, Path=/ e nenhum Domain.
+ */
+export function montarCookieTema(valor: TemaEscolhido): string {
+  const atributos = 'Path=/; Secure; SameSite=Lax';
+  if (valor === 'sistema') return `${NOME_COOKIE_TEMA}=; ${atributos}; Max-Age=0`;
+  const cor = valor === 'escuro' ? 'dark' : 'light';
+  return `${NOME_COOKIE_TEMA}=${cor}; ${atributos}; Max-Age=${UM_ANO_EM_SEGUNDOS}`;
+}
+
+function gravarCookieTema(valor: TemaEscolhido): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = montarCookieTema(valor);
+}
+
 /**
  * Composable de tema (seção 6 da arquitetura). Não é Pinia: o projeto não
  * lista biblioteca de estado global (seção 16), e um `ref` reativo mais
@@ -36,6 +56,7 @@ export function criarStoreTema(repositorio: RepositorioProgresso): StoreTema {
     (valor) => {
       repositorio.salvarTema(valor);
       aplicarAtributoTema(valor);
+      gravarCookieTema(valor);
     },
     // síncrono de propósito: a troca de tema é uma ação direta do leitor
     // (clique no AlternadorTema) e o atributo no <html> tem de refletir na

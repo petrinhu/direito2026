@@ -15,8 +15,11 @@ if (!defined('D26_API')) {
 /** CSP do shell do app (seção 1.3). Só o portão a emite, depois de confirmar a sessão. */
 const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
-/** CSP das telas de entrada, troca e indisponível (seção 1.3). */
-const PORTAO_CSP_TELA = "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+/** CSP das telas de entrada, troca e indisponível (seção 1.3). A fonte vem do próprio site (OS-F1, R4=A). */
+const PORTAO_CSP_TELA = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+
+/** Cookie que diz o tema escolhido no site: só claro ou escuro (OS-F1, R7). */
+const D26_TELA_COOKIE_TEMA = '__Host-d26tema';
 
 function d26_tela_csp(): string
 {
@@ -29,15 +32,57 @@ function d26_tela_e(string $valor): string
     return htmlspecialchars($valor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** Documento HTML mínimo: título fixo e o CSS público de entrada.css. */
+/**
+ * Atributo do tema no <html>. Lista fechada: só "light" e "dark" passam. Qualquer outro valor
+ * do cookie não escreve nada, nem escapado (o pedido é de quem manda o cabeçalho).
+ */
+function d26_tela_atributo_tema(): string
+{
+    $valor = $_COOKIE[D26_TELA_COOKIE_TEMA] ?? null;
+    if (!is_string($valor)) {
+        return '';
+    }
+    return match ($valor) {
+        'light', 'dark' => ' data-theme="' . $valor . '"',
+        default => '',
+    };
+}
+
+/**
+ * Doze primeiros hex do sha256 de entrada.css: o endereço muda quando o arquivo muda, e o cache
+ * de dias da borda não segura a versão antiga. Sem o arquivo, cai em "0" e a tela continua de pé.
+ */
+function d26_tela_versao_css(): string
+{
+    static $versao = null;
+    if ($versao !== null) {
+        return $versao;
+    }
+    $arquivo = dirname(__DIR__, 2) . '/entrada.css';
+    $versao = is_file($arquivo) ? substr((string) hash_file('sha256', $arquivo), 0, 12) : '0';
+    return $versao;
+}
+
+/** Faixa da marca, com o templo do SeloHome do site. Sem link: antes do login não há home. */
+function d26_tela_cabecalho(): string
+{
+    return '<header class="entrada-cabecalho"><div class="entrada-marca">'
+        . '<svg class="entrada-templo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">'
+        . '<g class="entrada-traco"><path d="M6 18 L24 7 L42 18 Z" /><path d="M6 18 H42 V21 H6 Z" />'
+        . '<path d="M11 23 V35 M19 23 V35 M29 23 V35 M37 23 V35" /><path d="M8 35 H40 V38 H8 Z" />'
+        . '<path d="M5 38 H43 V42 H5 Z" /></g></svg>'
+        . '<span>Caderno de Direito</span></div></header>';
+}
+
+/** Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. */
 function d26_tela_documento(string $titulo, string $corpo): string
 {
-    return '<!doctype html><html lang="pt-br"><head><meta charset="utf-8">'
+    return '<!doctype html><html lang="pt-br"' . d26_tela_atributo_tema() . '><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<meta name="robots" content="noindex, nofollow">'
         . '<title>' . d26_tela_e($titulo) . '</title>'
-        . '<link rel="stylesheet" href="/entrada.css">'
-        . '</head><body><main>' . $corpo . '</main></body></html>';
+        . '<link rel="stylesheet" href="/entrada.css?v=' . d26_tela_versao_css() . '">'
+        . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main></body></html>';
 }
 
 /**

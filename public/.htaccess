@@ -10,9 +10,9 @@ RewriteBase /
 RewriteCond %{HTTP_HOST} !^direito2026\.drpetrus\.top$ [NC]
 RewriteRule ^ - [F,L]
 RewriteRule ^api/nucleo(/|$) - [F,L]
-# Únicos caminhos servidos sem portão: endpoints e o visual da tela de entrada.
+# Únicos caminhos servidos sem portão: endpoints e o visual da tela de entrada (com as duas fontes dela).
 RewriteRule ^api/[a-z0-9/-]+\.php$ - [L]
-RewriteRule ^(sw\.js|robots\.txt|entrada\.css|icones/favicon\.svg)$ - [L]
+RewriteRule ^(sw\.js|robots\.txt|entrada\.css|icones/favicon\.svg|fontes/inter-400\.woff2|fontes/cormorant-garamond-700\.woff2)$ - [L]
 RewriteRule ^api(/|$) - [R=404,L]
 # Todo o resto passa pelo portão.
 RewriteRule ^ api/portao.php [L]
@@ -25,5 +25,10 @@ RewriteRule ^ api/portao.php [L]
   Header always set Strict-Transport-Security "max-age=31536000"
   <FilesMatch "^sw\.js$">
     Header set Cache-Control "no-store"
+  </FilesMatch>
+  # Revalida por ETag em toda visita: o CSS e as fontes da entrada têm nome fixo (o endereço do CSS
+  # leva ?v=, mas as fontes não). Sem isso, uma correção fica presa no cache do navegador.
+  <FilesMatch "^(entrada\.css|inter-400\.woff2|cormorant-garamond-700\.woff2)$">
+    Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>

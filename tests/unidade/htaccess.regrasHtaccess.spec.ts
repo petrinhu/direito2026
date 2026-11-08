@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { extrairRegras, veredito } from '@/core/rotas/regrasHtaccess';
 
@@ -9,7 +11,7 @@ const HTACCESS_NOVO = [
   'RewriteRule ^ - [F,L]',
   'RewriteRule ^api/nucleo(/|$) - [F,L]',
   'RewriteRule ^api/[a-z0-9/-]+\\.php$ - [L]',
-  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|icones/favicon\\.svg)$ - [L]',
+  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$ - [L]',
   'RewriteRule ^api(/|$) - [R=404,L]',
   'RewriteRule ^ api/portao.php [L]'
 ].join('\n');
@@ -44,6 +46,18 @@ describe('extrairRegras: regras de reescrita do .htaccess, em ordem', () => {
     expect(veredito('entrada.css', regras)).toBe('passa');
     expect(veredito('icones/favicon.svg', regras)).toBe('passa');
     expect(veredito('icones/faviconXsvg', regras)).toBe('portao');
+  });
+
+  it('as duas fontes públicas da tela de entrada passam direto, e o .htaccess real traz a mesma regra', () => {
+    const regras = extrairRegras(HTACCESS_NOVO);
+    expect(veredito('fontes/inter-400.woff2', regras)).toBe('passa');
+    expect(veredito('fontes/cormorant-garamond-700.woff2', regras)).toBe('passa');
+    const real = readFileSync(
+      fileURLToPath(new URL('../../public/.htaccess', import.meta.url)),
+      'utf8'
+    );
+    expect(real).toContain('fontes/inter-400\\.woff2');
+    expect(real).toContain('fontes/cormorant-garamond-700\\.woff2');
   });
 
   it('assets e o resto vão ao portão, nunca direto', () => {

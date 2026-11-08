@@ -395,6 +395,21 @@ apagar_clone() {
   CLONE=""
 }
 
+# LU-C1 (incidente de 08/11/2026): o acervo da Júri tem de estar no formato claro, o contrato de
+# scripts/juri/conferir.ts. Antes deste portão só se testava que imagens/ e acervo.json existiam, e uma
+# pasta cifrada de 28/10 passou e foi enviada. A saída vai para uma variável, não para arquivo: ESPACO
+# ainda é vazio neste ponto do fluxo. Falha fecha: recusa antes de qualquer commit ou virada.
+conferir_acervo_claro() {
+  local acervo saida rc=0
+  acervo="$(realpath -- "$1")" || recusar "acervo da Júri não resolve para caminho real; nada foi commitado"
+  saida="$(cd "$RAIZ" && node --import tsx scripts/juri/acervo.ts conferir --saida "$acervo" 2>&1)" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    printf '%s\n' "$saida" | sed 's/^/publicar: /' >&2 || true
+    recusar "acervo fora do formato claro (conferir código $rc); nada foi commitado"
+  fi
+  printf '%s\n' "$saida"
+}
+
 # Antes de criar release: insumos presentes. Falha aqui não deixa commit nem tag.
 conferir_insumos() {
   [ -f "$CHAVE_GIT_CRYPT" ] ||
@@ -408,6 +423,7 @@ conferir_insumos() {
   if [ "${MODO:-normal}" = preparar ]; then
     [ -d "${CADERNO_ACERVO_JURI:-/nao-definido}/imagens" ] && [ -f "${CADERNO_ACERVO_JURI:-/nao-definido}/acervo.json" ] ||
       recusar "--preparar precisa de CADERNO_ACERVO_JURI (pasta com imagens/ e acervo.json); nada foi commitado"
+    conferir_acervo_claro "$CADERNO_ACERVO_JURI"
     [ -f "${CADERNO_RESTRITO_JURI:-/nao-definido}" ] ||
       recusar "--preparar precisa de CADERNO_RESTRITO_JURI (JSON da Júri); nada foi commitado"
   fi

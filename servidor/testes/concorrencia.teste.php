@@ -73,6 +73,21 @@ function pausaEsperarChegada(array $req, Ambiente $a, string $ponto, int $n = 1,
     falhar("ninguém chegou ao ponto de pausa '$ponto' (o gancho não existe no código?) [" . implode(' | ', $diag) . ']');
 }
 
+/** Espera o sinal PRIV/sinal-<nome> do servidor (cache de stat limpo a cada volta). Teto de 15 s. */
+function pausaEsperarSinal(Ambiente $a, string $nome): void
+{
+    $arq = $a->priv . '/sinal-' . $nome;
+    $limite = microtime(true) + 15;
+    while (microtime(true) < $limite) {
+        clearstatcache(true, $arq);
+        if (is_file($arq)) {
+            return;
+        }
+        usleep(20000);
+    }
+    falhar("o pedido não chegou ao sinal '$nome' em 15 s");
+}
+
 /** @param array{resource, \CurlHandle} $req @return array{int, array<string, mixed>} */
 function postConcluir(array $req): array
 {

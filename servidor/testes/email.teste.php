@@ -939,21 +939,41 @@ function emb4Concluir(array $req): array
     return [$status, $corpo];
 }
 
-teste('e-mail: EM-B4 corrida: o admin troca o e-mail entre a leitura e o pedido; nenhum E2 vai ao endereço antigo e a resposta é a frase única', function (): void {
+teste('e-mail: EM-B4 corrida: o admin troca o e-mail entre a leitura e o pedido; o pedido não abre conexão SMTP, não grava convite e responde a frase única', function (): void {
     emailB3Com([], function (Ambiente $a, array $falso): void {
         emailB3Semear($a, 'ana', 'ana@example.com');
         $admin = $a->entrar();
         $c = $a->cliente();
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
-        file_put_contents($a->priv . '/pausa-esqueci-antes-pedir', 'ana');
+        pausaLigar($a, 'esqueci-antes-pedir', 'ana');
         $req = emb4PostAsync($c, $csrf, 'ana');
         pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
         igual(200, $admin->post('/api/usuarios.php', ['acao' => 'email', 'usuario' => 'ana', 'email' => 'nova@example.com'])->status, 'o admin troca o e-mail na janela');
         pausaSoltar($a, 'esqueci-antes-pedir');
+        // A resposta sai antes da busca e da gravação (TE4): só o sinal de fim prova que o pedido acabou.
+        pausaEsperarSinal($a, 'esqueci-fim');
         [$status, $corpo] = emb4Concluir($req);
         igual(200, $status, 'a resposta pública é 200');
         contem(EMB4_FRASE, $corpo, 'a frase única');
         $conversa = correioConversaFinal($falso, 2.0);
-        verdadeiro($conversa === null || emailB3Destinatario($conversa) !== 'ana@example.com', 'nenhum E2 vai ao endereço antigo');
+        verdadeiro($conversa === null, 'nenhuma conexão SMTP: o pedido que leu o e-mail antigo não envia' . ($conversa !== null ? ' (o E2 foi para ' . emailB3Destinatario($conversa) . ')' : ''));
+        $conta = conviteConta($a, 'ana');
+        igual('nova@example.com', $conta['email'] ?? null, 'a troca de e-mail ficou gravada');
+        igual(false, array_key_exists('convite', $conta ?? []), 'o pedido que leu o e-mail antigo não grava convite');
     }, ['workers' => 4]); // a requisição pausada segura um worker: sem mais de um, o admin nunca entra na janela
+});
+
+teste('e-mail: EM-B4 E2 depois da troca de e-mail vai ao endereço novo', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $admin = $a->entrar();
+        igual(200, $admin->post('/api/usuarios.php', ['acao' => 'email', 'usuario' => 'ana', 'email' => 'nova@example.com'])->status, 'o admin troca o e-mail antes do pedido');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        [$status] = emb4Concluir(emb4PostAsync($c, $csrf, 'ana'));
+        igual(200, $status, 'a resposta pública é 200');
+        $conversa = correioConversaFinal($falso, 10.0);
+        verdadeiro($conversa !== null, 'o E2 chegou ao SMTP falso');
+        igual('nova@example.com', emailB3Destinatario($conversa), 'o E2 vai ao endereço novo');
+    });
 });

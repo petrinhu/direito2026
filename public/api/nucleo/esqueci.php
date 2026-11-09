@@ -33,6 +33,7 @@ function d26_esqueci_sequencia(string $priv, callable $responder, callable $term
     } catch (Throwable $e) {
         d26_log_erro_em($priv, 'esqueci', 'pedido: ' . get_class($e));
     }
+    d26_teste_sinal('esqueci-fim'); // no-op em produção: o teste espera o fim do pedido, que a resposta não marca
 }
 
 /**

@@ -205,8 +205,26 @@ function d26_teste_pausar(string $ponto, string $chave = ''): void
     }
     @file_put_contents($dir . '/pausado-' . $ponto, "1\n", FILE_APPEND | LOCK_EX);
     $limite = microtime(true) + 15;
+    // clearstatcache: o PHP guarda o último resultado de stat; sem limpar, is_file repete "existe" e a pausa
+    // nunca é solta (medido: o pedido ficava parado até o teto de 15 s, e o teste lia o estado antes da gravação).
     while (is_file($dir . '/pausa-' . $ponto) && microtime(true) < $limite) {
+        clearstatcache(true, $dir . '/pausa-' . $ponto);
         usleep(10000);
+    }
+}
+
+/**
+ * Sinal de teste: PRIV/sinal-<nome> diz que o pedido terminou o trabalho que vem depois da resposta. A resposta sai
+ * antes da gravação e do E2 (TE4), então o teste espera este sinal para saber que o pedido acabou. No-op em produção.
+ */
+function d26_teste_sinal(string $nome): void
+{
+    if (PHP_SAPI !== 'cli-server') {
+        return;
+    }
+    $dir = getenv('D26_PRIVADO');
+    if (is_string($dir) && $dir !== '') {
+        @file_put_contents($dir . '/sinal-' . $nome, "1\n");
     }
 }
 

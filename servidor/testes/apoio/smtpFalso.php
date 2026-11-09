@@ -17,6 +17,7 @@ declare(strict_types=1);
  *   mudoEm (string: ao receber um comando que começa por esse texto, para de responder),
  *   mudoAposData (bool: responde ao DATA com 354 e depois para de ler o corpo),
  *   mudoNoHandshake (bool: aceita a conexão e não responde nada, nem ao handshake),
+ *   esperarArquivo (string: segura a saudação enquanto o arquivo existir; só para o teste de lock, D1),
  *   tls (objeto {cert, chave}: fala TLS com esse certificado; sem handshake válido, sai sem conversa).
  */
 
@@ -74,6 +75,18 @@ if (isset($roteiro['tls']) && @stream_socket_enable_crypto($sock, true, STREAM_C
     exit(0);
 }
 
+// Teste de lock (D1, EM-B3): segura a saudação enquanto o arquivo `esperarArquivo` existir. Sinaliza a chegada
+// criando <conversa>.chegou, para o teste saber que o envio já está no meio.
+if (isset($roteiro['esperarArquivo'])) {
+    @file_put_contents($arquivoConversa . '.chegou', "1\n");
+    $marcaEspera = (string) $roteiro['esperarArquivo'];
+    $limiteEspera = microtime(true) + 30;
+    // clearstatcache: sem ele, is_file repete o primeiro "existe" e a espera nunca termina antes dos 30 s.
+    while (is_file($marcaEspera) && microtime(true) < $limiteEspera) {
+        clearstatcache(true, $marcaEspera);
+        usleep(20000);
+    }
+}
 $conversa = fopen($arquivoConversa, 'wb');
 $enviaSaudacao = (string) ($roteiro['saudacao'] ?? '220 smtp.falso.teste pronto');
 smtpFalsoResponder($sock, $enviaSaudacao);

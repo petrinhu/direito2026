@@ -902,6 +902,106 @@ teste('e-mail: EM-B4 falha do E2 grava envioFalhouEm na conta e só etapa e cód
     });
 });
 
+// ---- EM-B3, revisão L-12 (rev-em-b3.md): D1 lock do envio, D2 ordem do E4, D3 prazo total de 20 s ----
+
+teste('e-mail: D1 o envio sai FORA do lock: com a saudação do SMTP segurada, um pedido que precisa do lock de usuarios.json termina antes do envio', function (): void {
+    $marca = dirTemporario() . '/segura-saudacao';
+    file_put_contents($marca, "1\n");
+    emailB3Com(['esperarArquivo' => $marca], function (Ambiente $a, array $falso) use ($marca): void {
+        emailB3Semear($a, 'bia', 'bia@example.com');
+        $a->semearUsuario('outra', 'SenhaOutraAdmin-2026', true, false);
+        $outro = $a->entrar('outra', 'SenhaOutraAdmin-2026');
+        $admin = $a->entrar();
+        $reqA = postSemEsperar($admin, '/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com']);
+        $chegou = $falso['dir'] . '/conversa.bin.chegou';
+        $limite = microtime(true) + 15;
+        while (!is_file($chegou) && microtime(true) < $limite) {
+            curl_multi_exec($reqA[0], $ativos);
+            usleep(20000);
+        }
+        verdadeiro(is_file($chegou), 'o envio de A chegou à saudação segurada');
+        $reqB = postSemEsperar($outro, '/api/usuarios.php', ['acao' => 'email', 'usuario' => 'bia', 'email' => 'nova@example.com']);
+        $codigoB = 0;
+        $limite = microtime(true) + 5;
+        while ($codigoB === 0 && microtime(true) < $limite) {
+            curl_multi_exec($reqB[0], $ativos);
+            usleep(20000);
+            $codigoB = (int) curl_getinfo($reqB[1], CURLINFO_RESPONSE_CODE);
+        }
+        igual(200, $codigoB, 'B termina enquanto o envio de A segura a saudação (o envio está fora do lock)');
+        igual(0, (int) curl_getinfo($reqA[1], CURLINFO_RESPONSE_CODE), 'A ainda não respondeu: o envio segue no meio');
+        @unlink($marca);
+        [$statusA, $jsonA] = postConcluir($reqA);
+        postConcluir($reqB);
+        igual(200, $statusA, 'criar de A termina depois de liberar o envio');
+        igual('enviado', $jsonA['email'] ?? null, 'o E1 saiu');
+    }, ['workers' => 4]);
+});
+
+teste('e-mail: D2 ordem: responde, termina a resposta, depois manda o E4 (injeção de sequência, como E30t)', function (): void {
+    correioCarregar();
+    $dir = dirTemporario();
+    $ordem = [];
+    d26_responder_e_depois($dir, static function () use (&$ordem): void { $ordem[] = 'resposta'; },
+        static function () use (&$ordem): bool { $ordem[] = 'terminar'; return true; },
+        static function () use (&$ordem): void { $ordem[] = 'aviso'; });
+    igual(['resposta', 'terminar', 'aviso'], $ordem, 'a ordem é responde, termina, avisa');
+    d26_responder_e_depois($dir, static fn () => null, static fn (): bool => false, static fn () => null);
+    contem('envio envio-sincrono', (string) @file_get_contents($dir . '/erros.log'), 'sem término, uma linha envio-sincrono');
+});
+
+teste('e-mail: D3 o prazo total de 20 s já corre no connect: a sessão recebe o instante de antes da conexão', function (): void {
+    correioCarregar();
+    [$lado, $outro] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+    // Simula um connect que levou 2,5 s de um total de 3 s: a saudação tem só ~0,5 s, não 3 s.
+    $sessao = new D26SmtpSessao($lado, 10, 3, microtime(true) - 2.5);
+    $inicio = microtime(true);
+    correioEsperarFalha(fn () => $sessao->esperar('conexao', 220));
+    $decorrido = microtime(true) - $inicio;
+    fclose($outro);
+    $sessao->fechar();
+    verdadeiro($decorrido <= 1.5, "a saudação respeitou o que sobrava do total: $decorrido s (esperado ~0,5 s)");
+});
+
+/** Envio com servidor mudo no roteiro, com prazos explícitos. @return float segundos até o fim do envio */
+function emb4MedirEnvioMudo(array $roteiro, int $leitura, int $total): float
+{
+    correioCarregar();
+    $priv = correioPriv();
+    $falso = correioSmtpFalso($roteiro);
+    try {
+        $inicio = microtime(true);
+        correioEsperarFalha(fn () => d26_correio_enviar(
+            ['destinatario' => 'pessoa@example.com', 'assunto' => 'Prazo', 'corpo' => "Oi.\n"],
+            $priv,
+            ['endereco' => 'tcp://127.0.0.1:' . $falso['porta'], 'tls' => false, 'prazoLeituraS' => $leitura, 'prazoTotalS' => $total]
+        ));
+        return microtime(true) - $inicio;
+    } finally {
+        correioFecharSmtpFalso($falso);
+    }
+}
+
+teste('e-mail: D3 servidor mudo em cada etapa: nenhum envio passa do total (3 s) mais uma folga de 1 s', function (): void {
+    $etapas = [
+        'saudação' => ['mudoNoHandshake' => true],
+        'EHLO' => ['mudoEm' => 'EHLO'],
+        'AUTH' => ['mudoEm' => 'AUTH PLAIN'],
+        'MAIL FROM' => ['mudoEm' => 'MAIL FROM'],
+        'RCPT TO' => ['mudoEm' => 'RCPT TO'],
+        'DATA' => ['mudoEm' => 'DATA'],
+    ];
+    foreach ($etapas as $etapa => $roteiro) {
+        $decorrido = emb4MedirEnvioMudo($roteiro, 2, 3);
+        verdadeiro($decorrido <= 4.0, "mudo em $etapa: $decorrido s, passou do total de 3 s mais a folga de 1 s");
+    }
+});
+
+teste('e-mail: D3 com os prazos de produção (10 s de leitura, 20 s de total), o servidor mudo na saudação não passa de 21 s', function (): void {
+    $decorrido = emb4MedirEnvioMudo(['mudoNoHandshake' => true], D26_SMTP_PRAZO_LEITURA_S, D26_SMTP_PRAZO_TOTAL_S);
+    verdadeiro($decorrido <= D26_SMTP_PRAZO_TOTAL_S + 1.0, "envio com prazos de produção levou $decorrido s (teto: 20 s mais folga de 1 s)");
+});
+
 /** POST de formulário do "Esqueci a senha" sem esperar a resposta. @return array{resource, \CurlHandle} */
 function emb4PostAsync(Cliente $c, string $csrf, string $usuario): array
 {

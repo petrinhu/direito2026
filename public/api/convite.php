@@ -96,27 +96,33 @@ d26_convite_responder_e_avisar(200, 'text/html; charset=utf-8', PORTAO_CSP_TELA,
  */
 function d26_convite_responder_e_avisar(int $status, string $tipo, string $csp, string $corpo, array $cabecalhos, string $priv, string $login, ?string $email): never
 {
-    d26_portao_cabecalhos($status, $tipo, $csp, strlen($corpo), 'no-referrer');
-    foreach ($cabecalhos as $nome => $valor) {
-        header($nome . ': ' . $valor);
-    }
-    echo $corpo;
-    session_write_close();
-    d26_convite_avisar_criada($priv, $login, $email);
+    d26_responder_e_depois(
+        $priv,
+        static function () use ($status, $tipo, $csp, $corpo, $cabecalhos): void {
+            d26_portao_cabecalhos($status, $tipo, $csp, strlen($corpo), 'no-referrer');
+            foreach ($cabecalhos as $nome => $valor) {
+                header($nome . ': ' . $valor);
+            }
+            echo $corpo;
+            session_write_close();
+        },
+        // Sem e-mail não há aviso: a resposta sai e nada mais acontece (nem término, nem linha de registro).
+        static fn (): bool => $email === null || d26_terminar_resposta(),
+        static function () use ($priv, $login, $email): void {
+            d26_convite_avisar_criada($priv, $login, $email);
+        }
+    );
     exit;
 }
 
 /**
- * E4, senha criada (8.1.4). Chamado depois da resposta. Sem término do servidor, o envio segue na mesma conexão e
- * fica registrado (envio-sincrono). Conta sem e-mail: nenhuma conexão.
+ * E4, senha criada (8.1.4). Chamado depois da resposta e do término (d26_responder_e_depois). Conta sem e-mail:
+ * nenhuma conexão.
  */
 function d26_convite_avisar_criada(string $priv, string $login, ?string $email): void
 {
     if ($email === null) {
         return;
-    }
-    if (!d26_terminar_resposta()) {
-        d26_log_erro_em($priv, 'envio', 'envio-sincrono');
     }
     d26_teste_pausar('senha-criada-antes-aviso', $login); // no-op em produção; prova a ordem nos testes de EM-B3
     d26_correio_avisar($priv, d26_correio_msg_senha_criada($email, $login));

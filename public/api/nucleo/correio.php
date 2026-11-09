@@ -24,9 +24,9 @@ require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a eta
  *    senha, texto do servidor nem endereço (TE3). Exceção inesperada vira a etapa interno, sem causa anexada.
  *  - Toda leitura, escrita e o handshake TLS têm prazo, e o envio inteiro tem prazo total.
  *
- * Pior caso: o connect espera até D26_SMTP_PRAZO_LEITURA_S (10 s). Depois dele, o envio tem
- * D26_SMTP_PRAZO_TOTAL_S (20 s) para handshake, leituras e escritas, contados desde o connect. Logo, até 30 s
- * no total, e não 20 s.
+ * Pior caso: o envio inteiro tem D26_SMTP_PRAZO_TOTAL_S (20 s), contados ANTES do connect (plano 8.1.4). O connect
+ * espera no máximo D26_SMTP_PRAZO_LEITURA_S (10 s), dentro desse total, e o handshake, as leituras e as escritas
+ * usam o que sobra. Logo, 20 s no total, sem somar o connect por fora.
  */
 
 const D26_SMTP_SENHA_ARQUIVO = 'smtp.senha';
@@ -203,11 +203,14 @@ final class D26SmtpSessao
     private $sock;
     private readonly float $fim;
 
-    /** @param resource $sock */
-    public function __construct($sock, private readonly int $prazoLeituraS, int $prazoTotalS)
+    /**
+     * @param resource $sock
+     * @param float|null $inicio instante em que o envio começou, antes do connect; sem ele, o total começa aqui
+     */
+    public function __construct($sock, private readonly int $prazoLeituraS, int $prazoTotalS, ?float $inicio = null)
     {
         $this->sock = $sock;
-        $this->fim = microtime(true) + $prazoTotalS;
+        $this->fim = ($inicio ?? microtime(true)) + $prazoTotalS;
     }
 
     /** Ajusta o prazo do próximo passo. Com o total esgotado, falha na etapa dada. */
@@ -224,7 +227,7 @@ final class D26SmtpSessao
 
     /**
      * Handshake TLS com prazo. Enquanto dura, o socket é não bloqueante: o laço repete o handshake a cada
-     * espera e para no menor entre o prazo de leitura e o que sobra do prazo total, contado desde o connect.
+     * espera e para no menor entre o prazo de leitura e o que sobra do prazo total, contado desde o início do envio.
      * Sem isso, o handshake espera o timeout do connect (o prazo de leitura), e não o prazo total.
      */
     public function ativarTls(): void
@@ -327,21 +330,23 @@ final class D26SmtpSessao
 
 /**
  * Abre a conexão do alvo. Com TLS, o handshake usa o contexto verificado. As etapas são separadas: conexao
- * (TCP e saudação) e tls (certificado ou protocolo). Em qualquer falha, o socket é fechado.
+ * (TCP e saudação) e tls (certificado ou protocolo). Em qualquer falha, o socket é fechado. O prazo total começa
+ * aqui, antes do connect, e o connect nunca passa do total.
  *
  * @param array{endereco: string, tls: bool} $alvo
  */
 function d26_correio_abrir(array $alvo, int $prazoLeituraS, int $prazoTotalS): D26SmtpSessao
 {
+    $inicio = microtime(true);
     if (!d26_correio_transporte_permitido($alvo)) {
         throw new D26EnvioFalhou('alvo');
     }
     $contexto = stream_context_create($alvo['tls'] ? d26_correio_contexto_tls() : []);
-    $sock = @stream_socket_client($alvo['endereco'], $numero, $texto, $prazoLeituraS, STREAM_CLIENT_CONNECT, $contexto);
+    $sock = @stream_socket_client($alvo['endereco'], $numero, $texto, min($prazoLeituraS, $prazoTotalS), STREAM_CLIENT_CONNECT, $contexto);
     if ($sock === false) {
         throw new D26EnvioFalhou('conexao');
     }
-    $sessao = new D26SmtpSessao($sock, $prazoLeituraS, $prazoTotalS);
+    $sessao = new D26SmtpSessao($sock, $prazoLeituraS, $prazoTotalS, $inicio);
     try {
         if ($alvo['tls']) {
             $sessao->ativarTls();
@@ -578,4 +583,23 @@ function d26_terminar_resposta(): bool
         return true;
     }
     return false;
+}
+
+/**
+ * Sequência de um pedido que responde antes de avisar (D2, EM-B3; o mesmo mecanismo do E30t do "Esqueci a senha"):
+ * responde, termina a resposta, só então manda o aviso. As três etapas entram como callables para que o teste prove
+ * a ordem por injeção, sem depender de tempo (TE4). Sem término (php -S), o aviso segue na mesma conexão e fica a
+ * linha envio-sincrono no erros.log.
+ *
+ * @param callable(): void $responder monta e envia a resposta sem encerrar o script
+ * @param callable(): bool $terminar d26_terminar_resposta, ou o equivalente injetado pelo teste
+ * @param callable(): void $avisar envio do aviso (E4)
+ */
+function d26_responder_e_depois(string $priv, callable $responder, callable $terminar, callable $avisar): void
+{
+    $responder();
+    if (!$terminar()) {
+        d26_log_erro_em($priv, 'envio', 'envio-sincrono');
+    }
+    $avisar();
 }

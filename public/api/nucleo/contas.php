@@ -672,12 +672,14 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
  * @param array<string, mixed> $ator conta lida da sessão
  * @param ?array{hash: string, expiraEm: int} $convite
  */
-function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null, ?array $convite = null, ?string $email = null): string
+function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null, ?array $convite = null, ?string $email = null, ?string &$emailLido = null): string
 {
+    // $emailLido: o e-mail da conta alvo lido DENTRO do lock, só no 'redefinir' (P9: o E3 não pode ler o e-mail depois do lock).
+    $emailLido = null;
     return d26_atualizar_json(
         d26_contas_arquivo($priv),
         D26_CONTAS_PADRAO,
-        static function (array &$d) use ($ator, $acao, $alvo, $hash, $convite, $email): string {
+        static function (array &$d) use ($ator, $acao, $alvo, $hash, $convite, $email, &$emailLido): string {
             $original = $d;
             $us = array_values(array_map('d26_conta_validar', $d['usuarios'] ?? []));
             $atorOk = false;
@@ -730,6 +732,8 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                         if ($convite !== null) {
                             $c['convite'] = $convite;
                         }
+                        // O destino do E3 é o e-mail que a conta tinha neste lock (P9, como o E4 do CAS em convite).
+                        $emailLido = isset($c['email']) ? (string) $c['email'] : null;
                         break;
                     case 'ativar':
                         $c['ativo'] = true;

@@ -27,6 +27,28 @@ teste('e-mail: E26t transporte sem TLS só existe em 127.0.0.1 com porta; host r
     igual(true, d26_correio_transporte_permitido(['endereco' => 'tcp://smtp.hostinger.com:465', 'tls' => true]), 'com TLS, o alvo segue a regra de produção');
 }, false);
 
+/**
+ * Vazamento da senha em base64, sem depender do alinhamento (E27t). A linha AUTH PLAIN codifica "\0usuario\0senha":
+ * conforme o tamanho do usuário, o início da senha cai em um dos três deslocamentos do grupo de 3 bytes. Por isso
+ * (1) procura o base64 de cada sufixo da senha (deslocamentos 0, 1 e 2) e (2) decodifica cada trecho de base64 do
+ * rastro em quatro deslocamentos e procura a senha no resultado. Só base64(senha) inteiro era canário falso: com
+ * usuário de 26 bytes, a linha AUTH vazava a senha e o teste ficava verde (rev-em-b2fix.md, item 3).
+ */
+function correioNaoVazaSenhaEmBase64(string $senha, string $texto, string $contexto): void
+{
+    foreach ([0, 1, 2] as $deslocamento) {
+        naoContem(base64_encode(substr($senha, $deslocamento)), $texto, "$contexto: base64 da senha a partir do deslocamento $deslocamento");
+    }
+    preg_match_all('/[A-Za-z0-9+\/]{8,}={0,2}/', $texto, $trechos);
+    foreach ($trechos[0] as $trecho) {
+        foreach ([0, 1, 2, 3] as $deslocamento) {
+            if (str_contains((string) base64_decode(substr($trecho, $deslocamento)), $senha)) {
+                falhar("$contexto: a senha aparece decodificada de base64 no rastro (deslocamento $deslocamento)");
+            }
+        }
+    }
+}
+
 teste('e-mail: E27t rastro da exceção do envio não leva a senha, nem em texto puro nem em base64', function (): void {
     correioCarregar();
     $senha = 'SenhaCanarioRastro-EM-B2';
@@ -49,28 +71,37 @@ teste('e-mail: E27t rastro da exceção do envio não leva a senha, nem em texto
             ));
             $rastro = $e->getTraceAsString();
             naoContem($senha, $rastro, '(a) a senha em texto puro não aparece no rastro');
-            naoContem(base64_encode($senha), $rastro, '(a) a senha em base64 não aparece no rastro');
+            correioNaoVazaSenhaEmBase64($senha, $rastro, '(a) a senha em base64 não aparece no rastro');
         } finally {
             correioFecharSmtpFalso($falso);
         }
 
         // (b) A escrita da linha de AUTH falha (peer já fechado). A linha leva a senha em base64, que é a
-        // mesma informação: nenhum argumento do caminho de escrita pode carregá-la.
-        $par = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
-        if ($par === false) {
-            falhar('sem par de sockets para a prova (b)');
-        }
-        [$lado, $outro] = $par;
-        fclose($outro);
-        $sessao = new D26SmtpSessao($lado, 3, 10);
-        try {
-            $e = correioEsperarFalha(fn () => d26_correio_autenticar($sessao, ['PLAIN'], D26_SMTP_USUARIO, static fn (): string => $senha));
-            $rastro = $e->getTraceAsString();
-            contem('escrever', $rastro, '(b) a falha veio do caminho de escrita da linha de AUTH');
-            naoContem(base64_encode($senha), $rastro, '(b) a senha em base64 não aparece no rastro da escrita');
-            naoContem($senha, $rastro, '(b) a senha em texto puro não aparece no rastro da escrita');
-        } finally {
-            $sessao->fechar();
+        // mesma informação: nenhum argumento do caminho de escrita pode carregá-la. Três usuários, de 25, 26 e 27
+        // bytes: (len+2) % 3 vale 0, 1 e 2, ou seja, a senha cai em cada um dos três alinhamentos do base64.
+        $usuarios = ['nao-responda@drpetrus.top', 'nao-responda@drpetrus.topo', 'nao-responda@drpetrus.topoo'];
+        $alinhamentos = array_values(array_unique(array_map(static fn (string $u): int => (strlen($u) + 2) % 3, $usuarios)));
+        sort($alinhamentos);
+        igual([0, 1, 2], $alinhamentos, 'prova válida: os três alinhamentos do base64 estão cobertos');
+        foreach ($usuarios as $usuario) {
+            $par = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+            if ($par === false) {
+                falhar('sem par de sockets para a prova (b)');
+            }
+            [$lado, $outro] = $par;
+            fclose($outro);
+            $sessao = new D26SmtpSessao($lado, 3, 10);
+            $rotulo = '(b) usuário de ' . strlen($usuario) . ' bytes';
+            try {
+                $e = correioEsperarFalha(fn () => d26_correio_autenticar($sessao, ['PLAIN'], $usuario, static fn (): string => $senha));
+                $rastro = $e->getTraceAsString();
+                contem('escrever', $rastro, "$rotulo: a falha veio do caminho de escrita da linha de AUTH");
+                naoContem(base64_encode("\0" . $usuario . "\0" . $senha), $rastro, "$rotulo: a linha AUTH inteira não aparece no rastro");
+                correioNaoVazaSenhaEmBase64($senha, $rastro, $rotulo);
+                naoContem($senha, $rastro, "$rotulo: a senha em texto puro não aparece no rastro da escrita");
+            } finally {
+                $sessao->fechar();
+            }
         }
     } finally {
         ini_set('zend.exception_ignore_args', $ignorarArgs);

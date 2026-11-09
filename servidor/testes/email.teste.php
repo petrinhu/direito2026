@@ -284,13 +284,14 @@ const EMB3_ORIGEM = 'https://direito2026.drpetrus.top';
  *
  * @param array<string, mixed> $roteiro
  * @param callable(Ambiente, array): void $corpo
+ * @param array{workers?:int} $opcoes repassadas a Ambiente::novo (corrida precisa de mais de um worker)
  */
-function emailB3Com(array $roteiro, callable $corpo): void
+function emailB3Com(array $roteiro, callable $corpo, array $opcoes = []): void
 {
     $falso = correioSmtpFalso($roteiro);
     putenv('D26_SMTP_TESTE=tcp://127.0.0.1:' . $falso['porta']);
     try {
-        $a = Ambiente::novo();
+        $a = Ambiente::novo($opcoes);
         file_put_contents($a->priv . '/smtp.senha', EMB3_SENHA_SMTP);
         chmod($a->priv . '/smtp.senha', 0600);
         $corpo($a, $falso);
@@ -556,4 +557,26 @@ teste('e-mail: EM-B3 sem término de resposta do servidor, o aviso E4 registra e
         $log = (string) @file_get_contents($a->priv . '/erros.log');
         igual(1, substr_count($log, 'envio envio-sincrono'), 'uma linha envio-sincrono por aviso');
     });
+});
+
+teste('e-mail: corrida P9: o E3 do redefinir vai ao endereço que a conta tinha no lock, mesmo se outro admin trocar o e-mail na janela', function (): void {
+    // Janela do bug: o redefinir solta o lock, e a leitura do e-mail vinha depois, fora dele. Por isso o pedido de
+    // redefinir pausa DEPOIS do agir e ANTES do envio; o outro admin troca o e-mail nesse intervalo.
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $admin = $a->entrar();
+        $a->semearUsuario('outra', 'SenhaOutraAdmin-2026', true, false);
+        $outro = $a->entrar('outra', 'SenhaOutraAdmin-2026');
+        file_put_contents($a->priv . '/pausa-redefinir-antes-enviar', 'ana');
+        $reqA = postSemEsperar($admin, '/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana']);
+        pausaEsperarChegada($reqA, $a, 'redefinir-antes-enviar');
+        $rB = emailPedir($outro, ['usuario' => 'ana', 'email' => 'nova@example.com']);
+        igual(200, $rB->status, 'a troca de e-mail na janela: ' . $rB->corpo);
+        pausaSoltar($a, 'redefinir-antes-enviar');
+        [$statusA, $jsonA] = postConcluir($reqA);
+        igual(200, $statusA, 'redefinir de A');
+        igual('enviado', $jsonA['email'] ?? null, 'a resposta diz enviado');
+        igual('ana@example.com', emailB3Destinatario((string) correioConversaFinal($falso)), 'o E3 vai ao endereço do lock, não ao endereço trocado na janela');
+        igual('nova@example.com', emailDeConta($a, 'ana'), 'a troca de B ficou gravada');
+    }, ['workers' => 4]);
 });

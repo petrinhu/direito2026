@@ -46,9 +46,9 @@ if (!in_array($acao, ['criar', 'email'], true) && $alvo === $conta['usuario']) {
  * Toda ação roda em d26_admin_agir: UMA mutação sob lock que revalida o ator
  * (admin, ativo, uid/versão da sessão) e recusa deixar o sistema sem admin ativo.
  */
-$agir = static function (string $acao, string $alvo, ?string $hash, ?array $convite = null, ?string $email = null) use ($priv, $conta): string {
+$agir = static function (string $acao, string $alvo, ?string $hash, ?array $convite = null, ?string $email = null, ?string &$emailLido = null) use ($priv, $conta): string {
     d26_teste_pausar('usuarios-antes-agir', (string) $conta['usuario']); // fora de lock; no-op em produção
-    $r = d26_admin_agir($priv, $conta, $acao, $alvo, $hash, $convite, $email);
+    $r = d26_admin_agir($priv, $conta, $acao, $alvo, $hash, $convite, $email, $emailLido);
     if ($r === 'ator-invalido') {
         d26_erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
     }
@@ -139,21 +139,23 @@ if ($acao === 'email') {
 
 if ($acao === 'redefinir') {
     [$token, $registro] = $novoConvite();
-    if ($agir('redefinir', $alvo, d26_hash_inverificavel(), $registro) !== 'ok') {
+    $emailAlvo = null; // preenchido DENTRO do lock do agir (P9): o E3 vai ao e-mail que a conta tinha ali
+    if ($agir('redefinir', $alvo, d26_hash_inverificavel(), $registro, null, $emailAlvo) !== 'ok') {
         d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
     }
+    // Janela entre o lock do agir e o envio (P9). Fora de lock; no-op em produção.
+    d26_teste_pausar('redefinir-antes-enviar', $alvo);
     // Depois do agir e fora do lock, como o CLI redefinir-senha: a pessoa não fica presa ao limite antigo.
     try {
         d26_limite_desbloquear_conta($priv, $alvo);
     } catch (Throwable $e) {
         d26_log_erro_em($priv, 'usuarios', 'redefinir: contadores não zerados (' . get_class($e) . ')');
     }
-    // E3 (8.1.4): o e-mail é o da conta agora. Sem e-mail, a resposta diz sem-email e só o link vai para copiar.
-    $contaAlvo = d26_contas_buscar($priv, $alvo);
-    $destino = is_array($contaAlvo) ? ($contaAlvo['email'] ?? null) : null;
-    $envio = $destino === null
+    // E3 (8.1.4): o destino é o e-mail lido no lock do agir, nunca um segundo acesso depois dele. Sem e-mail, a
+    // resposta diz sem-email e só o link vai para copiar.
+    $envio = $emailAlvo === null
         ? 'sem-email'
-        : d26_painel_enviar($priv, $alvo, d26_correio_msg_redefinicao($destino, $alvo, D26_ORIGEM . d26_convite_caminho($token)));
+        : d26_painel_enviar($priv, $alvo, d26_correio_msg_redefinicao($emailAlvo, $alvo, D26_ORIGEM . d26_convite_caminho($token)));
     d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token), 'email' => $envio]);
 }
 

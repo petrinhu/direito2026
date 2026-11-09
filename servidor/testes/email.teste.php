@@ -57,6 +57,9 @@ teste('e-mail: criar sem e-mail ou com e-mail inválido dá 400 e não altera us
         'com espaço' => ['email' => 'pes soa@example.com'],
         'com CR e LF' => ['email' => "pessoa@example.com\r\nBcc: outra@example.com"],
         'fora do ASCII' => ['email' => 'josé@example.com'],
+        // Entre aspas, filter_var aceita bytes de controle: só o regex do portão os barra (D1 da revisão EM-B1).
+        'byte de controle 0x01 entre aspas' => ['email' => "\"a\x01b\"@example.com"],
+        'DEL 0x7F entre aspas' => ['email' => "\"a\x7Fb\"@example.com"],
     ];
     foreach ($casos as $nome => $extra) {
         $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'pessoa'] + $extra);
@@ -159,8 +162,8 @@ teste('e-mail: auditar-contas mostra só se há e-mail, nunca o endereço; exclu
     apagarArvore($dir);
 }, false);
 
-teste('e-mail: redefinir-senha, definir-admin e criar-admin --adicionar preservam o e-mail das outras contas', function (): void {
-    [$dir, $priv] = cliPrivComContas(['petrus' => ['admin' => true], 'ana' => ['admin' => false], 'bia' => ['admin' => false]]);
+teste('e-mail: redefinir-senha, definir-admin, remover-conta e criar-admin --adicionar preservam o e-mail das outras contas', function (): void {
+    [$dir, $priv] = cliPrivComContas(['petrus' => ['admin' => true], 'ana' => ['admin' => false], 'bia' => ['admin' => false], 'caro' => ['admin' => false]]);
     d26_contas_mutar($priv, 'ana', static function (array &$c): string {
         $c['email'] = 'ana@example.com';
         return 'ok';
@@ -174,6 +177,28 @@ teste('e-mail: redefinir-senha, definir-admin e criar-admin --adicionar preserva
     [$rc3] = rodarCliScript('criar-admin.php', [$priv, 'novo.adm', '--adicionar'], "SenhaCliAdmin-2026\n");
     igual(0, $rc3, 'criar-admin --adicionar');
     igual('ana@example.com', cliContasPorLogin($priv)['ana']['email'] ?? null, 'criar-admin preserva ana');
+    // remover-conta usa o mesmo apoio/admin.php (D2 da revisão EM-B1): a conta alvo sai, a de ana fica.
+    [$rc4, , $err4] = rodarCliScript('remover-conta.php', [$priv, 'caro'], '');
+    igual(0, $rc4, "remover-conta da caro: $err4");
+    igual('ana@example.com', cliContasPorLogin($priv)['ana']['email'] ?? null, 'remover-conta preserva ana');
+    igual(false, array_key_exists('caro', cliContasPorLogin($priv)), 'caro saiu');
+    apagarArvore($dir);
+}, false);
+
+// D4 da revisão EM-B1: a unicidade do CLI (d26_contas_criar) não tinha teste de duplicado.
+teste('e-mail: criar-admin --adicionar com e-mail já usado em outra conta dá recusa e não altera usuarios.json', function (): void {
+    [$dir, $priv] = cliPrivComContas(['petrus' => ['admin' => true], 'ana' => ['admin' => false]]);
+    d26_contas_mutar($priv, 'ana', static function (array &$c): string {
+        $c['email'] = 'ana@example.com';
+        return 'ok';
+    });
+    $antes = hash_file('sha256', $priv . '/usuarios.json');
+    [$rc, $out, $err] = rodarCliScript('criar-admin.php', [$priv, 'novo.adm', '--adicionar', '--email=ANA@Example.com'], "SenhaCliAdmin-2026\n");
+    verdadeiro($rc !== 0, 'e-mail repetido é recusado');
+    contem('este e-mail já está em outra conta', $out . $err, 'mensagem de e-mail em uso');
+    naoContem('ANA@Example.com', $out . $err, 'o valor não é ecoado');
+    igual($antes, hash_file('sha256', $priv . '/usuarios.json'), 'usuarios.json igual');
+    igual(null, cliContasPorLogin($priv)['novo.adm'] ?? null, 'a conta nova não foi criada');
     apagarArvore($dir);
 }, false);
 

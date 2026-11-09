@@ -11,8 +11,11 @@ teste('I-2: o cenário do revisor; excluir e recriar o mesmo login não ressusci
     igual(true, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da Ana valia');
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana'])->status);
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status, 'recriada com o mesmo login');
+    // A conta nova ganha uma senha conhecida (fixada no privado, como o CLI faz): assim o 401 abaixo só pode vir da sessão.
+    d26_contas_redefinir($a->priv, 'ana', d26_hash_senha('Nova-Ana-Conhecida2'));
     igual(false, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da conta excluída não pode valer na conta nova');
-    igual(401, $ana->post('/api/trocar-senha.php', ['senhaAtual' => 'Outra-Provisoria2', 'senhaNova' => 'SenhaNovaDaAna123'])->status, 'nem para trocar a senha da conta nova');
+    igual(401, $ana->post('/api/trocar-senha.php', ['senhaAtual' => 'Nova-Ana-Conhecida2', 'senhaNova' => 'SenhaNovaDaAna123'])->status, 'nem com a senha certa da conta nova: a sessão antiga não age');
+    igual(true, $a->entrar('ana', 'Nova-Ana-Conhecida2')->get('/api/sessao.php')->json()['autenticado'], 'a senha é a certa: o 401 acima veio da sessão');
 });
 
 teste('I-2: a sessão guarda o uid e a versão, e confere os dois (mesma versão com uid diferente não vale)', function (): void {

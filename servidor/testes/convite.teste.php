@@ -92,6 +92,10 @@ teste('convite: C2 conta pendente recusa qualquer senha, inclusive a que a API d
     igual(true, $criada['ok'] ?? null, 'criar');
     $ana = conviteConta($a, 'ana');
     igual('argon2id', password_get_info((string) $ana['hash'])['algoName'] ?? null, 'hash inverificável é Argon2id real');
+    // G6: o custo do hash inverificável tem de ser o das outras contas, senão o tempo do login revela a conta pendente.
+    $custo = password_get_info((string) $ana['hash'])['options'] ?? [];
+    igual(D26_ARGON['memory_cost'], $custo['memory_cost'] ?? null, 'custo de memória igual ao das outras contas (G6)');
+    igual(D26_ARGON['time_cost'], $custo['time_cost'] ?? null, 'custo de tempo igual ao das outras contas (G6)');
     // Uma senha qualquer e, se a API ainda devolver uma senha provisória (R9), a própria senha entregue.
     $candidatas = ['QualquerSenhaDeQuinze1'];
     if (isset($criada['senhaProvisoria']) && is_string($criada['senhaProvisoria'])) {

@@ -789,15 +789,22 @@ teste('e-mail: E31t limite por IP: 11º em 15 min dá 429 e outro IP segue 200; 
         contem('Aguarde', $r11->corpo, 'frase de espera');
         igual(200, emb4PostDeIp($c, '127.0.0.2', $csrf, 'ana'), 'outro IP segue 200');
     });
-    emailB3Com([], function (Ambiente $a, array $falso): void {
+    // SMTP falso com duas conversas (EM-B4, S47): a 1ª é o E2 do pedido 1; uma 2ª só existe se o pedido 2 enviar.
+    // A resposta sai antes do envio (esqueci.php dá flush), então cada pedido espera o sinal do próprio fim.
+    emailB3Com(['conversas' => 2], function (Ambiente $a, array $falso): void {
         emailB3Semear($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
         $r1 = emb4Enviar($c, $csrf, 'ana');
         contem(EMB4_FRASE, $r1->corpo, 'frase única na resposta do 1º');
+        pausaEsperarSinal($a, 'esqueci-fim');
+        verdadeiro(is_file($falso['conversa'] . '.1'), 'controle: o 1º pedido abriu a 1ª conversa com o SMTP falso');
+        @unlink($a->priv . '/sinal-esqueci-fim');
         $antes = emb4LinhasEnvio($a);
         $r2 = emb4Enviar($c, $csrf, 'ana');
         igual(emb4SemData($r1), emb4SemData($r2), 'o 2º pedido responde igual ao 1º');
+        pausaEsperarSinal($a, 'esqueci-fim');
+        igual(false, is_file($falso['conversa'] . '.2'), 'o 2º pedido não enviou: nenhuma 2ª conversa chegou ao SMTP falso (limite por conta)');
         igual($antes, emb4LinhasEnvio($a), 'o 2º pedido não tenta enviar');
     });
 });

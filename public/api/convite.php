@@ -105,6 +105,7 @@ function d26_convite_responder_e_avisar(int $status, string $tipo, string $csp, 
             }
             echo $corpo;
             session_write_close();
+            d26_teste_sinal('convite-respondeu'); // no-op em produção: a resposta está escrita antes do aviso E4 (D-1)
         },
         // Sem e-mail não há aviso: a resposta sai e nada mais acontece (nem término, nem linha de registro).
         static fn (): bool => $email === null || d26_terminar_resposta(),

@@ -521,3 +521,21 @@ teste('uso simultâneo: d26_conta_publica expõe só usoSimultaneo e bloqueadaEm
         igual(false, array_key_exists($proibido, $p), "$proibido não sai na listagem do admin");
     }
 }, false);
+
+teste('uso simultâneo: U12 (S57) o CAS do login recusa conta bloqueada mesmo com a conta lida antes do bloqueio (uid, versão e hash iguais)', function (): void {
+    $dir = dirTemporario();
+    $priv = $dir . '/privado';
+    mkdir($priv, 0700, true);
+    igual('ok', d26_contas_criar($priv, 'ana', 'hash-ana', false));
+    $lida = d26_contas_buscar($priv, 'ana'); // lida antes do bloqueio: sem a chave bloqueada, com o mesmo uid, versão e hash
+    // Controle: sem bloqueio, o mesmo login entra e devolve a versão. Sem isto, o null abaixo poderia ser vazio.
+    igual($lida['versaoSessao'], d26_contas_efetivar_login($priv, 'ana', $lida, null, null), 'controle: conta sem bloqueio entra');
+    // Bloqueio gravado no disco sem trocar uid, versaoSessao nem hash: só a chave que o CAS precisa conferir.
+    usEditarConta($priv, 'ana', static function (array &$c): void {
+        $c['bloqueada'] = ['em' => time(), 'motivo' => 'uso-simultaneo'];
+    });
+    $antes = d26_contas_buscar($priv, 'ana');
+    igual(null, d26_contas_efetivar_login($priv, 'ana', $lida, null, null), 'a conta lida antes do bloqueio não entra');
+    igual($antes, d26_contas_buscar($priv, 'ana'), 'o login recusado não grava nada (ultimoLogin, sessão e marcador seguem os de antes)');
+    apagarArvore($dir);
+}, false);

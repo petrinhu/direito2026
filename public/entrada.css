@@ -40,6 +40,8 @@
   --cor-erro-bg: #ffebee;
   --cor-erro-borda: #dd9a98;
   --cor-friso: #d3b563;
+  --cor-fundo-sutil: #f2efe6;
+  --cor-acento: #7c621c;
   color-scheme: light dark;
 }
 
@@ -63,6 +65,8 @@
   --cor-erro-texto: #f0c6c4;
   --cor-erro-bg: #3a1a1a;
   --cor-erro-borda: #9a4a48;
+  --cor-fundo-sutil: #1f242d;
+  --cor-acento: #d3b563;
   color-scheme: dark;
 }
 
@@ -83,6 +87,8 @@
     --cor-erro-texto: #f0c6c4;
     --cor-erro-bg: #3a1a1a;
     --cor-erro-borda: #9a4a48;
+    --cor-fundo-sutil: #1f242d;
+    --cor-acento: #d3b563;
   }
 }
 
@@ -209,22 +215,21 @@ button {
 }
 
 /*
-  Aviso legal de site não oficial (espelha src/ui/componentes/AvisoLegal.vue, sem o modo
-  adaptado: a tela de entrada não tem JavaScript, então não recebe o atributo data-modo-adaptado).
-  Só tokens que esta tela já repete de tokens.css. A impressão troca as variáveis (papel branco,
-  tinta preta), e assim o aviso e o resto da tela seguem o mesmo caminho, sem cor literal fora de variável.
+  Aviso legal de site não oficial. Fundo, borda e largura são os do AvisoLegal.vue (--cor-fundo-sutil,
+  --cor-acento, 70ch, limitada pela tela). Sem o modo adaptado: a tela de entrada não tem JavaScript,
+  então não recebe o atributo data-modo-adaptado. Só tokens que esta tela já repete de tokens.css.
 */
 .entrada-rodape {
-  max-width: 26rem;
-  margin: 0 auto;
   padding: 0 1rem 2rem;
 }
 
 .aviso-legal {
   box-sizing: border-box;
-  padding: 1rem 1.25rem;
-  background: var(--cor-fundo-elevado);
-  border: 2px solid var(--cor-primaria);
+  max-width: 70ch;
+  margin: 2rem auto 0;
+  padding: 1rem 1.5rem;
+  background: var(--cor-fundo-sutil);
+  border: 2px solid var(--cor-acento);
   border-radius: 6px;
   color: var(--cor-texto);
 }
@@ -239,10 +244,31 @@ button {
 }
 
 @media print {
-  :root {
+  /*
+    Papel branco e tinta preta, em qualquer tema. Os três seletores abaixo vencem os seletores de
+    tema sem !important e sem depender da ordem do arquivo: :root:root (0,2,0) vence :root (0,1,0), e
+    os dois com atributo ou :not (0,3,0) vencem :root[data-theme='dark'] e
+    :root:not([data-theme='light']) (ambos 0,2,0). A lista de variáveis é a das cores que a tela usa.
+  */
+  :root:root,
+  :root:root[data-theme],
+  :root:root:not([data-theme='light']) {
+    color-scheme: light;
+    --cor-fundo: #ffffff;
     --cor-fundo-elevado: #ffffff;
+    --cor-fundo-sutil: #ffffff;
     --cor-texto: #111111;
+    --cor-texto-suave: #444444;
+    --cor-texto-invertido: #ffffff;
     --cor-primaria: #000000;
+    --cor-titulo-texto: #000000;
+    --cor-sidebar-fundo: #ffffff;
+    --cor-sidebar-texto: #111111;
+    --cor-friso: #000000;
+    --cor-erro-texto: #111111;
+    --cor-erro-bg: #ffffff;
+    --cor-erro-borda: #000000;
+    --cor-acento: #000000;
   }
 
   .aviso-legal {

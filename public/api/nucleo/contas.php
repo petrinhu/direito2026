@@ -173,7 +173,8 @@ function d26_teste_pausar(string $ponto, string $chave = ''): void
  * corrompido) é D26Indisponivel, fechado: `1`/"true" nunca passam por booleano.
  * uid ausente é aceito aqui (a sessão e o login recusam conta sem uid); presente,
  * tem de ser string. `aparelhos` ausente vale []. `sessaoVigente` (marcador de sessão
- * única, ver d26_marcador_confere) é opcional: ausente ou string.
+ * única, ver d26_marcador_confere) é opcional: ausente ou string. `convite` (registro do link,
+ * ver d26_convite_valido) e `conviteUsado` (sha256 em hex) são opcionais e fechados.
  * Chave desconhecida no arquivo da conta é ignorada: só os campos listados são validados.
  *
  * @param array<mixed> $c
@@ -191,7 +192,9 @@ function d26_conta_validar(array $c): array
         && (($c['ultimoLogin'] ?? null) === null || is_string($c['ultimoLogin']))
         && (!array_key_exists('uid', $c) || is_string($c['uid']))
         && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']))
-        && (!array_key_exists('sessaoVigente', $c) || is_string($c['sessaoVigente']));
+        && (!array_key_exists('sessaoVigente', $c) || is_string($c['sessaoVigente']))
+        && (!array_key_exists('convite', $c) || d26_convite_valido($c['convite']))
+        && (!array_key_exists('conviteUsado', $c) || d26_hash_hex_valido($c['conviteUsado']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }
@@ -237,6 +240,63 @@ function d26_marcador_confere(mixed $daConta, mixed $doOutro): bool
     return is_string($daConta) && is_string($doOutro) && hash_equals($daConta, $doOutro);
 }
 
+/** sha256 em hex minúsculo: 64 caracteres. Qualquer outra coisa é tipo errado (fechado). */
+function d26_hash_hex_valido(mixed $valor): bool
+{
+    return is_string($valor) && preg_match('/^[0-9a-f]{64}$/D', $valor) === 1;
+}
+
+/**
+ * Registro do convite por link (CV-B1): {"hash": sha256 do token, "expiraEm": epoch}. O token em
+ * claro nunca entra na conta; a conferência no CV-B2 é por hash_equals.
+ */
+function d26_convite_valido(mixed $convite): bool
+{
+    return is_array($convite)
+        && d26_hash_hex_valido($convite['hash'] ?? null)
+        && is_int($convite['expiraEm'] ?? null);
+}
+
+/** Token do link: 256 bits aleatórios (NIST 4.1.2.2 pede 112), em 64 hex. */
+function d26_convite_token(): string
+{
+    return bin2hex(random_bytes(32));
+}
+
+/**
+ * O que a conta guarda do convite: o sha256 do token e o prazo de D26_CONVITE_VALIDADE a partir de $agora.
+ *
+ * @return array{hash: string, expiraEm: int}
+ */
+function d26_convite_registro(string $token, int $agora): array
+{
+    return ['hash' => hash('sha256', $token), 'expiraEm' => $agora + D26_CONVITE_VALIDADE];
+}
+
+/** Caminho que a API devolve ao admin. O painel compõe a origem; o servidor nunca usa o Host. */
+function d26_convite_caminho(string $token): string
+{
+    return '/api/convite.php?t=' . $token;
+}
+
+/**
+ * Senha inverificável: Argon2id de 32 bytes aleatórios, descartados logo depois. A conta com convite
+ * pendente recusa qualquer senha e custa o mesmo Argon2id de qualquer outra (G6, sem enumeração).
+ */
+function d26_hash_inverificavel(): string
+{
+    return d26_hash_senha(bin2hex(random_bytes(32)));
+}
+
+/** Estado do convite para o painel: 'pendente', 'vencido' ou null (sem convite). Nunca o hash. */
+function d26_convite_estado(mixed $convite, int $agora): ?string
+{
+    if (!is_array($convite)) {
+        return null;
+    }
+    return (int) $convite['expiraEm'] > $agora ? 'pendente' : 'vencido';
+}
+
 /** @return list<array<string, mixed>> */
 function d26_contas_listar(string $priv): array
 {
@@ -276,9 +336,14 @@ function d26_conta_achar(array $dados, string $login): ?array
     return null;
 }
 
-/** Campos que a API pode expor: nunca o hash. @return array<string, mixed> */
-function d26_conta_publica(array $c): array
+/**
+ * Campos que a API pode expor: nunca o hash da senha nem o do convite (só o estado e o prazo).
+ *
+ * @return array<string, mixed>
+ */
+function d26_conta_publica(array $c, ?int $agora = null): array
 {
+    $agora ??= time();
     return [
         'usuario' => $c['usuario'],
         'admin' => (bool) $c['admin'],
@@ -287,6 +352,8 @@ function d26_conta_publica(array $c): array
         'criadoEm' => $c['criadoEm'],
         'ultimoLogin' => $c['ultimoLogin'],
         'aparelhos' => is_array($c['aparelhos'] ?? null) ? count($c['aparelhos']) : 0,
+        'convite' => d26_convite_estado($c['convite'] ?? null, $agora),
+        'conviteExpiraEm' => is_array($c['convite'] ?? null) ? $c['convite']['expiraEm'] : null,
     ];
 }
 
@@ -358,6 +425,7 @@ function d26_contas_criar(string $priv, string $login, string $hash, bool $admin
     );
 }
 
+/** CLI redefinir-senha: o convite pendente sai junto (senão haveria duas portas abertas, CV-B1 C9). */
 function d26_contas_redefinir(string $priv, string $login, string $hash): string
 {
     return d26_contas_mutar($priv, $login, static function (array &$c) use ($hash): string {
@@ -365,6 +433,7 @@ function d26_contas_redefinir(string $priv, string $login, string $hash): string
         $c['deveTrocarSenha'] = true;
         $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
         $c['aparelhos'] = [];
+        unset($c['convite']);
         return 'ok';
     });
 }
@@ -375,6 +444,9 @@ function d26_contas_definir_ativo(string $priv, string $login, bool $ativo): str
         if ($c['ativo'] !== $ativo && !$ativo) {
             $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
             $c['aparelhos'] = [];
+        }
+        if (!$ativo) {
+            unset($c['convite']); // conta desativada não tem link de primeiro acesso (CV-B1 C5)
         }
         $c['ativo'] = $ativo;
         return 'ok';
@@ -458,14 +530,18 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
  * Devolve 'ok' | 'existe' | 'nao-encontrado' | 'ator-invalido' | 'ultimo-admin'.
  * Não há promoção a admin pela API (existe um admin por desenho; o CLI cria o primeiro).
  *
+ * $convite é o registro do link (d26_convite_registro), já pronto FORA do lock: só o sha256 entra
+ * na conta. Criar e redefinir gravam esse registro; desativar apaga o convite; os outros não mexem.
+ *
  * @param array<string, mixed> $ator conta lida da sessão
+ * @param ?array{hash: string, expiraEm: int} $convite
  */
-function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null): string
+function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null, ?array $convite = null): string
 {
     return d26_atualizar_json(
         d26_contas_arquivo($priv),
         D26_CONTAS_PADRAO,
-        static function (array &$d) use ($ator, $acao, $alvo, $hash): string {
+        static function (array &$d) use ($ator, $acao, $alvo, $hash, $convite): string {
             $original = $d;
             $us = array_values(array_map('d26_conta_validar', $d['usuarios'] ?? []));
             $atorOk = false;
@@ -493,7 +569,11 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                 if ($i !== null) {
                     return 'existe';
                 }
-                $us[] = d26_conta_nova($alvo, (string) $hash, false);
+                $nova = d26_conta_nova($alvo, (string) $hash, false);
+                if ($convite !== null) {
+                    $nova['convite'] = $convite;
+                }
+                $us[] = $nova;
             } elseif ($i === null) {
                 return 'nao-encontrado';
             } else {
@@ -504,6 +584,10 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                         $c['deveTrocarSenha'] = true;
                         $c['versaoSessao'] += 1;
                         $c['aparelhos'] = [];
+                        unset($c['conviteUsado'], $c['convite']); // o link anterior morre aqui
+                        if ($convite !== null) {
+                            $c['convite'] = $convite;
+                        }
                         break;
                     case 'ativar':
                         $c['ativo'] = true;
@@ -514,6 +598,7 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                             $c['aparelhos'] = [];
                         }
                         $c['ativo'] = false;
+                        unset($c['convite']);
                         break;
                     case 'revogar-aparelhos':
                         // Decisão do CTO: revogar também derruba as sessões do alvo.

@@ -16,7 +16,11 @@ if ($conta['admin'] !== true) {
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
-    d26_responder(200, ['ok' => true, 'usuarios' => array_map('d26_conta_publica', d26_contas_listar($priv))]);
+    $agora = time();
+    d26_responder(200, ['ok' => true, 'usuarios' => array_map(
+        static fn (array $c): array => d26_conta_publica($c, $agora),
+        d26_contas_listar($priv)
+    )]);
 }
 
 $corpo = d26_corpo_json();
@@ -28,29 +32,21 @@ if (!is_string($acao) || !is_string($alvo)) {
 if (!in_array($acao, ['criar', 'redefinir', 'ativar', 'desativar', 'excluir', 'revogar-aparelhos'], true)) {
     d26_erro(400, 'acao-invalida', 'Ação desconhecida.');
 }
+// R9 (decisão do líder, 08/11/2026): a senha não passa pelo painel. Quem cria ou redefine recebe um link.
+if (in_array($acao, ['criar', 'redefinir'], true) && array_key_exists('senhaProvisoria', $corpo)) {
+    d26_erro(400, 'senha-provisoria-recusada', 'O painel não define senha. Use o link de primeiro acesso.');
+}
 if ($acao !== 'criar' && $alvo === $conta['usuario']) {
     d26_erro(409, 'si-mesmo', 'Esta ação não pode ser feita sobre a própria conta.');
 }
-
-/** Senha provisória: a informada (validada) ou uma gerada. */
-$provisoria = static function () use ($corpo): string {
-    $informada = $corpo['senhaProvisoria'] ?? null;
-    if ($informada === null) {
-        return d26_gerar_senha_provisoria();
-    }
-    if (!is_string($informada) || !d26_senha_provisoria_valida($informada, D26_PROVISORIA_MINIMA_API)) {
-        d26_erro(400, 'senha-invalida', 'A senha provisória deve ter de 8 a 128 caracteres.');
-    }
-    return $informada;
-};
 
 /**
  * Toda ação roda em d26_admin_agir: UMA mutação sob lock que revalida o ator
  * (admin, ativo, uid/versão da sessão) e recusa deixar o sistema sem admin ativo.
  */
-$agir = static function (string $acao, string $alvo, ?string $hash) use ($priv, $conta): string {
+$agir = static function (string $acao, string $alvo, ?string $hash, ?array $convite = null) use ($priv, $conta): string {
     d26_teste_pausar('usuarios-antes-agir', (string) $conta['usuario']); // fora de lock; no-op em produção
-    $r = d26_admin_agir($priv, $conta, $acao, $alvo, $hash);
+    $r = d26_admin_agir($priv, $conta, $acao, $alvo, $hash, $convite);
     if ($r === 'ator-invalido') {
         d26_erro(401, 'sem-sessao', 'É preciso entrar para continuar.');
     }
@@ -60,15 +56,26 @@ $agir = static function (string $acao, string $alvo, ?string $hash) use ($priv, 
     return $r;
 };
 
+/**
+ * Link novo (CV-B1): o token nasce AQUI, fora do lock. A conta recebe só o sha256 e o prazo
+ * (d26_convite_registro). A senha da conta fica inverificável até a pessoa usar o link (CV-B2).
+ *
+ * @return array{string, array{hash: string, expiraEm: int}} [token, registro]
+ */
+$novoConvite = static function (): array {
+    $token = d26_convite_token();
+    return [$token, d26_convite_registro($token, time())];
+};
+
 if ($acao === 'criar') {
     if (!d26_login_valido($alvo)) {
         d26_erro(400, 'login-invalido', 'Use de 3 a 32 caracteres: letras, números, ponto, hífen ou sublinhado.');
     }
-    $senha = $provisoria();
-    if ($agir('criar', $alvo, d26_hash_senha($senha)) === 'existe') {
+    [$token, $registro] = $novoConvite();
+    if ($agir('criar', $alvo, d26_hash_inverificavel(), $registro) === 'existe') {
         d26_erro(409, 'existe', 'Já existe um usuário com esse nome.');
     }
-    d26_responder(200, ['ok' => true, 'senhaProvisoria' => $senha]);
+    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token)]);
 }
 
 if (!d26_login_valido($alvo)) {
@@ -76,11 +83,17 @@ if (!d26_login_valido($alvo)) {
 }
 
 if ($acao === 'redefinir') {
-    $senha = $provisoria();
-    if ($agir('redefinir', $alvo, d26_hash_senha($senha)) !== 'ok') {
+    [$token, $registro] = $novoConvite();
+    if ($agir('redefinir', $alvo, d26_hash_inverificavel(), $registro) !== 'ok') {
         d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
     }
-    d26_responder(200, ['ok' => true, 'senhaProvisoria' => $senha]);
+    // Depois do agir e fora do lock, como o CLI redefinir-senha: a pessoa não fica presa ao limite antigo.
+    try {
+        d26_limite_desbloquear_conta($priv, $alvo);
+    } catch (Throwable $e) {
+        d26_log_erro_em($priv, 'usuarios', 'redefinir: contadores não zerados (' . get_class($e) . ')');
+    }
+    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token)]);
 }
 
 if ($agir($acao, $alvo, null) !== 'ok') {

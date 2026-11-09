@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 const CONTEUDO_FIXTURE = '{"versao":1,"meta":{"titulo":"T","subtitulo":"S","descricao":"D"},"resumo":[],"mapa":{"rotulo":"R"},"quiz":[]}';
 
-/** Admin cria o usuário comum e devolve o cliente já logado nele (com troca obrigatória). */
+/**
+ * Usuário comum com troca obrigatória e a senha $senha, e o cliente já logado nele. R9: a API não
+ * define senha, então a conta nasce direto no privado com a senha fixada (mesmo estado do criar antigo).
+ */
 function criarEEntrar(Ambiente $a, string $login = 'aluno1', string $senha = 'ProvisoriaAluno1'): Cliente
 {
-    $admin = $a->entrar();
-    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => $login, 'senhaProvisoria' => $senha]);
-    igual(200, $r->status, 'admin cria o usuário');
+    $a->semearUsuario($login, $senha, false, true);
     return $a->entrar($login, $senha);
 }
 

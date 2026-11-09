@@ -6,11 +6,11 @@ require_once __DIR__ . '/apoio/nucleo.php';
 teste('I-2: o cenário do revisor; excluir e recriar o mesmo login não ressuscita a sessão antiga', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
+    $a->semearUsuario('ana', 'Provisoria-Ana1', false, true); // R9: a API não define senha; a conta nasce com a senha fixada no privado
     $ana = $a->entrar('ana', 'Provisoria-Ana1');
     igual(true, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da Ana valia');
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana'])->status);
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Outra-Provisoria2'])->status, 'recriada com o mesmo login');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status, 'recriada com o mesmo login');
     igual(false, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da conta excluída não pode valer na conta nova');
     igual(401, $ana->post('/api/trocar-senha.php', ['senhaAtual' => 'Outra-Provisoria2', 'senhaNova' => 'SenhaNovaDaAna123'])->status, 'nem para trocar a senha da conta nova');
 });

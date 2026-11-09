@@ -25,32 +25,30 @@ teste('usuarios.php: admin lista sem NUNCA expor o hash', function (): void {
     naoContem('hash', $r->corpo);
     $lista = $r->json()['usuarios'];
     igual(2, count($lista));
-    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos'], array_keys($lista[0]), 'campos exatos');
+    // 'convite' e 'conviteExpiraEm' entram por 7.1.2 do plano (CV-B1): estado e prazo do convite, nunca o hash.
+    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos', 'convite', 'conviteExpiraEm'], array_keys($lista[0]), 'campos exatos');
 });
 
-teste('admin cria usuário com senha informada: nasce com troca obrigatória', function (): void {
+teste('admin cria usuário sem senha: nasce com troca obrigatória, sem admin, e a API não devolve senha (R9)', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana.silva', 'senhaProvisoria' => 'Provisoria-Ana1']);
+    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana.silva']);
     igual(200, $r->status);
-    igual('Provisoria-Ana1', $r->json()['senhaProvisoria']);
-    $e = $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'ana.silva', 'senha' => 'Provisoria-Ana1']);
-    igual(200, $e->status);
-    igual(true, $e->json()['deveTrocarSenha']);
-    igual(false, $e->json()['admin'], 'criar nunca concede admin');
+    naoContem('senhaProvisoria', $r->corpo, 'a resposta não traz senha');
+    $conta = array_values(array_filter($a->lerUsuarios()['usuarios'], static fn (array $u): bool => $u['usuario'] === 'ana.silva'))[0];
+    igual(true, $conta['deveTrocarSenha'], 'nasce com troca obrigatória');
+    igual(false, $conta['admin'], 'criar nunca concede admin');
+    igual(401, $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'ana.silva', 'senha' => 'Provisoria-Ana1'])->status, 'nenhuma senha conhecida entra: o convite (CV-B2) é o caminho');
 });
 
-teste('admin cria usuário sem senha: servidor gera 12 caracteres sem ambíguos, exibidos uma vez', function (): void {
+teste('admin cria usuário sem senha: a API não gera nem devolve senha, e a listagem não a repete (R9)', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
     $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia']);
     igual(200, $r->status);
-    $senha = $r->json()['senhaProvisoria'];
-    verdadeiro(is_string($senha) && preg_match('/^[A-HJ-NP-Za-km-z2-9]{12}$/D', $senha) === 1, 'formato da senha gerada');
-    $outra = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'caio'])->json()['senhaProvisoria'];
-    verdadeiro($senha !== $outra, 'senhas geradas diferem');
-    naoContem($senha, $admin->get('/api/usuarios.php')->corpo, 'listagem não repete a senha');
-    igual(200, $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'bia', 'senha' => $senha])->status);
+    igual(false, array_key_exists('senhaProvisoria', $r->json()), 'nenhuma senha gerada na resposta');
+    naoContem('senhaProvisoria', $admin->get('/api/usuarios.php')->corpo, 'a listagem não traz senha');
+    igual(401, $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'bia', 'senha' => 'SenhaQualquer1234567'])->status, 'sem senha conhecida, nada entra');
 });
 
 teste('criar: login duplicado 409; login inválido 400; "Chefe" é diferente de "chefe"', function (): void {
@@ -67,14 +65,15 @@ teste('criar: login duplicado 409; login inválido 400; "Chefe" é diferente de 
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'Chefe'])->status, 'caixa diferente é outro login');
 });
 
-teste('criar: senha provisória abaixo de 8 ou acima de 128 caracteres é 400; com 8 passa', function (): void {
+teste('criar e redefinir: senhaProvisoria no corpo é 400, de qualquer tamanho, e nada é gravado (R9)', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => 'abcdefg'])->status, '7 caracteres');
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'edu', 'senhaProvisoria' => 'abcdefgh'])->status, '8 caracteres');
-    igual(400, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'edu', 'senhaProvisoria' => 'curta'])->status, 'redefinir também exige 8');
+    igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'edu', 'senhaProvisoria' => 'abcdefgh'])->status, '8 caracteres');
+    igual(400, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'edu', 'senhaProvisoria' => 'curta'])->status, 'redefinir também recusa');
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => ''])->status);
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'dani', 'senhaProvisoria' => str_repeat('x', 129)])->status);
+    igual([Ambiente::LOGIN_ADMIN], array_column($a->lerUsuarios()['usuarios'], 'usuario'), 'nada foi criado');
 });
 
 teste('acao desconhecida ou usuário-alvo inexistente: 400', function (): void {
@@ -89,22 +88,21 @@ teste('acao desconhecida ou usuário-alvo inexistente: 400', function (): void {
     }
 });
 
-teste('redefinir: senha antiga morre, nova provisória entra com troca obrigatória e sessão antiga cai', function (): void {
+teste('redefinir: senha antiga morre, sessão antiga cai, e a conta fica com convite pendente (R9: sem senha pela API)', function (): void {
     $a = Ambiente::novo();
     $a->semearUsuario('eva', 'SenhaDaEva12345', false, false);
-    $eva = $a->entrar('eva', 'SenhaDaEva12345');
-    igual(true, $eva->get('/api/sessao.php')->json()['autenticado']);
+    $evaAparelho = $a->entrar('eva', 'SenhaDaEva12345');
+    igual(true, $evaAparelho->get('/api/sessao.php')->json()['autenticado']);
     $admin = $a->entrar();
     $r = $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'eva']);
     igual(200, $r->status);
-    $nova = $r->json()['senhaProvisoria'];
-    verdadeiro(is_string($nova) && strlen($nova) === 12, 'gerou 12 caracteres');
-    igual(false, $eva->get('/api/sessao.php')->json()['autenticado'], 'sessão antiga caiu');
+    igual(false, array_key_exists('senhaProvisoria', $r->json()), 'nenhuma senha na resposta (R9)');
+    igual(false, $evaAparelho->get('/api/sessao.php')->json()['autenticado'], 'sessão antiga caiu');
     $a->zerarTentativas();
     igual(401, $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'eva', 'senha' => 'SenhaDaEva12345'])->status);
-    $e = $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'eva', 'senha' => $nova]);
-    igual(200, $e->status);
-    igual(true, $e->json()['deveTrocarSenha']);
+    $contaEva = array_values(array_filter($a->lerUsuarios()['usuarios'], static fn (array $u): bool => $u['usuario'] === 'eva'))[0];
+    verdadeiro(is_array($contaEva['convite'] ?? null), 'redefinir deixa o convite pendente');
+    igual(true, $contaEva['deveTrocarSenha'], 'troca obrigatória');
 });
 
 teste('desativar: não entra mais, sessão antiga cai; ativar devolve o acesso', function (): void {
@@ -149,7 +147,7 @@ teste('ações do admin sobre si mesmo: 409 em redefinir, ativar, desativar e ex
 teste('não existe ação de conceder admin: campo admin no corpo é ignorado', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'hugo', 'admin' => true, 'senhaProvisoria' => 'Provisoria-Hugo1']);
+    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'hugo', 'admin' => true]);
     $hugo = array_values(array_filter($a->lerUsuarios()['usuarios'], static fn (array $u): bool => $u['usuario'] === 'hugo'))[0];
     igual(false, $hugo['admin']);
 });

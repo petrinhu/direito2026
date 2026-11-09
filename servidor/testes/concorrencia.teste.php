@@ -101,12 +101,14 @@ function contaDe(Ambiente $a, string $login): ?array
     return null;
 }
 
-/** Admin cria a Ana (provisória conhecida) e devolve o cliente do admin. */
+/**
+ * Ana com a senha 'Provisoria-Ana1' (troca obrigatória) e o cliente do admin. R9: a API não define
+ * senha; a conta nasce no privado com a senha fixada, como o criar antigo deixava.
+ */
 function admComAna(Ambiente $a): Cliente
 {
-    $adm = $a->entrar();
-    igual(200, $adm->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
-    return $adm;
+    $a->semearUsuario('ana', 'Provisoria-Ana1', false, true);
+    return $a->entrar();
 }
 
 // ---- Item 1 e 11: troca de senha em voo x redefinição / exclusão -------------------------------
@@ -118,13 +120,13 @@ teste('item 1: troca de senha em voo NÃO sobrescreve a redefinição do admin (
     pausaLigar($a, 'troca-antes-gravar', 'ana');
     $req = postSemEsperar($ana, '/api/trocar-senha.php', ['senhaAtual' => 'Provisoria-Ana1', 'senhaNova' => 'NovaSenhaDaAna123']);
     pausaEsperarChegada($req, $a, 'troca-antes-gravar');
-    igual(200, $adm->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana', 'senhaProvisoria' => 'Redefinida-Admin9'])->status);
+    igual(200, $adm->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana'])->status);
     pausaSoltar($a, 'troca-antes-gravar');
     [$status, $j] = postConcluir($req);
     igual(409, $status, 'a troca em voo é recusada');
     igual('conta-alterada', $j['erro'] ?? null);
     $c = contaDe($a, 'ana');
-    verdadeiro(password_verify('Redefinida-Admin9', $c['hash']), 'a senha redefinida pelo admin continua valendo');
+    verdadeiro(is_array($c['convite'] ?? null), 'a redefinição do admin continua valendo: o convite dela está no lugar (R9)');
     verdadeiro(!password_verify('NovaSenhaDaAna123', $c['hash']), 'a senha da troca em voo não foi gravada');
     igual(true, $c['deveTrocarSenha'], 'a redefinição continua exigindo troca');
 });
@@ -164,12 +166,12 @@ teste('item 2: login com a senha antiga em voo, depois de redefinição, desativ
         $req = postSemEsperar($cli, '/api/entrar.php', ['usuario' => 'ana', 'senha' => 'Provisoria-Ana1']);
         pausaEsperarChegada($req, $a, 'entrar-apos-verificar');
         if ($caso === 'redefinir') {
-            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana', 'senhaProvisoria' => 'Redefinida-Admin9'])->status);
+            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana'])->status);
         } elseif ($caso === 'desativar') {
             igual(200, $adm->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => 'ana'])->status);
         } else {
             igual(200, $adm->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana'])->status);
-            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Outra-Provisoria2'])->status);
+            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status);
         }
         pausaSoltar($a, 'entrar-apos-verificar');
         [$status, $j] = postConcluir($req);
@@ -232,7 +234,7 @@ teste('item 4: admin desativado entre a leitura da sessão e a ação NÃO cria 
     $um = $a->entrar();
     $dois = $a->entrar('segundo', 'SenhaSegundo123');
     pausaLigar($a, 'usuarios-antes-agir', Ambiente::LOGIN_ADMIN); // só o primeiro admin pausa
-    $req = postSemEsperar($um, '/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'intruso', 'senhaProvisoria' => 'Provisoria-Int1']);
+    $req = postSemEsperar($um, '/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'intruso']);
     pausaEsperarChegada($req, $a, 'usuarios-antes-agir');
     igual(200, $dois->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => Ambiente::LOGIN_ADMIN])->status, 'o segundo admin desativa o primeiro, sem pausar');
     pausaSoltar($a, 'usuarios-antes-agir');

@@ -282,7 +282,7 @@ teste('cli desbloquear: argumentos inválidos, pasta inexistente ou login invál
 teste('cookie de outra conta não isenta: o aparelho do admin não ajuda quem tenta a conta da Ana', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
+    $a->semearUsuario('ana', 'Provisoria-Ana1', false, true); // R9: a API não define senha; fixada no privado
     $disp = $admin->cookies[COOKIE_DISPOSITIVO];
     saturarConta($a->priv, 'ana');
     $c = $a->clienteComSessao();
@@ -309,9 +309,9 @@ teste('cookie antigo não vale após troca de senha (pela API) e o navegador rec
 teste('cookie antigo não vale após redefinição e desativação pelo admin', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
+    $a->semearUsuario('ana', 'Provisoria-Ana1', false, true);
     $disp = $a->entrar('ana', 'Provisoria-Ana1')->cookies[COOKIE_DISPOSITIVO];
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana', 'senhaProvisoria' => 'Outra-Provisoria2'])->status);
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana'])->status);
     saturarConta($a->priv, 'ana');
     $c = $a->clienteComSessao();
     $c->cookies[COOKIE_DISPOSITIVO] = $disp;
@@ -323,7 +323,7 @@ teste('cookie antigo não vale após redefinição e desativação pelo admin', 
 teste('admin revoga os aparelhos de um usuário: o cookie deixa de valer e o admin não revoga a si mesmo', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
+    $a->semearUsuario('ana', 'Provisoria-Ana1', false, true);
     $disp = $a->entrar('ana', 'Provisoria-Ana1')->cookies[COOKIE_DISPOSITIVO];
     $sessaoAna = $a->entrar('ana', 'Provisoria-Ana1');
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'ana'])->status);
@@ -336,7 +336,7 @@ teste('admin revoga os aparelhos de um usuário: o cookie deixa de valer e o adm
     igual(409, $r->status, 'sobre si mesmo: recusa');
     igual('si-mesmo', $r->json()['erro'] ?? null);
     igual(400, $admin->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'fantasma'])->status, 'usuário inexistente');
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'senhaProvisoria' => 'Provisoria-Bia1'])->status);
+    $a->semearUsuario('bia', 'Provisoria-Bia1', false, true);
     igual(403, $a->entrar('bia', 'Provisoria-Bia1')->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'ana'])->status, 'não admin não revoga');
 });
 
@@ -367,7 +367,7 @@ teste('conta sem uid: sessão recusada, login recusado, e a API e o CLI sempre g
 teste('API criar grava uid hex de 32 e aparelhos vazio', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'senhaProvisoria' => 'Provisoria-Ana1'])->status);
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status);
     $ana = $a->lerUsuarios()['usuarios'][1];
     verdadeiro(preg_match('/^[0-9a-f]{32}$/D', (string) ($ana['uid'] ?? '')) === 1, 'uid gravado pela API');
 });

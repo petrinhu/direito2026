@@ -428,6 +428,14 @@ teste('e-mail: E18t D26_ORIGEM e o host do .htaccess são o mesmo', function ():
     $hostOrigem = parse_url(D26_ORIGEM, PHP_URL_HOST);
     igual($hostHtaccess, $hostOrigem, 'host do .htaccess igual ao host de D26_ORIGEM');
     igual('https://' . $hostHtaccess, D26_ORIGEM, 'origem é https e sem caminho');
+
+    // Gêmeo de origem (L-17): scripts/publicar.sh usa o mesmo domínio no curl ao site no ar (DOMINIO) e no host
+    // público (HOST_PUBLICO). Confere o literal padrão de cada um, nunca o override PUBLICAR_*.
+    $publicar = (string) file_get_contents(RAIZ_REPO . '/scripts/publicar.sh');
+    verdadeiro(preg_match('/^DOMINIO="\$\{PUBLICAR_DOMINIO-([^}]*)\}"/m', $publicar, $dominio) === 1, 'publicar.sh tem o literal padrão de DOMINIO');
+    verdadeiro(preg_match('/^HOST_PUBLICO="\$\{PUBLICAR_HOST_PUBLICO-([^}]*)\}"/m', $publicar, $publico) === 1, 'publicar.sh tem o literal padrão de HOST_PUBLICO');
+    igual($hostOrigem, parse_url($dominio[1], PHP_URL_HOST), 'DOMINIO de publicar.sh tem o host de D26_ORIGEM');
+    igual($hostOrigem, $publico[1], 'HOST_PUBLICO de publicar.sh tem o host de D26_ORIGEM');
 }, false);
 
 teste('e-mail: E19t conferir-smtp contra o SMTP falso: auth sim sem MAIL FROM; 535 dá auth não e rc 1; senha nunca na saída', function (): void {

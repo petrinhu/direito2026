@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 define('D26_API', true);
+// O token vai na URL: nenhuma resposta deste endpoint (tela, 303, 403, 405, 503) envia o Referer (CV-B2).
+define('D26_REFERRER_API', 'no-referrer');
 require __DIR__ . '/nucleo/inicio.php';
 require_once __DIR__ . '/nucleo/portao.php';
 
@@ -9,7 +11,9 @@ require_once __DIR__ . '/nucleo/portao.php';
  * Página pública do convite (CV-B2, decisão do líder de 08/11/2026): a pessoa abre o link de 48 h, cria a
  * própria senha e já entra. GET mostra a tela e não grava nada (a pré-visualização de mensageiro não consome
  * o link). POST consome o link num compare-and-swap e entra. Todo pedido passa pelo limite por IP, e só a falha
- * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as telas saem com "no-referrer".
+ * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as respostas saem com "no-referrer".
+ * O sucesso do POST (senha criada) expira o cookie de aviso de outro aparelho que veio no pedido (plano 1.2);
+ * o convite nunca emite esse cookie (C21). Decisão do orquestrador (plano 1.2, revisão rev-cv-b2.md).
  */
 d26_metodo(['GET', 'POST']);
 $priv = d26_priv();
@@ -70,10 +74,13 @@ if ($gravou !== 'ok') {
     d26_convite_recusar(d26_convite_classificar(d26_contas_listar($priv), $token, time())['estado']);
 }
 
+// Senha criada (CAS ok): o aviso de outro aparelho que veio no pedido sai do navegador, no 303 e na tela sem entrada.
+d26_aviso_consumir();
+
 // A senha já está criada. Entrar é o mesmo caminho do login (limite, aparelho, sessão única, cookies).
 $entrada = d26_login_executar($priv, $login, $nova);
 if ($entrada['estado'] === 'entrou') {
-    d26_portao_vazio(303, ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA]);
+    d26_portao_vazio(303, ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA], 'no-referrer');
 }
 d26_portao_tela(200, d26_tela_criada(), PORTAO_CSP_TELA, 'no-referrer');
 

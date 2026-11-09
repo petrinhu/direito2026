@@ -726,16 +726,28 @@ teste('convite: C21 nenhuma resposta de convite.php emite __Host-d26aviso, nem c
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $aviso = D26_AVISO_NOME . '=' . D26_AVISO_OUTRO_APARELHO;
     $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    // O aviso vai no jar: Cliente::enviar troca o cabeçalho Cookie pelo jar, então um Cookie avulso nunca chegava.
+    $c->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
     $respostas = [
-        $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO + ['Cookie' => cvb2Cookies($c, $aviso)]),
-        $c->get('/api/convite.php?t=' . str_repeat('0', 64), PORTAO_NAVEGACAO + ['Cookie' => cvb2Cookies($c, $aviso)]),
-        cvb2Enviar($c, cvb2Campos($token, 'errado', CVB2_SENHA), ['Cookie' => cvb2Cookies($c, $aviso)]),
-        cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Cookie' => cvb2Cookies($c, $aviso)]),
+        $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO),
+        $c->get('/api/convite.php?t=' . str_repeat('0', 64), PORTAO_NAVEGACAO),
+        cvb2Enviar($c, cvb2Campos($token, 'errado', CVB2_SENHA)),
+        cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA)),
     ];
+    // Emitir é gravar o aviso com valor (o da lista fechada). Consumir (CV-B2, criação de senha) é só expirar:
+    // "__Host-d26aviso=; Max-Age=0". Qualquer cookie desse nome que não seja a expiração conta como emissão.
+    // (A versão anterior proibia o nome inteiro e ficaria vermelha com o consumo, que é o comportamento certo.)
     foreach ($respostas as $r) {
-        naoContem(D26_AVISO_NOME, implode(' | ', $r->cabecalhos['set-cookie'] ?? []), "status {$r->status}");
+        foreach ($r->cabecalhos['set-cookie'] ?? [] as $cookie) {
+            if (str_contains($cookie, D26_AVISO_NOME)) {
+                igual(
+                    D26_AVISO_NOME . '=; Max-Age=0',
+                    substr($cookie, 0, strlen(D26_AVISO_NOME . '=; Max-Age=0')),
+                    "status {$r->status}: o convite só expira o aviso, nunca o emite"
+                );
+            }
+        }
     }
 });
 
@@ -767,4 +779,86 @@ teste('convite: C22 o login falha depois do CAS: "Senha criada. Entre pela tela 
         'destino' => '/',
     ]), ['Content-Type' => 'application/x-www-form-urlencoded', 'X-CSRF-Token' => null]);
     igual(303, $entra->status, 'a senha nova entra pela tela de entrada');
+});
+
+// ---- C23: Referrer-Policy no-referrer nas respostas do convite (o token vai na URL) ------------
+
+teste('convite: C23 o 303 de sucesso sai com Referrer-Policy no-referrer', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
+    igual(303, $r->status, 'criou e entrou');
+    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 303');
+});
+
+// ---- C24: os 403 (sem cookie pré, Origin de outro site) e o 400 (tipo de conteúdo) também --------
+
+teste('convite: C24 os 403 e o 400 do formulário saem com Referrer-Policy no-referrer', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $semCookie = cvb2Enviar($a->cliente(), cvb2Campos($token, 'qualquer', CVB2_SENHA));
+    igual(403, $semCookie->status, 'sem cookie pré');
+    igual('no-referrer', $semCookie->cabecalho('referrer-policy'), 'referrer do 403 sem cookie pré');
+
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $origem = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => 'http://site-de-outro.example']);
+    igual(403, $origem->status, 'Origin de outro site');
+    igual('no-referrer', $origem->cabecalho('referrer-policy'), 'referrer do 403 de Origin');
+
+    $json = $c->post('/api/convite.php', ['t' => $token, 'senhaNova' => CVB2_SENHA]);
+    igual(400, $json->status, 'corpo JSON');
+    igual('no-referrer', $json->cabecalho('referrer-policy'), 'referrer do 400');
+});
+
+// ---- C24b: falha do servidor (503 do handler global) também sai com no-referrer ----------------
+
+teste('convite: C24b usuarios.json corrompido: o 503 do handler global sai com no-referrer e sem o token', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    file_put_contents($a->priv . '/usuarios.json', '{quebrado');
+    $r = cvb2Pagina($a->cliente(), $token);
+    igual(503, $r->status, 'falha do servidor');
+    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 503');
+    naoContem($token, $r->corpo, 'o token não volta no corpo do erro');
+});
+
+// ---- C25: o 405 (método errado, com o token na URL) também ------------------------------------
+
+teste('convite: C25 o 405 (método errado, com o token na URL) sai com Referrer-Policy no-referrer', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $r = $a->cliente()->enviar('PUT', '/api/convite.php?t=' . $token, '', []);
+    igual(405, $r->status, 'método não permitido');
+    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 405');
+});
+
+// ---- C26: a criação de senha expira o cookie de aviso que veio no pedido (303 e tela sem entrada) -
+
+teste('convite: C26 a criação de senha expira o cookie de aviso que veio no pedido, no 303 e na tela sem entrada', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $c->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
+    $entrou = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
+    igual(303, $entrou->status, 'criou e entrou');
+    contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $entrou->cabecalhos['set-cookie'] ?? []), 'o aviso que veio no pedido sai do navegador (303)');
+
+    // Mesma regra quando o login falha depois do CAS (limite forçado, como em C22): a senha já foi criada.
+    $b = Ambiente::novo();
+    $tokenB = cvb2Convidar($b, 'ana');
+    $d = $b->cliente();
+    $csrfB = cvb2Campo(cvb2Pagina($d, $tokenB)->corpo, 'csrf');
+    $kc = hash('sha256', 'conta' . "\0" . 'ana');
+    file_put_contents($b->priv . '/tentativas.json', json_encode(
+        ['u' => [], 'ip' => [], 'c' => [$kc => ['f' => array_fill(0, 10, time())]]],
+        JSON_THROW_ON_ERROR
+    ));
+    $d->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
+    $criada = cvb2Enviar($d, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
+    igual(200, $criada->status, 'senha criada sem entrada');
+    contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $criada->cabecalhos['set-cookie'] ?? []), 'o aviso sai também na tela de senha criada (200)');
 });

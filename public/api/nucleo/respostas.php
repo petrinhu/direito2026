@@ -7,6 +7,16 @@ if (!defined('D26_API')) {
 }
 
 /**
+ * Política de Referrer das respostas JSON da API. Padrão same-origin. Um endpoint cujo caminho leva segredo
+ * na URL (o convite, CV-B2) define D26_REFERRER_API antes do bootstrap; a constante vale só nessa requisição
+ * e cobre também os erros do handler global (503/500), que saem por d26_erro.
+ */
+function d26_referrer_api(): string
+{
+    return defined('D26_REFERRER_API') ? D26_REFERRER_API : 'same-origin';
+}
+
+/**
  * Cabeçalhos de toda resposta da API (sucesso ou erro). Cache-Control "private, no-store": toda
  * resposta da API tem sessão ou é a tela de entrada (plano 1.6). "private" mantém a resposta fora
  * de cache compartilhado (CDN) mesmo se alguém tirar o no-store depois.
@@ -17,7 +27,7 @@ function d26_cabecalhos(): void
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: private, no-store');
     header('X-Content-Type-Options: nosniff');
-    header('Referrer-Policy: same-origin');
+    header('Referrer-Policy: ' . d26_referrer_api());
     header('X-Frame-Options: DENY');
     header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
 }

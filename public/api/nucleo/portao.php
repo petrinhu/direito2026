@@ -57,9 +57,9 @@ function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tam
 }
 
 /** Resposta sem corpo (401, 403, 404, 405, 400). */
-function d26_portao_vazio(int $status, array $cabecalhos = []): never
+function d26_portao_vazio(int $status, array $cabecalhos = [], string $referrer = 'same-origin'): never
 {
-    d26_portao_cabecalhos($status, 'text/plain; charset=utf-8', d26_tela_csp(), 0);
+    d26_portao_cabecalhos($status, 'text/plain; charset=utf-8', d26_tela_csp(), 0, $referrer);
     foreach ($cabecalhos as $nome => $valor) {
         header($nome . ': ' . $valor);
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AVISO_LEGAL } from '@/conteudo/avisoLegal';
+import { AVISO_LEGAL } from '@/app/rodape/avisoLegal';
 </script>
 
 <template>

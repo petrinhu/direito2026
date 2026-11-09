@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * Aviso legal de "site não oficial" no rodapé da tela de entrada (ordem do líder, v1.6.1.1).
- * O texto mora em src/conteudo/avisoLegal.ts e a tela o repete em PHP: o teste de sincronia
+ * O texto mora em src/core/rodape/avisoLegal.ts e a tela o repete em PHP: o teste de sincronia
  * prova, pelo HTML servido, que os dois são iguais byte a byte (gêmeo da L-17).
  */
 
@@ -29,8 +29,8 @@ teste('entrada aviso: o aviso legal fica no rodapé, depois do formulário, fora
     verdadeiro($posMain !== false && $posMain < $posRodape, 'aviso depois de </main>, no rodapé da página');
 });
 
-teste('entrada aviso: rótulo e corpo na tela são os de src/conteudo/avisoLegal.ts, byte a byte', function (): void {
-    $fonte = dirname(__DIR__, 2) . '/src/conteudo/avisoLegal.ts';
+teste('entrada aviso: rótulo e corpo na tela são os de src/core/rodape/avisoLegal.ts, byte a byte', function (): void {
+    $fonte = dirname(__DIR__, 2) . '/src/core/rodape/avisoLegal.ts';
     $ts = (string) file_get_contents($fonte);
     verdadeiro(!str_starts_with($ts, "\0GITCRYPT\0"), 'avisoLegal.ts está cifrado: destrave a cópia (git-crypt) antes do teste');
 

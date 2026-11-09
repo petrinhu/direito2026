@@ -88,7 +88,7 @@ function d26_tela_documento(string $titulo, string $corpo, string $rodape = ''):
 
 /**
  * Aviso legal de site não oficial, no rodapé da tela de entrada. O texto é o de
- * src/conteudo/avisoLegal.ts, repetido aqui; servidor/testes/entrada-aviso.teste.php prova a igualdade.
+ * src/core/rodape/avisoLegal.ts, repetido aqui; servidor/testes/entrada-aviso.teste.php prova a igualdade.
  */
 function d26_tela_aviso_legal(): string
 {

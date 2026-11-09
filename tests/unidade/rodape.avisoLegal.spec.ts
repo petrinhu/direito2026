@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { AVISO_LEGAL } from '@/conteudo/avisoLegal';
+import { AVISO_LEGAL } from '@/core/rodape/avisoLegal';
 
 /**
  * Ordem do líder (20/10/2026): aviso legal no rodapé de todas as páginas,
  * com o texto APROVADO pelo líder, literal. O texto abaixo é cópia da
  * aprovação, escrita aqui à mão de propósito: importar de
- * src/conteudo/avisoLegal.ts tornaria o teste circular (passaria com
+ * src/core/rodape/avisoLegal.ts tornaria o teste circular (passaria com
  * qualquer texto). Alterar o aviso exige alterar este teste junto, com nova
  * ordem do líder.
  */

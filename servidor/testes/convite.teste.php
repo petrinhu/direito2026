@@ -572,6 +572,31 @@ teste('convite: C14 link vencido: M1 com 410 no GET; vencer entre o GET e o POST
     igual($antes, hash_file('sha256', $b->priv . '/usuarios.json'), 'o POST com link vencido não grava');
 });
 
+// ---- C14b: a janela do CAS: o link vence DURANTE o Argon2id, depois da classificação --------
+
+// A classificação (convite.php) já viu o link no prazo; o vencimento cai entre o hash e a gravação.
+// Só o CAS de d26_contas_consumir_convite (contas.php) pega isso. Caracterização coberta por mutação (L-27).
+teste('convite: C14b CAS: o link que vence durante o Argon2id dá M1 e nada grava', function (): void {
+    $a = Ambiente::novo(['workers' => 4]);
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+
+    pausaLigar($a, 'convite-antes-gravar', 'ana');
+    $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
+    pausaEsperarChegada($req, $a, 'convite-antes-gravar');
+    conviteEditarConta($a->priv, 'ana', static function (array $conta): array {
+        $conta['convite']['expiraEm'] = time() - 1;
+        return $conta;
+    });
+    pausaSoltar($a, 'convite-antes-gravar');
+
+    cvb2Mensagem(cvb2ConcluirPost($req), 410, CVB2_M1);
+    $conta = conviteConta($a, 'ana');
+    igual(false, password_verify(CVB2_SENHA, (string) $conta['hash']), 'a senha não foi gravada');
+    igual(false, array_key_exists('conviteUsado', $conta), 'o link não foi consumido');
+});
+
 // ---- C15: corrida: o POST que grava por último perde com M2 --------------------------------
 
 teste('convite: C15 corrida: um 303 e um M2; o hash gravado é o do vencedor', function (): void {

@@ -274,4 +274,15 @@ button {
   .aviso-legal {
     break-inside: avoid;
   }
+
+  /*
+    Botão sem fundo no papel. O navegador pode não imprimir fundos (padrão, e a escolha do usuário na
+    caixa de impressão vale), então o texto e a borda escuros são o que aparece. :root:root button
+    (0,2,1) vence button (0,0,1) sem depender da ordem.
+  */
+  :root:root button {
+    background: transparent;
+    color: var(--cor-texto);
+    border: 2px solid var(--cor-texto);
+  }
 }

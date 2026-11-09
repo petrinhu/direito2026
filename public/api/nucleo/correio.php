@@ -6,6 +6,8 @@ if (!defined('D26_API')) {
     exit;
 }
 
+require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a etapa e o código no erros.log
+
 /**
  * Cliente SMTP mínimo do envio de e-mail (EM-B2, plano-sessao-unica.md 8.1.6 e 8.1.8).
  *
@@ -470,4 +472,94 @@ function d26_correio_conferir(string $priv, array $alvo): array
         $sessao?->fechar();
     }
     return $resultado;
+}
+
+/** Destinatário, assunto e corpo de uma mensagem: é o que d26_correio_enviar recebe. */
+function d26_correio_mensagem(string $destinatario, string $assunto, string $corpo): array
+{
+    return ['destinatario' => $destinatario, 'assunto' => $assunto, 'corpo' => $corpo];
+}
+
+/** Assuntos ratificados pelo líder (R14). Os três cabem numa encoded-word (até 45 bytes, D26_SMTP_ASSUNTO_MAX). */
+const D26_CORREIO_ASSUNTO_CONVITE = 'Crie a sua senha de acesso';
+const D26_CORREIO_ASSUNTO_REDEFINICAO = 'Sua senha foi redefinida';
+const D26_CORREIO_ASSUNTO_SENHA_CRIADA = 'Sua senha foi criada';
+
+/**
+ * E1, convite do criar (plano-sessao-unica.md 8.1.9, texto ratificado em R14). O link vai sozinho numa linha,
+ * logo depois da frase que pede para abri-lo.
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_convite(string $destino, string $login, string $link): array
+{
+    return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_CONVITE,
+        "Olá.\n\n"
+        . "Foi criado um acesso para você, com o usuário {$login}.\n\n"
+        . "Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n\n"
+        . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.");
+}
+
+/**
+ * E3, redefinir do painel (8.1.9, texto ratificado em R14).
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_redefinicao(string $destino, string $login, string $link): array
+{
+    return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_REDEFINICAO,
+        "Olá.\n\n"
+        . "Quem administra o site redefiniu a senha do usuário {$login}. A senha antiga parou de valer.\n\n"
+        . "Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n\n"
+        . "Esta caixa não recebe respostas.");
+}
+
+/**
+ * E4, senha criada pelo link (8.1.9, texto ratificado em R14). Sem link: o aviso só existe depois da senha criada.
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_senha_criada(string $destino, string $login): array
+{
+    return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_SENHA_CRIADA,
+        "Olá.\n\n"
+        . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
+        . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.");
+}
+
+/**
+ * Envia um aviso e devolve true se saiu. Falha vira false: d26_correio_enviar já gravou a etapa e o código no
+ * erros.log, e quem chama segue com a operação (a conta existe, ou a senha já foi criada).
+ *
+ * @param array{destinatario: string, assunto: string, corpo: string} $mensagem
+ */
+function d26_correio_avisar(string $priv, array $mensagem): bool
+{
+    try {
+        d26_correio_enviar($mensagem, $priv);
+        return true;
+    } catch (D26EnvioFalhou) {
+        return false;
+    }
+}
+
+/**
+ * Termina a resposta HTTP e deixa o PHP seguir com o trabalho que vem depois (o aviso E4). Devolve true se o
+ * servidor fez o término (LiteSpeed ou FastCGI). Devolve false se não há como: então o trabalho segue na mesma
+ * conexão, e quem chama grava a linha envio-sincrono. Sob php -S nenhuma das duas funções existe.
+ */
+function d26_terminar_resposta(): bool
+{
+    if (function_exists('litespeed_finish_request')) {
+        litespeed_finish_request();
+        return true;
+    }
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+        return true;
+    }
+    return false;
 }

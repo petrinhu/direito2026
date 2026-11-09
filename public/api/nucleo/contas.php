@@ -237,7 +237,8 @@ function d26_conta_validar(array $c): array
         && (!array_key_exists('sessaoVigente', $c) || is_string($c['sessaoVigente']))
         && (!array_key_exists('convite', $c) || d26_convite_valido($c['convite']))
         && (!array_key_exists('conviteUsado', $c) || d26_hash_hex_valido($c['conviteUsado']))
-        && (!array_key_exists('email', $c) || is_string($c['email']));
+        && (!array_key_exists('email', $c) || is_string($c['email']))
+        && (!array_key_exists('envioFalhouEm', $c) || is_string($c['envioFalhouEm']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }
@@ -352,9 +353,10 @@ function d26_convite_classificar(array $contas, string $token, int $agora): arra
  * Gravado: hash da senha, troca obrigatória cumprida, versaoSessao + 1 (derruba sessões), aparelhos vazios,
  * conviteUsado com o hash consumido (para a mensagem M2) e o convite apagado. Devolve 'ok' ou 'divergente'.
  */
-function d26_contas_consumir_convite(string $priv, string $login, string $uid, string $hashConvite, string $hashSenha, int $agora): string
+function d26_contas_consumir_convite(string $priv, string $login, string $uid, string $hashConvite, string $hashSenha, int $agora, ?string &$email = null): string
 {
-    $resultado = d26_contas_mutar($priv, $login, static function (array &$c) use ($uid, $hashConvite, $hashSenha, $agora): string {
+    $email = null;
+    $resultado = d26_contas_mutar($priv, $login, static function (array &$c) use ($uid, $hashConvite, $hashSenha, $agora, &$email): string {
         $convite = $c['convite'] ?? null;
         if (($c['ativo'] ?? null) !== true
             || !is_string($c['uid'] ?? null) || !hash_equals($uid, $c['uid'])
@@ -368,6 +370,8 @@ function d26_contas_consumir_convite(string $priv, string $login, string $uid, s
         $c['aparelhos'] = [];
         $c['conviteUsado'] = $hashConvite;
         unset($c['convite']);
+        // O e-mail que recebe o aviso E4 é o da conta NO MOMENTO da troca (lido dentro do lock, 8.1.4).
+        $email = isset($c['email']) ? (string) $c['email'] : null;
         return 'ok';
     });
     return $resultado === 'ok' ? 'ok' : 'divergente';
@@ -569,6 +573,22 @@ function d26_contas_definir_ativo(string $priv, string $login, bool $ativo): str
 function d26_contas_excluir(string $priv, string $login): string
 {
     return d26_contas_mutar($priv, $login, static fn (array &$c): string => 'excluida');
+}
+
+/**
+ * Marca ou apaga a falha de envio do e-mail da conta (8.1.2). Com $quando (ISO 8601), grava a hora da falha; sem
+ * ele, apaga a marca no envio bem-sucedido. Uma mutação sob lock, sem tocar em mais nada da conta.
+ */
+function d26_contas_marcar_envio(string $priv, string $login, ?string $quando): string
+{
+    return d26_contas_mutar($priv, $login, static function (array &$c) use ($quando): string {
+        if ($quando === null) {
+            unset($c['envioFalhouEm']);
+        } else {
+            $c['envioFalhouEm'] = $quando;
+        }
+        return 'ok';
+    });
 }
 
 /**

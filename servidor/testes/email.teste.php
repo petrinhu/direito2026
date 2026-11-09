@@ -266,3 +266,294 @@ teste('e-mail: portão aceita o domínio em maiúsculas (domínio de e-mail não
     contem('falharam=0', $out, 'nenhum falhou');
     apagarArvore($raiz);
 }, false);
+
+/*
+ * Envio do painel e aviso de senha criada (EM-B3, plano-sessao-unica.md 8.1.4 e 8.1.9). Os textos esperados
+ * são LITERAIS deste arquivo, copiados dos textos ratificados pelo líder (R14). Não leem a constante de produção:
+ * se a produção mudar um texto, o teste reprova. O SMTP é o falso de apoio/smtpFalso.php, só em 127.0.0.1 (TE2).
+ */
+
+const EMB3_SENHA_SMTP = 'SenhaSmtpSintetica-EM-B3-4417';
+const EMB3_SENHA_CONTA = 'SenhaContaSintetica-EM-B3-2026';
+const EMB3_SENHA_NOVA = 'SenhaDoEmailB3-2026';
+const EMB3_ORIGEM = 'https://direito2026.drpetrus.top';
+
+/**
+ * Roda $corpo com um SMTP falso ligado ao php -S pelo ambiente. Sobe o falso ANTES do Ambiente (a porta vai na
+ * variável), grava o smtp.senha sintético em modo 600 e, ao fim, desliga a variável e fecha o falso, mesmo com falha.
+ *
+ * @param array<string, mixed> $roteiro
+ * @param callable(Ambiente, array): void $corpo
+ */
+function emailB3Com(array $roteiro, callable $corpo): void
+{
+    $falso = correioSmtpFalso($roteiro);
+    putenv('D26_SMTP_TESTE=tcp://127.0.0.1:' . $falso['porta']);
+    try {
+        $a = Ambiente::novo();
+        file_put_contents($a->priv . '/smtp.senha', EMB3_SENHA_SMTP);
+        chmod($a->priv . '/smtp.senha', 0600);
+        $corpo($a, $falso);
+    } finally {
+        putenv('D26_SMTP_TESTE=');
+        correioFecharSmtpFalso($falso);
+    }
+}
+
+/**
+ * Conta com e-mail (ou sem, se $email for null) e campos extras, editada no usuarios.json (fixture de teste).
+ *
+ * @param array<string, mixed> $extras
+ */
+function emailB3Semear(Ambiente $a, string $login, ?string $email, array $extras = []): void
+{
+    $a->semearUsuario($login, EMB3_SENHA_CONTA, false, false);
+    $arq = $a->priv . '/usuarios.json';
+    $d = json_decode((string) file_get_contents($arq), true, 512, JSON_THROW_ON_ERROR);
+    foreach ($d['usuarios'] as $i => $c) {
+        if (($c['usuario'] ?? null) === $login) {
+            if ($email !== null) {
+                $c['email'] = $email;
+            }
+            $d['usuarios'][$i] = array_merge($c, $extras);
+        }
+    }
+    file_put_contents($arq, json_encode($d, JSON_THROW_ON_ERROR));
+}
+
+/** Conta com convite pendente de 48 h, com o e-mail dado. Devolve o token do link (64 hex). */
+function emailB3SemearConvite(Ambiente $a, string $login, ?string $email): string
+{
+    $token = bin2hex(random_bytes(32));
+    emailB3Semear($a, $login, $email, ['convite' => ['hash' => hash('sha256', $token), 'expiraEm' => time() + 172800]]);
+    return $token;
+}
+
+/**
+ * Mensagem que o falso gravou no DATA: cabeçalhos (De, Assunto em encoded-word, Para) e corpo decodificados
+ * (quoted-printable, TE5). Sem o CRLF final que o MIME acrescenta. Falha se não houver mensagem.
+ *
+ * @return array{de: string, assunto: string, corpo: string}
+ */
+function emailB3Mensagem(?string $conversa): array
+{
+    verdadeiro($conversa !== null, 'o SMTP falso recebeu a conexão e gravou a conversa');
+    $inicio = strpos($conversa, 'Date: ');
+    verdadeiro($inicio !== false, 'a mensagem tem o cabeçalho Date');
+    $mensagem = substr($conversa, $inicio);
+    $separador = strpos($mensagem, "\r\n\r\n");
+    verdadeiro($separador !== false, 'linha em branco entre cabeçalhos e corpo');
+    $cabecalhos = substr($mensagem, 0, $separador);
+    $resto = substr($mensagem, $separador + 4);
+    $fimDoCorpo = strpos($resto, "\r\n.\r\n");
+    verdadeiro($fimDoCorpo !== false, 'a mensagem fecha com o ponto do DATA');
+    $codificado = substr($resto, 0, $fimDoCorpo + 2);
+    preg_match('/^From: (.*)\r$/m', $cabecalhos, $de) === 1 || falhar('cabeçalho From ausente');
+    preg_match('/^Subject: =\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=\r$/m', $cabecalhos, $assunto) === 1 || falhar('Subject em encoded-word ausente');
+    $corpo = quoted_printable_decode($codificado);
+    $corpo = str_replace("\r\n", "\n", $corpo);
+    if (str_ends_with($corpo, "\n")) {
+        $corpo = substr($corpo, 0, -1);
+    }
+    return ['de' => $de[1], 'assunto' => (string) base64_decode($assunto[1], true), 'corpo' => $corpo];
+}
+
+/** Endereço do RCPT TO da conversa. */
+function emailB3Destinatario(string $conversa): string
+{
+    preg_match('/^RCPT TO:<([^>]*)>\r$/m', $conversa, $m) === 1 || falhar('RCPT TO ausente na conversa');
+    return $m[1];
+}
+
+/** Texto ratificado do E1 (convite), byte a byte, com o login e o link preenchidos. */
+function emailB3CorpoConvite(string $login, string $link): string
+{
+    return "Olá.\n\n"
+        . "Foi criado um acesso para você, com o usuário {$login}.\n\n"
+        . "Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n\n"
+        . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.";
+}
+
+/** Texto ratificado do E3 (redefinir), byte a byte. */
+function emailB3CorpoRedefinicao(string $login, string $link): string
+{
+    return "Olá.\n\n"
+        . "Quem administra o site redefiniu a senha do usuário {$login}. A senha antiga parou de valer.\n\n"
+        . "Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n\n"
+        . "Esta caixa não recebe respostas.";
+}
+
+/** Texto ratificado do E4 (senha criada), byte a byte. */
+function emailB3CorpoSenhaCriada(string $login): string
+{
+    return "Olá.\n\n"
+        . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
+        . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.";
+}
+
+/** Criar pela API de admin. @param array<string, mixed> $corpo */
+function emailB3Criar(Ambiente $a, string $login, string $email): Resposta
+{
+    return $a->entrar()->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => $login, 'email' => $email]);
+}
+
+teste('e-mail: E20t criar envia E1 ao endereço informado, com o link da resposta e "email": "enviado"', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        $r = emailB3Criar($a, 'ana', 'ana@example.com');
+        igual(200, $r->status, 'criar: ' . $r->corpo);
+        igual('enviado', $r->json()['email'] ?? null, 'a resposta diz enviado');
+        $conversa = correioConversaFinal($falso);
+        $m = emailB3Mensagem($conversa);
+        igual('ana@example.com', emailB3Destinatario((string) $conversa), 'destinatário');
+        igual('nao-responda@drpetrus.top', $m['de'], 'remetente exato');
+        igual('Crie a sua senha de acesso', $m['assunto'], 'assunto');
+        igual(emailB3CorpoConvite('ana', EMB3_ORIGEM . $r->json()['convite']), $m['corpo'], 'corpo igual ao ratificado, com o link da resposta');
+    });
+});
+
+teste('e-mail: E21t criar com o SMTP recusando (550): conta criada, convite válido, "email": "falhou", envioFalhouEm e erros.log só com etapa e código', function (): void {
+    emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a): void {
+        $r = emailB3Criar($a, 'ana', 'ana@example.com');
+        igual(200, $r->status, 'criar mesmo com o e-mail falhando');
+        igual('falhou', $r->json()['email'] ?? null, 'a resposta diz falhou');
+        $token = conviteTokenDe($r);
+        $c = emailContaCrua($a, 'ana');
+        igual('ana@example.com', $c['email'] ?? null, 'a conta foi criada com o e-mail');
+        verdadeiro(is_string($c['envioFalhouEm'] ?? null), 'envioFalhouEm gravado');
+        igual(hash('sha256', $token), $c['convite']['hash'] ?? null, 'o convite continua válido');
+        $log = (string) @file_get_contents($a->priv . '/erros.log');
+        contem('envio etapa=destinatario codigo=550', $log, 'a etapa e o código no erros.log');
+        naoContem('ana@example.com', $log, 'o endereço não vai ao log');
+        naoContem($token, $log, 'o token não vai ao log');
+        naoContem('caixa de destino', $log, 'o texto do servidor não vai ao log');
+    });
+});
+
+teste('e-mail: E22t redefinir envia E3 quando a conta tem e-mail; sem e-mail, "sem-email" e nenhuma conexão', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $r = $a->entrar()->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana']);
+        igual(200, $r->status, 'redefinir: ' . $r->corpo);
+        igual('enviado', $r->json()['email'] ?? null, 'a resposta diz enviado');
+        $m = emailB3Mensagem(correioConversaFinal($falso));
+        igual('Sua senha foi redefinida', $m['assunto'], 'assunto do E3');
+        igual(emailB3CorpoRedefinicao('ana', EMB3_ORIGEM . $r->json()['convite']), $m['corpo'], 'corpo do E3 igual ao ratificado');
+    });
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'sem.email', null);
+        $r = $a->entrar()->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'sem.email']);
+        igual(200, $r->status, 'redefinir sem e-mail');
+        igual('sem-email', $r->json()['email'] ?? null, 'a resposta diz sem-email');
+        verdadeiro(is_string($r->json()['convite'] ?? null), 'o link continua na resposta, para copiar');
+        igual(false, is_file($falso['conversa']), 'nenhuma conexão com o SMTP');
+    });
+});
+
+teste('e-mail: E23t senha criada pelo link envia E4 depois do 303; sem e-mail, nenhuma conexão; falha do E4 não muda o 303 nem a sessão', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        // O aviso sai depois de terminar a resposta: uma pausa logo depois do término segura a conexão ao SMTP.
+        $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        verdadeiro($csrf !== '', 'a página traz o CSRF');
+        file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
+        $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
+        pausaEsperarChegada($req, $a, 'senha-criada-antes-aviso');
+        igual(false, is_file($falso['conversa']), 'parado na pausa, nenhuma conexão: o E4 ainda não saiu');
+        pausaSoltar($a, 'senha-criada-antes-aviso');
+        $r = cvb2ConcluirPost($req);
+        igual(303, $r->status, 'o 303 sai');
+        $m = emailB3Mensagem(correioConversaFinal($falso));
+        igual('Sua senha foi criada', $m['assunto'], 'assunto do E4');
+        igual(emailB3CorpoSenhaCriada('ana'), $m['corpo'], 'corpo do E4 igual ao ratificado');
+    });
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        $token = emailB3SemearConvite($a, 'sem.email', null);
+        $c = $a->cliente();
+        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
+        igual(false, is_file($falso['conversa']), 'conta sem e-mail: nenhuma conexão');
+    });
+    emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a): void {
+        $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $r = cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
+        igual(303, $r->status, 'a falha do E4 não muda o 303');
+        igual('/', $r->cabecalho('location'), 'destino continua /');
+        igual('ana', $c->get('/api/sessao.php')->json()['usuario'] ?? null, 'a sessão é da conta');
+        contem('envio etapa=destinatario codigo=550', (string) @file_get_contents($a->priv . '/erros.log'), 'a falha fica no erros.log');
+    });
+});
+
+teste('e-mail: E24t envio bem-sucedido depois de uma falha apaga envioFalhouEm', function (): void {
+    // A falha anterior é a precondição gravada na conta; a falha em si é coberta pelo E21t.
+    emailB3Com([], function (Ambiente $a): void {
+        emailB3Semear($a, 'ana', 'ana@example.com', ['envioFalhouEm' => '2026-11-08T10:00:00+00:00']);
+        $r = $a->entrar()->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana']);
+        igual('enviado', $r->json()['email'] ?? null, 'o envio deu certo');
+        verdadeiro(!array_key_exists('envioFalhouEm', emailContaCrua($a, 'ana') ?? []), 'envioFalhouEm foi apagado');
+    });
+});
+
+teste('e-mail: E25t token e endereço gerados na suíte não aparecem em erros.log, tentativas.json nem sessoes/ (C10)', function (): void {
+    $tokens = [];
+    $privs = [];
+    emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a) use (&$tokens, &$privs): void {
+        $r = emailB3Criar($a, 'ana', 'ana@example.com');
+        igual('falhou', $r->json()['email'] ?? null, 'envio que falha');
+        $tokens[] = conviteTokenDe($r);
+        $privs[] = $a->priv;
+        contem('envio etapa=', (string) @file_get_contents($a->priv . '/erros.log'), 'piso: o erros.log tem a linha de etapa');
+    });
+    emailB3Com([], function (Ambiente $a, array $falso) use (&$tokens, &$privs): void {
+        $r = emailB3Criar($a, 'bia', 'bia@example.com');
+        igual('enviado', $r->json()['email'] ?? null, 'envio que chega');
+        $tokens[] = conviteTokenDe($r);
+        $privs[] = $a->priv;
+        emailB3Mensagem(correioConversaFinal($falso));
+    });
+    // O e-mail mora em usuarios.json (8.1.1), por desenho; o C10 cobre só os lugares de registro e de sessão.
+    $arquivos = 0;
+    foreach ($privs as $priv) {
+        foreach (conviteArquivosDo($priv) as $arq) {
+            $lugarDeRegistro = in_array(basename($arq), ['erros.log', 'tentativas.json'], true) || str_contains($arq, '/sessoes/');
+            if (!$lugarDeRegistro) {
+                continue;
+            }
+            $arquivos++;
+            $texto = (string) file_get_contents($arq);
+            foreach ($tokens as $token) {
+                naoContem($token, $texto, basename($arq) . ': token');
+            }
+            naoContem('ana@example.com', $texto, basename($arq) . ': endereço');
+            naoContem('bia@example.com', $texto, basename($arq) . ': endereço');
+        }
+    }
+    verdadeiro($arquivos > 0, 'piso: a varredura leu arquivos do privado');
+});
+
+teste('e-mail: EM-B3 envioFalhouEm de tipo errado no arquivo dá indisponível (503) e nada é gravado', function (): void {
+    $a = Ambiente::novo();
+    $admin = $a->entrar();
+    emailB3Semear($a, 'ana', 'ana@example.com', ['envioFalhouEm' => 42]);
+    $antes = emailHashArquivo($a);
+    igual(503, $admin->get('/api/usuarios.php')->status, 'listagem com envioFalhouEm de tipo errado');
+    igual(503, $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana'])->status, 'redefinir com o mesmo arquivo');
+    igual($antes, emailHashArquivo($a), 'nada gravado');
+});
+
+teste('e-mail: EM-B3 sem término de resposta do servidor, o aviso E4 registra envio-sincrono no erros.log (uma linha)', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
+        emailB3Mensagem(correioConversaFinal($falso));
+        $log = (string) @file_get_contents($a->priv . '/erros.log');
+        igual(1, substr_count($log, 'envio envio-sincrono'), 'uma linha envio-sincrono por aviso');
+    });
+});

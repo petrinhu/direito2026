@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 define('D26_API', true);
 require __DIR__ . '/nucleo/inicio.php';
+require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: só o painel envia e-mail (EM-B3)
 
 d26_metodo(['GET', 'POST']);
 $priv = d26_priv();
@@ -107,7 +108,9 @@ if ($acao === 'criar') {
     if ($r === 'email-em-uso') {
         d26_erro(409, 'email-em-uso', 'Este e-mail já está em outra conta.');
     }
-    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token)]);
+    // E1 (8.1.4): depois do agir, fora de qualquer lock (TE1). A conta já existe, mesmo se o e-mail falhar.
+    $envio = d26_painel_enviar($priv, $alvo, d26_correio_msg_convite($email, $alvo, D26_ORIGEM . d26_convite_caminho($token)));
+    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token), 'email' => $envio]);
 }
 
 if (!d26_login_valido($alvo)) {
@@ -145,10 +148,29 @@ if ($acao === 'redefinir') {
     } catch (Throwable $e) {
         d26_log_erro_em($priv, 'usuarios', 'redefinir: contadores não zerados (' . get_class($e) . ')');
     }
-    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token)]);
+    // E3 (8.1.4): o e-mail é o da conta agora. Sem e-mail, a resposta diz sem-email e só o link vai para copiar.
+    $contaAlvo = d26_contas_buscar($priv, $alvo);
+    $destino = is_array($contaAlvo) ? ($contaAlvo['email'] ?? null) : null;
+    $envio = $destino === null
+        ? 'sem-email'
+        : d26_painel_enviar($priv, $alvo, d26_correio_msg_redefinicao($destino, $alvo, D26_ORIGEM . d26_convite_caminho($token)));
+    d26_responder(200, ['ok' => true, 'convite' => d26_convite_caminho($token), 'email' => $envio]);
 }
 
 if ($agir($acao, $alvo, null) !== 'ok') {
     d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
 }
 d26_responder(200, ['ok' => true]);
+
+/**
+ * Envio do painel (8.1.4) e marca de falha (8.1.2). O e-mail sai aqui, depois do lock do agir (TE1). Devolve
+ * 'enviado' ou 'falhou': a marca envioFalhouEm é gravada na falha e apagada no envio bem-sucedido.
+ *
+ * @param array{destinatario: string, assunto: string, corpo: string} $mensagem
+ */
+function d26_painel_enviar(string $priv, string $login, array $mensagem): string
+{
+    $saiu = d26_correio_avisar($priv, $mensagem);
+    d26_contas_marcar_envio($priv, $login, $saiu ? null : gmdate('c'));
+    return $saiu ? 'enviado' : 'falhou';
+}

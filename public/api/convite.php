@@ -6,6 +6,7 @@ define('D26_API', true);
 define('D26_REFERRER_API', 'no-referrer');
 require __DIR__ . '/nucleo/inicio.php';
 require_once __DIR__ . '/nucleo/portao.php';
+require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: o aviso E4 sai daqui, depois da resposta (EM-B3)
 
 /**
  * Página pública do convite (CV-B2, decisão do líder de 08/11/2026): a pessoa abre o link de 48 h, cria a
@@ -61,13 +62,15 @@ if ($motivo !== null) {
 // Argon2id fora de qualquer lock; o gancho de pausa dos testes também fica fora (no-op em produção).
 $hashNovo = d26_hash_senha($nova);
 d26_teste_pausar('convite-antes-gravar', $login);
+$email = null; // preenchido DENTRO do lock do CAS: é o e-mail da conta no momento da troca (E4)
 $gravou = d26_contas_consumir_convite(
     $priv,
     $login,
     (string) $conta['uid'],
     (string) $conta['convite']['hash'],
     $hashNovo,
-    time()
+    time(),
+    $email
 );
 if ($gravou !== 'ok') {
     // Outro POST ganhou a corrida, ou o link venceu entre a leitura e a gravação: a mensagem sai do estado atual.
@@ -80,9 +83,44 @@ d26_aviso_consumir();
 // A senha já está criada. Entrar é o mesmo caminho do login (limite, aparelho, sessão única, cookies).
 $entrada = d26_login_executar($priv, $login, $nova);
 if ($entrada['estado'] === 'entrou') {
-    d26_portao_vazio(303, ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA], 'no-referrer');
+    d26_convite_responder_e_avisar(303, 'text/plain; charset=utf-8', d26_tela_csp(), '', ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA], $priv, $login, $email);
 }
-d26_portao_tela(200, d26_tela_criada(), PORTAO_CSP_TELA, 'no-referrer');
+d26_convite_responder_e_avisar(200, 'text/html; charset=utf-8', PORTAO_CSP_TELA, d26_tela_criada(), [], $priv, $login, $email);
+
+/**
+ * Entrega a resposta do convite e só depois manda o aviso de senha criada (E4, 8.1.4). A ordem é a do desenho:
+ * cabeçalhos e corpo, sessão fechada (o aviso não segura o arquivo de sessão), término, aviso, saída. Falha do
+ * aviso não muda nada: a resposta já está pronta e a senha já está criada.
+ *
+ * @param array<string, string> $cabecalhos
+ */
+function d26_convite_responder_e_avisar(int $status, string $tipo, string $csp, string $corpo, array $cabecalhos, string $priv, string $login, ?string $email): never
+{
+    d26_portao_cabecalhos($status, $tipo, $csp, strlen($corpo), 'no-referrer');
+    foreach ($cabecalhos as $nome => $valor) {
+        header($nome . ': ' . $valor);
+    }
+    echo $corpo;
+    session_write_close();
+    d26_convite_avisar_criada($priv, $login, $email);
+    exit;
+}
+
+/**
+ * E4, senha criada (8.1.4). Chamado depois da resposta. Sem término do servidor, o envio segue na mesma conexão e
+ * fica registrado (envio-sincrono). Conta sem e-mail: nenhuma conexão.
+ */
+function d26_convite_avisar_criada(string $priv, string $login, ?string $email): void
+{
+    if ($email === null) {
+        return;
+    }
+    if (!d26_terminar_resposta()) {
+        d26_log_erro_em($priv, 'envio', 'envio-sincrono');
+    }
+    d26_teste_pausar('senha-criada-antes-aviso', $login); // no-op em produção; prova a ordem nos testes de EM-B3
+    d26_correio_avisar($priv, d26_correio_msg_senha_criada($email, $login));
+}
 
 /** Link recusado: M1 (vencido) e M2 (já usado) com 410; M3 (qualquer outro caso) com 404. Sem formulário. */
 function d26_convite_recusar(string $estado): never

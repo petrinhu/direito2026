@@ -78,8 +78,8 @@ teste('e-mail: E27t rastro da exceção do envio não leva a senha, nem em texto
 
         // (b) A escrita da linha de AUTH falha (peer já fechado). A linha leva a senha em base64, que é a
         // mesma informação: nenhum argumento do caminho de escrita pode carregá-la. Três usuários, de 25, 26 e 27
-        // bytes: (len+2) % 3 vale 0, 1 e 2, ou seja, a senha cai em cada um dos três alinhamentos do base64.
-        $usuarios = ['nao-responda@drpetrus.top', 'nao-responda@drpetrus.topo', 'nao-responda@drpetrus.topoo'];
+        // bytes (sem @: o portão de e-mail reprova endereço fora da lista): (len+2) % 3 vale 0, 1 e 2, ou seja, a senha cai em cada um dos três alinhamentos do base64.
+        $usuarios = ['nao-responda-drpetrus.top', 'nao-responda-drpetrus.topo', 'nao-responda-drpetrus.topoo'];
         $alinhamentos = array_values(array_unique(array_map(static fn (string $u): int => (strlen($u) + 2) % 3, $usuarios)));
         sort($alinhamentos);
         igual([0, 1, 2], $alinhamentos, 'prova válida: os três alinhamentos do base64 estão cobertos');

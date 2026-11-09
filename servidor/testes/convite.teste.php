@@ -68,7 +68,7 @@ teste('convite: C1 criar pela API devolve o caminho do convite, sem senha provis
     $a = Ambiente::novo();
     $admin = $a->entrar();
     $t0 = time();
-    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana']);
+    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com']);
     $t1 = time();
     igual(200, $r->status, 'criar');
     $token = conviteTokenDe($r);
@@ -88,7 +88,7 @@ teste('convite: C1 criar pela API devolve o caminho do convite, sem senha provis
 teste('convite: C2 conta pendente recusa qualquer senha, inclusive a que a API devolvesse, e gasta um Argon2id', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $criada = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->json();
+    $criada = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com'])->json();
     igual(true, $criada['ok'] ?? null, 'criar');
     $ana = conviteConta($a, 'ana');
     igual('argon2id', password_get_info((string) $ana['hash'])['algoName'] ?? null, 'hash inverificável é Argon2id real');
@@ -135,7 +135,7 @@ teste('convite: C3 redefinir derruba a sessão aberta do alvo sem aviso e recusa
 teste('convite: C4 gerar de novo pelo redefinir revoga o link anterior: só o último fica no disco', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $primeiro = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana']));
+    $primeiro = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com']));
     $segundo = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana']));
     verdadeiro($primeiro !== $segundo, 'tokens diferentes');
     $arq = (string) file_get_contents($a->priv . '/usuarios.json');
@@ -148,7 +148,7 @@ teste('convite: C4 gerar de novo pelo redefinir revoga o link anterior: só o ú
 teste('convite: C5 desativar apaga o convite, ativar não cria, revogar-aparelhos mantém e excluir apaga', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $token = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana']));
+    $token = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com']));
     $hash = hash('sha256', $token);
 
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'revogar-aparelhos', 'usuario' => 'ana'])->status, 'revogar-aparelhos');
@@ -160,7 +160,7 @@ teste('convite: C5 desativar apaga o convite, ativar não cria, revogar-aparelho
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'ativar', 'usuario' => 'ana'])->status, 'ativar');
     igual(false, array_key_exists('convite', conviteConta($a, 'ana')), 'ativar não cria convite');
 
-    $tokenBia = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia']));
+    $tokenBia = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'email' => 'bia@example.com']));
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'bia'])->status, 'excluir');
     igual(null, conviteConta($a, 'bia'), 'excluir remove a conta e o convite junto');
     naoContem(hash('sha256', $tokenBia), (string) file_get_contents($a->priv . '/usuarios.json'), 'o hash de bia não sobra no disco');
@@ -171,7 +171,7 @@ teste('convite: C5 desativar apaga o convite, ativar não cria, revogar-aparelho
 teste('convite: C6 a listagem mostra o estado e o prazo do convite, nunca o hash', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $token = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana']));
+    $token = conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com']));
     $hash = hash('sha256', $token);
 
     $r = $admin->get('/api/usuarios.php');
@@ -249,7 +249,7 @@ teste('convite: C8 senhaProvisoria no corpo de criar ou de redefinir dá 400 e n
     igual(400, $r->status, 'criar com senha provisória recusado');
     igual(null, conviteConta($a, 'ana'), 'a conta não foi criada');
 
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia'])->status, 'criar bia sem senha');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'email' => 'bia@example.com'])->status, 'criar bia sem senha');
     $hashAntes = conviteConta($a, 'bia')['hash'];
     $convite = conviteConta($a, 'bia')['convite'];
     $r2 = $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'bia', 'senhaProvisoria' => 'Provisoria-Bia1']);
@@ -317,9 +317,9 @@ teste('convite: C10 nenhum token gerado nos testes aparece em nenhum arquivo do 
     $a = Ambiente::novo();
     $admin = $a->entrar();
     $tokens = [
-        conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])),
+        conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com'])),
         conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana'])),
-        conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia'])),
+        conviteTokenDe($admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'email' => 'bia@example.com'])),
     ];
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => 'bia'])->status, 'desativar bia');
     $arquivos = conviteArquivosDo($a->priv);
@@ -354,7 +354,7 @@ function cvb2Campo(string $html, string $nome): string
 /** Cria a conta pelo admin e devolve o token do link (CV-B1). */
 function cvb2Convidar(Ambiente $a, string $login): string
 {
-    return conviteTokenDe($a->entrar()->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => $login]));
+    return conviteTokenDe($a->entrar()->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => $login, 'email' => $login . '@example.com']));
 }
 
 /** Página do convite (GET) como a navegação a faz. */

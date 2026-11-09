@@ -4,7 +4,8 @@ declare(strict_types=1);
 /**
  * Cria a estrutura privada da área restrita e o primeiro admin.
  *
- * Uso:  php criar-admin.php <dir-privado> <login> [--substituir | --adicionar]
+ * Uso:  php criar-admin.php <dir-privado> <login> [--substituir | --adicionar] [--email=<e-mail>]
+ *   --email: opcional (EM-B1). Sem ele a conta nasce sem e-mail; o admin preenche no painel.
  * A senha provisória vem do STDIN (uma linha; sem eco quando STDIN é
  * terminal). O admin nasce com deveTrocarSenha=true.
  *   --adicionar:  acrescenta o login às contas existentes. Não apaga ninguém e
@@ -46,12 +47,15 @@ umask(0077);
 
 $substituir = false;
 $adicionar = false;
+$emailBruto = null;
 $posicionais = [];
 foreach (array_slice($argv, 1) as $a) {
     if ($a === '--substituir') {
         $substituir = true;
     } elseif ($a === '--adicionar') {
         $adicionar = true;
+    } elseif (str_starts_with($a, '--email=')) {
+        $emailBruto = substr($a, strlen('--email='));
     } elseif (str_starts_with($a, '--')) {
         falha('opção desconhecida (o valor informado não foi lido nem mostrado)');
     } else {
@@ -62,11 +66,19 @@ if ($substituir && $adicionar) {
     falha('--adicionar e --substituir não podem vir juntos');
 }
 if (count($posicionais) !== 2) {
-    falha('uso: php criar-admin.php <dir-privado> <login> [--substituir | --adicionar]');
+    falha('uso: php criar-admin.php <dir-privado> <login> [--substituir | --adicionar] [--email=<e-mail>]');
 }
 [$priv, $login] = $posicionais;
 if (!d26_login_valido($login)) {
     falha('login inválido (3 a 32 caracteres: letras, números, ponto, hífen, sublinhado)');
+}
+// EM-B1: o e-mail é opcional no CLI (socorro). Quando vem, segue as mesmas regras da API; o valor nunca é ecoado.
+$email = null;
+if ($emailBruto !== null) {
+    $email = d26_email_normalizar($emailBruto);
+    if ($email === null) {
+        falha('e-mail inválido (o valor informado não foi mostrado)');
+    }
 }
 $arquivoUsuarios = rtrim($priv, '/') . '/usuarios.json';
 if (is_file($arquivoUsuarios) && !$substituir && !$adicionar) {
@@ -101,7 +113,11 @@ if (!d26_senha_provisoria_valida($senha)) {
 d26_garantir_estrutura($priv);
 $hash = d26_hash_senha($senha);
 if ($adicionar) {
-    if (d26_contas_criar($priv, $login, $hash, true) !== 'ok') {
+    $r = d26_contas_criar($priv, $login, $hash, true, $email);
+    if ($r === 'email-em-uso') {
+        falha('este e-mail já está em outra conta; nada foi alterado');
+    }
+    if ($r !== 'ok') {
         falha("login '$login' já existe; nada foi alterado");
     }
     echo "Admin acrescentado: $login (deve trocar a senha no primeiro acesso). As outras contas não foram tocadas.\n";
@@ -110,7 +126,7 @@ if ($adicionar) {
 if ($substituir && is_file($arquivoUsuarios)) {
     unlink($arquivoUsuarios);
 }
-if (d26_contas_criar($priv, $login, $hash, true) !== 'ok') {
+if (d26_contas_criar($priv, $login, $hash, true, $email) !== 'ok') {
     falha('não foi possível criar o usuário');
 }
 echo "Admin criado: $login (deve trocar a senha no primeiro acesso)\n";

@@ -367,7 +367,7 @@ teste('conta sem uid: sessão recusada, login recusado, e a API e o CLI sempre g
 teste('API criar grava uid hex de 32 e aparelhos vazio', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status);
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com'])->status);
     $ana = $a->lerUsuarios()['usuarios'][1];
     verdadeiro(preg_match('/^[0-9a-f]{32}$/D', (string) ($ana['uid'] ?? '')) === 1, 'uid gravado pela API');
 });

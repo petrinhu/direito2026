@@ -171,7 +171,7 @@ teste('item 2: login com a senha antiga em voo, depois de redefinição, desativ
             igual(200, $adm->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => 'ana'])->status);
         } else {
             igual(200, $adm->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana'])->status);
-            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status);
+            igual(200, $adm->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com'])->status);
         }
         pausaSoltar($a, 'entrar-apos-verificar');
         [$status, $j] = postConcluir($req);
@@ -234,7 +234,7 @@ teste('item 4: admin desativado entre a leitura da sessão e a ação NÃO cria 
     $um = $a->entrar();
     $dois = $a->entrar('segundo', 'SenhaSegundo123');
     pausaLigar($a, 'usuarios-antes-agir', Ambiente::LOGIN_ADMIN); // só o primeiro admin pausa
-    $req = postSemEsperar($um, '/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'intruso']);
+    $req = postSemEsperar($um, '/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'intruso', 'email' => 'intruso@example.com']);
     pausaEsperarChegada($req, $a, 'usuarios-antes-agir');
     igual(200, $dois->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => Ambiente::LOGIN_ADMIN])->status, 'o segundo admin desativa o primeiro, sem pausar');
     pausaSoltar($a, 'usuarios-antes-agir');

@@ -45,6 +45,7 @@ passo "webroot separado: só a lista fechada, sem termo e sem trecho de src/cont
 passo "termos proibidos (R3), dist" bash scripts/verificar-proibicoes.sh dist
 passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --import tsx scripts/verificar-conteudo-restrito.ts
 passo "vazamento do conteúdo da Júri (dist; sem JSON, só com a cadeira publicada)" node --import tsx scripts/verificar-conteudo-restrito-juri.ts
+passo "e-mail fora da lista (sem endereço real na árvore; EM-B1)" bash scripts/verificar-emails.sh
 passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
 
 if [ "$falhou" -ne 0 ]; then

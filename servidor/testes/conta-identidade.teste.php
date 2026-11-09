@@ -10,7 +10,7 @@ teste('I-2: o cenário do revisor; excluir e recriar o mesmo login não ressusci
     $ana = $a->entrar('ana', 'Provisoria-Ana1');
     igual(true, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da Ana valia');
     igual(200, $admin->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana'])->status);
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana'])->status, 'recriada com o mesmo login');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana', 'email' => 'ana@example.com'])->status, 'recriada com o mesmo login');
     // A conta nova ganha uma senha conhecida (fixada no privado, como o CLI faz): assim o 401 abaixo só pode vir da sessão.
     d26_contas_redefinir($a->priv, 'ana', d26_hash_senha('Nova-Ana-Conhecida2'));
     igual(false, $ana->get('/api/sessao.php')->json()['autenticado'], 'a sessão da conta excluída não pode valer na conta nova');

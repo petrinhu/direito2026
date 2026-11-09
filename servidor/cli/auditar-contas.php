@@ -9,7 +9,7 @@ declare(strict_types=1);
  *
  * Sem --login: contas, ativas, admins, admins_ativos e troca_pendente.
  * Com --login: existe_<login>, e para a conta, admin_, ativo_, troca_pendente_,
- * aparelhos_ (quantidade), nunca_logou_ e ultimo_login_ha_segundos_ (tempo desde
+ * aparelhos_ (quantidade), email_ (1 se há e-mail; o endereço nunca sai), nunca_logou_ e ultimo_login_ha_segundos_ (tempo desde
  * o último login, em segundos). Login inexistente é resposta de auditoria
  * (existe_<login>=0, sai 0), não erro. Pasta sem usuarios.json sai com erro,
  * para não dizer zero contas.
@@ -57,6 +57,8 @@ if (array_key_exists('login', $opcoes)) {
     echo 'ativo_' . $login . '=' . ($c['ativo'] ? 1 : 0) . "\n";
     echo 'troca_pendente_' . $login . '=' . ($c['deveTrocarSenha'] ? 1 : 0) . "\n";
     echo 'aparelhos_' . $login . '=' . count($c['aparelhos'] ?? []) . "\n";
+    // EM-B1: só se há e-mail (1 ou 0). O endereço nunca sai na auditoria.
+    echo 'email_' . $login . '=' . (isset($c['email']) ? 1 : 0) . "\n";
     if ($c['ultimoLogin'] === null) {
         echo "nunca_logou_$login=1\n";
     } else {

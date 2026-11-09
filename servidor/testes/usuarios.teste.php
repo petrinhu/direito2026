@@ -26,13 +26,13 @@ teste('usuarios.php: admin lista sem NUNCA expor o hash', function (): void {
     $lista = $r->json()['usuarios'];
     igual(2, count($lista));
     // 'convite' e 'conviteExpiraEm' entram por 7.1.2 do plano (CV-B1): estado e prazo do convite, nunca o hash.
-    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos', 'convite', 'conviteExpiraEm'], array_keys($lista[0]), 'campos exatos');
+    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos', 'convite', 'conviteExpiraEm', 'email'], array_keys($lista[0]), 'campos exatos');
 });
 
 teste('admin cria usuário sem senha: nasce com troca obrigatória, sem admin, e a API não devolve senha (R9)', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana.silva']);
+    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'ana.silva', 'email' => 'ana.silva@example.com']);
     igual(200, $r->status);
     naoContem('senhaProvisoria', $r->corpo, 'a resposta não traz senha');
     $conta = array_values(array_filter($a->lerUsuarios()['usuarios'], static fn (array $u): bool => $u['usuario'] === 'ana.silva'))[0];
@@ -44,7 +44,7 @@ teste('admin cria usuário sem senha: nasce com troca obrigatória, sem admin, e
 teste('admin cria usuário sem senha: a API não gera nem devolve senha, e a listagem não a repete (R9)', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia']);
+    $r = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'bia', 'email' => 'bia@example.com']);
     igual(200, $r->status);
     igual(false, array_key_exists('senhaProvisoria', $r->json()), 'nenhuma senha gerada na resposta');
     naoContem('senhaProvisoria', $admin->get('/api/usuarios.php')->corpo, 'a listagem não traz senha');
@@ -54,7 +54,7 @@ teste('admin cria usuário sem senha: a API não gera nem devolve senha, e a lis
 teste('criar: login duplicado 409; login inválido 400; "Chefe" é diferente de "chefe"', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $dup = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => Ambiente::LOGIN_ADMIN]);
+    $dup = $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => Ambiente::LOGIN_ADMIN, 'email' => 'chefe@example.com']);
     igual(409, $dup->status);
     igual('existe', $dup->json()['erro']);
     foreach (['ab', 'com espaço', 'açúcar', str_repeat('a', 33), "abc\n", ''] as $ruim) {
@@ -62,7 +62,7 @@ teste('criar: login duplicado 409; login inválido 400; "Chefe" é diferente de 
         igual(400, $r->status, json_encode($ruim));
         igual('login-invalido', $r->json()['erro']);
     }
-    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'Chefe'])->status, 'caixa diferente é outro login');
+    igual(200, $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'Chefe', 'email' => 'Chefe@example.com'])->status, 'caixa diferente é outro login');
 });
 
 teste('criar e redefinir: senhaProvisoria no corpo é 400, de qualquer tamanho, e nada é gravado (R9)', function (): void {
@@ -147,7 +147,7 @@ teste('ações do admin sobre si mesmo: 409 em redefinir, ativar, desativar e ex
 teste('não existe ação de conceder admin: campo admin no corpo é ignorado', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'hugo', 'admin' => true]);
+    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'hugo', 'email' => 'hugo@example.com', 'admin' => true]);
     $hugo = array_values(array_filter($a->lerUsuarios()['usuarios'], static fn (array $u): bool => $u['usuario'] === 'hugo'))[0];
     igual(false, $hugo['admin']);
 });

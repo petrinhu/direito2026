@@ -35,6 +35,48 @@ function d26_login_valido(string $login): bool
     return preg_match('/^[A-Za-z0-9._-]{3,32}$/D', $login) === 1;
 }
 
+/** Limites do e-mail da conta (EM-B1, 8.1.1), medidos depois do trim. */
+const D26_EMAIL_MINIMO = 6;
+const D26_EMAIL_MAXIMO = 254;
+
+/**
+ * Normaliza o e-mail da conta ou devolve null se ele não serve. Regras, nesta ordem: trim; só ASCII
+ * imprimível (sem espaço, CR, LF, NUL); de 6 a 254 caracteres; FILTER_VALIDATE_EMAIL; minúsculas.
+ * Endereço fora do ASCII é recusado nesta versão. Não é ecoado em mensagem nenhuma (chamador).
+ */
+function d26_email_normalizar(mixed $bruto): ?string
+{
+    if (!is_string($bruto)) {
+        return null;
+    }
+    $email = trim($bruto);
+    $tamanho = strlen($email);
+    if ($tamanho < D26_EMAIL_MINIMO || $tamanho > D26_EMAIL_MAXIMO) {
+        return null;
+    }
+    if (preg_match('/^[\x21-\x7E]+$/D', $email) !== 1 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        return null;
+    }
+    return strtolower($email);
+}
+
+/**
+ * Outra conta (que não $loginIgnorado) já usa este e-mail? Chamada SÓ dentro do lock de usuarios.json:
+ * é a unicidade do CAS. Compara em minúsculas.
+ *
+ * @param array<mixed> $usuarios contas (crus ou validadas)
+ */
+function d26_email_em_uso(array $usuarios, string $email, string $loginIgnorado): bool
+{
+    foreach ($usuarios as $c) {
+        if (is_array($c) && ($c['usuario'] ?? null) !== $loginIgnorado && isset($c['email'])
+            && is_string($c['email']) && strtolower($c['email']) === $email) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** Devolve a mensagem de recusa em pt-br, ou null se a senha nova serve. */
 function d26_validar_senha_nova(string $nova, string $login, string $atual): ?string
 {
@@ -194,7 +236,8 @@ function d26_conta_validar(array $c): array
         && (!array_key_exists('aparelhos', $c) || is_array($c['aparelhos']))
         && (!array_key_exists('sessaoVigente', $c) || is_string($c['sessaoVigente']))
         && (!array_key_exists('convite', $c) || d26_convite_valido($c['convite']))
-        && (!array_key_exists('conviteUsado', $c) || d26_hash_hex_valido($c['conviteUsado']));
+        && (!array_key_exists('conviteUsado', $c) || d26_hash_hex_valido($c['conviteUsado']))
+        && (!array_key_exists('email', $c) || is_string($c['email']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }
@@ -411,6 +454,8 @@ function d26_conta_publica(array $c, ?int $agora = null): array
         'aparelhos' => is_array($c['aparelhos'] ?? null) ? count($c['aparelhos']) : 0,
         'convite' => d26_convite_estado($c['convite'] ?? null, $agora),
         'conviteExpiraEm' => is_array($c['convite'] ?? null) ? $c['convite']['expiraEm'] : null,
+        // O e-mail sai só para quem administra (esta função só é chamada pela listagem do admin).
+        'email' => isset($c['email']) ? (string) $c['email'] : null,
     ];
 }
 
@@ -464,19 +509,30 @@ function d26_conta_nova(string $login, string $hash, bool $admin): array
     ];
 }
 
-/** @return 'ok'|'existe' */
-function d26_contas_criar(string $priv, string $login, string $hash, bool $admin): string
+/**
+ * Cria a conta. $email (já normalizado, ou null) é conferido de unicidade DENTRO do lock.
+ *
+ * @return 'ok'|'existe'|'email-em-uso'
+ */
+function d26_contas_criar(string $priv, string $login, string $hash, bool $admin, ?string $email = null): string
 {
     return d26_atualizar_json(
         d26_contas_arquivo($priv),
         D26_CONTAS_PADRAO,
-        static function (array &$d) use ($login, $hash, $admin): string {
+        static function (array &$d) use ($login, $hash, $admin, $email): string {
             foreach ($d['usuarios'] ?? [] as $c) {
                 if ($c['usuario'] === $login) {
                     return 'existe';
                 }
             }
-            $d['usuarios'][] = d26_conta_nova($login, $hash, $admin);
+            if ($email !== null && d26_email_em_uso($d['usuarios'] ?? [], $email, $login)) {
+                return 'email-em-uso';
+            }
+            $nova = d26_conta_nova($login, $hash, $admin);
+            if ($email !== null) {
+                $nova['email'] = $email;
+            }
+            $d['usuarios'][] = $nova;
             return 'ok';
         }
     );
@@ -590,15 +646,18 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
  * $convite é o registro do link (d26_convite_registro), já pronto FORA do lock: só o sha256 entra
  * na conta. Criar e redefinir gravam esse registro; desativar apaga o convite; os outros não mexem.
  *
+ * $email (EM-B1, já normalizado): criar grava; a ação 'email' troca e apaga o convite pendente. A unicidade
+ * é conferida DENTRO deste lock ('email-em-uso', nada gravado). Devolve também 'email-em-uso'.
+ *
  * @param array<string, mixed> $ator conta lida da sessão
  * @param ?array{hash: string, expiraEm: int} $convite
  */
-function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null, ?array $convite = null): string
+function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?string $hash = null, ?array $convite = null, ?string $email = null): string
 {
     return d26_atualizar_json(
         d26_contas_arquivo($priv),
         D26_CONTAS_PADRAO,
-        static function (array &$d) use ($ator, $acao, $alvo, $hash, $convite): string {
+        static function (array &$d) use ($ator, $acao, $alvo, $hash, $convite, $email): string {
             $original = $d;
             $us = array_values(array_map('d26_conta_validar', $d['usuarios'] ?? []));
             $atorOk = false;
@@ -626,7 +685,13 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                 if ($i !== null) {
                     return 'existe';
                 }
+                if ($email !== null && d26_email_em_uso($us, $email, $alvo)) {
+                    return 'email-em-uso';
+                }
                 $nova = d26_conta_nova($alvo, (string) $hash, false);
+                if ($email !== null) {
+                    $nova['email'] = $email;
+                }
                 if ($convite !== null) {
                     $nova['convite'] = $convite;
                 }
@@ -661,6 +726,14 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                         // Decisão do CTO: revogar também derruba as sessões do alvo.
                         $c['versaoSessao'] += 1;
                         $c['aparelhos'] = [];
+                        break;
+                    case 'email':
+                        // Troca de e-mail: unicidade no lock; o convite pendente (link ao endereço antigo) morre aqui.
+                        if ($email === null || d26_email_em_uso($us, $email, $alvo)) {
+                            return $email === null ? 'email-invalido' : 'email-em-uso';
+                        }
+                        $c['email'] = $email;
+                        unset($c['convite']);
                         break;
                     case 'excluir':
                         break;

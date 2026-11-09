@@ -8,9 +8,9 @@ teste('hash Argon2id nunca aparece em nenhuma resposta (nem em erro)', function 
     $ivo = $a->entrar('ivo', 'SenhaDoIvo123456');
     $todas = [
         $admin->get('/api/usuarios.php'),
-        $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'jose']),
+        $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'jose', 'email' => 'jose@example.com']),
         $admin->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ivo']),
-        $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'jose']),
+        $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'jose', 'email' => 'jose@example.com']),
         $admin->get('/api/sessao.php'),
         $ivo->get('/api/conteudo.php'),
         $ivo->post('/api/trocar-senha.php', ['senhaAtual' => 'x', 'senhaNova' => 'y']),
@@ -25,7 +25,7 @@ teste('hash Argon2id nunca aparece em nenhuma resposta (nem em erro)', function 
 teste('todo arquivo sob o diretório privado é 600 e todo diretório é 700', function (): void {
     $a = Ambiente::novo();
     $admin = $a->entrar();
-    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'kleber']);
+    $admin->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => 'kleber', 'email' => 'kleber@example.com']);
     $a->clienteComSessao()->post('/api/entrar.php', ['usuario' => 'x', 'senha' => 'errada-errada']);
     $a->semearConteudo('{}');
     $admin->get('/api/conteudo.php');

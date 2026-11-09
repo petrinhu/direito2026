@@ -16,13 +16,15 @@ if (!defined('D26_API')) {
  *  - Antes de qualquer conexão, o envio está validado: cabeçalhos sem CR, LF ou NUL, destinatário em
  *    ASCII, assunto em UTF-8 com até 45 bytes (uma encoded-word, RFC 2047), corpo sem NUL, senha lida.
  *  - Produção fala só TLS verificado com smtp.hostinger.com (sem self-signed, sem texto puro, sem a porta
- *    587). Texto puro existe só para destino de teste em loopback: sob cli-server com D26_SMTP_TESTE, ou
- *    pela opção --destino do CLI conferir-smtp.
- *  - A senha sai só no AUTH. Erro, log e saída não levam senha, texto do servidor nem endereço (TE3).
- *  - Toda leitura tem prazo, e o envio inteiro tem prazo total. Não há leitura sem prazo.
+ *    587). Texto puro existe só para destino de teste em 127.0.0.1 com porta (d26_correio_transporte_permitido):
+ *    sob cli-server com D26_SMTP_TESTE, ou pela opção --destino do CLI conferir-smtp.
+ *  - A senha sai só no AUTH, e chega às funções por closure, nunca como string. Erro, log e saída não levam
+ *    senha, texto do servidor nem endereço (TE3). Exceção inesperada vira a etapa interno, sem causa anexada.
+ *  - Toda leitura, escrita e o handshake TLS têm prazo, e o envio inteiro tem prazo total.
  *
- * Limite declarado: a escrita no socket não tem prazo próprio. A mensagem é pequena (cabeçalhos e texto
- * curto), e o prazo total cobre as leituras que a seguem.
+ * Pior caso: o connect espera até D26_SMTP_PRAZO_LEITURA_S (10 s). Depois dele, o envio tem
+ * D26_SMTP_PRAZO_TOTAL_S (20 s) para handshake, leituras e escritas, contados desde o connect. Logo, até 30 s
+ * no total, e não 20 s.
  */
 
 const D26_SMTP_SENHA_ARQUIVO = 'smtp.senha';
@@ -36,8 +38,9 @@ const D26_SMTP_TLS_METODO = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_
 
 /**
  * Falha de envio. `etapa` diz onde parou: alvo, smtp-senha, cabecalho, destino, corpo (antes de conectar);
- * conexao, tls, auth, remetente, destinatario, dados (depois). `codigo` é o código de 3 dígitos do servidor,
- * quando houve resposta. A mensagem leva só a etapa e o código: o texto do servidor nunca entra aqui.
+ * conexao, tls, auth, remetente, destinatario, dados (depois); interno (exceção inesperada, sem detalhe).
+ * `codigo` é o código de 3 dígitos do servidor, quando houve resposta. A mensagem leva só a etapa e o
+ * código: o texto do servidor nunca entra aqui.
  */
 final class D26EnvioFalhou extends RuntimeException
 {
@@ -75,6 +78,17 @@ function d26_correio_loopback(?string $valor): ?string
 }
 
 /**
+ * Sem TLS, o transporte só existe para o SMTP falso em loopback (tcp://127.0.0.1:<porta>): AUTH em texto
+ * puro para qualquer outro endereço é recusado antes de a rede ser tocada. Com TLS, vale o alvo dado.
+ *
+ * @param array{endereco: string, tls: bool} $alvo
+ */
+function d26_correio_transporte_permitido(array $alvo): bool
+{
+    return $alvo['tls'] || d26_correio_loopback($alvo['endereco']) !== null;
+}
+
+/**
  * Contexto TLS de produção (plano 8.1.6): certificado verificado contra o nome do servidor, sem self-signed,
  * só TLS 1.2 ou 1.3.
  *
@@ -92,6 +106,12 @@ function d26_correio_contexto_tls(): array
     ]];
 }
 
+/** Destinatário em ASCII imprimível, sem espaço e sem quebra de linha no fim (\z, não $, que aceitaria o LF final). */
+function d26_correio_destino_ascii(string $destino): bool
+{
+    return preg_match('/^[\x21-\x7E]+\z/', $destino) === 1;
+}
+
 /**
  * Valida tudo o que vai ao fio antes de abrir conexão. Cabeçalho com CR, LF ou NUL é recusado aqui,
  * porque sem isso um destinatário ou um assunto abriria cabeçalho novo (injeção).
@@ -105,7 +125,7 @@ function d26_correio_validar(array $envio): void
             throw new D26EnvioFalhou('cabecalho');
         }
     }
-    if (preg_match('/^[\x21-\x7E]+$/', $envio['destinatario']) !== 1
+    if (!d26_correio_destino_ascii($envio['destinatario'])
         || filter_var($envio['destinatario'], FILTER_VALIDATE_EMAIL) === false) {
         throw new D26EnvioFalhou('destino');
     }
@@ -200,9 +220,49 @@ final class D26SmtpSessao
         stream_set_timeout($this->sock, $inteiro, max(1000, (int) (($segundos - $inteiro) * 1000000)));
     }
 
+    /**
+     * Handshake TLS com prazo. Enquanto dura, o socket é não bloqueante: o laço repete o handshake a cada
+     * espera e para no menor entre o prazo de leitura e o que sobra do prazo total, contado desde o connect.
+     * Sem isso, o handshake espera o timeout do connect (o prazo de leitura), e não o prazo total.
+     */
+    public function ativarTls(): void
+    {
+        $limite = microtime(true) + min((float) $this->prazoLeituraS, max(0.0, $this->fim - microtime(true)));
+        stream_set_blocking($this->sock, false);
+        while (true) {
+            $resultado = @stream_socket_enable_crypto($this->sock, true, D26_SMTP_TLS_METODO);
+            if ($resultado === true) {
+                break;
+            }
+            $espera = $limite - microtime(true);
+            if ($resultado === false || $espera <= 0.0) {
+                throw new D26EnvioFalhou('tls');
+            }
+            // false: o handshake precisa de mais bytes do peer. Espera em fatias curtas e tenta de novo.
+            $segundos = min($espera, 0.05);
+            $leitura = [$this->sock];
+            $nulo = null;
+            stream_select($leitura, $nulo, $nulo, (int) floor($segundos), (int) (($segundos - floor($segundos)) * 1000000));
+        }
+        stream_set_blocking($this->sock, true);
+    }
+
     public function escrever(string $dados, string $etapa): void
     {
         $this->prazo($etapa);
+        if (fwrite($this->sock, $dados) !== strlen($dados)) {
+            throw new D26EnvioFalhou($etapa);
+        }
+    }
+
+    /**
+     * Escreve uma linha que leva a senha. O texto sai de $linha, dentro daqui, e nunca entra como argumento:
+     * se a escrita falhar, o rastro traz o closure, sem o base64 da senha (que é a mesma informação).
+     */
+    public function escreverSigiloso(Closure $linha, string $etapa): void
+    {
+        $this->prazo($etapa);
+        $dados = $linha();
         if (fwrite($this->sock, $dados) !== strlen($dados)) {
             throw new D26EnvioFalhou($etapa);
         }
@@ -271,6 +331,9 @@ final class D26SmtpSessao
  */
 function d26_correio_abrir(array $alvo, int $prazoLeituraS, int $prazoTotalS): D26SmtpSessao
 {
+    if (!d26_correio_transporte_permitido($alvo)) {
+        throw new D26EnvioFalhou('alvo');
+    }
     $contexto = stream_context_create($alvo['tls'] ? d26_correio_contexto_tls() : []);
     $sock = @stream_socket_client($alvo['endereco'], $numero, $texto, $prazoLeituraS, STREAM_CLIENT_CONNECT, $contexto);
     if ($sock === false) {
@@ -279,10 +342,7 @@ function d26_correio_abrir(array $alvo, int $prazoLeituraS, int $prazoTotalS): D
     $sessao = new D26SmtpSessao($sock, $prazoLeituraS, $prazoTotalS);
     try {
         if ($alvo['tls']) {
-            $sessao->prazo('tls');
-            if (@stream_socket_enable_crypto($sock, true, D26_SMTP_TLS_METODO) !== true) {
-                throw new D26EnvioFalhou('tls');
-            }
+            $sessao->ativarTls();
         }
         $sessao->esperar('conexao', 220);
     } catch (Throwable $e) {
@@ -310,13 +370,18 @@ function d26_correio_ehlo(D26SmtpSessao $sessao): array
 
 /**
  * AUTH PLAIN quando anunciado; senão AUTH LOGIN; senão recusa (etapa auth, sem código). A senha só sai aqui.
+ * Recebe a senha por closure, nunca como string: argumento de string aparece em rastro de exceção.
  *
  * @param list<string> $mecanismos
+ * @param Closure(): string $senha
  */
-function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string $usuario, string $senha): void
+function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string $usuario, Closure $senha): void
 {
     if (in_array('PLAIN', $mecanismos, true)) {
-        $sessao->escrever('AUTH PLAIN ' . base64_encode("\0" . $usuario . "\0" . $senha) . "\r\n", 'auth');
+        $sessao->escreverSigiloso(
+            static fn (): string => 'AUTH PLAIN ' . base64_encode("\0" . $usuario . "\0" . $senha()) . "\r\n",
+            'auth'
+        );
         $sessao->esperar('auth', 235);
         return;
     }
@@ -325,7 +390,7 @@ function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string
         $sessao->esperar('auth', 334);
         $sessao->escrever(base64_encode($usuario) . "\r\n", 'auth');
         $sessao->esperar('auth', 334);
-        $sessao->escrever(base64_encode($senha) . "\r\n", 'auth');
+        $sessao->escreverSigiloso(static fn (): string => base64_encode($senha()) . "\r\n", 'auth');
         $sessao->esperar('auth', 235);
         return;
     }
@@ -346,6 +411,7 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
     try {
         d26_correio_validar($envio);
         $senha = d26_correio_senha($priv);
+        $segredo = static fn (): string => $senha;
         $alvo = $transporte ?? d26_correio_alvo(PHP_SAPI, getenv('D26_SMTP_TESTE') ?: null);
         $mensagem = d26_correio_montar($envio);
         $sessao = d26_correio_abrir(
@@ -353,7 +419,7 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
             (int) ($alvo['prazoLeituraS'] ?? D26_SMTP_PRAZO_LEITURA_S),
             (int) ($alvo['prazoTotalS'] ?? D26_SMTP_PRAZO_TOTAL_S)
         );
-        d26_correio_autenticar($sessao, d26_correio_ehlo($sessao), D26_SMTP_USUARIO, $senha);
+        d26_correio_autenticar($sessao, d26_correio_ehlo($sessao), D26_SMTP_USUARIO, $segredo);
         $sessao->escrever('MAIL FROM:<' . D26_REMETENTE . ">\r\n", 'remetente');
         $sessao->esperar('remetente', 250);
         $sessao->escrever('RCPT TO:<' . $envio['destinatario'] . ">\r\n", 'destinatario');
@@ -366,6 +432,10 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
     } catch (D26EnvioFalhou $e) {
         d26_log_erro_em($priv, 'envio', 'etapa=' . $e->etapa . ($e->codigo === null ? '' : ' codigo=' . $e->codigo));
         throw $e;
+    } catch (Throwable) {
+        // Falha inesperada: vira a etapa interno, sem a causa original (exceção anterior leva o rastro).
+        d26_log_erro_em($priv, 'envio', 'etapa=interno');
+        throw new D26EnvioFalhou('interno');
     } finally {
         $sessao?->fechar();
     }
@@ -384,15 +454,18 @@ function d26_correio_conferir(string $priv, array $alvo): array
     $sessao = null;
     try {
         $senha = d26_correio_senha($priv);
+        $segredo = static fn (): string => $senha;
         $sessao = d26_correio_abrir($alvo, D26_SMTP_PRAZO_LEITURA_S, D26_SMTP_PRAZO_TOTAL_S);
         $resultado['tls'] = $alvo['tls'];
         $resultado['mecanismos'] = d26_correio_ehlo($sessao);
-        d26_correio_autenticar($sessao, $resultado['mecanismos'], D26_SMTP_USUARIO, $senha);
+        d26_correio_autenticar($sessao, $resultado['mecanismos'], D26_SMTP_USUARIO, $segredo);
         $resultado['auth'] = true;
         $sessao->sair();
     } catch (D26EnvioFalhou $e) {
         $resultado['etapa'] = $e->etapa;
         $resultado['codigo'] = $e->codigo;
+    } catch (Throwable) {
+        $resultado['etapa'] = 'interno';
     } finally {
         $sessao?->fechar();
     }

@@ -16,6 +16,7 @@ declare(strict_types=1);
  *   fecharNoData (bool: fecha a conexão depois da primeira linha da mensagem),
  *   mudoEm (string: ao receber um comando que começa por esse texto, para de responder),
  *   mudoAposData (bool: responde ao DATA com 354 e depois para de ler o corpo),
+ *   mudoNoHandshake (bool: aceita a conexão e não responde nada, nem ao handshake),
  *   tls (objeto {cert, chave}: fala TLS com esse certificado; sem handshake válido, sai sem conversa).
  */
 
@@ -59,6 +60,12 @@ if ($sock === false) {
 }
 fclose($servidor);
 stream_set_timeout($sock, 30);
+
+if (($roteiro['mudoNoHandshake'] ?? false) === true) {
+    // Aceitou a conexão e não responde nada, nem ao handshake: o teste mata o processo depois de ver o prazo.
+    sleep(60);
+    exit(0);
+}
 
 // Com `tls`, o handshake do servidor vem antes de qualquer linha. Se o cliente recusar o certificado,
 // o servidor sai sem criar o arquivo de conversa: arquivo ausente prova que nada SMTP chegou em claro.

@@ -89,6 +89,23 @@ teste('e-mail: E23t servidor de texto puro falha em tls sem receber EHLO nem AUT
     }
 }, false);
 
+teste('e-mail: E25t prazo do handshake vale: servidor mudo durante o TLS falha em tls no prazo total, não no prazo de leitura', function (): void {
+    correioCarregar();
+    $priv = correioPriv();
+    $falso = correioSmtpFalso(['mudoNoHandshake' => true]);
+    try {
+        $envio = ['destinatario' => 'pessoa@example.com', 'assunto' => 'Mudo', 'corpo' => "Oi.\n"];
+        $inicio = microtime(true);
+        // Prazo de leitura de 4 s e prazo total de 1 s: o handshake tem de obedecer ao total (o menor dos dois).
+        $e = correioEsperarFalha(fn () => correioEnviar($envio, $priv, $falso, ['tls' => true, 'prazoLeituraS' => 4, 'prazoTotalS' => 1]));
+        $gasto = microtime(true) - $inicio;
+        igual('tls', $e->etapa, 'servidor mudo no handshake: etapa tls');
+        verdadeiro($gasto < 2.5, 'handshake mudo sai no prazo total de 1 s, não no de leitura de 4 s (gastou ' . round($gasto, 2) . ' s)');
+    } finally {
+        correioFecharSmtpFalso($falso);
+    }
+}, false);
+
 teste('e-mail: E24t alvo de produção (litespeed e fpm) é TLS: tls === true, e o teste de loopback não o desliga', function (): void {
     correioCarregar();
     foreach (['litespeed', 'fpm-fcgi'] as $sapi) {

@@ -238,7 +238,7 @@ final class D26SmtpSessao
             if ($resultado === false || $espera <= 0.0) {
                 throw new D26EnvioFalhou('tls');
             }
-            // false: o handshake precisa de mais bytes do peer. Espera em fatias curtas e tenta de novo.
+            // Retorno 0: o handshake precisa de mais bytes do peer. Espera em fatias curtas e tenta de novo.
             $segundos = min($espera, 0.05);
             $leitura = [$this->sock];
             $nulo = null;

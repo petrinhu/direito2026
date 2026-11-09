@@ -901,3 +901,59 @@ teste('e-mail: EM-B4 falha do E2 grava envioFalhouEm na conta e só etapa e cód
         naoContem('caixa de destino', $log, 'o texto do servidor não vai ao log');
     });
 });
+
+/** POST de formulário do "Esqueci a senha" sem esperar a resposta. @return array{resource, \CurlHandle} */
+function emb4PostAsync(Cliente $c, string $csrf, string $usuario): array
+{
+    $pares = [];
+    foreach ($c->cookies as $n => $v) {
+        $pares[] = "$n=$v";
+    }
+    $h = curl_init($c->origem() . '/api/esqueci.php');
+    curl_setopt_array($h, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query(['usuario' => $usuario, 'csrf' => $csrf]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 60,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded', 'Origin: ' . $c->origem(), 'Cookie: ' . implode('; ', $pares), 'Connection: close'],
+    ]);
+    $m = curl_multi_init();
+    curl_multi_add_handle($m, $h);
+    return [$m, $h];
+}
+
+/** Espera o POST assíncrono e devolve [status, corpo bruto]. @param array{resource, \CurlHandle} $req @return array{int, string} */
+function emb4Concluir(array $req): array
+{
+    [$m, $h] = $req;
+    do {
+        $estado = curl_multi_exec($m, $ativos);
+        if ($ativos > 0) {
+            curl_multi_select($m, 0.1);
+        }
+    } while ($ativos > 0 && $estado === CURLM_OK);
+    $status = (int) curl_getinfo($h, CURLINFO_RESPONSE_CODE);
+    $corpo = (string) curl_multi_getcontent($h);
+    curl_multi_remove_handle($m, $h);
+    curl_close($h);
+    return [$status, $corpo];
+}
+
+teste('e-mail: EM-B4 corrida: o admin troca o e-mail entre a leitura e o pedido; nenhum E2 vai ao endereço antigo e a resposta é a frase única', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $admin = $a->entrar();
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        file_put_contents($a->priv . '/pausa-esqueci-antes-pedir', 'ana');
+        $req = emb4PostAsync($c, $csrf, 'ana');
+        pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
+        igual(200, $admin->post('/api/usuarios.php', ['acao' => 'email', 'usuario' => 'ana', 'email' => 'nova@example.com'])->status, 'o admin troca o e-mail na janela');
+        pausaSoltar($a, 'esqueci-antes-pedir');
+        [$status, $corpo] = emb4Concluir($req);
+        igual(200, $status, 'a resposta pública é 200');
+        contem(EMB4_FRASE, $corpo, 'a frase única');
+        $conversa = correioConversaFinal($falso, 2.0);
+        verdadeiro($conversa === null || emailB3Destinatario($conversa) !== 'ana@example.com', 'nenhum E2 vai ao endereço antigo');
+    }, ['workers' => 4]); // a requisição pausada segura um worker: sem mais de um, o admin nunca entra na janela
+});

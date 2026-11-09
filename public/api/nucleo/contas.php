@@ -821,17 +821,24 @@ function d26_contas_pedido_achar(array $contas, string $pedido): ?array
 
 /**
  * Grava o convite do pedido "Esqueci a senha" sob lock (EM-B4, 8.1.3). Troca SÓ o convite: a senha, a versão da
- * sessão, os aparelhos e a sessão aberta não mudam (E29t). Conta inativa ou sem e-mail, relidas no lock: 'inelegivel'.
+ * sessão, os aparelhos e a sessão aberta não mudam (E29t). Confere DENTRO do lock o uid e o e-mail que o pedido leu
+ * antes: se a conta mudou (troca de e-mail, desativação, exclusão), não grava e devolve 'divergente'. O e-mail que
+ * recebe o E2 sai por $emailNoLock, preenchido no lock: nunca vem da leitura anterior.
  *
  * @param array{hash: string, expiraEm: int} $registro
  */
-function d26_contas_pedir_senha(string $priv, string $login, array $registro): string
+function d26_contas_pedir_senha(string $priv, string $login, array $registro, string $uidLido, string $emailLido, ?string &$emailNoLock = null): string
 {
-    return d26_contas_mutar($priv, $login, static function (array &$c) use ($registro): string {
-        if (($c['ativo'] ?? null) !== true || !is_string($c['email'] ?? null)) {
+    $emailNoLock = null;
+    return d26_contas_mutar($priv, $login, static function (array &$c) use ($registro, $uidLido, $emailLido, &$emailNoLock): string {
+        if (($c['ativo'] ?? null) !== true || !is_string($c['email'] ?? null) || !is_string($c['uid'] ?? null)) {
             return 'inelegivel';
         }
+        if (!hash_equals($uidLido, $c['uid']) || $c['email'] !== $emailLido) {
+            return 'divergente';
+        }
         $c['convite'] = $registro;
+        $emailNoLock = (string) $c['email'];
         return 'ok';
     });
 }

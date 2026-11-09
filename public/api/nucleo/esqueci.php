@@ -46,7 +46,12 @@ function d26_esqueci_tratar(string $priv, string $pedido, int $agora): void
     if ($conta === null || ($conta['ativo'] ?? null) !== true || !is_string($conta['email'] ?? null)) {
         return;
     }
+    $destino = (string) $conta['email'];
     $login = (string) $conta['usuario'];
+    $uidLido = is_string($conta['uid'] ?? null) ? $conta['uid'] : '';
+    if ($uidLido === '') {
+        return;
+    }
     if (!d26_limite_envio_conta($priv, $login, $agora)) {
         return;
     }
@@ -54,10 +59,12 @@ function d26_esqueci_tratar(string $priv, string $pedido, int $agora): void
         d26_log_erro_em($priv, 'envio', 'envio-teto');
         return;
     }
+    d26_teste_pausar('esqueci-antes-pedir', $login); // janela entre a leitura e a gravação (no-op em produção)
     $token = d26_convite_token();
-    if (d26_contas_pedir_senha($priv, $login, d26_convite_registro($token, $agora, D26_ESQUECI_VALIDADE)) !== 'ok') {
+    $emailNoLock = null; // o destino do E2 é o e-mail que a conta tem DENTRO do lock (corrida com a troca de e-mail)
+    if (d26_contas_pedir_senha($priv, $login, d26_convite_registro($token, $agora, D26_ESQUECI_VALIDADE), $uidLido, $destino, $emailNoLock) !== 'ok' || $emailNoLock === null) {
         return;
     }
-    $saiu = d26_correio_avisar($priv, d26_correio_msg_esqueci((string) $conta['email'], $login, D26_ORIGEM . d26_convite_caminho($token)));
+    $saiu = d26_correio_avisar($priv, d26_correio_msg_esqueci($emailNoLock, $login, D26_ORIGEM . d26_convite_caminho($token)));
     d26_contas_marcar_envio($priv, $login, $saiu ? null : gmdate('c'));
 }

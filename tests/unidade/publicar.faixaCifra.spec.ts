@@ -52,7 +52,7 @@ function git(args: string[]): string {
       '-c',
       'user.name=teste',
       '-c',
-      'user.email=teste@exemplo.invalido',
+      'user.email=teste@example.com',
       '-c',
       'commit.gpgSign=false',
       ...args
@@ -209,7 +209,7 @@ describe('refs antes do envio: main e a tag apontam para o commit de release', (
           '-c',
           'user.name=t',
           '-c',
-          'user.email=t@exemplo.invalido',
+          'user.email=t@example.com',
           '-c',
           'commit.gpgSign=false',
           ...args
@@ -278,7 +278,7 @@ describe('faixa: casos da revisão (merge, nomes, regra no meio, aninhado)', () 
       '-c',
       'user.name=teste',
       '-c',
-      'user.email=teste@exemplo.invalido',
+      'user.email=teste@example.com',
       'merge',
       '-q',
       '--no-edit',

@@ -53,7 +53,7 @@ beforeAll(() => {
   escreverFerramentas();
 
   git(raiz, ['init', '-q', '.']);
-  git(raiz, ['config', 'user.email', 'teste@exemplo.invalido']);
+  git(raiz, ['config', 'user.email', 'teste@example.com']);
   git(raiz, ['config', 'user.name', 'teste']);
   // Atributo diff=ruido sem filtro de cifra: o blob fica em claro, como um commit antigo.
   git(raiz, [

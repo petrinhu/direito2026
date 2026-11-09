@@ -62,7 +62,7 @@ function git(cwd: string, args: string[]): string {
       '-c',
       'user.name=teste',
       '-c',
-      'user.email=teste@exemplo.invalido',
+      'user.email=teste@example.com',
       '-c',
       'commit.gpgSign=false',
       ...args
@@ -110,7 +110,7 @@ function montarFixture(): Fixture {
   git(raiz, ['config', '--local', 'commit.gpgSign', 'false']);
   // O publicar commita e cria tag sem as opções -c do teste: a identidade precisa estar na config local.
   git(raiz, ['config', '--local', 'user.name', 'teste']);
-  git(raiz, ['config', '--local', 'user.email', 'teste@exemplo.invalido']);
+  git(raiz, ['config', '--local', 'user.email', 'teste@example.com']);
   execFileSync('git-crypt', ['init'], { cwd: raiz, env: ambienteGit(), stdio: 'ignore' });
   execFileSync('git-crypt', ['export-key', chave], {
     cwd: raiz,

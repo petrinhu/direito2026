@@ -30,7 +30,7 @@ function git(cwd: string, args: string[]): void {
       '-c',
       'user.name=teste',
       '-c',
-      'user.email=teste@exemplo.invalido',
+      'user.email=teste@example.com',
       '-c',
       'commit.gpgSign=false',
       ...args

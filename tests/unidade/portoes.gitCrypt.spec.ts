@@ -35,7 +35,7 @@ function git(cwd: string, args: string[], extra: string[] = []): void {
       '-c',
       `core.hooksPath=${vazio}`,
       '-c',
-      'user.email=teste@exemplo.invalido',
+      'user.email=teste@example.com',
       '-c',
       'user.name=teste',
       '-c',

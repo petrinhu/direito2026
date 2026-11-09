@@ -463,3 +463,24 @@ teste('e-mail: E19t conferir-smtp contra o SMTP falso: auth sim sem MAIL FROM; 5
         correioFecharSmtpFalso($falso);
     }
 }, false);
+
+teste('e-mail: E29t escrita do DATA tem prazo: servidor que para de ler depois do 354 falha em dados no prazo, sem pendurar', function (): void {
+    correioCarregar();
+    $priv = correioPriv();
+    // 'é' em quoted-printable vira =C3=A9 (6 bytes no fio): 32768 'é' dão ~196 KB, bem acima do buffer do socket.
+    $corpo = str_repeat('é', 32768);
+    $falso = correioSmtpFalso(['mudoAposData' => true]);
+    try {
+        $inicio = microtime(true);
+        $e = correioEsperarFalha(fn () => correioEnviar(
+            ['destinatario' => 'pessoa@example.com', 'assunto' => 'Escrita', 'corpo' => $corpo],
+            $priv,
+            $falso,
+            ['prazoLeituraS' => 1, 'prazoTotalS' => 3]
+        ));
+        igual('dados', $e->etapa, 'escrita parada depois do 354: etapa dados');
+        verdadeiro(microtime(true) - $inicio < 5.0, 'escrita parada: a falha sai no prazo, não nos 60 s do padrão do PHP');
+    } finally {
+        correioFecharSmtpFalso($falso);
+    }
+}, false);

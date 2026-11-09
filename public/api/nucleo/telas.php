@@ -173,11 +173,18 @@ function d26_tela_criada(): string
         . d26_tela_e(D26_CONVITE_CRIADA) . '</p><p><a href="/">Tela de entrada</a></p>', true);
 }
 
+/**
+ * Texto da conta bloqueada por uso simultâneo (BL-B1), verbatim da ordem do líder de 08/11/2026. Usado na tela de
+ * entrada (aviso e 403 do login) e no mapa de avisos. Não alterar sem nova ordem do líder.
+ */
+const D26_TEXTO_BLOQUEIO = 'Esta conta foi bloqueada porque foi usada em dois aparelhos ao mesmo tempo. Fale com Petrus para liberar.';
+
 /** Texto do aviso da tela de entrada, por código da lista fechada (D26_AVISOS). */
 function d26_tela_texto_aviso(string $codigo): ?string
 {
     return match ($codigo) {
         D26_AVISO_OUTRO_APARELHO => 'Sua conta foi aberta em outro aparelho. Entre de novo para continuar aqui.',
+        D26_AVISO_BLOQUEADA => D26_TEXTO_BLOQUEIO,
         default => null,
     };
 }

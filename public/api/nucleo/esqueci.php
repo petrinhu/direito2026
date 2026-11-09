@@ -44,7 +44,8 @@ function d26_esqueci_sequencia(string $priv, callable $responder, callable $term
 function d26_esqueci_tratar(string $priv, string $pedido, int $agora): void
 {
     $conta = d26_contas_pedido_achar(d26_contas_listar($priv), $pedido);
-    if ($conta === null || ($conta['ativo'] ?? null) !== true || !is_string($conta['email'] ?? null)) {
+    // Conta bloqueada por uso simultâneo (BL-B1) não recebe link: a resposta é a mesma frase de sempre.
+    if ($conta === null || ($conta['ativo'] ?? null) !== true || !is_string($conta['email'] ?? null) || array_key_exists('bloqueada', $conta)) {
         return;
     }
     $destino = (string) $conta['email'];

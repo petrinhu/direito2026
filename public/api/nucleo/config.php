@@ -30,7 +30,17 @@ const D26_CORPO_MAX = 8192;
 const D26_AVISO_NOME = '__Host-d26aviso';
 const D26_AVISO_VALIDADE = 600;
 const D26_AVISO_OUTRO_APARELHO = 'outro-aparelho';
-const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO];
+const D26_AVISO_BLOQUEADA = 'bloqueada';
+const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO, D26_AVISO_BLOQUEADA];
+
+/**
+ * Uso simultâneo (BL-B1, plano-sessao-unica.md 9.1.1 e 9.1.3, decisões do líder de 08/11/2026): N = 5 minutos
+ * (janela de (a) e (b)); reserva de 30 s para o caso sem cookie de aparelho nos dois lados; a ocorrência que
+ * leva o contador a este número bloqueia a conta comum (a admin nunca é bloqueada).
+ */
+const D26_USO_JANELA = 300;
+const D26_USO_RESERVA = 30;
+const D26_USO_BLOQUEIO_EM = 2;
 
 /**
  * Validade do convite por link de criar e de redefinir (CV-B1, decisão do líder de 08/11/2026):

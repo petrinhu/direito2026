@@ -61,6 +61,7 @@ function d26_cookies_juri_antigos_expirar(): void
  *  - ['estado' => 'entrou', 'conta' => array, 'csrf' => string]
  *  - ['estado' => 'espera', 'segundos' => int]   (limite de tentativas, 429)
  *  - ['estado' => 'recusado']                    (qualquer falha, 401)
+ *  - ['estado' => 'bloqueada']                   (senha certa em conta bloqueada por uso simultâneo, 403; BL-B1)
  *
  * @return array<string, mixed>
  */
@@ -87,6 +88,10 @@ function d26_login_executar(string $priv, string $usuario, string $senha): array
     if (!$confere || $conta === null || $conta['ativo'] !== true || !is_string($conta['uid'] ?? null) || $conta['uid'] === '') {
         return ['estado' => 'recusado'];
     }
+    // BL-B1: senha certa numa conta bloqueada recebe o texto do bloqueio, sem sessão e sem aparelho anexado.
+    if (array_key_exists('bloqueada', $conta)) {
+        return ['estado' => 'bloqueada'];
+    }
 
     // Fora de qualquer lock: ponto de pausa dos testes de corrida (no-op em produção).
     d26_teste_pausar('entrar-apos-verificar', $usuario);
@@ -94,10 +99,13 @@ function d26_login_executar(string $priv, string $usuario, string $senha): array
     // O aparelho que já é confiável não ocupa outra vaga.
     $token = $res['confiavel'] ? null : d26_dispositivo_gerar_token();
     // Login = UMA mutação sob lock: a conta tem de ser a mesma que foi verificada (ativa, uid, versão e hash).
+    // O aparelho do login vigente (BL-B1) é o do token novo ou o do cookie que já era confiável.
     $vigente = null;
-    $versao = d26_contas_efetivar_login($priv, $usuario, $conta, $novoHash, $token, null, $vigente);
+    $versao = d26_contas_efetivar_login($priv, $usuario, $conta, $novoHash, $token, null, d26_aparelho_do_pedido(), $vigente);
     if ($versao === null) {
-        return ['estado' => 'recusado']; // a reserva fica: conta como tentativa
+        // Divergiu ou foi bloqueada durante a verificação: a releitura diz qual dos dois. A reserva fica: conta como tentativa.
+        $atual = d26_contas_buscar($priv, $usuario);
+        return ['estado' => $atual !== null && array_key_exists('bloqueada', $atual) ? 'bloqueada' : 'recusado'];
     }
 
     d26_limite_sucesso($priv, $usuario, $ip, $reserva, $res['inseriu']['c']);

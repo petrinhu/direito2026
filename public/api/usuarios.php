@@ -30,7 +30,7 @@ $alvo = $corpo['usuario'] ?? null;
 if (!is_string($acao) || !is_string($alvo)) {
     d26_erro(400, 'invalido', 'Informe a ação e o usuário.');
 }
-if (!in_array($acao, ['criar', 'redefinir', 'ativar', 'desativar', 'excluir', 'revogar-aparelhos', 'email'], true)) {
+if (!in_array($acao, ['criar', 'redefinir', 'ativar', 'desativar', 'excluir', 'revogar-aparelhos', 'email', 'desbloquear'], true)) {
     d26_erro(400, 'acao-invalida', 'Ação desconhecida.');
 }
 // R9 (decisão do líder, 08/11/2026): a senha não passa pelo painel. Quem cria ou redefine recebe um link.
@@ -161,6 +161,14 @@ if ($acao === 'redefinir') {
 
 if ($agir($acao, $alvo, null) !== 'ok') {
     d26_erro(400, 'nao-encontrado', 'Usuário não encontrado.');
+}
+// BL-B1 (9.1.4): Desbloquear também zera o limite de tentativas da conta, fora do lock, como o CLI faz.
+if ($acao === 'desbloquear') {
+    try {
+        d26_limite_desbloquear_conta($priv, $alvo);
+    } catch (Throwable $e) {
+        d26_log_erro_em($priv, 'usuarios', 'desbloquear: contadores não zerados (' . get_class($e) . ')');
+    }
 }
 d26_responder(200, ['ok' => true]);
 

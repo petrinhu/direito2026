@@ -27,6 +27,10 @@ if ($r['estado'] === 'entrou') {
 }
 
 $token = d26_csrf_pre_atual($priv);
+// BL-B1: senha certa numa conta bloqueada por uso simultâneo: 403 com o texto do bloqueio, sem sessão.
+if ($r['estado'] === 'bloqueada') {
+    d26_portao_tela(403, d26_tela_entrada($token, $destino, null, D26_TEXTO_BLOQUEIO), PORTAO_CSP_TELA);
+}
 if ($r['estado'] === 'espera') {
     d26_portao_tela(429, d26_tela_entrada($token, $destino, d26_frase_espera((int) $r['segundos'])), PORTAO_CSP_TELA);
 }

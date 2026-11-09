@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 define('D26_API', true);
 require __DIR__ . '/nucleo/inicio.php';
+require_once __DIR__ . '/nucleo/telas.php'; // D26_TEXTO_BLOQUEIO (BL-B1): o 403 de conta bloqueada
 
 /**
  * Entrada por JSON (suíte de testes e conferência). A tela de entrada usa acesso.php, que
@@ -22,6 +23,10 @@ $senha = is_string($corpo['senha'] ?? null) ? $corpo['senha'] : '';
 $r = d26_login_executar($priv, $usuario, $senha);
 if ($r['estado'] === 'espera') {
     d26_erro(429, 'aguarde', d26_frase_espera((int) $r['segundos']), ['segundos' => (int) $r['segundos']]);
+}
+// BL-B1: senha certa numa conta bloqueada por uso simultâneo: 403 com o texto do bloqueio, sem sessão.
+if ($r['estado'] === 'bloqueada') {
+    d26_erro(403, 'bloqueada', D26_TEXTO_BLOQUEIO);
 }
 if ($r['estado'] !== 'entrou') {
     d26_erro(401, 'credenciais', D26_FRASE_RECUSA);

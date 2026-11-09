@@ -256,7 +256,12 @@ function d26_conta_validar(array $c): array
         && (!array_key_exists('convite', $c) || d26_convite_valido($c['convite']))
         && (!array_key_exists('conviteUsado', $c) || d26_hash_hex_valido($c['conviteUsado']))
         && (!array_key_exists('email', $c) || is_string($c['email']))
-        && (!array_key_exists('envioFalhouEm', $c) || is_string($c['envioFalhouEm']));
+        && (!array_key_exists('envioFalhouEm', $c) || is_string($c['envioFalhouEm']))
+        && (!array_key_exists('vigenteDesde', $c) || is_int($c['vigenteDesde']))
+        && (!array_key_exists('vigenteAparelho', $c) || d26_hash_hex_valido($c['vigenteAparelho']))
+        && (!array_key_exists('usoSimultaneo', $c) || is_int($c['usoSimultaneo']))
+        && (!array_key_exists('quedaContadaPara', $c) || d26_hash_hex_valido($c['quedaContadaPara']))
+        && (!array_key_exists('bloqueada', $c) || d26_bloqueio_valido($c['bloqueada']));
     if (!$ok) {
         throw new D26Indisponivel('conta com campo de tipo inválido');
     }
@@ -306,6 +311,37 @@ function d26_marcador_confere(mixed $daConta, mixed $doOutro): bool
 function d26_hash_hex_valido(mixed $valor): bool
 {
     return is_string($valor) && preg_match('/^[0-9a-f]{64}$/D', $valor) === 1;
+}
+
+/** Bloqueio por uso simultâneo (BL-B1): objeto com o instante (inteiro) e o motivo fixo. Outra forma é tipo errado. */
+function d26_bloqueio_valido(mixed $bloqueio): bool
+{
+    return is_array($bloqueio) && is_int($bloqueio['em'] ?? null) && ($bloqueio['motivo'] ?? null) === 'uso-simultaneo';
+}
+
+/**
+ * Condições (a), (b) e (c) de 9.1.1 para uma sessão derrubada que fez pedido, contra a conta lida. $atividade e
+ * $criada são da sessão derrubada; $aparelhoPedido é o sha256 do cookie de aparelho do pedido (null se não trouxe).
+ * (a) a última atividade é de até N antes do login vigente; (b) o pedido chega até N depois dele; (c) o cookie do
+ * pedido não é o do login vigente. Sem cookie nos dois lados vale a reserva: não conta quando a sessão foi criada
+ * até D26_USO_RESERVA antes do login vigente. Função pura: o relógio entra por $agora.
+ *
+ * @param array<string, mixed> $conta
+ */
+function d26_uso_simultaneo_vale(array $conta, int $atividade, int $criada, ?string $aparelhoPedido, int $agora): bool
+{
+    $desde = $conta['vigenteDesde'] ?? null;
+    if (!is_int($desde)) {
+        return false;
+    }
+    if ($atividade < $desde - D26_USO_JANELA || $agora - $desde > D26_USO_JANELA) {
+        return false;
+    }
+    $aparelhoVigente = $conta['vigenteAparelho'] ?? null;
+    if ($aparelhoVigente === null && $aparelhoPedido === null) {
+        return $criada < $desde - D26_USO_RESERVA;
+    }
+    return $aparelhoVigente === null || $aparelhoPedido === null || !hash_equals((string) $aparelhoVigente, $aparelhoPedido);
 }
 
 /**
@@ -478,6 +514,9 @@ function d26_conta_publica(array $c, ?int $agora = null): array
         'conviteExpiraEm' => is_array($c['convite'] ?? null) ? $c['convite']['expiraEm'] : null,
         // O e-mail sai só para quem administra (esta função só é chamada pela listagem do admin).
         'email' => isset($c['email']) ? (string) $c['email'] : null,
+        // Uso simultâneo (BL-B1): só o contador e o instante do bloqueio. Nunca os marcadores de aparelho e de queda.
+        'usoSimultaneo' => (int) ($c['usoSimultaneo'] ?? 0),
+        'bloqueadaEm' => is_array($c['bloqueada'] ?? null) ? (int) $c['bloqueada']['em'] : null,
     ];
 }
 
@@ -649,13 +688,17 @@ function d26_contas_trocar_senha(string $priv, string $login, string $hash, arra
  *
  * @param array<string, mixed> $lida
  */
-function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?string $novoHash, ?string $tokenAparelho, ?int $agora = null, ?string &$vigente = null): ?int
+function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?string $novoHash, ?string $tokenAparelho, ?int $agora = null, ?string $aparelhoPresente = null, ?string &$vigente = null): ?int
 {
     $versao = null;
     $agora ??= time();
-    d26_contas_mutar($priv, $login, static function (array &$c) use ($lida, $novoHash, $tokenAparelho, $agora, &$versao, &$vigente): string {
+    d26_contas_mutar($priv, $login, static function (array &$c) use ($lida, $novoHash, $tokenAparelho, $aparelhoPresente, $agora, &$versao, &$vigente): string {
         if (!d26_conta_igual_lida($c, $lida)) {
             return 'divergente';
+        }
+        // BL-B1: a conta bloqueada não entra, mesmo que a senha tenha conferido antes do bloqueio (corrida, 9.2).
+        if (array_key_exists('bloqueada', $c)) {
+            return 'bloqueada';
         }
         $c['ultimoLogin'] = gmdate('c');
         if ($novoHash !== null) {
@@ -664,12 +707,59 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
         if ($tokenAparelho !== null) {
             d26_dispositivo_anexar($c, $tokenAparelho, $agora);
         }
+        // Aparelho do login vigente (BL-B1, condição (c)): o novo, ou o já confiável que chegou no pedido.
+        $aparelho = $tokenAparelho !== null ? d26_dispositivo_hash($tokenAparelho) : $aparelhoPresente;
+        if ($aparelho !== null) {
+            $c['vigenteAparelho'] = $aparelho;
+        } else {
+            unset($c['vigenteAparelho']);
+        }
+        $c['vigenteDesde'] = $agora;
         $vigente = bin2hex(random_bytes(16));
         $c['sessaoVigente'] = $vigente;
         $versao = (int) $c['versaoSessao'];
         return 'ok';
     });
     return $versao;
+}
+
+/**
+ * Conta uma ocorrência de uso simultâneo (BL-B1) numa ÚNICA mutação sob o lock de usuarios.json. O CAS confere a
+ * conta lida (ativa, uid, versão, hash) e o marcador que derrubou a sessão. Idempotente por quedaContadaPara (sha256
+ * do marcador): uma queda por login conta uma vez, mesmo com pedidos paralelos. A conta admin nunca é bloqueada: só
+ * o contador sobe. Na ocorrência que chega a D26_USO_BLOQUEIO_EM numa conta comum grava bloqueada e faz
+ * versaoSessao + 1 (a sessão que ficou também cai). Devolve 'contou', 'bloqueou', 'nao-conta' ou 'divergente'.
+ *
+ * @param array<string, mixed> $lida
+ */
+function d26_contas_contar_uso(string $priv, array $lida, int $atividade, int $criada, ?string $aparelhoPedido, int $agora): string
+{
+    $resultado = 'nao-conta';
+    if (!is_string($lida['sessaoVigente'] ?? null)) {
+        return $resultado;
+    }
+    d26_contas_mutar($priv, (string) $lida['usuario'], static function (array &$c) use ($lida, $atividade, $criada, $aparelhoPedido, $agora, &$resultado): string {
+        if (!d26_conta_igual_lida($c, $lida) || !d26_marcador_confere($c['sessaoVigente'] ?? null, $lida['sessaoVigente'])) {
+            $resultado = 'divergente';
+            return 'divergente';
+        }
+        $marca = hash('sha256', (string) $c['sessaoVigente']);
+        if (array_key_exists('bloqueada', $c) || ($c['quedaContadaPara'] ?? null) === $marca
+            || !d26_uso_simultaneo_vale($c, $atividade, $criada, $aparelhoPedido, $agora)) {
+            return 'nao-conta';
+        }
+        $c['usoSimultaneo'] = (int) ($c['usoSimultaneo'] ?? 0) + 1;
+        $c['quedaContadaPara'] = $marca;
+        $resultado = 'contou';
+        if ($c['admin'] !== true && $c['usoSimultaneo'] >= D26_USO_BLOQUEIO_EM) {
+            $c['bloqueada'] = ['em' => $agora, 'motivo' => 'uso-simultaneo'];
+            $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+            $c['aparelhos'] = [];
+            $resultado = 'bloqueou';
+        }
+        return 'ok';
+    });
+    return $resultado;
 }
 
 /**
@@ -776,6 +866,11 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
                         }
                         $c['email'] = $email;
                         unset($c['convite']);
+                        break;
+                    case 'desbloquear':
+                        // BL-B1 (9.1.4): tira o bloqueio e zera a contagem. Não troca a senha nem a versão da sessão.
+                        unset($c['bloqueada'], $c['quedaContadaPara']);
+                        $c['usoSimultaneo'] = 0;
                         break;
                     case 'excluir':
                         break;

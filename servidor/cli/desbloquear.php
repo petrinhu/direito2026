@@ -2,13 +2,12 @@
 declare(strict_types=1);
 
 /**
- * Zera os contadores de limite de tentativas de UMA conta (socorro do admin
- * trancado por um atacante distribuído; ver docs/publicacao.md).
- *
- * Uso:  php desbloquear.php <dir-privado> <login>
- * Remove a chave de conta e as chaves usuário+IP daquele login em
- * tentativas.json. Não toca nas chaves de IP nem nas outras contas, não cria
- * pasta nem arquivo, não imprime IP.
+ * Desbloqueia UMA conta (socorro do admin trancado; ver docs/publicacao.md), em dois arquivos:
+ *  - tentativas.json: remove a chave de conta e as chaves usuário+IP daquele login (limite de tentativas);
+ *  - usuarios.json: apaga o bloqueio por uso simultâneo (bloqueada e quedaContadaPara) e zera usoSimultaneo
+ *    (BL-B1, paridade com o botão Desbloquear do painel).
+ * Não toca nas chaves de IP nem nas outras contas, não troca senha nem versão de sessão, não cria pasta nem
+ * arquivo, não imprime IP.
  *
  * No servidor, onde o núcleo não está ao lado deste arquivo, aponte-o por
  * D26_NUCLEO=<pasta api/nucleo publicada>.
@@ -26,7 +25,7 @@ function falha(string $mensagem): never
 
 // Erro inesperado sai em uma linha: a pilha de chamadas mostra argumentos, e nenhum deles deve sair no terminal.
 set_exception_handler(static function (Throwable $e): void {
-    fwrite(STDERR, "desbloquear: erro interno ao acessar o arquivo de contadores (detalhes omitidos de propósito)\n");
+    fwrite(STDERR, "desbloquear: erro interno ao acessar os arquivos de contas e contadores (detalhes omitidos de propósito)\n");
     exit(1);
 });
 
@@ -56,3 +55,13 @@ if (!d26_login_valido($login)) {
 
 $n = d26_limite_desbloquear_conta($priv, $login);
 echo "Contadores zerados para $login ($n entrada(s) removida(s)).\n";
+
+// BL-B1: só a conta alvo. Conta inexistente não grava nada em usuarios.json.
+$uso = d26_contas_mutar($priv, $login, static function (array &$c): string {
+    unset($c['bloqueada'], $c['quedaContadaPara']);
+    $c['usoSimultaneo'] = 0;
+    return 'ok';
+});
+echo $uso === 'ok'
+    ? "Bloqueio por uso simultâneo removido para $login.\n"
+    : "Conta $login não encontrada em usuarios.json; nada foi alterado ali.\n";

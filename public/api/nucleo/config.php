@@ -39,6 +39,20 @@ const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO];
 const D26_CONVITE_VALIDADE = 172800;
 
 /**
+ * Envio de e-mail (EM-B2, plano-sessao-unica.md 8.1.5, 8.1.6 e 8.1.8). A origem é fixa no código: o
+ * servidor nunca lê o cabeçalho Host (OWASP). O .htaccess tem o mesmo host; o teste E18t lê os dois.
+ * A senha da caixa não mora aqui: fica em direito2026_privado/smtp.senha (correio.php).
+ */
+const D26_ORIGEM = 'https://direito2026.drpetrus.top';
+const D26_SMTP_HOST = 'smtp.hostinger.com';
+const D26_SMTP_PORTA = 465;
+const D26_REMETENTE = 'nao-responda@drpetrus.top';
+const D26_SMTP_USUARIO = D26_REMETENTE;
+/** Prazo de cada leitura do SMTP e prazo total de um envio (segundos). Nunca infinito. */
+const D26_SMTP_PRAZO_LEITURA_S = 10;
+const D26_SMTP_PRAZO_TOTAL_S = 20;
+
+/**
  * Teto de espera por uma trava de arquivo (armazenamento.php). Nunca infinito:
  * lock preso viraria 503 `indisponivel`, não worker pendurado. Os testes de
  * unidade podem definir antes um valor menor.

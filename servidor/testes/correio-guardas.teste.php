@@ -108,3 +108,22 @@ teste('e-mail: E30t destinatário ASCII: quebra de linha no fim não passa, nem 
     igual(false, d26_correio_destino_ascii("pessoa@example.com\n"), 'LF no fim não passa: \z, não $, que aceitaria antes do LF');
     igual(false, d26_correio_destino_ascii('pessoa@example.com '), 'espaço não passa');
 }, false);
+
+teste('e-mail: E31t a guarda de transporte está no caminho real: enviar e conferir recusam tls=false fora de 127.0.0.1 antes de conectar', function (): void {
+    correioCarregar();
+    $priv = correioPriv();
+    $falso = correioSmtpFalso();
+    try {
+        // 127.0.0.2 é loopback, então nada sai da máquina. O SMTP falso escuta em 127.0.0.1: se a guarda faltar,
+        // o connect a 127.0.0.2 é recusado na hora e a etapa vira conexao, em vez de alvo.
+        $endereco = 'tcp://127.0.0.2:' . $falso['porta'];
+        $envio = ['destinatario' => 'pessoa@example.com', 'assunto' => 'Guarda', 'corpo' => "Oi.\n"];
+        $e = correioEsperarFalha(fn () => d26_correio_enviar($envio, $priv, ['endereco' => $endereco, 'tls' => false]));
+        igual('alvo', $e->etapa, 'enviar: tls=false fora de 127.0.0.1 é recusado como alvo');
+        $resultado = d26_correio_conferir($priv, ['endereco' => $endereco, 'tls' => false]);
+        igual('alvo', $resultado['etapa'], 'conferir: a mesma recusa, no mesmo ponto');
+        igual(null, correioConversaFinal($falso, 1.0), 'nenhuma conexão chegou ao SMTP falso');
+    } finally {
+        correioFecharSmtpFalso($falso);
+    }
+}, false);

@@ -123,10 +123,47 @@ function d26_tela_convite(string $login, string $token, string $csrf, ?string $e
         . '</form>', true);
 }
 
-/** Tela de mensagem do convite (M1, M2, M3 ou limite): o texto em role="alert", repetido no título, sem formulário. */
-function d26_tela_mensagem(string $texto): string
+/**
+ * Tela de mensagem do convite (M1, M2, M3 ou limite): o texto em role="alert", repetido no título, sem formulário.
+ * Com $comPedido (M1 e M3, EM-B4), o link "Esqueci a senha" vai abaixo da mensagem: quem recebeu um link sem valor
+ * pode pedir outro. M2 (link já usado) não leva o link.
+ */
+function d26_tela_mensagem(string $texto, bool $comPedido = false): string
 {
-    return d26_tela_documento($texto, '<h1>Caderno de Direito</h1><p role="alert">' . d26_tela_e($texto) . '</p>', true);
+    return d26_tela_documento($texto, '<h1>Caderno de Direito</h1><p role="alert">' . d26_tela_e($texto) . '</p>'
+        . ($comPedido ? D26_TELA_LINK_ESQUECI : ''), true);
+}
+
+/** Texto único do "Esqueci a senha" (8.1.3, decisão autônoma do orquestrador, a ratificar): sai igual para toda conta. */
+const D26_ESQUECI_FRASE = 'Se houver uma conta com esse usuário ou e-mail, o link para criar a senha nova chega ao e-mail dela em alguns minutos. Confira também a pasta de spam.';
+const D26_ESQUECI_ERRO_VAZIO = 'Escreva o seu usuário ou e-mail.';
+
+/** Link "Esqueci a senha" (texto do líder, pedido de 08/11/2026): na entrada e nas telas M1 e M3. */
+const D26_TELA_LINK_ESQUECI = '<p><a href="/api/esqueci.php">Esqueci a senha</a></p>';
+
+/**
+ * Página "Esqueci a senha" (8.1.3): usuário ou e-mail, CSRF do cookie pré (G8) e "Voltar para a entrada". Sem
+ * script. Com $erro, a mensagem vai em role="alert" e repetida no título (como nas outras telas).
+ */
+function d26_tela_esqueci(string $token, ?string $erro = null): string
+{
+    $titulo = $erro ?? 'Esqueci a senha';
+    $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    return d26_tela_documento($titulo, '<h1>Esqueci a senha</h1>' . $erroHtml
+        . '<form method="post" action="/api/esqueci.php">'
+        . '<label for="usuario">Usuário ou e-mail</label>'
+        . '<input id="usuario" name="usuario" type="text" autocomplete="username" maxlength="254" autofocus required>'
+        . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'
+        . '<button type="submit">Enviar link</button>'
+        . '</form>'
+        . '<p><a href="/">Voltar para a entrada</a></p>');
+}
+
+/** Resposta do pedido: a mesma frase para toda conta, sem formulário e sem nada que dependa do pedido. */
+function d26_tela_esqueci_enviado(): string
+{
+    return d26_tela_documento(D26_ESQUECI_FRASE, '<h1>Esqueci a senha</h1><p role="alert">' . d26_tela_e(D26_ESQUECI_FRASE) . '</p>'
+        . '<p><a href="/">Voltar para a entrada</a></p>');
 }
 
 /** Senha criada sem entrar (o login automático falhou depois da gravação). Aviso informativo, com o endereço /. */
@@ -167,7 +204,7 @@ function d26_tela_entrada(string $token, string $destino, ?string $erro = null, 
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'
         . '<input type="hidden" name="destino" value="' . d26_tela_e($destino) . '">'
         . '<button type="submit">Entrar</button>'
-        . '</form>');
+        . '</form>' . D26_TELA_LINK_ESQUECI);
 }
 
 /**

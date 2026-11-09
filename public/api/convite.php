@@ -126,10 +126,10 @@ function d26_convite_avisar_criada(string $priv, string $login, ?string $email):
 function d26_convite_recusar(string $estado): never
 {
     if ($estado === 'vencido') {
-        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M1), PORTAO_CSP_TELA, 'no-referrer');
+        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M1, true), PORTAO_CSP_TELA, 'no-referrer'); // M1 leva o link de EM-B4
     }
     if ($estado === 'usado') {
         d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M2), PORTAO_CSP_TELA, 'no-referrer');
     }
-    d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3), PORTAO_CSP_TELA, 'no-referrer');
+    d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3, true), PORTAO_CSP_TELA, 'no-referrer'); // M3 leva o link de EM-B4
 }

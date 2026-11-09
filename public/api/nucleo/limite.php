@@ -196,6 +196,12 @@ function d26_limite_faxina(array &$d, int $agora): void
             }
         }
     }
+    // Categoria e (pedidos "Esqueci a senha", EM-B4): a janela mais longa é a de 24 h.
+    foreach ($d['e'] ?? [] as $k => $v) {
+        if (d26_limite_envio_recentes(array_map('intval', (array) ($v['f'] ?? [])), $agora, D26_ENVIO_JANELA_LONGA) === 0) {
+            unset($d['e'][$k]);
+        }
+    }
 }
 
 /**
@@ -257,6 +263,87 @@ function d26_limite_desbloquear_conta(string $priv, string $login): int
                 }
             }
             return $removidas;
+        },
+        d26_limite_provisionado($priv)
+    );
+}
+
+/*
+ * Categoria e (EM-B4, plano 8.1.7): pedidos "Esqueci a senha" em tentativas.json. Três chaves, cada uma com a lista
+ * de marcas de tempo (f) das últimas 24 h. Nunca são zeradas pelo sucesso de login, e não contam nos envios do painel.
+ *  - IP agrupado: 10 pedidos em 15 min; acima, 429 (o pedido não envia nada).
+ *  - Conta: 1 e-mail em 15 min e 4 em 24 h; acima, silêncio (a mesma frase).
+ *  - Teto diário do site: 60 e-mails em 24 h; acima, silêncio e uma linha envio-teto no erros.log.
+ * Ordem de locks intacta: só tentativas.json é tocado aqui.
+ */
+const D26_ENVIO_JANELA_CURTA = 900;
+const D26_ENVIO_JANELA_LONGA = 86400;
+const D26_ENVIO_MAX_IP = 10;
+const D26_ENVIO_MAX_CONTA_15MIN = 1;
+const D26_ENVIO_MAX_CONTA_DIA = 4;
+const D26_ENVIO_TETO_DIA = 60;
+
+/** Chave da categoria e: sha256 de "e<tipo>" + NUL + alvo (mesmo padrão das chaves de hoje). */
+function d26_limite_chave_envio(string $tipo, string $alvo = ''): string
+{
+    return hash('sha256', 'e' . $tipo . "\0" . $alvo);
+}
+
+/** @param list<int> $marcas */
+function d26_limite_envio_recentes(array $marcas, int $agora, int $janela): int
+{
+    return count(array_filter($marcas, static fn (int $t): bool => $t > $agora - $janela));
+}
+
+/** Reserva o pedido de um IP agrupado: true se coube no limite (e fica registrado). */
+function d26_limite_envio_ip(string $priv, string $ip, int $agora): bool
+{
+    return d26_limite_envio_reservar($priv, d26_limite_chave_envio('ip', d26_limite_ip_agrupado($ip)), $agora,
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_CURTA) < D26_ENVIO_MAX_IP);
+}
+
+/** Reserva um e-mail para a conta: 1 a cada 15 min e 4 em 24 h. */
+function d26_limite_envio_conta(string $priv, string $login, int $agora): bool
+{
+    return d26_limite_envio_reservar($priv, d26_limite_chave_envio('conta', $login), $agora,
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_CURTA) < D26_ENVIO_MAX_CONTA_15MIN
+            && d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_MAX_CONTA_DIA);
+}
+
+/** Reserva um e-mail do teto diário do site (60 em 24 h). Os envios do painel não passam por aqui. */
+function d26_limite_envio_teto(string $priv, int $agora): bool
+{
+    return d26_limite_envio_reservar($priv, d26_limite_chave_envio('teto'), $agora,
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_TETO_DIA);
+}
+
+/**
+ * Decide e registra numa única mutação sob o lock de tentativas.json. $pode(marcas, agora) devolve true para
+ * aceitar; aceito, o instante entra na lista. Recusado não grava nada além da poda da própria chave.
+ *
+ * @param callable(list<int>, int): bool $pode
+ */
+function d26_limite_envio_reservar(string $priv, string $chave, int $agora, callable $pode): bool
+{
+    return (bool) d26_atualizar_json(
+        d26_limite_arquivo($priv),
+        D26_LIMITE_PADRAO,
+        static function (array &$d) use ($chave, $agora, $pode): bool {
+            $d['e'] = $d['e'] ?? [];
+            $marcas = array_values(array_filter(
+                array_map('intval', (array) ($d['e'][$chave]['f'] ?? [])),
+                static fn (int $t): bool => $t > $agora - D26_ENVIO_JANELA_LONGA
+            ));
+            $aceito = $pode($marcas, $agora);
+            if ($aceito) {
+                $marcas[] = $agora;
+            }
+            if ($marcas === []) {
+                unset($d['e'][$chave]);
+            } else {
+                $d['e'][$chave] = ['f' => array_slice($marcas, -200)];
+            }
+            return $aceito;
         },
         d26_limite_provisionado($priv)
     );

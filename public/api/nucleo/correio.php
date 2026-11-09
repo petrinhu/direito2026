@@ -484,6 +484,7 @@ function d26_correio_mensagem(string $destinatario, string $assunto, string $cor
 const D26_CORREIO_ASSUNTO_CONVITE = 'Crie a sua senha de acesso';
 const D26_CORREIO_ASSUNTO_REDEFINICAO = 'Sua senha foi redefinida';
 const D26_CORREIO_ASSUNTO_SENHA_CRIADA = 'Sua senha foi criada';
+const D26_CORREIO_ASSUNTO_ESQUECI = 'Link para criar uma senha nova';
 
 /**
  * E1, convite do criar (plano-sessao-unica.md 8.1.9, texto ratificado em R14). O link vai sozinho numa linha,
@@ -528,6 +529,21 @@ function d26_correio_msg_senha_criada(string $destino, string $login): array
         "Olá.\n\n"
         . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
         . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.");
+}
+
+/**
+ * E2, "Esqueci a senha" (8.1.9, texto ratificado em R14; prazo de 24 h, R18). O link vai sozinho numa linha.
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_esqueci(string $destino, string $login, string $link): array
+{
+    return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_ESQUECI,
+        "Olá.\n\n"
+        . "Pediram uma senha nova para o usuário {$login}.\n\n"
+        . "Para criar a senha nova, abra o link abaixo. Ele vale por 24 horas e só pode ser usado uma vez. Até lá, a senha atual continua valendo.\n"
+        . "{$link}\n\n"
+        . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.");
 }
 
 /**

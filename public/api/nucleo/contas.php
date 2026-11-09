@@ -312,9 +312,9 @@ function d26_convite_token(): string
  *
  * @return array{hash: string, expiraEm: int}
  */
-function d26_convite_registro(string $token, int $agora): array
+function d26_convite_registro(string $token, int $agora, int $validade = D26_CONVITE_VALIDADE): array
 {
-    return ['hash' => hash('sha256', $token), 'expiraEm' => $agora + D26_CONVITE_VALIDADE];
+    return ['hash' => hash('sha256', $token), 'expiraEm' => $agora + $validade];
 }
 
 /** Token recebido na página do convite: 64 hex minúsculos e string. Qualquer outra coisa (ausente, lista, tamanho, maiúsculas) é null. */
@@ -781,4 +781,57 @@ function d26_admin_agir(string $priv, array $ator, string $acao, string $alvo, ?
         false,
         false
     );
+}
+
+/**
+ * Conta que o pedido "Esqueci a senha" identifica (EM-B4, 8.1.3): com '@' é e-mail (normalizado, único no lock),
+ * sem '@' é login (formato de d26_login_valido, H1). Entrada inválida ou sem conta devolve null, sem exceção.
+ *
+ * @param list<array<string, mixed>> $contas
+ * @return array<string, mixed>|null
+ */
+function d26_contas_pedido_achar(array $contas, string $pedido): ?array
+{
+    $pedido = trim($pedido);
+    if ($pedido === '') {
+        return null;
+    }
+    if (str_contains($pedido, '@')) {
+        $email = d26_email_normalizar($pedido);
+        if ($email === null) {
+            return null;
+        }
+        foreach ($contas as $c) {
+            if (($c['email'] ?? null) === $email) {
+                return $c;
+            }
+        }
+        return null;
+    }
+    if (!d26_login_valido($pedido)) {
+        return null;
+    }
+    foreach ($contas as $c) {
+        if (($c['usuario'] ?? null) === $pedido) {
+            return $c;
+        }
+    }
+    return null;
+}
+
+/**
+ * Grava o convite do pedido "Esqueci a senha" sob lock (EM-B4, 8.1.3). Troca SÓ o convite: a senha, a versão da
+ * sessão, os aparelhos e a sessão aberta não mudam (E29t). Conta inativa ou sem e-mail, relidas no lock: 'inelegivel'.
+ *
+ * @param array{hash: string, expiraEm: int} $registro
+ */
+function d26_contas_pedir_senha(string $priv, string $login, array $registro): string
+{
+    return d26_contas_mutar($priv, $login, static function (array &$c) use ($registro): string {
+        if (($c['ativo'] ?? null) !== true || !is_string($c['email'] ?? null)) {
+            return 'inelegivel';
+        }
+        $c['convite'] = $registro;
+        return 'ok';
+    });
 }

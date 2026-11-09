@@ -580,3 +580,324 @@ teste('e-mail: corrida P9: o E3 do redefinir vai ao endereço que a conta tinha 
         igual('nova@example.com', emailDeConta($a, 'ana'), 'a troca de B ficou gravada');
     }, ['workers' => 4]);
 });
+
+// ---- EM-B4: "Esqueci a senha" por e-mail (plano 8.1.3, 8.1.7; OS EM-B4) ----
+
+const EMB4_FRASE = 'Se houver uma conta com esse usuário ou e-mail, o link para criar a senha nova chega ao e-mail dela em alguns minutos. Confira também a pasta de spam.';
+const EMB4_ERRO_VAZIO = 'Escreva o seu usuário ou e-mail.';
+
+/** Carrega os módulos do pedido (sem executar nenhum endpoint). */
+function emb4Carregar(): void
+{
+    if (!defined('D26_API')) {
+        define('D26_API', true);
+    }
+    foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'telas', 'correio', 'esqueci'] as $m) {
+        require_once RAIZ_REPO . '/public/api/nucleo/' . $m . '.php';
+    }
+}
+
+/** GET da página, como a navegação faz. */
+function emb4Pagina(Cliente $c): Resposta
+{
+    return $c->get('/api/esqueci.php', PORTAO_NAVEGACAO);
+}
+
+/** POST de formulário, como o navegador envia a página (sem JSON e sem X-CSRF-Token). @param mixed $usuario string ou lista */
+function emb4Enviar(Cliente $c, string $csrf, mixed $usuario, array $cabecalhos = []): Resposta
+{
+    return $c->enviar('POST', '/api/esqueci.php', http_build_query(['usuario' => $usuario, 'csrf' => $csrf]), [
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'X-CSRF-Token' => null,
+    ] + $cabecalhos);
+}
+
+/** Mesmo POST, com o IP de origem amarrado (127.0.0.x é loopback): devolve só o status. */
+function emb4PostDeIp(Cliente $c, string $ip, string $csrf, string $usuario): int
+{
+    $pares = [];
+    foreach ($c->cookies as $n => $v) {
+        $pares[] = "$n=$v";
+    }
+    $ctx = stream_context_create(['socket' => ['bindto' => $ip . ':0'], 'http' => [
+        'method' => 'POST',
+        'header' => "Content-Type: application/x-www-form-urlencoded\r\nOrigin: " . $c->origem() . "\r\nCookie: " . implode('; ', $pares),
+        'content' => http_build_query(['usuario' => $usuario, 'csrf' => $csrf]),
+        'ignore_errors' => true,
+        'timeout' => 30,
+    ]]);
+    $http_response_header = [];
+    @file_get_contents($c->origem() . '/api/esqueci.php', false, $ctx);
+    return (int) preg_replace('#^HTTP/\S+ (\d{3}).*#', '$1', (string) ($http_response_header[0] ?? ''));
+}
+
+/** Link de criar senha que o E2 carrega (o único link do corpo). */
+function emb4Link(?string $conversa): string
+{
+    $m = emailB3Mensagem($conversa);
+    preg_match('#https://direito2026\.drpetrus\.top/api/convite\.php\?t=[0-9a-f]{64}#', $m['corpo'], $x) === 1 || falhar('o E2 traz o link de criar senha');
+    return $x[0];
+}
+
+/** Caminho + query de um link absoluto (o teste abre o link pelo servidor local). */
+function emb4Caminho(string $link): string
+{
+    return (string) parse_url($link, PHP_URL_PATH) . '?' . (string) parse_url($link, PHP_URL_QUERY);
+}
+
+/** Linhas do erros.log que registram tentativa de envio (etapa=...): sobe quando algum envio tenta conectar. */
+function emb4LinhasEnvio(Ambiente $a): int
+{
+    return substr_count((string) @file_get_contents($a->priv . '/erros.log'), 'envio etapa=');
+}
+
+/**
+ * Resposta sem o que muda entre pedidos sem ser o pedido: Date (relógio) e host (porta do processo de teste, que
+ * troca a cada Ambiente). @return array<string, mixed>
+ */
+function emb4SemData(Resposta $r): array
+{
+    $c = $r->cabecalhos;
+    unset($c['date'], $c['host']);
+    return ['status' => $r->status, 'cabecalhos' => $c, 'corpo' => $r->corpo];
+}
+
+teste('e-mail: E26t a tela de entrada tem o link "Esqueci a senha"; M1 e M3 também; M2 não', function (): void {
+    emailB3Com([], function (Ambiente $a): void {
+        $entrada = $a->cliente()->get('/', PORTAO_NAVEGACAO);
+        igual(200, $entrada->status, 'tela de entrada');
+        contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $entrada->corpo, 'link na entrada');
+        $vencido = bin2hex(random_bytes(32));
+        emailB3Semear($a, 'ana', 'ana@example.com', ['convite' => ['hash' => hash('sha256', $vencido), 'expiraEm' => time() - 60]]);
+        $m1 = $a->cliente()->get('/api/convite.php?t=' . $vencido, PORTAO_NAVEGACAO);
+        cvb2Mensagem($m1, 410, CVB2_M1);
+        contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $m1->corpo, 'M1 tem o link');
+        $m3 = $a->cliente()->get('/api/convite.php?t=' . bin2hex(random_bytes(32)), PORTAO_NAVEGACAO);
+        cvb2Mensagem($m3, 404, CVB2_M3);
+        contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $m3->corpo, 'M3 tem o link');
+        $usado = cvb2Convidar($a, 'bia');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(cvb2Pagina($c, $usado)->corpo, 'csrf');
+        igual(303, cvb2Enviar($c, cvb2Campos($usado, $csrf, EMB3_SENHA_NOVA))->status, 'consome o link');
+        $m2 = cvb2Pagina($a->cliente(), $usado);
+        cvb2Mensagem($m2, 410, CVB2_M2);
+        naoContem('esqueci.php', $m2->corpo, 'M2 sem o link');
+    });
+});
+
+teste('e-mail: E27t GET de esqueci.php: 200, CSP da tela, private no-store, zero script, campo com autocomplete e CSRF', function (): void {
+    emailB3Com([], function (Ambiente $a): void {
+        $r = emb4Pagina($a->cliente());
+        igual(200, $r->status, 'GET');
+        igual(PORTAO_CSP_TELA, $r->cabecalho('content-security-policy'), 'CSP da tela');
+        igual('private, no-store', $r->cabecalho('cache-control'), 'cache');
+        naoContem('<script', $r->corpo, 'sem script');
+        naoContem('id="app"', $r->corpo, 'nenhum byte do app');
+        contem('autocomplete="username"', $r->corpo, 'campo usuário');
+        verdadeiro(cvb2Campo($r->corpo, 'csrf') !== '', 'CSRF no formulário');
+        contem('<h1>Esqueci a senha</h1>', $r->corpo, 'título');
+        contem('>Enviar link<', $r->corpo, 'botão');
+        contem('>Voltar para a entrada<', $r->corpo, 'volta à entrada');
+    });
+});
+
+teste('e-mail: E28t conta existente com e-mail, login inexistente, e-mail inexistente, conta desativada e conta sem e-mail: resposta igual; só a primeira manda E2', function (): void {
+    $semear = static function (Ambiente $a): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        emailB3Semear($a, 'desativada', 'desativada@example.com', ['ativo' => false]);
+        emailB3Semear($a, 'sem.email', null);
+    };
+    $primeira = null;
+    emailB3Com([], function (Ambiente $a, array $falso) use ($semear, &$primeira): void {
+        $semear($a);
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        $primeira = emb4Enviar($c, $csrf, 'ana');
+        igual(200, $primeira->status, 'login existente com e-mail');
+        $m = emailB3Mensagem(correioConversaFinal($falso));
+        igual('ana@example.com', emailB3Destinatario((string) correioConversaFinal($falso)), 'E2 vai ao e-mail da conta');
+        igual('Link para criar uma senha nova', $m['assunto'], 'assunto do E2');
+        contem(EMB4_FRASE, $primeira->corpo, 'frase única na resposta');
+    });
+    $demais = [];
+    emailB3Com([], function (Ambiente $a, array $falso) use ($semear, &$demais): void {
+        $semear($a);
+        foreach (['nao-existe', 'naoexiste@example.com', 'desativada', 'sem.email'] as $pedido) {
+            $c = $a->cliente();
+            $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+            $demais[$pedido] = emb4Enviar($c, $csrf, $pedido);
+        }
+        igual(null, correioConversaFinal($falso, 1.0), 'nenhum dos quatro manda E2');
+    });
+    foreach ($demais as $pedido => $r) {
+        igual(emb4SemData($primeira), emb4SemData($r), "a resposta de '$pedido' é igual, byte a byte, à de conta existente");
+    }
+});
+
+teste('e-mail: E29t o pedido não muda hash, versaoSessao, aparelhos nem sessão; o link de E2 abre o convite e a senha nova entra', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $a->entrar('ana', EMB3_SENHA_CONTA);
+        $antes = emailContaCrua($a, 'ana');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
+        $depois = emailContaCrua($a, 'ana');
+        foreach (['hash', 'versaoSessao', 'aparelhos', 'sessaoVigente', 'uid', 'deveTrocarSenha'] as $campo) {
+            igual($antes[$campo] ?? null, $depois[$campo] ?? null, "o pedido não muda $campo");
+        }
+        $link = emb4Link(correioConversaFinal($falso));
+        $cp = $a->cliente();
+        $pagina = $cp->get(emb4Caminho($link), PORTAO_NAVEGACAO);
+        igual(200, $pagina->status, 'o link de E2 abre a página do convite');
+        $token = cvb2Campo($pagina->corpo, 't');
+        igual(303, cvb2Enviar($cp, cvb2Campos($token, cvb2Campo($pagina->corpo, 'csrf'), EMB3_SENHA_NOVA))->status, 'cria a senha nova');
+        $entrou = $a->entrar('ana', EMB3_SENHA_NOVA);
+        verdadeiro($entrou instanceof Cliente, 'a senha nova entra');
+    });
+});
+
+teste('e-mail: E30t ordem: responde antes de qualquer leitura de usuarios.json, com terminador e busca injetados', function (): void {
+    emb4Carregar();
+    $dir = dirTemporario();
+    $ordem = [];
+    d26_esqueci_sequencia($dir, static function () use (&$ordem): void { $ordem[] = 'resposta'; },
+        static function () use (&$ordem): bool { $ordem[] = 'terminar'; return true; },
+        static function () use (&$ordem): void { $ordem[] = 'buscar'; });
+    igual(['resposta', 'terminar', 'buscar'], $ordem, 'a ordem é responde, termina, busca');
+    // Busca que lança: a resposta já saiu (o teste não vê exceção) e a falha vai só ao log, pela classe.
+    $ordem = [];
+    d26_esqueci_sequencia($dir, static function () use (&$ordem): void { $ordem[] = 'resposta'; },
+        static function () use (&$ordem): bool { $ordem[] = 'terminar'; return true; },
+        static function (): void { throw new RuntimeException('segredo-do-pedido-EM-B4'); });
+    igual(['resposta', 'terminar'], $ordem, 'exceção na busca não muda a ordem');
+    $log = (string) @file_get_contents($dir . '/erros.log');
+    contem('RuntimeException', $log, 'o log traz a classe');
+    naoContem('segredo-do-pedido-EM-B4', $log, 'o log não traz a mensagem');
+});
+
+teste('e-mail: E31t limite por IP: 11º em 15 min dá 429 e outro IP segue 200; limite por conta: o 2º em 15 min não envia e responde igual', function (): void {
+    emailB3Com([], function (Ambiente $a): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        for ($i = 1; $i <= 10; $i++) {
+            igual(200, emb4Enviar($c, $csrf, 'ana')->status, "pedido $i do IP");
+        }
+        $r11 = emb4Enviar($c, $csrf, 'ana');
+        igual(429, $r11->status, 'o 11º do IP dá 429');
+        contem('Aguarde', $r11->corpo, 'frase de espera');
+        igual(200, emb4PostDeIp($c, '127.0.0.2', $csrf, 'ana'), 'outro IP segue 200');
+    });
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        $r1 = emb4Enviar($c, $csrf, 'ana');
+        contem(EMB4_FRASE, $r1->corpo, 'frase única na resposta do 1º');
+        $antes = emb4LinhasEnvio($a);
+        $r2 = emb4Enviar($c, $csrf, 'ana');
+        igual(emb4SemData($r1), emb4SemData($r2), 'o 2º pedido responde igual ao 1º');
+        igual($antes, emb4LinhasEnvio($a), 'o 2º pedido não tenta enviar');
+    });
+});
+
+teste('e-mail: E31t teto diário: o 61º pedido não envia, responde igual e grava envio-teto', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        // Chave do teto em limite.php (d26_limite_chave_envio('teto')): sha256 de "eteto" + NUL + vazio.
+        $chaveTeto = hash('sha256', "eteto\0");
+        file_put_contents($a->priv . '/tentativas.json', json_encode(['u' => [], 'ip' => [], 'c' => [], 'e' => [$chaveTeto => ['f' => array_fill(0, 60, time() - 10)]]], JSON_THROW_ON_ERROR));
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        $r = emb4Enviar($c, $csrf, 'ana');
+        igual(200, $r->status, 'o 61º responde 200');
+        contem(EMB4_FRASE, $r->corpo, 'a mesma frase');
+        igual(null, correioConversaFinal($falso, 1.0), 'o 61º não envia');
+        contem('envio-teto', (string) @file_get_contents($a->priv . '/erros.log'), 'linha envio-teto');
+    });
+});
+
+teste('e-mail: E32t POST sem cookie pré, com Origin de outro site, ou com corpo JSON: 403 ou 400, nada enviado', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(403, emb4Enviar($a->cliente(), $csrf, 'ana')->status, 'sem cookie pré');
+        igual(403, emb4Enviar($c, $csrf, 'ana', ['Origin' => 'https://outro.example'])->status, 'Origin de outro site');
+        igual(400, $c->post('/api/esqueci.php', ['usuario' => 'ana'])->status, 'corpo JSON');
+        igual(null, correioConversaFinal($falso, 1.0), 'nada enviado');
+    });
+});
+
+teste('e-mail: E33t corpo vazio dá 400 com a frase de erro; texto longo, lista e CRLF dão a frase única ou 400, sem exceção, e o texto não vai ao erros.log', function (): void {
+    emailB3Com([], function (Ambiente $a): void {
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        $vazio = emb4Enviar($c, $csrf, '');
+        igual(400, $vazio->status, 'corpo vazio');
+        contem(EMB4_ERRO_VAZIO, $vazio->corpo, 'frase de erro');
+        $longo = 'Texto-Secreto-EM-B4-' . str_repeat('y', 240);
+        $crlf = "Texto-Secreto-EM-B4\r\nana@example.com";
+        foreach ([$longo, $crlf, ['Texto-Secreto-EM-B4-lista']] as $caso) {
+            $r = emb4Enviar($c, $csrf, $caso);
+            verdadeiro(in_array($r->status, [200, 400], true), 'a resposta é 200 ou 400, nunca 500');
+            if ($r->status === 200) {
+                contem(EMB4_FRASE, $r->corpo, 'a frase única');
+            }
+        }
+        $log = (string) @file_get_contents($a->priv . '/erros.log');
+        naoContem('Texto-Secreto-EM-B4', $log, 'o texto digitado não vai ao erros.log');
+    });
+});
+
+teste('e-mail: E34t o pedido substitui o convite pendente que o admin gerou: o link antigo dá M3', function (): void {
+    emailB3Com([], function (Ambiente $a, array $falso): void {
+        // Convite do admin sem E1: cvb2Convidar mandaria o E1 pelo mesmo SMTP falso e o teste leria o link errado.
+        $antigo = emailB3SemearConvite($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
+        $novo = substr(emb4Caminho(emb4Link(correioConversaFinal($falso))), strlen('/api/convite.php?t='));
+        cvb2Mensagem(cvb2Pagina($a->cliente(), $antigo), 404, CVB2_M3);
+        igual(200, cvb2Pagina($a->cliente(), $novo)->status, 'o link novo abre');
+    });
+});
+
+teste('e-mail: E35t tentativas.json gerado pelo pedido (categoria e) é relido pela v1.6.1.0 sem quebrar (K6, primeira metade)', function (): void {
+    $dir = dirTemporario();
+    $arvore = $dir . '/v161';
+    mkdir($arvore, 0700, true);
+    exec('git -C ' . escapeshellarg(RAIZ_REPO) . ' archive v1.6.1.0 public/api | tar -x -C ' . escapeshellarg($arvore) . ' 2>&1', $saidaTar, $rcTar);
+    igual(0, $rcTar, 'extração da v1.6.1.0 (tag)');
+    $prova = $dir . '/prova.php';
+    file_put_contents($prova, "<?php\ndeclare(strict_types=1);\ndefine('D26_API', true);\n"
+        . "foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite'] as \$m) { require \$argv[1] . '/nucleo/' . \$m . '.php'; }\n"
+        . "echo json_encode(d26_limite_reservar_detalhado(\$argv[2], 'ana', '127.0.0.1', time(), false));\n");
+    emailB3Com([], function (Ambiente $a) use ($prova, $arvore): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'o pedido grava a categoria e');
+        $tentativas = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true);
+        verdadeiro(is_array($tentativas) && isset($tentativas['e']), 'tentativas.json tem a categoria e');
+        exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($prova) . ' ' . escapeshellarg($arvore . '/public/api') . ' ' . escapeshellarg($a->priv) . ' 2>&1', $saida, $rc);
+        igual(0, $rc, 'a v1.6.1.0 roda sobre o arquivo com e: ' . implode(' ', $saida));
+        $json = json_decode(implode('', $saida), true);
+        igual(0, is_array($json) ? ($json['espera'] ?? null) : null, 'sem espera indevida');
+    });
+});
+
+teste('e-mail: EM-B4 falha do E2 grava envioFalhouEm na conta e só etapa e código no erros.log; a resposta é a mesma', function (): void {
+    emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a): void {
+        emailB3Semear($a, 'ana', 'ana@example.com');
+        $c = $a->cliente();
+        $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
+        verdadeiro(is_string(emailContaCrua($a, 'ana')['envioFalhouEm'] ?? null), 'envioFalhouEm gravado');
+        $log = (string) @file_get_contents($a->priv . '/erros.log');
+        contem('envio etapa=destinatario codigo=550', $log, 'etapa e código');
+        naoContem('ana@example.com', $log, 'o endereço não vai ao log');
+        naoContem('caixa de destino', $log, 'o texto do servidor não vai ao log');
+    });
+});

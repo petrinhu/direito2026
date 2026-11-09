@@ -74,16 +74,66 @@ function d26_tela_cabecalho(): string
         . '<span>Caderno de Direito</span></div></header>';
 }
 
-/** Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. */
-function d26_tela_documento(string $titulo, string $corpo): string
+/**
+ * Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. Com $semReferrer
+ * (página do convite, CV-B2), a marcação também pede "no-referrer": o token vai na URL, e o Referer levaria
+ * o token aos pedidos de entrada.css e do ícone.
+ */
+function d26_tela_documento(string $titulo, string $corpo, bool $semReferrer = false): string
 {
     return '<!doctype html><html lang="pt-br"' . d26_tela_atributo_tema() . '><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<meta name="robots" content="noindex, nofollow">'
+        . ($semReferrer ? '<meta name="referrer" content="no-referrer">' : '')
         . '<link rel="icon" href="/icones/favicon.svg" type="image/svg+xml">'
         . '<title>' . d26_tela_e($titulo) . '</title>'
         . '<link rel="stylesheet" href="/entrada.css?v=' . d26_tela_versao_css() . '">'
         . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main></body></html>';
+}
+
+/** Textos do convite por link (CV-B2). M1, M2, M3 e a frase de sucesso são do líder (08/11/2026, R8), verbatim. */
+const D26_CONVITE_M1 = 'Este link venceu. Peça um novo a quem administra o site.';
+const D26_CONVITE_M2 = 'Este link já foi usado. Se não foi você, avise quem administra o site.';
+const D26_CONVITE_M3 = 'Este link não vale. Peça um novo a quem administra o site.';
+/** Decisão autônoma do orquestrador, a ratificar: a repetição que não confere com a senha nova. */
+const D26_CONVITE_REPETICAO = 'A repetição não confere com a senha nova.';
+const D26_CONVITE_CRIADA = 'Senha criada. Entre pela tela de entrada.';
+
+/**
+ * Tela do convite (CV-B2): usuário somente leitura, senha nova com a regra de 15 caracteres, repetição (R10),
+ * token no campo oculto t (escapado) e CSRF do cookie pré. O formulário vai para o endereço fixo, sem o token.
+ * Com $erro, a mensagem vai em role="alert" e repetida no título (F9), e a tela segue com o link.
+ */
+function d26_tela_convite(string $login, string $token, string $csrf, ?string $erro = null): string
+{
+    $titulo = $erro ?? 'Criar senha';
+    $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    return d26_tela_documento($titulo, '<h1>Criar senha</h1>' . $erroHtml
+        . '<form method="post" action="/api/convite.php">'
+        . '<label for="usuario">Usuário</label>'
+        . '<input id="usuario" name="usuario" type="text" value="' . d26_tela_e($login) . '" autocomplete="username" readonly>'
+        . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
+        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required autofocus aria-describedby="senhaNova-ajuda">'
+        . '<p id="senhaNova-ajuda">A senha precisa ter pelo menos 15 caracteres.</p>'
+        . '<label for="senhaRepetida">Repita a senha</label>'
+        . '<input id="senhaRepetida" name="senhaRepetida" type="password" autocomplete="new-password" minlength="15" required>'
+        . '<input type="hidden" name="t" value="' . d26_tela_e($token) . '">'
+        . '<input type="hidden" name="csrf" value="' . d26_tela_e($csrf) . '">'
+        . '<button type="submit">Criar senha e entrar</button>'
+        . '</form>', true);
+}
+
+/** Tela de mensagem do convite (M1, M2, M3 ou limite): o texto em role="alert", repetido no título, sem formulário. */
+function d26_tela_mensagem(string $texto): string
+{
+    return d26_tela_documento($texto, '<h1>Caderno de Direito</h1><p role="alert">' . d26_tela_e($texto) . '</p>', true);
+}
+
+/** Senha criada sem entrar (o login automático falhou depois da gravação). Aviso informativo, com o endereço /. */
+function d26_tela_criada(): string
+{
+    return d26_tela_documento(D26_CONVITE_CRIADA, '<h1>Caderno de Direito</h1><p class="entrada-aviso" role="alert">'
+        . d26_tela_e(D26_CONVITE_CRIADA) . '</p><p><a href="/">Tela de entrada</a></p>', true);
 }
 
 /** Texto do aviso da tela de entrada, por código da lista fechada (D26_AVISOS). */

@@ -273,6 +273,63 @@ function d26_convite_registro(string $token, int $agora): array
     return ['hash' => hash('sha256', $token), 'expiraEm' => $agora + D26_CONVITE_VALIDADE];
 }
 
+/** Token recebido na página do convite: 64 hex minúsculos e string. Qualquer outra coisa (ausente, lista, tamanho, maiúsculas) é null. */
+function d26_convite_token_recebido(mixed $bruto): ?string
+{
+    return is_string($bruto) && preg_match('/^[0-9a-f]{64}$/D', $bruto) === 1 ? $bruto : null;
+}
+
+/**
+ * Classifica o link da página pública (CV-B2) pelo sha256 do token: 'valido' (convite pendente no prazo, com a
+ * conta em 'conta'), 'vencido' (convite com o hash, prazo passado), 'usado' (é o último consumido) ou 'nao-vale'.
+ * Lê sem lock: quem grava confere de novo, dentro do lock (d26_contas_consumir_convite).
+ *
+ * @param list<array<string, mixed>> $contas
+ * @return array{estado: string, conta: ?array<string, mixed>}
+ */
+function d26_convite_classificar(array $contas, string $token, int $agora): array
+{
+    $hash = hash('sha256', $token);
+    foreach ($contas as $c) {
+        if (is_array($c['convite'] ?? null) && hash_equals((string) $c['convite']['hash'], $hash)) {
+            return ['estado' => (int) $c['convite']['expiraEm'] > $agora ? 'valido' : 'vencido', 'conta' => $c];
+        }
+    }
+    foreach ($contas as $c) {
+        if (is_string($c['conviteUsado'] ?? null) && hash_equals($c['conviteUsado'], $hash)) {
+            return ['estado' => 'usado', 'conta' => null];
+        }
+    }
+    return ['estado' => 'nao-vale', 'conta' => null];
+}
+
+/**
+ * Consome o convite e grava a senha nova numa ÚNICA mutação sob lock (CV-B2, compare-and-swap). Invariante: só
+ * grava se a conta ainda é a lida (ativa, mesmo uid), o convite ainda é o mesmo (mesmo hash) e não venceu.
+ * Gravado: hash da senha, troca obrigatória cumprida, versaoSessao + 1 (derruba sessões), aparelhos vazios,
+ * conviteUsado com o hash consumido (para a mensagem M2) e o convite apagado. Devolve 'ok' ou 'divergente'.
+ */
+function d26_contas_consumir_convite(string $priv, string $login, string $uid, string $hashConvite, string $hashSenha, int $agora): string
+{
+    $resultado = d26_contas_mutar($priv, $login, static function (array &$c) use ($uid, $hashConvite, $hashSenha, $agora): string {
+        $convite = $c['convite'] ?? null;
+        if (($c['ativo'] ?? null) !== true
+            || !is_string($c['uid'] ?? null) || !hash_equals($uid, $c['uid'])
+            || !is_array($convite) || !hash_equals($hashConvite, (string) $convite['hash'])
+            || (int) $convite['expiraEm'] <= $agora) {
+            return 'divergente';
+        }
+        $c['hash'] = $hashSenha;
+        $c['deveTrocarSenha'] = false;
+        $c['versaoSessao'] = (int) $c['versaoSessao'] + 1;
+        $c['aparelhos'] = [];
+        $c['conviteUsado'] = $hashConvite;
+        unset($c['convite']);
+        return 'ok';
+    });
+    return $resultado === 'ok' ? 'ok' : 'divergente';
+}
+
 /** Caminho que a API devolve ao admin. O painel compõe a origem; o servidor nunca usa o Host. */
 function d26_convite_caminho(string $token): string
 {

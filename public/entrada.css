@@ -207,3 +207,45 @@ button {
   border: 1px solid var(--cor-erro-borda);
   border-radius: 6px;
 }
+
+/*
+  Aviso legal de site não oficial (espelha src/ui/componentes/AvisoLegal.vue, sem o modo
+  adaptado: a tela de entrada não tem JavaScript, então não recebe o atributo data-modo-adaptado).
+  Só tokens que esta tela já repete de tokens.css. A impressão troca as variáveis (papel branco,
+  tinta preta), e assim o aviso e o resto da tela seguem o mesmo caminho, sem cor literal fora de variável.
+*/
+.entrada-rodape {
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.aviso-legal {
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
+  background: var(--cor-fundo-elevado);
+  border: 2px solid var(--cor-primaria);
+  border-radius: 6px;
+  color: var(--cor-texto);
+}
+
+.aviso-legal__texto {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: justify;
+  text-indent: 2em;
+  hyphens: auto;
+}
+
+@media print {
+  :root {
+    --cor-fundo-elevado: #ffffff;
+    --cor-texto: #111111;
+    --cor-primaria: #000000;
+  }
+
+  .aviso-legal {
+    break-inside: avoid;
+  }
+}

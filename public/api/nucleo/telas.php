@@ -75,7 +75,7 @@ function d26_tela_cabecalho(): string
 }
 
 /** Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. */
-function d26_tela_documento(string $titulo, string $corpo): string
+function d26_tela_documento(string $titulo, string $corpo, string $rodape = ''): string
 {
     return '<!doctype html><html lang="pt-br"' . d26_tela_atributo_tema() . '><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -83,7 +83,20 @@ function d26_tela_documento(string $titulo, string $corpo): string
         . '<link rel="icon" href="/icones/favicon.svg" type="image/svg+xml">'
         . '<title>' . d26_tela_e($titulo) . '</title>'
         . '<link rel="stylesheet" href="/entrada.css?v=' . d26_tela_versao_css() . '">'
-        . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main></body></html>';
+        . '</head><body>' . d26_tela_cabecalho() . '<main>' . $corpo . '</main>' . $rodape . '</body></html>';
+}
+
+/**
+ * Aviso legal de site não oficial, no rodapé da tela de entrada. O texto é o de
+ * src/conteudo/avisoLegal.ts, repetido aqui; servidor/testes/entrada-aviso.teste.php prova a igualdade.
+ */
+function d26_tela_aviso_legal(): string
+{
+    $rotulo = 'Aviso:';
+    $corpo = 'este site não é oficial e não tem vínculo com a instituição de ensino nem com seus professores. É um projeto pessoal, independente e gratuito, feito para apoiar os estudos da turma de Direito. O conteúdo foi preparado a partir de materiais de aula, mas a seleção, a redação e eventuais erros são de responsabilidade exclusiva do autor, e não dos professores nem da instituição. O material é oferecido como está, apenas para estudo, sem garantia de exatidão ou atualização, e não substitui as aulas, a bibliografia indicada nem orientação jurídica profissional.';
+    return '<footer class="entrada-rodape"><section class="aviso-legal" role="note" aria-label="Aviso legal">'
+        . '<p class="aviso-legal__texto" lang="pt-BR"><strong>' . d26_tela_e($rotulo) . '</strong> ' . d26_tela_e($corpo) . '</p>'
+        . '</section></footer>';
 }
 
 /**
@@ -104,7 +117,7 @@ function d26_tela_entrada(string $token, string $destino, ?string $erro = null):
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'
         . '<input type="hidden" name="destino" value="' . d26_tela_e($destino) . '">'
         . '<button type="submit">Entrar</button>'
-        . '</form>');
+        . '</form>', d26_tela_aviso_legal());
 }
 
 /**

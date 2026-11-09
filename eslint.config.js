@@ -67,6 +67,7 @@ export default [
       'dist-pacote/**',
       'node_modules/**',
       'public/**',
+      '.worktrees/**',
       '.dependency-cruiser.cjs'
     ]
   },

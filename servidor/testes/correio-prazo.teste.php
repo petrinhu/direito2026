@@ -13,7 +13,8 @@ require_once __DIR__ . '/cli-apoio.php';
  * de passar vazio (L-36; revisão de EM-B3, ENV-BACKLOG128).
  */
 
-const CPZ_ESPERA_S = 3;
+// 4 s e não 3: com 3 s, o M8 (connect sem o total) saía em 2,03 s contra o teto de 2 s, margem de 30 ms (L-36).
+const CPZ_ESPERA_S = 4;
 const CPZ_SONDA_S = 1;
 
 /**
@@ -68,7 +69,7 @@ function cpzPremissaConnectBloqueia(int $porta): void
     );
 }
 
-teste('e-mail: D-2 o prazo total de 4 s conta desde antes do connect: um connect que esperou ~3 s não ganha outro total depois dele', function (): void {
+teste('e-mail: D-2 o prazo total de 4 s conta desde antes do connect: um connect que esperou ~4 s não ganha outro total depois dele', function (): void {
     correioCarregar();
     $ouvinte = cpzIniciarOuvinte(CPZ_ESPERA_S, dirTemporario());
     try {
@@ -85,7 +86,7 @@ teste('e-mail: D-2 o prazo total de 4 s conta desde antes do connect: um connect
     }
 });
 
-teste('e-mail: D-2 borda o connect nunca passa do prazo total de 1 s, mesmo com leitura de 10 s (ouvinte aceita depois de 3 s)', function (): void {
+teste('e-mail: D-2 borda o connect nunca passa do prazo total de 1 s, mesmo com leitura de 10 s (ouvinte aceita depois de 4 s)', function (): void {
     correioCarregar();
     $ouvinte = cpzIniciarOuvinte(CPZ_ESPERA_S, dirTemporario());
     try {

@@ -336,6 +336,15 @@ function emailB3SemearConvite(Ambiente $a, string $login, ?string $email): strin
  *
  * @return array{de: string, assunto: string, corpo: string}
  */
+/**
+ * Valor do Subject com SÓ encoded-words UTF-8 B, separadas por CRLF e espaço (dobra RFC 5322). Texto solto entre elas,
+ * ou fora delas, reprova (BL-B2, A5): o decodificador não pode ignorar o que não é encoded-word.
+ */
+function emailB3SubjectEstrito(string $valor): bool
+{
+    return preg_match('/^=\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=(?:\r\n =\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=)*$/', $valor) === 1;
+}
+
 function emailB3Mensagem(?string $conversa): array
 {
     verdadeiro($conversa !== null, 'o SMTP falso recebeu a conexão e gravou a conversa');
@@ -348,11 +357,13 @@ function emailB3Mensagem(?string $conversa): array
     $resto = substr($mensagem, $separador + 4);
     $fimDoCorpo = strpos($resto, "\r\n.\r\n");
     verdadeiro($fimDoCorpo !== false, 'a mensagem fecha com o ponto do DATA');
-    $codificado = substr($resto, 0, $fimDoCorpo + 2);
+    // Transparência SMTP (RFC 5321, 4.5.2): a linha que começa com ponto saiu como ".."; desfaz antes do quoted-printable.
+    $codificado = preg_replace('/^\.\./m', '.', substr($resto, 0, $fimDoCorpo + 2));
     preg_match('/^From: (.*)\r$/m', $cabecalhos, $de) === 1 || falhar('cabeçalho From ausente');
     // Assunto dobrado (BL-B2): uma ou mais encoded-words, separadas por CRLF e espaço; juntas dão o assunto.
     preg_match('/^Subject: ((?:[^\r\n]|\r\n )*)\r$/m', $cabecalhos, $assunto) === 1 || falhar('Subject ausente');
-    preg_match_all('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=/', $assunto[1], $palavras) >= 1 || falhar('Subject sem encoded-word UTF-8 B');
+    emailB3SubjectEstrito($assunto[1]) || falhar('Subject com texto fora das encoded-words (só encoded-word UTF-8 B, separada por CRLF e espaço)');
+    preg_match_all('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=/', $assunto[1], $palavras);
     $textoAssunto = '';
     foreach ($palavras[1] as $palavra) {
         $parte = base64_decode($palavra, true);
@@ -366,6 +377,21 @@ function emailB3Mensagem(?string $conversa): array
     }
     return ['de' => $de[1], 'assunto' => $textoAssunto, 'corpo' => $corpo];
 }
+
+teste('e-mail: decodificador do Subject recusa texto solto entre encoded-words (A5, BL-B2)', function (): void {
+    $palavra = static fn (string $texto): string => '=?UTF-8?B?' . base64_encode($texto) . '?=';
+    $montar = static fn (string $assunto): string => "Date: Tue, 10 Nov 2026 14:00:00 +0000\r\nFrom: nao-responda@example.com\r\n"
+        . "To: aviso@example.com\r\nSubject: $assunto\r\nMessage-ID: <x@example.com>\r\nMIME-Version: 1.0\r\n\r\ncorpo\r\n.\r\n";
+    igual('Conta ana', emailB3Mensagem($montar($palavra('Conta ana')))['assunto'], 'controle: uma encoded-word passa');
+    igual('Conta ana', emailB3Mensagem($montar($palavra('Conta ') . "\r\n " . $palavra('ana')))['assunto'], 'controle: duas encoded-words dobradas passam');
+    $recusou = false;
+    try {
+        emailB3Mensagem($montar($palavra('Conta ') . ' solto ' . $palavra('ana')));
+    } catch (RuntimeException $e) {
+        $recusou = str_contains($e->getMessage(), 'Subject');
+    }
+    verdadeiro($recusou, 'texto solto entre encoded-words é recusado no Subject, não ignorado');
+});
 
 /** Endereço do RCPT TO da conversa. */
 function emailB3Destinatario(string $conversa): string

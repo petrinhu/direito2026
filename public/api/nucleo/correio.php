@@ -697,7 +697,7 @@ function d26_aviso_destino(string $priv): ?string
     return $lido === '' ? null : $lido;
 }
 
-/** Teto de avisos: D26_AVISO_TETO_DIA em D26_AVISO_JANELA, chave própria (separada do teto do "Esqueci a senha"). */
+/** Teto dos avisos de primeira ocorrência (A1): D26_AVISO_TETO_DIA em D26_AVISO_JANELA, chave própria (separada do teto do "Esqueci a senha"). O A2 de bloqueio não passa por aqui. */
 function d26_aviso_reservar(string $priv, int $agora): bool
 {
     return d26_limite_envio_reservar($priv, d26_limite_chave_envio('aviso'), $agora,
@@ -789,8 +789,10 @@ function d26_aviso_agendar(string $priv, array $mensagem): void
 
 /**
  * Decide o aviso da ocorrência que a contagem acabou de fazer (BL-B2): 'contou' manda o A1, 'bloqueou' manda o A2.
- * Ordem: destino (ausente grava aviso-sem-destino), teto (aviso-teto) e só então a fila. $n é o número lido dentro do
- * lock (contas.php). Qualquer falha vira uma linha do erros.log pela classe e não muda a resposta.
+ * Ordem: destino (ausente grava aviso-sem-destino); só o A1 passa pelo teto (aviso-teto), porque o A2 de bloqueio sai
+ * sempre e não conta no teto (decisão do líder, 10/11/2026: o aviso que pede ação não pode ser calado por volume de
+ * A1); depois, a fila. $n é o número lido dentro do lock (contas.php). Qualquer falha vira uma linha do erros.log pela
+ * classe e não muda a resposta.
  *
  * @param array<string, mixed> $lida
  */
@@ -806,7 +808,7 @@ function d26_aviso_ocorrencia(string $priv, array $lida, int $n, bool $bloqueou,
         $mensagem = $bloqueou
             ? d26_correio_msg_bloqueio($destino, $login, $agora)
             : d26_correio_msg_uso($destino, $login, $n, $lida['admin'] === true, (int) ($lida['vigenteDesde'] ?? $agora));
-        if (!d26_aviso_reservar($priv, $agora)) {
+        if (!$bloqueou && !d26_aviso_reservar($priv, $agora)) {
             d26_log_erro_em($priv, 'aviso', 'aviso-teto');
             return;
         }

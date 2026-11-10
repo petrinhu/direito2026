@@ -644,39 +644,53 @@ teste('uso simultâneo: U14 aviso.destino ausente: nenhum envio e a linha aviso-
 
 // ---- U13: a segunda ocorrência manda A2 uma vez só, mesmo com pedidos paralelos ---------------------
 
-/** Todas as conversas do SMTP falso (conversa.bin e, com mais de uma conexão, conversa.bin.N), depois do prazo. */
-function usB2ConversaTodas(array $falso): string
+/**
+ * Uma mensagem decodificada por conexão SMTP que enviou (conversa.bin, ou conversa.bin.N com mais de uma conexão),
+ * na ordem de chegada. Espera o SMTP falso terminar, até o prazo. Conexão sem DATA não entra (não é envio).
+ *
+ * @return list<array{de: string, assunto: string, corpo: string}>
+ */
+function usB2Mensagens(array $falso): array
 {
     correioConversaFinal($falso, 5.0);
-    $tudo = '';
-    foreach (glob($falso['conversa'] . '*') ?: [] as $arquivo) {
-        $tudo .= (string) file_get_contents($arquivo);
+    $arquivos = glob($falso['conversa'] . '*') ?: [];
+    sort($arquivos, SORT_NATURAL);
+    $mensagens = [];
+    foreach ($arquivos as $arquivo) {
+        $conversa = (string) file_get_contents($arquivo);
+        if (str_contains($conversa, 'MAIL FROM:')) {
+            $mensagens[] = emailB3Mensagem($conversa);
+        }
     }
-    return $tudo;
+    return $mensagens;
 }
 
-teste('uso simultâneo: U13 segunda ocorrência: A2 sai uma vez, mesmo com três pedidos paralelos do derrubado', function (): void {
-    emailB3Com(['conversas' => 3], function (Ambiente $a, array $falso): void {
-        $a->semearUsuario('ana', US_SENHA_ANA, false, false);
+teste('uso simultâneo: U13 segunda ocorrência com dois derrubados em pedidos concorrentes: A2 sai uma vez, e o aparelho vivo depois do bloqueio não duplica', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
         usB2Destino($a);
-        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
-        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
-        $aparelhoA->get('/api/conteudo.php'); // ocorrência 1: A1
-        $aparelhoC = $a->entrar('ana', US_SENHA_ANA); // B cai na vez seguinte
-        $paralelos = [];
-        for ($i = 0; $i < 3; $i++) {
-            $paralelos[] = usGetSemEsperar($aparelhoB, '/api/conteudo.php');
-        }
-        foreach ($paralelos as $req) {
-            usConcluirGet($req);
-        }
-        $conversa = usB2ConversaTodas($falso);
-        igual(2, substr_count($conversa, 'MAIL FROM:'), 'dois envios no total: o A1 e o A2, nenhum a mais');
-        igual(1, substr_count($conversa, base64_encode(US_B2_ASSUNTO_A2)), 'o A2 aparece uma vez na conversa');
-        igual(2, usB2MarcasAviso($a), 'uma marca de teto para o A1 e uma para o A2, nenhuma a mais');
-        igual(true, array_key_exists('bloqueada', usB2Conta($a)), 'a conta ficou bloqueada');
-        verdadeiro($aparelhoC !== null, 'o terceiro login existiu');
-    });
+        $p = $a->entrar('ana', US_SENHA_ANA);
+        $q = $a->entrar('ana', US_SENHA_ANA); // derruba p
+        igual(401, $p->get('/api/conteudo.php')->status, 'ocorrência 1: p cai (A1)');
+        $r = $a->entrar('ana', US_SENHA_ANA); // derruba q
+        $k = $a->entrar('ana', US_SENHA_ANA); // derruba r: k é o último login vivo
+        // q e r são sessões diferentes (a trava de sessão não os serializa). Os dois param, já com a conta lida
+        // antes do bloqueio, no ponto de pausa; soltos juntos, só um conta e bloqueia; o outro perde no CAS.
+        // r sai depois de q já estar parado: disparados juntos, o php -S não entregou o pedido de r (medido).
+        pausaLigar($a, 'queda-antes-contar', 'ana');
+        $reqQ = usGetSemEsperar($q, '/api/conteudo.php');
+        pausaEsperarChegada($reqQ, $a, 'queda-antes-contar', 1);
+        $reqR = usGetSemEsperar($r, '/api/conteudo.php');
+        pausaEsperarChegada($reqR, $a, 'queda-antes-contar', 2, [$reqQ]);
+        pausaSoltar($a, 'queda-antes-contar');
+        igual([401, 401], [usConcluirGet($reqQ)->status, usConcluirGet($reqR)->status], 'q e r recebem 401');
+        igual(2, usB2Conta($a)['usoSimultaneo'] ?? null, 'duas ocorrências, uma por marcador, nenhuma a mais');
+        verdadeiro(array_key_exists('bloqueada', usB2Conta($a)), 'a conta ficou bloqueada');
+        // k é o aparelho vivo que ficou: o pedido dele, depois do bloqueio, não pode mandar outro A2
+        igual(401, $k->get('/api/conteudo.php')->status, 'k cai pelo bloqueio');
+        $mensagens = usB2Mensagens($falso);
+        igual([US_B2_ASSUNTO_A1, US_B2_ASSUNTO_A2], array_column($mensagens, 'assunto'), 'um A1 e um só A2: nenhum a mais');
+        igual(1, usB2MarcasAviso($a), 'o teto conta só o A1 (o A2 não entra no teto)');
+    }, ['conversas' => 3], ['workers' => 4]);
 });
 
 teste('uso simultâneo: U13b A2 byte a byte: conta comum bloqueada, hora do bloqueio em Recife', function (): void {
@@ -686,6 +700,26 @@ teste('uso simultâneo: U13b A2 byte a byte: conta comum bloqueada, hora do bloq
     igual(US_B2_ASSUNTO_A2, $m['assunto'], 'assunto do A2');
     igual('A conta ana foi bloqueada em 09/11/2026 às 23:30 (horário de Recife), na 2ª vez em que foi usada em dois aparelhos ao mesmo tempo. Todas as sessões dela caíram. Para liberar, use Desbloquear no painel. Se a senha pode ter vazado, use também Redefinir senha.', $m['corpo'], 'corpo do A2');
 });
+
+teste('uso simultâneo: U13c contar_uso não conta de novo a conta já bloqueada, mesmo com CAS e marcador conferindo (A2 idempotente no lock)', function (): void {
+    $dir = dirTemporario();
+    $priv = $dir . '/privado';
+    mkdir($priv, 0700, true);
+    igual('ok', d26_contas_criar($priv, 'ana', 'hash-ana', false));
+    // Bloqueio gravado sem trocar uid, versaoSessao nem hash (como o S57): a lida é do mesmo estado, então o CAS passa.
+    usEditarConta($priv, 'ana', static function (array &$c): void {
+        $c['sessaoVigente'] = str_repeat('a', 64);
+        $c['usoSimultaneo'] = 1;
+        $c['bloqueada'] = ['em' => time(), 'motivo' => 'uso-simultaneo'];
+    });
+    $agora = time();
+    $lida = d26_contas_buscar($priv, 'ana');
+    $ordinal = null;
+    igual('nao-conta', d26_contas_contar_uso($priv, $lida, $agora - 10, $agora - 3600, null, $agora, $ordinal), 'conta já bloqueada não conta de novo');
+    igual(null, $ordinal, 'nenhum número de ocorrência para um aviso');
+    igual(1, d26_contas_buscar($priv, 'ana')['usoSimultaneo'] ?? null, 'o contador não sobe');
+    apagarArvore($dir);
+}, false);
 
 // ---- U15: teto de 20 avisos em 24 h (chave própria); o teto do "Esqueci a senha" cheio não impede o aviso --
 
@@ -723,6 +757,23 @@ teste('uso simultâneo: U15b o teto do Esqueci a senha cheio não impede o aviso
     });
 });
 
+teste('uso simultâneo: U15c teto cheio de A1 não segura o A2: o bloqueio sai sempre e não entra no teto (decisão do líder, 10/11/2026)', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        usB2Destino($a);
+        usB2EncherTeto($a, 'aviso', 20);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php'); // 1ª ocorrência: o A1 sai suprimido pelo teto cheio
+        $aparelhoC = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB->get('/api/conteudo.php'); // 2ª ocorrência: bloqueia, e o A2 sai mesmo com o teto cheio
+        verdadeiro(array_key_exists('bloqueada', usB2Conta($a)), 'a conta ficou bloqueada');
+        contem('aviso-teto', (string) @file_get_contents($a->priv . '/erros.log'), 'o A1 ficou no teto');
+        igual([US_B2_ASSUNTO_A2], array_column(usB2Mensagens($falso), 'assunto'), 'só o A2 sai');
+        igual(20, usB2MarcasAviso($a), 'o A2 não grava marca no teto');
+        verdadeiro($aparelhoC !== null, 'o terceiro login existiu');
+    }, ['conversas' => 2]);
+});
+
 // ---- U16: o aviso sai DEPOIS da resposta, fora de lock; falha do SMTP não muda a resposta -------------
 
 teste('uso simultâneo: U16 o aviso sai depois da resposta (ordem por injeção, TE4); falha do SMTP não sai do despacho', function (): void {
@@ -746,22 +797,145 @@ teste('uso simultâneo: U16 o aviso sai depois da resposta (ordem por injeção,
     igual(['termino', 'envio'], $ordem, 'o término da resposta vem antes do envio');
 });
 
+/**
+ * GET que entrega o corpo à medida que chega, sem esperar o fim da resposta. O corpo vai para $corpo por referência.
+ *
+ * @return array{resource, \CurlHandle}
+ */
+function usGetParcial(Cliente $c, string $caminho, string &$corpo): array
+{
+    $cookie = [];
+    foreach ($c->cookies as $n => $v) {
+        $cookie[] = "$n=$v";
+    }
+    $h = curl_init($c->origem() . $caminho);
+    curl_setopt_array($h, [
+        CURLOPT_WRITEFUNCTION => static function ($curl, string $pedaco) use (&$corpo): int {
+            $corpo .= $pedaco;
+            return strlen($pedaco);
+        },
+        CURLOPT_TIMEOUT => 60,
+        CURLOPT_HTTPHEADER => ['Cookie: ' . implode('; ', $cookie), 'Connection: close'],
+    ]);
+    $m = curl_multi_init();
+    curl_multi_add_handle($m, $h);
+    curl_multi_exec($m, $ativos);
+    return [$m, $h];
+}
+
+/** Termina um GET de usGetParcial e devolve o status. */
+function usConcluirParcial(array $req): int
+{
+    [$m, $h] = $req;
+    do {
+        $estado = curl_multi_exec($m, $ativos);
+        if ($ativos > 0) {
+            curl_multi_select($m, 0.1);
+        }
+    } while ($ativos > 0 && $estado === CURLM_OK);
+    $status = (int) curl_getinfo($h, CURLINFO_RESPONSE_CODE);
+    curl_multi_remove_handle($m, $h);
+    curl_close($h);
+    curl_multi_close($m);
+    return $status;
+}
+
+/**
+ * Envio depois da resposta com o término REAL do SAPI (stub de apoio/sapi-*.php, sob php -S). O SMTP falso segura a
+ * conexão enquanto $parada existir. Prova: quando a conexão do envio chega ao SMTP, o término do SAPI já foi chamado
+ * e o corpo da resposta já saiu para o cliente. Com o envio síncrono no pedido (mutante g), o término não existe
+ * quando a conexão abre, e o corpo não sai.
+ */
+function usB2SapiEnvioDepois(string $stub): void
+{
+    $parada = dirTemporario() . '/envio-parado';
+    touch($parada);
+    usB2Com(function (Ambiente $a, array $falso) use ($parada): void {
+        usB2Destino($a);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $sinal = $a->priv . '/sinal-sapi-finish';
+        $chegou = $falso['conversa'] . '.chegou';
+        @unlink($sinal);
+        $corpo = '';
+        $req = usGetParcial($aparelhoA, '/api/conteudo.php', $corpo); // 1ª ocorrência: o A1 é o envio em teste
+        [$m] = $req;
+        $limite = microtime(true) + 5;
+        while (!is_file($chegou) && microtime(true) < $limite) {
+            curl_multi_exec($m, $ativos);
+            clearstatcache(true, $chegou);
+            usleep(20000);
+        }
+        verdadeiro(is_file($chegou), 'a conexão do envio chegou ao SMTP falso (o envio começou)');
+        clearstatcache(true, $sinal);
+        verdadeiro(is_file($sinal), 'o término do SAPI foi chamado antes de a conexão do envio existir');
+        $limite = microtime(true) + 2;
+        while ($corpo === '' && microtime(true) < $limite) {
+            curl_multi_exec($m, $ativos);
+            usleep(20000);
+        }
+        verdadeiro($corpo !== '', 'o corpo da resposta já saiu com o envio ainda parado no SMTP');
+        unlink($parada);
+        igual(401, usConcluirParcial($req), 'o 401 termina');
+        igual([US_B2_ASSUNTO_A1], array_column(usB2Mensagens($falso), 'assunto'), 'o A1 saiu depois do término');
+    }, ['esperarArquivo' => $parada], ['prepend' => $stub]);
+}
+
+teste('uso simultâneo: U16b SAPI falso litespeed: o término vem antes da conexão do envio, e o corpo sai antes do envio', fn () => usB2SapiEnvioDepois(RAIZ_REPO . '/servidor/testes/apoio/sapi-litespeed.php'));
+teste('uso simultâneo: U16b SAPI falso fastcgi: o término vem antes da conexão do envio, e o corpo sai antes do envio', fn () => usB2SapiEnvioDepois(RAIZ_REPO . '/servidor/testes/apoio/sapi-fastcgi.php'));
+
 // ---- U17: A1 e A2 não levam IP, cookie nem User-Agent --------------------------------------------------
 
-teste('uso simultâneo: U17 A1 e A2 sem IP, sem cookie e sem texto de User-Agent', function (): void {
+/**
+ * Corpo inteiro do A1 e do A2 como o líder lê (plano 9.1.5, R22 "Usar como estão"). Literais copiados do plano, com
+ * {hora} no lugar de dd/mm/aaaa às hh:mm (horário de Recife). Não vêm do código de produção: o teste não se compara a si.
+ */
+const US_B2_CORPO_A1 = 'A conta ana entrou em outro aparelho enquanto ainda estava em uso no anterior, em {hora} (horário de Recife). Esta é a 1ª vez. Na 2ª vez, a conta é bloqueada.';
+const US_B2_CORPO_A2 = 'A conta ana foi bloqueada em {hora} (horário de Recife), na 2ª vez em que foi usada em dois aparelhos ao mesmo tempo. Todas as sessões dela caíram. Para liberar, use Desbloquear no painel. Se a senha pode ter vazado, use também Redefinir senha.';
+
+teste('uso simultâneo: U17 A1 e A2 por HTTP: corpo inteiro igual ao texto do 9.1.5, sem IP, cookie nem User-Agent', function (): void {
     usB2Com(function (Ambiente $a, array $falso): void {
         usB2Destino($a);
         $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
         $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
         $aparelhoA->get('/api/conteudo.php', ['User-Agent' => 'UA-SENTINELA-BL-B2']);
-        $conversa = usB2Conversa($falso);
-        contem('Subject: =?UTF-8?B?', $conversa, 'há um e-mail na conversa');
-        naoContem('UA-SENTINELA-BL-B2', $conversa, 'o User-Agent não vai ao e-mail');
-        naoContem($aparelhoA->cookies[D26_SESSAO_NOME] ?? '§', $conversa, 'o cookie de sessão não vai ao e-mail');
-    });
-    $m = d26_correio_msg_uso(US_B2_DESTINO, 'ana', 1, false, time());
-    verdadeiro(preg_match('/\d+\.\d+\.\d+\.\d+/', $m['corpo']) !== 1, 'o corpo do A1 não tem endereço IP');
+        $horaA1 = (int) usB2Conta($a)['vigenteDesde']; // a hora do A1 é a do login que causou a queda
+        $aparelhoC = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB->get('/api/conteudo.php', ['User-Agent' => 'UA-SENTINELA-BL-B2']);
+        $horaA2 = (int) usB2Conta($a)['bloqueada']['em'];
+        $porAssunto = [];
+        foreach (usB2Mensagens($falso) as $msg) {
+            $porAssunto[$msg['assunto']] = $msg;
+        }
+        verdadeiro(isset($porAssunto[US_B2_ASSUNTO_A1]) && isset($porAssunto[US_B2_ASSUNTO_A2]), 'o A1 e o A2 saíram');
+        igual(str_replace('{hora}', usB2Hora($horaA1), US_B2_CORPO_A1), $porAssunto[US_B2_ASSUNTO_A1]['corpo'], 'corpo inteiro do A1 igual ao 9.1.5');
+        igual(str_replace('{hora}', usB2Hora($horaA2), US_B2_CORPO_A2), $porAssunto[US_B2_ASSUNTO_A2]['corpo'], 'corpo inteiro do A2 igual ao 9.1.5');
+        foreach ([US_B2_ASSUNTO_A1, US_B2_ASSUNTO_A2] as $assunto) {
+            verdadeiro(preg_match('/\d+\.\d+\.\d+\.\d+/', $porAssunto[$assunto]['corpo']) !== 1, "o corpo de '$assunto' não tem endereço IP");
+        }
+        $conversas = usB2ConversasBrutas($falso);
+        naoContem('UA-SENTINELA-BL-B2', $conversas, 'o User-Agent não vai ao e-mail');
+        foreach ([$aparelhoA, $aparelhoB] as $c) {
+            foreach ([D26_SESSAO_NOME, D26_DISP_NOME] as $nome) {
+                if (isset($c->cookies[$nome])) {
+                    naoContem((string) $c->cookies[$nome], $conversas, "o cookie $nome não vai ao e-mail");
+                }
+            }
+        }
+        verdadeiro($aparelhoC !== null, 'o terceiro login existiu');
+    }, ['conversas' => 3]);
 });
+
+/** Conversas SMTP cruas, todas as conexões, depois do prazo (para procurar IP, cookie e User-Agent no que saiu). */
+function usB2ConversasBrutas(array $falso): string
+{
+    correioConversaFinal($falso, 5.0);
+    $tudo = '';
+    foreach (glob($falso['conversa'] . '*') ?: [] as $arquivo) {
+        $tudo .= (string) file_get_contents($arquivo);
+    }
+    return $tudo;
+}
 
 // ---- U12d: login no tamanho máximo (32) passa na validação do envio (conflito de D26_SMTP_ASSUNTO_MAX) --
 
@@ -792,6 +966,7 @@ teste('uso simultâneo: U12e assunto maior que 45 bytes sai em encoded-words de 
     $assunto = str_repeat('ç', 30) . 'fim'; // 63 bytes: o corte de 45 bytes cairia no meio de um ç
     $cabecalhos = d26_correio_montar(['destinatario' => US_B2_DESTINO, 'assunto' => $assunto, 'corpo' => 'x']);
     $sub = usB2Subject($cabecalhos);
+    verdadeiro(emailB3SubjectEstrito(substr($sub, strlen('Subject: '))), 'o Subject sai só com encoded-words separadas por CRLF e espaço');
     preg_match_all('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=/', $sub, $palavras);
     verdadeiro(count($palavras[1]) >= 2, 'o assunto de 63 bytes ocupa mais de uma encoded-word');
     $juntos = '';

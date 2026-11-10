@@ -55,7 +55,9 @@ teste('e-mail: D-1 convite: a resposta (303) é escrita e o término volta antes
         // convite grava quando a resposta está escrita (d26_teste_sinal, no-op em produção), lido com o E4 parado.
         clearstatcache(true, $a->priv . '/sinal-convite-respondeu');
         verdadeiro(is_file($a->priv . '/sinal-convite-respondeu'), 'com o E4 parado, a resposta do convite já estava escrita: o aviso vem depois da resposta');
-        igual(1, ordemLinhasSincronas($a), 'com o E4 parado, o término já voltou (uma linha envio-sincrono): sem ela, o aviso saiu antes do término (M6)');
+        clearstatcache(true, $a->priv . '/sinal-termino-fim');
+        verdadeiro(is_file($a->priv . '/sinal-termino-fim'), 'com o E4 parado, o sinal termino-fim não existe: o término não voltou antes do aviso (término ausente ou depois do aviso)');
+        igual(1, ordemLinhasSincronas($a), 'com o E4 parado, o término voltou e a linha envio-sincrono existe');
         igual(false, is_file($falso['conversa']), 'parado no aviso, nenhuma conexão SMTP ainda');
         pausaSoltar($a, 'senha-criada-antes-aviso');
         igual(303, cvb2ConcluirPost($req)->status, 'o 303 termina');
@@ -74,7 +76,9 @@ teste('e-mail: D-1 esqueci: a resposta sai, o término volta e só então a busc
         $req = emb4PostAsync($c, $csrf, 'ana');
         pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
         igual(200, ordemStatusParado($req), 'com a busca parada, o cliente já tem a resposta: a resposta sai antes da busca');
-        igual(1, ordemLinhasSincronas($a), 'com a busca parada, o término já voltou (uma linha envio-sincrono): sem ela, a busca saiu antes do término (M7)');
+        clearstatcache(true, $a->priv . '/sinal-termino-fim');
+        verdadeiro(is_file($a->priv . '/sinal-termino-fim'), 'com a busca parada, o sinal termino-fim não existe: o término não voltou antes da busca (término ausente ou depois da busca)');
+        igual(1, ordemLinhasSincronas($a), 'com a busca parada, o término voltou e a linha envio-sincrono existe');
         igual(false, is_file($falso['conversa']), 'parada na busca, nenhuma conexão SMTP ainda');
         pausaSoltar($a, 'esqueci-antes-pedir');
         [$status, $corpo] = emb4Concluir($req);

@@ -598,7 +598,9 @@ function d26_terminar_resposta(): bool
 function d26_responder_e_depois(string $priv, callable $responder, callable $terminar, callable $avisar): void
 {
     $responder();
-    if (!$terminar()) {
+    $terminou = $terminar();
+    d26_teste_sinal('termino-fim'); // no-op em produção: o término voltou antes do aviso (D-1)
+    if (!$terminou) {
         d26_log_erro_em($priv, 'envio', 'envio-sincrono');
     }
     $avisar();

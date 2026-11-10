@@ -25,7 +25,9 @@ const D26_ESQUECI_VALIDADE = 86400;
 function d26_esqueci_sequencia(string $priv, callable $responder, callable $terminar, callable $buscar): void
 {
     $responder();
-    if (!$terminar()) {
+    $terminou = $terminar();
+    d26_teste_sinal('termino-fim'); // no-op em produção: o término voltou antes da busca (D-1)
+    if (!$terminou) {
         d26_log_erro_em($priv, 'envio', 'envio-sincrono');
     }
     try {

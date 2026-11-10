@@ -574,6 +574,7 @@ function d26_correio_avisar(string $priv, array $mensagem): bool
  */
 function d26_terminar_resposta(): bool
 {
+    d26_teste_sinal('termino-chamado'); // no-op em produção: prova que a chamada real aconteceu (D-1)
     if (function_exists('litespeed_finish_request')) {
         litespeed_finish_request();
         return true;

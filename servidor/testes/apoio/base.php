@@ -281,10 +281,12 @@ final class Ambiente
     private $processo = null;
 
     private int $workers = 0;
+    public string $prepend = '';
 
     /**
-     * @param array{docroot?:string, docrootDir?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int} $opcoes
+     * @param array{docroot?:string, docrootDir?:string, semRoteador?:bool, admin?:bool, deveTrocar?:bool, workers?:int, prepend?:string} $opcoes
      *  docrootDir: pasta absoluta do webroot a servir (ex.: o webroot do pacote, LU-F4.3); tem prioridade sobre docroot.
+     *  prepend: caminho de um arquivo carregado como auto_prepend_file do php -S (SAPI falso, só nos testes que pedem).
      */
     public static function novo(array $opcoes = []): self
     {
@@ -312,6 +314,7 @@ final class Ambiente
             $a->semearUsuario(self::LOGIN_ADMIN, self::SENHA_ADMIN, true, $opcoes['deveTrocar'] ?? false);
         }
         $a->workers = (int) ($opcoes['workers'] ?? 0);
+        $a->prepend = (string) ($opcoes['prepend'] ?? '');
         self::$vivos[] = $a; // antes de iniciar: se o php -S falhar, ainda assim é limpo
         $a->iniciar((bool) ($opcoes['semRoteador'] ?? false));
         return $a;
@@ -400,6 +403,9 @@ final class Ambiente
         $this->base = 'http://127.0.0.1:' . $this->porta;
 
         $cmd = [PHP_BINARY, '-S', '127.0.0.1:' . $this->porta, '-t', $this->docroot];
+        if ($this->prepend !== '') {
+            array_splice($cmd, 1, 0, ['-d', 'auto_prepend_file=' . $this->prepend]);
+        }
         if (!$semRoteador) {
             $cmd[] = RAIZ_REPO . '/servidor/dev/roteador.php';
         }

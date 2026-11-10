@@ -56,6 +56,8 @@ teste('e-mail: D-1 convite: a resposta (303) é escrita e o término volta antes
         clearstatcache(true, $a->priv . '/sinal-convite-respondeu');
         verdadeiro(is_file($a->priv . '/sinal-convite-respondeu'), 'com o E4 parado, a resposta do convite já estava escrita: o aviso vem depois da resposta');
         clearstatcache(true, $a->priv . '/sinal-termino-fim');
+        clearstatcache(true, $a->priv . '/sinal-termino-chamado');
+        verdadeiro(is_file($a->priv . '/sinal-termino-chamado'), 'com o E4 parado, a chamada real de d26_terminar_resposta não aconteceu antes do aviso (PROP3)');
         verdadeiro(is_file($a->priv . '/sinal-termino-fim'), 'com o E4 parado, o sinal termino-fim não existe: o término não voltou antes do aviso (término ausente ou depois do aviso)');
         igual(1, ordemLinhasSincronas($a), 'com o E4 parado, o término voltou e a linha envio-sincrono existe');
         igual(false, is_file($falso['conversa']), 'parado no aviso, nenhuma conexão SMTP ainda');
@@ -77,6 +79,8 @@ teste('e-mail: D-1 esqueci: a resposta sai, o término volta e só então a busc
         pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
         igual(200, ordemStatusParado($req), 'com a busca parada, o cliente já tem a resposta: a resposta sai antes da busca');
         clearstatcache(true, $a->priv . '/sinal-termino-fim');
+        clearstatcache(true, $a->priv . '/sinal-termino-chamado');
+        verdadeiro(is_file($a->priv . '/sinal-termino-chamado'), 'com a busca parada, a chamada real de d26_terminar_resposta não aconteceu antes da busca (PROP3)');
         verdadeiro(is_file($a->priv . '/sinal-termino-fim'), 'com a busca parada, o sinal termino-fim não existe: o término não voltou antes da busca (término ausente ou depois da busca)');
         igual(1, ordemLinhasSincronas($a), 'com a busca parada, o término voltou e a linha envio-sincrono existe');
         igual(false, is_file($falso['conversa']), 'parada na busca, nenhuma conexão SMTP ainda');

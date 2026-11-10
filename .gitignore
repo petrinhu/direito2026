@@ -11,3 +11,5 @@ src/conteudo/**/dispositivos.ts
 imagens/
 originais/
 dist-pacote/
+# Cópias de trabalho (worktree/clone) do próprio projeto (L-55): nunca entram em commit nem nos portões.
+.worktrees/

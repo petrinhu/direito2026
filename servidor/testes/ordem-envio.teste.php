@@ -31,11 +31,23 @@ function ordemStatusParado(array $req, float $segundos = 5.0): int
     }
 }
 
-teste('e-mail: D-1 convite: a resposta (303) é escrita antes do aviso E4; com o E4 parado, a marca da resposta já existe e nenhum SMTP foi aberto', function (): void {
+/**
+ * Linhas "envio envio-sincrono" do erros.log: uma por pedido em que o término da resposta devolveu false (php -S) e o
+ * trabalho seguinte ficou na mesma conexão. A escrita é síncrona (d26_log_erro_em, LOCK_EX). Com a pausa segurada, a
+ * linha existe se, e só se, d26_terminar_resposta já foi chamado e voltou antes do aviso ou da busca (D-1; mutações
+ * M6 e M7 da revisão). Sem término de verdade sob php -S, esta linha é a única marca observável da ordem.
+ */
+function ordemLinhasSincronas(Ambiente $a): int
+{
+    return substr_count((string) @file_get_contents($a->priv . '/erros.log'), 'envio envio-sincrono');
+}
+
+teste('e-mail: D-1 convite: a resposta (303) é escrita e o término volta antes do aviso E4; com o E4 parado, a marca da resposta e a linha de término já existem e nenhum SMTP foi aberto', function (): void {
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
         $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        igual(0, ordemLinhasSincronas($a), 'antes do pedido, nenhuma linha envio-sincrono');
         file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
         pausaEsperarChegada($req, $a, 'senha-criada-antes-aviso');
@@ -43,6 +55,7 @@ teste('e-mail: D-1 convite: a resposta (303) é escrita antes do aviso E4; com o
         // convite grava quando a resposta está escrita (d26_teste_sinal, no-op em produção), lido com o E4 parado.
         clearstatcache(true, $a->priv . '/sinal-convite-respondeu');
         verdadeiro(is_file($a->priv . '/sinal-convite-respondeu'), 'com o E4 parado, a resposta do convite já estava escrita: o aviso vem depois da resposta');
+        igual(1, ordemLinhasSincronas($a), 'com o E4 parado, o término já voltou (uma linha envio-sincrono): sem ela, o aviso saiu antes do término (M6)');
         igual(false, is_file($falso['conversa']), 'parado no aviso, nenhuma conexão SMTP ainda');
         pausaSoltar($a, 'senha-criada-antes-aviso');
         igual(303, cvb2ConcluirPost($req)->status, 'o 303 termina');
@@ -51,15 +64,17 @@ teste('e-mail: D-1 convite: a resposta (303) é escrita antes do aviso E4; com o
     });
 });
 
-teste('e-mail: D-1 esqueci: a resposta sai antes da busca e do E2; com a busca parada, o cliente já tem os 200 e nenhum SMTP foi aberto', function (): void {
+teste('e-mail: D-1 esqueci: a resposta sai, o término volta e só então a busca roda; com a busca parada, o cliente já tem os 200, a linha de término existe e nenhum SMTP foi aberto', function (): void {
     emailB3Com([], function (Ambiente $a, array $falso): void {
         emailB3Semear($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
+        igual(0, ordemLinhasSincronas($a), 'antes do pedido, nenhuma linha envio-sincrono');
         pausaLigar($a, 'esqueci-antes-pedir', 'ana');
         $req = emb4PostAsync($c, $csrf, 'ana');
         pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
         igual(200, ordemStatusParado($req), 'com a busca parada, o cliente já tem a resposta: a resposta sai antes da busca');
+        igual(1, ordemLinhasSincronas($a), 'com a busca parada, o término já voltou (uma linha envio-sincrono): sem ela, a busca saiu antes do término (M7)');
         igual(false, is_file($falso['conversa']), 'parada na busca, nenhuma conexão SMTP ainda');
         pausaSoltar($a, 'esqueci-antes-pedir');
         [$status, $corpo] = emb4Concluir($req);

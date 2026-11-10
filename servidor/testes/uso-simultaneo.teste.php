@@ -533,8 +533,12 @@ teste('uso simultâneo: U12 (S57) o CAS do login recusa conta bloqueada mesmo co
     // Bloqueio gravado no disco sem trocar uid, versaoSessao nem hash: só a chave que o CAS precisa conferir.
     usEditarConta($priv, 'ana', static function (array &$c): void {
         $c['bloqueada'] = ['em' => time(), 'motivo' => 'uso-simultaneo'];
+        // Sentinela de data fixa (BAIXA-2 da revisão): um login recusado que gravasse ultimoLogin (M9) trocaria este
+        // valor. gmdate('c') no mesmo segundo do controle esconderia a gravação, então a espera não é o caminho.
+        $c['ultimoLogin'] = '2000-01-01T00:00:00+00:00';
     });
     $antes = d26_contas_buscar($priv, 'ana');
+    igual('2000-01-01T00:00:00+00:00', $antes['ultimoLogin'] ?? null, 'premissa: a sentinela de ultimoLogin ficou gravada antes do login recusado');
     igual(null, d26_contas_efetivar_login($priv, 'ana', $lida, null, null), 'a conta lida antes do bloqueio não entra');
     igual($antes, d26_contas_buscar($priv, 'ana'), 'o login recusado não grava nada (ultimoLogin, sessão e marcador seguem os de antes)');
     apagarArvore($dir);

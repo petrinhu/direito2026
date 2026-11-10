@@ -16,7 +16,7 @@ require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a eta
  *
  * Invariantes:
  *  - Antes de qualquer conexão, o envio está validado: cabeçalhos sem CR, LF ou NUL, destinatário em
- *    ASCII, assunto em UTF-8 com até 45 bytes (uma encoded-word, RFC 2047), corpo sem NUL, senha lida.
+ *    ASCII, assunto em UTF-8 com até D26_SMTP_ASSUNTO_MAX bytes, em encoded-words dobradas (RFC 2047), corpo sem NUL, senha lida.
  *  - Produção fala só TLS verificado com smtp.hostinger.com (sem self-signed, sem texto puro, sem a porta
  *    587). Texto puro existe só para destino de teste em 127.0.0.1 com porta (d26_correio_transporte_permitido):
  *    sob cli-server com D26_SMTP_TESTE, ou pela opção --destino do CLI conferir-smtp.
@@ -31,8 +31,17 @@ require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a eta
 
 const D26_SMTP_SENHA_ARQUIVO = 'smtp.senha';
 const D26_SMTP_SENHA_MAX = 256;
-/** Encoded-word RFC 2047: 10 + base64 + 2 caracteres, no máximo 75. Com 45 bytes, base64 tem 60. */
-const D26_SMTP_ASSUNTO_MAX = 45;
+/**
+ * Teto do assunto, em bytes (BL-B2, decisão do orquestrador, opção 1). Medido com PHP: o maior assunto que o produto
+ * manda é o A2 com login de 32 caracteres, "Conta " + login + " bloqueada por uso simultâneo", com 68 bytes. O teto de
+ * 160 deixa folga e cabe em até quatro palavras de 45 bytes. Acima disso, recusa como cabecalho.
+ */
+const D26_SMTP_ASSUNTO_MAX = 160;
+/**
+ * Bytes de texto por encoded-word RFC 2047 (UTF-8, B): 45 bytes viram 60 caracteres de base64; com "=?UTF-8?B?" (10) e
+ * "?=" (2) a palavra tem 72 caracteres, no máximo 75. O corte nunca parte um caractere (d26_correio_partes_assunto).
+ */
+const D26_SMTP_PALAVRA_BYTES = 45;
 const D26_SMTP_CORPO_MAX = 65536;
 const D26_SMTP_LINHA_MAX = 1024;
 const D26_SMTP_RESPOSTA_LINHAS_MAX = 100;
@@ -123,7 +132,7 @@ function d26_correio_destino_ascii(string $destino): bool
 function d26_correio_validar(array $envio): void
 {
     foreach ([$envio['destinatario'], $envio['assunto']] as $valor) {
-        if (preg_match('/[\r\n\0]/', $valor) === 1) {
+        if (preg_match('/[\x00-\x1F]/', $valor) === 1) {
             throw new D26EnvioFalhou('cabecalho');
         }
     }
@@ -159,6 +168,40 @@ function d26_correio_senha(string $priv): string
 }
 
 /**
+ * Divide o assunto em partes de até D26_SMTP_PALAVRA_BYTES bytes, cortando só entre caracteres UTF-8 inteiros.
+ * Assunto vazio ou UTF-8 inválido não chega aqui (d26_correio_validar recusa antes).
+ *
+ * @return list<string>
+ */
+function d26_correio_partes_assunto(string $assunto): array
+{
+    $partes = [];
+    $atual = '';
+    foreach (preg_split('//u', $assunto, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $caractere) {
+        if ($atual !== '' && strlen($atual) + strlen($caractere) > D26_SMTP_PALAVRA_BYTES) {
+            $partes[] = $atual;
+            $atual = '';
+        }
+        $atual .= $caractere;
+    }
+    $partes[] = $atual;
+    return $partes;
+}
+
+/**
+ * Cabeçalho Subject: as partes em encoded-words RFC 2047 (UTF-8, B), dobradas com CRLF e espaço (RFC 5322, 2.2.3).
+ * Assunto de até 45 bytes sai como antes: uma encoded-word só.
+ */
+function d26_correio_cabecalho_assunto(string $assunto): string
+{
+    $palavras = array_map(
+        static fn (string $parte): string => '=?UTF-8?B?' . base64_encode($parte) . '?=',
+        d26_correio_partes_assunto($assunto)
+    );
+    return 'Subject: ' . implode("\r\n ", $palavras);
+}
+
+/**
  * Mensagem completa em CRLF, sem o ponto final do DATA. Texto puro em quoted-printable. Remetente exato,
  * sem nome de exibição; Message-ID aleatório no domínio do remetente; Auto-Submitted contra resposta
  * automática (RFC 3834).
@@ -177,7 +220,7 @@ function d26_correio_montar(array $envio): string
         'Date: ' . gmdate('D, d M Y H:i:s') . ' +0000',
         'From: ' . D26_REMETENTE,
         'To: ' . $envio['destinatario'],
-        'Subject: =?UTF-8?B?' . base64_encode($envio['assunto']) . '?=',
+        d26_correio_cabecalho_assunto($envio['assunto']),
         'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $dominio . '>',
         'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8',
@@ -485,7 +528,7 @@ function d26_correio_mensagem(string $destinatario, string $assunto, string $cor
     return ['destinatario' => $destinatario, 'assunto' => $assunto, 'corpo' => $corpo];
 }
 
-/** Assuntos ratificados pelo líder (R14). Os três cabem numa encoded-word (até 45 bytes, D26_SMTP_ASSUNTO_MAX). */
+/** Assuntos ratificados pelo líder (R14). Cada um cabe numa encoded-word (até 45 bytes de texto). */
 const D26_CORREIO_ASSUNTO_CONVITE = 'Crie a sua senha de acesso';
 const D26_CORREIO_ASSUNTO_REDEFINICAO = 'Sua senha foi redefinida';
 const D26_CORREIO_ASSUNTO_SENHA_CRIADA = 'Sua senha foi criada';
@@ -605,4 +648,170 @@ function d26_responder_e_depois(string $priv, callable $responder, callable $ter
         d26_log_erro_em($priv, 'envio', 'envio-sincrono');
     }
     $avisar();
+}
+
+// ---- BL-B2: aviso ao líder por e-mail (plano-sessao-unica.md 9.1.5; textos R22 "Usar como estão") ----
+
+/** Hora dos textos de aviso: dd/mm/aaaa às hh:mm no fuso de Recife (UTC-3, sem horário de verão). Só no texto. */
+function d26_correio_hora_recife(int $instante): string
+{
+    $data = (new DateTimeImmutable('@' . $instante))->setTimezone(new DateTimeZone('America/Recife'));
+    return $data->format('d/m/Y') . ' às ' . $data->format('H:i');
+}
+
+/**
+ * A1 (BL-B2): a conta entrou em outro aparelho enquanto ainda estava em uso no anterior. $instante é a hora do login
+ * vigente (preenchimento do BL-B2, L-07). Admin: a última frase vira "Contas de administração não são bloqueadas.".
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_uso(string $destino, string $login, int $n, bool $admin, int $instante): array
+{
+    $fecho = $admin ? 'Contas de administração não são bloqueadas.' : 'Na 2ª vez, a conta é bloqueada.';
+    $corpo = 'A conta ' . $login . ' entrou em outro aparelho enquanto ainda estava em uso no anterior, em '
+        . d26_correio_hora_recife($instante) . ' (horário de Recife). Esta é a ' . $n . 'ª vez. ' . $fecho;
+    return d26_correio_mensagem($destino, 'Uso simultâneo na conta ' . $login, $corpo);
+}
+
+/**
+ * A2 (BL-B2): a conta comum foi bloqueada nesta ocorrência. $instante é o bloqueado em (bloqueada.em).
+ *
+ * @return array{destinatario: string, assunto: string, corpo: string}
+ */
+function d26_correio_msg_bloqueio(string $destino, string $login, int $instante): array
+{
+    $corpo = 'A conta ' . $login . ' foi bloqueada em ' . d26_correio_hora_recife($instante)
+        . ' (horário de Recife), na 2ª vez em que foi usada em dois aparelhos ao mesmo tempo. Todas as sessões dela caíram. '
+        . 'Para liberar, use Desbloquear no painel. Se a senha pode ter vazado, use também Redefinir senha.';
+    return d26_correio_mensagem($destino, 'Conta ' . $login . ' bloqueada por uso simultâneo', $corpo);
+}
+
+/** Destino do aviso: arquivo do privado, fora do repositório. Ausente ou vazio devolve null. */
+function d26_aviso_destino(string $priv): ?string
+{
+    $arquivo = $priv . '/' . D26_AVISO_DESTINO_ARQUIVO;
+    if (!is_file($arquivo)) {
+        return null;
+    }
+    $lido = trim((string) file_get_contents($arquivo));
+    return $lido === '' ? null : $lido;
+}
+
+/** Teto de avisos: D26_AVISO_TETO_DIA em D26_AVISO_JANELA, chave própria (separada do teto do "Esqueci a senha"). */
+function d26_aviso_reservar(string $priv, int $agora): bool
+{
+    return d26_limite_envio_reservar($priv, d26_limite_chave_envio('aviso'), $agora,
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_AVISO_JANELA) < D26_AVISO_TETO_DIA);
+}
+
+/**
+ * Fila dos avisos desta requisição. 'por' guarda [privado, mensagem]; 'tirar' devolve as mensagens do privado e as
+ * tira da fila; 'privs' lista os privados com aviso pendente. Estática: uma requisição, uma fila.
+ *
+ * @return list<mixed>
+ */
+function d26_aviso_fila(string $acao, string $priv = '', array $mensagem = []): array
+{
+    static $fila = [];
+    if ($acao === 'por') {
+        $fila[] = [$priv, $mensagem];
+        return [];
+    }
+    if ($acao === 'privs') {
+        return array_values(array_unique(array_column($fila, 0)));
+    }
+    $devolver = [];
+    $resto = [];
+    foreach ($fila as [$privado, $msg]) {
+        if ($privado === $priv) {
+            $devolver[] = $msg;
+        } else {
+            $resto[] = [$privado, $msg];
+        }
+    }
+    $fila = $resto;
+    return $devolver;
+}
+
+/** Termina a resposta, depois de fechar a sessão e descarregar o buffer do preâmbulo (inicio.php:14). */
+function d26_aviso_terminar_resposta(): bool
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
+    while (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    return d26_terminar_resposta();
+}
+
+/**
+ * Envia os avisos do privado depois da resposta (BL-B2; TE4): termina a resposta e só então envia, pela mesma
+ * sequência do E4 (d26_responder_e_depois). Fora de lock. Falha ou exceção vai ao erros.log só pela classe (TE3) e
+ * nunca muda a resposta.
+ *
+ * @param callable(): bool $terminar d26_aviso_terminar_resposta, ou o equivalente injetado pelo teste
+ * @param callable(array): mixed $enviar envio de uma mensagem
+ */
+function d26_aviso_despachar(string $priv, callable $terminar, callable $enviar): void
+{
+    $mensagens = d26_aviso_fila('tirar', $priv);
+    if ($mensagens === []) {
+        return;
+    }
+    d26_responder_e_depois($priv, static function (): void {
+    }, $terminar, static function () use ($priv, $mensagens, $enviar): void {
+        foreach ($mensagens as $mensagem) {
+            try {
+                $enviar($mensagem);
+            } catch (Throwable $e) {
+                d26_log_erro_em($priv, 'aviso', get_class($e));
+            }
+        }
+    });
+}
+
+/** Põe um aviso na fila da requisição e, na primeira vez, registra o envio para o fim dela (shutdown). */
+function d26_aviso_agendar(string $priv, array $mensagem): void
+{
+    static $registrado = false;
+    d26_aviso_fila('por', $priv, $mensagem);
+    if (!$registrado) {
+        $registrado = true;
+        register_shutdown_function(static function (): void {
+            foreach (d26_aviso_fila('privs') as $privado) {
+                d26_aviso_despachar($privado, 'd26_aviso_terminar_resposta',
+                    static fn (array $m): bool => d26_correio_avisar($privado, $m));
+            }
+        });
+    }
+}
+
+/**
+ * Decide o aviso da ocorrência que a contagem acabou de fazer (BL-B2): 'contou' manda o A1, 'bloqueou' manda o A2.
+ * Ordem: destino (ausente grava aviso-sem-destino), teto (aviso-teto) e só então a fila. $n é o número lido dentro do
+ * lock (contas.php). Qualquer falha vira uma linha do erros.log pela classe e não muda a resposta.
+ *
+ * @param array<string, mixed> $lida
+ */
+function d26_aviso_ocorrencia(string $priv, array $lida, int $n, bool $bloqueou, int $agora): void
+{
+    try {
+        $destino = d26_aviso_destino($priv);
+        if ($destino === null) {
+            d26_log_erro_em($priv, 'aviso', 'aviso-sem-destino');
+            return;
+        }
+        $login = (string) $lida['usuario'];
+        $mensagem = $bloqueou
+            ? d26_correio_msg_bloqueio($destino, $login, $agora)
+            : d26_correio_msg_uso($destino, $login, $n, $lida['admin'] === true, (int) ($lida['vigenteDesde'] ?? $agora));
+        if (!d26_aviso_reservar($priv, $agora)) {
+            d26_log_erro_em($priv, 'aviso', 'aviso-teto');
+            return;
+        }
+        d26_aviso_agendar($priv, $mensagem);
+    } catch (Throwable $e) {
+        d26_log_erro_em($priv, 'aviso', get_class($e));
+    }
 }

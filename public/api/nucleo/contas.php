@@ -729,16 +729,17 @@ function d26_contas_efetivar_login(string $priv, string $login, array $lida, ?st
  * do marcador): uma queda por login conta uma vez, mesmo com pedidos paralelos. A conta admin nunca é bloqueada: só
  * o contador sobe. Na ocorrência que chega a D26_USO_BLOQUEIO_EM numa conta comum grava bloqueada e faz
  * versaoSessao + 1 (a sessão que ficou também cai). Devolve 'contou', 'bloqueou', 'nao-conta' ou 'divergente'.
+ * $ordinal (BL-B2) recebe o número da ocorrência lido DENTRO do lock, para o aviso; só é preenchido em 'contou' e 'bloqueou'.
  *
  * @param array<string, mixed> $lida
  */
-function d26_contas_contar_uso(string $priv, array $lida, int $atividade, int $criada, ?string $aparelhoPedido, int $agora): string
+function d26_contas_contar_uso(string $priv, array $lida, int $atividade, int $criada, ?string $aparelhoPedido, int $agora, ?int &$ordinal = null): string
 {
     $resultado = 'nao-conta';
     if (!is_string($lida['sessaoVigente'] ?? null)) {
         return $resultado;
     }
-    d26_contas_mutar($priv, (string) $lida['usuario'], static function (array &$c) use ($lida, $atividade, $criada, $aparelhoPedido, $agora, &$resultado): string {
+    d26_contas_mutar($priv, (string) $lida['usuario'], static function (array &$c) use ($lida, $atividade, $criada, $aparelhoPedido, $agora, &$resultado, &$ordinal): string {
         if (!d26_conta_igual_lida($c, $lida) || !d26_marcador_confere($c['sessaoVigente'] ?? null, $lida['sessaoVigente'])) {
             $resultado = 'divergente';
             return 'divergente';
@@ -750,6 +751,7 @@ function d26_contas_contar_uso(string $priv, array $lida, int $atividade, int $c
         }
         $c['usoSimultaneo'] = (int) ($c['usoSimultaneo'] ?? 0) + 1;
         $c['quedaContadaPara'] = $marca;
+        $ordinal = $c['usoSimultaneo']; // lido DENTRO do lock: um Desbloquear antes do lock não desloca o número (BL-B2)
         $resultado = 'contou';
         if ($c['admin'] !== true && $c['usoSimultaneo'] >= D26_USO_BLOQUEIO_EM) {
             $c['bloqueada'] = ['em' => $agora, 'motivo' => 'uso-simultaneo'];

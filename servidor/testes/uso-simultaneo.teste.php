@@ -543,3 +543,322 @@ teste('uso simultâneo: U12 (S57) o CAS do login recusa conta bloqueada mesmo co
     igual($antes, d26_contas_buscar($priv, 'ana'), 'o login recusado não grava nada (ultimoLogin, sessão e marcador seguem os de antes)');
     apagarArvore($dir);
 }, false);
+
+
+correioCarregar(); // o módulo de correio (D26_SMTP_ASSUNTO_MAX, d26_correio_*) entra no processo de teste
+
+// ---- BL-B2: aviso por e-mail ao líder (U12 a U17, plano-sessao-unica.md 9.1.5, textos R22 "Usar como estão") ----
+// Os textos abaixo são LITERAIS, copiados do plano. A hora é a de Recife (America/Recife, sem horário de verão).
+// A dona da hora (vigenteDesde do login que causou a queda, no A1; bloqueada.em, no A2) é preenchimento do BL-B2 (L-07).
+
+const US_B2_DESTINO = 'aviso-uso@example.com';
+const US_B2_ASSUNTO_A1 = 'Uso simultâneo na conta ana';
+const US_B2_ASSUNTO_A2 = 'Conta ana bloqueada por uso simultâneo';
+
+/** Hora no formato do texto (dd/mm/aaaa às hh:mm) no fuso de Recife. */
+function usB2Hora(int $instante): string
+{
+    $d = (new DateTimeImmutable('@' . $instante))->setTimezone(new DateTimeZone('America/Recife'));
+    return $d->format('d/m/Y') . ' às ' . $d->format('H:i');
+}
+
+/** Grava o destino do aviso no privado sintético, modo 600 (a Fase 1 faz o mesmo no servidor). */
+function usB2Destino(Ambiente $a, string $destino = US_B2_DESTINO): void
+{
+    file_put_contents($a->priv . '/aviso.destino', $destino);
+    chmod($a->priv . '/aviso.destino', 0600);
+}
+
+/** Lê a conta ana do privado sintético (o que o produto gravou). */
+function usB2Conta(Ambiente $a): array
+{
+    return contaDe($a, 'ana');
+}
+
+/** Marcas de envio do teto de avisos (chave própria do BL-B2) no tentativas.json do privado. */
+function usB2MarcasAviso(Ambiente $a): int
+{
+    $d = json_decode((string) @file_get_contents($a->priv . '/tentativas.json'), true);
+    $chave = d26_limite_chave_envio('aviso');
+    return is_array($d) ? count((array) ($d['e'][$chave]['f'] ?? [])) : 0;
+}
+
+/** SMTP falso ligado ao php -S, com a conta ana semeada (sem troca obrigatória). */
+function usB2Com(callable $corpo, array $roteiro = [], array $opcoes = []): void
+{
+    emailB3Com($roteiro, static function (Ambiente $a, array $falso) use ($corpo): void {
+        $a->semearUsuario('ana', US_SENHA_ANA, false, false);
+        $corpo($a, $falso);
+    }, $opcoes);
+}
+
+/** Conversa do SMTP falso, depois que o processo dele terminou (ou o prazo passou). */
+function usB2Conversa(array $falso): string
+{
+    return (string) correioConversaFinal($falso, 5.0);
+}
+
+// ---- U12: a primeira ocorrência manda A1 (texto byte a byte, hora de Recife, "1ª") ----------------
+
+teste('uso simultâneo: U12a A1 byte a byte: conta comum, 1ª vez, hora de Recife (não UTC)', function (): void {
+    verdadeiro(function_exists('d26_correio_msg_uso'), 'd26_correio_msg_uso existe (função de montagem do A1)');
+    $instante = strtotime('2026-11-10T02:30:00Z'); // 09/11/2026 23:30 em Recife (UTC-3)
+    $m = d26_correio_msg_uso(US_B2_DESTINO, 'ana', 1, false, $instante);
+    igual(US_B2_DESTINO, $m['destinatario'], 'destino do A1');
+    igual(US_B2_ASSUNTO_A1, $m['assunto'], 'assunto do A1');
+    igual('A conta ana entrou em outro aparelho enquanto ainda estava em uso no anterior, em 09/11/2026 às 23:30 (horário de Recife). Esta é a 1ª vez. Na 2ª vez, a conta é bloqueada.', $m['corpo'], 'corpo do A1, conta comum');
+});
+
+teste('uso simultâneo: U12b A1 byte a byte: conta admin, 3ª vez, frase de admin no lugar da última', function (): void {
+    verdadeiro(function_exists('d26_correio_msg_uso'), 'd26_correio_msg_uso existe');
+    $instante = strtotime('2026-11-10T02:30:00Z');
+    $m = d26_correio_msg_uso(US_B2_DESTINO, 'admin', 3, true, $instante);
+    igual('A conta admin entrou em outro aparelho enquanto ainda estava em uso no anterior, em 09/11/2026 às 23:30 (horário de Recife). Esta é a 3ª vez. Contas de administração não são bloqueadas.', $m['corpo'], 'corpo do A1, admin');
+});
+
+teste('uso simultâneo: U12c primeira ocorrência por HTTP: A1 sai para o aviso.destino com login, hora e "1ª"', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        usB2Destino($a);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $r = $aparelhoA->get('/api/conteudo.php');
+        igual('outro-aparelho', usAviso($r), 'A recebe o aviso de outro aparelho');
+        $conversa = usB2Conversa($falso);
+        contem('RCPT TO:<' . US_B2_DESTINO . '>', $conversa, 'A1 vai para o aviso.destino sintético');
+        $msg = emailB3Mensagem($conversa);
+        igual(US_B2_ASSUNTO_A1, $msg['assunto'], 'assunto do A1 por HTTP');
+        contem('Esta é a 1ª vez. Na 2ª vez, a conta é bloqueada.', $msg['corpo'], 'frase da 1ª vez');
+        contem(usB2Hora((int) usB2Conta($a)['vigenteDesde']), $msg['corpo'], 'hora de Recife do login que causou a queda');
+    });
+});
+
+teste('uso simultâneo: U14 aviso.destino ausente: nenhum envio e a linha aviso-sem-destino no erros.log', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php');
+        naoContem('MAIL FROM', usB2Conversa($falso), 'nenhum envio sem destino');
+        contem('aviso-sem-destino', (string) @file_get_contents($a->priv . '/erros.log'), 'linha aviso-sem-destino');
+    });
+});
+
+// ---- U13: a segunda ocorrência manda A2 uma vez só, mesmo com pedidos paralelos ---------------------
+
+/** Todas as conversas do SMTP falso (conversa.bin e, com mais de uma conexão, conversa.bin.N), depois do prazo. */
+function usB2ConversaTodas(array $falso): string
+{
+    correioConversaFinal($falso, 5.0);
+    $tudo = '';
+    foreach (glob($falso['conversa'] . '*') ?: [] as $arquivo) {
+        $tudo .= (string) file_get_contents($arquivo);
+    }
+    return $tudo;
+}
+
+teste('uso simultâneo: U13 segunda ocorrência: A2 sai uma vez, mesmo com três pedidos paralelos do derrubado', function (): void {
+    emailB3Com(['conversas' => 3], function (Ambiente $a, array $falso): void {
+        $a->semearUsuario('ana', US_SENHA_ANA, false, false);
+        usB2Destino($a);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php'); // ocorrência 1: A1
+        $aparelhoC = $a->entrar('ana', US_SENHA_ANA); // B cai na vez seguinte
+        $paralelos = [];
+        for ($i = 0; $i < 3; $i++) {
+            $paralelos[] = usGetSemEsperar($aparelhoB, '/api/conteudo.php');
+        }
+        foreach ($paralelos as $req) {
+            usConcluirGet($req);
+        }
+        $conversa = usB2ConversaTodas($falso);
+        igual(2, substr_count($conversa, 'MAIL FROM:'), 'dois envios no total: o A1 e o A2, nenhum a mais');
+        igual(1, substr_count($conversa, base64_encode(US_B2_ASSUNTO_A2)), 'o A2 aparece uma vez na conversa');
+        igual(2, usB2MarcasAviso($a), 'uma marca de teto para o A1 e uma para o A2, nenhuma a mais');
+        igual(true, array_key_exists('bloqueada', usB2Conta($a)), 'a conta ficou bloqueada');
+        verdadeiro($aparelhoC !== null, 'o terceiro login existiu');
+    });
+});
+
+teste('uso simultâneo: U13b A2 byte a byte: conta comum bloqueada, hora do bloqueio em Recife', function (): void {
+    verdadeiro(function_exists('d26_correio_msg_bloqueio'), 'd26_correio_msg_bloqueio existe (função de montagem do A2)');
+    $instante = strtotime('2026-11-10T02:30:00Z');
+    $m = d26_correio_msg_bloqueio(US_B2_DESTINO, 'ana', $instante);
+    igual(US_B2_ASSUNTO_A2, $m['assunto'], 'assunto do A2');
+    igual('A conta ana foi bloqueada em 09/11/2026 às 23:30 (horário de Recife), na 2ª vez em que foi usada em dois aparelhos ao mesmo tempo. Todas as sessões dela caíram. Para liberar, use Desbloquear no painel. Se a senha pode ter vazado, use também Redefinir senha.', $m['corpo'], 'corpo do A2');
+});
+
+// ---- U15: teto de 20 avisos em 24 h (chave própria); o teto do "Esqueci a senha" cheio não impede o aviso --
+
+/** Escreve marcas de envio numa chave do teto no tentativas.json do privado sintético. */
+function usB2EncherTeto(Ambiente $a, string $chave, int $n): void
+{
+    $arq = $a->priv . '/tentativas.json';
+    $d = json_decode((string) @file_get_contents($arq), true);
+    $d = is_array($d) ? $d : D26_LIMITE_PADRAO;
+    $d['e'][d26_limite_chave_envio($chave)]['f'] = array_fill(0, $n, time());
+    file_put_contents($arq, json_encode($d));
+    chmod($arq, 0600);
+}
+
+teste('uso simultâneo: U15a teto de 20 avisos em 24 h: o 21º não sai, linha aviso-teto', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        usB2Destino($a);
+        usB2EncherTeto($a, 'aviso', 20);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php');
+        naoContem('MAIL FROM', usB2Conversa($falso), 'o 21º aviso não sai');
+        contem('aviso-teto', (string) @file_get_contents($a->priv . '/erros.log'), 'linha aviso-teto');
+    });
+});
+
+teste('uso simultâneo: U15b o teto do Esqueci a senha cheio não impede o aviso ao líder', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        usB2Destino($a);
+        usB2EncherTeto($a, 'teto', D26_ENVIO_TETO_DIA);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php');
+        contem('RCPT TO:<' . US_B2_DESTINO . '>', usB2Conversa($falso), 'o A1 sai mesmo com o teto do Esqueci cheio');
+    });
+});
+
+// ---- U16: o aviso sai DEPOIS da resposta, fora de lock; falha do SMTP não muda a resposta -------------
+
+teste('uso simultâneo: U16 o aviso sai depois da resposta (ordem por injeção, TE4); falha do SMTP não sai do despacho', function (): void {
+    verdadeiro(function_exists('d26_aviso_agendar') && function_exists('d26_aviso_despachar'), 'd26_aviso_agendar e d26_aviso_despachar existem');
+    $ordem = [];
+    $dir = dirTemporario();
+    d26_aviso_agendar($dir, d26_correio_msg_uso(US_B2_DESTINO, 'ana', 1, false, time()));
+    $terminar = static function () use (&$ordem): bool {
+        $ordem[] = 'termino';
+        return true;
+    };
+    $enviar = static function (array $m) use (&$ordem): void {
+        $ordem[] = 'envio';
+        throw new D26EnvioFalhou('etapa'); // falha do SMTP: não pode sair do despacho
+    };
+    try {
+        d26_aviso_despachar($dir, $terminar, $enviar);
+    } catch (Throwable $e) {
+        falhar('a falha do envio saiu do despacho: ' . get_class($e));
+    }
+    igual(['termino', 'envio'], $ordem, 'o término da resposta vem antes do envio');
+});
+
+// ---- U17: A1 e A2 não levam IP, cookie nem User-Agent --------------------------------------------------
+
+teste('uso simultâneo: U17 A1 e A2 sem IP, sem cookie e sem texto de User-Agent', function (): void {
+    usB2Com(function (Ambiente $a, array $falso): void {
+        usB2Destino($a);
+        $aparelhoA = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoB = $a->entrar('ana', US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php', ['User-Agent' => 'UA-SENTINELA-BL-B2']);
+        $conversa = usB2Conversa($falso);
+        contem('Subject: =?UTF-8?B?', $conversa, 'há um e-mail na conversa');
+        naoContem('UA-SENTINELA-BL-B2', $conversa, 'o User-Agent não vai ao e-mail');
+        naoContem($aparelhoA->cookies[D26_SESSAO_NOME] ?? '§', $conversa, 'o cookie de sessão não vai ao e-mail');
+    });
+    $m = d26_correio_msg_uso(US_B2_DESTINO, 'ana', 1, false, time());
+    verdadeiro(preg_match('/\d+\.\d+\.\d+\.\d+/', $m['corpo']) !== 1, 'o corpo do A1 não tem endereço IP');
+});
+
+// ---- U12d: login no tamanho máximo (32) passa na validação do envio (conflito de D26_SMTP_ASSUNTO_MAX) --
+
+teste('uso simultâneo: U12d A2 com login de 32 caracteres passa d26_correio_validar (assunto até o teto de envio)', function (): void {
+    verdadeiro(function_exists('d26_correio_msg_bloqueio'), 'd26_correio_msg_bloqueio existe');
+    $login = str_repeat('a', 32);
+    $m = d26_correio_msg_bloqueio(US_B2_DESTINO, $login, time());
+    try {
+        d26_correio_validar($m);
+    } catch (D26EnvioFalhou $e) {
+        falhar('A2 com login de 32 caracteres recusado na validação: etapa ' . $e->getMessage() . ' (assunto de ' . strlen($m['assunto']) . ' bytes)');
+    }
+});
+
+// ---- Conserto do assunto (decisão do orquestrador, opção 1): encoded-words dobradas, teto de 160 bytes ----
+
+/** Recorta o cabeçalho Subject (com as dobras) da mensagem montada, para decodificar sem o helper de e-mail. */
+function usB2Subject(string $cabecalhos): string
+{
+    $inicio = strpos($cabecalhos, 'Subject: ');
+    $fim = strpos($cabecalhos, "\r\nMessage-ID:");
+    verdadeiro($inicio !== false && $fim !== false && $fim > $inicio, 'a mensagem tem Subject antes de Message-ID');
+    return substr($cabecalhos, $inicio, $fim - $inicio);
+}
+
+teste('uso simultâneo: U12e assunto maior que 45 bytes sai em encoded-words de até 75 caracteres, juntas igual ao original, com acento no corte', function (): void {
+    verdadeiro(function_exists('d26_correio_montar'), 'd26_correio_montar existe');
+    $assunto = str_repeat('ç', 30) . 'fim'; // 63 bytes: o corte de 45 bytes cairia no meio de um ç
+    $cabecalhos = d26_correio_montar(['destinatario' => US_B2_DESTINO, 'assunto' => $assunto, 'corpo' => 'x']);
+    $sub = usB2Subject($cabecalhos);
+    preg_match_all('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=/', $sub, $palavras);
+    verdadeiro(count($palavras[1]) >= 2, 'o assunto de 63 bytes ocupa mais de uma encoded-word');
+    $juntos = '';
+    foreach ($palavras[0] as $palavra) {
+        verdadeiro(strlen($palavra) <= 75, 'cada encoded-word tem até 75 caracteres');
+    }
+    foreach ($palavras[1] as $b64) {
+        $parte = base64_decode($b64, true);
+        verdadeiro($parte !== false && preg_match('//u', $parte) === 1, 'cada parte decodifica como UTF-8 válido');
+        $juntos .= $parte;
+    }
+    igual($assunto, $juntos, 'juntas, as partes dão o assunto byte a byte');
+    foreach (explode("\r\n", $cabecalhos) as $linha) {
+        verdadeiro(strlen($linha) <= D26_SMTP_LINHA_MAX, 'nenhuma linha do cabeçalho passa de D26_SMTP_LINHA_MAX');
+    }
+});
+
+teste('uso simultâneo: U12f assunto com caractere de controle (abaixo de 0x20) é recusado como cabecalho', function (): void {
+    foreach (["Conta\x01ana", "Conta\tana", "Conta\x1Fana", "Conta\rana", "Conta\nana", "Conta\x00ana"] as $ruim) {
+        try {
+            d26_correio_validar(['destinatario' => US_B2_DESTINO, 'assunto' => $ruim, 'corpo' => 'x']);
+            falhar('assunto com controle passou: ' . bin2hex($ruim));
+        } catch (D26EnvioFalhou $e) {
+            igual('cabecalho', $e->etapa, 'recusa como cabecalho: ' . bin2hex($ruim));
+        }
+    }
+});
+
+teste('uso simultâneo: U12g teto do assunto em 160 bytes: 160 passa, 161 é recusado como cabecalho', function (): void {
+    igual(160, D26_SMTP_ASSUNTO_MAX, 'teto do assunto em 160 bytes');
+    d26_correio_validar(['destinatario' => US_B2_DESTINO, 'assunto' => str_repeat('a', 160), 'corpo' => 'x']);
+    try {
+        d26_correio_validar(['destinatario' => US_B2_DESTINO, 'assunto' => str_repeat('a', 161), 'corpo' => 'x']);
+        falhar('161 bytes passou da validação');
+    } catch (D26EnvioFalhou $e) {
+        igual('cabecalho', $e->etapa, '161 bytes recusado como cabecalho');
+    }
+});
+
+teste('uso simultâneo: U12h A1 por HTTP com login de 32 caracteres: o assunto dobrado chega inteiro ao SMTP falso', function (): void {
+    $login = str_repeat('a', 32);
+    emailB3Com([], function (Ambiente $a, array $falso) use ($login): void {
+        usB2Destino($a);
+        $a->semearUsuario($login, US_SENHA_ANA, false, false);
+        $aparelhoA = $a->entrar($login, US_SENHA_ANA);
+        $aparelhoB = $a->entrar($login, US_SENHA_ANA);
+        $aparelhoA->get('/api/conteudo.php');
+        $msg = emailB3Mensagem(usB2Conversa($falso));
+        igual('Uso simultâneo na conta ' . $login, $msg['assunto'], 'assunto dobrado decodifica igual ao original');
+    });
+});
+
+// ---- U18: o ordinal do A1 é lido DENTRO do lock (Desbloquear entre a leitura e o lock, ramo contas.php:870) ----
+
+teste('uso simultâneo: U18 o ordinal do A1 é o número lido dentro do lock, não o da leitura anterior', function (): void {
+    $a = Ambiente::novo([]);
+    $a->semearUsuario('ana', US_SENHA_ANA, true, false);
+    $agora = time();
+    usEditarConta($a->priv, 'ana', static function (array &$c) use ($agora): void {
+        $c['vigenteDesde'] = $agora - 5;
+        $c['sessaoVigente'] = str_repeat('a', 64);
+        $c['usoSimultaneo'] = 5; // o número real, dentro do lock
+    });
+    $lida = contaDe($a, 'ana');
+    $lida['usoSimultaneo'] = 0; // leitura anterior ao lock (um Desbloquear caiu entre as duas)
+    $ordinal = null;
+    $resultado = d26_contas_contar_uso($a->priv, $lida, $agora - 10, $agora - 3600, null, $agora, $ordinal);
+    igual('contou', $resultado, 'a contagem vale');
+    igual(6, $ordinal, 'o ordinal é 6, o número dentro do lock + 1');
+});

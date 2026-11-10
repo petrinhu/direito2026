@@ -6,6 +6,8 @@ if (!defined('D26_API')) {
     exit;
 }
 
+require_once __DIR__ . '/correio.php'; // o aviso de uso simultâneo sai daqui, depois da resposta (BL-B2)
+
 /**
  * Sessão server-side em PRIV/sessoes (pasta própria, não a compartilhada).
  * Configurada só por funções de sessão e pelo array de opções (sem ini_set,
@@ -153,7 +155,11 @@ function d26_sessao_contar_queda(string $priv, array $lida, int $agora): string
     $atividade = (int) ($_SESSION['atividade'] ?? 0);
     $criada = (int) ($_SESSION['criada'] ?? 0);
     d26_teste_pausar('queda-antes-contar', (string) ($lida['usuario'] ?? '')); // no-op em produção
-    $resultado = d26_contas_contar_uso($priv, $lida, $atividade, $criada, d26_aparelho_do_pedido(), $agora);
+    $ordinal = null;
+    $resultado = d26_contas_contar_uso($priv, $lida, $atividade, $criada, d26_aparelho_do_pedido(), $agora, $ordinal);
+    if ($resultado === 'contou' || $resultado === 'bloqueou') {
+        d26_aviso_ocorrencia($priv, $lida, (int) $ordinal, $resultado === 'bloqueou', $agora);
+    }
     return $resultado === 'bloqueou' ? D26_AVISO_BLOQUEADA : D26_AVISO_OUTRO_APARELHO;
 }
 

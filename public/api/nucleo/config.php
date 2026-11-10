@@ -43,6 +43,14 @@ const D26_USO_RESERVA = 30;
 const D26_USO_BLOQUEIO_EM = 2;
 
 /**
+ * Aviso por e-mail ao líder (BL-B2, plano-sessao-unica.md 9.1.5): teto de 20 avisos em 24 h, com chave própria no
+ * tentativas.json. O destino fica num arquivo do privado com este nome, nunca no repositório nem em d26_conta_publica.
+ */
+const D26_AVISO_TETO_DIA = 20;
+const D26_AVISO_JANELA = 86400;
+const D26_AVISO_DESTINO_ARQUIVO = 'aviso.destino';
+
+/**
  * Validade do convite por link de criar e de redefinir (CV-B1, decisão do líder de 08/11/2026):
  * 48 horas, uso único. Gerar outro link (ou redefinir de novo) revoga o anterior.
  */

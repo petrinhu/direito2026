@@ -350,13 +350,21 @@ function emailB3Mensagem(?string $conversa): array
     verdadeiro($fimDoCorpo !== false, 'a mensagem fecha com o ponto do DATA');
     $codificado = substr($resto, 0, $fimDoCorpo + 2);
     preg_match('/^From: (.*)\r$/m', $cabecalhos, $de) === 1 || falhar('cabeçalho From ausente');
-    preg_match('/^Subject: =\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=\r$/m', $cabecalhos, $assunto) === 1 || falhar('Subject em encoded-word ausente');
+    // Assunto dobrado (BL-B2): uma ou mais encoded-words, separadas por CRLF e espaço; juntas dão o assunto.
+    preg_match('/^Subject: ((?:[^\r\n]|\r\n )*)\r$/m', $cabecalhos, $assunto) === 1 || falhar('Subject ausente');
+    preg_match_all('/=\?UTF-8\?B\?([A-Za-z0-9+\/=]+)\?=/', $assunto[1], $palavras) >= 1 || falhar('Subject sem encoded-word UTF-8 B');
+    $textoAssunto = '';
+    foreach ($palavras[1] as $palavra) {
+        $parte = base64_decode($palavra, true);
+        $parte !== false || falhar('encoded-word do Subject inválida');
+        $textoAssunto .= $parte;
+    }
     $corpo = quoted_printable_decode($codificado);
     $corpo = str_replace("\r\n", "\n", $corpo);
     if (str_ends_with($corpo, "\n")) {
         $corpo = substr($corpo, 0, -1);
     }
-    return ['de' => $de[1], 'assunto' => (string) base64_decode($assunto[1], true), 'corpo' => $corpo];
+    return ['de' => $de[1], 'assunto' => $textoAssunto, 'corpo' => $corpo];
 }
 
 /** Endereço do RCPT TO da conversa. */

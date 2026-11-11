@@ -386,6 +386,9 @@ function cvb2Mensagem(Resposta $r, int $status, string $texto): void
     contem('<title>' . $texto . '</title>', $r->corpo, 'texto repetido no título');
     contem($texto, $r->corpo, 'texto da mensagem');
     naoContem('<form', $r->corpo, 'sem formulário');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer da mensagem');
+    contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer na mensagem');
+    igual(CVB2_CSP_TELA, $r->cabecalho('content-security-policy'), 'CSP da mensagem');
 }
 
 /** Cookies do cliente mais um extra (para simular um pedido com o cookie de aviso). */
@@ -681,6 +684,9 @@ teste('convite: C18 30 falhas de token do mesmo IP: a seguinte dá 429; um link 
     $bloqueada = cvb2Pagina($c, $token);
     igual(429, $bloqueada->status, 'a 31ª do mesmo IP dá 429, mesmo com link válido');
     contem('Aguarde', $bloqueada->corpo, 'frase de espera');
+    igual('strict-origin', $bloqueada->cabecalho('referrer-policy'), 'referrer da tela de espera');
+    contem('<meta name="referrer" content="strict-origin">', $bloqueada->corpo, 'meta de referrer na tela de espera');
+    igual(CVB2_CSP_TELA, $bloqueada->cabecalho('content-security-policy'), 'CSP da tela de espera');
     igual(200, cvb2GetDeOutroIp($a, '/api/convite.php?t=' . $token, '127.0.0.2')->status, 'link válido de outro IP segue entrando');
 });
 
@@ -768,6 +774,9 @@ teste('convite: C22 o login falha depois do CAS: "Senha criada. Entre pela tela 
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(200, $r->status, 'a senha foi criada: tela de sucesso sem sessão');
     contem('Senha criada. Entre pela tela de entrada.', $r->corpo, 'texto de sucesso sem entrada automática');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer da tela de senha criada');
+    contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer na tela de senha criada');
+    igual(CVB2_CSP_TELA, $r->cabecalho('content-security-policy'), 'CSP da tela de senha criada');
     igual(false, $c->get('/api/sessao.php')->json()['autenticado'] ?? null, 'sem sessão aberta');
 
     $a->zerarTentativas();

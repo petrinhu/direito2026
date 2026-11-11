@@ -1,0 +1,293 @@
+/*
+  Pirâmide 3D (Kelsen e hierarquia brasileira). Porte do estilo do desenho aprovado: só o que a
+  figura usa. Todo texto segue os tokens do tema (--cor-*); as cores --pir-* são só do desenho
+  3D. Classes com prefixo próprio (figura-piramide, pir-): nada aqui vaza para o resto do site.
+*/
+
+/* ---- A figura que vem no corpo do texto: versão plana, legenda e lista ---- */
+
+.figura-piramide {
+  display: flex;
+  flex-direction: column;
+  margin: var(--esp-5, 1.5rem) 0;
+}
+
+/* O Teleport põe o 3D no fim do <figure>; na tela ele vem antes da legenda e da lista. */
+.figura-piramide > .figura-piramide3d {
+  order: -1;
+}
+
+.figura-piramide__plana svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  /*
+    O espaçamento de letra e de palavra do modo adaptado vale para o texto da página, não para o
+    texto dentro do desenho: os rótulos são medidos para o viewBox (400 unidades) e, com o
+    espaçamento herdado, as linhas passavam da borda direita e saíam cortadas. Medido no site, a
+    360 px no modo adaptado (tests/e2e-portao/piramide3d.spec.ts). A legenda e a lista, que são
+    texto da página, seguem o modo.
+  */
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+/* Com o 3D na tela, a versão plana sai (volta sozinha se o 3D desmontar). */
+.figura-piramide[data-3d='on'] > .figura-piramide__plana {
+  display: none;
+}
+
+.figura-piramide figcaption {
+  margin-top: var(--esp-2, 0.5rem);
+  font-size: var(--escala-sm, 0.9375rem);
+  color: var(--cor-texto-suave);
+}
+
+.figura-piramide__lista {
+  margin: var(--esp-3, 0.75rem) 0 0;
+  padding-left: 1.3em;
+}
+
+.figura-piramide__lista li {
+  margin: 0 0 0.6em;
+}
+
+.figura-piramide__explicacao {
+  margin: 0.3em 0 0;
+}
+
+.figura-piramide__exemplo {
+  margin-top: 0.5em;
+  padding: 0.6em 0.8em;
+  background: var(--cor-acento-claro);
+  border-left: 4px solid var(--cor-acento);
+}
+
+.figura-piramide__exemplo-rotulo {
+  display: inline-block;
+  margin: 0 0 0.3em;
+  padding: 0.05em 0.45em;
+  background: var(--cor-primaria);
+  color: var(--cor-fundo-elevado);
+  font-weight: 700;
+}
+
+.figura-piramide__exemplo-texto {
+  margin: 0;
+}
+
+/* ---- Paleta do desenho 3D: petróleo e ouro (complementares), areia e sombra neutros ---- */
+
+.figura-piramide3d {
+  --pir-ouro: #a8801e;
+  --pir-ouro-luz: #e7c46a;
+  --pir-petroleo: #1d4d7a;
+  --pir-areia: #efe4c8;
+  --pir-sombra: #0d2440;
+  --pir-atmosfera: radial-gradient(
+    ellipse at 46% 56%,
+    rgba(29, 77, 122, 0.14) 0%,
+    rgba(29, 77, 122, 0) 68%
+  );
+  /* Face com texto: contraste WCAG medido nos pixels renderizados (6:1 ou mais no pior caso). */
+  --pir-face-topo: #1b4772;
+  --pir-face-base: #0d2440;
+  --pir-face-faixa: #0a1b30;
+  --pir-face-nome: #f0d68a;
+  --pir-face-explicacao: #faf9f5;
+  --pir-face-exemplo: #f3ead1;
+  --pir-face-rotulo: #e7c46a;
+  --pir-face-filete: #c9a544;
+
+  position: relative;
+  margin: 0 0 14px;
+}
+
+:root[data-theme='dark'] .figura-piramide3d {
+  --pir-ouro: #d3b563;
+  --pir-ouro-luz: #f5e2a6;
+  --pir-petroleo: #7fa8d6;
+  --pir-areia: #2a2418;
+  --pir-sombra: #04070b;
+  --pir-atmosfera: radial-gradient(
+    ellipse at 46% 56%,
+    rgba(127, 168, 214, 0.16) 0%,
+    rgba(127, 168, 214, 0) 68%
+  );
+  --pir-face-topo: #2a5484;
+  --pir-face-base: #173a61;
+  --pir-face-faixa: #102a47;
+  --pir-face-nome: #f5e2a6;
+  --pir-face-explicacao: #eceff2;
+  --pir-face-exemplo: #f3ead1;
+  --pir-face-rotulo: #f0d68a;
+  --pir-face-filete: #d3b563;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .figura-piramide3d {
+    --pir-ouro: #d3b563;
+    --pir-ouro-luz: #f5e2a6;
+    --pir-petroleo: #7fa8d6;
+    --pir-areia: #2a2418;
+    --pir-sombra: #04070b;
+    --pir-atmosfera: radial-gradient(
+      ellipse at 46% 56%,
+      rgba(127, 168, 214, 0.16) 0%,
+      rgba(127, 168, 214, 0) 68%
+    );
+    --pir-face-topo: #2a5484;
+    --pir-face-base: #173a61;
+    --pir-face-faixa: #102a47;
+    --pir-face-nome: #f5e2a6;
+    --pir-face-explicacao: #eceff2;
+    --pir-face-exemplo: #f3ead1;
+    --pir-face-rotulo: #f0d68a;
+    --pir-face-filete: #d3b563;
+  }
+}
+
+.figura-piramide3d[hidden] {
+  display: none;
+}
+
+/* ---- Controles de som ---- */
+
+.figura-piramide3d__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-2, 0.5rem);
+  margin: 0 0 var(--esp-3, 0.75rem);
+}
+
+.figura-piramide3d__botao {
+  font: inherit;
+  font-size: var(--escala-sm, 0.9375rem);
+  padding: 8px 14px;
+  min-height: var(--alvo-toque-minimo, 24px);
+  color: var(--cor-texto);
+  background: var(--cor-fundo-elevado);
+  border: 2px solid var(--cor-texto);
+  cursor: pointer;
+}
+
+.figura-piramide3d__botao[aria-pressed='true'] {
+  background: var(--cor-texto);
+  color: var(--cor-fundo-elevado);
+}
+
+.figura-piramide3d__botao:focus-visible {
+  outline: 3px solid var(--cor-texto);
+  outline-offset: 3px;
+}
+
+.figura-piramide3d__aviso {
+  margin: 0 0 0 10px;
+  font-size: var(--escala-sm, 0.9375rem);
+  color: var(--cor-texto);
+}
+
+/* ---- Cena 3D: canvas, rótulos, guias e leitor sobrepostos ---- */
+
+.pir-cena {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 760 / 600;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--pir-atmosfera);
+}
+
+/* O canvas nunca intercepta o ponteiro: o tratamento é por ouvintes no documento. */
+.pir-tela {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Palco do voo: o canvas da figura é o mesmo; em voo vira a janela inteira. */
+.pir-tela--voo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.pir-sobreposicao,
+.pir-guias {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pir-guia {
+  stroke: var(--cor-texto);
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.pir-rotulo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.35em 0.6em;
+  font-family: inherit;
+  font-size: var(--escala-sm, 0.9375rem);
+  line-height: 1.35;
+  text-align: left;
+  color: var(--cor-texto);
+  background: var(--cor-fundo-elevado);
+  border: 1px solid var(--cor-texto);
+  border-radius: 4px;
+  pointer-events: auto;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.pir-rotulo--texto {
+  cursor: default;
+  pointer-events: none;
+}
+
+.pir-rotulo--ativo {
+  border-width: 2px;
+  background: var(--cor-acento-claro);
+}
+
+.pir-rotulo:focus-visible {
+  outline: 3px solid var(--cor-texto);
+  outline-offset: 3px;
+}
+
+/* Com a fatia em primeiro plano, os rótulos e as guias saem do caminho: o texto fica dentro da
+   fatia. Os rótulos continuam focáveis (teclado). */
+.pir-cena[data-zoom='sim'] .pir-rotulo,
+.pir-cena[data-zoom='sim'] .pir-guias {
+  pointer-events: none;
+}
+
+/* Leitor de tela: o texto da fatia fica numa região própria, escondida do desenho. */
+.pir-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pir-rotulo {
+    transition: none;
+  }
+}

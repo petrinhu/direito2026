@@ -2,6 +2,7 @@ import type { MapaFichamento } from '../fichamento/tipos';
 import type { Mnemonico } from '../mnemonicos/tipos';
 import type { EstadoPublicacao } from '../curriculo/tipos';
 import type { TextoIntegral } from '../textoIntegral/tipos';
+import type { ChaveFigura3d, DadosFigura3d } from '../piramide3d/tipos';
 
 export interface MetaUnidade {
   /** Não lido: o rótulo é AVN pelo número da pasta, ordem do líder de 22/10/2026. */
@@ -49,6 +50,16 @@ export interface BlocoResumo {
   readonly componenteExtra?: ChaveComponenteExtra;
   /** Dados do extra 'dicas-forma-professora': título e itens. Ausente nos demais blocos. */
   readonly dicasDeForma?: DicasDeForma;
+  /**
+   * Figuras em 3D que entram dentro do corpoHtml. `alvo` é o id do `<figure>` do corpoHtml, que
+   * já traz a versão plana; o 3D é montado dentro dele quando o navegador aguenta, e a plana
+   * continua sendo o que aparece nos demais casos. Os textos vêm do conteúdo.
+   */
+  readonly figuras3d?: readonly {
+    readonly chave: ChaveFigura3d;
+    readonly alvo: string;
+    readonly dados: DadosFigura3d;
+  }[];
 }
 
 /** Um item das dicas: o texto inteiro, e o trecho que aparece em negrito (deve estar no texto). */

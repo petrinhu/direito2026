@@ -5,6 +5,7 @@ import QuadroResumo from './QuadroResumo.vue';
 import ChecklistArt319 from './ChecklistArt319.vue';
 import CartoesCincoPerguntas from './CartoesCincoPerguntas.vue';
 import DicasFormaProfessora from './DicasFormaProfessora.vue';
+import FiguraPiramide from '../piramide3d/FiguraPiramide.vue';
 
 const props = withDefaults(
   defineProps<{ bloco: BlocoResumo; itensChecklistMarcados?: readonly string[] }>(),
@@ -45,6 +46,16 @@ onBeforeUnmount(() => observador?.disconnect());
     <p v-if="bloco.fonte.length > 0" class="bloco-teorico__fonte">{{ bloco.fonte }}</p>
     <!-- v-html só recebe corpoHtml, que vem de src/conteudo/ (seção 4.4). -->
     <div class="bloco-teorico__corpo" v-html="bloco.corpoHtml" />
+    <!-- Figuras em 3D: cada uma monta dentro do <figure> que o corpoHtml já trouxe, com a versão
+         plana. `defer` espera o v-html existir; o alvo é o id do <figure>. -->
+    <Teleport
+      v-for="figura in bloco.figuras3d ?? []"
+      :key="figura.alvo"
+      defer
+      :to="`#${figura.alvo}`"
+    >
+      <FiguraPiramide :chave="figura.chave" :dados="figura.dados" />
+    </Teleport>
     <!-- Extensão opcional (Área da Júri: linhas A e B, fontes). Sem conteúdo no slot, nada muda. -->
     <slot name="depois-do-corpo" />
     <ChecklistArt319

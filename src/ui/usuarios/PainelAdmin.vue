@@ -25,6 +25,7 @@ const novoUsuario = ref('');
  * seguinte e ao desmontar. Guarda só o caminho que o servidor deu; o endereço completo é composto com
  * `location.origin` na hora de mostrar e de copiar, e nunca vai a armazenamento, console ou barra de endereço.
  */
+const blocoDoLink = ref<HTMLElement>();
 const link = ref<{ usuario: string; acao: 'criar' | 'redefinir'; caminho: string } | undefined>();
 const copiaAvisada = ref('');
 const confirmandoExclusao = ref<string | undefined>();
@@ -69,6 +70,20 @@ async function carregar(): Promise<void> {
   }
 }
 
+/**
+ * O link aparece uma vez só, e a conta pode estar numa linha baixa da lista: sem isto o bloco nasce fora da
+ * janela e a pessoa não o vê. O foco vai ao bloco (tabindex -1, só por código, sem entrar na ordem de Tab) para o
+ * leitor de tela anunciar o status, e a rolagem usa `nearest` com o scroll-padding que o layout já publica
+ * (cabeçalho fixo e pilha inferior), sem animação: não há movimento a reduzir.
+ */
+async function mostrarBlocoDoLink(): Promise<void> {
+  await nextTick();
+  const bloco = blocoDoLink.value;
+  if (!bloco) return;
+  bloco.focus({ preventScroll: true });
+  bloco.scrollIntoView({ block: 'nearest' });
+}
+
 async function executar(
   pedido: Parameters<ClienteApi['acaoUsuario']>[0],
   aviso: string
@@ -83,6 +98,7 @@ async function executar(
     status.value = aviso;
     if (r.valor.convite && (pedido.acao === 'criar' || pedido.acao === 'redefinir')) {
       link.value = { usuario: pedido.usuario, acao: pedido.acao, caminho: r.valor.convite };
+      await mostrarBlocoDoLink();
     }
     await carregar();
   } else {
@@ -139,7 +155,13 @@ onBeforeUnmount(dispensarLink);
     <p v-if="erro" class="ar-alerta ar-alerta--erro" role="alert">{{ erro }}</p>
     <p class="ar-visualmente-oculto" role="status" aria-live="polite">{{ status }}</p>
 
-    <div v-if="link" class="ar-alerta ar-alerta--aviso ar-admin__convite" role="status">
+    <div
+      v-if="link"
+      ref="blocoDoLink"
+      class="ar-alerta ar-alerta--aviso ar-admin__convite"
+      role="status"
+      tabindex="-1"
+    >
       <p>{{ tituloDoLink }}</p>
       <p>
         <code class="ar-admin__link">{{ enderecoDoLink }}</code>

@@ -279,6 +279,25 @@
   user-select: all;
 }
 
+/* Em largura estreita o bloco do link tem de caber na área livre entre o cabeçalho fixo e a pilha fixa
+   da base (o cartão de contagem e o botão Home), senão o título ou os botões ficam por baixo de um deles
+   e o link, que aparece uma vez só, não é visto inteiro. Só tamanho e respiro: nenhum texto muda. */
+@container (max-width: 30rem) {
+  .ar-admin__convite {
+    padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+  }
+
+  .ar-admin__convite p {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .ar-admin__convite .ar-admin__link {
+    font-size: 0.78rem;
+  }
+}
+
 .ar-admin__acoes,
 .ar-admin__acoes-aviso,
 .ar-admin__confirmar {

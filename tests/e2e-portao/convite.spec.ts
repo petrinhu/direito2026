@@ -29,7 +29,6 @@ import { CONTA_ADMIN, ORIGEM } from './apoio/constantes';
  */
 
 const LOGIN_CONVIDADO = 'convidado-sintetico';
-const EMAIL_CONVIDADO = 'convidado-sintetico@example.com';
 const SENHA_PRIMEIRA = 'senha-do-convite-um-123';
 const SENHA_SEGUNDA = 'senha-do-convite-dois-456';
 /** Também com 15 caracteres ou mais: o `minlength` do navegador barraria uma curta antes de ela chegar ao servidor. */
@@ -77,7 +76,10 @@ async function violacoesDoAxe(page: Page, escopo?: string): Promise<unknown[]> {
  * Cria a conta pela API, de dentro do contexto do admin. Devolve só o caminho do convite
  * (o token fica na variável do teste) e a resposta em forma booleana.
  */
-async function criarContaPelaApi(page: Page): Promise<{ status: number; caminho: string }> {
+async function criarContaPelaApi(
+  page: Page,
+  usuario: string = LOGIN_CONVIDADO
+): Promise<{ status: number; caminho: string }> {
   return page.evaluate(
     async ({ usuario, email }) => {
       const sessao = (await (await fetch('/api/sessao.php')).json()) as { csrf: string };
@@ -93,8 +95,68 @@ async function criarContaPelaApi(page: Page): Promise<{ status: number; caminho:
       const corpo = (await resposta.json()) as { convite?: string };
       return { status: resposta.status, caminho: corpo.convite ?? '' };
     },
-    { usuario: LOGIN_CONVIDADO, email: EMAIL_CONVIDADO }
+    { usuario, email: `${usuario}@example.com` }
   );
+}
+
+/** Quantas contas a lista ganha antes da conta de teste, para o bloco do link nascer fora da janela. */
+const CONTAS_EXTRAS = 6;
+
+/** Contas sintéticas criadas pelo próprio teste, pela mesma API: a conta de teste vira a última linha da lista. */
+async function criarContasExtras(page: Page): Promise<void> {
+  for (let n = 1; n <= CONTAS_EXTRAS; n += 1) {
+    const resposta = await criarContaPelaApi(page, `extra-sintetica-${n}`);
+    expect(resposta.status, `criar a conta extra ${n} pela API`).toBe(200);
+  }
+}
+
+/**
+ * O bloco do link aparece dentro da janela e com o foco SEM o teste rolar nada: quem leva o bloco para a vista
+ * é o próprio painel. Sem isso, com a conta numa linha baixa da lista, o link (que aparece uma vez) nasceria fora
+ * da janela e a pessoa não o veria (F-2 da revisão).
+ */
+async function esperarBlocoDoLinkNaJanelaEComFoco(page: Page): Promise<void> {
+  const bloco = page.locator('.ar-admin__convite');
+  await expect(bloco).toBeFocused();
+  await expect
+    .poll(
+      () =>
+        bloco.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return (
+            r.top >= 0 &&
+            r.left >= 0 &&
+            r.bottom <= document.documentElement.clientHeight &&
+            r.right <= document.documentElement.clientWidth
+          );
+        }),
+      { message: 'o bloco do link está dentro da janela, sem o teste rolar' }
+    )
+    .toBe(true);
+}
+
+/**
+ * Nada fixo da página cobre o elemento: o centro, o meio de cada lado (recuado dos cantos arredondados) e
+ * os pontos de cima e de baixo devolvem o próprio elemento ou algo dentro dele em `elementFromPoint`.
+ * Fora da janela, `elementFromPoint` devolve null e a checagem falha.
+ */
+async function livreDeElementoFixo(alvo: Locator): Promise<boolean> {
+  return alvo.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const meioX = r.left + r.width / 2;
+    const meioY = r.top + r.height / 2;
+    const pontos: [number, number][] = [
+      [meioX, meioY],
+      [r.left + 10, meioY],
+      [r.right - 10, meioY],
+      [meioX, r.top + 3],
+      [meioX, r.bottom - 3]
+    ];
+    return pontos.every(([x, y]) => {
+      const topo = document.elementFromPoint(x, y);
+      return topo !== null && el.contains(topo);
+    });
+  });
 }
 
 /**
@@ -319,6 +381,7 @@ test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; rede
   await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
 
   // 1. A conta nasce com convite pendente; o painel mostra o prazo lido do epoch em segundos.
+  await criarContasExtras(page);
   const criada = await criarContaPelaApi(page);
   expect(criada.status, 'criar pela API').toBe(200);
   expect(FORMA_DO_LINK.test(`${ORIGEM}${criada.caminho}`), 'forma do convite do criar').toBe(true);
@@ -332,6 +395,7 @@ test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; rede
 
   // 2. Redefinir mostra o link, composto com a origem do navegador, uma vez, com os textos do líder.
   const link = await redefinirELerLink(page);
+  await esperarBlocoDoLinkNaJanelaEComFoco(page);
   expect(link === linkDoCriar, 'o link do Redefinir é outro, não o do criar').toBe(false);
   await expect(page.getByText(TEXTO_VALIDADE, { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copiar link' })).toBeVisible();
@@ -343,7 +407,6 @@ test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; rede
   expect(copiado === link, 'a área de transferência tem o link inteiro').toBe(true);
 
   // 4. Capturas, axe e rolagem lateral com o link na tela (o link tem cerca de 100 caracteres).
-  await page.locator('.ar-admin__convite').scrollIntoViewIfNeeded();
   await capturarEAnalisar(page, 'painel-com-link', projeto, [VIEWPORT_1280], '.ar-admin');
   await page.emulateMedia({ colorScheme: 'light' });
 
@@ -420,12 +483,14 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
   // O viewport estreito vale desde a entrada: o menu lateral do app vira gaveta ao carregar, não ao redimensionar.
   await page.setViewportSize({ width: VIEWPORT_360.largura, height: VIEWPORT_360.altura });
   await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  await criarContasExtras(page);
   const criada = await criarContaPelaApi(page);
   expect(criada.status, 'criar pela API').toBe(200);
   await page.reload();
   await esperarApp(page);
 
   const link = await redefinirELerLink(page);
+  await esperarBlocoDoLinkNaJanelaEComFoco(page);
   const medidas = await page.locator('.ar-admin__link').evaluate((el) => {
     const caixa = el.getBoundingClientRect();
     return {
@@ -441,7 +506,27 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
   ).toBeGreaterThan(1);
   expect(link.length, 'o link tem o comprimento de um convite').toBeGreaterThan(90);
 
-  await page.locator('.ar-admin__convite').scrollIntoViewIfNeeded();
+  // F-1 da revisão: a 360 px o cartão fixo do calendário e o cabeçalho fixo não cobrem o bloco nem os botões.
+  expect(
+    await livreDeElementoFixo(page.locator('.ar-admin__convite')),
+    'nada fixo cobre o bloco do link'
+  ).toBe(true);
+  for (const nome of ['Copiar link', 'Já enviei']) {
+    expect(
+      await livreDeElementoFixo(page.getByRole('button', { name: nome })),
+      `nada fixo cobre o botão ${nome}`
+    ).toBe(true);
+  }
+  // Uso real: copiar (sem a permissão da área de transferência neste contexto, a falha mostra a frase de cópia à
+  // mão, a mais longa) aumenta o bloco, e os botões continuam inteiros acima do cartão fixo.
+  await page.getByRole('button', { name: 'Copiar link' }).click();
+  await expect(page.getByText(/^(Link copiado\.|Não foi possível copiar\.)/)).toBeVisible();
+  for (const nome of ['Copiar link', 'Já enviei']) {
+    expect(
+      await livreDeElementoFixo(page.getByRole('button', { name: nome })),
+      `nada fixo cobre o botão ${nome} depois de copiar`
+    ).toBe(true);
+  }
   await capturarEAnalisar(
     page,
     'painel-com-link',

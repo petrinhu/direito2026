@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import PainelAdmin from '@/ui/usuarios/PainelAdmin.vue';
 import type { ClienteApi, UsuarioAdmin } from '@/app/sessao/administracao';
@@ -142,7 +142,16 @@ describe('PainelAdmin', () => {
 });
 
 describe('PainelAdmin, link de convite (CV-F1)', () => {
+  /** O jsdom não implementa `scrollIntoView`: o teste instala um espião e o remove no fim. */
+  const rolar = vi.fn();
+
+  beforeEach(() => {
+    rolar.mockClear();
+    window.Element.prototype.scrollIntoView = rolar;
+  });
+
   afterEach(() => {
+    delete (window.Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     localStorage.clear();
@@ -246,6 +255,66 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
     expect(w.html()).not.toContain(TOKEN);
     expect(estadoInterno(w).link).toBeUndefined();
     expect(estadoInterno(w).copiaAvisada).toBe('');
+  });
+
+  it('depois de redefinir, o bloco do link recebe o foco e é rolado para dentro da janela', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    const bloco = w.get('.ar-admin__convite');
+    expect(document.activeElement).toBe(bloco.element);
+    expect(rolar).toHaveBeenCalledTimes(1);
+    expect(rolar.mock.contexts[0]).toBe(bloco.element);
+  });
+
+  it('depois de criar, o bloco do link recebe o foco e é rolado para dentro da janela', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await criarCarla(w);
+    const bloco = w.get('.ar-admin__convite');
+    expect(document.activeElement).toBe(bloco.element);
+    expect(rolar).toHaveBeenCalledTimes(1);
+    expect(rolar.mock.contexts[0]).toBe(bloco.element);
+  });
+
+  it('o bloco foca por código (tabindex -1, fora da ordem de Tab) e segue anunciado como status', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    const bloco = w.get('.ar-admin__convite');
+    expect(bloco.attributes('tabindex')).toBe('-1');
+    expect(bloco.attributes('role')).toBe('status');
+  });
+
+  it('o foco só vai ao bloco quando o link aparece: nem copiar nem outra ação sem link o puxam', async () => {
+    const acaoUsuario = vi
+      .fn()
+      .mockResolvedValueOnce({ convite: CAMINHO_CONVITE })
+      .mockResolvedValue({});
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn(async () => {}) },
+      configurable: true
+    });
+    vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
+    const { w } = montar({ acaoUsuario });
+    await flushPromises();
+    await redefinirAna(w);
+    expect(rolar).toHaveBeenCalledTimes(1);
+
+    const campo = w.get<HTMLInputElement>('input[name="novoUsuario"]').element;
+    campo.focus();
+    await w.get('button[data-acao="copiar"]').trigger('click');
+    await flushPromises();
+    expect(document.activeElement).toBe(campo);
+    expect(rolar).toHaveBeenCalledTimes(1);
+
+    // Ação sem convite na resposta: não há bloco para focar nem rolar.
+    campo.focus();
+    await w.get('button[data-acao="desativar"][data-usuario="ana"]').trigger('click');
+    await flushPromises();
+    expect(w.find('.ar-admin__convite').exists()).toBe(false);
+    expect(document.activeElement).toBe(campo);
+    expect(rolar).toHaveBeenCalledTimes(1);
   });
 
   it('a ação seguinte apaga o link, mesmo quando a resposta dela não traz convite', async () => {

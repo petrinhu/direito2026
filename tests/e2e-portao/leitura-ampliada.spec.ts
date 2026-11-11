@@ -173,12 +173,12 @@ for (const largura of [360, 390, 768, 1280]) {
   }
 }
 
-test('com a pilha inferior presente, o último campo de Gerenciar focado fica inteiro acima do topo da pilha, a 360x640', async ({
+test('com a pilha inferior presente, o campo de Gerenciar focado fica inteiro acima do topo da pilha, a 360x640', async ({
   page
 }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
-  const ultimo = page.locator('form.ar-admin__criar input[name="provisoriaEscolhida"]');
+  const ultimo = page.locator('form.ar-admin__criar input[name="novoUsuario"]');
   await expect(ultimo).toBeVisible();
   await ultimo.focus();
   await expect
@@ -186,7 +186,7 @@ test('com a pilha inferior presente, o último campo de Gerenciar focado fica in
       () =>
         page.evaluate(() => {
           const campo = document
-            .querySelector<HTMLElement>('form.ar-admin__criar input[name="provisoriaEscolhida"]')!
+            .querySelector<HTMLElement>('form.ar-admin__criar input[name="novoUsuario"]')!
             .getBoundingClientRect();
           const pilha = document.querySelector('.layout-base__inferior')!.getBoundingClientRect();
           return campo.bottom <= pilha.top + 0.5 && campo.top >= 0;

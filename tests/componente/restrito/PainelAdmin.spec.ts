@@ -1,9 +1,21 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import PainelAdmin from '@/ui/usuarios/PainelAdmin.vue';
 import type { ClienteApi, UsuarioAdmin } from '@/app/sessao/administracao';
 import type { ResultadoAdministracao } from '@/app/sessao/administracao';
+
+/** Token sintético: 64 hex, a forma do convite, sem valor real. */
+const TOKEN = 'ab12'.repeat(16);
+const CAMINHO_CONVITE = `/api/convite.php?t=${TOKEN}`;
+/** Origem que não é a do jsdom nem a de produção: só `location.origin` explica o endereço composto. */
+const ORIGEM_DE_TESTE = 'https://origem-de-teste.invalid';
+const TEXTO_VALIDADE =
+  'Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.';
+
+/** Epoch em segundos (como o servidor manda), montado por componentes locais: o teste não depende do fuso. */
+const PRAZO_LOCAL = new Date(2026, 10, 13, 9, 5, 0);
+const PRAZO_EPOCH = Math.floor(PRAZO_LOCAL.getTime() / 1000);
 
 const usuarios: UsuarioAdmin[] = [
   {
@@ -73,25 +85,6 @@ describe('PainelAdmin', () => {
     expect(propria.text()).toMatch(/sua conta/i);
   });
 
-  it('cria usuário com senha provisória gerada e a mostra uma vez, com botão copiar', async () => {
-    const { w, cliente } = montar({
-      acaoUsuario: vi.fn(async () => ({ senhaProvisoria: 'ABCD2345wxyz' }))
-    });
-    await flushPromises();
-    await w.get('input[name="novoUsuario"]').setValue('carla');
-    await w.get('form.ar-admin__criar').trigger('submit');
-    await flushPromises();
-    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'criar', usuario: 'carla' });
-    const aviso = w.get('[role="status"].ar-admin__provisoria');
-    expect(aviso.text()).toContain('carla');
-    expect(aviso.text()).toContain('ABCD2345wxyz');
-    expect(aviso.text()).toMatch(/só aparece agora/i);
-    expect(aviso.findAll('button').map((b) => b.text())).toEqual(['Copiar senha', 'Já anotei']);
-    await aviso.findAll('button')[1]!.trigger('click');
-    expect(w.find('.ar-admin__provisoria').exists()).toBe(false);
-    expect(w.html()).not.toContain('ABCD2345wxyz');
-  });
-
   it('login inválido não chama o servidor e explica a regra', async () => {
     const { w, cliente } = montar();
     await flushPromises();
@@ -100,40 +93,6 @@ describe('PainelAdmin', () => {
     await flushPromises();
     expect(cliente.acaoUsuario).not.toHaveBeenCalled();
     expect(w.get('[role="alert"]').text()).toMatch(/3 a 32 caracteres/);
-  });
-
-  it('senha provisória digitada vai junto', async () => {
-    const { w, cliente } = montar();
-    await flushPromises();
-    await w.get('input[name="novoUsuario"]').setValue('carla');
-    await w.get('input[name="provisoriaEscolhida"]').setValue('minha provisoria 1');
-    await w.get('form.ar-admin__criar').trigger('submit');
-    await flushPromises();
-    expect(cliente.acaoUsuario).toHaveBeenCalledWith({
-      acao: 'criar',
-      usuario: 'carla',
-      senhaProvisoria: 'minha provisoria 1'
-    });
-  });
-
-  it('campo de senha provisória (texto visível para quem cria) não deixa o navegador guardar nem sugerir', async () => {
-    // LU-F3.2, I5 da revisão da Onda 3: o campo segue type=text (quem cria vê o que digitou),
-    // e o autocomplete desligado é a cobertura contra o navegador guardar a senha.
-    const { w } = montar();
-    await flushPromises();
-    expect(w.get('input[name="provisoriaEscolhida"]').attributes('autocomplete')).toBe('off');
-    expect(w.get('input[name="provisoriaEscolhida"]').attributes('type')).toBe('text');
-  });
-
-  it('redefinir mostra a nova provisória', async () => {
-    const { w, cliente } = montar({
-      acaoUsuario: vi.fn(async () => ({ senhaProvisoria: 'NOVA9999aaaa' }))
-    });
-    await flushPromises();
-    await w.get('button[data-acao="redefinir"][data-usuario="ana"]').trigger('click');
-    await flushPromises();
-    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'redefinir', usuario: 'ana' });
-    expect(w.get('.ar-admin__provisoria').text()).toContain('NOVA9999aaaa');
   });
 
   it('ativa quem está desativado e desativa quem está ativo, e atualiza a lista', async () => {
@@ -170,19 +129,236 @@ describe('PainelAdmin', () => {
     expect(w.get('[role="alert"]').text()).toBe('Sua sessão terminou. Entre de novo.');
   });
 
-  it('copiar usa a área de transferência e avisa o resultado', async () => {
+  it('criar manda só o usuário: o formulário não tem campo de senha provisória (R9)', async () => {
+    const { w, cliente } = montar();
+    await flushPromises();
+    expect(w.find('input[name="provisoriaEscolhida"]').exists()).toBe(false);
+    expect(w.get('form.ar-admin__criar').text()).not.toMatch(/senha provisória/i);
+    await w.get('input[name="novoUsuario"]').setValue('carla');
+    await w.get('form.ar-admin__criar').trigger('submit');
+    await flushPromises();
+    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'criar', usuario: 'carla' });
+  });
+});
+
+describe('PainelAdmin, link de convite (CV-F1)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  function montarComLink(origem = ORIGEM_DE_TESTE) {
+    vi.stubGlobal('location', { ...window.location, origin: origem });
+    return montar({ acaoUsuario: vi.fn(async () => ({ convite: CAMINHO_CONVITE })) });
+  }
+
+  async function criarCarla(w: ReturnType<typeof montar>['w']) {
+    await w.get('input[name="novoUsuario"]').setValue('carla');
+    await w.get('form.ar-admin__criar').trigger('submit');
+    await flushPromises();
+  }
+
+  async function redefinirAna(w: ReturnType<typeof montar>['w']) {
+    await w.get('button[data-acao="redefinir"][data-usuario="ana"]').trigger('click');
+    await flushPromises();
+  }
+
+  it('criar mostra o link composto com location.origin e os textos do líder, uma vez', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await criarCarla(w);
+    const aviso = w.get('[role="status"].ar-admin__convite');
+    expect(aviso.text()).toContain('Link de primeiro acesso de carla:');
+    expect(aviso.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    expect(aviso.text()).toContain(TEXTO_VALIDADE);
+    expect(aviso.findAll('button').map((b) => b.text())).toEqual(['Copiar link', 'Já enviei']);
+  });
+
+  it('redefinir mostra o link com o título da nova senha', async () => {
+    const { w, cliente } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'redefinir', usuario: 'ana' });
+    const aviso = w.get('.ar-admin__convite');
+    expect(aviso.text()).toContain('Link para nova senha de ana:');
+    expect(aviso.text()).not.toContain('primeiro acesso');
+    expect(aviso.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    expect(aviso.text()).toContain(TEXTO_VALIDADE);
+  });
+
+  it('a origem vem do navegador: outra origem, outro endereço', async () => {
+    const { w } = montarComLink('http://localhost:4741');
+    await flushPromises();
+    await redefinirAna(w);
+    expect(w.get('.ar-admin__link').text()).toBe(`http://localhost:4741${CAMINHO_CONVITE}`);
+  });
+
+  it('Copiar link entrega o endereço completo à área de transferência e avisa', async () => {
     const escrever = vi.fn(async () => {});
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: escrever },
       configurable: true
     });
-    const { w } = montar({ acaoUsuario: vi.fn(async () => ({ senhaProvisoria: 'COPIAR123abc' })) });
+    const { w } = montarComLink();
     await flushPromises();
-    await w.get('button[data-acao="redefinir"][data-usuario="ana"]').trigger('click');
-    await flushPromises();
+    await redefinirAna(w);
     await w.get('button[data-acao="copiar"]').trigger('click');
     await flushPromises();
-    expect(escrever).toHaveBeenCalledWith('COPIAR123abc');
-    expect(w.get('.ar-admin__provisoria').text()).toMatch(/copiada/i);
+    expect(escrever).toHaveBeenCalledTimes(1);
+    expect(escrever).toHaveBeenCalledWith(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    expect(w.get('.ar-admin__convite').text()).toContain('Link copiado.');
+  });
+
+  it('se a cópia falha, mostra o texto de cópia à mão e o link segue na tela', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: vi.fn(async () => {
+          throw new Error('negado');
+        })
+      },
+      configurable: true
+    });
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    await w.get('button[data-acao="copiar"]').trigger('click');
+    await flushPromises();
+    const aviso = w.get('.ar-admin__convite');
+    expect(aviso.text()).toContain('Não foi possível copiar. Selecione o link e copie à mão.');
+    expect(aviso.text()).not.toContain('Link copiado.');
+    expect(aviso.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+  });
+
+  it('Já enviei apaga o link e o aviso de cópia', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn(async () => {}) },
+      configurable: true
+    });
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    await w.get('button[data-acao="copiar"]').trigger('click');
+    await flushPromises();
+    await w.get('button[data-acao="dispensar"]').trigger('click');
+    expect(w.find('.ar-admin__convite').exists()).toBe(false);
+    expect(w.html()).not.toContain(TOKEN);
+    expect(estadoInterno(w).link).toBeUndefined();
+    expect(estadoInterno(w).copiaAvisada).toBe('');
+  });
+
+  it('a ação seguinte apaga o link, mesmo quando a resposta dela não traz convite', async () => {
+    const acaoUsuario = vi
+      .fn()
+      .mockResolvedValueOnce({ convite: CAMINHO_CONVITE })
+      .mockResolvedValue({});
+    vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
+    const { w } = montar({ acaoUsuario });
+    await flushPromises();
+    await redefinirAna(w);
+    expect(w.html()).toContain(TOKEN);
+    await w.get('button[data-acao="desativar"][data-usuario="ana"]').trigger('click');
+    await flushPromises();
+    expect(acaoUsuario).toHaveBeenCalledTimes(2);
+    expect(w.find('.ar-admin__convite').exists()).toBe(false);
+    expect(w.html()).not.toContain(TOKEN);
+    expect(estadoInterno(w).link).toBeUndefined();
+  });
+
+  it('um link novo substitui o anterior: nunca dois links na tela', async () => {
+    const outro = 'cd34'.repeat(16);
+    const acaoUsuario = vi
+      .fn()
+      .mockResolvedValueOnce({ convite: CAMINHO_CONVITE })
+      .mockResolvedValueOnce({ convite: `/api/convite.php?t=${outro}` });
+    vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
+    const { w } = montar({ acaoUsuario });
+    await flushPromises();
+    await redefinirAna(w);
+    await w.get('button[data-acao="redefinir"][data-usuario="beto"]').trigger('click');
+    await flushPromises();
+    expect(w.findAll('.ar-admin__link')).toHaveLength(1);
+    expect(w.html()).not.toContain(TOKEN);
+    expect(w.get('.ar-admin__link').text()).toContain(outro);
+    expect(w.get('.ar-admin__convite').text()).toContain('Link para nova senha de beto:');
+  });
+
+  it('a desmontagem apaga o link da memória do componente', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    const estado = estadoInterno(w);
+    expect(estado.link).toBeDefined();
+    w.unmount();
+    // Depois de desmontar o DOM some de qualquer jeito; o que prova o apagar é a memória do componente.
+    expect(estado.link).toBeUndefined();
+  });
+
+  it('o link não vai a localStorage, sessionStorage, console nem barra de endereço', async () => {
+    const consoles = (['log', 'info', 'warn', 'error', 'debug'] as const).map((m) =>
+      vi.spyOn(console, m).mockImplementation(() => {})
+    );
+    const empurrar = vi.spyOn(window.history, 'pushState');
+    const substituir = vi.spyOn(window.history, 'replaceState');
+    const hrefAntes = window.location.href;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn(async () => {}) },
+      configurable: true
+    });
+    const { w } = montarComLink();
+    await flushPromises();
+    await criarCarla(w);
+    await w.get('button[data-acao="copiar"]').trigger('click');
+    await flushPromises();
+    expect(w.html()).toContain(TOKEN);
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+    expect(JSON.stringify(consoles.flatMap((c) => c.mock.calls))).not.toContain(TOKEN);
+    expect(empurrar).not.toHaveBeenCalled();
+    expect(substituir).not.toHaveBeenCalled();
+    expect(window.location.href).toBe(hrefAntes);
   });
 });
+
+describe('PainelAdmin, coluna Estado com o convite (CV-F1)', () => {
+  const comConvite = (convite: 'pendente' | 'vencido' | null, expiraEm: number | null) =>
+    ({ ...usuarios[1]!, convite, conviteExpiraEm: expiraEm }) as UsuarioAdmin;
+
+  async function estadoDaLinha(lista: UsuarioAdmin[]): Promise<string> {
+    const { w } = montar({ listarUsuarios: vi.fn(async () => lista) });
+    await flushPromises();
+    return w.findAll('tbody tr')[0]!.get('td[data-rotulo="Estado"]').text();
+  }
+
+  it('convite pendente mostra o prazo em dd/mm hh:mm, lido do epoch em segundos', async () => {
+    const estado = await estadoDaLinha([comConvite('pendente', PRAZO_EPOCH)]);
+    expect(estado).toContain('Convite pendente até 13/11 09:05');
+  });
+
+  it('convite vencido mostra "Convite vencido", sem prazo', async () => {
+    const estado = await estadoDaLinha([comConvite('vencido', PRAZO_EPOCH)]);
+    expect(estado).toContain('Convite vencido');
+    expect(estado).not.toContain('Convite pendente');
+    expect(estado).not.toContain('13/11');
+  });
+
+  it('quem decide pendente ou vencido é o servidor, nunca o relógio do navegador', async () => {
+    const passado = await estadoDaLinha([comConvite('pendente', PRAZO_EPOCH - 10 * 365 * 86400)]);
+    expect(passado).toContain('Convite pendente até');
+    const futuro = await estadoDaLinha([comConvite('vencido', PRAZO_EPOCH + 10 * 365 * 86400)]);
+    expect(futuro).toContain('Convite vencido');
+    expect(futuro).not.toContain('Convite pendente');
+  });
+
+  it('sem convite (ou servidor antigo sem o campo) não diz nada de convite', async () => {
+    expect(await estadoDaLinha([comConvite(null, null)])).not.toMatch(/convite/i);
+    const semCampo = { ...usuarios[1]! };
+    expect(await estadoDaLinha([semCampo])).not.toMatch(/convite/i);
+  });
+});
+
+/** Estado interno do componente (script setup). Só os testes de apagar o link o leem: o DOM sozinho não prova a memória. */
+function estadoInterno(w: { vm: unknown }): { link: unknown; copiaAvisada: string } {
+  return (w.vm as { $: { setupState: { link: unknown; copiaAvisada: string } } }).$.setupState;
+}

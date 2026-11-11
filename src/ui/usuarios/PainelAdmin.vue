@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, useId } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
 import {
   loginValido,
   type Administrar,
@@ -20,11 +20,35 @@ const erro = ref('');
 const status = ref('');
 const ocupado = ref(false);
 const novoUsuario = ref('');
-const provisoriaEscolhida = ref('');
-const provisoria = ref<{ usuario: string; senha: string } | undefined>();
+/**
+ * O link do convite vive só aqui, na memória do componente (plano 7.1.7): some em "Já enviei", na ação
+ * seguinte e ao desmontar. Guarda só o caminho que o servidor deu; o endereço completo é composto com
+ * `location.origin` na hora de mostrar e de copiar, e nunca vai a armazenamento, console ou barra de endereço.
+ */
+const link = ref<{ usuario: string; acao: 'criar' | 'redefinir'; caminho: string } | undefined>();
 const copiaAvisada = ref('');
 const confirmandoExclusao = ref<string | undefined>();
 const botaoCancelar = ref<HTMLButtonElement[]>();
+
+const tituloDoLink = computed(() =>
+  link.value
+    ? `${link.value.acao === 'criar' ? 'Link de primeiro acesso de' : 'Link para nova senha de'} ${link.value.usuario}:`
+    : ''
+);
+const enderecoDoLink = computed(() =>
+  link.value ? `${window.location.origin}${link.value.caminho}` : ''
+);
+
+function dois(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+/** Prazo do convite: o servidor manda epoch em segundos; o painel mostra dd/mm hh:mm no fuso de quem olha. */
+function formatarPrazo(epochSegundos: number | null | undefined): string {
+  if (typeof epochSegundos !== 'number') return '';
+  const d = new Date(epochSegundos * 1000);
+  return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+}
 
 function formatarData(valor: string | null): string {
   if (!valor) return 'Nunca';
@@ -52,12 +76,13 @@ async function executar(
   if (ocupado.value) return;
   ocupado.value = true;
   erro.value = '';
+  // A ação seguinte apaga o link da anterior, venha ou não um novo convite na resposta.
+  dispensarLink();
   const r = await props.administrar((c) => c.acaoUsuario(pedido));
   if (r.ok) {
     status.value = aviso;
-    copiaAvisada.value = '';
-    if (r.valor.senhaProvisoria) {
-      provisoria.value = { usuario: pedido.usuario, senha: r.valor.senhaProvisoria };
+    if (r.valor.convite && (pedido.acao === 'criar' || pedido.acao === 'redefinir')) {
+      link.value = { usuario: pedido.usuario, acao: pedido.acao, caminho: r.valor.convite };
     }
     await carregar();
   } else {
@@ -73,15 +98,8 @@ async function criar(): Promise<void> {
     return;
   }
   const login = novoUsuario.value;
-  const escolhida = provisoriaEscolhida.value;
-  await executar(
-    { acao: 'criar', usuario: login, ...(escolhida ? { senhaProvisoria: escolhida } : {}) },
-    `Usuário ${login} criado.`
-  );
-  if (!erro.value) {
-    novoUsuario.value = '';
-    provisoriaEscolhida.value = '';
-  }
+  await executar({ acao: 'criar', usuario: login }, `Usuário ${login} criado.`);
+  if (!erro.value) novoUsuario.value = '';
 }
 
 async function pedirConfirmacao(login: string): Promise<void> {
@@ -96,21 +114,22 @@ async function excluir(login: string): Promise<void> {
 }
 
 async function copiar(): Promise<void> {
-  if (!provisoria.value) return;
+  if (!link.value) return;
   try {
-    await navigator.clipboard.writeText(provisoria.value.senha);
-    copiaAvisada.value = 'Senha copiada.';
+    await navigator.clipboard.writeText(enderecoDoLink.value);
+    copiaAvisada.value = 'Link copiado.';
   } catch {
-    copiaAvisada.value = 'Não foi possível copiar. Selecione a senha e copie à mão.';
+    copiaAvisada.value = 'Não foi possível copiar. Selecione o link e copie à mão.';
   }
 }
 
-function dispensarProvisoria(): void {
-  provisoria.value = undefined;
+function dispensarLink(): void {
+  link.value = undefined;
   copiaAvisada.value = '';
 }
 
 onMounted(carregar);
+onBeforeUnmount(dispensarLink);
 </script>
 
 <template>
@@ -120,22 +139,19 @@ onMounted(carregar);
     <p v-if="erro" class="ar-alerta ar-alerta--erro" role="alert">{{ erro }}</p>
     <p class="ar-visualmente-oculto" role="status" aria-live="polite">{{ status }}</p>
 
-    <div v-if="provisoria" class="ar-alerta ar-alerta--aviso ar-admin__provisoria" role="status">
+    <div v-if="link" class="ar-alerta ar-alerta--aviso ar-admin__convite" role="status">
+      <p>{{ tituloDoLink }}</p>
       <p>
-        Senha provisória de <strong>{{ provisoria.usuario }}</strong
-        >: <code class="ar-admin__senha">{{ provisoria.senha }}</code>
+        <code class="ar-admin__link">{{ enderecoDoLink }}</code>
       </p>
-      <p>
-        Ela só aparece agora. Quem entrar com ela precisará trocá-la no primeiro acesso. Envie por
-        um canal privado.
-      </p>
+      <p>Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.</p>
       <p v-if="copiaAvisada">{{ copiaAvisada }}</p>
       <div class="ar-admin__acoes-aviso">
         <button type="button" class="ar-botao" data-acao="copiar" @click="copiar">
-          Copiar senha
+          Copiar link
         </button>
-        <button type="button" class="ar-botao" data-acao="dispensar" @click="dispensarProvisoria">
-          Já anotei
+        <button type="button" class="ar-botao" data-acao="dispensar" @click="dispensarLink">
+          Já enviei
         </button>
       </div>
     </div>
@@ -153,22 +169,6 @@ onMounted(carregar);
           autocapitalize="none"
           spellcheck="false"
         />
-      </div>
-      <div class="ar-campo">
-        <label :for="`${idBase}-prov`">Senha provisória (opcional)</label>
-        <input
-          :id="`${idBase}-prov`"
-          v-model="provisoriaEscolhida"
-          name="provisoriaEscolhida"
-          type="text"
-          autocomplete="off"
-          autocapitalize="none"
-          spellcheck="false"
-          :aria-describedby="`${idBase}-prov-ajuda`"
-        />
-        <p :id="`${idBase}-prov-ajuda`" class="ar-formulario__regra">
-          Em branco, o servidor gera uma senha de 12 caracteres e mostra uma vez.
-        </p>
       </div>
       <button
         type="submit"
@@ -207,6 +207,10 @@ onMounted(carregar);
             <td data-rotulo="Estado">
               {{ u.ativo ? 'Ativo' : 'Desativado' }}
               <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
+              <span v-if="u.convite === 'pendente'">
+                · Convite pendente até {{ formatarPrazo(u.conviteExpiraEm) }}</span
+              >
+              <span v-else-if="u.convite === 'vencido'"> · Convite vencido</span>
             </td>
             <td data-rotulo="Último acesso">{{ formatarData(u.ultimoLogin) }}</td>
             <td data-rotulo="Ações">

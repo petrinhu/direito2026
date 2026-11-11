@@ -21,15 +21,19 @@ export interface UsuarioAdmin {
   readonly deveTrocarSenha: boolean;
   readonly criadoEm: string | null;
   readonly ultimoLogin: string | null;
+  /** Estado do convite por link, decidido pelo servidor (nunca pelo relógio do navegador). Ausente em servidor antigo. */
+  readonly convite?: 'pendente' | 'vencido' | null;
+  /** Fim do prazo do convite, em epoch de segundos. */
+  readonly conviteExpiraEm?: number | null;
 }
 
-export type AcaoUsuario =
-  | {
-      readonly acao: 'criar' | 'redefinir';
-      readonly usuario: string;
-      readonly senhaProvisoria?: string;
-    }
-  | { readonly acao: 'ativar' | 'desativar' | 'excluir'; readonly usuario: string };
+export type AcaoUsuario = {
+  readonly acao: 'criar' | 'redefinir' | 'ativar' | 'desativar' | 'excluir';
+  readonly usuario: string;
+};
+
+/** Caminho do convite que o servidor devolve ao criar e ao redefinir: o painel compõe o endereço com `location.origin`. */
+const CAMINHO_CONVITE = /^\/api\/convite\.php\?t=[0-9a-f]{64}$/;
 
 export interface ClienteApi {
   sessao(): Promise<RespostaSessao>;
@@ -40,7 +44,7 @@ export interface ClienteApi {
   /** JSON cru da Júri (juri/conteudo.php): mesma sessão, sem senha; quem chama valida antes de usar. */
   obterConteudoJuri(): Promise<unknown>;
   listarUsuarios(): Promise<readonly UsuarioAdmin[]>;
-  acaoUsuario(pedido: AcaoUsuario): Promise<{ readonly senhaProvisoria?: string }>;
+  acaoUsuario(pedido: AcaoUsuario): Promise<{ readonly convite?: string }>;
 }
 
 export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
@@ -79,7 +83,11 @@ export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
     },
     async acaoUsuario(pedido) {
       const c = await enviar('usuarios.php', { ...pedido });
-      return typeof c.senhaProvisoria === 'string' ? { senhaProvisoria: c.senhaProvisoria } : {};
+      if (c.convite === undefined) return {};
+      if (typeof c.convite !== 'string' || !CAMINHO_CONVITE.test(c.convite)) {
+        throw new ErroDeApi(200, 'resposta-invalida');
+      }
+      return { convite: c.convite };
     }
   };
 }

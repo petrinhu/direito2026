@@ -267,13 +267,15 @@
   max-width: 30rem;
 }
 
-.ar-admin__senha {
+.ar-admin__link {
+  display: block;
   padding: 0.1rem 0.5rem;
   border-radius: 6px;
   background: var(--cor-fundo);
   font-family: var(--fonte-mono, monospace);
-  font-size: 1.15em;
-  letter-spacing: 0.06em;
+  /* O link tem cerca de 100 caracteres sem espaço: sem quebra forçada, a 360 px a página rola de lado. */
+  overflow-wrap: anywhere;
+  word-break: break-all;
   user-select: all;
 }
 

@@ -70,6 +70,26 @@ describe('criarAdministrar, tradução de erro da administração', () => {
   });
 });
 
+describe('criarAdministrar, ação sobre usuário com convite (CV-F1)', () => {
+  it('o caminho do convite chega intacto ao painel e a senha provisória não existe mais no contrato', async () => {
+    const cliente = criarClienteFalso();
+    const caminho = `/api/convite.php?t=${'0123456789abcdef'.repeat(4)}`;
+    cliente.acaoUsuario.mockResolvedValueOnce({ convite: caminho } as never);
+    const administrar = criarAdministrar(cliente, vi.fn());
+    const r = await administrar((c) => c.acaoUsuario({ acao: 'redefinir', usuario: 'ana' }));
+    expect(r).toEqual({ ok: true, valor: { convite: caminho } });
+    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'redefinir', usuario: 'ana' });
+  });
+
+  it('o servidor que recusa o criar (400) tem a mensagem em pt-br mostrada, sem o código', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(400, 'email-invalido', undefined, 'E-mail inválido.');
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'E-mail inválido.' });
+  });
+});
+
 describe('criarSessaoGlobal, sessão conhecida e troca de senha', () => {
   it('se a leitura da sessão falha, iniciar não lança: fica não pronta e marca a falha', async () => {
     const cliente = criarClienteFalso();

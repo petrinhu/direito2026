@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { criarClienteApi, ErroDeApi } from '@/app/restrito/clienteApi';
 import { criarFetchFalso } from './apoio/fetchFalso';
 
+/** 64 hex sintéticos: a forma do token do convite, sem valor real. */
+const TOKEN_FALSO = '0123456789abcdef'.repeat(4);
 const sessaoAnonima = { json: { ok: true, autenticado: false, csrf: 'tok-1' } };
 
 describe('clienteApi', () => {
@@ -120,20 +122,49 @@ describe('clienteApi', () => {
           ]
         }
       },
-      { json: { ok: true, senhaProvisoria: 'ABCD2345wxyz' } },
+      { json: { ok: true, convite: `/api/convite.php?t=${TOKEN_FALSO}`, email: 'falhou' } },
       { json: { ok: true } }
     ]);
     const cliente = criarClienteApi({ buscar: f.buscar });
     await cliente.sessao();
     expect((await cliente.listarUsuarios())[0]!.usuario).toBe('a');
     expect(await cliente.acaoUsuario({ acao: 'redefinir', usuario: 'b' })).toEqual({
-      senhaProvisoria: 'ABCD2345wxyz'
+      convite: `/api/convite.php?t=${TOKEN_FALSO}`
     });
     await cliente.acaoUsuario({ acao: 'excluir', usuario: 'b' });
     expect(f.chamadas[1]!.url).toBe('/api/usuarios.php');
     expect(f.chamadas[2]).toMatchObject({
       metodo: 'POST',
       corpo: { acao: 'redefinir', usuario: 'b' }
+    });
+  });
+
+  describe('ação sobre usuário, convite no lugar da senha provisória (R9)', () => {
+    async function agir(corpo: Record<string, unknown>) {
+      const f = criarFetchFalso([sessaoAnonima, { json: { ok: true, ...corpo } }]);
+      const cliente = criarClienteApi({ buscar: f.buscar });
+      await cliente.sessao();
+      return cliente.acaoUsuario({ acao: 'criar', usuario: 'c' });
+    }
+
+    it('resposta sem convite (ativar, desativar, excluir) devolve objeto vazio', async () => {
+      expect(await agir({})).toEqual({});
+    });
+
+    it('senhaProvisoria que viesse do servidor é ignorada, nunca repassada ao painel', async () => {
+      expect(await agir({ senhaProvisoria: 'ABCD2345wxyz' })).toEqual({});
+    });
+
+    it.each([
+      ['endereço de outro site', `https://outro.invalid/api/convite.php?t=${TOKEN_FALSO}`],
+      ['token curto', '/api/convite.php?t=abc'],
+      ['token em maiúsculas', `/api/convite.php?t=${TOKEN_FALSO.toUpperCase()}`],
+      ['não é texto', 42]
+    ])('convite fora da forma (%s) é resposta inválida', async (_nome, convite) => {
+      await expect(agir({ convite })).rejects.toMatchObject({
+        status: 200,
+        codigo: 'resposta-invalida'
+      });
     });
   });
 });

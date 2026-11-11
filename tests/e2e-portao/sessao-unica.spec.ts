@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import { resetarPrivado } from './apoio/ambiente';
-import { capturar, entrarNoApp, esperarEntrada } from './apoio/acoes';
+import { capturar, entrarNoApp, esperarApp, esperarEntrada, preencherEntrada } from './apoio/acoes';
 import { CONTA_ADMIN, ORIGEM } from './apoio/constantes';
 
 /**
@@ -63,6 +63,7 @@ async function trocarPaginaEConferir(
   nome: 'Calendário' | 'Trocar senha'
 ): Promise<unknown> {
   let corpo: unknown;
+  let falhaDeLeitura: Error | undefined;
   let liberar: () => void = () => undefined;
   const lido = new Promise<void>((resolver) => {
     liberar = resolver;
@@ -71,20 +72,33 @@ async function trocarPaginaEConferir(
     '**/api/sessao.php',
     async (rota) => {
       const resposta = await rota.fetch();
-      corpo = await resposta.json().catch(() => undefined);
+      try {
+        corpo = await resposta.json();
+      } catch (erro) {
+        const motivo = erro instanceof Error ? erro.message : String(erro);
+        falhaDeLeitura = new Error(
+          `o corpo de /api/sessao.php (status ${resposta.status()}) não pôde ser lido como JSON: ${motivo}`
+        );
+      }
       await rota.fulfill({ response: resposta });
       liberar();
     },
     { times: 1 }
   );
   await trocarPaginaPeloMenu(page, nome);
+  let temporizador: ReturnType<typeof setTimeout> | undefined;
   const limite = new Promise<never>((_, rejeitar) => {
-    setTimeout(
+    temporizador = setTimeout(
       () => rejeitar(new Error('a troca não chamou /api/sessao.php a tempo')),
       TEMPO_ESPERA_CONFERENCIA_MS
     );
   });
-  await Promise.race([lido, limite]);
+  try {
+    await Promise.race([lido, limite]);
+  } finally {
+    clearTimeout(temporizador);
+  }
+  if (falhaDeLeitura) throw falhaDeLeitura;
   return corpo;
 }
 
@@ -136,6 +150,11 @@ test('sessão única: o último a entrar fica; o anterior cai na troca de págin
       const resultado = await new AxeBuilder({ page }).analyze();
       expect(resultado.violations, `axe no tema ${tema}`).toEqual([]);
     }
+
+    // O último a entrar agora é A: A entra de novo e volta ao mesmo endereço.
+    await preencherEntrada(page, CONTA_ADMIN);
+    await esperarApp(page);
+    await expect(page).toHaveURL(/\/calendario$/);
   } finally {
     await aparelhoB.fechar();
   }

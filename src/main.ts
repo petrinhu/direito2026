@@ -18,6 +18,7 @@ import {
 import { criarClienteApi } from '@/app/restrito/clienteApi';
 import { criarAoNaoAutorizado, criarSessaoGlobal } from '@/app/sessao/sessaoGlobal';
 import { criarNavegadorReal } from '@/app/sessao/navegador';
+import { criarConferirNaTroca } from '@/app/sessao/conferirNaTroca';
 import {
   criarFonteVoltaNavegador,
   iniciarVigiaVoltaNavegador
@@ -104,6 +105,18 @@ async function bootstrap(): Promise<void> {
 
   const router = criarRouter();
   app.use(router);
+
+  // SU-F1 (plano 1.6): a troca de página confere a sessão no servidor, no máximo uma vez a cada
+  // 30 s, sem esperar a resposta. A navegação inicial não conta (o iniciar() já leu a sessão),
+  // e navegação falha ou repetida também não.
+  const conferirNaTroca = criarConferirNaTroca({
+    conferir: () => sessao.conferirAoVoltar(),
+    agora: () => Date.now()
+  });
+  router.afterEach((_para, de, falha) => {
+    if (falha || de.matched.length === 0) return;
+    conferirNaTroca();
+  });
 
   // Volta do cache (botão Voltar depois de sair) e aba que volta: fiação em vigiaVoltaNavegador.ts.
   iniciarVigiaVoltaNavegador(criarFonteVoltaNavegador(window, document), { navegador, sessao });

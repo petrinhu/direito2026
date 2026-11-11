@@ -28,6 +28,11 @@ import { ID_IMAGEM_SINTETICA } from './constantes';
 export const AMBIENTE = process.env.E2E_PORTAO_AMBIENTE ?? '/var/tmp/site-login-unico/f44/ambiente';
 export const PRIVADO = join(AMBIENTE, 'privado');
 export const APP = join(AMBIENTE, 'app');
+/** SMTP falso (EM-F1): conversas capturadas, uma por conexão, e o roteiro que o próximo falso vai seguir. */
+export const PASTA_SMTP = join(AMBIENTE, 'smtp');
+export const ROTEIRO_SMTP = join(PASTA_SMTP, 'roteiro.json');
+/** Senha da caixa, SINTÉTICA: só existe para o envio não falhar antes de conectar (modo 600, sem quebra de linha). */
+const SENHA_SMTP_SINTETICA = 'senha-smtp-sintetica-do-teste';
 
 /** Arquivos que vivem na webroot (public/), não no app: o portão nunca os lista no manifesto. */
 const SO_WEBROOT = new Set([
@@ -127,10 +132,16 @@ function esvaziarSessoes(): void {
   for (const nome of readdirSync(pasta)) rmSync(join(pasta, nome), { force: true });
 }
 
-/** Estado de um teste: contas novas, sessões vazias, limite zerado. Chamada antes de cada teste. */
+/** Roteiro do SMTP falso (smtpFalso.php): vazio é o caminho feliz. Os testes de falha gravam as respostas que querem. */
+export function definirRoteiroSmtp(roteiro: Record<string, unknown> = {}): void {
+  writeFileSync(ROTEIRO_SMTP, JSON.stringify(roteiro));
+}
+
+/** Estado de um teste: contas novas, sessões vazias, limite zerado, SMTP falso com o roteiro feliz. */
 export function resetarPrivado(): void {
   semearContas();
   esvaziarSessoes();
+  definirRoteiroSmtp();
 }
 
 /** Monta o ambiente inteiro: privado com conteúdo sintético, imagem e app a partir do dist. */
@@ -139,6 +150,12 @@ export function prepararAmbiente(dist: string): void {
   rmSync(AMBIENTE, { recursive: true, force: true });
   mkdirSync(PRIVADO, { recursive: true, mode: 0o700 });
   semearContas();
+
+  mkdirSync(PASTA_SMTP, { recursive: true, mode: 0o700 });
+  definirRoteiroSmtp();
+  const senhaSmtp = join(PRIVADO, 'smtp.senha');
+  writeFileSync(senhaSmtp, SENHA_SMTP_SINTETICA);
+  chmodSync(senhaSmtp, 0o600);
 
   const conteudo = join(PRIVADO, 'conteudo');
   writeFileSync(join(conteudo, 'interdisciplinar.json'), JSON.stringify(conteudoRestritoFalso()));

@@ -6,6 +6,13 @@
 /** Porta fixa do php -S de teste. Fora da 4173 (preview do estudo) e da 8731 (matador). */
 export const PORTA = 4741;
 
+/**
+ * Porta fixa, só de loopback, do repasse ao SMTP falso (EM-F1). O php -S sobe uma vez e lê D26_SMTP_TESTE do
+ * ambiente, e o SMTP falso (servidor/testes/apoio/smtpFalso.php) abre porta aleatória e atende uma conversa:
+ * o repasse (smtpRepasse.ts) tem a porta fixa e sobe um falso novo por conexão. Fora de 4741, 4173 e 8731.
+ */
+export const PORTA_SMTP = 4742;
+
 /** Origem do app: o domínio que o teste usa como "o site" (T8: cookie __Host- só em origem segura). */
 export const ORIGEM = `http://localhost:${PORTA}`;
 
@@ -14,6 +21,10 @@ export const ORIGEM = `http://localhost:${PORTA}`;
  * do link externo. Com cookie SameSite=Strict, a navegação vinda daqui não leva a sessão.
  */
 export const ORIGEM_EXTERNA = `http://127.0.0.1:${PORTA}`;
+
+/** Remetente e origem que o servidor usa nos e-mails (D26_ORIGEM, nucleo/config.php): o e-mail carrega o domínio de produção. */
+export const REMETENTE_DO_SITE = 'nao-responda@drpetrus.top';
+export const ORIGEM_NO_EMAIL = 'https://direito2026.drpetrus.top';
 
 /** Frase do líder: verbatim em toda falha de entrada. Não alterar (login.php, D26_FRASE_RECUSA). */
 export const FRASE_RECUSA = 'Site exclusivo para público seleto!';

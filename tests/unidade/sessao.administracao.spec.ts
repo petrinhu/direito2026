@@ -90,6 +90,79 @@ describe('criarAdministrar, ação sobre usuário com convite (CV-F1)', () => {
   });
 });
 
+describe('criarAdministrar, e-mail da conta (EM-F1)', () => {
+  it('o resultado do envio do e-mail chega ao painel junto com o caminho do convite', async () => {
+    const cliente = criarClienteFalso();
+    const caminho = `/api/convite.php?t=${'0123456789abcdef'.repeat(4)}`;
+    cliente.acaoUsuario.mockResolvedValueOnce({ convite: caminho, email: 'enviado' } as never);
+    const administrar = criarAdministrar(cliente, vi.fn());
+    const r = await administrar((c) =>
+      c.acaoUsuario({ acao: 'criar', usuario: 'ana', email: 'ana@example.com' })
+    );
+    expect(r).toEqual({ ok: true, valor: { convite: caminho, email: 'enviado' } });
+    expect(cliente.acaoUsuario).toHaveBeenCalledWith({
+      acao: 'criar',
+      usuario: 'ana',
+      email: 'ana@example.com'
+    });
+  });
+
+  it('e-mail em uso (409) mostra a mensagem do servidor, sem o código', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(409, 'email-em-uso', undefined, 'Este e-mail já está em outra conta.');
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'Este e-mail já está em outra conta.' });
+  });
+
+  it('senha atual errada na troca do próprio e-mail (403) diz que não confere, sem sair da página', async () => {
+    const aoTrocaObrigatoria = vi.fn();
+    const administrar = criarAdministrar(criarClienteFalso(), aoTrocaObrigatoria);
+    const r = await administrar(async () => {
+      throw new ErroDeApi(403, 'senha-atual', undefined, 'A senha atual não confere.');
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'A senha atual não confere.' });
+    expect(aoTrocaObrigatoria).not.toHaveBeenCalled();
+  });
+
+  it('senha atual em branco (403) mostra a mensagem do servidor', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(
+        403,
+        'senha-atual-exigida',
+        undefined,
+        'Informe a senha atual para trocar o seu e-mail.'
+      );
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'Informe a senha atual para trocar o seu e-mail.' });
+  });
+
+  it('muitas tentativas de senha atual (429) mostram a espera que o servidor mandou', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(
+        429,
+        'aguarde',
+        30,
+        'Muitas tentativas. Aguarde 30 segundos e tente de novo.'
+      );
+    });
+    expect(r).toEqual({
+      ok: false,
+      mensagem: 'Muitas tentativas. Aguarde 30 segundos e tente de novo.'
+    });
+  });
+
+  it('403 de outro código nunca vira a mensagem crua do servidor', async () => {
+    const administrar = criarAdministrar(criarClienteFalso(), vi.fn());
+    const r = await administrar(async () => {
+      throw new ErroDeApi(403, 'nao-admin', undefined, 'Acesso restrito a quem administra.');
+    });
+    expect(r).toEqual({ ok: false, mensagem: 'Não foi possível concluir a ação.' });
+  });
+});
+
 describe('criarSessaoGlobal, sessão conhecida e troca de senha', () => {
   it('se a leitura da sessão falha, iniciar não lança: fica não pronta e marca a falha', async () => {
     const cliente = criarClienteFalso();

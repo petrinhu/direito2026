@@ -20,6 +20,7 @@ const erro = ref('');
 const status = ref('');
 const ocupado = ref(false);
 const novoUsuario = ref('');
+const novoEmail = ref('');
 /**
  * O link do convite vive só aqui, na memória do componente (plano 7.1.7): some em "Já enviei", na ação
  * seguinte e ao desmontar. Guarda só o caminho que o servidor deu; o endereço completo é composto com
@@ -29,8 +30,27 @@ const blocoDoLink = ref<HTMLElement>();
 const secao = ref<HTMLElement>();
 const tituloDaSecao = ref<HTMLElement>();
 const campoNovoUsuario = ref<HTMLInputElement>();
-const link = ref<{ usuario: string; acao: 'criar' | 'redefinir'; caminho: string } | undefined>();
+type EnvioDoEmail = NonNullable<Awaited<ReturnType<ClienteApi['acaoUsuario']>>['email']>;
+/**
+ * `envio` e `destino` ficam com o link, na memória: o e-mail da pessoa vive só enquanto o bloco está na tela
+ * (some em "Já enviei", na ação seguinte e ao desmontar), como o próprio link.
+ */
+const link = ref<
+  | {
+      usuario: string;
+      acao: 'criar' | 'redefinir';
+      caminho: string;
+      envio?: EnvioDoEmail;
+      destino?: string;
+    }
+  | undefined
+>();
 const copiaAvisada = ref('');
+/** Trocar e-mail: a conta aberta para edição, o valor digitado e, só na própria conta, a senha atual. */
+const editandoEmail = ref<string | undefined>();
+const emailEditado = ref('');
+const senhaAtualEditada = ref('');
+
 const confirmandoExclusao = ref<string | undefined>();
 const botaoCancelar = ref<HTMLButtonElement[]>();
 
@@ -42,6 +62,14 @@ const tituloDoLink = computed(() =>
 const enderecoDoLink = computed(() =>
   link.value ? `${window.location.origin}${link.value.caminho}` : ''
 );
+/** O link está na tela nos dois casos: a frase só diz se o e-mail também saiu. Conta sem e-mail: só o link. */
+const fraseDoEnvio = computed(() => {
+  const atual = link.value;
+  if (atual?.envio === 'enviado' && atual.destino)
+    return `O link também foi para ${atual.destino}.`;
+  if (atual?.envio === 'falhou') return 'O e-mail não saiu. Copie o link e envie por outro canal.';
+  return '';
+});
 
 function dois(n: number): string {
   return String(n).padStart(2, '0');
@@ -52,6 +80,15 @@ function formatarPrazo(epochSegundos: number | null | undefined): string {
   if (typeof epochSegundos !== 'number') return '';
   const d = new Date(epochSegundos * 1000);
   return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+}
+
+/** Instante ISO da última falha de envio, em dd/mm hh:mm no fuso de quem olha. Valor que não é data: nada a mostrar. */
+function formatarFalhaDeEnvio(instante: string | null | undefined): string {
+  if (typeof instante !== 'string') return '';
+  const d = new Date(instante);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
 }
 
 function formatarData(valor: string | null): string {
@@ -100,11 +137,23 @@ async function executar(
   erro.value = '';
   // A ação seguinte apaga o link da anterior, venha ou não um novo convite na resposta.
   dispensarLink();
+  // Para onde o e-mail foi: o que o admin digitou ao criar (o servidor grava em minúsculas), ou o que a lista
+  // mostrava da conta ao redefinir. A resposta do servidor só diz se saiu.
+  const destino =
+    pedido.acao === 'criar'
+      ? pedido.email.toLowerCase()
+      : usuarios.value.find((u) => u.usuario === pedido.usuario)?.email;
   const r = await props.administrar((c) => c.acaoUsuario(pedido));
   if (r.ok) {
     status.value = aviso;
     if (r.valor.convite && (pedido.acao === 'criar' || pedido.acao === 'redefinir')) {
-      link.value = { usuario: pedido.usuario, acao: pedido.acao, caminho: r.valor.convite };
+      link.value = {
+        usuario: pedido.usuario,
+        acao: pedido.acao,
+        caminho: r.valor.convite,
+        ...(r.valor.email === undefined ? {} : { envio: r.valor.email }),
+        ...(destino ? { destino } : {})
+      };
       await mostrarBlocoDoLink();
     }
     await carregar();
@@ -120,9 +169,79 @@ async function criar(): Promise<void> {
       'O usuário deve ter de 3 a 32 caracteres: letras sem acento, números, ponto, hífen ou sublinhado.';
     return;
   }
+  const email = novoEmail.value.trim();
+  if (email === '') {
+    erro.value = 'E-mail inválido.';
+    return;
+  }
   const login = novoUsuario.value;
-  await executar({ acao: 'criar', usuario: login }, `Usuário ${login} criado.`);
-  if (!erro.value) novoUsuario.value = '';
+  await executar({ acao: 'criar', usuario: login, email }, `Usuário ${login} criado.`);
+  if (!erro.value) {
+    novoUsuario.value = '';
+    novoEmail.value = '';
+  }
+}
+
+/** Fecha o formulário de Trocar e-mail e apaga o que estava nele, a senha atual inclusive. */
+function fecharTrocaDeEmail(): void {
+  editandoEmail.value = undefined;
+  emailEditado.value = '';
+  senhaAtualEditada.value = '';
+}
+
+async function focarBotaoTrocarEmail(login: string): Promise<void> {
+  await nextTick();
+  Array.from(
+    secao.value?.querySelectorAll<HTMLButtonElement>('button[data-acao="trocar-email"]') ?? []
+  )
+    .find((botao) => botao.dataset.usuario === login)
+    ?.focus();
+}
+
+/** Campo do formulário de Trocar e-mail que está aberto (só há um por vez, dentro da linha da conta). */
+function campoDaTroca(nome: 'emailEditado' | 'senhaAtual'): HTMLInputElement | null | undefined {
+  return secao.value?.querySelector<HTMLInputElement>(
+    `form.ar-admin__trocar-email input[name="${nome}"]`
+  );
+}
+
+async function abrirTrocaDeEmail(u: UsuarioAdmin): Promise<void> {
+  senhaAtualEditada.value = '';
+  emailEditado.value = u.email ?? '';
+  editandoEmail.value = u.usuario;
+  await nextTick();
+  campoDaTroca('emailEditado')?.focus();
+}
+
+async function cancelarTrocaDeEmail(): Promise<void> {
+  const login = editandoEmail.value;
+  fecharTrocaDeEmail();
+  if (login) await focarBotaoTrocarEmail(login);
+}
+
+/**
+ * O servidor decide o que vale (formato, e-mail em uso, senha atual): o painel só recusa o campo vazio, sem
+ * chamada. Na própria conta a senha atual vai no mesmo pedido; em branco, o servidor responde com a frase dele.
+ * Falhou: o formulário fica aberto com o e-mail digitado e a senha digitada é apagada.
+ */
+async function trocarEmail(): Promise<void> {
+  const login = editandoEmail.value;
+  if (!login || ocupado.value) return;
+  const email = emailEditado.value.trim();
+  if (email === '') {
+    erro.value = 'E-mail inválido.';
+    return;
+  }
+  const propria = login === props.usuarioAtual;
+  const senhaAtual = senhaAtualEditada.value;
+  await executar({ acao: 'email', usuario: login, email, ...(propria ? { senhaAtual } : {}) }, '');
+  senhaAtualEditada.value = '';
+  if (erro.value) {
+    if (propria) campoDaTroca('senhaAtual')?.focus();
+    return;
+  }
+  fecharTrocaDeEmail();
+  await focarBotaoTrocarEmail(login);
 }
 
 async function pedirConfirmacao(login: string): Promise<void> {
@@ -168,7 +287,10 @@ async function jaEnviei(): Promise<void> {
 }
 
 onMounted(carregar);
-onBeforeUnmount(dispensarLink);
+onBeforeUnmount(() => {
+  dispensarLink();
+  fecharTrocaDeEmail();
+});
 </script>
 
 <template>
@@ -190,6 +312,7 @@ onBeforeUnmount(dispensarLink);
         <code class="ar-admin__link">{{ enderecoDoLink }}</code>
       </p>
       <p>Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.</p>
+      <p v-if="fraseDoEnvio">{{ fraseDoEnvio }}</p>
       <p v-if="copiaAvisada">{{ copiaAvisada }}</p>
       <div class="ar-admin__acoes-aviso">
         <button type="button" class="ar-botao" data-acao="copiar" @click="copiar">
@@ -214,6 +337,19 @@ onBeforeUnmount(dispensarLink);
           autocomplete="off"
           autocapitalize="none"
           spellcheck="false"
+        />
+      </div>
+      <div class="ar-campo">
+        <label :for="`${idBase}-novo-email`">E-mail</label>
+        <input
+          :id="`${idBase}-novo-email`"
+          v-model="novoEmail"
+          name="novoEmail"
+          type="email"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          required
         />
       </div>
       <button
@@ -241,6 +377,7 @@ onBeforeUnmount(dispensarLink);
           <tr>
             <th scope="col">Usuário</th>
             <th scope="col">Papel</th>
+            <th scope="col">E-mail</th>
             <th scope="col">Estado</th>
             <th scope="col">Último acesso</th>
             <th scope="col">Ações</th>
@@ -248,11 +385,16 @@ onBeforeUnmount(dispensarLink);
         </thead>
         <tbody>
           <tr v-for="u in usuarios" :key="u.usuario">
-            <th scope="row">{{ u.usuario }}</th>
+            <th :id="`${idBase}-linha-${u.usuario}`" scope="row">{{ u.usuario }}</th>
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
+            <td data-rotulo="E-mail">{{ u.email ?? '' }}</td>
             <td data-rotulo="Estado">
               {{ u.ativo ? 'Ativo' : 'Desativado' }}
               <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
+              <span v-if="u.email === null"> · Sem e-mail</span>
+              <span v-if="formatarFalhaDeEnvio(u.envioFalhouEm)">
+                · E-mail não saiu em {{ formatarFalhaDeEnvio(u.envioFalhouEm) }}</span
+              >
               <span v-if="u.convite === 'pendente'">
                 · Convite pendente até {{ formatarPrazo(u.conviteExpiraEm) }}</span
               >
@@ -260,7 +402,67 @@ onBeforeUnmount(dispensarLink);
             </td>
             <td data-rotulo="Último acesso">{{ formatarData(u.ultimoLogin) }}</td>
             <td data-rotulo="Ações">
-              <span v-if="u.usuario === usuarioAtual">Sua conta</span>
+              <form
+                v-if="editandoEmail === u.usuario"
+                class="ar-admin__acoes ar-admin__trocar-email"
+                novalidate
+                @submit.prevent="trocarEmail"
+              >
+                <div class="ar-campo">
+                  <label :for="`${idBase}-email-editado`">E-mail</label>
+                  <input
+                    :id="`${idBase}-email-editado`"
+                    v-model="emailEditado"
+                    name="emailEditado"
+                    type="email"
+                    autocomplete="off"
+                    autocapitalize="none"
+                    spellcheck="false"
+                    required
+                  />
+                </div>
+                <div v-if="u.usuario === usuarioAtual" class="ar-campo">
+                  <label :for="`${idBase}-senha-atual`">Senha atual</label>
+                  <input
+                    :id="`${idBase}-senha-atual`"
+                    v-model="senhaAtualEditada"
+                    name="senhaAtual"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="ar-botao ar-botao--primario"
+                  data-acao="salvar-email"
+                  :aria-disabled="ocupado ? 'true' : undefined"
+                >
+                  Trocar e-mail
+                </button>
+                <button
+                  type="button"
+                  class="ar-botao"
+                  data-acao="cancelar-email"
+                  @click="cancelarTrocaDeEmail"
+                >
+                  Cancelar
+                </button>
+              </form>
+              <div v-else-if="u.usuario === usuarioAtual" class="ar-admin__acoes">
+                <span>Sua conta</span>
+                <button
+                  :id="`${idBase}-trocar-${u.usuario}`"
+                  type="button"
+                  class="ar-botao"
+                  data-acao="trocar-email"
+                  :data-usuario="u.usuario"
+                  :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-linha-${u.usuario}`"
+                  @click="abrirTrocaDeEmail(u)"
+                >
+                  Trocar e-mail
+                </button>
+              </div>
               <template v-else>
                 <div
                   v-if="confirmandoExclusao === u.usuario"
@@ -302,6 +504,17 @@ onBeforeUnmount(dispensarLink);
                     "
                   >
                     Redefinir senha
+                  </button>
+                  <button
+                    :id="`${idBase}-trocar-${u.usuario}`"
+                    type="button"
+                    class="ar-botao"
+                    data-acao="trocar-email"
+                    :data-usuario="u.usuario"
+                    :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-linha-${u.usuario}`"
+                    @click="abrirTrocaDeEmail(u)"
+                  >
+                    Trocar e-mail
                   </button>
                   <button
                     v-if="u.ativo"

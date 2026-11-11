@@ -25,12 +25,41 @@ export interface UsuarioAdmin {
   readonly convite?: 'pendente' | 'vencido' | null;
   /** Fim do prazo do convite, em epoch de segundos. */
   readonly conviteExpiraEm?: number | null;
+  /** E-mail da conta, em minúsculas (só o administrador o recebe). `null`: a conta ainda não tem. Ausente em servidor antigo. */
+  readonly email?: string | null;
+  /** Instante (ISO 8601) do último e-mail que o site tentou mandar a esta conta e não saiu. Ausente ou `null`: sem falha pendente. */
+  readonly envioFalhouEm?: string | null;
 }
 
-export type AcaoUsuario = {
-  readonly acao: 'criar' | 'redefinir' | 'ativar' | 'desativar' | 'excluir';
-  readonly usuario: string;
-};
+/**
+ * O que o servidor fez com o e-mail do convite: `enviado`, `falhou` (a conta e o link existem mesmo assim) ou
+ * `sem-email` (conta sem endereço: só o link vai para copiar).
+ */
+export type EnvioDoEmail = 'enviado' | 'falhou' | 'sem-email';
+
+const ENVIOS_DO_EMAIL: ReadonlySet<string> = new Set<EnvioDoEmail>([
+  'enviado',
+  'falhou',
+  'sem-email'
+]);
+
+export type AcaoUsuario =
+  | {
+      readonly acao: 'criar';
+      readonly usuario: string;
+      readonly email: string;
+    }
+  | {
+      readonly acao: 'email';
+      readonly usuario: string;
+      readonly email: string;
+      /** Só na própria conta: o servidor reconfere a senha antes de trocar o e-mail. */
+      readonly senhaAtual?: string;
+    }
+  | {
+      readonly acao: 'redefinir' | 'ativar' | 'desativar' | 'excluir';
+      readonly usuario: string;
+    };
 
 /** Caminho do convite que o servidor devolve ao criar e ao redefinir: o painel compõe o endereço com `location.origin`. */
 const CAMINHO_CONVITE = /^\/api\/convite\.php\?t=[0-9a-f]{64}$/;
@@ -44,7 +73,9 @@ export interface ClienteApi {
   /** JSON cru da Júri (juri/conteudo.php): mesma sessão, sem senha; quem chama valida antes de usar. */
   obterConteudoJuri(): Promise<unknown>;
   listarUsuarios(): Promise<readonly UsuarioAdmin[]>;
-  acaoUsuario(pedido: AcaoUsuario): Promise<{ readonly convite?: string }>;
+  acaoUsuario(
+    pedido: AcaoUsuario
+  ): Promise<{ readonly convite?: string; readonly email?: EnvioDoEmail }>;
 }
 
 export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
@@ -83,11 +114,15 @@ export function criarClienteApi(opcoes: OpcoesTransporte = {}): ClienteApi {
     },
     async acaoUsuario(pedido) {
       const c = await enviar('usuarios.php', { ...pedido });
-      if (c.convite === undefined) return {};
+      if (c.email !== undefined && (typeof c.email !== 'string' || !ENVIOS_DO_EMAIL.has(c.email))) {
+        throw new ErroDeApi(200, 'resposta-invalida');
+      }
+      const email = c.email as EnvioDoEmail | undefined;
+      if (c.convite === undefined) return email === undefined ? {} : { email };
       if (typeof c.convite !== 'string' || !CAMINHO_CONVITE.test(c.convite)) {
         throw new ErroDeApi(200, 'resposta-invalida');
       }
-      return { convite: c.convite };
+      return { convite: c.convite, ...(email === undefined ? {} : { email }) };
     }
   };
 }

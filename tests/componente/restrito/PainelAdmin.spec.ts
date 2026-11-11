@@ -24,7 +24,8 @@ const usuarios: UsuarioAdmin[] = [
     ativo: true,
     deveTrocarSenha: false,
     criadoEm: '2026-10-01',
-    ultimoLogin: '2026-10-05'
+    ultimoLogin: '2026-10-05',
+    email: 'chefe@example.com'
   },
   {
     usuario: 'ana',
@@ -32,7 +33,8 @@ const usuarios: UsuarioAdmin[] = [
     ativo: true,
     deveTrocarSenha: true,
     criadoEm: '2026-10-02',
-    ultimoLogin: null
+    ultimoLogin: null,
+    email: 'ana@example.com'
   },
   {
     usuario: 'beto',
@@ -40,7 +42,8 @@ const usuarios: UsuarioAdmin[] = [
     ativo: false,
     deveTrocarSenha: false,
     criadoEm: '2026-10-02',
-    ultimoLogin: null
+    ultimoLogin: null,
+    email: null
   }
 ];
 
@@ -77,11 +80,11 @@ describe('PainelAdmin', () => {
     expect(linhas[0]!.text()).toContain('Administrador');
   });
 
-  it('a própria conta não tem botões de ação', async () => {
+  it('a própria conta só tem a ação Trocar e-mail: nenhuma ação que o servidor recusa sobre si mesmo', async () => {
     const { w } = montar();
     await flushPromises();
     const propria = w.findAll('tbody tr')[0]!;
-    expect(propria.findAll('button')).toHaveLength(0);
+    expect(propria.findAll('button').map((b) => b.text())).toEqual(['Trocar e-mail']);
     expect(propria.text()).toMatch(/sua conta/i);
   });
 
@@ -129,15 +132,20 @@ describe('PainelAdmin', () => {
     expect(w.get('[role="alert"]').text()).toBe('Sua sessão terminou. Entre de novo.');
   });
 
-  it('criar manda só o usuário: o formulário não tem campo de senha provisória (R9)', async () => {
+  it('criar manda o usuário e o e-mail: o formulário não tem campo de senha provisória (R9)', async () => {
     const { w, cliente } = montar();
     await flushPromises();
     expect(w.find('input[name="provisoriaEscolhida"]').exists()).toBe(false);
     expect(w.get('form.ar-admin__criar').text()).not.toMatch(/senha provisória/i);
     await w.get('input[name="novoUsuario"]').setValue('carla');
+    await w.get('input[name="novoEmail"]').setValue('carla@example.com');
     await w.get('form.ar-admin__criar').trigger('submit');
     await flushPromises();
-    expect(cliente.acaoUsuario).toHaveBeenCalledWith({ acao: 'criar', usuario: 'carla' });
+    expect(cliente.acaoUsuario).toHaveBeenCalledWith({
+      acao: 'criar',
+      usuario: 'carla',
+      email: 'carla@example.com'
+    });
   });
 });
 
@@ -165,6 +173,7 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
 
   async function criarCarla(w: ReturnType<typeof montar>['w']) {
     await w.get('input[name="novoUsuario"]').setValue('carla');
+    await w.get('input[name="novoEmail"]').setValue('carla@example.com');
     await w.get('form.ar-admin__criar').trigger('submit');
     await flushPromises();
   }
@@ -467,6 +476,505 @@ describe('PainelAdmin, coluna Estado com o convite (CV-F1)', () => {
     expect(await estadoDaLinha([semCampo])).not.toMatch(/convite/i);
   });
 });
+
+describe('PainelAdmin, e-mail da conta (EM-F1)', () => {
+  const FRASE_FALHA = 'O e-mail não saiu. Copie o link e envie por outro canal.';
+
+  /** Painel em que só a ação falha: a lista carrega, e a ação devolve o erro do servidor já traduzido. */
+  function montarComFalhaNaAcao(mensagem: string) {
+    const cliente = {
+      listarUsuarios: vi.fn(async () => usuarios),
+      acaoUsuario: vi.fn(async () => {
+        throw new Error('falha do servidor');
+      })
+    } as unknown as ClienteApi;
+    const administrar = async <T>(
+      f: (c: ClienteApi) => Promise<T>
+    ): Promise<ResultadoAdministracao<T>> => {
+      try {
+        return { ok: true, valor: await f(cliente) };
+      } catch {
+        return { ok: false, mensagem };
+      }
+    };
+    const w = mount(PainelAdmin, {
+      props: { usuarioAtual: 'chefe', administrar },
+      attachTo: document.body
+    });
+    return { w, cliente };
+  }
+
+  function montarComResposta(resposta: { convite?: string; email?: string }) {
+    vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
+    return montar({
+      acaoUsuario: vi.fn(async () => resposta) as unknown as ClienteApi['acaoUsuario']
+    });
+  }
+
+  async function criar(
+    w: ReturnType<typeof montar>['w'],
+    usuario = 'carla',
+    email = 'carla@example.com'
+  ) {
+    await w.get('input[name="novoUsuario"]').setValue(usuario);
+    await w.get('input[name="novoEmail"]').setValue(email);
+    await w.get('form.ar-admin__criar').trigger('submit');
+    await flushPromises();
+  }
+
+  async function abrirTrocaDeEmail(w: ReturnType<typeof montar>['w'], login: string) {
+    await w.get(`button[data-acao="trocar-email"][data-usuario="${login}"]`).trigger('click');
+    await flushPromises();
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    localStorage.clear();
+    sessionStorage.clear();
+    delete (window.Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+  });
+
+  beforeEach(() => {
+    window.Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  describe('criar', () => {
+    it('o formulário tem o campo E-mail, obrigatório, com rótulo visível', async () => {
+      const { w } = montar();
+      await flushPromises();
+      const campo = w.get<HTMLInputElement>('form.ar-admin__criar input[name="novoEmail"]');
+      expect(campo.attributes('type')).toBe('email');
+      expect(campo.attributes('required')).toBeDefined();
+      expect(campo.attributes('autocomplete')).toBe('off');
+      const rotulo = w.get(`label[for="${campo.attributes('id')}"]`);
+      expect(rotulo.text()).toBe('E-mail');
+    });
+
+    it.each([
+      ['vazio', ''],
+      ['só espaços', '   ']
+    ])('e-mail %s: o botão não envia, e o erro aparece num alerta', async (_nome, email) => {
+      const { w, cliente } = montar();
+      await flushPromises();
+      await w.get('input[name="novoUsuario"]').setValue('carla');
+      await w.get('input[name="novoEmail"]').setValue(email);
+      await w.get('form.ar-admin__criar').trigger('submit');
+      await flushPromises();
+      expect(cliente.acaoUsuario).not.toHaveBeenCalled();
+      expect(w.get('[role="alert"]').text()).toBe('E-mail inválido.');
+    });
+
+    it('manda o e-mail sem espaços nas pontas', async () => {
+      const { w, cliente } = montar();
+      await flushPromises();
+      await criar(w, 'carla', '  carla@example.com ');
+      expect(cliente.acaoUsuario).toHaveBeenCalledWith({
+        acao: 'criar',
+        usuario: 'carla',
+        email: 'carla@example.com'
+      });
+    });
+
+    it.each([['E-mail inválido.'], ['Este e-mail já está em outra conta.']])(
+      'o erro do servidor (%s) aparece e os campos seguem preenchidos',
+      async (mensagem) => {
+        const { w } = montarComFalhaNaAcao(mensagem);
+        await flushPromises();
+        await criar(w);
+        expect(w.get('[role="alert"]').text()).toBe(mensagem);
+        expect(w.get<HTMLInputElement>('input[name="novoEmail"]').element.value).toBe(
+          'carla@example.com'
+        );
+        expect(w.get<HTMLInputElement>('input[name="novoUsuario"]').element.value).toBe('carla');
+      }
+    );
+
+    it('conta criada: os dois campos esvaziam', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w);
+      expect(w.get<HTMLInputElement>('input[name="novoEmail"]').element.value).toBe('');
+      expect(w.get<HTMLInputElement>('input[name="novoUsuario"]').element.value).toBe('');
+    });
+  });
+
+  describe('frase de enviado ou de falha, com o link sempre visível', () => {
+    it('criar com envio feito: "O link também foi para <e-mail>." e o link na tela', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w);
+      const bloco = w.get('.ar-admin__convite');
+      expect(bloco.text()).toContain('O link também foi para carla@example.com.');
+      expect(bloco.text()).not.toContain('não saiu');
+      expect(bloco.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    });
+
+    it('o título continua sendo o primeiro parágrafo do bloco, e a frase vem depois do link', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w);
+      const paragrafos = w.findAll('.ar-admin__convite p').map((p) => p.text());
+      expect(paragrafos[0]).toBe('Link de primeiro acesso de carla:');
+      expect(paragrafos.findIndex((t) => t.startsWith('O link também foi para'))).toBeGreaterThan(
+        paragrafos.findIndex((t) => t.startsWith('https://') || t.startsWith(ORIGEM_DE_TESTE))
+      );
+    });
+
+    it('o endereço da frase é o que o servidor grava: em minúsculas', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w, 'carla', ' Carla@Example.COM ');
+      expect(w.get('.ar-admin__convite').text()).toContain(
+        'O link também foi para carla@example.com.'
+      );
+    });
+
+    it('criar com envio que falhou: a frase de falha e o link, sem a frase de enviado', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'falhou' });
+      await flushPromises();
+      await criar(w);
+      const bloco = w.get('.ar-admin__convite');
+      expect(bloco.text()).toContain(FRASE_FALHA);
+      expect(bloco.text()).not.toContain('O link também foi para');
+      expect(bloco.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    });
+
+    it('redefinir uma conta com e-mail: a frase leva o e-mail que a lista mostra', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await w.get('button[data-acao="redefinir"][data-usuario="ana"]').trigger('click');
+      await flushPromises();
+      expect(w.get('.ar-admin__convite').text()).toContain(
+        'O link também foi para ana@example.com.'
+      );
+    });
+
+    it('redefinir com envio que falhou: a frase de falha e o link', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'falhou' });
+      await flushPromises();
+      await w.get('button[data-acao="redefinir"][data-usuario="ana"]').trigger('click');
+      await flushPromises();
+      expect(w.get('.ar-admin__convite').text()).toContain(FRASE_FALHA);
+      expect(w.find('.ar-admin__link').exists()).toBe(true);
+    });
+
+    it('redefinir uma conta sem e-mail: só o link, nenhuma das duas frases', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'sem-email' });
+      await flushPromises();
+      await w.get('button[data-acao="redefinir"][data-usuario="beto"]').trigger('click');
+      await flushPromises();
+      const bloco = w.get('.ar-admin__convite');
+      expect(bloco.text()).not.toContain('O link também foi para');
+      expect(bloco.text()).not.toContain('não saiu');
+      expect(bloco.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    });
+
+    it('servidor sem o campo email na resposta: só o link', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE });
+      await flushPromises();
+      await criar(w);
+      expect(w.get('.ar-admin__convite').text()).not.toContain('O link também foi para');
+      expect(w.get('.ar-admin__convite').text()).not.toContain('não saiu');
+    });
+
+    it('Já enviei apaga a frase junto com o link', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w);
+      await w.get('button[data-acao="dispensar"]').trigger('click');
+      await flushPromises();
+      expect(w.text()).not.toContain('O link também foi para');
+      expect(w.text()).not.toContain('carla@example.com');
+    });
+
+    it('Já enviei, na origem criar, devolve o foco ao campo Usuário (a frase não muda isso)', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'falhou' });
+      await flushPromises();
+      await criar(w);
+      await w.get('button[data-acao="dispensar"]').trigger('click');
+      await flushPromises();
+      expect(document.activeElement).toBe(w.get('input[name="novoUsuario"]').element);
+    });
+  });
+
+  describe('coluna Estado e coluna E-mail', () => {
+    const conta = (extra: Partial<UsuarioAdmin>) => ({ ...usuarios[1]!, ...extra }) as UsuarioAdmin;
+
+    async function linha(lista: UsuarioAdmin[]) {
+      const { w } = montar({ listarUsuarios: vi.fn(async () => lista) });
+      await flushPromises();
+      const tr = w.findAll('tbody tr')[0]!;
+      return {
+        estado: tr.get('td[data-rotulo="Estado"]').text(),
+        email: tr.get('td[data-rotulo="E-mail"]').text()
+      };
+    }
+
+    it('sem e-mail na conta: Estado diz "Sem e-mail"', async () => {
+      expect((await linha([conta({ email: null })])).estado).toContain('Sem e-mail');
+    });
+
+    it('com e-mail: nada de "Sem e-mail", e a coluna E-mail mostra o endereço', async () => {
+      const r = await linha([conta({ email: 'ana@example.com' })]);
+      expect(r.estado).not.toContain('Sem e-mail');
+      expect(r.email).toBe('ana@example.com');
+    });
+
+    it('servidor antigo, sem o campo email: não afirma "Sem e-mail"', async () => {
+      const antigo = { ...usuarios[1]! } as Record<string, unknown>;
+      delete antigo.email;
+      expect((await linha([antigo as unknown as UsuarioAdmin])).estado).not.toContain('Sem e-mail');
+    });
+
+    it('falha de envio gravada: "E-mail não saiu em dd/mm hh:mm", no fuso de quem olha', async () => {
+      const instante = new Date(2026, 10, 13, 9, 5, 0);
+      const r = await linha([conta({ envioFalhouEm: instante.toISOString() })]);
+      expect(r.estado).toContain('E-mail não saiu em 13/11 09:05');
+    });
+
+    it('sem falha gravada, ou com valor que não é data: nenhum aviso de falha', async () => {
+      expect((await linha([conta({ envioFalhouEm: null })])).estado).not.toContain('não saiu');
+      expect((await linha([conta({})])).estado).not.toContain('não saiu');
+      expect((await linha([conta({ envioFalhouEm: 'não é data' })])).estado).not.toContain(
+        'não saiu em'
+      );
+    });
+  });
+
+  describe('Trocar e-mail', () => {
+    it('há um botão por conta, inclusive a própria, com nome acessível que diz de quem é', async () => {
+      const { w } = montar();
+      await flushPromises();
+      for (const login of ['chefe', 'ana', 'beto']) {
+        const botao = w.get(`button[data-acao="trocar-email"][data-usuario="${login}"]`);
+        expect(botao.text()).toBe('Trocar e-mail');
+        const ids = botao.attributes('aria-labelledby')!.split(' ');
+        const nome = ids.map((id) => document.getElementById(id)!.textContent!.trim()).join(' ');
+        expect(nome).toBe(`Trocar e-mail ${login}`);
+      }
+    });
+
+    it('abre o campo E-mail com o valor atual e o foco nele', async () => {
+      const { w } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      const campo = w.get<HTMLInputElement>('input[name="emailEditado"]');
+      expect(campo.element.value).toBe('ana@example.com');
+      expect(document.activeElement).toBe(campo.element);
+      expect(w.get(`label[for="${campo.attributes('id')}"]`).text()).toBe('E-mail');
+      expect(campo.attributes('type')).toBe('email');
+    });
+
+    it('conta sem e-mail: o campo abre vazio', async () => {
+      const { w } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'beto');
+      expect(w.get<HTMLInputElement>('input[name="emailEditado"]').element.value).toBe('');
+    });
+
+    it('outra conta: manda só o e-mail novo, sem campo nem valor de senha atual', async () => {
+      const { w, cliente } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      expect(w.find('input[name="senhaAtual"]').exists()).toBe(false);
+      await w.get('input[name="emailEditado"]').setValue(' Ana.Nova@Example.com ');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(cliente.acaoUsuario).toHaveBeenCalledWith({
+        acao: 'email',
+        usuario: 'ana',
+        email: 'Ana.Nova@Example.com'
+      });
+      expect(cliente.listarUsuarios).toHaveBeenCalledTimes(2);
+    });
+
+    it('depois de trocar, o campo fecha e o foco volta ao Trocar e-mail da conta', async () => {
+      const { w } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w.get('input[name="emailEditado"]').setValue('outro@example.com');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(w.find('form.ar-admin__trocar-email').exists()).toBe(false);
+      expect(document.activeElement).toBe(
+        w.get('button[data-acao="trocar-email"][data-usuario="ana"]').element
+      );
+    });
+
+    it('e-mail vazio: não envia e diz "E-mail inválido."', async () => {
+      const { w, cliente } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w.get('input[name="emailEditado"]').setValue('  ');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(cliente.acaoUsuario).not.toHaveBeenCalled();
+      expect(w.get('[role="alert"]').text()).toBe('E-mail inválido.');
+      expect(w.find('form.ar-admin__trocar-email').exists()).toBe(true);
+    });
+
+    it('o erro do servidor aparece e o campo segue aberto com o que foi digitado', async () => {
+      const { w } = montarComFalhaNaAcao('Este e-mail já está em outra conta.');
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w.get('input[name="emailEditado"]').setValue('beto@example.com');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(w.get('[role="alert"]').text()).toBe('Este e-mail já está em outra conta.');
+      expect(w.get<HTMLInputElement>('input[name="emailEditado"]').element.value).toBe(
+        'beto@example.com'
+      );
+    });
+
+    it('Cancelar fecha sem chamar o servidor e devolve o foco ao botão', async () => {
+      const { w, cliente } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w
+        .get('form.ar-admin__trocar-email button[data-acao="cancelar-email"]')
+        .trigger('click');
+      await flushPromises();
+      expect(w.find('form.ar-admin__trocar-email').exists()).toBe(false);
+      expect(cliente.acaoUsuario).not.toHaveBeenCalled();
+      expect(document.activeElement).toBe(
+        w.get('button[data-acao="trocar-email"][data-usuario="ana"]').element
+      );
+    });
+
+    it('só um campo de e-mail aberto por vez: abrir outro fecha o anterior', async () => {
+      const { w } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await abrirTrocaDeEmail(w, 'beto');
+      expect(w.findAll('form.ar-admin__trocar-email')).toHaveLength(1);
+      expect(w.get<HTMLInputElement>('input[name="emailEditado"]').element.value).toBe('');
+    });
+  });
+
+  describe('Trocar e-mail na própria conta pede a Senha atual', () => {
+    async function abrirPropria() {
+      const montado = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(montado.w, 'chefe');
+      return montado;
+    }
+
+    it('mostra o campo Senha atual, do tipo senha e com autocomplete current-password', async () => {
+      const { w } = await abrirPropria();
+      const campo = w.get<HTMLInputElement>('input[name="senhaAtual"]');
+      expect(campo.attributes('type')).toBe('password');
+      expect(campo.attributes('autocomplete')).toBe('current-password');
+      expect(w.get(`label[for="${campo.attributes('id')}"]`).text()).toBe('Senha atual');
+    });
+
+    it('manda a senha atual junto com o e-mail novo', async () => {
+      const { w, cliente } = await abrirPropria();
+      await w.get('input[name="emailEditado"]').setValue('chefe.novo@example.com');
+      await w.get('input[name="senhaAtual"]').setValue('senha-sintetica-do-teste');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(cliente.acaoUsuario).toHaveBeenCalledWith({
+        acao: 'email',
+        usuario: 'chefe',
+        email: 'chefe.novo@example.com',
+        senhaAtual: 'senha-sintetica-do-teste'
+      });
+    });
+
+    it('depois de trocar, a senha atual sai da memória do componente e do documento', async () => {
+      const { w } = await abrirPropria();
+      await w.get('input[name="senhaAtual"]').setValue('senha-sintetica-do-teste');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(estadoDoEmail(w).senhaAtualEditada).toBe('');
+      expect(w.html()).not.toContain('senha-sintetica-do-teste');
+    });
+
+    it('senha errada: o erro aparece, o campo segue aberto e a senha digitada é apagada', async () => {
+      const cliente = {
+        listarUsuarios: vi.fn(async () => usuarios),
+        acaoUsuario: vi.fn(async () => {
+          throw new Error('403');
+        })
+      } as unknown as ClienteApi;
+      const administrar = async <T>(
+        f: (c: ClienteApi) => Promise<T>
+      ): Promise<ResultadoAdministracao<T>> => {
+        try {
+          return { ok: true, valor: await f(cliente) };
+        } catch {
+          return { ok: false, mensagem: 'A senha atual não confere.' };
+        }
+      };
+      const w = mount(PainelAdmin, {
+        props: { usuarioAtual: 'chefe', administrar },
+        attachTo: document.body
+      });
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'chefe');
+      await w.get('input[name="senhaAtual"]').setValue('senha-errada-do-teste');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(w.get('[role="alert"]').text()).toBe('A senha atual não confere.');
+      expect(w.find('form.ar-admin__trocar-email').exists()).toBe(true);
+      expect(estadoDoEmail(w).senhaAtualEditada).toBe('');
+      expect(w.get<HTMLInputElement>('input[name="senhaAtual"]').element.value).toBe('');
+      expect(document.activeElement).toBe(w.get('input[name="senhaAtual"]').element);
+    });
+
+    it('Cancelar apaga a senha digitada', async () => {
+      const { w } = await abrirPropria();
+      await w.get('input[name="senhaAtual"]').setValue('senha-sintetica-do-teste');
+      await w.get('button[data-acao="cancelar-email"]').trigger('click');
+      expect(estadoDoEmail(w).senhaAtualEditada).toBe('');
+    });
+
+    it('a desmontagem apaga a senha digitada da memória', async () => {
+      const { w } = await abrirPropria();
+      await w.get('input[name="senhaAtual"]').setValue('senha-sintetica-do-teste');
+      const estado = estadoDoEmail(w);
+      expect(estado.senhaAtualEditada).toBe('senha-sintetica-do-teste');
+      w.unmount();
+      expect(estado.senhaAtualEditada).toBe('');
+    });
+  });
+
+  describe('o e-mail e a senha atual não saem da memória do componente', () => {
+    it('nunca vão a localStorage, sessionStorage, console nem barra de endereço', async () => {
+      const consoles = (['log', 'info', 'warn', 'error', 'debug'] as const).map((m) =>
+        vi.spyOn(console, m).mockImplementation(() => {})
+      );
+      const empurrar = vi.spyOn(window.history, 'pushState');
+      const substituir = vi.spyOn(window.history, 'replaceState');
+      const hrefAntes = window.location.href;
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'enviado' });
+      await flushPromises();
+      await criar(w, 'carla', 'carla.segredo@example.com');
+      await w.get('button[data-acao="dispensar"]').trigger('click');
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'chefe');
+      await w.get('input[name="emailEditado"]').setValue('chefe.segredo@example.com');
+      await w.get('input[name="senhaAtual"]').setValue('senha-secreta-do-teste');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(localStorage.length).toBe(0);
+      expect(sessionStorage.length).toBe(0);
+      const impresso = JSON.stringify(consoles.flatMap((c) => c.mock.calls));
+      for (const segredo of ['carla.segredo', 'chefe.segredo', 'senha-secreta-do-teste']) {
+        expect(impresso).not.toContain(segredo);
+      }
+      expect(empurrar).not.toHaveBeenCalled();
+      expect(substituir).not.toHaveBeenCalled();
+      expect(window.location.href).toBe(hrefAntes);
+    });
+  });
+});
+
+/** Estado do formulário de Trocar e-mail (script setup): o DOM sozinho não prova que a senha saiu da memória. */
+function estadoDoEmail(w: { vm: unknown }): { senhaAtualEditada: string } {
+  return (w.vm as { $: { setupState: { senhaAtualEditada: string } } }).$.setupState;
+}
 
 /** Estado interno do componente (script setup). Só os testes de apagar o link o leem: o DOM sozinho não prova a memória. */
 function estadoInterno(w: { vm: unknown }): { link: unknown; copiaAvisada: string } {

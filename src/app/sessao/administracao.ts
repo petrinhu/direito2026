@@ -35,6 +35,10 @@ export function mensagemDeErro(erro: unknown): string {
       return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
     case 'troca-obrigatoria':
       return MENSAGEM_TROCA_OBRIGATORIA;
+    case 'senha-atual-exigida':
+    case 'aguarde':
+      // Trocar o próprio e-mail reconfere a senha: o servidor diz o que falta ou quanto esperar, em pt-br.
+      return erro.mensagemDoServidor ?? MENSAGEM_PADRAO;
     default:
       // O servidor só fala em 400 e 409 (ver ErroDeApi); o resto cai na mensagem padrão.
       return (erro.status === 400 || erro.status === 409) && erro.mensagemDoServidor

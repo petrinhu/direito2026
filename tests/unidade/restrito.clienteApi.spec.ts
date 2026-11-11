@@ -129,7 +129,8 @@ describe('clienteApi', () => {
     await cliente.sessao();
     expect((await cliente.listarUsuarios())[0]!.usuario).toBe('a');
     expect(await cliente.acaoUsuario({ acao: 'redefinir', usuario: 'b' })).toEqual({
-      convite: `/api/convite.php?t=${TOKEN_FALSO}`
+      convite: `/api/convite.php?t=${TOKEN_FALSO}`,
+      email: 'falhou'
     });
     await cliente.acaoUsuario({ acao: 'excluir', usuario: 'b' });
     expect(f.chamadas[1]!.url).toBe('/api/usuarios.php');
@@ -144,7 +145,7 @@ describe('clienteApi', () => {
       const f = criarFetchFalso([sessaoAnonima, { json: { ok: true, ...corpo } }]);
       const cliente = criarClienteApi({ buscar: f.buscar });
       await cliente.sessao();
-      return cliente.acaoUsuario({ acao: 'criar', usuario: 'c' });
+      return cliente.acaoUsuario({ acao: 'criar', usuario: 'c', email: 'c@example.com' });
     }
 
     it('resposta sem convite (ativar, desativar, excluir) devolve objeto vazio', async () => {
@@ -164,6 +165,71 @@ describe('clienteApi', () => {
       await expect(agir({ convite })).rejects.toMatchObject({
         status: 200,
         codigo: 'resposta-invalida'
+      });
+    });
+  });
+
+  describe('e-mail da conta (EM-F1)', () => {
+    const convite = `/api/convite.php?t=${TOKEN_FALSO}`;
+
+    async function agir(corpo: Record<string, unknown>) {
+      const f = criarFetchFalso([sessaoAnonima, { json: { ok: true, ...corpo } }]);
+      const cliente = criarClienteApi({ buscar: f.buscar });
+      await cliente.sessao();
+      const resultado = await cliente.acaoUsuario({
+        acao: 'criar',
+        usuario: 'c',
+        email: 'c@example.com'
+      });
+      return { resultado, chamadas: f.chamadas };
+    }
+
+    it.each(['enviado', 'falhou', 'sem-email'])(
+      'o resultado do envio (%s) chega junto com o convite',
+      async (envio) => {
+        const { resultado } = await agir({ convite, email: envio });
+        expect(resultado).toEqual({ convite, email: envio });
+      }
+    );
+
+    it.each([
+      ['texto fora da lista', 'talvez'],
+      ['número', 1],
+      ['objeto', {}]
+    ])('resultado do envio fora da lista (%s) é resposta inválida', async (_nome, email) => {
+      await expect(agir({ convite, email })).rejects.toMatchObject({
+        status: 200,
+        codigo: 'resposta-invalida'
+      });
+    });
+
+    it('criar manda o e-mail no corpo do pedido', async () => {
+      const { chamadas } = await agir({ convite, email: 'enviado' });
+      expect(chamadas[1]).toMatchObject({
+        metodo: 'POST',
+        corpo: { acao: 'criar', usuario: 'c', email: 'c@example.com' }
+      });
+    });
+
+    it('a ação email manda o e-mail e, na própria conta, a senha atual; a resposta vazia vira objeto vazio', async () => {
+      const f = criarFetchFalso([sessaoAnonima, { json: { ok: true } }]);
+      const cliente = criarClienteApi({ buscar: f.buscar });
+      await cliente.sessao();
+      const resultado = await cliente.acaoUsuario({
+        acao: 'email',
+        usuario: 'chefe',
+        email: 'novo@example.com',
+        senhaAtual: 'senha-sintetica-do-teste'
+      });
+      expect(resultado).toEqual({});
+      expect(f.chamadas[1]).toMatchObject({
+        metodo: 'POST',
+        corpo: {
+          acao: 'email',
+          usuario: 'chefe',
+          email: 'novo@example.com',
+          senhaAtual: 'senha-sintetica-do-teste'
+        }
       });
     });
   });

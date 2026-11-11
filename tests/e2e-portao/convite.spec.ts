@@ -8,24 +8,33 @@ import {
   type Locator,
   type Page
 } from '@playwright/test';
-import { resetarPrivado } from './apoio/ambiente';
+import { definirRoteiroSmtp, resetarPrivado } from './apoio/ambiente';
 import { capturar, entrarNoApp, esperarApp, esperarEntrada } from './apoio/acoes';
-import { CONTA_ADMIN, ORIGEM } from './apoio/constantes';
+import { CONTA_ADMIN, ORIGEM, REMETENTE_DO_SITE } from './apoio/constantes';
+import {
+  caminhoDoLinkNoCorpo,
+  conversasDesde,
+  corpoSemLink,
+  esperarEmail,
+  marcarCapturas,
+  semEmailCompleto,
+  type EmailCapturado
+} from './apoio/emailsCapturados';
 
 /**
- * CV-F1 (plano da sessão única, seção 7.1.7 e OS CV-F1): o link de convite no painel de administração.
+ * CV-F1 e EM-F1 (plano da sessão única, seções 7.1.7 e 8, e as OS CV-F1 e EM-F1): o link de convite e o e-mail
+ * da conta no painel de administração.
  *
- * Dois contextos do navegador. O admin sintético está no painel; o segundo contexto é a pessoa que
- * recebe o link. A conta é sintética e criada pelo próprio teste (T25).
+ * Dois contextos do navegador. O admin sintético está no painel; o segundo contexto é a pessoa que recebe o
+ * link. As contas são sintéticas e criadas pelo próprio teste (T25), com e-mail `@example.com`.
  *
- * O formulário "Novo usuário" do painel ainda não tem o campo de e-mail (é da EM-F1) e o servidor
- * já exige e-mail ao criar. Por isso a conta nasce por uma chamada à API feita DENTRO do contexto
- * do admin (mesma sessão e mesmo token de formulário que o painel usa), com e-mail `@example.com`.
- * O link é lido no painel pelo Redefinir, que o mostra pelo mesmo bloco do criar. O criar pelo
- * formulário fica provado no vitest (PainelAdmin.spec.ts).
+ * O servidor manda e-mail de verdade pelo cliente SMTP, mas aqui o destino é o SMTP falso (apoio/smtpRepasse.ts,
+ * em 127.0.0.1): nenhuma mensagem sai da máquina. O link que a pessoa abre é lido do e-mail capturado, e o do
+ * painel só é comparado com ele. O e-mail traz o endereço de produção do site; o teste NUNCA navega até ele:
+ * abre só o caminho e a query, na origem do teste.
  *
- * O token do convite nunca vai a log: o link só é comparado por resultado booleano, e as falhas
- * de navegação e de axe são reescritas sem o endereço.
+ * O token do convite nunca vai a log: o link só é comparado por resultado booleano, e as falhas de navegação e
+ * de axe são reescritas sem o endereço.
  */
 
 const LOGIN_CONVIDADO = 'convidado-sintetico';
@@ -43,6 +52,71 @@ const M3 = 'Este link não vale. Peça um novo a quem administra o site.';
 const TITULO_REDEFINIR = `Link para nova senha de ${LOGIN_CONVIDADO}:`;
 const TEXTO_VALIDADE =
   'Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.';
+const TITULO_CRIAR = `Link de primeiro acesso de ${LOGIN_CONVIDADO}:`;
+
+/** E-mail do convidado como o admin o digita (com maiúsculas) e como o servidor o grava e o usa (minúsculas). */
+const EMAIL_DIGITADO = 'Convidado-Sintetico@Example.COM';
+const EMAIL_CONVIDADO = `${LOGIN_CONVIDADO}@example.com`;
+const FRASE_ENVIADO = `O link também foi para ${EMAIL_CONVIDADO}.`;
+const FRASE_FALHA = 'O e-mail não saiu. Copie o link e envie por outro canal.';
+const E_MAIL_INVALIDO = 'E-mail inválido.';
+const E_MAIL_EM_USO = 'Este e-mail já está em outra conta.';
+const SENHA_ATUAL_NAO_CONFERE = 'A senha atual não confere.';
+const SENHA_ATUAL_EXIGIDA = 'Informe a senha atual para trocar o seu e-mail.';
+
+/**
+ * Textos dos e-mails E1 a E4 e da tela do "Esqueci a senha" (R14, ratificados pelo líder em 09/11/2026: "Usar
+ * como estão"; plano da sessão única, 8.1.9), verbatim. `<link>` marca o lugar do endereço, sozinho na linha.
+ */
+const E1_ASSUNTO = 'Crie a sua senha de acesso';
+const e1Corpo = (login: string): string =>
+  [
+    'Olá.',
+    '',
+    `Foi criado um acesso para você, com o usuário ${login}.`,
+    '',
+    'Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.',
+    '<link>',
+    '',
+    'Se você não esperava esta mensagem, pode ignorá-la.',
+    '',
+    'Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.'
+  ].join('\n');
+const E2_ASSUNTO = 'Link para criar uma senha nova';
+const e2Corpo = (login: string): string =>
+  [
+    'Olá.',
+    '',
+    `Pediram uma senha nova para o usuário ${login}.`,
+    '',
+    'Para criar a senha nova, abra o link abaixo. Ele vale por 24 horas e só pode ser usado uma vez. Até lá, a senha atual continua valendo.',
+    '<link>',
+    '',
+    'Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.'
+  ].join('\n');
+const E3_ASSUNTO = 'Sua senha foi redefinida';
+const e3Corpo = (login: string): string =>
+  [
+    'Olá.',
+    '',
+    `Quem administra o site redefiniu a senha do usuário ${login}. A senha antiga parou de valer.`,
+    '',
+    'Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.',
+    '<link>',
+    '',
+    'Esta caixa não recebe respostas.'
+  ].join('\n');
+const E4_ASSUNTO = 'Sua senha foi criada';
+const e4Corpo = (login: string): string =>
+  [
+    'Olá.',
+    '',
+    `A senha do usuário ${login} acabou de ser criada pelo link enviado a este e-mail.`,
+    '',
+    'Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.'
+  ].join('\n');
+const FRASE_UNICA_DO_ESQUECI =
+  'Se houver uma conta com esse usuário ou e-mail, o link para criar a senha nova chega ao e-mail dela em alguns minutos. Confira também a pasta de spam.';
 
 const VIEWPORT_360 = { largura: 360, altura: 740 } as const;
 const VIEWPORT_1280 = { largura: 1280, altura: 800 } as const;
@@ -108,6 +182,42 @@ async function criarContasExtras(page: Page): Promise<void> {
     const resposta = await criarContaPelaApi(page, `extra-sintetica-${n}`);
     expect(resposta.status, `criar a conta extra ${n} pela API`).toBe(200);
   }
+}
+
+/** Cria a conta pelo formulário "Novo usuário" do painel, como o admin faria. */
+async function criarPeloFormulario(page: Page, usuario: string, email: string): Promise<void> {
+  await page.locator('input[name="novoUsuario"]').fill(usuario);
+  await page.locator('input[name="novoEmail"]').fill(email);
+  await page.getByRole('button', { name: 'Criar usuário' }).click();
+}
+
+/**
+ * O e-mail capturado e o link que ele traz, já na origem do teste: o endereço de produção do e-mail nunca é
+ * aberto, só o caminho e a query. Falha sem imprimir o corpo (ele leva o link).
+ */
+async function linkDoEmail(
+  antes: ReadonlySet<string>,
+  filtro: { para: string; assunto: string }
+): Promise<{ email: EmailCapturado; link: string }> {
+  const email = await esperarEmail(antes, filtro);
+  const caminho = caminhoDoLinkNoCorpo(email.corpo);
+  expect(
+    caminho !== undefined,
+    'o corpo do e-mail traz o link, sozinho na linha, com a origem do site em produção'
+  ).toBe(true);
+  return { email, link: `${ORIGEM}${caminho!}` };
+}
+
+/** O e-mail confere com o texto do líder, byte a byte, e sai do remetente fixo para o endereço certo. */
+function exigirEmailIgualAoDoLider(
+  email: EmailCapturado,
+  esperado: { para: string; assunto: string; corpo: string }
+): void {
+  expect(email.remetente, 'remetente do e-mail').toBe(REMETENTE_DO_SITE);
+  expect(email.destinatario, 'destinatário do e-mail').toBe(esperado.para);
+  expect(email.assunto, 'assunto do e-mail').toBe(esperado.assunto);
+  expect(email.codificacao, 'e-mail só texto, em quoted-printable').toBe('quoted-printable');
+  expect(corpoSemLink(email.corpo), 'corpo do e-mail').toBe(esperado.corpo);
 }
 
 /**
@@ -218,17 +328,20 @@ async function livreDeElementoFixo(alvo: Locator): Promise<boolean> {
 }
 
 /**
- * Rola até o botão com a rolagem nativa (`nearest`, que respeita o scroll-padding do layout) e confere que nada
- * fixo o cobre: a pilha fixa da base (cartão de contagem e botão Home) fica fora da área alcançada.
+ * Rola até o elemento com a rolagem nativa (`nearest`, que respeita o scroll-padding do layout) e confere que
+ * nada fixo o cobre: a pilha fixa da base (cartão de contagem e botão Home) fica fora da área alcançada.
  */
-async function conferirBotaoAlcancavelPorRolagem(page: Page, nome: string): Promise<void> {
-  const botao = page.getByRole('button', { name: nome });
-  await botao.evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
+async function conferirAlcancavelPorRolagem(alvo: Locator, descricao: string): Promise<void> {
+  await alvo.evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
   await expect
-    .poll(() => livreDeElementoFixo(botao), {
-      message: `nada fixo cobre o botão ${nome} depois de rolar até ele`
+    .poll(() => livreDeElementoFixo(alvo), {
+      message: `nada fixo cobre ${descricao} depois de rolar até ele`
     })
     .toBe(true);
+}
+
+async function conferirBotaoAlcancavelPorRolagem(page: Page, nome: string): Promise<void> {
+  await conferirAlcancavelPorRolagem(page.getByRole('button', { name: nome }), `o botão ${nome}`);
 }
 
 /** O foco do teclado chega a cada botão pelo Tab, a partir do bloco, e a rolagem nativa o deixa sem nada por cima. */
@@ -451,7 +564,8 @@ async function capturarEAnalisar(
   prefixo: string,
   projeto: string,
   viewports: readonly { largura: number; altura: number }[],
-  escopoDoAxe?: string
+  escopoDoAxe?: string,
+  fatia = 'cv-f1'
 ): Promise<void> {
   const fundos = new Set<string>();
   for (const tema of TEMAS) {
@@ -465,7 +579,7 @@ async function capturarEAnalisar(
         semRolagemHorizontal,
         `${prefixo}: rolagem horizontal a ${largura} px, tema ${tema}`
       ).toBe(true);
-      await capturar(page, `cv-f1-${projeto}-${prefixo}-${largura}-${tema}`);
+      await capturar(page, `${fatia}-${projeto}-${prefixo}-${largura}-${tema}`);
     }
     fundos.add(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
     expect(await violacoesDoAxe(page, escopoDoAxe), `${prefixo}: axe no tema ${tema}`).toEqual([]);
@@ -474,51 +588,101 @@ async function capturarEAnalisar(
   expect(fundos.size, `${prefixo}: o tema escuro difere do claro`).toBe(2);
 }
 
-test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; redefinir derruba a sessão sem aviso', async ({
+test('convite: o admin cria a conta pelo painel com e-mail, o link vem no e-mail, a pessoa cria a senha e entra; redefinir derruba a sessão sem aviso', async ({
   page,
   browser
 }, testInfo) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   const projeto = testInfo.project.name;
+  const capturas = marcarCapturas();
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGEM });
   await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
-
-  // 1. A conta nasce com convite pendente; o painel mostra o prazo lido do epoch em segundos.
   await criarContasExtras(page);
-  const criada = await criarContaPelaApi(page);
-  expect(criada.status, 'criar pela API').toBe(200);
-  expect(FORMA_DO_LINK.test(`${ORIGEM}${criada.caminho}`), 'forma do convite do criar').toBe(true);
-  const linkDoCriar = `${ORIGEM}${criada.caminho}`;
+  await page.reload();
+  await esperarApp(page);
+
+  // 1. O admin cria a conta pelo formulário, com o e-mail em maiúsculas: o painel mostra o título, o link e a
+  //    frase de enviado, com o e-mail como o servidor o grava.
+  await criarPeloFormulario(page, LOGIN_CONVIDADO, EMAIL_DIGITADO);
+  await expect(page.getByText(TITULO_CRIAR, { exact: true })).toBeVisible();
+  await esperarTopoDoBlocoNaAreaLivreComFoco(page);
+  await expect(page.getByText(FRASE_ENVIADO, { exact: true })).toBeVisible();
+  const linkNoPainel = (await page.locator('.ar-admin__link').textContent()) ?? '';
+  expect(FORMA_DO_LINK.test(linkNoPainel), 'forma do link do criar mostrado no painel').toBe(true);
+
+  // 2. O E1 chegou ao SMTP falso: texto do líder, remetente fixo, endereço em minúsculas, o mesmo link do painel.
+  const e1 = await linkDoEmail(capturas, { para: EMAIL_CONVIDADO, assunto: E1_ASSUNTO });
+  exigirEmailIgualAoDoLider(e1.email, {
+    para: EMAIL_CONVIDADO,
+    assunto: E1_ASSUNTO,
+    corpo: e1Corpo(LOGIN_CONVIDADO)
+  });
+  expect(e1.link === linkNoPainel, 'o link do e-mail é o mesmo do painel').toBe(true);
+  const linkDoCriar = e1.link;
+
+  // 3. Capturas e axe do painel com o link e a frase; "Já enviei" devolve o foco ao campo Usuário do formulário.
+  await capturarEAnalisar(
+    page,
+    'painel-criou-com-email',
+    projeto,
+    [VIEWPORT_1280],
+    '.ar-admin',
+    'em-f1'
+  );
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Já enviei' }).click();
+  await expect(page.locator('.ar-admin__convite')).toHaveCount(0);
+  await expect(page.locator('input[name="novoUsuario"]')).toBeFocused();
+  await expect(page.locator('input[name="novoUsuario"]')).toHaveValue('');
+  await expect(page.locator('input[name="novoEmail"]')).toHaveValue('');
+
+  // 4. A conta nasce com convite pendente (o painel mostra o prazo lido do epoch em segundos) e com e-mail na
+  //    coluna E-mail; a conta do admin, que o semeador criou sem e-mail, diz "Sem e-mail".
   const prazo = await prazoEsperadoPelaApi(page);
   await page.reload();
   await esperarApp(page);
-  await expect(linhaDaConta(page).locator('td[data-rotulo="Estado"]')).toContainText(
-    `Convite pendente até ${prazo}`
-  );
+  const estadoDaConta = linhaDaConta(page).locator('td[data-rotulo="Estado"]');
+  await expect(estadoDaConta).toContainText(`Convite pendente até ${prazo}`);
+  await expect(estadoDaConta).not.toContainText('Sem e-mail');
+  await expect(linhaDaConta(page).locator('td[data-rotulo="E-mail"]')).toHaveText(EMAIL_CONVIDADO);
+  await expect(
+    page.locator('tbody tr', { hasText: CONTA_ADMIN.usuario }).locator('td[data-rotulo="Estado"]')
+  ).toContainText('Sem e-mail');
 
-  // 2. Redefinir mostra o link, composto com a origem do navegador, uma vez, com os textos do líder.
-  const link = await redefinirELerLink(page);
+  // 5. Redefinir mostra o link, composto com a origem do navegador, uma vez, com os textos do líder, e manda o
+  //    E3 com o mesmo link.
+  const antesDoRedefinir = marcarCapturas();
+  const linkDoPainel = await redefinirELerLink(page);
   await esperarTopoDoBlocoNaAreaLivreComFoco(page);
-  expect(link === linkDoCriar, 'o link do Redefinir é outro, não o do criar').toBe(false);
+  expect(linkDoPainel === linkDoCriar, 'o link do Redefinir é outro, não o do criar').toBe(false);
   await expect(page.getByText(TEXTO_VALIDADE, { exact: true })).toBeVisible();
+  await expect(page.getByText(FRASE_ENVIADO, { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copiar link' })).toBeVisible();
+  const e3 = await linkDoEmail(antesDoRedefinir, { para: EMAIL_CONVIDADO, assunto: E3_ASSUNTO });
+  exigirEmailIgualAoDoLider(e3.email, {
+    para: EMAIL_CONVIDADO,
+    assunto: E3_ASSUNTO,
+    corpo: e3Corpo(LOGIN_CONVIDADO)
+  });
+  expect(e3.link === linkDoPainel, 'o link do e-mail do Redefinir é o do painel').toBe(true);
+  const link = e3.link;
 
-  // 3. Copiar link entrega o endereço completo à área de transferência.
+  // 6. Copiar link entrega o endereço completo à área de transferência.
   await page.getByRole('button', { name: 'Copiar link' }).click();
   await expect(page.getByText('Link copiado.', { exact: true })).toBeVisible();
   const copiado = await page.evaluate(() => navigator.clipboard.readText());
   expect(copiado === link, 'a área de transferência tem o link inteiro').toBe(true);
 
-  // 4. Capturas, axe e rolagem lateral com o link na tela (o link tem cerca de 100 caracteres).
+  // 7. Capturas, axe e rolagem lateral com o link na tela (o link tem cerca de 100 caracteres).
   await capturarEAnalisar(page, 'painel-com-link', projeto, [VIEWPORT_1280], '.ar-admin');
   await page.emulateMedia({ colorScheme: 'light' });
 
-  // 5. Já enviei apaga o link da tela.
+  // 8. Já enviei apaga o link da tela.
   await page.getByRole('button', { name: 'Já enviei' }).click();
   await expect(page.locator('.ar-admin__convite')).toHaveCount(0);
   await expect(page.locator('.ar-admin__link')).toHaveCount(0);
 
-  // 6. A pessoa abre o link do criar (já trocado por este Redefinir): M3. O link novo mostra só o formulário.
+  // 9. A pessoa abre o link do criar (já trocado por este Redefinir): M3. O link novo mostra só o formulário.
   const pessoa = await novaPessoa(browser);
   const pedidosDaPessoa = gravarPedidos(pessoa);
   try {
@@ -534,40 +698,53 @@ test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; rede
     await aparelho.setViewportSize({ width: 1280, height: 800 });
     await aparelho.emulateMedia({ colorScheme: 'light' });
 
-    // 7. E3: a repetição diferente mostra a mensagem e o link segue valendo; E1 vale nos dois POSTs.
+    // 10. E3: a repetição diferente mostra a mensagem e o link segue valendo; E1 vale nos dois POSTs.
     const posErro = await enviarFormulario(aparelho, SENHA_PRIMEIRA, SENHA_REPETICAO_ERRADA);
     exigirPostComOrigemPropria(posErro, 400, 'E3, 1º POST com a repetição errada');
     await expect(aparelho.getByRole('alert')).toHaveText(REPETICAO_NAO_CONFERE);
     await esperarFormularioDoConvite(aparelho);
 
-    // 8. Cria a senha e já está dentro do site (E1 no 2º POST, antes de esperar o app).
+    // 11. Cria a senha e já está dentro do site (E1 no 2º POST, antes de esperar o app), e o E4 avisa o e-mail.
+    const antesDaSenha = marcarCapturas();
     await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'E3, 2º POST depois do erro');
     expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo convite').toBe(true);
     exigirRefererSemToken((await pedidosDaPessoa.vistos()).slice(pedidosAntesDoLink), link);
+    exigirEmailIgualAoDoLider(
+      await esperarEmail(antesDaSenha, { para: EMAIL_CONVIDADO, assunto: E4_ASSUNTO }),
+      { para: EMAIL_CONVIDADO, assunto: E4_ASSUNTO, corpo: e4Corpo(LOGIN_CONVIDADO) }
+    );
 
-    // 9. O mesmo link de novo: M2, sem formulário.
+    // 12. O mesmo link de novo: M2, sem formulário.
     await abrirLink(aparelho, link);
     await esperarMensagem(aparelho, M2);
     await aparelho.goto('/');
     await esperarApp(aparelho);
     expect(await sessaoAutenticada(pessoa), 'sessão ainda aberta antes do Redefinir').toBe(true);
 
-    // 10. O admin recarrega: o convite consumido sumiu da coluna Estado. Redefine outra vez.
+    // 13. O admin recarrega: o convite consumido sumiu da coluna Estado. Redefine outra vez, e o E3 novo traz o
+    //     mesmo link que o painel mostra.
     await page.reload();
     await esperarApp(page);
     await expect(linhaDaConta(page).locator('td[data-rotulo="Estado"]')).not.toContainText(
       'Convite'
     );
-    const linkNovo = await redefinirELerLink(page);
+    const antesDoSegundo = marcarCapturas();
+    const linkNovoNoPainel = await redefinirELerLink(page);
+    const e3Novo = await linkDoEmail(antesDoSegundo, {
+      para: EMAIL_CONVIDADO,
+      assunto: E3_ASSUNTO
+    });
+    expect(e3Novo.link === linkNovoNoPainel, 'o 2º e-mail do Redefinir é o do painel').toBe(true);
+    const linkNovo = e3Novo.link;
     expect(linkNovo === link, 'o Redefinir gerou outro link').toBe(false);
 
-    // 11. O segundo contexto cai no gesto seguinte, sem o aviso de outro aparelho.
+    // 14. O segundo contexto cai no gesto seguinte, sem o aviso de outro aparelho.
     await aparelho.reload();
     await esperarEntrada(aparelho);
     await expect(aparelho.getByRole('alert')).toHaveCount(0);
     expect(await sessaoAutenticada(pessoa), 'sessão derrubada pelo Redefinir').toBe(false);
 
-    // 12. O link já usado virou M3 (o Redefinir apaga o registro do uso) e o novo funciona.
+    // 15. O link já usado virou M3 (o Redefinir apaga o registro do uso) e o novo funciona.
     await abrirLink(aparelho, link);
     await esperarMensagem(aparelho, M3);
     await abrirLink(aparelho, linkNovo);
@@ -587,12 +764,32 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
   await page.setViewportSize({ width: VIEWPORT_360.largura, height: VIEWPORT_360.altura });
   await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
   await criarContasExtras(page);
-  const criada = await criarContaPelaApi(page);
-  expect(criada.status, 'criar pela API').toBe(200);
   await page.reload();
   await esperarApp(page);
 
-  const link = await redefinirELerLink(page);
+  // A conta nasce pelo formulário, com o campo E-mail, a 360 px nos dois temas (EM-F1); o bloco do link que
+  // aparece é o do criar, com a frase de enviado.
+  await page.locator('input[name="novoUsuario"]').fill(LOGIN_CONVIDADO);
+  await page.locator('input[name="novoEmail"]').fill(EMAIL_CONVIDADO);
+  await conferirAlcancavelPorRolagem(
+    page.locator('input[name="novoEmail"]'),
+    'o campo E-mail do formulário'
+  );
+  await conferirBotaoAlcancavelPorRolagem(page, 'Criar usuário');
+  await capturarEAnalisar(
+    page,
+    'painel-formulario-com-email',
+    testInfo.project.name,
+    [VIEWPORT_360],
+    '.ar-admin',
+    'em-f1'
+  );
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Criar usuário' }).click();
+  await expect(page.getByText(TITULO_CRIAR, { exact: true })).toBeVisible();
+  await expect(page.getByText(FRASE_ENVIADO, { exact: true })).toBeVisible();
+  const link = (await page.locator('.ar-admin__link').textContent()) ?? '';
+  expect(FORMA_DO_LINK.test(link), 'forma do link do criar mostrado no painel').toBe(true);
   await esperarTopoDoBlocoNaAreaLivreComFoco(page);
   const medidas = await page.locator('.ar-admin__link').evaluate((el) => {
     const caixa = el.getBoundingClientRect();
@@ -631,6 +828,9 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
     [VIEWPORT_360],
     '.ar-admin'
   );
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.getByRole('button', { name: 'Já enviei' }).click();
+  await expect(page.locator('input[name="novoUsuario"]')).toBeFocused();
 });
 
 /**
@@ -728,4 +928,230 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
         .toBeLessThanOrEqual(lateral.larguraJanela);
     });
   }
+}
+
+/** Senha nova do "Esqueci a senha": 15 caracteres ou mais, sintética. */
+const SENHA_DO_ESQUECI = 'senha-nova-do-esqueci-321';
+
+test('convite: "Esqueci a senha" pela tela de entrada: o link vem por e-mail, a senha nova entra e o aviso de senha criada chega', async ({
+  page,
+  browser
+}, testInfo) => {
+  test.setTimeout(240_000);
+  const projeto = testInfo.project.name;
+  const capturas = marcarCapturas();
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  const criada = await criarContaPelaApi(page);
+  expect(criada.status, 'criar pela API').toBe(200);
+  const e1 = await linkDoEmail(capturas, { para: EMAIL_CONVIDADO, assunto: E1_ASSUNTO });
+
+  // A pessoa cria a primeira senha e vai embora: a conta passa a ter senha de verdade.
+  const primeira = await novaPessoa(browser);
+  try {
+    const aparelho = await primeira.newPage();
+    await abrirLink(aparelho, e1.link);
+    await esperarFormularioDoConvite(aparelho);
+    await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'primeira senha, antes do Esqueci');
+  } finally {
+    await primeira.close();
+  }
+
+  // Outro aparelho, sem sessão: a pessoa esqueceu a senha.
+  const pessoa = await novaPessoa(browser);
+  try {
+    const aparelho = await pessoa.newPage();
+    await aparelho.goto('/');
+    await esperarEntrada(aparelho);
+    await aparelho.getByRole('link', { name: 'Esqueci a senha' }).click();
+
+    await expect(aparelho).toHaveTitle('Esqueci a senha');
+    await expect(aparelho.getByRole('heading', { name: 'Esqueci a senha' })).toBeVisible();
+    await expect(aparelho.getByLabel('Usuário ou e-mail')).toBeFocused();
+    await expect(aparelho.locator('script')).toHaveCount(0);
+    await expect(aparelho.locator('#app')).toHaveCount(0);
+    await capturarEAnalisar(
+      aparelho,
+      'pagina-esqueci',
+      projeto,
+      AMBOS_OS_VIEWPORTS,
+      undefined,
+      'em-f1'
+    );
+    await aparelho.setViewportSize({ width: 1280, height: 800 });
+    await aparelho.emulateMedia({ colorScheme: 'light' });
+
+    const antesDoPedido = marcarCapturas();
+    await aparelho.getByLabel('Usuário ou e-mail').fill(LOGIN_CONVIDADO);
+    await aparelho.getByRole('button', { name: 'Enviar link' }).click();
+    await expect(aparelho.getByRole('alert')).toHaveText(FRASE_UNICA_DO_ESQUECI);
+    await expect(aparelho).toHaveTitle(FRASE_UNICA_DO_ESQUECI);
+    await capturarEAnalisar(
+      aparelho,
+      'pagina-esqueci-enviado',
+      projeto,
+      AMBOS_OS_VIEWPORTS,
+      undefined,
+      'em-f1'
+    );
+    await aparelho.setViewportSize({ width: 1280, height: 800 });
+    await aparelho.emulateMedia({ colorScheme: 'light' });
+
+    // O E2 chegou ao e-mail da conta, com o texto do líder, e o link é outro, que abre a tela de senha nova.
+    const e2 = await linkDoEmail(antesDoPedido, { para: EMAIL_CONVIDADO, assunto: E2_ASSUNTO });
+    exigirEmailIgualAoDoLider(e2.email, {
+      para: EMAIL_CONVIDADO,
+      assunto: E2_ASSUNTO,
+      corpo: e2Corpo(LOGIN_CONVIDADO)
+    });
+    expect(e2.link === e1.link, 'o E2 traz um link novo, não o do convite').toBe(false);
+
+    await abrirLink(aparelho, e2.link);
+    await esperarFormularioDoConvite(aparelho);
+    const antesDaNova = marcarCapturas();
+    await criarSenhaPeloConvite(aparelho, SENHA_DO_ESQUECI, 'senha nova pelo Esqueci');
+    expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo link do E2').toBe(true);
+    exigirEmailIgualAoDoLider(
+      await esperarEmail(antesDaNova, { para: EMAIL_CONVIDADO, assunto: E4_ASSUNTO }),
+      { para: EMAIL_CONVIDADO, assunto: E4_ASSUNTO, corpo: e4Corpo(LOGIN_CONVIDADO) }
+    );
+  } finally {
+    await pessoa.close();
+  }
+});
+
+test('convite: quando o e-mail não sai o painel diz e mostra o link; e-mail repetido e e-mail inválido são recusados', async ({
+  page,
+  browser
+}, testInfo) => {
+  test.setTimeout(180_000);
+  const projeto = testInfo.project.name;
+  const capturas = marcarCapturas();
+  definirRoteiroSmtp({ rcpt: ['550 destinatario recusado'] });
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+
+  // 1. O SMTP falso recusa o destinatário: a conta existe, o link aparece, e a frase diz que o e-mail não saiu.
+  await criarPeloFormulario(page, LOGIN_CONVIDADO, EMAIL_CONVIDADO);
+  await expect(page.getByText(TITULO_CRIAR, { exact: true })).toBeVisible();
+  await esperarTopoDoBlocoNaAreaLivreComFoco(page);
+  await expect(page.getByText(FRASE_FALHA, { exact: true })).toBeVisible();
+  await expect(page.getByText('O link também foi para')).toHaveCount(0);
+  const link = (await page.locator('.ar-admin__link').textContent()) ?? '';
+  expect(FORMA_DO_LINK.test(link), 'forma do link mostrado quando o e-mail não saiu').toBe(true);
+  expect(conversasDesde(capturas), 'o servidor tentou o envio uma vez').toBe(1);
+  expect(semEmailCompleto(capturas), 'nenhuma mensagem completa chegou ao SMTP falso').toBe(true);
+  await capturarEAnalisar(
+    page,
+    'painel-email-nao-saiu',
+    projeto,
+    [VIEWPORT_1280],
+    '.ar-admin',
+    'em-f1'
+  );
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // 2. O link do painel funciona: a conta foi criada mesmo assim.
+  const pessoa = await novaPessoa(browser);
+  try {
+    const aparelho = await pessoa.newPage();
+    await abrirLink(aparelho, `${ORIGEM}${new URL(link).pathname}${new URL(link).search}`);
+    await esperarFormularioDoConvite(aparelho);
+  } finally {
+    await pessoa.close();
+  }
+
+  // 3. Com o SMTP normal de volta: o mesmo e-mail em outra conta, em maiúsculas, é recusado com a frase do
+  //    servidor, e nada é criado; sem arroba, "E-mail inválido.".
+  definirRoteiroSmtp();
+  await page.getByRole('button', { name: 'Já enviei' }).click();
+  await criarPeloFormulario(page, 'outro-sintetico', EMAIL_CONVIDADO.toUpperCase());
+  const alerta = page.locator('.ar-admin [role="alert"]');
+  await expect(alerta).toHaveText(E_MAIL_EM_USO);
+  await expect(page.locator('tbody tr', { hasText: 'outro-sintetico' })).toHaveCount(0);
+  await expect(page.locator('input[name="novoUsuario"]')).toHaveValue('outro-sintetico');
+  await page.locator('input[name="novoEmail"]').fill('sem-arroba');
+  await page.getByRole('button', { name: 'Criar usuário' }).click();
+  await expect(alerta).toHaveText(E_MAIL_INVALIDO);
+  await expect(page.locator('tbody tr', { hasText: 'outro-sintetico' })).toHaveCount(0);
+});
+
+for (const viewport of AMBOS_OS_VIEWPORTS) {
+  test(`convite: a ${viewport.largura} px o admin troca o próprio e-mail só com a senha atual; senha em branco e senha errada são recusadas`, async ({
+    page
+  }, testInfo) => {
+    test.setTimeout(180_000);
+    const projeto = testInfo.project.name;
+    // O viewport vale desde a entrada: a 360 px o menu lateral vira gaveta ao carregar, não ao redimensionar.
+    await page.setViewportSize({ width: viewport.largura, height: viewport.altura });
+    await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+    const propria = page.locator('tbody tr', { hasText: CONTA_ADMIN.usuario });
+    await expect(propria.locator('td[data-rotulo="Estado"]')).toContainText('Sem e-mail');
+    await propria.locator('button[data-acao="trocar-email"]').click();
+
+    const campoEmail = page.locator('input[name="emailEditado"]');
+    const campoSenha = page.getByLabel('Senha atual');
+    await expect(campoEmail).toBeFocused();
+    await expect(campoSenha).toHaveAttribute('type', 'password');
+    await expect(campoSenha).toHaveAttribute('autocomplete', 'current-password');
+    for (const [alvo, descricao] of [
+      [campoEmail, 'o campo E-mail'],
+      [campoSenha, 'o campo Senha atual'],
+      [
+        page.locator('form.ar-admin__trocar-email button[data-acao="salvar-email"]'),
+        'o botão Trocar e-mail'
+      ],
+      [
+        page.locator('form.ar-admin__trocar-email button[data-acao="cancelar-email"]'),
+        'o botão Cancelar'
+      ]
+    ] as const) {
+      await conferirAlcancavelPorRolagem(alvo, descricao);
+    }
+    await capturarEAnalisar(
+      page,
+      'painel-trocar-email-propria',
+      projeto,
+      [viewport],
+      '.ar-admin',
+      'em-f1'
+    );
+    await page.emulateMedia({ colorScheme: 'light' });
+
+    const enviar = page.locator('form.ar-admin__trocar-email button[data-acao="salvar-email"]');
+    const alerta = page.locator('.ar-admin [role="alert"]');
+    await campoEmail.fill('Admin.Sintetico@Example.com');
+
+    // Senha em branco: o servidor recusa e a frase dele aparece; nada muda.
+    await enviar.click();
+    await expect(alerta).toHaveText(SENHA_ATUAL_EXIGIDA);
+
+    // Senha errada: recusada, o campo de senha esvazia, o de e-mail segue como estava.
+    await campoSenha.fill('senha-errada-sintetica-1');
+    await enviar.click();
+    await expect(alerta).toHaveText(SENHA_ATUAL_NAO_CONFERE);
+    await expect(campoSenha).toHaveValue('');
+    await expect(campoEmail).toHaveValue('Admin.Sintetico@Example.com');
+    await expect(propria.locator('td[data-rotulo="E-mail"]')).toHaveText('');
+
+    // Senha certa: o campo fecha, o foco volta ao botão, e a lista mostra o e-mail em minúsculas.
+    await campoSenha.fill(CONTA_ADMIN.senha);
+    await enviar.click();
+    await expect(page.locator('form.ar-admin__trocar-email')).toHaveCount(0);
+    await expect(propria.locator('td[data-rotulo="E-mail"]')).toHaveText(
+      'admin.sintetico@example.com'
+    );
+    await expect(propria.locator('td[data-rotulo="Estado"]')).not.toContainText('Sem e-mail');
+    await expect(propria.locator('button[data-acao="trocar-email"]')).toBeFocused();
+
+    // Nem o e-mail nem a senha ficam em armazenamento local ou de sessão (só booleanos: nada vai a log).
+    const guardado = await page.evaluate(() =>
+      JSON.stringify([...Object.entries(localStorage), ...Object.entries(sessionStorage)])
+    );
+    expect(guardado.toLowerCase().includes('admin.sintetico'), 'e-mail em armazenamento').toBe(
+      false
+    );
+    expect(guardado.includes(CONTA_ADMIN.senha), 'senha atual em armazenamento').toBe(false);
+    expect(guardado.includes('senha-errada-sintetica-1'), 'senha errada em armazenamento').toBe(
+      false
+    );
+  });
 }

@@ -279,9 +279,18 @@
   user-select: all;
 }
 
-/* Em largura estreita o bloco do link tem de caber na área livre entre o cabeçalho fixo e a pilha fixa
-   da base (o cartão de contagem e o botão Home), senão o título ou os botões ficam por baixo de um deles
-   e o link, que aparece uma vez só, não é visto inteiro. Só tamanho e respiro: nenhum texto muda. */
+/* Bloco do link de convite. O link aparece uma vez só, e o painel leva o bloco para a vista com o foco
+   (PainelAdmin.vue, scrollIntoView start). O scroll-margin-top deixa o título abaixo do fio dourado de
+   progresso e da onda que o cabeçalho fixo pendura sob a faixa (o scroll-padding-top só conta a faixa). */
+.ar-admin__convite {
+  scroll-margin-top: var(--esp-5, 1.5rem);
+}
+
+/* Em largura estreita o bloco ganha respiro, e só respiro: padding e margem. O tamanho e a entrelinha da
+   letra vêm da escala do site (--escala-*, que o modo Leitura ampliada troca), como no resto do painel: fixar rem
+   aqui encolheria o link e os parágrafos justamente no modo de baixa visão. Sem caber inteiro na área livre
+   entre o cabeçalho fixo e a pilha fixa da base, o bloco se alcança rolando; o scroll-padding que o layout
+   publica traz os botões para a área livre. Nenhum texto muda. */
 @container (max-width: 30rem) {
   .ar-admin__convite {
     padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
@@ -289,12 +298,6 @@
 
   .ar-admin__convite p {
     margin-bottom: 0.25rem;
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .ar-admin__convite .ar-admin__link {
-    font-size: 0.78rem;
   }
 }
 

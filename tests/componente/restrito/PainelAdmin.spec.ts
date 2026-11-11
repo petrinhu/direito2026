@@ -265,6 +265,7 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
     expect(document.activeElement).toBe(bloco.element);
     expect(rolar).toHaveBeenCalledTimes(1);
     expect(rolar.mock.contexts[0]).toBe(bloco.element);
+    expect(rolar).toHaveBeenCalledWith({ block: 'start' });
   });
 
   it('depois de criar, o bloco do link recebe o foco e é rolado para dentro da janela', async () => {
@@ -275,6 +276,7 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
     expect(document.activeElement).toBe(bloco.element);
     expect(rolar).toHaveBeenCalledTimes(1);
     expect(rolar.mock.contexts[0]).toBe(bloco.element);
+    expect(rolar).toHaveBeenCalledWith({ block: 'start' });
   });
 
   it('o bloco foca por código (tabindex -1, fora da ordem de Tab) e segue anunciado como status', async () => {
@@ -315,6 +317,45 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
     expect(w.find('.ar-admin__convite').exists()).toBe(false);
     expect(document.activeElement).toBe(campo);
     expect(rolar).toHaveBeenCalledTimes(1);
+  });
+
+  it('Já enviei devolve o foco ao Redefinir da conta que gerou o link', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await redefinirAna(w);
+    await w.get('button[data-acao="dispensar"]').trigger('click');
+    await flushPromises();
+    expect(w.find('.ar-admin__convite').exists()).toBe(false);
+    expect(document.activeElement).toBe(
+      w.get('button[data-acao="redefinir"][data-usuario="ana"]').element
+    );
+  });
+
+  it('Já enviei, depois de criar, devolve o foco ao campo Usuário do formulário', async () => {
+    const { w } = montarComLink();
+    await flushPromises();
+    await criarCarla(w);
+    await w.get('button[data-acao="dispensar"]').trigger('click');
+    await flushPromises();
+    expect(w.find('.ar-admin__convite').exists()).toBe(false);
+    expect(document.activeElement).toBe(w.get('input[name="novoUsuario"]').element);
+  });
+
+  it('Já enviei, quando a conta de origem já não está na lista, leva o foco ao título da seção', async () => {
+    const semAna = usuarios.filter((u) => u.usuario !== 'ana');
+    vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
+    const { w } = montar({
+      listarUsuarios: vi.fn().mockResolvedValueOnce(usuarios).mockResolvedValue(semAna),
+      acaoUsuario: vi.fn(async () => ({ convite: CAMINHO_CONVITE }))
+    });
+    await flushPromises();
+    await redefinirAna(w);
+    expect(w.find('button[data-acao="redefinir"][data-usuario="ana"]').exists()).toBe(false);
+    await w.get('button[data-acao="dispensar"]').trigger('click');
+    await flushPromises();
+    const titulo = w.get('#ar-admin-titulo');
+    expect(titulo.attributes('tabindex')).toBe('-1');
+    expect(document.activeElement).toBe(titulo.element);
   });
 
   it('a ação seguinte apaga o link, mesmo quando a resposta dela não traz convite', async () => {

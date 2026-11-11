@@ -111,51 +111,154 @@ async function criarContasExtras(page: Page): Promise<void> {
 }
 
 /**
- * O bloco do link aparece dentro da janela e com o foco SEM o teste rolar nada: quem leva o bloco para a vista
- * é o próprio painel. Sem isso, com a conta numa linha baixa da lista, o link (que aparece uma vez) nasceria fora
- * da janela e a pessoa não o veria (F-2 da revisão).
+ * Limite de cima da área livre: a borda de baixo do cabeçalho quando ele é fixo e, quando o fio dourado de
+ * progresso de leitura aparece, a borda de baixo dele (o fio e a onda do cabeçalho penduram abaixo da faixa
+ * e não capturam clique, então `elementFromPoint` não os enxerga: a geometria é que os conta).
  */
-async function esperarBlocoDoLinkNaJanelaEComFoco(page: Page): Promise<void> {
-  const bloco = page.locator('.ar-admin__convite');
-  await expect(bloco).toBeFocused();
+async function limiteDeCima(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const cabecalho = document.querySelector<HTMLElement>('.barra-topo');
+    const trilho = document.querySelector<HTMLElement>('.barra-topo__progresso-trilho');
+    let limite = 0;
+    if (cabecalho && getComputedStyle(cabecalho).position === 'fixed') {
+      limite = cabecalho.getBoundingClientRect().bottom;
+    }
+    if (trilho && getComputedStyle(trilho).display !== 'none') {
+      limite = Math.max(limite, trilho.getBoundingClientRect().bottom);
+    }
+    return limite;
+  });
+}
+
+/**
+ * Espera a rolagem da página assentar: a mesma posição em várias leituras seguidas. Sem isto, uma leitura feita
+ * antes de o painel rolar (ou durante) poderia dar o verde que a posição final não dá.
+ */
+async function esperarRolagemAssentar(page: Page): Promise<void> {
+  let anterior = Number.NaN;
+  let iguais = 0;
   await expect
     .poll(
-      () =>
-        bloco.evaluate((el) => {
+      async () => {
+        const y = await page.evaluate(() => window.scrollY);
+        iguais = y === anterior ? iguais + 1 : 0;
+        anterior = y;
+        return iguais;
+      },
+      { intervals: [100], message: 'a rolagem da página assenta' }
+    )
+    .toBeGreaterThanOrEqual(4);
+}
+
+/**
+ * O bloco do link aparece com o foco e o TOPO dele (o título e o começo do link) na área livre, abaixo do cabeçalho
+ * fixo e do fio de progresso (o título começa abaixo do limite, não só a caixa do bloco), SEM o teste rolar nada:
+ * quem leva o bloco para a vista é o próprio painel. O bloco inteiro pode ser mais alto que a área livre (a letra
+ * segue a escala do site); o resto se alcança rolando.
+ * Sem isso, com a conta numa linha baixa da lista, o link (que aparece uma vez) nasceria fora da janela e a pessoa
+ * não o veria (F-2 da revisão). Tolerância de 1 px: o navegador alinha em subpixel.
+ */
+async function esperarTopoDoBlocoNaAreaLivreComFoco(page: Page): Promise<void> {
+  const bloco = page.locator('.ar-admin__convite');
+  await expect(bloco).toBeFocused();
+  await esperarRolagemAssentar(page);
+  await expect
+    .poll(
+      async () => {
+        const limite = await limiteDeCima(page);
+        return bloco.evaluate((el, limiteDeCima) => {
           const r = el.getBoundingClientRect();
+          // O título é a primeira linha de texto do bloco: é ele que o fio dourado cruzaria (V-1 da revisão).
+          const titulo = el.querySelector('p')!.getBoundingClientRect();
           return (
-            r.top >= 0 &&
+            titulo.top >= limiteDeCima - 1 &&
+            r.top < document.documentElement.clientHeight &&
             r.left >= 0 &&
-            r.bottom <= document.documentElement.clientHeight &&
             r.right <= document.documentElement.clientWidth
           );
-        }),
-      { message: 'o bloco do link está dentro da janela, sem o teste rolar' }
+        }, limite);
+      },
+      {
+        message:
+          'o topo do bloco do link está abaixo do cabeçalho e dentro da janela, sem o teste rolar'
+      }
     )
     .toBe(true);
 }
 
 /**
- * Nada fixo da página cobre o elemento: o centro, o meio de cada lado (recuado dos cantos arredondados) e
- * os pontos de cima e de baixo devolvem o próprio elemento ou algo dentro dele em `elementFromPoint`.
- * Fora da janela, `elementFromPoint` devolve null e a checagem falha.
+ * Nada fixo da página cobre o elemento: o centro, o meio de cada lado (recuado dos cantos arredondados), os
+ * pontos de cima e de baixo e os quatro cantos (recuados do arredondamento) devolvem o próprio elemento ou algo
+ * dentro dele em `elementFromPoint`. Fora da janela, `elementFromPoint` devolve null e a checagem falha.
  */
 async function livreDeElementoFixo(alvo: Locator): Promise<boolean> {
   return alvo.evaluate((el) => {
     const r = el.getBoundingClientRect();
     const meioX = r.left + r.width / 2;
     const meioY = r.top + r.height / 2;
+    // Recuo dos cantos: metade do raio do arredondamento (botão em pílula inclusive), no máximo a metade do lado.
+    const raio = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const recuo = Math.max(3, Math.min(raio / 2, r.width / 2 - 1, r.height / 2 - 1));
     const pontos: [number, number][] = [
       [meioX, meioY],
       [r.left + 10, meioY],
       [r.right - 10, meioY],
       [meioX, r.top + 3],
-      [meioX, r.bottom - 3]
+      [meioX, r.bottom - 3],
+      [r.left + recuo, r.top + recuo],
+      [r.right - recuo, r.top + recuo],
+      [r.left + recuo, r.bottom - recuo],
+      [r.right - recuo, r.bottom - recuo]
     ];
     return pontos.every(([x, y]) => {
       const topo = document.elementFromPoint(x, y);
       return topo !== null && el.contains(topo);
     });
+  });
+}
+
+/**
+ * Rola até o botão com a rolagem nativa (`nearest`, que respeita o scroll-padding do layout) e confere que nada
+ * fixo o cobre: a pilha fixa da base (cartão de contagem e botão Home) fica fora da área alcançada.
+ */
+async function conferirBotaoAlcancavelPorRolagem(page: Page, nome: string): Promise<void> {
+  const botao = page.getByRole('button', { name: nome });
+  await botao.evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
+  await expect
+    .poll(() => livreDeElementoFixo(botao), {
+      message: `nada fixo cobre o botão ${nome} depois de rolar até ele`
+    })
+    .toBe(true);
+}
+
+/** O foco do teclado chega a cada botão pelo Tab, a partir do bloco, e a rolagem nativa o deixa sem nada por cima. */
+async function conferirBotoesPeloTeclado(page: Page): Promise<void> {
+  await page.locator('.ar-admin__convite').focus();
+  for (const nome of ['Copiar link', 'Já enviei']) {
+    await page.keyboard.press('Tab');
+    const botao = page.getByRole('button', { name: nome });
+    await expect(botao).toBeFocused();
+    await expect
+      .poll(() => livreDeElementoFixo(botao), {
+        message: `nada fixo cobre o botão ${nome} depois do Tab`
+      })
+      .toBe(true);
+  }
+}
+
+/** Tamanho da letra, em px computados, do que o bloco mostra, e o do corpo do próprio painel naquele modo. */
+async function tamanhosDeLetra(
+  page: Page
+): Promise<{ link: number; paragrafos: number[]; corpoDoPainel: number }> {
+  return page.evaluate(() => {
+    const px = (el: HTMLElement | null): number =>
+      el ? parseFloat(getComputedStyle(el).fontSize) : Number.NaN;
+    const bloco = document.querySelector('.ar-admin__convite')!;
+    return {
+      link: px(bloco.querySelector('.ar-admin__link')),
+      paragrafos: Array.from(bloco.querySelectorAll('p')).map(px),
+      corpoDoPainel: px(document.querySelector('.ar-admin'))
+    };
   });
 }
 
@@ -395,7 +498,7 @@ test('convite: o admin lê o link no painel, a pessoa cria a senha e entra; rede
 
   // 2. Redefinir mostra o link, composto com a origem do navegador, uma vez, com os textos do líder.
   const link = await redefinirELerLink(page);
-  await esperarBlocoDoLinkNaJanelaEComFoco(page);
+  await esperarTopoDoBlocoNaAreaLivreComFoco(page);
   expect(link === linkDoCriar, 'o link do Redefinir é outro, não o do criar').toBe(false);
   await expect(page.getByText(TEXTO_VALIDADE, { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copiar link' })).toBeVisible();
@@ -490,7 +593,7 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
   await esperarApp(page);
 
   const link = await redefinirELerLink(page);
-  await esperarBlocoDoLinkNaJanelaEComFoco(page);
+  await esperarTopoDoBlocoNaAreaLivreComFoco(page);
   const medidas = await page.locator('.ar-admin__link').evaluate((el) => {
     const caixa = el.getBoundingClientRect();
     return {
@@ -506,26 +609,20 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
   ).toBeGreaterThan(1);
   expect(link.length, 'o link tem o comprimento de um convite').toBeGreaterThan(90);
 
-  // F-1 da revisão: a 360 px o cartão fixo do calendário e o cabeçalho fixo não cobrem o bloco nem os botões.
+  // F-1 da revisão: a 360 px o cartão fixo do calendário e o cabeçalho fixo não cobrem o título nem os botões.
   expect(
-    await livreDeElementoFixo(page.locator('.ar-admin__convite')),
-    'nada fixo cobre o bloco do link'
+    await livreDeElementoFixo(page.locator('.ar-admin__convite p').first()),
+    'nada fixo cobre o título do bloco do link'
   ).toBe(true);
   for (const nome of ['Copiar link', 'Já enviei']) {
-    expect(
-      await livreDeElementoFixo(page.getByRole('button', { name: nome })),
-      `nada fixo cobre o botão ${nome}`
-    ).toBe(true);
+    await conferirBotaoAlcancavelPorRolagem(page, nome);
   }
   // Uso real: copiar (sem a permissão da área de transferência neste contexto, a falha mostra a frase de cópia à
-  // mão, a mais longa) aumenta o bloco, e os botões continuam inteiros acima do cartão fixo.
+  // mão, a mais longa) aumenta o bloco, e os botões continuam alcançáveis acima do cartão fixo.
   await page.getByRole('button', { name: 'Copiar link' }).click();
   await expect(page.getByText(/^(Link copiado\.|Não foi possível copiar\.)/)).toBeVisible();
   for (const nome of ['Copiar link', 'Já enviei']) {
-    expect(
-      await livreDeElementoFixo(page.getByRole('button', { name: nome })),
-      `nada fixo cobre o botão ${nome} depois de copiar`
-    ).toBe(true);
+    await conferirBotaoAlcancavelPorRolagem(page, nome);
   }
   await capturarEAnalisar(
     page,
@@ -535,3 +632,100 @@ test('convite: a 360 px o link do painel quebra a linha e a página não rola de
     '.ar-admin'
   );
 });
+
+/**
+ * Letra e posição do bloco do link (terceira correção da CV-F1): a letra vem dos tokens de escala do site, em
+ * cada largura e em cada modo (a Leitura ampliada é o modo de baixa visão e não pode ter o menor texto da tela
+ * aqui); o topo do bloco fica na área livre quando ele recebe o foco, mesmo quando o bloco inteiro é mais alto
+ * que a área; os botões se alcançam por rolagem e por Tab sem nada fixo por cima; e a página não rola de lado.
+ * Só números e booleanos nas mensagens: o link nunca aparece em falha.
+ */
+const CHAVE_MODO_ADAPTADO = 'caderno-direito:v1:modo-adaptado';
+const LETRA_MINIMA_NO_MODO_NORMAL_PX = 14;
+
+for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
+  for (const ampliada of [false, true]) {
+    const modo = ampliada ? 'Leitura ampliada' : 'modo normal';
+    test(`convite: o bloco do link a ${largura} px (${modo}) tem a letra da escala e o topo na área livre`, async ({
+      page
+    }, testInfo) => {
+      test.setTimeout(120_000);
+      if (ampliada) {
+        await page.addInitScript(
+          (chave) => localStorage.setItem(chave, 'true'),
+          CHAVE_MODO_ADAPTADO
+        );
+      }
+      await page.setViewportSize({ width: largura, height: altura });
+      await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+      await criarContasExtras(page);
+      const criada = await criarContaPelaApi(page);
+      expect(criada.status, 'criar pela API').toBe(200);
+      await page.reload();
+      await esperarApp(page);
+      if (ampliada) {
+        await expect(page.locator('html')).toHaveAttribute('data-modo-adaptado', 'on');
+      }
+
+      await redefinirELerLink(page);
+      await esperarTopoDoBlocoNaAreaLivreComFoco(page);
+      if (ampliada) {
+        for (const tema of TEMAS) {
+          await page.emulateMedia({ colorScheme: tema });
+          await capturar(
+            page,
+            `cv-f1-${testInfo.project.name}-painel-com-link-ampliada-${largura}-${tema}`
+          );
+        }
+      }
+
+      const letra = await tamanhosDeLetra(page);
+      const menorParagrafo = Math.min(...letra.paragrafos);
+      const contexto = `a ${largura} px (${modo})`;
+      if (!ampliada) {
+        expect
+          .soft(
+            letra.link,
+            `font-size do link ${contexto}, mínimo ${LETRA_MINIMA_NO_MODO_NORMAL_PX}`
+          )
+          .toBeGreaterThanOrEqual(LETRA_MINIMA_NO_MODO_NORMAL_PX);
+        expect
+          .soft(
+            menorParagrafo,
+            `menor font-size dos parágrafos ${contexto}, mínimo ${LETRA_MINIMA_NO_MODO_NORMAL_PX}`
+          )
+          .toBeGreaterThanOrEqual(LETRA_MINIMA_NO_MODO_NORMAL_PX);
+      }
+      expect
+        .soft(
+          letra.link,
+          `font-size do link ${contexto} contra o corpo do painel (${letra.corpoDoPainel})`
+        )
+        .toBeGreaterThanOrEqual(letra.corpoDoPainel);
+      expect
+        .soft(
+          menorParagrafo,
+          `menor font-size dos parágrafos ${contexto} contra o corpo do painel (${letra.corpoDoPainel})`
+        )
+        .toBeGreaterThanOrEqual(letra.corpoDoPainel);
+
+      expect
+        .soft(
+          await livreDeElementoFixo(page.locator('.ar-admin__convite p').first()),
+          `nada fixo cobre o título do bloco ${contexto}`
+        )
+        .toBe(true);
+      for (const nome of ['Copiar link', 'Já enviei']) {
+        await conferirBotaoAlcancavelPorRolagem(page, nome);
+      }
+      await conferirBotoesPeloTeclado(page);
+      const lateral = await page.evaluate(() => ({
+        larguraDocumento: document.documentElement.scrollWidth,
+        larguraJanela: document.documentElement.clientWidth
+      }));
+      expect
+        .soft(lateral.larguraDocumento, `rolagem lateral da página ${contexto}`)
+        .toBeLessThanOrEqual(lateral.larguraJanela);
+    });
+  }
+}

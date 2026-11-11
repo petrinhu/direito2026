@@ -26,6 +26,9 @@ const novoUsuario = ref('');
  * `location.origin` na hora de mostrar e de copiar, e nunca vai a armazenamento, console ou barra de endereço.
  */
 const blocoDoLink = ref<HTMLElement>();
+const secao = ref<HTMLElement>();
+const tituloDaSecao = ref<HTMLElement>();
+const campoNovoUsuario = ref<HTMLInputElement>();
 const link = ref<{ usuario: string; acao: 'criar' | 'redefinir'; caminho: string } | undefined>();
 const copiaAvisada = ref('');
 const confirmandoExclusao = ref<string | undefined>();
@@ -73,15 +76,19 @@ async function carregar(): Promise<void> {
 /**
  * O link aparece uma vez só, e a conta pode estar numa linha baixa da lista: sem isto o bloco nasce fora da
  * janela e a pessoa não o vê. O foco vai ao bloco (tabindex -1, só por código, sem entrar na ordem de Tab) para o
- * leitor de tela anunciar o status, e a rolagem usa `nearest` com o scroll-padding que o layout já publica
- * (cabeçalho fixo e pilha inferior), sem animação: não há movimento a reduzir.
+ * leitor de tela anunciar o status. A rolagem leva o TOPO do bloco (título e começo do link) para a área livre,
+ * abaixo do cabeçalho fixo: `start` respeita o scroll-padding que o layout já publica e o scroll-margin do
+ * bloco. Com a letra na escala do site o bloco pode ser mais alto que a área livre entre o cabeçalho e a pilha
+ * fixa de baixo; `nearest` alinharia a base e esconderia o título sob o cabeçalho. O resto do bloco e os
+ * botões se alcançam rolando ou por Tab, e o scroll-padding da base os traz para a área livre. Sem animação:
+ * não há movimento a reduzir.
  */
 async function mostrarBlocoDoLink(): Promise<void> {
   await nextTick();
   const bloco = blocoDoLink.value;
   if (!bloco) return;
   bloco.focus({ preventScroll: true });
-  bloco.scrollIntoView({ block: 'nearest' });
+  bloco.scrollIntoView({ block: 'start' });
 }
 
 async function executar(
@@ -144,13 +151,29 @@ function dispensarLink(): void {
   copiaAvisada.value = '';
 }
 
+/**
+ * O foco estava no bloco; sem destino ele cairia no corpo da página. Vai ao que gerou o link, quando ainda existe
+ * (o Redefinir daquela conta, ou o campo Usuário do formulário de criar); senão ao título da seção. Só aqui, no
+ * botão: as ações seguintes e o desmonte também dispensam o link e não mexem no foco.
+ */
+async function jaEnviei(): Promise<void> {
+  const origem = link.value;
+  dispensarLink();
+  await nextTick();
+  const botaoDaConta = Array.from(
+    secao.value?.querySelectorAll<HTMLButtonElement>('button[data-acao="redefinir"]') ?? []
+  ).find((botao) => botao.dataset.usuario === origem?.usuario);
+  const destino = origem?.acao === 'criar' ? campoNovoUsuario.value : botaoDaConta;
+  (destino ?? tituloDaSecao.value)?.focus();
+}
+
 onMounted(carregar);
 onBeforeUnmount(dispensarLink);
 </script>
 
 <template>
-  <section class="ar-admin" aria-labelledby="ar-admin-titulo">
-    <h2 id="ar-admin-titulo">Administração de usuários</h2>
+  <section ref="secao" class="ar-admin" aria-labelledby="ar-admin-titulo">
+    <h2 id="ar-admin-titulo" ref="tituloDaSecao" tabindex="-1">Administração de usuários</h2>
 
     <p v-if="erro" class="ar-alerta ar-alerta--erro" role="alert">{{ erro }}</p>
     <p class="ar-visualmente-oculto" role="status" aria-live="polite">{{ status }}</p>
@@ -172,7 +195,7 @@ onBeforeUnmount(dispensarLink);
         <button type="button" class="ar-botao" data-acao="copiar" @click="copiar">
           Copiar link
         </button>
-        <button type="button" class="ar-botao" data-acao="dispensar" @click="dispensarLink">
+        <button type="button" class="ar-botao" data-acao="dispensar" @click="jaEnviei">
           Já enviei
         </button>
       </div>
@@ -184,6 +207,7 @@ onBeforeUnmount(dispensarLink);
         <label :for="`${idBase}-novo`">Usuário</label>
         <input
           :id="`${idBase}-novo`"
+          ref="campoNovoUsuario"
           v-model="novoUsuario"
           name="novoUsuario"
           type="text"

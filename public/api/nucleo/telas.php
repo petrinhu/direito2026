@@ -75,16 +75,17 @@ function d26_tela_cabecalho(): string
 }
 
 /**
- * Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. Com $semReferrer
- * (página do convite, CV-B2), a marcação também pede "no-referrer": o token vai na URL, e o Referer levaria
- * o token aos pedidos de entrada.css e do ícone.
+ * Documento HTML mínimo: título fixo, tema do cookie, marca e o CSS público de entrada.css. Com $soOrigem
+ * (página do convite, CV-B2), a marcação também pede "strict-origin": o token vai na URL, e o Referer dos
+ * pedidos de entrada.css, do ícone e do formulário leva só a origem, sem caminho nem query. O valor é o mesmo
+ * de D26_REFERRER_API em convite.php; a política que omite o Referer faria o POST sair com "Origin: null".
  */
-function d26_tela_documento(string $titulo, string $corpo, bool $semReferrer = false): string
+function d26_tela_documento(string $titulo, string $corpo, bool $soOrigem = false): string
 {
     return '<!doctype html><html lang="pt-br"' . d26_tela_atributo_tema() . '><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width, initial-scale=1">'
         . '<meta name="robots" content="noindex, nofollow">'
-        . ($semReferrer ? '<meta name="referrer" content="no-referrer">' : '')
+        . ($soOrigem ? '<meta name="referrer" content="strict-origin">' : '')
         . '<link rel="icon" href="/icones/favicon.svg" type="image/svg+xml">'
         . '<title>' . d26_tela_e($titulo) . '</title>'
         . '<link rel="stylesheet" href="/entrada.css?v=' . d26_tela_versao_css() . '">'

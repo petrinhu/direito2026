@@ -485,7 +485,7 @@ function cvb2ConcluirPost(array $req): Resposta
 
 // ---- C11: GET válido: tela de convite, cabeçalhos de tela e nada do app ------------------------
 
-teste('convite: C11 GET válido: 200, CSP de tela, no-store, referrer no-referrer, sem script, formulário com o token só no campo oculto', function (): void {
+teste('convite: C11 GET válido: 200, CSP de tela, no-store, referrer strict-origin, sem script, formulário com o token só no campo oculto', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $antes = hash_file('sha256', $a->priv . '/usuarios.json');
@@ -493,8 +493,9 @@ teste('convite: C11 GET válido: 200, CSP de tela, no-store, referrer no-referre
     igual(200, $r->status, 'página do convite');
     igual(CVB2_CSP_TELA, $r->cabecalho('content-security-policy'), 'CSP de tela, sem script');
     igual('private, no-store', $r->cabecalho('cache-control'), 'sem cache');
-    igual('no-referrer', $r->cabecalho('referrer-policy'), 'sem referrer: o token está na URL');
-    contem('<meta name="referrer" content="no-referrer">', $r->corpo, 'meta de referrer no documento');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer só com a origem: o token está na URL');
+    contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer no documento');
+    naoContem('no-referrer', $r->corpo, 'sem no-referrer: com ele o navegador manda Origin null no POST');
     naoContem('<script', $r->corpo, 'nenhum script na tela');
     contem('<title>Criar senha</title>', $r->corpo, 'título da tela');
     contem('<form method="post" action="/api/convite.php">', $r->corpo, 'formulário com endereço fixo, sem o token');
@@ -781,58 +782,58 @@ teste('convite: C22 o login falha depois do CAS: "Senha criada. Entre pela tela 
     igual(303, $entra->status, 'a senha nova entra pela tela de entrada');
 });
 
-// ---- C23: Referrer-Policy no-referrer nas respostas do convite (o token vai na URL) ------------
+// ---- C23: Referrer-Policy strict-origin nas respostas do convite (o token vai na URL) ------------
 
-teste('convite: C23 o 303 de sucesso sai com Referrer-Policy no-referrer', function (): void {
+teste('convite: C23 o 303 de sucesso sai com Referrer-Policy strict-origin', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
     $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $r->status, 'criou e entrou');
-    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 303');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 303');
 });
 
 // ---- C24: os 403 (sem cookie pré, Origin de outro site) e o 400 (tipo de conteúdo) também --------
 
-teste('convite: C24 os 403 e o 400 do formulário saem com Referrer-Policy no-referrer', function (): void {
+teste('convite: C24 os 403 e o 400 do formulário saem com Referrer-Policy strict-origin', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $semCookie = cvb2Enviar($a->cliente(), cvb2Campos($token, 'qualquer', CVB2_SENHA));
     igual(403, $semCookie->status, 'sem cookie pré');
-    igual('no-referrer', $semCookie->cabecalho('referrer-policy'), 'referrer do 403 sem cookie pré');
+    igual('strict-origin', $semCookie->cabecalho('referrer-policy'), 'referrer do 403 sem cookie pré');
 
     $c = $a->cliente();
     $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
     $origem = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => 'http://site-de-outro.example']);
     igual(403, $origem->status, 'Origin de outro site');
-    igual('no-referrer', $origem->cabecalho('referrer-policy'), 'referrer do 403 de Origin');
+    igual('strict-origin', $origem->cabecalho('referrer-policy'), 'referrer do 403 de Origin');
 
     $json = $c->post('/api/convite.php', ['t' => $token, 'senhaNova' => CVB2_SENHA]);
     igual(400, $json->status, 'corpo JSON');
-    igual('no-referrer', $json->cabecalho('referrer-policy'), 'referrer do 400');
+    igual('strict-origin', $json->cabecalho('referrer-policy'), 'referrer do 400');
 });
 
-// ---- C24b: falha do servidor (503 do handler global) também sai com no-referrer ----------------
+// ---- C24b: falha do servidor (503 do handler global) também sai com strict-origin ----------------
 
-teste('convite: C24b usuarios.json corrompido: o 503 do handler global sai com no-referrer e sem o token', function (): void {
+teste('convite: C24b usuarios.json corrompido: o 503 do handler global sai com strict-origin e sem o token', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     file_put_contents($a->priv . '/usuarios.json', '{quebrado');
     $r = cvb2Pagina($a->cliente(), $token);
     igual(503, $r->status, 'falha do servidor');
-    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 503');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 503');
     naoContem($token, $r->corpo, 'o token não volta no corpo do erro');
 });
 
 // ---- C25: o 405 (método errado, com o token na URL) também ------------------------------------
 
-teste('convite: C25 o 405 (método errado, com o token na URL) sai com Referrer-Policy no-referrer', function (): void {
+teste('convite: C25 o 405 (método errado, com o token na URL) sai com Referrer-Policy strict-origin', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $r = $a->cliente()->enviar('PUT', '/api/convite.php?t=' . $token, '', []);
     igual(405, $r->status, 'método não permitido');
-    igual('no-referrer', $r->cabecalho('referrer-policy'), 'referrer do 405');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 405');
 });
 
 // ---- C26: a criação de senha expira o cookie de aviso que veio no pedido (303 e tela sem entrada) -
@@ -861,4 +862,48 @@ teste('convite: C26 a criação de senha expira o cookie de aviso que veio no pe
     $criada = cvb2Enviar($d, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
     igual(200, $criada->status, 'senha criada sem entrada');
     contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $criada->cabecalhos['set-cookie'] ?? []), 'o aviso sai também na tela de senha criada (200)');
+});
+
+// ---- C27: a tela de erro de senha (400) reenvia o formulário: mesma política no cabeçalho e no meta ----
+
+teste('convite: C27 a tela de erro de senha (400) sai com strict-origin no cabeçalho e no meta, e o reenvio cria a senha', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $erro = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA, CVB2_SENHA . '-outra'));
+    igual(400, $erro->status, 'repetição diferente');
+    igual('strict-origin', $erro->cabecalho('referrer-policy'), 'referrer da tela de erro');
+    contem('<meta name="referrer" content="strict-origin">', $erro->corpo, 'meta de referrer na tela de erro');
+    naoContem('no-referrer', $erro->corpo, 'sem no-referrer na tela que reenvia o formulário');
+    $reenvio = cvb2Enviar($c, cvb2Campos($token, cvb2Campo($erro->corpo, 'csrf'), CVB2_SENHA));
+    igual(303, $reenvio->status, 'o reenvio cria a senha e entra');
+});
+
+// ---- C28: origem do POST: o que o navegador manda com strict-origin passa; "null" nunca passa ----------
+
+teste('convite: C28 Origin null ou de outro site é 403 origem com qualquer Sec-Fetch-Site; Origin próprio com same-origin cria a senha', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $antes = hash_file('sha256', $a->priv . '/usuarios.json');
+    $recusas = [
+        'null com same-origin' => ['Origin' => 'null', 'Sec-Fetch-Site' => 'same-origin'],
+        'null com cross-site' => ['Origin' => 'null', 'Sec-Fetch-Site' => 'cross-site'],
+        'null com same-site' => ['Origin' => 'null', 'Sec-Fetch-Site' => 'same-site'],
+        'null com none' => ['Origin' => 'null', 'Sec-Fetch-Site' => 'none'],
+        'null sem Sec-Fetch-Site' => ['Origin' => 'null'],
+        'outro site com same-origin' => ['Origin' => 'http://site-de-outro.example', 'Sec-Fetch-Site' => 'same-origin'],
+        'própria com cross-site' => ['Origin' => $c->origem(), 'Sec-Fetch-Site' => 'cross-site'],
+        'própria com same-site' => ['Origin' => $c->origem(), 'Sec-Fetch-Site' => 'same-site'],
+    ];
+    foreach ($recusas as $nome => $cabecalhos) {
+        $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), $cabecalhos);
+        igual(403, $r->status, "$nome: status");
+        igual('origem', $r->json()['erro'], "$nome: erro");
+    }
+    igual($antes, hash_file('sha256', $a->priv . '/usuarios.json'), 'nenhuma recusa grava nem consome o link');
+    $navegador = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => $c->origem(), 'Sec-Fetch-Site' => 'same-origin']);
+    igual(303, $navegador->status, 'Origin próprio com same-origin (o pedido do navegador real) cria a senha');
 });

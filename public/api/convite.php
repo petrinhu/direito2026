@@ -2,8 +2,10 @@
 declare(strict_types=1);
 
 define('D26_API', true);
-// O token vai na URL: nenhuma resposta deste endpoint (tela, 303, 403, 405, 503) envia o Referer (CV-B2).
-define('D26_REFERRER_API', 'no-referrer');
+// O token vai na URL: em toda resposta deste endpoint (tela, 303, 403, 405, 503) o Referer leva só a origem, sem
+// caminho nem query (CV-B2). Não se usa a política que omite o Referer: com ela o navegador manda "Origin: null"
+// no POST do formulário (padrão Fetch), e d26_exigir_origem_propria recusa "null" de propósito.
+define('D26_REFERRER_API', 'strict-origin');
 require __DIR__ . '/nucleo/inicio.php';
 require_once __DIR__ . '/nucleo/portao.php';
 require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: o aviso E4 sai daqui, depois da resposta (EM-B3)
@@ -12,7 +14,7 @@ require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: o aviso E4 
  * Página pública do convite (CV-B2, decisão do líder de 08/11/2026): a pessoa abre o link de 48 h, cria a
  * própria senha e já entra. GET mostra a tela e não grava nada (a pré-visualização de mensageiro não consome
  * o link). POST consome o link num compare-and-swap e entra. Todo pedido passa pelo limite por IP, e só a falha
- * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as respostas saem com "no-referrer".
+ * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as respostas saem com "strict-origin".
  * O sucesso do POST (senha criada) expira o cookie de aviso de outro aparelho que veio no pedido (plano 1.2);
  * o convite nunca emite esse cookie (C21). Decisão do orquestrador (plano 1.2, revisão rev-cv-b2.md).
  */
@@ -31,7 +33,7 @@ if ($postagem) {
 $reserva = time();
 $limite = d26_limite_reservar_detalhado($priv, '', $ip, $reserva);
 if ($limite['espera'] > 0) {
-    d26_portao_tela(429, d26_tela_mensagem(d26_frase_espera((int) $limite['espera'])), PORTAO_CSP_TELA, 'no-referrer');
+    d26_portao_tela(429, d26_tela_mensagem(d26_frase_espera((int) $limite['espera'])), PORTAO_CSP_TELA, D26_REFERRER_API);
 }
 
 $token = d26_convite_token_recebido($postagem ? ($_POST['t'] ?? null) : ($_GET['t'] ?? null));
@@ -47,7 +49,7 @@ $conta = $consulta['conta'];
 $login = (string) $conta['usuario'];
 
 if (!$postagem) {
-    d26_portao_tela(200, d26_tela_convite($login, $token, d26_csrf_pre_atual($priv)), PORTAO_CSP_TELA, 'no-referrer');
+    d26_portao_tela(200, d26_tela_convite($login, $token, d26_csrf_pre_atual($priv)), PORTAO_CSP_TELA, D26_REFERRER_API);
 }
 
 $csrf = d26_csrf_pre_atual($priv);
@@ -56,7 +58,7 @@ $repetida = is_string($_POST['senhaRepetida'] ?? null) ? $_POST['senhaRepetida']
 // A validação vem antes do Argon2id: erro de senha não gasta custo caro e não consome o link.
 $motivo = d26_validar_senha_nova($nova, $login, '') ?? ($nova === $repetida ? null : D26_CONVITE_REPETICAO);
 if ($motivo !== null) {
-    d26_portao_tela(400, d26_tela_convite($login, $token, $csrf, $motivo), PORTAO_CSP_TELA, 'no-referrer');
+    d26_portao_tela(400, d26_tela_convite($login, $token, $csrf, $motivo), PORTAO_CSP_TELA, D26_REFERRER_API);
 }
 
 // Argon2id fora de qualquer lock; o gancho de pausa dos testes também fica fora (no-op em produção).
@@ -99,7 +101,7 @@ function d26_convite_responder_e_avisar(int $status, string $tipo, string $csp, 
     d26_responder_e_depois(
         $priv,
         static function () use ($status, $tipo, $csp, $corpo, $cabecalhos): void {
-            d26_portao_cabecalhos($status, $tipo, $csp, strlen($corpo), 'no-referrer');
+            d26_portao_cabecalhos($status, $tipo, $csp, strlen($corpo), D26_REFERRER_API);
             foreach ($cabecalhos as $nome => $valor) {
                 header($nome . ': ' . $valor);
             }
@@ -133,10 +135,10 @@ function d26_convite_avisar_criada(string $priv, string $login, ?string $email):
 function d26_convite_recusar(string $estado): never
 {
     if ($estado === 'vencido') {
-        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M1, true), PORTAO_CSP_TELA, 'no-referrer'); // M1 leva o link de EM-B4
+        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M1, true), PORTAO_CSP_TELA, D26_REFERRER_API); // M1 leva o link de EM-B4
     }
     if ($estado === 'usado') {
-        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M2), PORTAO_CSP_TELA, 'no-referrer');
+        d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M2), PORTAO_CSP_TELA, D26_REFERRER_API);
     }
-    d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3, true), PORTAO_CSP_TELA, 'no-referrer'); // M3 leva o link de EM-B4
+    d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3, true), PORTAO_CSP_TELA, D26_REFERRER_API); // M3 leva o link de EM-B4
 }

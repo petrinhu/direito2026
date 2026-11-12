@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { criarClienteApi } from '@/app/restrito/clienteApi';
 import { criarAoNaoAutorizado, criarSessaoGlobal, type Navegador } from '@/app/sessao/sessaoGlobal';
 
 function criarNavegadorFalso(caminho = '/p/p1/interdisciplinar?x=1') {
@@ -119,6 +120,24 @@ describe('criarSessaoGlobal', () => {
     await sessao.sair();
 
     expect(ordem).toEqual(['limpar', 'substituir:/']);
+  });
+
+  it('sair numa sessão derrubada (403 csrf pelo transporte de verdade) termina em /, depois do aviso', async () => {
+    const { navegador, ordem } = criarNavegadorFalso('/p/p1/interdisciplinar?x=1');
+    const cliente = criarClienteApi({
+      buscar: async (_url, init) =>
+        init.method === 'POST'
+          ? new Response('{"ok":false,"erro":"csrf"}', { status: 403 })
+          : new Response('{"ok":true,"autenticado":true,"csrf":"token-sintetico"}', {
+              status: 200
+            }),
+      aoNaoAutorizado: criarAoNaoAutorizado(navegador)
+    });
+    const sessao = criarSessaoGlobal({ cliente, navegador });
+
+    await sessao.sair();
+
+    expect(ordem).toEqual(['substituir:/p/p1/interdisciplinar?x=1', 'limpar', 'substituir:/']);
   });
 
   it('sair e iniciar não gravam nada em localStorage nem sessionStorage', async () => {

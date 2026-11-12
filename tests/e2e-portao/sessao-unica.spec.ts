@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { devices, expect, test, type Browser, type Page } from '@playwright/test';
 import { resetarPrivado } from './apoio/ambiente';
 import { capturar, entrarNoApp, esperarApp, esperarEntrada, preencherEntrada } from './apoio/acoes';
-import { CONTA_ADMIN, ORIGEM } from './apoio/constantes';
+import { CONTA_ADMIN, CONTA_COMUM, ORIGEM, SENHA_NOVA_TROCA } from './apoio/constantes';
 
 /**
  * SU-F1 (plano da sessão única, seção 1.6): o aparelho que cai percebe na próxima
@@ -196,5 +196,102 @@ test('sessão única: o aparelho que entrou antes cai na própria troca de pági
     await expect(aparelho).toHaveURL(/\/calendario$/);
   } finally {
     await anterior.fechar();
+  }
+});
+
+/**
+ * SU-F2: o aparelho derrubado que, em vez de trocar de página, ENVIA um formulário. O servidor confere o CSRF
+ * antes da conta, então a resposta é 403 `csrf` (e não 401), e o app tem de levar a pessoa à tela de entrada
+ * com o aviso, como faz com o 401. Sem navegação nem recarga em A depois de B entrar: a conferência da troca
+ * de página não pode ser a causa da queda. Cada teste derruba uma conta uma única vez (o POST do derrubado
+ * conta uso simultâneo, e uma segunda queda poderia trocar o aviso por bloqueio).
+ *
+ * A ordem das asserções importa: A cai (entrada + aviso), B segue autenticado (leitura dentro da página,
+ * sem navegar), e só no fim A entra de novo, o que derruba B.
+ */
+
+/** B lê a própria sessão por dentro da página, sem navegar: ela segue autenticada. */
+async function exigirAutenticada(page: Page, rotulo: string): Promise<void> {
+  const corpo = await page.evaluate(async () => {
+    const resposta = await fetch('/api/sessao.php', { cache: 'no-store' });
+    return (await resposta.json()) as { autenticado: boolean };
+  });
+  expect(corpo.autenticado, rotulo).toBe(true);
+}
+
+test('sessão única: derrubado que envia a troca de senha volta à tela de entrada com o aviso', async ({
+  page,
+  browser
+}) => {
+  await page.clock.install();
+  // A página de troca tem campos de senha, que o `esperarApp` não aceita: entra pela raiz e vai pelo menu.
+  await entrarNoApp(page, CONTA_ADMIN, '/');
+  await trocarPaginaPeloMenu(page, 'Trocar senha');
+  await expect(page.getByRole('heading', { name: 'Trocar senha', level: 1 })).toBeVisible();
+
+  const aparelhoB = await abrirAparelho(browser);
+  try {
+    await entrarNoApp(aparelhoB.page, CONTA_ADMIN, '/');
+    await expect(aparelhoB.page.locator('#app')).not.toBeEmpty();
+
+    // A segue na página, sem aviso nenhum ainda: só o envio vai ao servidor.
+    await esperarNoApp(page);
+    await page.getByLabel('Senha atual').fill(CONTA_ADMIN.senha);
+    await page.getByLabel('Nova senha', { exact: true }).fill(SENHA_NOVA_TROCA);
+    await page.getByLabel('Confirmar nova senha').fill(SENHA_NOVA_TROCA);
+    await page.getByRole('button', { name: 'Salvar nova senha' }).click();
+
+    await esperarEntrada(page);
+    await expect(page.getByRole('alert')).toHaveText(TEXTO_AVISO);
+    await expect(page).toHaveURL(/\/conta$/);
+
+    await exigirAutenticada(aparelhoB.page, 'B segue autenticado depois da queda de A');
+
+    // Nada foi gravado: a senha antiga ainda entra (e derruba B, por isso é a última coisa).
+    await preencherEntrada(page, CONTA_ADMIN);
+    await esperarNoApp(page);
+    await expect(page).toHaveURL(/\/conta$/);
+  } finally {
+    await aparelhoB.fechar();
+  }
+});
+
+test('sessão única: administrador derrubado que aciona o painel volta à tela de entrada e nada é gravado', async ({
+  page,
+  browser
+}) => {
+  await page.clock.install();
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  const botaoRedefinir = page.locator(
+    `button[data-acao="redefinir"][data-usuario="${CONTA_COMUM.usuario}"]`
+  );
+  await expect(botaoRedefinir).toBeVisible();
+
+  const aparelhoB = await abrirAparelho(browser);
+  try {
+    await entrarNoApp(aparelhoB.page, CONTA_ADMIN, '/');
+    await expect(aparelhoB.page.locator('#app')).not.toBeEmpty();
+
+    await esperarNoApp(page);
+    await botaoRedefinir.click();
+
+    await esperarEntrada(page);
+    await expect(page.getByRole('alert')).toHaveText(TEXTO_AVISO);
+    await expect(page).toHaveURL(/\/usuarios$/);
+
+    await exigirAutenticada(aparelhoB.page, 'B segue autenticado depois da queda de A');
+    const convite = await aparelhoB.page.evaluate(async (usuario) => {
+      const resposta = await fetch('/api/usuarios.php', { cache: 'no-store' });
+      const corpo = (await resposta.json()) as {
+        usuarios: { usuario: string; convite: string | null }[];
+      };
+      return corpo.usuarios.find((u) => u.usuario === usuario)?.convite;
+    }, CONTA_COMUM.usuario);
+    expect(convite ?? null, 'a conta alvo não ganhou convite novo').toBeNull();
+
+    await preencherEntrada(page, CONTA_ADMIN);
+    await esperarApp(page);
+  } finally {
+    await aparelhoB.fechar();
   }
 });

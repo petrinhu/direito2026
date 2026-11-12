@@ -56,6 +56,43 @@ describe('transporte: 401 leva ao caminho da tela de entrada (sessão vencida)',
     expect(aoNaoAutorizado).not.toHaveBeenCalled();
   });
 
+  it('403 csrf num POST (sessão derrubada por outro aparelho) chama o aviso uma vez', async () => {
+    const aoNaoAutorizado = vi.fn();
+    const transporte = criarTransporte({
+      buscar: async (_url, init) =>
+        init.method === 'POST'
+          ? respostaComCorpo(403, '{"ok":false,"erro":"csrf"}')
+          : respostaComCorpo(200, '{"ok":true,"autenticado":true,"csrf":"token-sintetico"}'),
+      aoNaoAutorizado
+    });
+
+    await expect(transporte.enviar('trocar-senha.php', {})).rejects.toMatchObject({
+      status: 403,
+      codigo: 'csrf'
+    });
+    expect(aoNaoAutorizado).toHaveBeenCalledOnce();
+  });
+
+  it.each(['troca-obrigatoria', 'nao-admin', 'origem', 'senha-atual'])(
+    '403 %s NÃO navega: a mensagem fica na tela',
+    async (erro) => {
+      const aoNaoAutorizado = vi.fn();
+      const transporte = criarTransporte({
+        buscar: async (_url, init) =>
+          init.method === 'POST'
+            ? respostaComCorpo(403, `{"ok":false,"erro":"${erro}"}`)
+            : respostaComCorpo(200, '{"ok":true,"autenticado":true,"csrf":"token-sintetico"}'),
+        aoNaoAutorizado
+      });
+
+      await expect(transporte.enviar('usuarios.php', {})).rejects.toMatchObject({
+        status: 403,
+        codigo: erro
+      });
+      expect(aoNaoAutorizado).not.toHaveBeenCalled();
+    }
+  );
+
   it('403 e 200 não chamam o aviso', async () => {
     const aoNaoAutorizado = vi.fn();
     const comFalha = criarTransporte({

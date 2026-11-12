@@ -16,8 +16,10 @@ export interface OpcoesTransporte {
   readonly base?: string;
   readonly tempoLimiteMs?: number;
   /**
-   * Chamado quando a API responde 401 numa chamada que não é de login nem de
-   * troca de senha: a sessão venceu e a página deve voltar à tela de entrada.
+   * Chamado quando a sessão venceu e a página deve voltar à tela de entrada: 401
+   * numa chamada que não é de login nem de troca de senha, ou 403 `csrf` (o
+   * servidor confere o CSRF antes da conta, então quem foi derrubado por outro
+   * aparelho e envia um formulário recebe 403, não 401).
    */
   readonly aoNaoAutorizado?: () => void;
 }
@@ -57,7 +59,9 @@ export function criarTransporte(opcoes: OpcoesTransporte = {}): Transporte {
   let csrf: string | undefined;
 
   function avisarSeSessaoVencida(status: number, codigo: string): void {
-    if (status === 401 && !CODIGOS_401_NA_TELA.has(codigo)) opcoes.aoNaoAutorizado?.();
+    const vencida =
+      (status === 401 && !CODIGOS_401_NA_TELA.has(codigo)) || (status === 403 && codigo === 'csrf');
+    if (vencida) opcoes.aoNaoAutorizado?.();
   }
 
   async function requisitar(caminho: string, init: RequestInit): Promise<Corpo> {

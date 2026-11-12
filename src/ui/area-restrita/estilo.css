@@ -351,6 +351,12 @@
   font-size: var(--escala-sm, 0.9375rem);
 }
 
+/* Login de 32 letras (o máximo válido) também não tem ponto de quebra: a célula do login quebra pelo mesmo motivo
+   (RV-A, achado 3: a 360 em Leitura ampliada a página rolava de lado, 589 contra 360). */
+.ar-tabela tbody th {
+  overflow-wrap: anywhere;
+}
+
 /* Endereço de e-mail sem ponto de quebra (60 letras seguidas é válido): sem isto a coluna toma a largura do
    endereço inteiro e empurra Estado e Ações para fora da janela. `anywhere` (e não `break-word`) também
    reduz a largura mínima da coluna, que é o que a tabela de layout automático usa. */
@@ -358,8 +364,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Piso da coluna: com `anywhere` a tabela a espremeria até quebrar endereço comum no meio da palavra. Fora da
-   Leitura ampliada, onde a letra maior não deixa folga e o piso empurraria Estado e Ações para fora. */
+/* Piso da coluna no modo normal: sem ele, a 1280 o e-mail curto de 27 caracteres quebra no hífen (`curto-`, 6 letras)
+   (P-2 do teste do painel fica vermelho). Na Leitura ampliada a tabela empilha, então a regra não vale lá. */
 :root:not([data-modo-adaptado='on']) .ar-tabela td[data-rotulo='E-mail'] {
   min-width: 14rem;
 }
@@ -384,10 +390,6 @@
   }
 
   .ar-tabela {
-    min-width: 0;
-  }
-
-  :root:not([data-modo-adaptado='on']) .ar-tabela td[data-rotulo='E-mail'] {
     min-width: 0;
   }
 
@@ -417,6 +419,54 @@
     color: var(--cor-texto-suave);
     font-size: var(--escala-sm, 0.9375rem);
   }
+}
+
+/* Leitura ampliada (EM-F1c): a letra maior não deixa folga para a tabela em nenhuma largura (a 1280, a coluna
+   E-mail ficava com 4 ou 5 letras por linha), então nesse modo cada linha vira bloco SEMPRE, com as mesmas regras do
+   empilhado acima e sem condição de largura. É a segunda ocorrência do bloco; extrair só na terceira (L-33). */
+:root[data-modo-adaptado='on'] .ar-tabela-rolavel {
+  overflow-x: visible;
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela,
+:root[data-modo-adaptado='on'] .ar-tabela tbody,
+:root[data-modo-adaptado='on'] .ar-tabela tr,
+:root[data-modo-adaptado='on'] .ar-tabela th,
+:root[data-modo-adaptado='on'] .ar-tabela td {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela {
+  min-width: 0;
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela tr {
+  padding: var(--esp-3, 0.75rem) 0;
+  border-top: 1px solid var(--cor-borda);
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela th,
+:root[data-modo-adaptado='on'] .ar-tabela td {
+  border-top: 0;
+  padding: var(--esp-1, 0.25rem) var(--esp-3, 0.75rem);
+}
+
+:root[data-modo-adaptado='on'] .ar-tabela td::before {
+  content: attr(data-rotulo);
+  display: block;
+  color: var(--cor-texto-suave);
+  font-size: var(--escala-sm, 0.9375rem);
 }
 
 /* Impressão dos slides: as páginas vão para o <body> (Teleport) e o resto do site some. */

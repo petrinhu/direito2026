@@ -152,7 +152,8 @@ async function violacoesDoAxe(page: Page, escopo?: string): Promise<unknown[]> {
  */
 async function criarContaPelaApi(
   page: Page,
-  usuario: string = LOGIN_CONVIDADO
+  usuario: string = LOGIN_CONVIDADO,
+  email: string = `${usuario}@example.com`
 ): Promise<{ status: number; caminho: string }> {
   return page.evaluate(
     async ({ usuario, email }) => {
@@ -169,7 +170,7 @@ async function criarContaPelaApi(
       const corpo = (await resposta.json()) as { convite?: string };
       return { status: resposta.status, caminho: corpo.convite ?? '' };
     },
-    { usuario, email: `${usuario}@example.com` }
+    { usuario, email }
   );
 }
 
@@ -931,112 +932,370 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
 }
 
 /**
- * E-mail longo na coluna E-mail (EM-F1, revisão): endereço válido de 72 caracteres (60 letras sem quebra natural,
- * mais `@example.com`) não pode estourar o painel. A página não rola de lado, o contêiner da tabela não rola por
- * dentro e as colunas Estado e Ações ficam na janela (a 1280 a tabela é uma tabela; a 360 cada linha vira bloco).
- * O mesmo endereço aparece na frase "O link também foi para ..." logo depois de criar a conta pelo formulário, então
- * a página também é medida com esse bloco na tela. Vale na Leitura ampliada, onde a letra é maior. As capturas
- * (coluna E-mail preenchida, endereço curto e longo, os dois temas) saem do mesmo teste.
+ * Painel de contas com endereço e login sem ponto de quebra (EM-F1, revisão, e EM-F1c): a página não rola de lado,
+ * o contêiner da tabela não rola por dentro e as colunas Login, E-mail, Estado e Ações ficam na janela. Matriz:
+ * 360, 1280 e 1920 px, modo normal e Leitura ampliada, e três variantes de linhas sintéticas (e-mail curto de 27
+ * caracteres e de 72 caracteres; login de 32 letras; a pior combinação, login de 32 letras com e-mail de 72, só a
+ * 1280 no modo normal). O endereço de 72 caracteres aparece também na frase "O link também foi para ..." logo
+ * depois de criar a conta pelo formulário, então a página também é medida com esse bloco na tela.
+ *
+ * Pisos de leitura da célula E-mail. Os NÚMEROS foram fixados antes do dado (adendo 12.3; L-43); a definição do que
+ * se conta foi reescrita DEPOIS do dado (adendo 13.2), porque "caracteres na primeira linha" misturava coluna
+ * estreita (o defeito) com a quebra no hífen (que ajuda a ler: `curto-` / `sintetico@example.com`, 6 caracteres numa
+ * célula que comporta 20 por linha). Os números não mudaram; o critério antigo continua impresso, só como informação.
+ *  - P-1a, capacidade da coluna: largura da caixa de conteúdo da célula dividida pela largura média de um caractere do
+ *    endereço (retângulos dos caracteres), arredondada para baixo. 16 ou mais a 1280 e a 1920; 12 ou mais a 360.
+ *  - P-1b, quebra só onde precisa: toda linha do endereço que não seja a última termina logo depois de um hífen ou
+ *    está cheia (a borda direita do último caractere, somada à largura do seguinte, passa da borda direita da caixa
+ *    de conteúdo; tolerância de 1 px a favor de "cheia", por arredondamento de subpixel). P-1b nunca foi vista
+ *    vermelha: o teste traz dois controles dentro da própria página (com espaço, sobra: tem de ser apontado; com
+ *    hífen: não).
+ *  - P-2: com a tabela NÃO empilhada (modo normal, 1280 e 1920), o e-mail curto de 27 caracteres ocupa uma linha só.
+ * Na Leitura ampliada a tabela empilha em qualquer largura (sinal: display de bloco na tabela); no modo normal a
+ * 1280 e a 1920 ela segue tabela. As capturas (coluna E-mail preenchida, curto e longo, os dois temas) saem do mesmo teste.
  */
 const LOGIN_EMAIL_CURTO = 'curto-sintetico';
 const LOGIN_EMAIL_LONGO = 'longo-sintetico';
+const LOGIN_DE_32_LETRAS = 'x'.repeat(32);
+const EMAIL_DO_LOGIN_DE_32_LETRAS = 'curto-login-032@example.com';
 const EMAIL_LONGO = `${'a'.repeat(60)}@example.com`;
+const LARGURAS_DO_PAINEL = [
+  { largura: 360, altura: 740 },
+  { largura: 1280, altura: 800 },
+  { largura: 1920, altura: 1080 }
+] as const;
 
-async function medidasDoPainelComEmail(page: Page): Promise<{
-  larguraDocumento: number;
-  larguraJanela: number;
-  rolagemInternaDaTabela: number;
-  celulas: { rotulo: string; esquerda: number; direita: number }[];
-  textoDoEmail: string;
-}> {
-  return page.evaluate((login) => {
-    const linha = Array.from(document.querySelectorAll('tbody tr')).find(
-      (tr) => tr.querySelector('th')?.textContent?.trim() === login
-    )!;
-    const celula = (rotulo: string): HTMLElement =>
-      linha.querySelector<HTMLElement>(`td[data-rotulo="${rotulo}"]`)!;
+interface AnaliseDoEmail {
+  readonly capacidade: number;
+  readonly larguraUtil: number;
+  readonly larguraMediaDoCaractere: number;
+  readonly linhas: number;
+  readonly linhasComSobra: readonly string[];
+  readonly caracteresNaPrimeiraLinha: number;
+  readonly primeiraLinha: string;
+}
+
+interface LinhaMedida extends AnaliseDoEmail {
+  readonly login: string;
+  readonly esquerdaDoLogin: number;
+  readonly direitaDoLogin: number;
+  readonly celulas: readonly { rotulo: string; esquerda: number; direita: number }[];
+  readonly textoDoEmail: string;
+}
+
+interface MedidasDoPainel {
+  readonly larguraDocumento: number;
+  readonly larguraJanela: number;
+  readonly rolagemInternaDaTabela: number;
+  readonly tabelaEmpilhada: boolean;
+  readonly linhas: readonly LinhaMedida[];
+  /** Controles de P-1b, medidos pela mesma análise: o primeiro tem de ter 1 linha com sobra, o segundo nenhuma. */
+  readonly controleComEspaco: readonly string[];
+  readonly controleComHifen: readonly string[];
+}
+
+/** Espera a linha da conta aparecer na tabela: a lista é recarregada depois de criar, e a medição não pode correr antes. */
+async function esperarLinhasDasContas(page: Page, logins: readonly string[]): Promise<void> {
+  for (const login of logins) {
+    await expect(
+      page.locator('tbody tr').filter({ has: page.locator('th', { hasText: login }) })
+    ).toHaveCount(1);
+  }
+}
+
+async function medidasDoPainel(page: Page, logins: readonly string[]): Promise<MedidasDoPainel> {
+  return page.evaluate((logins) => {
+    /** P-1a e P-1b sobre o primeiro texto do elemento (caracteres sem espaço, um retângulo por caractere). */
+    const analisar = (elemento: HTMLElement) => {
+      const no = document.createTreeWalker(elemento, window.NodeFilter.SHOW_TEXT).nextNode()!;
+      const texto = no.textContent ?? '';
+      const caracteres: { letra: string; esquerda: number; direita: number; topo: number }[] = [];
+      for (let i = 0; i < texto.length; i += 1) {
+        if (/\s/.test(texto[i]!)) continue;
+        const intervalo = document.createRange();
+        intervalo.setStart(no, i);
+        intervalo.setEnd(no, i + 1);
+        const caixa = intervalo.getBoundingClientRect();
+        caracteres.push({
+          letra: texto[i]!,
+          esquerda: caixa.left,
+          direita: caixa.right,
+          topo: caixa.top
+        });
+      }
+      const estilo = getComputedStyle(elemento);
+      const caixaDaCelula = elemento.getBoundingClientRect();
+      const esquerdaUtil =
+        caixaDaCelula.left + parseFloat(estilo.paddingLeft) + parseFloat(estilo.borderLeftWidth);
+      const direitaUtil =
+        caixaDaCelula.right - parseFloat(estilo.paddingRight) - parseFloat(estilo.borderRightWidth);
+      const larguraMedia =
+        caracteres.reduce((soma, c) => soma + (c.direita - c.esquerda), 0) / caracteres.length;
+      const linhas: { de: number; ate: number }[] = [];
+      for (let i = 0; i < caracteres.length; i += 1) {
+        const atual = linhas[linhas.length - 1];
+        if (atual && Math.abs(caracteres[i]!.topo - caracteres[atual.de]!.topo) <= 1) {
+          atual.ate = i;
+        } else {
+          linhas.push({ de: i, ate: i });
+        }
+      }
+      const linhasComSobra: string[] = [];
+      linhas.slice(0, -1).forEach(({ de, ate }) => {
+        const ultimo = caracteres[ate]!;
+        const seguinte = caracteres[ate + 1]!;
+        const terminaNoHifen = ultimo.letra === '-';
+        const cheia = ultimo.direita + (seguinte.direita - seguinte.esquerda) > direitaUtil - 1;
+        if (!terminaNoHifen && !cheia) {
+          linhasComSobra.push(
+            caracteres
+              .slice(de, ate + 1)
+              .map((c) => c.letra)
+              .join('')
+          );
+        }
+      });
+      const naPrimeira = linhas[0]!.ate + 1;
+      return {
+        capacidade: Math.floor((direitaUtil - esquerdaUtil) / larguraMedia),
+        larguraUtil: direitaUtil - esquerdaUtil,
+        larguraMediaDoCaractere: larguraMedia,
+        linhas: linhas.length,
+        linhasComSobra,
+        caracteresNaPrimeiraLinha: naPrimeira,
+        primeiraLinha: caracteres
+          .slice(0, naPrimeira)
+          .map((c) => c.letra)
+          .join('')
+      };
+    };
+
+    const controle = (conteudo: string): string[] => {
+      const caixa = document.createElement('div');
+      caixa.style.cssText =
+        'position:absolute;left:0;top:0;width:120px;font:16px monospace;overflow-wrap:anywhere';
+      caixa.textContent = conteudo;
+      document.body.appendChild(caixa);
+      const resultado = analisar(caixa).linhasComSobra;
+      caixa.remove();
+      return resultado;
+    };
+
     const tabela = document.querySelector<HTMLElement>('.ar-tabela-rolavel')!;
+    const linhas = logins.map((login) => {
+      const linha = Array.from(document.querySelectorAll('tbody tr')).find(
+        (tr) => tr.querySelector('th')?.textContent?.trim() === login
+      )!;
+      const celula = (rotulo: string): HTMLElement =>
+        linha.querySelector<HTMLElement>(`td[data-rotulo="${rotulo}"]`)!;
+      const caixaDoLogin = linha.querySelector('th')!.getBoundingClientRect();
+      const celulaDoEmail = celula('E-mail');
+      return {
+        ...analisar(celulaDoEmail),
+        login,
+        esquerdaDoLogin: caixaDoLogin.left,
+        direitaDoLogin: caixaDoLogin.right,
+        celulas: ['E-mail', 'Estado', 'Ações'].map((rotulo) => {
+          const caixa = celula(rotulo).getBoundingClientRect();
+          return { rotulo, esquerda: caixa.left, direita: caixa.right };
+        }),
+        textoDoEmail: celulaDoEmail.textContent?.trim() ?? ''
+      };
+    });
     return {
       larguraDocumento: document.documentElement.scrollWidth,
       larguraJanela: document.documentElement.clientWidth,
       rolagemInternaDaTabela: tabela.scrollWidth - tabela.clientWidth,
-      celulas: ['E-mail', 'Estado', 'Ações'].map((rotulo) => {
-        const caixa = celula(rotulo).getBoundingClientRect();
-        return { rotulo, esquerda: caixa.left, direita: caixa.right };
-      }),
-      textoDoEmail: celula('E-mail').textContent?.trim() ?? ''
+      tabelaEmpilhada: getComputedStyle(document.querySelector('.ar-tabela')!).display === 'block',
+      linhas,
+      controleComEspaco: controle('aaaa bbbbbbbbbbbb'),
+      controleComHifen: controle('aaaa-bbbbbbbbbbbb')
     };
-  }, LOGIN_EMAIL_LONGO);
+  }, logins);
 }
 
-for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
-  for (const ampliada of [false, true]) {
-    const modo = ampliada ? 'Leitura ampliada' : 'modo normal';
-    test(`painel: e-mail de 72 caracteres a ${largura} px (${modo}) não estoura a página nem empurra Estado e Ações`, async ({
-      page
-    }, testInfo) => {
-      test.setTimeout(120_000);
-      expect(EMAIL_LONGO.length, 'o endereço de teste tem 72 caracteres').toBe(72);
-      if (ampliada) {
-        await page.addInitScript(
-          (chave) => localStorage.setItem(chave, 'true'),
-          CHAVE_MODO_ADAPTADO
+/**
+ * As variantes da matriz. "emails" mede o e-mail curto (27) e o de 72 caracteres na mesma tabela, com bloco do link e
+ * capturas. "login32" mede só a linha do login de 32 letras (RV-A, achado 3), sozinha: a célula do login, na mesma
+ * tabela das linhas de e-mail, tomaria largura da coluna E-mail e contaminaria as medidas. "pior" é a pior combinação
+ * (login de 32 letras e e-mail de 72 na MESMA linha), só a 1280 no modo normal, onde a tabela é tabela e o
+ * `min-width` da coluna E-mail pesa.
+ */
+const VARIANTES_DO_PAINEL = [
+  {
+    nome: 'e-mail de 27 e de 72 caracteres',
+    contasPelaApi: [{ login: LOGIN_EMAIL_CURTO, email: `${LOGIN_EMAIL_CURTO}@example.com` }],
+    contaPeloFormulario: { login: LOGIN_EMAIL_LONGO, email: EMAIL_LONGO },
+    capturas: true,
+    larguras: LARGURAS_DO_PAINEL,
+    modos: [false, true]
+  },
+  {
+    nome: 'e-mail e login de 32 letras',
+    contasPelaApi: [{ login: LOGIN_DE_32_LETRAS, email: EMAIL_DO_LOGIN_DE_32_LETRAS }],
+    contaPeloFormulario: undefined,
+    capturas: false,
+    larguras: LARGURAS_DO_PAINEL,
+    modos: [false, true]
+  },
+  {
+    nome: 'e-mail de 72 caracteres e login de 32 letras na mesma linha',
+    contasPelaApi: [{ login: LOGIN_DE_32_LETRAS, email: EMAIL_LONGO }],
+    contaPeloFormulario: undefined,
+    capturas: false,
+    larguras: [LARGURAS_DO_PAINEL[1]],
+    modos: [false]
+  }
+] as const;
+
+for (const variante of VARIANTES_DO_PAINEL) {
+  for (const { largura, altura } of variante.larguras) {
+    for (const ampliada of variante.modos) {
+      const modo = ampliada ? 'Leitura ampliada' : 'modo normal';
+      test(`painel: ${variante.nome} a ${largura} px (${modo}) não estouram a página nem empurram Estado e Ações`, async ({
+        page
+      }, testInfo) => {
+        test.setTimeout(120_000);
+        expect(EMAIL_LONGO.length, 'o endereço de teste tem 72 caracteres').toBe(72);
+        expect(LOGIN_DE_32_LETRAS.length, 'o login de teste tem 32 letras').toBe(32);
+        expect(`${LOGIN_EMAIL_CURTO}@example.com`.length, 'o e-mail curto tem 27 caracteres').toBe(
+          27
         );
-      }
-      await page.setViewportSize({ width: largura, height: altura });
-      await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
-      const curta = await criarContaPelaApi(page, LOGIN_EMAIL_CURTO);
-      expect(curta.status, 'criar a conta de e-mail curto pela API').toBe(200);
-      await page.reload();
-      await esperarApp(page);
-      if (ampliada) {
-        await expect(page.locator('html')).toHaveAttribute('data-modo-adaptado', 'on');
-      }
-
-      await criarPeloFormulario(page, LOGIN_EMAIL_LONGO, EMAIL_LONGO);
-      await expect(
-        page.getByText(`O link também foi para ${EMAIL_LONGO}.`, { exact: true })
-      ).toBeVisible();
-      const comBloco = await medidasDoPainelComEmail(page);
-      expect
-        .soft(comBloco.larguraDocumento, 'rolagem lateral da página com o bloco do link na tela')
-        .toBeLessThanOrEqual(comBloco.larguraJanela);
-
-      await page.getByRole('button', { name: 'Já enviei' }).click();
-      await expect(page.locator('.ar-admin__convite')).toHaveCount(0);
-      await page.locator('.ar-tabela-rolavel').scrollIntoViewIfNeeded();
-      const medidas = await medidasDoPainelComEmail(page);
-      const contexto = `a ${largura} px (${modo})`;
-      expect(medidas.textoDoEmail, 'a célula mostra o endereço inteiro').toBe(EMAIL_LONGO);
-      expect
-        .soft(medidas.larguraDocumento, `rolagem lateral da página ${contexto}`)
-        .toBeLessThanOrEqual(medidas.larguraJanela);
-      expect
-        .soft(medidas.rolagemInternaDaTabela, `rolagem lateral dentro da tabela ${contexto}`)
-        .toBeLessThanOrEqual(0);
-      for (const celula of medidas.celulas) {
-        expect
-          .soft(celula.esquerda, `${celula.rotulo}: borda esquerda ${contexto}`)
-          .toBeGreaterThanOrEqual(0);
-        expect
-          .soft(celula.direita, `${celula.rotulo}: borda direita ${contexto}`)
-          .toBeLessThanOrEqual(medidas.larguraJanela);
-      }
-
-      const sufixo = ampliada ? 'ampliada' : 'normal';
-      for (const login of [LOGIN_EMAIL_CURTO, LOGIN_EMAIL_LONGO]) {
-        await page
-          .locator('tbody tr', { hasText: login })
-          .evaluate((el) => el.scrollIntoView({ block: 'start' }));
-        for (const tema of TEMAS) {
-          await page.emulateMedia({ colorScheme: tema });
-          await capturar(
-            page,
-            `em-f1b-${testInfo.project.name}-painel-${login}-${sufixo}-${largura}-${tema}`
+        if (ampliada) {
+          await page.addInitScript(
+            (chave) => localStorage.setItem(chave, 'true'),
+            CHAVE_MODO_ADAPTADO
           );
         }
-      }
-    });
+        await page.setViewportSize({ width: largura, height: altura });
+        await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+        for (const conta of variante.contasPelaApi) {
+          const criada = await criarContaPelaApi(page, conta.login, conta.email);
+          expect(criada.status, `criar a conta ${conta.login.slice(0, 15)} pela API`).toBe(200);
+        }
+        await page.reload();
+        await esperarApp(page);
+        if (ampliada) {
+          await expect(page.locator('html')).toHaveAttribute('data-modo-adaptado', 'on');
+        }
+
+        const pelaApi = variante.contasPelaApi.map((conta) => conta.login);
+        const formulario = variante.contaPeloFormulario;
+        if (formulario) {
+          await criarPeloFormulario(page, formulario.login, formulario.email);
+          await expect(
+            page.getByText(`O link também foi para ${formulario.email}.`, { exact: true })
+          ).toBeVisible();
+          const larguraComBloco = await page.evaluate(() => ({
+            documento: document.documentElement.scrollWidth,
+            janela: document.documentElement.clientWidth
+          }));
+          expect
+            .soft(
+              larguraComBloco.documento,
+              'rolagem lateral da página com o bloco do link na tela'
+            )
+            .toBeLessThanOrEqual(larguraComBloco.janela);
+          await page.getByRole('button', { name: 'Já enviei' }).click();
+          await expect(page.locator('.ar-admin__convite')).toHaveCount(0);
+        }
+
+        const logins = formulario ? [...pelaApi, formulario.login] : pelaApi;
+        await esperarLinhasDasContas(page, logins);
+        await page.locator('.ar-tabela-rolavel').scrollIntoViewIfNeeded();
+        const medidas = await medidasDoPainel(page, logins);
+        const contexto = `a ${largura} px (${modo})`;
+        const emailEsperado: Record<string, string> = Object.fromEntries(
+          [...variante.contasPelaApi, ...(formulario ? [formulario] : [])].map((conta) => [
+            conta.login,
+            conta.email
+          ])
+        );
+
+        expect(
+          medidas.controleComEspaco,
+          'controle de P-1b: quebra com sobra tem de ser apontada'
+        ).toEqual(['aaaa']);
+        expect(
+          medidas.controleComHifen,
+          'controle de P-1b: quebra depois do hífen não é apontada'
+        ).toEqual([]);
+        expect
+          .soft(medidas.larguraDocumento, `rolagem lateral da página ${contexto}`)
+          .toBeLessThanOrEqual(medidas.larguraJanela);
+        expect
+          .soft(medidas.rolagemInternaDaTabela, `rolagem lateral dentro da tabela ${contexto}`)
+          .toBeLessThanOrEqual(0);
+        expect
+          .soft(
+            medidas.tabelaEmpilhada,
+            `tabela empilhada ${contexto} (esperado: ${ampliada || largura === 360})`
+          )
+          .toBe(ampliada || largura === 360);
+
+        for (const linha of medidas.linhas) {
+          const rotuloDaLinha = linha.login.slice(0, 15);
+          const linhaContexto = `${rotuloDaLinha} ${contexto}`;
+          console.log(
+            `MEDIDA ${testInfo.project.name} ${modo} ${largura} ${rotuloDaLinha}: capacidade ${linha.capacidade} (célula útil ${Math.round(linha.larguraUtil)} px, caractere médio ${linha.larguraMediaDoCaractere.toFixed(1)} px), ${linha.linhas} linha(s), linhas com sobra [${linha.linhasComSobra.join(', ')}], ${linha.caracteresNaPrimeiraLinha} caracteres na primeira linha de ${linha.textoDoEmail.length} (${linha.primeiraLinha})`
+          );
+          expect(linha.textoDoEmail, `a célula mostra o endereço inteiro (${linhaContexto})`).toBe(
+            emailEsperado[linha.login]
+          );
+          expect
+            .soft(linha.esquerdaDoLogin, `Login: borda esquerda (${linhaContexto})`)
+            .toBeGreaterThanOrEqual(0);
+          expect
+            .soft(linha.direitaDoLogin, `Login: borda direita (${linhaContexto})`)
+            .toBeLessThanOrEqual(medidas.larguraJanela);
+          for (const celula of linha.celulas) {
+            expect
+              .soft(celula.esquerda, `${celula.rotulo}: borda esquerda (${linhaContexto})`)
+              .toBeGreaterThanOrEqual(0);
+            expect
+              .soft(celula.direita, `${celula.rotulo}: borda direita (${linhaContexto})`)
+              .toBeLessThanOrEqual(medidas.larguraJanela);
+          }
+          const piso = largura === 360 ? 12 : 16;
+          expect
+            .soft(
+              linha.capacidade,
+              `P-1a: capacidade da coluna E-mail em caracteres (${linhaContexto}), piso ${piso}`
+            )
+            .toBeGreaterThanOrEqual(piso);
+          expect
+            .soft(
+              linha.linhasComSobra,
+              `P-1b: linha que não termina em hífen nem está cheia (${linhaContexto})`
+            )
+            .toEqual([]);
+          if (linha.login === LOGIN_EMAIL_CURTO && !ampliada && largura >= 1280) {
+            expect
+              .soft(
+                linha.caracteresNaPrimeiraLinha,
+                `P-2: e-mail curto numa linha só (${linhaContexto})`
+              )
+              .toBe(27);
+          }
+        }
+
+        const sufixo = ampliada ? 'ampliada' : 'normal';
+        if (variante.capturas && (ampliada || largura === 1280)) {
+          for (const login of logins) {
+            await page
+              .locator('tbody tr', { hasText: login })
+              .evaluate((el) => el.scrollIntoView({ block: 'start' }));
+            for (const tema of TEMAS) {
+              await page.emulateMedia({ colorScheme: tema });
+              await capturar(
+                page,
+                `em-f1c-${testInfo.project.name}-painel-${login}-${sufixo}-${largura}-${tema}`
+              );
+            }
+          }
+        }
+      });
+    }
   }
 }
 

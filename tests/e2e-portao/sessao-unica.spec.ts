@@ -1,5 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
-import { devices, expect, test, type Browser, type Page } from '@playwright/test';
+import {
+  devices,
+  expect,
+  test,
+  type Browser,
+  type Page,
+  type Request,
+  type Route
+} from '@playwright/test';
 import { resetarPrivado } from './apoio/ambiente';
 import { capturar, entrarNoApp, esperarApp, esperarEntrada, preencherEntrada } from './apoio/acoes';
 import { CONTA_ADMIN, CONTA_COMUM, ORIGEM, SENHA_NOVA_TROCA } from './apoio/constantes';
@@ -292,6 +300,105 @@ test('sessão única: administrador derrubado que aciona o painel volta à tela 
     await preencherEntrada(page, CONTA_ADMIN);
     await esperarApp(page);
   } finally {
+    await aparelhoB.fechar();
+  }
+});
+
+/**
+ * Sair num aparelho derrubado (SU-F2b). O Sair é o único gesto em que "a sessão acabou" é o resultado pedido, e a
+ * pessoa tem de ir à tela de entrada na RAIZ. O pedido de Sair volta 403 csrf, o transporte avisa "sessão vencida"
+ * (troca a página pelo próprio caminho) e o Sair ainda troca a página por `/`: duas navegações em sequência, e a que
+ * o navegador consuma primeiro decide o destino (corrida: 6 de 6 num navegador, 1 de 6 no outro). Por isso o teste
+ * não espera nem lê o endereço no fim: ele SEGURA todo pedido de navegação do quadro principal, deixa a rota dizer
+ * por evento quando o pedido para `/` chegou, e afirma que a lista de caminhos pedidos é exatamente `['/']`.
+ */
+test('sessão única: Sair num aparelho derrubado só navega para a raiz', async ({
+  page,
+  browser
+}, testInfo) => {
+  await page.clock.install();
+  await entrarNoApp(page, CONTA_ADMIN, '/');
+  await trocarPaginaPeloMenu(page, 'Trocar senha');
+  await expect(page).toHaveURL(/\/conta$/);
+
+  const aparelhoB = await abrirAparelho(browser);
+  try {
+    await entrarNoApp(aparelhoB.page, CONTA_ADMIN, '/');
+    await expect(aparelhoB.page.locator('#app')).not.toBeEmpty();
+    await esperarNoApp(page);
+
+    // Um cache nomeado de aparelho parado: a limpeza local do Sair (a única, em navegador sem Clear-Site-Data) o apaga.
+    await page.evaluate(() => window.caches.open('cache-sintetico-de-aparelho-parado'));
+    expect(await page.evaluate(() => window.caches.keys()), 'cache plantado antes do Sair').toEqual(
+      ['cache-sintetico-de-aparelho-parado']
+    );
+
+    const quadro = page.mainFrame();
+    const ehNavegacaoDoQuadro = (pedido: Request): boolean =>
+      pedido.isNavigationRequest() && pedido.frame() === quadro;
+    const caminhoDe = (pedido: Request): string => {
+      const url = new URL(pedido.url());
+      return `${url.pathname}${url.search}`;
+    };
+
+    const caminhosPedidos: string[] = [];
+    page.on('request', (pedido) => {
+      if (ehNavegacaoDoQuadro(pedido)) caminhosPedidos.push(caminhoDe(pedido));
+    });
+
+    const seguros: Route[] = [];
+    let rotaDaRaiz: Route | undefined;
+    let soltou = false;
+    let avisarQueARaizChegou: () => void = () => undefined;
+    const raizChegou = new Promise<void>((resolver) => {
+      avisarQueARaizChegou = resolver;
+    });
+    await page.route('**/*', async (rota) => {
+      const pedido = rota.request();
+      if (soltou || !ehNavegacaoDoQuadro(pedido)) {
+        await rota.fallback();
+        return;
+      }
+      if (new URL(pedido.url()).pathname === '/') {
+        rotaDaRaiz = rota;
+        avisarQueARaizChegou();
+        return;
+      }
+      seguros.push(rota);
+    });
+
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await raizChegou;
+
+    expect(caminhosPedidos, 'caminhos de navegação pedidos pelo Sair, em ordem').toEqual(['/']);
+
+    // A limpeza local vem antes da troca para `/`: com o pedido para `/` ainda preso, ela já tem de ter rodado. A
+    // leitura é feita numa aba à parte, da mesma origem: a página que sai não responde enquanto a navegação está presa.
+    const leitora = await page.context().newPage();
+    try {
+      await leitora.goto(`${ORIGEM}/entrada.css`);
+      expect(
+        await leitora.evaluate(() => window.caches.keys()),
+        'o Sair apagou os caches antes de navegar'
+      ).toEqual([]);
+    } finally {
+      await leitora.close();
+    }
+
+    soltou = true;
+    for (const rota of seguros) await rota.abort().catch(() => undefined);
+    await rotaDaRaiz!.continue();
+
+    await esperarEntrada(page);
+    expect(new URL(page.url()).pathname, 'destino final do Sair numa sessão derrubada').toBe('/');
+    await exigirAutenticada(aparelhoB.page, 'B segue autenticado depois do Sair de A');
+
+    testInfo.annotations.push({
+      type: 'aviso de outro aparelho na entrada (sem afirmar)',
+      description: String((await page.getByRole('alert').count()) > 0)
+    });
+  } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await aparelhoB.fechar();
   }
 });

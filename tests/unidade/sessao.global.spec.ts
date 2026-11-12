@@ -122,8 +122,9 @@ describe('criarSessaoGlobal', () => {
     expect(ordem).toEqual(['limpar', 'substituir:/']);
   });
 
-  it('sair numa sessão derrubada (403 csrf pelo transporte de verdade) termina em /, depois do aviso', async () => {
+  it('sair numa sessão derrubada (403 csrf pelo transporte de verdade) só navega para /, uma vez', async () => {
     const { navegador, ordem } = criarNavegadorFalso('/p/p1/interdisciplinar?x=1');
+    const aoNaoAutorizado = criarAoNaoAutorizado(navegador);
     const cliente = criarClienteApi({
       buscar: async (_url, init) =>
         init.method === 'POST'
@@ -131,13 +132,59 @@ describe('criarSessaoGlobal', () => {
           : new Response('{"ok":true,"autenticado":true,"csrf":"token-sintetico"}', {
               status: 200
             }),
-      aoNaoAutorizado: criarAoNaoAutorizado(navegador)
+      aoNaoAutorizado
     });
-    const sessao = criarSessaoGlobal({ cliente, navegador });
+    const sessao = criarSessaoGlobal({
+      cliente,
+      navegador,
+      suspenderAviso: aoNaoAutorizado.suspender
+    });
 
     await sessao.sair();
 
-    expect(ordem).toEqual(['substituir:/p/p1/interdisciplinar?x=1', 'limpar', 'substituir:/']);
+    expect(navegador.substituir).toHaveBeenCalledTimes(1);
+    expect(navegador.substituir).toHaveBeenCalledWith('/');
+    expect(ordem).toEqual(['limpar', 'substituir:/']);
+  });
+
+  it('401 em outro pedido depois de o Sair começar não troca a página pelo caminho atual', async () => {
+    const { navegador, ordem } = criarNavegadorFalso('/p/p1/interdisciplinar?x=1');
+    const aoNaoAutorizado = criarAoNaoAutorizado(navegador);
+    const cliente = criarClienteFalso();
+    let terminarSair: () => void = () => undefined;
+    cliente.sair.mockImplementationOnce(
+      () =>
+        new Promise<undefined>((resolver) => {
+          terminarSair = () => resolver(undefined);
+        })
+    );
+    const sessao = criarSessaoGlobal({
+      cliente,
+      navegador,
+      suspenderAviso: aoNaoAutorizado.suspender
+    });
+
+    const saindo = sessao.sair();
+    aoNaoAutorizado();
+    terminarSair();
+    await saindo;
+
+    expect(ordem).toEqual(['limpar', 'substituir:/']);
+  });
+
+  it('sem Sair em curso, o aviso de sessão vencida segue trocando a página pelo próprio caminho', async () => {
+    const { navegador, ordem } = criarNavegadorFalso('/p/p1/interdisciplinar?x=1');
+    const aoNaoAutorizado = criarAoNaoAutorizado(navegador);
+    const sessao = criarSessaoGlobal({
+      cliente: criarClienteFalso(),
+      navegador,
+      suspenderAviso: aoNaoAutorizado.suspender
+    });
+    await sessao.iniciar();
+
+    aoNaoAutorizado();
+
+    expect(ordem).toEqual(['substituir:/p/p1/interdisciplinar?x=1']);
   });
 
   it('sair e iniciar não gravam nada em localStorage nem sessionStorage', async () => {

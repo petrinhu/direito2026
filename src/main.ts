@@ -91,7 +91,11 @@ async function bootstrap(): Promise<void> {
   const navegador = criarNavegadorReal();
   const aoNaoAutorizado = criarAoNaoAutorizado(navegador);
   const cliente = criarClienteApi({ aoNaoAutorizado });
-  const sessao = criarSessaoGlobal({ cliente, navegador });
+  const sessao = criarSessaoGlobal({
+    cliente,
+    navegador,
+    suspenderAviso: aoNaoAutorizado.suspender
+  });
   const storeBusca = criarStoreBusca(aoNaoAutorizado);
 
   const app = createApp(App);

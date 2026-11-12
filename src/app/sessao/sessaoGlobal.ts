@@ -30,6 +30,8 @@ export interface Navegador {
 export interface OpcoesSessaoGlobal {
   readonly cliente: ClienteSessao;
   readonly navegador: Navegador;
+  /** Suspende o aviso de sessão vencida; o Sair a chama antes de falar com o servidor. */
+  readonly suspenderAviso?: () => void;
 }
 
 /**
@@ -39,11 +41,18 @@ export interface OpcoesSessaoGlobal {
  */
 export function criarAoNaoAutorizado(
   navegador: Pick<Navegador, 'caminhoAtual' | 'substituir'>
-): () => void {
-  return () => navegador.substituir(navegador.caminhoAtual());
+): (() => void) & { readonly suspender: () => void } {
+  let suspenso = false;
+  const avisar = (): void => {
+    if (!suspenso) navegador.substituir(navegador.caminhoAtual());
+  };
+  const suspender = (): void => {
+    suspenso = true;
+  };
+  return Object.assign(avisar, { suspender });
 }
 
-export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
+export function criarSessaoGlobal({ cliente, navegador, suspenderAviso }: OpcoesSessaoGlobal) {
   const usuario = ref('');
   const admin = ref(false);
   /**
@@ -108,8 +117,13 @@ export function criarSessaoGlobal({ cliente, navegador }: OpcoesSessaoGlobal) {
     }
   }
 
-  /** Sair: encerra no servidor, apaga caches e registros do navegador, e vai para a raiz. */
+  /**
+   * Sair: encerra no servidor, apaga caches e registros do navegador, e vai para a raiz. O aviso de sessão
+   * vencida é suspenso antes: numa sessão já derrubada o servidor responde 401/403 ao próprio Sair, e o aviso
+   * trocaria a página pelo caminho atual numa corrida com a troca para `/`. No Sair, `/` é o destino pedido.
+   */
   async function sair(): Promise<void> {
+    suspenderAviso?.();
     try {
       await cliente.sair();
     } catch {

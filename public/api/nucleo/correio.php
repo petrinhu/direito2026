@@ -20,7 +20,8 @@ require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a eta
  *  - Produção fala só TLS verificado com smtp.hostinger.com (sem self-signed, sem texto puro, sem a porta
  *    587). Texto puro existe só para destino de teste em 127.0.0.1 com porta (d26_correio_transporte_permitido):
  *    sob cli-server com D26_SMTP_TESTE, ou pela opção --destino do CLI conferir-smtp.
- *  - A senha sai só no AUTH, e chega às funções por closure, nunca como string. Erro, log e saída não levam
+ *  - O login e a senha saem só no AUTH, e chegam às funções por closure, nunca como string. O login mora em
+ *    smtp.usuario, ao lado de smtp.senha, e tem as mesmas regras de forma. Erro, log e saída não levam login,
  *    senha, texto do servidor nem endereço (TE3). Exceção inesperada vira a etapa interno, sem causa anexada.
  *  - Toda leitura, escrita e o handshake TLS têm prazo, e o envio inteiro tem prazo total.
  *
@@ -31,6 +32,9 @@ require_once __DIR__ . '/respostas.php'; // d26_log_erro_em: o envio grava a eta
 
 const D26_SMTP_SENHA_ARQUIVO = 'smtp.senha';
 const D26_SMTP_SENHA_MAX = 256;
+const D26_SMTP_LOGIN_ARQUIVO = 'smtp.usuario';
+const D26_SMTP_LOGIN_MIN = 3;
+const D26_SMTP_LOGIN_MAX = 254;
 /**
  * Teto do assunto, em bytes (BL-B2, decisão do orquestrador, opção 1). Medido com PHP: o maior assunto que o produto
  * manda é o A2 com login de 32 caracteres, "Conta " + login + " bloqueada por uso simultâneo", com 68 bytes. O teto de
@@ -48,7 +52,7 @@ const D26_SMTP_RESPOSTA_LINHAS_MAX = 100;
 const D26_SMTP_TLS_METODO = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT;
 
 /**
- * Falha de envio. `etapa` diz onde parou: alvo, smtp-senha, cabecalho, destino, corpo (antes de conectar);
+ * Falha de envio. `etapa` diz onde parou: alvo, smtp-usuario, smtp-senha, cabecalho, destino, corpo (antes de conectar);
  * conexao, tls, auth, remetente, destinatario, dados (depois); interno (exceção inesperada, sem detalhe).
  * `codigo` é o código de 3 dígitos do servidor, quando houve resposta. A mensagem leva só a etapa e o
  * código: o texto do servidor nunca entra aqui.
@@ -165,6 +169,27 @@ function d26_correio_senha(string $priv): string
         throw new D26EnvioFalhou('smtp-senha');
     }
     return $senha;
+}
+
+/**
+ * Lê o login da caixa do privado (smtp.usuario), com as mesmas regras de forma da senha. Recusa (etapa smtp-usuario)
+ * se o arquivo faltar, tiver menos de 3 ou mais de 254 bytes, não for modo exatamente 600, ou tiver qualquer byte
+ * fora do ASCII imprimível sem espaço (isso cobre CR, LF, NUL e espaço). Não cai no remetente: sem o arquivo
+ * válido, nada é enviado. Nunca devolve nem registra o conteúdo na falha.
+ */
+function d26_correio_usuario(string $priv): string
+{
+    $arquivo = $priv . '/' . D26_SMTP_LOGIN_ARQUIVO;
+    $tamanho = is_file($arquivo) ? filesize($arquivo) : false;
+    if ($tamanho === false || $tamanho < D26_SMTP_LOGIN_MIN || $tamanho > D26_SMTP_LOGIN_MAX
+        || (fileperms($arquivo) & 0777) !== 0600) {
+        throw new D26EnvioFalhou('smtp-usuario');
+    }
+    $usuario = file_get_contents($arquivo);
+    if (!is_string($usuario) || strlen($usuario) !== $tamanho || preg_match('/^[\x21-\x7E]+\z/', $usuario) !== 1) {
+        throw new D26EnvioFalhou('smtp-usuario');
+    }
+    return $usuario;
 }
 
 /**
@@ -304,8 +329,8 @@ final class D26SmtpSessao
     }
 
     /**
-     * Escreve uma linha que leva a senha. O texto sai de $linha, dentro daqui, e nunca entra como argumento:
-     * se a escrita falhar, o rastro traz o closure, sem o base64 da senha (que é a mesma informação).
+     * Escreve uma linha que leva o login ou a senha. O texto sai de $linha, dentro daqui, e nunca entra como argumento:
+     * se a escrita falhar, o rastro traz o closure, sem o base64 do login nem da senha (que é a mesma informação).
      */
     public function escreverSigiloso(Closure $linha, string $etapa): void
     {
@@ -419,17 +444,18 @@ function d26_correio_ehlo(D26SmtpSessao $sessao): array
 }
 
 /**
- * AUTH PLAIN quando anunciado; senão AUTH LOGIN; senão recusa (etapa auth, sem código). A senha só sai aqui.
- * Recebe a senha por closure, nunca como string: argumento de string aparece em rastro de exceção.
+ * AUTH PLAIN quando anunciado; senão AUTH LOGIN; senão recusa (etapa auth, sem código). O login e a senha só saem aqui.
+ * Recebem login e senha por closure, nunca como string: argumento de string aparece em rastro de exceção.
  *
  * @param list<string> $mecanismos
+ * @param Closure(): string $usuario
  * @param Closure(): string $senha
  */
-function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string $usuario, Closure $senha): void
+function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, Closure $usuario, Closure $senha): void
 {
     if (in_array('PLAIN', $mecanismos, true)) {
         $sessao->escreverSigiloso(
-            static fn (): string => 'AUTH PLAIN ' . base64_encode("\0" . $usuario . "\0" . $senha()) . "\r\n",
+            static fn (): string => 'AUTH PLAIN ' . base64_encode("\0" . $usuario() . "\0" . $senha()) . "\r\n",
             'auth'
         );
         $sessao->esperar('auth', 235);
@@ -438,7 +464,7 @@ function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string
     if (in_array('LOGIN', $mecanismos, true)) {
         $sessao->escrever("AUTH LOGIN\r\n", 'auth');
         $sessao->esperar('auth', 334);
-        $sessao->escrever(base64_encode($usuario) . "\r\n", 'auth');
+        $sessao->escreverSigiloso(static fn (): string => base64_encode($usuario()) . "\r\n", 'auth');
         $sessao->esperar('auth', 334);
         $sessao->escreverSigiloso(static fn (): string => base64_encode($senha()) . "\r\n", 'auth');
         $sessao->esperar('auth', 235);
@@ -448,7 +474,7 @@ function d26_correio_autenticar(D26SmtpSessao $sessao, array $mecanismos, string
 }
 
 /**
- * Envia uma mensagem de texto pela caixa nao-responda. Valida e lê a senha antes de conectar, fala TLS
+ * Envia uma mensagem de texto pela caixa nao-responda. Valida e lê o login e a senha antes de conectar, fala TLS
  * verificado em produção e registra no erros.log do privado só a etapa e o código da falha.
  *
  * @param array{destinatario: string, assunto: string, corpo: string} $envio
@@ -460,7 +486,9 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
     $sessao = null;
     try {
         d26_correio_validar($envio);
+        $usuario = d26_correio_usuario($priv);
         $senha = d26_correio_senha($priv);
+        $login = static fn (): string => $usuario;
         $segredo = static fn (): string => $senha;
         $alvo = $transporte ?? d26_correio_alvo(PHP_SAPI, getenv('D26_SMTP_TESTE') ?: null);
         $mensagem = d26_correio_montar($envio);
@@ -469,7 +497,7 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
             (int) ($alvo['prazoLeituraS'] ?? D26_SMTP_PRAZO_LEITURA_S),
             (int) ($alvo['prazoTotalS'] ?? D26_SMTP_PRAZO_TOTAL_S)
         );
-        d26_correio_autenticar($sessao, d26_correio_ehlo($sessao), D26_SMTP_USUARIO, $segredo);
+        d26_correio_autenticar($sessao, d26_correio_ehlo($sessao), $login, $segredo);
         $sessao->escrever('MAIL FROM:<' . D26_REMETENTE . ">\r\n", 'remetente');
         $sessao->esperar('remetente', 250);
         $sessao->escrever('RCPT TO:<' . $envio['destinatario'] . ">\r\n", 'destinatario');
@@ -492,8 +520,8 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
 }
 
 /**
- * Conferência do SMTP da caixa, sem enviar nada: abre (com TLS, em produção), faz EHLO e AUTH e sai. Nunca
- * manda MAIL FROM. Não lança: devolve o resultado para o CLI imprimir.
+ * Conferência do SMTP da caixa, sem enviar nada: lê o login e a senha, abre (com TLS, em produção), faz EHLO e AUTH
+ * e sai. Nunca manda MAIL FROM. Não lança: devolve o resultado para o CLI imprimir.
  *
  * @param array{endereco: string, tls: bool} $alvo
  * @return array{tls: bool, auth: bool, codigo: ?int, etapa: ?string, mecanismos: list<string>}
@@ -503,12 +531,14 @@ function d26_correio_conferir(string $priv, array $alvo): array
     $resultado = ['tls' => false, 'auth' => false, 'codigo' => null, 'etapa' => null, 'mecanismos' => []];
     $sessao = null;
     try {
+        $usuario = d26_correio_usuario($priv);
         $senha = d26_correio_senha($priv);
+        $login = static fn (): string => $usuario;
         $segredo = static fn (): string => $senha;
         $sessao = d26_correio_abrir($alvo, D26_SMTP_PRAZO_LEITURA_S, D26_SMTP_PRAZO_TOTAL_S);
         $resultado['tls'] = $alvo['tls'];
         $resultado['mecanismos'] = d26_correio_ehlo($sessao);
-        d26_correio_autenticar($sessao, $resultado['mecanismos'], D26_SMTP_USUARIO, $segredo);
+        d26_correio_autenticar($sessao, $resultado['mecanismos'], $login, $segredo);
         $resultado['auth'] = true;
         $sessao->sair();
     } catch (D26EnvioFalhou $e) {

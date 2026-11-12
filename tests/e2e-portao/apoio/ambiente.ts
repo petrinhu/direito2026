@@ -33,6 +33,8 @@ export const PASTA_SMTP = join(AMBIENTE, 'smtp');
 export const ROTEIRO_SMTP = join(PASTA_SMTP, 'roteiro.json');
 /** Senha da caixa, SINTÉTICA: só existe para o envio não falhar antes de conectar (modo 600, sem quebra de linha). */
 const SENHA_SMTP_SINTETICA = 'senha-smtp-sintetica-do-teste';
+/** Login sintético do SMTP (EM-SMTP-APELIDO): vive em smtp.usuario, diferente do remetente do site. */
+const LOGIN_SMTP_SINTETICO = 'caixa-dona@example.com';
 
 /** Arquivos que vivem na webroot (public/), não no app: o portão nunca os lista no manifesto. */
 const SO_WEBROOT = new Set([
@@ -156,6 +158,9 @@ export function prepararAmbiente(dist: string): void {
   const senhaSmtp = join(PRIVADO, 'smtp.senha');
   writeFileSync(senhaSmtp, SENHA_SMTP_SINTETICA);
   chmodSync(senhaSmtp, 0o600);
+  const usuarioSmtp = join(PRIVADO, 'smtp.usuario');
+  writeFileSync(usuarioSmtp, LOGIN_SMTP_SINTETICO);
+  chmodSync(usuarioSmtp, 0o600);
 
   const conteudo = join(PRIVADO, 'conteudo');
   writeFileSync(join(conteudo, 'interdisciplinar.json'), JSON.stringify(conteudoRestritoFalso()));

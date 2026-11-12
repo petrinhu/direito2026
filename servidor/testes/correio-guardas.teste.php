@@ -93,7 +93,7 @@ teste('e-mail: E27t rastro da exceção do envio não leva a senha, nem em texto
             $sessao = new D26SmtpSessao($lado, 3, 10);
             $rotulo = '(b) usuário de ' . strlen($usuario) . ' bytes';
             try {
-                $e = correioEsperarFalha(fn () => d26_correio_autenticar($sessao, ['PLAIN'], $usuario, static fn (): string => $senha));
+                $e = correioEsperarFalha(fn () => d26_correio_autenticar($sessao, ['PLAIN'], static fn (): string => $usuario, static fn (): string => $senha));
                 $rastro = $e->getTraceAsString();
                 contem('escrever', $rastro, "$rotulo: a falha veio do caminho de escrita da linha de AUTH");
                 naoContem(base64_encode("\0" . $usuario . "\0" . $senha), $rastro, "$rotulo: a linha AUTH inteira não aparece no rastro");

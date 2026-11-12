@@ -305,6 +305,8 @@ function emailB3Com(array $roteiro, callable $corpo, array $opcoes = []): void
         $a = Ambiente::novo($opcoes);
         file_put_contents($a->priv . '/smtp.senha', EMB3_SENHA_SMTP);
         chmod($a->priv . '/smtp.senha', 0600);
+        file_put_contents($a->priv . '/smtp.usuario', CORREIO_LOGIN_SINTETICO);
+        chmod($a->priv . '/smtp.usuario', 0600);
         $corpo($a, $falso);
     } finally {
         putenv('D26_SMTP_TESTE=');

@@ -11,6 +11,8 @@ require_once __DIR__ . '/cli-apoio.php';
  */
 
 const CORREIO_SENHA_SINTETICA = 'SenhaSmtpSintetica-EM-B2-7731';
+/** Login do SMTP, sintético e DIFERENTE do remetente (EM-SMTP-APELIDO): vive em smtp.usuario, nunca no código. */
+const CORREIO_LOGIN_SINTETICO = 'caixa-dona@example.com';
 const CORREIO_CORPO_PADRAO = "Olá.\n\nAbra o link abaixo.\nhttps://direito2026.drpetrus.top/api/convite.php?t="
     . 'abababababababababababababababababababababababababababababababab' . "\n\nNão responda.\n";
 
@@ -24,13 +26,24 @@ function correioCarregar(): void
     require_once $arquivo;
 }
 
-/** Privado temporário com smtp.senha sintético (modo 600 por padrão). @return string caminho do privado */
-function correioPriv(string $senha = CORREIO_SENHA_SINTETICA, int $modo = 0600): string
-{
+/**
+ * Privado temporário com smtp.senha e smtp.usuario sintéticos (modo 600 por padrão). `$usuario` null não grava
+ * o arquivo do login. @return string caminho do privado
+ */
+function correioPriv(
+    string $senha = CORREIO_SENHA_SINTETICA,
+    int $modo = 0600,
+    ?string $usuario = CORREIO_LOGIN_SINTETICO,
+    int $modoUsuario = 0600
+): string {
     $priv = dirTemporario() . '/privado';
     mkdir($priv, 0700, true);
     file_put_contents($priv . '/smtp.senha', $senha);
     chmod($priv . '/smtp.senha', $modo);
+    if ($usuario !== null) {
+        file_put_contents($priv . '/smtp.usuario', $usuario);
+        chmod($priv . '/smtp.usuario', $modoUsuario);
+    }
     return $priv;
 }
 
@@ -177,7 +190,8 @@ teste('e-mail: E10t envio bem-sucedido: EHLO, AUTH PLAIN, MAIL FROM, um RCPT, ca
         }
         verdadeiro($auth !== null, 'AUTH PLAIN enviado');
         // Remetente pela constante, sem literal: o portão de e-mail lê "\0nao-..." como outro token (0nao-...).
-        igual(chr(0) . D26_REMETENTE . chr(0) . $senha, base64_decode((string) $auth), 'AUTH PLAIN com usuário e senha do arquivo');
+        verdadeiro(CORREIO_LOGIN_SINTETICO !== D26_REMETENTE, 'prova válida: o login do arquivo é diferente do remetente');
+        igual(chr(0) . CORREIO_LOGIN_SINTETICO . chr(0) . $senha, base64_decode((string) $auth), 'AUTH PLAIN com o login do arquivo smtp.usuario e a senha do arquivo');
         igual(1, substr_count($conversa, "MAIL FROM:<nao-responda@drpetrus.top>\r\n"), 'MAIL FROM exato, uma vez');
         igual(1, substr_count($conversa, "RCPT TO:<pessoa@example.com>\r\n"), 'um único RCPT TO');
         igual(1, count(array_filter(explode("\r\n", $conversa), static fn (string $l): bool => $l === 'DATA')), 'DATA uma vez, como linha própria');
@@ -237,7 +251,8 @@ teste('e-mail: E12t resposta de várias linhas é lida inteira; só AUTH LOGIN a
         verdadeiro($conversa !== null, 'o SMTP falso recebeu a conexão');
         naoContem('AUTH PLAIN', $conversa, 'sem AUTH PLAIN, porque não foi anunciado');
         contem("AUTH LOGIN\r\n", $conversa, 'AUTH LOGIN enviado');
-        contem(base64_encode('nao-responda@drpetrus.top') . "\r\n", $conversa, 'usuário em base64 na linha seguinte');
+        contem(base64_encode(CORREIO_LOGIN_SINTETICO) . "\r\n", $conversa, 'login do arquivo smtp.usuario em base64 na linha seguinte');
+        naoContem(base64_encode(D26_REMETENTE) . "\r\n", $conversa, 'o remetente não é o login do AUTH');
         contem(base64_encode($senha) . "\r\n", $conversa, 'senha em base64 na linha seguinte');
         contem("MAIL FROM:<nao-responda@drpetrus.top>\r\n", $conversa, 'envio seguiu depois da resposta de várias linhas');
     } finally {
@@ -403,6 +418,8 @@ function correioAmbienteSonda(): Ambiente
     $a = Ambiente::novo(['docroot' => 'copia', 'admin' => false]);
     file_put_contents($a->priv . '/smtp.senha', CORREIO_SENHA_SINTETICA);
     chmod($a->priv . '/smtp.senha', 0600);
+    file_put_contents($a->priv . '/smtp.usuario', CORREIO_LOGIN_SINTETICO);
+    chmod($a->priv . '/smtp.usuario', 0600);
     file_put_contents($a->docroot . '/api/correio-sonda.php', <<<'PHP'
 <?php
 declare(strict_types=1);

@@ -34,8 +34,18 @@ const REGRAS_DA_SUPERFICIE_ESCURA: Record<string, string> = {
   'barra-modo-adaptado': 'button.botao-modo-adaptado',
   'barra-busca': 'input#campo-busca-input',
   'barra-gaveta': 'button.barra-topo__botao-gaveta',
-  'lista-de-cadeiras': 'a.linha'
+  'lista-de-cadeiras': 'a.linha',
+  // A11Y-FOCO-3: a região rolável da tabela do painel de administração.
+  'painel-tabela-rolavel': 'div.ar-tabela-rolavel'
 };
+
+/**
+ * Item (e): o ponto do meio do traço do anel, nos lados esquerdo e direito e dentro da janela, tem
+ * de cair sobre o PRÓPRIO elemento (ou um descendente), e não sobre outra coisa. A cor computada
+ * compara o anel com o fundo do pai e não vê o traço desenhado em cima da lateral (A11Y-FOCO-3).
+ * Só se afirma onde o anel é desenhado por dentro, que é o conserto da região do painel.
+ */
+const REGRA_COM_ITEM_E = 'painel-tabela-rolavel';
 
 /**
  * O menu lateral ocupa a largura inteira da lateral (e, a 360, da gaveta): o anel de fora fica
@@ -86,6 +96,8 @@ interface MedidaFoco {
   readonly cortadoPor: string;
   /** Caixa do anel e janela, para ler o item (d): esq,topo,dir,base / largura x altura. */
   readonly geometria: string;
+  /** Item (e): o que `elementFromPoint` devolve no meio do traço, lados esquerdo e direito. */
+  readonly pontos: readonly { lado: string; dentro: boolean; hit: string }[];
 }
 
 /**
@@ -112,6 +124,7 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
     cabe: false,
     cortadoPor: '',
     geometria: '',
+    pontos: [],
     ...campos
   });
 
@@ -222,12 +235,13 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
     dir: r.right + extensao,
     base: r.bottom + extensao
   };
+  // Elemento mais alto que a janela não cabe na vertical por definição: só o eixo horizontal vale.
+  const maisAltoQueAJanela = r.height > alturaJanela + TOLERANCIA;
   let cortadoPor = '';
   if (
     caixa.esq < -TOLERANCIA ||
-    caixa.topo < -TOLERANCIA ||
     caixa.dir > larguraJanela + TOLERANCIA ||
-    caixa.base > alturaJanela + TOLERANCIA
+    (!maisAltoQueAJanela && (caixa.topo < -TOLERANCIA || caixa.base > alturaJanela + TOLERANCIA))
   ) {
     cortadoPor = 'janela';
   }
@@ -248,6 +262,26 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
     ) {
       cortadoPor = `${pai.tagName.toLowerCase()}${pai.className ? '.' + String(pai.className).split(/\s+/)[0] : ''}`;
     }
+  }
+
+  const meioDoTraco = deslocamento + espessura / 2;
+  const yDoMeio = (r.top + r.bottom) / 2;
+  const descrever = (no: { tagName: string; className: unknown } | null): string =>
+    no === null
+      ? 'nada'
+      : `${no.tagName.toLowerCase()}${typeof no.className === 'string' && no.className ? '.' + no.className.split(/\s+/)[0] : ''}`;
+  const pontos: { lado: string; dentro: boolean; hit: string }[] = [];
+  for (const [lado, x] of [
+    ['esq', r.left - meioDoTraco],
+    ['dir', r.right + meioDoTraco]
+  ] as const) {
+    if (x < 0 || x >= larguraJanela || yDoMeio < 0 || yDoMeio >= alturaJanela) continue;
+    const topo = document.elementFromPoint(x, yDoMeio);
+    pontos.push({
+      lado,
+      dentro: topo !== null && (topo === el || el.contains(topo)),
+      hit: descrever(topo)
+    });
   }
 
   let regra: string | null = null;
@@ -278,6 +312,7 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
     razao,
     cabe: cortadoPor === '',
     cortadoPor,
+    pontos,
     geometria: `${Math.round(caixa.esq)},${Math.round(caixa.topo)},${Math.round(caixa.dir)},${Math.round(caixa.base)} / ${larguraJanela}x${alturaJanela}`
   };
 }
@@ -310,6 +345,7 @@ function reprovacoes(m: MedidaFoco, ignorarForaDaTela: boolean): string[] {
   if (m.estilo !== 'solid' || !(m.espessura >= PISO_ESPESSURA_PX)) itens.push('b');
   if (!(m.razao >= PISO_CONTRASTE)) itens.push('c');
   if (!m.cabe && !(ignorarForaDaTela && m.foraDaTela)) itens.push('d');
+  if (m.regra === REGRA_COM_ITEM_E && m.pontos.some((p) => !p.dentro)) itens.push('e');
   return itens;
 }
 
@@ -333,6 +369,9 @@ function linha(
     `razao=${Number.isFinite(m.razao) ? m.razao.toFixed(2) : 'NaN'}`,
     `itens=${itens.join('') || '-'}`,
     m.cortadoPor ? `cortado-por=${m.cortadoPor} caixa=${m.geometria}` : '',
+    m.regra === REGRA_COM_ITEM_E
+      ? `pontos=${m.pontos.map((p) => `${p.lado}:${p.dentro ? 'dentro' : 'FORA'}(${p.hit})`).join(',')}`
+      : '',
     m.foraDaTela ? 'fora-da-tela' : ''
   ]
     .filter((c) => c !== '')
@@ -344,6 +383,8 @@ interface AlvoA {
   readonly nome: string;
   readonly seletor: string;
   readonly larguras: readonly number[];
+  /** Página em que o alvo é procurado; por padrão, a inicial. */
+  readonly pagina?: Pagina;
 }
 
 const ALVOS_A: readonly AlvoA[] = [
@@ -373,7 +414,14 @@ const ALVOS_A: readonly AlvoA[] = [
     seletor: 'button.barra-topo__botao-gaveta',
     larguras: [360]
   },
-  { nome: 'primeira linha da lista de cadeiras', seletor: 'a.linha', larguras: LARGURAS }
+  { nome: 'primeira linha da lista de cadeiras', seletor: 'a.linha', larguras: LARGURAS },
+  // A11Y-FOCO-3: a região rolável da tabela do painel, mais alta que a janela.
+  {
+    nome: 'região rolável da tabela do painel',
+    seletor: 'div.ar-tabela-rolavel',
+    larguras: LARGURAS,
+    pagina: PAGINAS[3]!
+  }
 ];
 
 for (const alvo of ALVOS_A) {
@@ -384,7 +432,7 @@ for (const alvo of ALVOS_A) {
       }) => {
         await prepararModo(page, modo);
         await entrarNoApp(page, CONTA_ADMIN, '/');
-        await abrirPagina(page, PAGINAS[0]!, largura);
+        await abrirPagina(page, alvo.pagina ?? PAGINAS[0]!, largura);
         await ligarModalidadeDeTeclado(page);
 
         let chegou = false;
@@ -399,7 +447,7 @@ for (const alvo of ALVOS_A) {
 
         const m = await page.evaluate(medirFocoAtual, REGRAS_DA_SUPERFICIE_ESCURA);
         const itens = reprovacoes(m, false);
-        console.log(linha('inicial', modo, largura, m, itens));
+        console.log(linha(alvo.pagina?.nome ?? 'inicial', modo, largura, m, itens));
         expect(m.focusVisible, '(a) casa com :focus-visible').toBe(true);
         expect(m.estilo, '(b) contorno sólido').toBe('solid');
         expect(m.espessura, '(b) espessura do contorno em px').toBeGreaterThanOrEqual(
@@ -410,6 +458,17 @@ for (const alvo of ALVOS_A) {
           `(c) contraste do contorno ${m.corAnel} contra o fundo real ${m.corFundo}`
         ).toBeGreaterThanOrEqual(PISO_CONTRASTE);
         expect(m.cabe, `(d) a caixa do anel cabe (cortada por: ${m.cortadoPor})`).toBe(true);
+        if (m.regra === REGRA_COM_ITEM_E) {
+          const fora = m.pontos.filter((ponto) => !ponto.dentro);
+          expect(
+            fora.map((ponto) => `${ponto.lado}: ${ponto.hit}`),
+            '(e) o anel está desenhado sobre a própria região, não sobre outro elemento'
+          ).toEqual([]);
+          expect(
+            m.pontos.length,
+            '(e) ao menos um lado do anel está dentro da janela'
+          ).toBeGreaterThan(0);
+        }
       });
     }
   }
@@ -464,6 +523,7 @@ for (const modo of MODOS) {
     }
     passagens.push({ nome: 'inicial', largura: 360, gaveta: true });
 
+    const feitas: string[] = [];
     for (const { nome, largura, gaveta } of passagens) {
       const pagina = PAGINAS.find((p) => p.nome === nome)!;
       await abrirPagina(page, pagina, largura);
@@ -479,6 +539,10 @@ for (const modo of MODOS) {
       ).toBeGreaterThan(0);
       expect(passagem.analisados, `medidos em ${rotulo} (${modo}, ${largura})`).toBe(
         passagem.encontrados
+      );
+      feitas.push(`${rotulo} ${largura}`);
+      console.log(
+        `FOCO-PASSAGEM | modo=${modo} | ${rotulo} | ${largura} | encontrados=${passagem.encontrados}`
       );
       encontrados += passagem.encontrados;
       analisados += passagem.analisados;
@@ -500,6 +564,20 @@ for (const modo of MODOS) {
     console.log(
       `FOCO-TOTAL | modo=${modo} | ENCONTRADOS=${encontrados} ANALISADOS=${analisados} FALHARAM=${falharam}`
     );
+    // Lista escrita por extenso, de propósito: não é a que o laço percorre. Uma página que saia
+    // do laço não muda a igualdade entre ANALISADOS e ENCONTRADOS (cada passagem se compara só
+    // consigo mesma), mas muda esta lista.
+    expect(feitas, 'as nove passagens da varredura, na ordem').toEqual([
+      'inicial 360',
+      'unidade 360',
+      'troca-de-senha 360',
+      'painel 360',
+      'inicial 1280',
+      'unidade 1280',
+      'troca-de-senha 1280',
+      'painel 1280',
+      'inicial+gaveta 360'
+    ]);
     for (const regra of Object.keys(REGRAS_DA_SUPERFICIE_ESCURA)) {
       console.log(
         `FOCO-REGRA | modo=${modo} | ${regra} medidos=${medidosPorRegra.get(regra) ?? 0}`

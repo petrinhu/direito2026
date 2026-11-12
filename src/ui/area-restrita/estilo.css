@@ -326,6 +326,14 @@
   border-radius: var(--raio-md, 10px);
 }
 
+/* A região fica colada na lateral e na borda direita da janela: o anel de fora caía em cima
+   da lateral escura e sumia (1,34:1 por pixel). Por dentro da região, o traço repousa sobre
+   a própria tabela. Sem o prefixo .area-restrita: o painel (rota /usuarios) não fica dentro
+   dele, e a regra geral do anel ali é a de base.css, que esta vence pela classe. */
+.ar-tabela-rolavel:focus-visible {
+  outline-offset: calc(var(--foco-espessura, 2px) * -1);
+}
+
 .ar-tabela {
   width: 100%;
   border-collapse: collapse;

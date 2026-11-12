@@ -286,6 +286,11 @@
   scroll-margin-top: var(--esp-5, 1.5rem);
 }
 
+/* A frase "O link também foi para <e-mail>" leva um endereço que pode ter 60 letras seguidas. */
+.ar-admin__convite p {
+  overflow-wrap: anywhere;
+}
+
 /* Em largura estreita o bloco ganha respiro, e só respiro: padding e margem. O tamanho e a entrelinha da
    letra vêm da escala do site (--escala-*, que o modo Leitura ampliada troca), como no resto do painel: fixar rem
    aqui encolheria o link e os parágrafos justamente no modo de baixa visão. Sem caber inteiro na área livre
@@ -346,6 +351,19 @@
   font-size: var(--escala-sm, 0.9375rem);
 }
 
+/* Endereço de e-mail sem ponto de quebra (60 letras seguidas é válido): sem isto a coluna toma a largura do
+   endereço inteiro e empurra Estado e Ações para fora da janela. `anywhere` (e não `break-word`) também
+   reduz a largura mínima da coluna, que é o que a tabela de layout automático usa. */
+.ar-tabela td[data-rotulo='E-mail'] {
+  overflow-wrap: anywhere;
+}
+
+/* Piso da coluna: com `anywhere` a tabela a espremeria até quebrar endereço comum no meio da palavra. Fora da
+   Leitura ampliada, onde a letra maior não deixa folga e o piso empurraria Estado e Ações para fora. */
+:root:not([data-modo-adaptado='on']) .ar-tabela td[data-rotulo='E-mail'] {
+  min-width: 14rem;
+}
+
 /* Tabela que não cabe no contêiner (QA rodada 5, achado 2: a 768 em Leitura ampliada, os botões de
    linha ficavam fora da janela, e o foco não rolava o contêiner). Então cada linha vira um bloco
    empilhado, com o rótulo de cada coluna. Nada fica fora da janela, e não há rolagem lateral. Em
@@ -366,6 +384,10 @@
   }
 
   .ar-tabela {
+    min-width: 0;
+  }
+
+  :root:not([data-modo-adaptado='on']) .ar-tabela td[data-rotulo='E-mail'] {
     min-width: 0;
   }
 

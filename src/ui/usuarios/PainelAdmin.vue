@@ -234,7 +234,10 @@ async function trocarEmail(): Promise<void> {
   }
   const propria = login === props.usuarioAtual;
   const senhaAtual = senhaAtualEditada.value;
-  await executar({ acao: 'email', usuario: login, email, ...(propria ? { senhaAtual } : {}) }, '');
+  await executar(
+    { acao: 'email', usuario: login, email, ...(propria ? { senhaAtual } : {}) },
+    'E-mail trocado.'
+  );
   senhaAtualEditada.value = '';
   if (erro.value) {
     if (propria) campoDaTroca('senhaAtual')?.focus();

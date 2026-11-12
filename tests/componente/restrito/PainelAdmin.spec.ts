@@ -802,6 +802,28 @@ describe('PainelAdmin, e-mail da conta (EM-F1)', () => {
       );
     });
 
+    it('troca concluída: a região de status anuncia "E-mail trocado."', async () => {
+      const { w } = montar();
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w.get('input[name="emailEditado"]').setValue('outro@example.com');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(w.get('p.ar-visualmente-oculto[role="status"]').text()).toBe('E-mail trocado.');
+    });
+
+    it('troca que falha: a região de status não anuncia "E-mail trocado."', async () => {
+      const { w } = montarComFalhaNaAcao('Este e-mail já está em outra conta.');
+      await flushPromises();
+      await abrirTrocaDeEmail(w, 'ana');
+      await w.get('input[name="emailEditado"]').setValue('beto@example.com');
+      await w.get('form.ar-admin__trocar-email').trigger('submit');
+      await flushPromises();
+      expect(w.get('p.ar-visualmente-oculto[role="status"]').text()).not.toContain(
+        'E-mail trocado.'
+      );
+    });
+
     it('e-mail vazio: não envia e diz "E-mail inválido."', async () => {
       const { w, cliente } = montar();
       await flushPromises();

@@ -930,6 +930,116 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
   }
 }
 
+/**
+ * E-mail longo na coluna E-mail (EM-F1, revisão): endereço válido de 72 caracteres (60 letras sem quebra natural,
+ * mais `@example.com`) não pode estourar o painel. A página não rola de lado, o contêiner da tabela não rola por
+ * dentro e as colunas Estado e Ações ficam na janela (a 1280 a tabela é uma tabela; a 360 cada linha vira bloco).
+ * O mesmo endereço aparece na frase "O link também foi para ..." logo depois de criar a conta pelo formulário, então
+ * a página também é medida com esse bloco na tela. Vale na Leitura ampliada, onde a letra é maior. As capturas
+ * (coluna E-mail preenchida, endereço curto e longo, os dois temas) saem do mesmo teste.
+ */
+const LOGIN_EMAIL_CURTO = 'curto-sintetico';
+const LOGIN_EMAIL_LONGO = 'longo-sintetico';
+const EMAIL_LONGO = `${'a'.repeat(60)}@example.com`;
+
+async function medidasDoPainelComEmail(page: Page): Promise<{
+  larguraDocumento: number;
+  larguraJanela: number;
+  rolagemInternaDaTabela: number;
+  celulas: { rotulo: string; esquerda: number; direita: number }[];
+  textoDoEmail: string;
+}> {
+  return page.evaluate((login) => {
+    const linha = Array.from(document.querySelectorAll('tbody tr')).find(
+      (tr) => tr.querySelector('th')?.textContent?.trim() === login
+    )!;
+    const celula = (rotulo: string): HTMLElement =>
+      linha.querySelector<HTMLElement>(`td[data-rotulo="${rotulo}"]`)!;
+    const tabela = document.querySelector<HTMLElement>('.ar-tabela-rolavel')!;
+    return {
+      larguraDocumento: document.documentElement.scrollWidth,
+      larguraJanela: document.documentElement.clientWidth,
+      rolagemInternaDaTabela: tabela.scrollWidth - tabela.clientWidth,
+      celulas: ['E-mail', 'Estado', 'Ações'].map((rotulo) => {
+        const caixa = celula(rotulo).getBoundingClientRect();
+        return { rotulo, esquerda: caixa.left, direita: caixa.right };
+      }),
+      textoDoEmail: celula('E-mail').textContent?.trim() ?? ''
+    };
+  }, LOGIN_EMAIL_LONGO);
+}
+
+for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
+  for (const ampliada of [false, true]) {
+    const modo = ampliada ? 'Leitura ampliada' : 'modo normal';
+    test(`painel: e-mail de 72 caracteres a ${largura} px (${modo}) não estoura a página nem empurra Estado e Ações`, async ({
+      page
+    }, testInfo) => {
+      test.setTimeout(120_000);
+      expect(EMAIL_LONGO.length, 'o endereço de teste tem 72 caracteres').toBe(72);
+      if (ampliada) {
+        await page.addInitScript(
+          (chave) => localStorage.setItem(chave, 'true'),
+          CHAVE_MODO_ADAPTADO
+        );
+      }
+      await page.setViewportSize({ width: largura, height: altura });
+      await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+      const curta = await criarContaPelaApi(page, LOGIN_EMAIL_CURTO);
+      expect(curta.status, 'criar a conta de e-mail curto pela API').toBe(200);
+      await page.reload();
+      await esperarApp(page);
+      if (ampliada) {
+        await expect(page.locator('html')).toHaveAttribute('data-modo-adaptado', 'on');
+      }
+
+      await criarPeloFormulario(page, LOGIN_EMAIL_LONGO, EMAIL_LONGO);
+      await expect(
+        page.getByText(`O link também foi para ${EMAIL_LONGO}.`, { exact: true })
+      ).toBeVisible();
+      const comBloco = await medidasDoPainelComEmail(page);
+      expect
+        .soft(comBloco.larguraDocumento, 'rolagem lateral da página com o bloco do link na tela')
+        .toBeLessThanOrEqual(comBloco.larguraJanela);
+
+      await page.getByRole('button', { name: 'Já enviei' }).click();
+      await expect(page.locator('.ar-admin__convite')).toHaveCount(0);
+      await page.locator('.ar-tabela-rolavel').scrollIntoViewIfNeeded();
+      const medidas = await medidasDoPainelComEmail(page);
+      const contexto = `a ${largura} px (${modo})`;
+      expect(medidas.textoDoEmail, 'a célula mostra o endereço inteiro').toBe(EMAIL_LONGO);
+      expect
+        .soft(medidas.larguraDocumento, `rolagem lateral da página ${contexto}`)
+        .toBeLessThanOrEqual(medidas.larguraJanela);
+      expect
+        .soft(medidas.rolagemInternaDaTabela, `rolagem lateral dentro da tabela ${contexto}`)
+        .toBeLessThanOrEqual(0);
+      for (const celula of medidas.celulas) {
+        expect
+          .soft(celula.esquerda, `${celula.rotulo}: borda esquerda ${contexto}`)
+          .toBeGreaterThanOrEqual(0);
+        expect
+          .soft(celula.direita, `${celula.rotulo}: borda direita ${contexto}`)
+          .toBeLessThanOrEqual(medidas.larguraJanela);
+      }
+
+      const sufixo = ampliada ? 'ampliada' : 'normal';
+      for (const login of [LOGIN_EMAIL_CURTO, LOGIN_EMAIL_LONGO]) {
+        await page
+          .locator('tbody tr', { hasText: login })
+          .evaluate((el) => el.scrollIntoView({ block: 'start' }));
+        for (const tema of TEMAS) {
+          await page.emulateMedia({ colorScheme: tema });
+          await capturar(
+            page,
+            `em-f1b-${testInfo.project.name}-painel-${login}-${sufixo}-${largura}-${tema}`
+          );
+        }
+      }
+    });
+  }
+}
+
 /** Senha nova do "Esqueci a senha": 15 caracteres ou mais, sintética. */
 const SENHA_DO_ESQUECI = 'senha-nova-do-esqueci-321';
 

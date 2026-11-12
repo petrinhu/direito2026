@@ -521,14 +521,20 @@ function d26_correio_enviar(array $envio, string $priv, ?array $transporte = nul
 
 /**
  * Conferência do SMTP da caixa, sem enviar nada: lê o login e a senha, abre (com TLS, em produção), faz EHLO e AUTH
- * e sai. Nunca manda MAIL FROM. Não lança: devolve o resultado para o CLI imprimir.
+ * e sai. Sem `$envelope`, nunca manda MAIL FROM. Com `$envelope`, depois do AUTH confere o envelope (MAIL FROM e
+ * RCPT TO, os dois com o remetente) e sai com QUIT; nunca manda DATA, então nenhuma mensagem existe, e o QUIT
+ * descarta a transação (sem RSET). O texto que o servidor devolve nunca é guardado: só o código e a etapa.
+ * Não lança: devolve o resultado para o CLI imprimir.
  *
  * @param array{endereco: string, tls: bool} $alvo
- * @return array{tls: bool, auth: bool, codigo: ?int, etapa: ?string, mecanismos: list<string>}
+ * @return array{tls: bool, auth: bool, remetente: bool, destinatario: bool, codigo: ?int, etapa: ?string, mecanismos: list<string>}
  */
-function d26_correio_conferir(string $priv, array $alvo): array
+function d26_correio_conferir(string $priv, array $alvo, bool $envelope = false): array
 {
-    $resultado = ['tls' => false, 'auth' => false, 'codigo' => null, 'etapa' => null, 'mecanismos' => []];
+    $resultado = [
+        'tls' => false, 'auth' => false, 'remetente' => false, 'destinatario' => false,
+        'codigo' => null, 'etapa' => null, 'mecanismos' => [],
+    ];
     $sessao = null;
     try {
         $usuario = d26_correio_usuario($priv);
@@ -540,6 +546,14 @@ function d26_correio_conferir(string $priv, array $alvo): array
         $resultado['mecanismos'] = d26_correio_ehlo($sessao);
         d26_correio_autenticar($sessao, $resultado['mecanismos'], $login, $segredo);
         $resultado['auth'] = true;
+        if ($envelope) {
+            $sessao->escrever('MAIL FROM:<' . D26_REMETENTE . ">\r\n", 'remetente');
+            $sessao->esperar('remetente', 250);
+            $resultado['remetente'] = true;
+            $sessao->escrever('RCPT TO:<' . D26_REMETENTE . ">\r\n", 'destinatario');
+            $sessao->esperar('destinatario', 250);
+            $resultado['destinatario'] = true;
+        }
         $sessao->sair();
     } catch (D26EnvioFalhou $e) {
         $resultado['etapa'] = $e->etapa;

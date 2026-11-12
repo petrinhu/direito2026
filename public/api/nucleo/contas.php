@@ -514,6 +514,7 @@ function d26_conta_publica(array $c, ?int $agora = null): array
         'conviteExpiraEm' => is_array($c['convite'] ?? null) ? $c['convite']['expiraEm'] : null,
         // O e-mail sai só para quem administra (esta função só é chamada pela listagem do admin).
         'email' => isset($c['email']) ? (string) $c['email'] : null,
+        'envioFalhouEm' => is_string($c['envioFalhouEm'] ?? null) ? $c['envioFalhouEm'] : null,
         // Uso simultâneo (BL-B1): só o contador e o instante do bloqueio. Nunca os marcadores de aparelho e de queda.
         'usoSimultaneo' => (int) ($c['usoSimultaneo'] ?? 0),
         'bloqueadaEm' => is_array($c['bloqueada'] ?? null) ? (int) $c['bloqueada']['em'] : null,

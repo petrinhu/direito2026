@@ -26,8 +26,9 @@ teste('usuarios.php: admin lista sem NUNCA expor o hash', function (): void {
     $lista = $r->json()['usuarios'];
     igual(2, count($lista));
     // 'convite' e 'conviteExpiraEm' entram por 7.1.2 do plano (CV-B1): estado e prazo do convite, nunca o hash.
+    // 'envioFalhouEm' entra pela EM-F1-ENVIOFALHOU (o texto gravado da falha de envio do e-mail, ou null).
     // 'usoSimultaneo' e 'bloqueadaEm' entram pelo BL-B1 (só o contador e o instante do bloqueio, nunca os marcadores).
-    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos', 'convite', 'conviteExpiraEm', 'email', 'usoSimultaneo', 'bloqueadaEm'], array_keys($lista[0]), 'campos exatos');
+    igual(['usuario', 'admin', 'ativo', 'deveTrocarSenha', 'criadoEm', 'ultimoLogin', 'aparelhos', 'convite', 'conviteExpiraEm', 'email', 'envioFalhouEm', 'usoSimultaneo', 'bloqueadaEm'], array_keys($lista[0]), 'campos exatos');
 });
 
 teste('admin cria usuário sem senha: nasce com troca obrigatória, sem admin, e a API não devolve senha (R9)', function (): void {

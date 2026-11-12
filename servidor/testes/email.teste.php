@@ -25,6 +25,17 @@ function emailContaCrua(Ambiente $a, string $login): ?array
     return null;
 }
 
+/** A conta como o painel a recebe: a listagem do administrador (campos públicos), ou null se não está nela. @return array<string, mixed>|null */
+function emailListada(Ambiente $a, string $login): ?array
+{
+    foreach ($a->entrar()->get('/api/usuarios.php')->json()['usuarios'] as $c) {
+        if ($c['usuario'] === $login) {
+            return $c;
+        }
+    }
+    return null;
+}
+
 /** E-mail gravado da conta, ou null se a conta não tem o campo. */
 function emailDeConta(Ambiente $a, string $login): ?string
 {
@@ -458,6 +469,7 @@ teste('e-mail: E21t criar com o SMTP recusando (550): conta criada, convite vál
         $c = emailContaCrua($a, 'ana');
         igual('ana@example.com', $c['email'] ?? null, 'a conta foi criada com o e-mail');
         verdadeiro(is_string($c['envioFalhouEm'] ?? null), 'envioFalhouEm gravado');
+        igual($c['envioFalhouEm'], emailListada($a, 'ana')['envioFalhouEm'] ?? null, 'a listagem do administrador devolve a marca da falha (EM-F1-ENVIOFALHOU)');
         igual(hash('sha256', $token), $c['convite']['hash'] ?? null, 'o convite continua válido');
         $log = (string) @file_get_contents($a->priv . '/erros.log');
         contem('envio etapa=destinatario codigo=550', $log, 'a etapa e o código no erros.log');
@@ -528,9 +540,12 @@ teste('e-mail: E24t envio bem-sucedido depois de uma falha apaga envioFalhouEm',
     // A falha anterior é a precondição gravada na conta; a falha em si é coberta pelo E21t.
     emailB3Com([], function (Ambiente $a): void {
         emailB3Semear($a, 'ana', 'ana@example.com', ['envioFalhouEm' => '2026-11-08T10:00:00+00:00']);
+        igual('2026-11-08T10:00:00+00:00', emailListada($a, 'ana')['envioFalhouEm'] ?? null, 'antes do envio, a listagem devolve a marca gravada (EM-F1-ENVIOFALHOU)');
         $r = $a->entrar()->post('/api/usuarios.php', ['acao' => 'redefinir', 'usuario' => 'ana']);
         igual('enviado', $r->json()['email'] ?? null, 'o envio deu certo');
         verdadeiro(!array_key_exists('envioFalhouEm', emailContaCrua($a, 'ana') ?? []), 'envioFalhouEm foi apagado');
+        $lista = emailListada($a, 'ana') ?? [];
+        verdadeiro(array_key_exists('envioFalhouEm', $lista) && $lista['envioFalhouEm'] === null, 'depois do envio que deu certo, a listagem devolve envioFalhouEm null (EM-F1-ENVIOFALHOU)');
     });
 });
 
@@ -936,6 +951,7 @@ teste('e-mail: EM-B4 falha do E2 grava envioFalhouEm na conta e só etapa e cód
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
         igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
         verdadeiro(is_string(emailContaCrua($a, 'ana')['envioFalhouEm'] ?? null), 'envioFalhouEm gravado');
+        igual(emailContaCrua($a, 'ana')['envioFalhouEm'], emailListada($a, 'ana')['envioFalhouEm'] ?? null, 'a listagem do administrador mostra a marca da falha do Esqueci a senha (EM-F1-ENVIOFALHOU)');
         $log = (string) @file_get_contents($a->priv . '/erros.log');
         contem('envio etapa=destinatario codigo=550', $log, 'etapa e código');
         naoContem('ana@example.com', $log, 'o endereço não vai ao log');

@@ -367,6 +367,16 @@ onBeforeUnmount(() => {
   transition: none;
 }
 
+/* A faixa é escura nos dois temas. O anel dos controles dela vinha da cor primária
+   (azul-marinho no claro: 1,34:1 contra a faixa). Troca só a COR, pela do par da
+   superfície escura, a mesma do menu lateral; espessura e deslocamento seguem os do site. */
+.barra-topo__botao-gaveta:focus-visible,
+.barra-topo :deep(.alternador-tema:focus-visible),
+.barra-topo :deep(.botao-modo-adaptado:focus-visible),
+.barra-topo :deep(.campo-busca__input:focus-visible) {
+  outline-color: var(--cor-sidebar-texto, #faf9f5);
+}
+
 @media print {
   .barra-topo {
     display: none;

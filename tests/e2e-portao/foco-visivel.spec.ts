@@ -21,13 +21,20 @@ const PISO_ESPESSURA_PX = 2;
 const LIMITE_DE_TABS = 600;
 const CHAVE_MODO_ADAPTADO = 'caderno-direito:v1:modo-adaptado';
 
-/** As regras de contorno que usam a cor de texto da superfície escura (N1 e N3 da OS). */
+/** As regras de contorno afirmadas na Parte B: as de superfície escura (N1, N3) e as da A11Y-FOCO-2. */
 const REGRAS_DA_SUPERFICIE_ESCURA: Record<string, string> = {
   'rodape-oferecimento': '.rodape__link-oferecimento',
   'menu-lateral':
     '.menu-curriculo__botao, .menu-curriculo a, .menu-curriculo__sair, .menu-curriculo__toggle',
   'selo-home': '.selo-home',
-  trilha: '.trilha-navegacao a'
+  trilha: '.trilha-navegacao a',
+  // A11Y-FOCO-2: a faixa da barra do topo é escura nos dois temas e a lista de cadeiras tinha
+  // o contorno sem valor de reserva (inexistente fora da Leitura ampliada).
+  'barra-alternador-tema': 'button.alternador-tema',
+  'barra-modo-adaptado': 'button.botao-modo-adaptado',
+  'barra-busca': 'input#campo-busca-input',
+  'barra-gaveta': 'button.barra-topo__botao-gaveta',
+  'lista-de-cadeiras': 'a.linha'
 };
 
 /**
@@ -332,39 +339,79 @@ function linha(
     .join(' | ');
 }
 
-for (const modo of MODOS) {
-  for (const largura of LARGURAS) {
-    test(`A: o link de oferecimento do rodapé mostra o contorno de foco (${modo}, ${largura} px)`, async ({
-      page
-    }) => {
-      await prepararModo(page, modo);
-      await entrarNoApp(page, CONTA_ADMIN, '/');
-      await abrirPagina(page, PAGINAS[0]!, largura);
-      await ligarModalidadeDeTeclado(page);
+/** Alvos da Parte A: o primeiro elemento que casa com o seletor, alcançado por Tab. */
+interface AlvoA {
+  readonly nome: string;
+  readonly seletor: string;
+  readonly larguras: readonly number[];
+}
 
-      let chegou = false;
-      for (let i = 0; i < LIMITE_DE_TABS && !chegou; i += 1) {
-        await page.keyboard.press('Tab');
-        chegou = await page.evaluate(
-          () => document.activeElement?.matches('.rodape__link-oferecimento') ?? false
+const ALVOS_A: readonly AlvoA[] = [
+  {
+    nome: 'link de oferecimento do rodapé',
+    seletor: '.rodape__link-oferecimento',
+    larguras: LARGURAS
+  },
+  {
+    nome: 'alternador de tema da barra do topo',
+    seletor: 'button.alternador-tema',
+    larguras: LARGURAS
+  },
+  {
+    nome: 'botão do modo de leitura da barra do topo',
+    seletor: 'button.botao-modo-adaptado',
+    larguras: LARGURAS
+  },
+  {
+    nome: 'campo de busca da barra do topo',
+    seletor: 'input#campo-busca-input',
+    larguras: LARGURAS
+  },
+  // A gaveta do menu só existe na barra a 360 px.
+  {
+    nome: 'botão da gaveta da barra do topo',
+    seletor: 'button.barra-topo__botao-gaveta',
+    larguras: [360]
+  },
+  { nome: 'primeira linha da lista de cadeiras', seletor: 'a.linha', larguras: LARGURAS }
+];
+
+for (const alvo of ALVOS_A) {
+  for (const modo of MODOS) {
+    for (const largura of alvo.larguras) {
+      test(`A: ${alvo.nome} mostra o contorno de foco (${modo}, ${largura} px)`, async ({
+        page
+      }) => {
+        await prepararModo(page, modo);
+        await entrarNoApp(page, CONTA_ADMIN, '/');
+        await abrirPagina(page, PAGINAS[0]!, largura);
+        await ligarModalidadeDeTeclado(page);
+
+        let chegou = false;
+        for (let i = 0; i < LIMITE_DE_TABS && !chegou; i += 1) {
+          await page.keyboard.press('Tab');
+          chegou = await page.evaluate(
+            (seletor) => document.activeElement?.matches(seletor) ?? false,
+            alvo.seletor
+          );
+        }
+        expect(chegou, `Tab chegou a ${alvo.nome}`).toBe(true);
+
+        const m = await page.evaluate(medirFocoAtual, REGRAS_DA_SUPERFICIE_ESCURA);
+        const itens = reprovacoes(m, false);
+        console.log(linha('inicial', modo, largura, m, itens));
+        expect(m.focusVisible, '(a) casa com :focus-visible').toBe(true);
+        expect(m.estilo, '(b) contorno sólido').toBe('solid');
+        expect(m.espessura, '(b) espessura do contorno em px').toBeGreaterThanOrEqual(
+          PISO_ESPESSURA_PX
         );
-      }
-      expect(chegou, 'Tab chegou ao link de oferecimento').toBe(true);
-
-      const m = await page.evaluate(medirFocoAtual, REGRAS_DA_SUPERFICIE_ESCURA);
-      const itens = reprovacoes(m, false);
-      console.log(linha('inicial', modo, largura, m, itens));
-      expect(m.focusVisible, '(a) casa com :focus-visible').toBe(true);
-      expect(m.estilo, '(b) contorno sólido').toBe('solid');
-      expect(m.espessura, '(b) espessura do contorno em px').toBeGreaterThanOrEqual(
-        PISO_ESPESSURA_PX
-      );
-      expect(
-        m.razao,
-        `(c) contraste do contorno ${m.corAnel} contra o fundo real ${m.corFundo}`
-      ).toBeGreaterThanOrEqual(PISO_CONTRASTE);
-      expect(m.cabe, `(d) a caixa do anel cabe (cortada por: ${m.cortadoPor})`).toBe(true);
-    });
+        expect(
+          m.razao,
+          `(c) contraste do contorno ${m.corAnel} contra o fundo real ${m.corFundo}`
+        ).toBeGreaterThanOrEqual(PISO_CONTRASTE);
+        expect(m.cabe, `(d) a caixa do anel cabe (cortada por: ${m.cortadoPor})`).toBe(true);
+      });
+    }
   }
 }
 

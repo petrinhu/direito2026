@@ -111,7 +111,7 @@ const hrefRestrita = computed(() => `/p/${props.periodo.id}/${props.cadeira.id}`
 }
 
 .linha:focus-visible {
-  outline: var(--foco-espessura) solid var(--cor-foco);
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
   outline-offset: calc(var(--foco-deslocamento) * -1);
 }
 

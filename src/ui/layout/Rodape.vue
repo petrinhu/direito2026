@@ -135,9 +135,12 @@ function apagar(): void {
   color: var(--cor-sidebar-texto, #faf9f5);
 }
 
+/* O anel fica FORA da pílula escura, sobre o fundo da página, que no tema claro é
+   creme: o anel do site (--cor-foco) contrasta com ele nos dois temas e no modo
+   adaptado. A cor do texto da superfície escura sumia no claro (creme sobre creme). */
 .rodape__link-oferecimento:focus-visible {
-  outline: 2px solid var(--cor-sidebar-texto, #faf9f5);
-  outline-offset: 2px;
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
+  outline-offset: var(--foco-deslocamento, 2px);
 }
 
 .rodape__logo {

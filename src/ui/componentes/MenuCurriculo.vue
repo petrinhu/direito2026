@@ -797,6 +797,14 @@ provide(ESTADO_MENU, {
   background: var(--cor-sidebar-selo-bg, #1a3a5c);
 }
 
+/* "Em breve" dentro de uma linha (grupo direto sem publicação, como "Perspectiva racial e o
+   não-dito"): no modo adaptado, com a largura da linha, o selo não cabe na mesma linha do
+   rótulo e passa da borda da gaveta (QA b69c4298, 60 px). flex-wrap deixa o selo descer para a
+   linha de baixo, dentro da gaveta. Só no modo adaptado: nos outros modos não há estouro. */
+:root[data-modo-adaptado='on'] .menu-curriculo__linha > .estado-em-breve {
+  flex-wrap: wrap;
+}
+
 @media (max-width: 880px) {
   /* Gaveta estreita (LayoutBase.vue): nunca rolagem horizontal, mesmo no
      nível 5 com título de bloco longo. */

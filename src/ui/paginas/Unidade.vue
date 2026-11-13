@@ -3,9 +3,12 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { CHAVE_CURRICULO, CHAVE_REPOSITORIO } from '@/app/chaves';
 import { criarStoreProgresso } from '@/app/stores/progresso';
+import { embaralharRodada } from '@/app/quiz/motor';
+import { deveReabrirRodada } from '@/app/quiz/reabrir';
+import { indiceOriginalDaEscolha, respostasParaExibir } from '@/app/quiz/respostasPersistidas';
 import { CARREGADORES_DISPOSITIVOS } from '@/app/carregamento/carregadoresDispositivos';
 import type { ChaveAba } from '@/core/curriculo/tipos';
-import type { ConteudoUnidade } from '@/core/unidade/tipos';
+import type { ConteudoUnidade, IndiceAlternativa } from '@/core/unidade/tipos';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
 import AbasUnidade from '../componentes/AbasUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
@@ -57,6 +60,48 @@ const dispositivos = ref<IndiceDispositivos | undefined>();
 const regiaoConteudoRef = ref<HTMLElement | undefined>();
 
 /**
+ * AV3-K4: a rodada como a MotorQuiz a monta (mesma semente efetiva, `semente ?? 1`).
+ * Converte as respostas guardadas pela posição ORIGINAL para a posição exibida.
+ */
+const perguntasDaRodada = computed(() => {
+  const quiz = conteudo.value?.quiz;
+  if (!quiz) return [];
+  return embaralharRodada(quiz, storeProgresso.value.registro.value.quizSemente ?? 1).perguntas;
+});
+
+const respostasSalvasNaTela = computed(() =>
+  respostasParaExibir(
+    perguntasDaRodada.value,
+    storeProgresso.value.registro.value.quizRespostasOriginais ?? {}
+  )
+);
+
+function idsDoQuiz(): number[] {
+  return (conteudo.value?.quiz ?? []).map((pergunta) => pergunta.id);
+}
+
+function registrarRespostaDoQuiz(idPergunta: number, indiceExibido: IndiceAlternativa): void {
+  const original = indiceOriginalDaEscolha(perguntasDaRodada.value, idPergunta, indiceExibido);
+  if (original === undefined) return;
+  storeProgresso.value.atualizar({
+    quizRespostasOriginais: {
+      ...storeProgresso.value.registro.value.quizRespostasOriginais,
+      [idPergunta]: original
+    },
+    quizIdsDaRodada: idsDoQuiz()
+  });
+}
+
+/** AV3-K4: quiz finalizado que ganhou pergunta nova volta a ficar em andamento, com as respostas antigas. */
+function reabrirSeCresceu(): void {
+  const quiz = conteudo.value?.quiz;
+  if (!quiz) return;
+  if (deveReabrirRodada(storeProgresso.value.registro.value, quiz.map((p) => p.id))) {
+    storeProgresso.value.atualizar({ quizFinalizado: false });
+  }
+}
+
+/**
  * O roteador rola até a âncora da URL ANTES de o conteúdo existir (ele chega
  * por import dinâmico), e o link "Ver o tema no Resumo" caía no topo. Depois
  * de montar o conteúdo, rola até o bloco; o cabeçalho fixo é coberto pelo
@@ -75,6 +120,7 @@ async function carregar(): Promise<void> {
   carregando.value = true;
   try {
     conteudo.value = await referencia.carregar();
+    reabrirSeCresceu();
   } finally {
     carregando.value = false;
   }
@@ -177,23 +223,18 @@ const contagemBlocos = computed(() =>
             v-else-if="abaDoPainel === 'quiz' && conteudo.quiz"
             :perguntas="conteudo.quiz"
             :semente="storeProgresso.registro.value.quizSemente"
-            :respostas-salvas="storeProgresso.registro.value.quizRespostas ?? {}"
+            :respostas-salvas="respostasSalvasNaTela"
             :finalizada="storeProgresso.registro.value.quizFinalizado ?? false"
             @semente-gerada="(semente) => storeProgresso.atualizar({ quizSemente: semente })"
-            @responder="
-              (idPergunta, indice) =>
-                storeProgresso.atualizar({
-                  quizRespostas: {
-                    ...storeProgresso.registro.value.quizRespostas,
-                    [idPergunta]: indice
-                  }
-                })
+            @responder="(idPergunta, indice) => registrarRespostaDoQuiz(idPergunta, indice)"
+            @finalizar="
+              storeProgresso.atualizar({ quizFinalizado: true, quizIdsDaRodada: idsDoQuiz() })
             "
-            @finalizar="storeProgresso.atualizar({ quizFinalizado: true })"
             @reiniciar="
               storeProgresso.atualizar({
                 quizSemente: undefined,
-                quizRespostas: {},
+                quizRespostasOriginais: {},
+                quizIdsDaRodada: undefined,
                 quizFinalizado: false
               })
             "

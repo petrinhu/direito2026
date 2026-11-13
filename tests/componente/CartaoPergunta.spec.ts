@@ -12,7 +12,8 @@ function pergunta(): PerguntaEmbaralhada {
     explicacaoHtml: 'porque sim',
     fonteExtra: false,
     alternativasHtml: ['a', 'b', 'c', 'd'],
-    indiceCorreto: 2
+    indiceCorreto: 2,
+    ordemOriginal: [0, 1, 2, 3]
   };
 }
 

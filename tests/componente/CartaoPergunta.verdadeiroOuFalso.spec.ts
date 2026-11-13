@@ -146,7 +146,8 @@ describe('CartaoPergunta, nada muda nas perguntas de quatro e cinco alternativas
     explicacaoHtml: 'x',
     fonteExtra: false,
     alternativasHtml: ['a', 'b', 'c', 'd'],
-    indiceCorreto: 1
+    indiceCorreto: 1,
+    ordemOriginal: [0, 1, 2, 3]
   };
 
   it('sem selo, sem modificador de tipo, sem letras', () => {

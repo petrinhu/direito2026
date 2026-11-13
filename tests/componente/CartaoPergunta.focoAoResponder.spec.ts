@@ -18,7 +18,8 @@ const pergunta: PerguntaEmbaralhada = {
   explicacaoHtml: 'porque sim',
   fonteExtra: false,
   alternativasHtml: ['a', 'b', 'c', 'd'],
-  indiceCorreto: 1
+  indiceCorreto: 1,
+  ordemOriginal: [0, 1, 2, 3]
 };
 
 let montado: VueWrapper | undefined;

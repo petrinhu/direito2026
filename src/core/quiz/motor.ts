@@ -59,6 +59,7 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
         tipo: 'verdadeiro-ou-falso' as const,
         alternativasHtml: ALTERNATIVAS_VERDADEIRO_OU_FALSO,
         indiceCorreto: (pergunta.correta ? 0 : 1) as IndiceAlternativa,
+        ordemOriginal: [0, 1],
         ...marcas
       };
     }
@@ -72,7 +73,7 @@ export function embaralharRodada(perguntas: readonly PerguntaQuiz[], semente: nu
       (i) => pergunta.alternativasHtml[i]
     ) as unknown as AlternativasQuiz;
     const indiceCorreto = ordem.indexOf(pergunta.correta) as IndiceAlternativa;
-    return { ...comum, alternativasHtml, indiceCorreto, ...marcas };
+    return { ...comum, alternativasHtml, indiceCorreto, ordemOriginal: ordem, ...marcas };
   });
 
   return {

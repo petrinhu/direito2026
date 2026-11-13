@@ -16,7 +16,8 @@ const pergunta: PerguntaEmbaralhada = {
   explicacaoHtml: 'Porque sim.',
   fonteExtra: false,
   alternativasHtml: ['um', 'dois', 'tres', 'quatro'],
-  indiceCorreto: 0
+  indiceCorreto: 0,
+  ordemOriginal: [0, 1, 2, 3]
 };
 
 describe('CartaoPergunta: letras opcionais (A a D) para a área restrita', () => {

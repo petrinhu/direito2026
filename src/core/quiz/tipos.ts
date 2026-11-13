@@ -26,6 +26,12 @@ export interface PerguntaEmbaralhada {
   /** Verdadeiro ou falso: sempre as duas alternativas fixas, nessa ordem. */
   readonly alternativasHtml: AlternativasQuiz | AlternativasVerdadeiroOuFalso;
   readonly indiceCorreto: IndiceAlternativa;
+  /**
+   * Para cada alternativa mostrada, a posição dela no conteúdo (antes de embaralhar).
+   * É o que permite guardar a resposta pela posição original, e não pela ordem da
+   * semente (AV3-K4). Verdadeiro ou falso: sempre [0, 1].
+   */
+  readonly ordemOriginal: readonly IndiceAlternativa[];
   /** Só presente (e só 'verdadeiro-ou-falso') nas perguntas de verdadeiro ou falso. */
   readonly tipo?: 'verdadeiro-ou-falso';
   readonly gabaritoDoCaderno?: true;

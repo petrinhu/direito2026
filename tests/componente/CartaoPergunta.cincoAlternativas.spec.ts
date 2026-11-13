@@ -13,6 +13,7 @@ function perguntaDeCinco(extra: Partial<PerguntaEmbaralhada> = {}): PerguntaEmba
     fonteExtra: false,
     alternativasHtml: ['um', 'dois', 'tres', 'quatro', 'cinco'],
     indiceCorreto: 4,
+    ordemOriginal: [0, 1, 2, 3, 4],
     ...extra
   };
 }

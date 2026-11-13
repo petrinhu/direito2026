@@ -26,10 +26,16 @@ function embaralhadaDe(pergunta: PerguntaQuiz): PerguntaEmbaralhada {
       ...comum,
       tipo: 'verdadeiro-ou-falso',
       alternativasHtml: ALTERNATIVAS_VERDADEIRO_OU_FALSO,
-      indiceCorreto: pergunta.correta ? 0 : 1
+      indiceCorreto: pergunta.correta ? 0 : 1,
+      ordemOriginal: [0, 1]
     };
   }
-  return { ...comum, alternativasHtml: pergunta.alternativasHtml, indiceCorreto: pergunta.correta };
+  return {
+    ...comum,
+    alternativasHtml: pergunta.alternativasHtml,
+    indiceCorreto: pergunta.correta,
+    ordemOriginal: pergunta.alternativasHtml.map((_, i) => i) as PerguntaEmbaralhada['ordemOriginal']
+  };
 }
 
 /** Textos que o cartão mostra: enunciado, explicação e alternativas (se houver). */
@@ -65,7 +71,8 @@ function perguntaComCitacaoEmTudo(): PerguntaEmbaralhada {
       `Só o dano, sem conduta.`,
       `Nenhuma das anteriores.`
     ],
-    indiceCorreto: 1
+    indiceCorreto: 1,
+    ordemOriginal: [0, 1, 2, 3]
   };
 }
 

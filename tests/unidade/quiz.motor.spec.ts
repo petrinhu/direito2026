@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { embaralharRodada, corrigirResposta, calcularPontuacao } from '@/core/quiz/motor';
-import type { IndiceAlternativa, PerguntaMultiplaEscolha } from '@/core/unidade/tipos';
+import type { IndiceAlternativa, PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
 
 function perguntasDeTeste(): readonly PerguntaMultiplaEscolha[] {
   return [
@@ -198,6 +198,39 @@ describe('perguntas com cinco alternativas (Sociologia Jurídica)', () => {
     expect(rodada.perguntas.map((p) => p.alternativasHtml.join(''))).toEqual(
       ORDEM_ALTERNATIVAS_SEMENTE_42
     );
+  });
+});
+
+describe('embaralharRodada: ordemOriginal (AV3-K4)', () => {
+  it('diz de que posição do conteúdo veio cada alternativa embaralhada', () => {
+    const rodada = embaralharRodada(perguntasDeTeste(), 42);
+    for (const original of perguntasDeTeste()) {
+      const embaralhada = rodada.perguntas.find((p) => p.id === original.id)!;
+      expect(embaralhada.ordemOriginal).toBeDefined();
+      expect(embaralhada.ordemOriginal.map((o) => original.alternativasHtml[o])).toEqual([
+        ...embaralhada.alternativasHtml
+      ]);
+    }
+  });
+
+  it('verdadeiro ou falso sempre tem ordemOriginal [0, 1], e a pergunta sintética ainda preserva as outras', () => {
+    const comVf: readonly PerguntaQuiz[] = [
+      ...perguntasDeTeste(),
+      {
+        id: 9,
+        categoria: 'teoria',
+        enunciadoHtml: 'Afirmação',
+        explicacaoHtml: 'porque sim',
+        fonteExtra: false,
+        tipo: 'verdadeiro-ou-falso',
+        correta: false
+      } as PerguntaQuiz
+    ];
+    const rodada = embaralharRodada(comVf, 42);
+    const vf = rodada.perguntas.find((p) => p.id === 9)!;
+    expect(vf.ordemOriginal).toEqual([0, 1]);
+    const mc = rodada.perguntas.find((p) => p.id === 1)!;
+    expect(mc.ordemOriginal).toHaveLength(4);
   });
 });
 

@@ -129,8 +129,8 @@ describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
   });
 });
 
-describe('AV3-K4: a decisão do corte fica tomada na leitura', () => {
-  it('Introdução antes do corte: zera na leitura, e marcar um bloco não traz a resposta de volta', () => {
+describe('AV3-K4: quiz legado de Introdução zera na leitura', () => {
+  it('Introdução legada: zera na leitura, e marcar um bloco não traz a resposta de volta', () => {
     const chave = 'p1/intr-direito/u3-material-norma-interpretacao';
     const antes: RegistroProgressoUnidade = {
       versao: 1,

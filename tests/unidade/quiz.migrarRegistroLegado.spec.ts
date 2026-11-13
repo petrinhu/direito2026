@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { migrarRegistroLegado, type FontesMigracao } from '@/app/quiz/migrarRegistroLegado';
-import { CORTES_QUIZ_CRESCEU } from '@/app/quiz/cortesQuizCresceu';
 import { FORMAS_CONGELADAS } from '@/app/quiz/formasCongeladas';
 import { embaralharRodada, ordemDaRodada } from '@/core/quiz/motor';
 import type { ChaveUnidade, RegistroProgressoUnidade } from '@/core/progresso/tipos';
@@ -12,6 +11,7 @@ import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moder
 
 const CHAVE_INTRO = 'p1/intr-direito/u3-material-norma-interpretacao';
 const CHAVE_ECA = 'p1/sociologia-juridica/u3-eca-digital';
+const CHAVE_ARTIGOS = 'p1/sociologia-juridica/u3-artigos-infancia-digital';
 const CHAVE_SEM_CORTE = 'p1/teste/u1';
 
 /** Forma sintética com V/F no meio: a V/F não gasta sorteio, e a tradução tem de saber disso. */
@@ -25,7 +25,7 @@ const FORMA_TESTE: FormaPergunta[] = [
 
 const FONTES_TESTE: FontesMigracao = {
   formas: { [CHAVE_SEM_CORTE]: FORMA_TESTE },
-  cortes: {}
+  zerarLegado: []
 };
 
 function legado(extra: Partial<RegistroProgressoUnidade> = {}): RegistroProgressoUnidade {
@@ -111,7 +111,7 @@ describe('migrarRegistroLegado: tradução pela forma congelada', () => {
     const casos: Array<{ chave: ChaveUnidade; quiz: readonly PerguntaQuiz[] }> = [
       { chave: 'p1/intr-direito/u3-livro-teoria-pura', quiz: quizTeoriaPura },
       { chave: 'p1/filosofia-juridica/u3-moderna-contemporanea', quiz: quizFilosofia },
-      { chave: 'p1/sociologia-juridica/u3-artigos-infancia-digital', quiz: quizArtigos }
+      { chave: CHAVE_ARTIGOS, quiz: quizArtigos }
     ];
     for (const { chave, quiz } of casos) {
       const rodada = embaralharRodada(quiz, semente);
@@ -131,55 +131,58 @@ describe('migrarRegistroLegado: tradução pela forma congelada', () => {
   });
 
   it('a chave nova decide a forma: Sociologia u3 (endereço antigo) usa a forma de Artigos, de 40', () => {
-    const forma = FORMAS_CONGELADAS['p1/sociologia-juridica/u3-artigos-infancia-digital'];
+    const forma = FORMAS_CONGELADAS[CHAVE_ARTIGOS];
     expect(forma).toHaveLength(40);
     const saida = migrarRegistroLegado(
       legado({ quizSemente: 9, quizRespostas: { [forma![0]!.id]: 0 as IndiceAlternativa } }),
-      'p1/sociologia-juridica/u3-artigos-infancia-digital'
+      CHAVE_ARTIGOS
     );
     expect(saida.quizIdsDaRodada).toHaveLength(40);
   });
 });
 
-describe('migrarRegistroLegado: corte de Introdução u3 e ECA (instantes de publicado, AV3-K4)', () => {
-  const corteIntro = Date.parse(CORTES_QUIZ_CRESCEU[CHAVE_INTRO]!);
-  const corteEca = Date.parse(CORTES_QUIZ_CRESCEU[CHAVE_ECA]!);
-
-  function comData(chave: ChaveUnidade, atualizadoEm: string): RegistroProgressoUnidade {
-    return migrarRegistroLegado(legado({ atualizadoEm, quizSemente: 2026, quizRespostas: {} }), chave);
-  }
-
-  it('o corte de Introdução é 16:07:25 de 13/11 em -03:00, e o de ECA é 09:16:34 no mesmo dia', () => {
-    expect(corteIntro).toBe(Date.parse('2026-11-13T19:07:25.000Z'));
-    expect(corteEca).toBe(Date.parse('2026-11-13T12:16:34.000Z'));
+describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção c, decisão do líder de 13/11/2026)', () => {
+  it('Introdução: legado respondido antes do corte e tocado depois zera (o resíduo que o corte por data não fechava)', () => {
+    const saida = migrarRegistroLegado(
+      legado({
+        atualizadoEm: '2026-11-13T20:00:00.000Z',
+        quizSemente: 2026,
+        quizRespostas: { 1: 0 as IndiceAlternativa }
+      }),
+      CHAVE_INTRO
+    );
+    expect(saida.quizSemente).toBeUndefined();
+    expect(saida.quizRespostas).toBeUndefined();
+    expect(saida.quizRespostasOriginais).toEqual({});
   });
 
-  it('Introdução: 1 ms antes do corte zera; no instante exato traduz; 1 ms depois traduz', () => {
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:07:24.999Z').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:07:25.000Z').quizSemente).toBe(2026);
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:07:25.001Z').quizSemente).toBe(2026);
+  it('ECA: legado zera mesmo com atualizadoEm depois do crescimento', () => {
+    const saida = migrarRegistroLegado(
+      legado({
+        atualizadoEm: '2026-11-14T10:00:00.000Z',
+        quizSemente: 2026,
+        quizRespostas: { 1: 0 as IndiceAlternativa }
+      }),
+      CHAVE_ECA
+    );
+    expect(saida.quizSemente).toBeUndefined();
+    expect(saida.quizRespostasOriginais).toEqual({});
   });
 
-  it('um minuto antes do corte zera e um minuto depois traduz, nos dois quizzes', () => {
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:06:25.000Z').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:08:25.000Z').quizSemente).toBe(2026);
-    expect(comData(CHAVE_ECA, '2026-11-13T12:15:34.000Z').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_ECA, '2026-11-13T12:17:34.000Z').quizSemente).toBe(2026);
+  it('Introdução e ECA: legado zera também com data inválida ou anterior ao crescimento', () => {
+    for (const chave of [CHAVE_INTRO, CHAVE_ECA]) {
+      expect(migrarRegistroLegado(legado({ atualizadoEm: 'nao-e-data', quizSemente: 2026 }), chave).quizSemente).toBeUndefined();
+      expect(migrarRegistroLegado(legado({ atualizadoEm: '2026-11-01T00:00:00.000Z', quizSemente: 2026 }), chave).quizSemente).toBeUndefined();
+    }
   });
 
-  it('Introdução: um minuto antes zera e data em -03:00 é comparada pelo instante, não pelo texto', () => {
-    expect(comData(CHAVE_INTRO, '2026-11-13T19:06:25.000Z').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_INTRO, '2026-11-13T16:07:24.999-03:00').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_INTRO, '2026-11-13T16:07:25.000-03:00').quizSemente).toBe(2026);
-  });
-
-  it('ECA: 1 ms antes do corte zera; no instante exato traduz', () => {
-    expect(comData(CHAVE_ECA, '2026-11-13T12:16:33.999Z').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_ECA, '2026-11-13T12:16:34.000Z').quizSemente).toBe(2026);
-  });
-
-  it('data inválida zera (não há como provar que a resposta é posterior ao corte)', () => {
-    expect(comData(CHAVE_INTRO, 'nao-e-uma-data').quizSemente).toBeUndefined();
-    expect(comData(CHAVE_ECA, '').quizSemente).toBeUndefined();
+  it('quiz que não cresceu segue traduzido: Artigos (endereço antigo de Sociologia u3) não zera', () => {
+    const primeiraId = FORMAS_CONGELADAS[CHAVE_ARTIGOS]![0]!.id;
+    const saida = migrarRegistroLegado(
+      legado({ quizSemente: 9, quizRespostas: { [primeiraId]: 0 as IndiceAlternativa } }),
+      CHAVE_ARTIGOS
+    );
+    expect(saida.quizSemente).toBe(9);
+    expect(saida.quizRespostasOriginais?.[primeiraId]).toBeDefined();
   });
 });

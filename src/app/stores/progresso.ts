@@ -34,8 +34,8 @@ function chaveAntiga(chave: ChaveUnidade): ChaveUnidade | undefined {
 }
 
 /**
- * Lê o registro (chave nova, ou antiga de unidade movida) e traduz o quiz legado (AV3-K4)
- * antes de qualquer gravação da sessão: a decisão de zerar depende de atualizadoEm como lido.
+ * Lê o registro (chave nova, ou antiga de unidade movida) e converte o quiz legado (AV3-K4)
+ * antes de qualquer gravação da sessão: traduz, ou zera nos quizzes que cresceram.
  */
 function lerRegistroInicial(
   repositorio: RepositorioProgresso,

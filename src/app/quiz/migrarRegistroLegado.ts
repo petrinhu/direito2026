@@ -2,26 +2,26 @@ import { ordemDaRodada } from '@/core/quiz/motor';
 import type { ChaveUnidade, RegistroProgressoUnidade } from '@/core/progresso/tipos';
 import type { FormaPergunta } from '@/core/quiz/tipos';
 import type { IndiceAlternativa } from '@/core/unidade/tipos';
-import { CORTES_QUIZ_CRESCEU } from './cortesQuizCresceu';
+import { QUIZZES_QUE_CRESCERAM } from './quizzesQueCresceram';
 import { FORMAS_CONGELADAS } from './formasCongeladas';
 
 export interface FontesMigracao {
   readonly formas: Readonly<Record<ChaveUnidade, readonly FormaPergunta[]>>;
-  readonly cortes: Readonly<Record<ChaveUnidade, string>>;
+  /** Unidades cujo quiz legado zera por inteiro (ver quizzesQueCresceram.ts). */
+  readonly zerarLegado: readonly ChaveUnidade[];
 }
 
 const FONTES_DO_SITE: FontesMigracao = {
   formas: FORMAS_CONGELADAS,
-  cortes: CORTES_QUIZ_CRESCEU
+  zerarLegado: QUIZZES_QUE_CRESCERAM
 };
 
 /**
- * Registro legado (antes da AV3-K4) vira formato novo, uma vez, na leitura. Três saídas:
+ * Registro legado (antes da AV3-K4) vira formato novo, uma vez, na leitura. Saídas:
  * - formato novo ou sem quiz: passa intacto;
- * - não dá para provar que a resposta é posterior ao corte, ou não há forma/semente:
- *   zera o quiz (lidos e aba ficam);
+ * - quiz que cresceu no ar (Introdução u3 material, ECA Digital): zera o quiz, sem olhar a data;
+ * - sem forma congelada ou sem semente: zera o quiz (lidos e aba ficam);
  * - o resto: traduz cada resposta da posição embaralhada para a posição original.
- * A decisão de zerar é tomada aqui, com o registro como foi lido, antes de qualquer gravação.
  */
 export function migrarRegistroLegado(
   registro: RegistroProgressoUnidade,
@@ -32,10 +32,7 @@ export function migrarRegistroLegado(
   const temQuiz = registro.quizSemente !== undefined || registro.quizRespostas !== undefined;
   if (!temQuiz) return registro;
 
-  const corte = fontes.cortes[chave];
-  if (corte !== undefined && !(Date.parse(registro.atualizadoEm) >= Date.parse(corte))) {
-    return semQuiz(registro);
-  }
+  if (fontes.zerarLegado.includes(chave)) return semQuiz(registro);
   const forma = fontes.formas[chave];
   if (forma === undefined || registro.quizSemente === undefined) return semQuiz(registro);
   return traduzir(registro, forma, registro.quizSemente);

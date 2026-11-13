@@ -1,6 +1,13 @@
 import type { AlternativasQuiz, IndiceAlternativa, PerguntaQuiz } from '../unidade/tipos';
 import { ALTERNATIVAS_VERDADEIRO_OU_FALSO } from './alternativasVerdadeiroOuFalso';
-import type { PerguntaEmbaralhada, Pontuacao, PontuacaoCategoria, RodadaQuiz } from './tipos';
+import type {
+  FormaPergunta,
+  OrdemRodada,
+  PerguntaEmbaralhada,
+  Pontuacao,
+  PontuacaoCategoria,
+  RodadaQuiz
+} from './tipos';
 
 /**
  * PRNG determinístico (mulberry32) a partir de uma semente numérica. Nunca
@@ -118,4 +125,29 @@ export function calcularPontuacao(
   );
 
   return { acertos, total: perguntas.length, porCategoria };
+}
+
+/**
+ * Ordem de exibição só pela forma e pela semente (AV3-K4). Repete o sorteio de
+ * embaralharRodada na mesma sequência: perguntas primeiro, depois as alternativas
+ * de cada múltipla escolha, na ordem já embaralhada. Verdadeiro ou falso não gasta
+ * sorteio. Um teste de paridade prova que as duas saem iguais.
+ */
+export function ordemDaRodada(formas: readonly FormaPergunta[], semente: number): OrdemRodada {
+  const aleatorio = criarGerador(semente);
+  const ordemPerguntas = embaralhar(
+    formas.map((_, i) => i),
+    aleatorio
+  );
+  const alternativas = new Map<number, readonly IndiceAlternativa[]>();
+  for (const i of ordemPerguntas) {
+    const forma = formas[i]!;
+    if (forma.tipo === 'vf') {
+      alternativas.set(forma.id, [0, 1]);
+      continue;
+    }
+    const posicoes = Array.from({ length: forma.alternativas }, (_, k) => k as IndiceAlternativa);
+    alternativas.set(forma.id, embaralhar(posicoes, aleatorio));
+  }
+  return { ids: ordemPerguntas.map((i) => formas[i]!.id), alternativas };
 }

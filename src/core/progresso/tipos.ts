@@ -16,6 +16,17 @@ export interface RegistroProgressoUnidade {
   readonly quizRespostas?: Readonly<Record<number, IndiceAlternativa>>;
   readonly quizFinalizado?: boolean;
   /**
+   * AV3-K4: a resposta guardada pela posição ORIGINAL da alternativa no conteúdo, e
+   * não pela ordem embaralhada. Ausente só em registro legado (antes da K4), que é
+   * traduzido na leitura (app/quiz/migrarRegistroLegado.ts).
+   */
+  readonly quizRespostasOriginais?: Readonly<Record<number, IndiceAlternativa>>;
+  /**
+   * AV3-K4: ids da rodada na última gravação (resposta ou finalização). Ausente = não
+   * reabre. Quiz que ganha pergunta nova depois disso reabre (app/quiz/reabrir.ts).
+   */
+  readonly quizIdsDaRodada?: readonly number[];
+  /**
    * Ids de item marcado num checklist interativo do resumo (extra (a) da
    * unidade de Redação Jurídica 1, docs/arquitetura.md): genérico o
    * bastante para qualquer checklist futuro, não só o art. 319 do CPC.

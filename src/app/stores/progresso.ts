@@ -7,6 +7,7 @@ import {
   marcarBlocoLido
 } from '@/core/progresso/calculo';
 import { ENDERECOS_MOVIDOS } from '@/app/curriculo/enderecosMovidos';
+import { migrarRegistroLegado } from '@/app/quiz/migrarRegistroLegado';
 import type {
   ChaveUnidade,
   RegistroProgressoUnidade,
@@ -32,16 +33,20 @@ function chaveAntiga(chave: ChaveUnidade): ChaveUnidade | undefined {
   return Object.entries(ENDERECOS_MOVIDOS).find(([, nova]) => nova === chave)?.[0];
 }
 
+/**
+ * Lê o registro (chave nova, ou antiga de unidade movida) e traduz o quiz legado (AV3-K4)
+ * antes de qualquer gravação da sessão: a decisão de zerar depende de atualizadoEm como lido.
+ */
 function lerRegistroInicial(
   repositorio: RepositorioProgresso,
   chave: ChaveUnidade
 ): RegistroProgressoUnidade {
   const antiga = chaveAntiga(chave);
-  return (
+  const lido =
     repositorio.ler(chave) ??
     (antiga === undefined ? undefined : repositorio.ler(antiga)) ??
-    criarRegistroVazio(new Date().toISOString())
-  );
+    criarRegistroVazio(new Date().toISOString());
+  return migrarRegistroLegado(lido, chave);
 }
 
 export function criarStoreProgresso(

@@ -49,6 +49,17 @@ export interface FormaPergunta {
   readonly alternativas: 2 | 4 | 5;
 }
 
+/**
+ * Ordem de exibição de uma rodada, só pela forma e pela semente (sem texto).
+ * Tem de sair igual ao que embaralharRodada sorteia para o mesmo conteúdo.
+ */
+export interface OrdemRodada {
+  /** Ids das perguntas, na ordem em que a semente as põe. */
+  readonly ids: readonly number[];
+  /** Por id: a posição original de cada alternativa, na ordem exibida. */
+  readonly alternativas: ReadonlyMap<number, readonly IndiceAlternativa[]>;
+}
+
 export interface RodadaQuiz {
   readonly perguntas: readonly PerguntaEmbaralhada[];
   /** Chave: id da pergunta. Valor: índice escolhido na ordem embaralhada. */

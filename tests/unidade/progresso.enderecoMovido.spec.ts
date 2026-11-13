@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { criarStoreProgresso } from '@/app/stores/progresso';
 import type { RegistroProgressoUnidade, RepositorioProgresso } from '@/core/progresso/tipos';
+import { embaralharRodada } from '@/core/quiz/motor';
+import type { IndiceAlternativa, PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
+import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz/index';
 
 /**
  * Progresso de unidade movida (ordem do líder, 25/10/2026: "Levar para o endereço
@@ -49,15 +52,40 @@ describe('progresso de unidade movida', () => {
 });
 
 /**
- * Filosofia AV3 (decisão R1 = A, 13/11/2026): o registro inteiro vai com a unidade,
- * inclusive a semente e as respostas do quiz. A leitura por id de pergunta e por
- * posição na semente só continua válida porque o quiz não muda nesta fatia.
+ * Filosofia AV3 (decisão R1 = A, 13/11/2026) e AV3-K4: o endereço antigo leva o
+ * registro inteiro, e a resposta do quiz é TRADUZIDA na leitura, pela forma congelada
+ * da chave NOVA. Sem a tradução, quiz que cresce troca o texto de toda resposta salva.
  */
 const CHAVE_ANTIGA_FILOSOFIA = 'p1/filosofia-juridica/u3';
 const CHAVE_NOVA_FILOSOFIA = 'p1/filosofia-juridica/u3-moderna-contemporanea';
 
-describe('progresso de unidade movida: Filosofia AV3', () => {
-  it('o registro inteiro (lidos, aba, semente e respostas do quiz) chega intacto à chave nova', () => {
+/** Filosofia com uma 5ª alternativa no fim de cada pergunta e 60 perguntas novas (crescimento). */
+function crescerQuiz(perguntas: readonly PerguntaQuiz[]): PerguntaQuiz[] {
+  const comQuinta = perguntas.map(
+    (p) =>
+      ({
+        ...p,
+        alternativasHtml: [...(p as PerguntaMultiplaEscolha).alternativasHtml, 'Quinta alternativa nova']
+      }) as PerguntaQuiz
+  );
+  const novas = Array.from(
+    { length: 60 },
+    (_, i) =>
+      ({
+        id: 21 + i,
+        categoria: 'filosofia-moderna',
+        enunciadoHtml: `Nova ${21 + i}`,
+        explicacaoHtml: 'x',
+        fonteExtra: false,
+        alternativasHtml: ['a', 'b', 'c', 'd'],
+        correta: 0
+      }) as unknown as PerguntaQuiz
+  );
+  return [...comQuinta, ...novas];
+}
+
+describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
+  it('lidos e aba chegam intactos à chave nova', () => {
     const antigo: RegistroProgressoUnidade = {
       versao: 1,
       atualizadoEm: '2026-11-01T00:00:00.000Z',
@@ -67,8 +95,56 @@ describe('progresso de unidade movida: Filosofia AV3', () => {
       quizRespostas: { 1: 2, 17: 0 },
       quizFinalizado: false
     };
-    const repositorio = repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo });
-    const store = criarStoreProgresso(repositorio, CHAVE_NOVA_FILOSOFIA);
-    expect(store.registro.value).toEqual(antigo);
+    const store = criarStoreProgresso(repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }), CHAVE_NOVA_FILOSOFIA);
+    expect(store.registro.value.blocosLidos).toEqual(['bloco-0', 'bloco-3']);
+    expect(store.registro.value.ultimaAba).toBe('quiz');
+  });
+
+  it('a resposta legada chega traduzida e aponta o mesmo texto que apontava antes do quiz crescer', () => {
+    const semente = 2026;
+    const respostasHoje: Record<number, IndiceAlternativa> = { 1: 2, 4: 0, 9: 3, 12: 1, 17: 0 };
+    const antigo: RegistroProgressoUnidade = {
+      versao: 1,
+      atualizadoEm: '2026-11-01T00:00:00.000Z',
+      blocosLidos: [],
+      ultimaAba: 'quiz',
+      quizSemente: semente,
+      quizRespostas: respostasHoje,
+      quizFinalizado: false
+    };
+    const store = criarStoreProgresso(repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }), CHAVE_NOVA_FILOSOFIA);
+    const traduzidas = store.registro.value.quizRespostasOriginais;
+    expect(traduzidas).toBeDefined();
+    expect(store.registro.value.quizRespostas).toBeUndefined();
+
+    const hoje = embaralharRodada(quizFilosofia, semente);
+    const depois = embaralharRodada(crescerQuiz(quizFilosofia), semente);
+    for (const [idStr, mostrada] of Object.entries(respostasHoje)) {
+      const id = Number(idStr);
+      const textoHoje = hoje.perguntas.find((p) => p.id === id)!.alternativasHtml[mostrada]!;
+      const pergunta = depois.perguntas.find((p) => p.id === id)!;
+      const indiceDepois = pergunta.ordemOriginal.indexOf(traduzidas![id]!);
+      expect(pergunta.alternativasHtml[indiceDepois]).toBe(textoHoje);
+    }
+  });
+});
+
+describe('AV3-K4: a decisão do corte fica tomada na leitura', () => {
+  it('Introdução antes do corte: zera na leitura, e marcar um bloco não traz a resposta de volta', () => {
+    const chave = 'p1/intr-direito/u3-material-norma-interpretacao';
+    const antes: RegistroProgressoUnidade = {
+      versao: 1,
+      atualizadoEm: '2026-11-13T10:00:00.000-03:00',
+      blocosLidos: [],
+      ultimaAba: 'quiz',
+      quizSemente: 2026,
+      quizRespostas: { 1: 0 as IndiceAlternativa },
+      quizFinalizado: true
+    };
+    const store = criarStoreProgresso(repositorioCom({ [chave]: antes }), chave);
+    expect(store.registro.value.quizSemente).toBeUndefined();
+    store.marcarLido('bloco-0');
+    expect(store.registro.value.quizSemente).toBeUndefined();
+    expect(store.registro.value.quizRespostas).toBeUndefined();
   });
 });

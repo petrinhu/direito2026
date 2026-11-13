@@ -1,9 +1,17 @@
 import { test, expect, type Page } from './apoio/sessaoDoEstudo';
 import { calcularContraste } from '../../src/core/design/contraste';
-import { quiz as quizIntr } from '../../src/conteudo/p1/intr-direito/u1/quiz';
+import { quiz as quizIntrU1 } from '../../src/conteudo/p1/intr-direito/u1/quiz';
+import { quiz as quizIntrRegras } from '../../src/conteudo/p1/intr-direito/u3-livro-regras-primarias-secundarias/quiz';
+import { quiz as quizIntrTeoria } from '../../src/conteudo/p1/intr-direito/u3-livro-teoria-pura/quiz';
+import { quiz as quizIntrTextura } from '../../src/conteudo/p1/intr-direito/u3-livro-textura-aberta/quiz';
+import { quiz as quizIntrDanos } from '../../src/conteudo/p1/intr-direito/u3-material-danos-morais/quiz';
+import { quiz as quizIntrNorma } from '../../src/conteudo/p1/intr-direito/u3-material-norma-interpretacao/quiz';
 import { quiz as quizRedacao } from '../../src/conteudo/p1/redacao-juridica-1/u1/quiz';
-import { quiz as quizSociologia } from '../../src/conteudo/p1/sociologia-juridica/u1/quiz';
-import { quiz as quizFilosofia } from '../../src/conteudo/p1/filosofia-juridica/u1/quiz';
+import { quiz as quizSociologiaU1 } from '../../src/conteudo/p1/sociologia-juridica/u1/quiz';
+import { quiz as quizSociologiaArtigos } from '../../src/conteudo/p1/sociologia-juridica/u3-artigos-infancia-digital/quiz';
+import { quiz as quizSociologiaEca } from '../../src/conteudo/p1/sociologia-juridica/u3-eca-digital/quiz';
+import { quiz as quizFilosofiaU1 } from '../../src/conteudo/p1/filosofia-juridica/u1/quiz';
+import { quiz as quizFilosofiaU3 } from '../../src/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz';
 import type { PerguntaQuiz } from '../../src/core/unidade/tipos';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 import { prepararEstadoInicial, type EstadoInicial } from './apoio/estadoInicial';
@@ -145,18 +153,30 @@ async function varrer(page: Page, total: number): Promise<LeituraDoCartao[]> {
  * selo removido do template deixava o teste verde (nenhum cartão com selo,
  * nada a medir). Toda unidade com quiz tem de estar aqui; uma unidade nova
  * sem entrada reprova em vez de passar sem conferir.
+ *
+ * Chave por UNIDADE ("periodo/cadeira/unidade"), não por cadeira: cada quiz tem
+ * as suas próprias perguntas do professor. Por cadeira, a 3a unidade de
+ * Filosofia era comparada com as 20 da 1a (AV3-F0, revisão reprovou).
  */
-const QUIZ_POR_CADEIRA: Record<string, readonly PerguntaQuiz[]> = {
-  'intr-direito': quizIntr,
-  'redacao-juridica-1': quizRedacao,
-  'sociologia-juridica': quizSociologia,
-  'filosofia-juridica': quizFilosofia
+const QUIZ_POR_UNIDADE: Record<string, readonly PerguntaQuiz[]> = {
+  'p1/intr-direito/u1': quizIntrU1,
+  'p1/intr-direito/u3-livro-regras-primarias-secundarias': quizIntrRegras,
+  'p1/intr-direito/u3-livro-teoria-pura': quizIntrTeoria,
+  'p1/intr-direito/u3-livro-textura-aberta': quizIntrTextura,
+  'p1/intr-direito/u3-material-danos-morais': quizIntrDanos,
+  'p1/intr-direito/u3-material-norma-interpretacao': quizIntrNorma,
+  'p1/redacao-juridica-1/u1': quizRedacao,
+  'p1/sociologia-juridica/u1': quizSociologiaU1,
+  'p1/sociologia-juridica/u3-artigos-infancia-digital': quizSociologiaArtigos,
+  'p1/sociologia-juridica/u3-eca-digital': quizSociologiaEca,
+  'p1/filosofia-juridica/u1': quizFilosofiaU1,
+  'p1/filosofia-juridica/u3-moderna-contemporanea': quizFilosofiaU3
 };
 
 function perguntasDoProfessor(caminho: string): readonly PerguntaQuiz[] {
-  const cadeira = /^\/p\/[^/]+\/([^/]+)\//.exec(caminho)?.[1] ?? '';
-  const quiz = QUIZ_POR_CADEIRA[cadeira];
-  if (!quiz) throw new Error(`quiz da cadeira "${cadeira}" ausente em QUIZ_POR_CADEIRA`);
+  const unidade = /^\/p\/([^/]+\/[^/]+\/[^/]+)\/quiz$/.exec(caminho)?.[1] ?? '';
+  const quiz = QUIZ_POR_UNIDADE[unidade];
+  if (!quiz) throw new Error(`quiz da unidade "${unidade}" ausente em QUIZ_POR_UNIDADE`);
   return quiz.filter((p) => p.origem === 'professor');
 }
 
@@ -175,8 +195,8 @@ for (const rota of rotasDeQuiz) {
 
         const comSelo = leituras.filter((l) => l.selo !== null);
         const doProfessor = perguntasDoProfessor(rota.caminho);
-        if (rota.caminho.includes('/filosofia-juridica/')) {
-          // Decisão do líder: 20 do simulado do professor, ids 1 a 20.
+        if (rota.caminho === '/p/p1/filosofia-juridica/u1/quiz') {
+          // Decisão do líder: 20 do simulado do professor, ids 1 a 20 (só na U1).
           expect(doProfessor.map((p) => p.id).sort((x, y) => x - y)).toEqual(
             Array.from({ length: 20 }, (_, i) => i + 1)
           );

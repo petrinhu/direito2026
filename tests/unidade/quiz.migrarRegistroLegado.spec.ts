@@ -160,6 +160,13 @@ describe('migrarRegistroLegado: corte de Introdução u3 e ECA (instantes de pub
     expect(comData(CHAVE_INTRO, '2026-11-13T19:07:25.001Z').quizSemente).toBe(2026);
   });
 
+  it('um minuto antes do corte zera e um minuto depois traduz, nos dois quizzes', () => {
+    expect(comData(CHAVE_INTRO, '2026-11-13T19:06:25.000Z').quizSemente).toBeUndefined();
+    expect(comData(CHAVE_INTRO, '2026-11-13T19:08:25.000Z').quizSemente).toBe(2026);
+    expect(comData(CHAVE_ECA, '2026-11-13T12:15:34.000Z').quizSemente).toBeUndefined();
+    expect(comData(CHAVE_ECA, '2026-11-13T12:17:34.000Z').quizSemente).toBe(2026);
+  });
+
   it('Introdução: um minuto antes zera e data em -03:00 é comparada pelo instante, não pelo texto', () => {
     expect(comData(CHAVE_INTRO, '2026-11-13T19:06:25.000Z').quizSemente).toBeUndefined();
     expect(comData(CHAVE_INTRO, '2026-11-13T16:07:24.999-03:00').quizSemente).toBeUndefined();

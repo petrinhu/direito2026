@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { migrarRegistroLegado, type FontesMigracao } from '@/app/quiz/migrarRegistroLegado';
 import { FORMAS_CONGELADAS } from '@/app/quiz/formasCongeladas';
+import { QUIZZES_QUE_CRESCERAM } from '@/app/quiz/quizzesQueCresceram';
+import { CARREGADORES } from '@/app/carregamento/carregadores';
 import { embaralharRodada, ordemDaRodada } from '@/core/quiz/motor';
 import type { ChaveUnidade, RegistroProgressoUnidade } from '@/core/progresso/tipos';
 import type { FormaPergunta } from '@/core/quiz/tipos';
@@ -193,5 +195,38 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
     );
     expect(saida.quizSemente).toBe(9);
     expect(saida.quizRespostasOriginais?.[primeiraId]).toBeDefined();
+  });
+});
+
+describe('migrarRegistroLegado: a lista de quizzes que cresceram é fixa, e os outros traduzem sem perda (AV3-K4)', () => {
+  it('a lista é exatamente Introdução u3 material e ECA Digital', () => {
+    expect([...QUIZZES_QUE_CRESCERAM].sort()).toEqual(
+      [
+        'p1/intr-direito/u3-material-norma-interpretacao',
+        'p1/sociologia-juridica/u3-eca-digital'
+      ].sort()
+    );
+  });
+
+  it('legado de Filosofia u1 (nunca cresceu, tem V/F) traduz com o conteúdo real, sem zerar', async () => {
+    const chave = 'p1/filosofia-juridica/u1';
+    const conteudo = await CARREGADORES[chave]!();
+    const quiz = conteudo.quiz!;
+    const semente = 314;
+    const rodada = embaralharRodada(quiz, semente);
+    const respostas: Record<number, IndiceAlternativa> = {};
+    for (const pergunta of rodada.perguntas) {
+      respostas[pergunta.id] = (pergunta.id %
+        pergunta.alternativasHtml.length) as IndiceAlternativa;
+    }
+    const saida = migrarRegistroLegado(
+      legado({ quizSemente: semente, quizRespostas: respostas }),
+      chave
+    );
+    expect(saida.quizSemente).toBe(semente);
+    for (const pergunta of rodada.perguntas) {
+      const mostrada = respostas[pergunta.id]!;
+      expect(saida.quizRespostasOriginais?.[pergunta.id]).toBe(pergunta.ordemOriginal[mostrada]);
+    }
   });
 });

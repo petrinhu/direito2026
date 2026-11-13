@@ -805,6 +805,35 @@ provide(ESTADO_MENU, {
   flex-wrap: wrap;
 }
 
+/* Modo adaptado (decisão do líder, 13/11/2026): recuo menor entre os níveis e palavras
+   longas quebradas com hífen, como num livro. A largura da gaveta e o tamanho da letra não
+   mudam; claro e escuro ficam como estão. O hífen depende do lang do documento (index.html
+   tem lang="pt-BR"): sem ele, hyphens: auto não tem dicionário. Os recuos somam, por isso
+   o nível 5 aninhado (lista de abas dentro de um tópico) também reduz. */
+:root[data-modo-adaptado='on'] .menu-curriculo {
+  hyphens: auto;
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-2 {
+  margin-left: 8px;
+  padding-left: 4px;
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-3 {
+  margin-left: 8px;
+  padding-left: 4px;
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-4 {
+  margin-left: calc(var(--menu-toggle) - 32px);
+  padding-left: 0;
+}
+
+:root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-5 {
+  margin-left: 2px;
+  padding-left: 0;
+}
+
 @media (max-width: 880px) {
   /* Gaveta estreita (LayoutBase.vue): nunca rolagem horizontal, mesmo no
      nível 5 com título de bloco longo. */

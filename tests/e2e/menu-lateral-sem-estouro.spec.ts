@@ -7,18 +7,16 @@ import {
 } from './apoio/estadoInicial';
 
 /**
- * Estouro do item "Perspectiva racial e o não-dito" no menu lateral (QA
- * b69c4298, AV3-F0c). Estado do QA: 1º período > Filosofia Jurídica > AV3
- * abertos. O item é um "em breve" dentro de uma linha flex: sem min-width:0,
- * o item não encolhe abaixo do próprio conteúdo e passa da borda da gaveta em
- * 60 px no modo adaptado. A gaveta tem overflow-y: auto, o que torna o
+ * Estouro do menu lateral (QA b69c4298, AV3-F0c). No modo adaptado, o selo
+ * "em breve" de "Perspectiva racial e o não-dito" e outros rótulos longos
+ * passam da borda da gaveta. A gaveta tem overflow-y: auto, o que torna o
  * overflow-x auto: o documento mede 0 px e o estouro fica dentro da gaveta.
  *
- * Mede o retângulo de cada texto do item contra a borda direita da gaveta.
- * Não cobre outros itens do menu (ver a INBOX do TODO.md).
+ * Duas medidas: (a) o item do QA, com a AV3 de Filosofia aberta; (b) a
+ * varredura completa, com TODOS os menus abertos, que pega os gêmeos (L-17).
+ * Em ambas, mede-se o retângulo de cada texto visível contra a borda direita
+ * da gaveta e a rolagem horizontal própria da gaveta.
  */
-// Home: a rota de uma unidade abre também os tópicos dela, e o QA mediu só com
-// período, Filosofia e AV3 abertos.
 const ROTA = '/';
 const LARGURAS = [360, 1280] as const;
 const ESTADOS: ReadonlyArray<{ rotulo: string; estado: EstadoInicial }> = [
@@ -27,6 +25,12 @@ const ESTADOS: ReadonlyArray<{ rotulo: string; estado: EstadoInicial }> = [
   { rotulo: 'modo adaptado, tema claro', estado: { tema: 'claro', modoAdaptado: true } },
   { rotulo: 'modo adaptado, tema escuro', estado: { tema: 'escuro', modoAdaptado: true } }
 ];
+
+interface Medida {
+  rolagemHorizontalDaGaveta: number;
+  textosForaDaBorda: string[];
+  textosMedidos: number;
+}
 
 /** Expande o botão só se ele estiver fechado; espera o estado aberto. */
 async function abrirSeFechado(botao: Locator): Promise<void> {
@@ -48,31 +52,59 @@ async function abrirAv3DeFilosofia(page: Page, largura: number): Promise<void> {
   );
 }
 
-/** Retângulos de cada texto do item "Perspectiva racial" e a borda direita da gaveta. */
-async function medirItemPerspectiva(page: Page): Promise<{ borda: number; textos: string[] }> {
-  return page.evaluate(() => {
+/**
+ * Abre todo botão de expandir visível, até não sobrar nenhum fechado. Limite
+ * de voltas para um laço que não termina nunca passar em silêncio.
+ */
+async function abrirTodoOMenu(page: Page, largura: number): Promise<void> {
+  if (largura <= 880) {
+    await page.locator('.barra-topo__botao-gaveta').click();
+  }
+  const menu = page.locator('nav[aria-label="Currículo"]');
+  for (let volta = 0; volta < 200; volta++) {
+    const fechado = menu.locator('button[aria-expanded="false"]:visible').first();
+    if ((await fechado.count()) === 0) return;
+    await fechado.click();
+  }
+  throw new Error('o menu não terminou de abrir em 200 cliques (laço sem fim?)');
+}
+
+/** Mede cada texto visível da gaveta contra a borda direita dela. */
+async function medirGaveta(page: Page, seletorRaiz: string | null): Promise<Medida> {
+  return page.evaluate((seletor) => {
     const gaveta = document.getElementById('gaveta-do-curriculo');
     if (!gaveta) throw new Error('gaveta do currículo não encontrada');
-    const borda = gaveta.getBoundingClientRect().right;
-    const item = Array.from(gaveta.querySelectorAll<HTMLElement>('.estado-em-breve')).find((el) =>
-      (el.textContent ?? '').includes('Perspectiva racial')
-    );
-    if (!item) throw new Error('item "Perspectiva racial" não encontrado na gaveta');
-    const textos: string[] = [];
-    const percurso = document.createTreeWalker(item, window.NodeFilter.SHOW_TEXT);
+    const raiz = seletor === null ? gaveta : gaveta.querySelector<HTMLElement>(seletor);
+    if (!raiz) throw new Error(`raiz da medida não encontrada: ${seletor}`);
+    const bordaDireita = gaveta.getBoundingClientRect().right;
+    const textosForaDaBorda: string[] = [];
+    let textosMedidos = 0;
+    const percurso = document.createTreeWalker(raiz, window.NodeFilter.SHOW_TEXT);
     for (let no = percurso.nextNode(); no; no = percurso.nextNode()) {
       const texto = (no.textContent ?? '').trim();
       if (texto === '') continue;
       const faixa = document.createRange();
       faixa.selectNodeContents(no);
       for (const retangulo of Array.from(faixa.getClientRects())) {
-        if (retangulo.width > 0 && retangulo.right > borda + 0.5) {
-          textos.push(`"${texto.slice(0, 40)}" passa ${(retangulo.right - borda).toFixed(1)} px`);
+        if (retangulo.width <= 0) continue;
+        textosMedidos++;
+        if (retangulo.right > bordaDireita + 0.5) {
+          const excesso = (retangulo.right - bordaDireita).toFixed(1);
+          const pai = no.parentElement;
+          const nivel = pai?.closest('ul[class*="menu-curriculo__nivel"]')?.className ?? '';
+          const hifen = pai ? getComputedStyle(pai).hyphens : '';
+          textosForaDaBorda.push(
+            `"${texto.slice(0, 120)}" passa ${excesso} px da borda [nivel=${nivel}; hyphens=${hifen}; lang=${document.documentElement.lang}]`
+          );
         }
       }
     }
-    return { borda, textos };
-  });
+    return {
+      rolagemHorizontalDaGaveta: gaveta.scrollWidth - gaveta.clientWidth,
+      textosForaDaBorda,
+      textosMedidos
+    };
+  }, seletorRaiz);
 }
 
 for (const largura of LARGURAS) {
@@ -86,9 +118,31 @@ for (const largura of LARGURAS) {
       await abrirAv3DeFilosofia(page, largura);
       await esperarLayoutAssentar(page);
 
-      const medida = await medirItemPerspectiva(page);
+      const medida = await medirGaveta(page, '.estado-em-breve');
+      expect(medida.textosMedidos, 'o laço de medida precisa ter visto texto').toBeGreaterThan(0);
+      expect(
+        medida.textosForaDaBorda.filter((t) => t.includes('em breve')),
+        'selo "em breve" que passa da borda da gaveta'
+      ).toEqual([]);
+    });
 
-      expect(medida.textos, 'textos do item que passam da borda da gaveta').toEqual([]);
+    test(`menu lateral, todos os menus abertos: nenhum texto estoura a gaveta, ${largura}px, ${rotulo}`, async ({
+      page
+    }) => {
+      await page.setViewportSize({ width: largura, height: 900 });
+      await prepararEstadoInicial(page, estado);
+      await page.goto(ROTA);
+      await abrirTodoOMenu(page, largura);
+      await esperarLayoutAssentar(page);
+
+      const medida = await medirGaveta(page, null);
+
+      expect(medida.textosMedidos, 'o laço de medida precisa ter visto texto').toBeGreaterThan(0);
+      expect(medida.textosForaDaBorda, 'textos que passam da borda da gaveta').toEqual([]);
+      expect(
+        medida.rolagemHorizontalDaGaveta,
+        'rolagem horizontal própria da gaveta do currículo (px)'
+      ).toBe(0);
     });
   }
 }

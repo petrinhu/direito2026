@@ -32,6 +32,17 @@ export interface PerguntaEmbaralhada {
   readonly origem?: OrigemPergunta;
 }
 
+/**
+ * Forma de uma pergunta do quiz no ar, sem texto: id, tipo e número de alternativas.
+ * É o que uma resposta salva indexa, então a forma congelada (AV3-K4) guarda esta lista.
+ */
+export interface FormaPergunta {
+  readonly id: number;
+  readonly tipo: 'mc' | 'vf';
+  /** Verdadeiro ou falso tem 2 alternativas fixas e não gasta sorteio. */
+  readonly alternativas: 2 | 4 | 5;
+}
+
 export interface RodadaQuiz {
   readonly perguntas: readonly PerguntaEmbaralhada[];
   /** Chave: id da pergunta. Valor: índice escolhido na ordem embaralhada. */

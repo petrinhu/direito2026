@@ -287,50 +287,66 @@ describe('preparar não toca a pasta de originais', () => {
 });
 
 describe('preparar: recusas de borda', () => {
-  it('recusa saída que já tem conteúdo (não mistura acervo de chave diferente)', async () => {
-    const origem = originaisBase();
-    const saida = novaSaida();
-    mkdirSync(saida, { mode: 0o700 });
-    writeFileSync(join(saida, 'resto.txt'), 'x', { mode: 0o600 });
-    const r = await rodarFerramenta(['preparar', '--originais', origem, '--saida', saida]);
-    expect(r.codigo).toBe(1);
-    expect(r.stderr).toContain('não está vazia');
-  });
+  it(
+    'recusa saída que já tem conteúdo (não mistura acervo de chave diferente)',
+    async () => {
+      const origem = originaisBase();
+      const saida = novaSaida();
+      mkdirSync(saida, { mode: 0o700 });
+      writeFileSync(join(saida, 'resto.txt'), 'x', { mode: 0o600 });
+      const r = await rodarFerramenta(['preparar', '--originais', origem, '--saida', saida]);
+      expect(r.codigo).toBe(1);
+      expect(r.stderr).toContain('não está vazia');
+    },
+    LONGO
+  );
 
-  it('recusa originais dentro de um repositório git (L-28: nada de dado no repositório)', async () => {
-    const raiz = criarDirTeste();
-    mkdirSync(join(raiz, 'repo', '.git'), { recursive: true });
-    const origem = join(raiz, 'repo', 'originais');
-    mkdirSync(origem);
-    escreverArquivos(origem, { 'a.png': pngSintetico() });
-    const r = await rodarFerramenta([
-      'preparar',
-      '--originais',
-      origem,
-      '--saida',
-      join(raiz, 'saida')
-    ]);
-    expect(r.codigo).toBe(1);
-    expect(r.stderr).toContain('repositório');
-  });
+  it(
+    'recusa originais dentro de um repositório git (L-28: nada de dado no repositório)',
+    async () => {
+      const raiz = criarDirTeste();
+      mkdirSync(join(raiz, 'repo', '.git'), { recursive: true });
+      const origem = join(raiz, 'repo', 'originais');
+      mkdirSync(origem);
+      escreverArquivos(origem, { 'a.png': pngSintetico() });
+      const r = await rodarFerramenta([
+        'preparar',
+        '--originais',
+        origem,
+        '--saida',
+        join(raiz, 'saida')
+      ]);
+      expect(r.codigo).toBe(1);
+      expect(r.stderr).toContain('repositório');
+    },
+    LONGO
+  );
 
-  it('recusa original que não é imagem e não cria saída nenhuma', async () => {
-    const origem = originaisBase();
-    writeFileSync(join(origem, 'documento.pdf'), '%PDF-1.4 sintetico', { mode: 0o600 });
-    const saida = novaSaida();
-    const r = await rodarFerramenta(['preparar', '--originais', origem, '--saida', saida]);
-    expect(r.codigo).toBe(1);
-    expect(r.stderr).toContain('não é imagem');
-    expect(r.stderr).not.toContain('documento');
-    expect(() => statSync(saida)).toThrow();
-  });
+  it(
+    'recusa original que não é imagem e não cria saída nenhuma',
+    async () => {
+      const origem = originaisBase();
+      writeFileSync(join(origem, 'documento.pdf'), '%PDF-1.4 sintetico', { mode: 0o600 });
+      const saida = novaSaida();
+      const r = await rodarFerramenta(['preparar', '--originais', origem, '--saida', saida]);
+      expect(r.codigo).toBe(1);
+      expect(r.stderr).toContain('não é imagem');
+      expect(r.stderr).not.toContain('documento');
+      expect(() => statSync(saida)).toThrow();
+    },
+    LONGO
+  );
 
-  it('conferir não aceita --senha: a senha saiu da ferramenta (uso incorreto, código 2)', async () => {
-    const saida = novaSaida();
-    await prepararOk(originaisBase(), saida);
-    const r = await rodarFerramenta(['conferir', '--saida', saida, '--senha', 'qualquer']);
-    expect(r.codigo).toBe(2);
-  });
+  it(
+    'conferir não aceita --senha: a senha saiu da ferramenta (uso incorreto, código 2)',
+    async () => {
+      const saida = novaSaida();
+      await prepararOk(originaisBase(), saida);
+      const r = await rodarFerramenta(['conferir', '--saida', saida, '--senha', 'qualquer']);
+      expect(r.codigo).toBe(2);
+    },
+    LONGO
+  );
 });
 
 describe('conferir reprova o que não está limpo ou não confere com o índice', () => {

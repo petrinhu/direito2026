@@ -58,7 +58,7 @@ export async function capturarReferencias(raiz: string = RAIZ_DO_CONTEUDO): Prom
   const dispositivos = carregadoresDispositivosDoDisco(raiz);
 
   const unidades: Record<string, ResumoConteudo> = {};
-  const alternativas: Record<string, ImpressoesDaPergunta> = {};
+  const alternativas: Record<string, Readonly<Record<string, ImpressoesDaPergunta>>> = {};
   for (const chave of chavesDasUnidadesPublicadas(curriculo)) {
     const carregar = carregadores[chave];
     if (!carregar) throw new Error(`unidade publicada sem carregador: ${chave}`);

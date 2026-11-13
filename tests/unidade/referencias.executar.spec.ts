@@ -29,13 +29,15 @@ function porta() {
 }
 
 const ANTERIOR = {
-  alternativas: { 'p1/x/u1': { '1': ['a', 'b', 'c', 'd'] } }
+  alternativas: { 'p1/x/u1': { '1': { alternativas: ['a', 'b', 'c', 'd'], correta: 0 } } }
 } as unknown as Partial<Referencias>;
 
 describe('executarAtualizacao: a recusa é da decisão, não do script', () => {
   it('reordenação: não grava, emite RECUSADO e devolve 1', async () => {
     const { p, gravados, erros } = porta();
-    const atual = referencia({ 'p1/x/u1': { '1': ['b', 'a', 'c', 'd'] } });
+    const atual = referencia({
+      'p1/x/u1': { '1': { alternativas: ['b', 'a', 'c', 'd'], correta: 0 } }
+    });
     const codigo = await executarAtualizacao(ANTERIOR, atual, p);
     expect(codigo).toBe(1);
     expect(gravados).toHaveLength(0);
@@ -51,14 +53,41 @@ describe('executarAtualizacao: a recusa é da decisão, não do script', () => {
 
   it('alternativa nova no fim: grava e devolve 0', async () => {
     const { p, gravados } = porta();
-    const atual = referencia({ 'p1/x/u1': { '1': ['a', 'b', 'c', 'd', 'e'] } });
+    const atual = referencia({
+      'p1/x/u1': { '1': { alternativas: ['a', 'b', 'c', 'd', 'e'], correta: 0 } }
+    });
     expect(await executarAtualizacao(ANTERIOR, atual, p)).toBe(0);
     expect(gravados).toHaveLength(1);
   });
 
   it('primeira geração (sem referência anterior): grava e devolve 0', async () => {
     const { p, gravados } = porta();
-    expect(await executarAtualizacao({}, referencia({ 'p1/x/u1': { '1': ['a'] } }), p)).toBe(0);
+    expect(
+      await executarAtualizacao(
+        {},
+        referencia({ 'p1/x/u1': { '1': { alternativas: ['a'], correta: 0 } } }),
+        p
+      )
+    ).toBe(0);
     expect(gravados).toHaveLength(1);
+  });
+  it('edição de texto no lugar: grava e lista o aviso para quem publica', async () => {
+    const { p, gravados, linhas } = porta();
+    const atual = referencia({
+      'p1/x/u1': { '1': { alternativas: ['a', 'b', 'X', 'd'], correta: 0 } }
+    });
+    expect(await executarAtualizacao(ANTERIOR, atual, p)).toBe(0);
+    expect(gravados).toHaveLength(1);
+    expect(linhas.some((l) => l.startsWith('AVISO') && l.includes('editada no lugar'))).toBe(true);
+  });
+
+  it('troca de gabarito: não grava e devolve 1', async () => {
+    const { p, gravados, erros } = porta();
+    const atual = referencia({
+      'p1/x/u1': { '1': { alternativas: ['a', 'b', 'c', 'd'], correta: 3 } }
+    });
+    expect(await executarAtualizacao(ANTERIOR, atual, p)).toBe(1);
+    expect(gravados).toHaveLength(0);
+    expect(erros.some((l) => l.includes('gabarito trocado'))).toBe(true);
   });
 });

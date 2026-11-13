@@ -9,8 +9,9 @@ export interface PortaAtualizacao {
 }
 
 /**
- * Decide e executa a atualização. Reordenação, remoção ou alternativa fora do fim reprovam:
- * nada é gravado e o código de saída é 1. O resto grava, e lista as aceitas.
+ * Decide e executa a atualização. Reordenação, remoção, alternativa fora do fim ou gabarito
+ * trocado reprovam: nada é gravado e o código de saída é 1. O resto grava. Edição de texto no
+ * lugar grava e aparece como AVISO, para quem publica conferir.
  */
 export async function executarAtualizacao(
   anterior: Partial<Referencias>,
@@ -27,6 +28,8 @@ export async function executarAtualizacao(
   }
   await porta.gravar(atual);
   porta.emitir('atualizar-referencias: tests/caracterizacao/ regenerado a partir do estado atual.');
+  for (const linha of alternativas.avisos)
+    porta.emitir(`AVISO (conferir antes de publicar): ${linha}`);
   for (const linha of alternativas.aceitas) porta.emitir(`alternativas (aceita): ${linha}`);
   return 0;
 }

@@ -17,7 +17,8 @@ function referenciaVazia(): Referencias {
     carregadores: { chavesCarregadores: [], chavesCarregadoresDispositivos: [], unidades: {} },
     curriculo: [],
     rotas: { rotasDoCurriculo: [], rotasDeUnidades: [], rotasDeAbaAusente: [] },
-    indiceBusca: { documentosEncontrados: 0, documentos: [] }
+    indiceBusca: { documentosEncontrados: 0, documentos: [] },
+    alternativas: {}
   };
 }
 

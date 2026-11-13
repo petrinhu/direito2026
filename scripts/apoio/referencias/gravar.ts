@@ -17,7 +17,8 @@ const ARQUIVOS = {
   carregadores: 'carregadores.esperado.json',
   curriculo: 'curriculo.esperado.json',
   rotas: 'rotas.esperado.json',
-  indiceBusca: 'indiceBusca.esperado.json'
+  indiceBusca: 'indiceBusca.esperado.json',
+  alternativas: 'alternativas.esperado.json'
 } as const;
 
 /** Lê as referências já gravadas. Arquivo ausente fica de fora (primeira geração). */

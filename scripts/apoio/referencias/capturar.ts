@@ -1,9 +1,15 @@
 import {
   curriculoDoDisco,
   carregadoresDoDisco,
-  carregadoresDispositivosDoDisco
+  carregadoresDispositivosDoDisco,
+  RAIZ_DO_CONTEUDO
 } from '../conteudoDoDisco';
 import type { Curriculo } from '../../../src/core/curriculo/tipos';
+import {
+  projetarAlternativas,
+  type AlternativasPorUnidade,
+  type ImpressoesDaPergunta
+} from '../../../tests/caracterizacao/alternativas';
 import {
   chavesDasUnidadesPublicadas,
   montarDocumentosComoBuild,
@@ -41,22 +47,29 @@ export interface Referencias {
     readonly documentosEncontrados: number;
     readonly documentos: { id: string; url: string }[];
   };
+  /** AV3-K4: impressão de cada alternativa de cada pergunta com quiz (sem texto). */
+  readonly alternativas: AlternativasPorUnidade;
 }
 
-export async function capturarReferencias(): Promise<Referencias> {
-  const curriculo: Curriculo = await curriculoDoDisco();
-  const carregadores = carregadoresDoDisco();
-  const dispositivos = carregadoresDispositivosDoDisco();
+/** `raiz` troca o conteúdo lido (sabotagem em cópia fora da árvore, AV3-K4); o padrão é src/conteudo. */
+export async function capturarReferencias(raiz: string = RAIZ_DO_CONTEUDO): Promise<Referencias> {
+  const curriculo: Curriculo = await curriculoDoDisco(raiz);
+  const carregadores = carregadoresDoDisco(raiz);
+  const dispositivos = carregadoresDispositivosDoDisco(raiz);
 
   const unidades: Record<string, ResumoConteudo> = {};
+  const alternativas: Record<string, ImpressoesDaPergunta> = {};
   for (const chave of chavesDasUnidadesPublicadas(curriculo)) {
     const carregar = carregadores[chave];
     if (!carregar) throw new Error(`unidade publicada sem carregador: ${chave}`);
-    unidades[chave] = resumirConteudo(await carregar());
+    const conteudo = await carregar();
+    unidades[chave] = resumirConteudo(conteudo);
+    if (conteudo.quiz !== undefined) alternativas[chave] = projetarAlternativas(conteudo.quiz);
   }
 
   const documentos = await montarDocumentosComoBuild(curriculo, carregadores);
   return {
+    alternativas,
     carregadores: {
       chavesCarregadores: Object.keys(carregadores).sort(),
       chavesCarregadoresDispositivos: Object.keys(dispositivos).sort(),

@@ -28,7 +28,7 @@ describe('router, foco na troca de rota sem rolar a página', () => {
 
     await router.push('/busca');
 
-    await vi.waitFor(() => expect(focar).toHaveBeenCalled());
+    await vi.waitFor(() => expect(focar).toHaveBeenCalled(), { timeout: 5000 });
     expect(focar).toHaveBeenCalledWith({ preventScroll: true });
   });
 

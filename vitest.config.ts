@@ -35,6 +35,7 @@ export default mergeConfig(
       // (MenuCurriculo.abasMapaFichamento, calendario.modal, AreaJuri); com 6, reprovou em
       // 0 de 6 rodadas. Nos quatro testes instáveis, quem passou levou de 405 a 2049 ms
       // (15 workers) para 275 a 1411 ms (6 workers).
+      // 12/11/2026: com 6 workers, sob carga 16 em 16 núcleos (outra sessão compilando), o MenuCurriculo levou 2040 ms; todo vi.waitFor de tests/ passou a ter timeout de 5000 ms.
       // minWorkers acompanha: sem ele o pool recusa minThreads 15 > maxThreads 6 e a
       // suíte roda com zero testes (RangeError no Tinypool).
       maxWorkers: 6,

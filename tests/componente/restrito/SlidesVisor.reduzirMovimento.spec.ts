@@ -49,7 +49,7 @@ async function aguardarSlide(visor: VueWrapper, numero: number, total: number): 
         `Slide ${numero} de ${total}`
       );
     },
-    { interval: 5, timeout: 2000 }
+    { interval: 5, timeout: 5000 }
   );
 }
 

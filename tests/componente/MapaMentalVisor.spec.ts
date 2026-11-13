@@ -57,17 +57,17 @@ describe('MapaMentalVisor', () => {
   it('o mapa visual abre com o markmap, a árvore de pensadores e o botão Abrir todos os ramos', async () => {
     criar.mockClear();
     montar();
-    await vi.waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(criar).toHaveBeenCalledTimes(1), { timeout: 5000 });
     const arvore = criar.mock.calls[0]![0] as { children: { children: unknown[] }[] };
     expect(arvore.children).toHaveLength(2);
     const botao = wrapper!.find('button.mapa-visual__todos');
     expect(botao.text()).toBe('Abrir todos os ramos');
     expect(botao.attributes('aria-expanded')).toBe('false');
     await botao.trigger('click');
-    await vi.waitFor(() => expect(botao.text()).toBe('Recolher todos os ramos'));
+    await vi.waitFor(() => expect(botao.text()).toBe('Recolher todos os ramos'), { timeout: 5000 });
     expect(botao.attributes('aria-expanded')).toBe('true');
     await botao.trigger('click');
-    await vi.waitFor(() => expect(botao.text()).toBe('Abrir todos os ramos'));
+    await vi.waitFor(() => expect(botao.text()).toBe('Abrir todos os ramos'), { timeout: 5000 });
     expect(wrapper!.find('button.mapa-visual__centralizar').text()).toBe('Centralizar');
   });
 

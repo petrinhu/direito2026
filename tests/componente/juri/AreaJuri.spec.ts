@@ -37,7 +37,9 @@ describe('AreaJuri: carga direta, sem login', () => {
   it('monta e pede o conteúdo sem tela de senha nem de login', async () => {
     const montado = montar(async () => conteudoJuriFalso());
     w = montado.w;
-    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true));
+    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true), {
+      timeout: 5000
+    });
     expect(montado.cliente.obterConteudoJuri).toHaveBeenCalledTimes(1);
     expect(w.get('h1').text()).toBe('Júri Simulado');
     expect(w.find('input[type="password"]').exists()).toBe(false);
@@ -48,7 +50,9 @@ describe('AreaJuri: carga direta, sem login', () => {
   it('não grava nada no navegador: Storage continua vazio', async () => {
     const montado = montar(async () => conteudoJuriFalso());
     w = montado.w;
-    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true));
+    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true), {
+      timeout: 5000
+    });
     expect(localStorage.length).toBe(0);
     expect(sessionStorage.length).toBe(0);
   });
@@ -56,7 +60,9 @@ describe('AreaJuri: carga direta, sem login', () => {
   it('conteúdo que não valida mostra o defeito, sem tela de senha', async () => {
     const montado = montar(async () => ({ versao: 1 }));
     w = montado.w;
-    await vi.waitFor(() => expect(w!.find('[role="alert"]').exists()).toBe(true));
+    await vi.waitFor(() => expect(w!.find('[role="alert"]').exists()).toBe(true), {
+      timeout: 5000
+    });
     expect(w.get('[role="alert"]').text()).toContain('Ele tem um defeito');
     expect(w.find('input[type="password"]').exists()).toBe(false);
   });
@@ -69,11 +75,13 @@ describe('AreaJuri: carga direta, sem login', () => {
       return conteudoJuriFalso();
     });
     w = montado.w;
-    await vi.waitFor(() => expect(w!.find('button').exists()).toBe(true));
+    await vi.waitFor(() => expect(w!.find('button').exists()).toBe(true), { timeout: 5000 });
     expect(w.get('[role="alert"]').text()).toContain('Verifique a conexão');
     await w.get('button').trigger('click');
     await flushPromises();
-    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true));
+    await vi.waitFor(() => expect(w!.find('[data-estado="pronto"]').exists()).toBe(true), {
+      timeout: 5000
+    });
     expect(montado.cliente.obterConteudoJuri).toHaveBeenCalledTimes(2);
   });
 });

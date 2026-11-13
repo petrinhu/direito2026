@@ -30,8 +30,9 @@ describe('MenuCurriculo: abas novas de Filosofia Jurídica', () => {
     const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
     await abrirTudo(wrapper);
     // O conteúdo da unidade é carregado por import dinâmico: espera chegar.
-    await vi.waitFor(() =>
-      expect(wrapper.find('a[href="/p/p1/filosofia-juridica/u1/quiz"]').exists()).toBe(true)
+    await vi.waitFor(
+      () => expect(wrapper.find('a[href="/p/p1/filosofia-juridica/u1/quiz"]').exists()).toBe(true),
+      { timeout: 5000 }
     );
     const base = '/p/p1/filosofia-juridica/u1';
     const links = wrapper
@@ -60,11 +61,14 @@ describe('MenuCurriculo: abas novas de Filosofia Jurídica', () => {
     const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
     await abrirTudo(wrapper);
     // Só vale afirmar a ausência depois que o conteúdo das outras cadeiras chegou.
-    await vi.waitFor(() => {
-      for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
-        expect(wrapper.find(`a[href="/p/p1/${cadeira}/u1/quiz"]`).exists(), cadeira).toBe(true);
-      }
-    });
+    await vi.waitFor(
+      () => {
+        for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
+          expect(wrapper.find(`a[href="/p/p1/${cadeira}/u1/quiz"]`).exists(), cadeira).toBe(true);
+        }
+      },
+      { timeout: 5000 }
+    );
     for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
       for (const aba of ['mapa', 'fichamento', 'mnemonicos']) {
         expect(
@@ -140,8 +144,9 @@ describe('MenuCurriculo: link Texto integral', () => {
       props: { curriculo: curriculoComTextoNoMenu, caminhoAtual: '' }
     });
     await abrirTudo(wrapper);
-    await vi.waitFor(() =>
-      expect(wrapper.find('a[href="/p/p1/cadeira/u1/quiz"]').exists()).toBe(true)
+    await vi.waitFor(
+      () => expect(wrapper.find('a[href="/p/p1/cadeira/u1/quiz"]').exists()).toBe(true),
+      { timeout: 5000 }
     );
     const linksDaUnidade = wrapper
       .findAll('a')
@@ -158,8 +163,9 @@ describe('MenuCurriculo: link Texto integral', () => {
       props: { curriculo: curriculoComTextoNoMenu, caminhoAtual: '' }
     });
     await abrirTudo(wrapper);
-    await vi.waitFor(() =>
-      expect(wrapper.find('a[href="/p/p1/cadeira/u2/quiz"]').exists()).toBe(true)
+    await vi.waitFor(
+      () => expect(wrapper.find('a[href="/p/p1/cadeira/u2/quiz"]').exists()).toBe(true),
+      { timeout: 5000 }
     );
     expect(wrapper.find('a[href="/p/p1/cadeira/u2/texto"]').exists()).toBe(false);
   });

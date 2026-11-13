@@ -98,9 +98,12 @@ describe('QuadroProva, o botão abre o calendário em janela modal', () => {
   it('o conteúdo é o mesmo da página: grade, legenda, painel e lista de datas', async () => {
     const { w } = await montarQuadro();
     await abrirJanela(w);
-    await vi.waitFor(() => {
-      expect(janela().querySelector('.fc')).not.toBeNull();
-    });
+    await vi.waitFor(
+      () => {
+        expect(janela().querySelector('.fc')).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
 
     expect(janela().querySelector('[data-testid="legenda-calendario"]')).not.toBeNull();
     expect(janela().querySelector('[data-testid="painel-do-dia"]')).not.toBeNull();
@@ -110,9 +113,12 @@ describe('QuadroProva, o botão abre o calendário em janela modal', () => {
   it('o painel do dia usa a data injetada (20 de outubro de 2026)', async () => {
     const { w } = await montarQuadro();
     await abrirJanela(w);
-    await vi.waitFor(() => {
-      expect(janela().querySelector('[data-testid="painel-do-dia"] h2')).not.toBeNull();
-    });
+    await vi.waitFor(
+      () => {
+        expect(janela().querySelector('[data-testid="painel-do-dia"] h2')).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
     expect(janela().querySelector('[data-testid="painel-do-dia"] h2')?.textContent).toContain(
       '20 de outubro de 2026'
     );
@@ -124,9 +130,12 @@ describe('QuadroProva, o botão abre o calendário em janela modal', () => {
     expect(janela().hasAttribute('open')).toBe(false);
 
     await abrirJanela(w);
-    await vi.waitFor(() => {
-      expect(janela().querySelector('.fc')).not.toBeNull();
-    });
+    await vi.waitFor(
+      () => {
+        expect(janela().querySelector('.fc')).not.toBeNull();
+      },
+      { timeout: 5000 }
+    );
   });
 });
 

@@ -52,7 +52,7 @@ function montar(cadeira: string) {
 describe('Cadeira.vue e a Júri', () => {
   it('a cadeira da Júri abre a própria área e pede o conteúdo direto, sem login', async () => {
     const { w, restrito } = montar('juri-simulado');
-    await vi.waitFor(() => expect(w.find('.area-juri').exists()).toBe(true));
+    await vi.waitFor(() => expect(w.find('.area-juri').exists()).toBe(true), { timeout: 5000 });
     await flushPromises();
     expect(w.get('h1').text()).toBe('Júri Simulado');
     expect(w.find('.area-restrita').exists()).toBe(false);
@@ -64,7 +64,7 @@ describe('Cadeira.vue e a Júri', () => {
 
   it('o Interdisciplinar continua na própria área, com o cliente dela', async () => {
     const { w, restrito } = montar('interdisciplinar');
-    await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true));
+    await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true), { timeout: 5000 });
     await flushPromises();
     expect(w.find('.area-juri').exists()).toBe(false);
     expect(restrito.obterConteudo).toHaveBeenCalled();

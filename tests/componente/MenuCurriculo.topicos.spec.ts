@@ -116,8 +116,9 @@ describe('MenuCurriculo: AV com grupos e tópicos', () => {
   it('dentro de Livro, o tópico publicado é um link para a unidade, com o título dela', async () => {
     const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
     await abrirTudo(wrapper);
-    await vi.waitFor(() =>
-      expect(wrapper.find('a[href="/p/p1/cadeira/u3-livro-topico"]').exists()).toBe(true)
+    await vi.waitFor(
+      () => expect(wrapper.find('a[href="/p/p1/cadeira/u3-livro-topico"]').exists()).toBe(true),
+      { timeout: 5000 }
     );
     expect(wrapper.find('a[href="/p/p1/cadeira/u3-livro-topico"]').text()).toBe('Título do tópico');
   });

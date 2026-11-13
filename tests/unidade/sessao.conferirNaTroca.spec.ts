@@ -134,7 +134,9 @@ describe('criarConferirNaTroca com a sessão global', () => {
     });
 
     trocar();
-    await vi.waitFor(() => expect(navegador.recarregar).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(navegador.recarregar).toHaveBeenCalledTimes(1), {
+      timeout: 5000
+    });
 
     expect(cliente.sessao).toHaveBeenCalledTimes(1);
   });
@@ -150,7 +152,7 @@ describe('criarConferirNaTroca com a sessão global', () => {
     });
 
     trocar();
-    await vi.waitFor(() => expect(cliente.sessao).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(cliente.sessao).toHaveBeenCalledTimes(1), { timeout: 5000 });
 
     expect(navegador.recarregar).not.toHaveBeenCalled();
   });

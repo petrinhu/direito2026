@@ -38,7 +38,7 @@ function montar(cadeira: string) {
 describe('Cadeira.vue e a cadeira restrita', () => {
   it('a cadeira restrita abre a área restrita, sem pedir senha, e não a lista de unidades', async () => {
     const w = montar('secreta');
-    await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true));
+    await vi.waitFor(() => expect(w.find('.area-restrita').exists()).toBe(true), { timeout: 5000 });
     await flushPromises();
     expect(w.get('h1').text()).toBe('Área restrita ao grupo Fronteiras da Inteligência Artificial');
     expect(w.find('input[type="password"]').exists()).toBe(false);

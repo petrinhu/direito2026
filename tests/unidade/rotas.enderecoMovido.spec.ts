@@ -34,3 +34,24 @@ describe('endereço movido: Sociologia AV3 vai para o tópico Artigos', () => {
     expect(rota.hash).toBe('#bloco-2');
   });
 });
+
+const NOVO_FILOSOFIA = '/p/p1/filosofia-juridica/u3-moderna-contemporanea';
+
+describe('endereço movido: Filosofia AV3 vai para o tópico Moderna e Contemporânea', () => {
+  it('o endereço da unidade antiga chega ao novo', async () => {
+    const rota = await irPara('/p/p1/filosofia-juridica/u3');
+    expect(rota.path).toBe(NOVO_FILOSOFIA);
+  });
+
+  it('a aba do endereço antigo (/quiz) chega à mesma aba no endereço novo', async () => {
+    const rota = await irPara('/p/p1/filosofia-juridica/u3/quiz');
+    expect(rota.path).toBe(`${NOVO_FILOSOFIA}/quiz`);
+    expect(rota.name).toBe('unidade-quiz');
+  });
+
+  it('a âncora do endereço antigo (#bloco-2) é mantida no endereço novo', async () => {
+    const rota = await irPara('/p/p1/filosofia-juridica/u3#bloco-2');
+    expect(rota.path).toBe(NOVO_FILOSOFIA);
+    expect(rota.hash).toBe('#bloco-2');
+  });
+});

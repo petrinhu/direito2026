@@ -4,5 +4,6 @@
  * Chave e valor no formato "periodo/cadeira/unidade", o de progresso e de carregadores.
  */
 export const ENDERECOS_MOVIDOS: Readonly<Record<string, string>> = {
-  'p1/sociologia-juridica/u3': 'p1/sociologia-juridica/u3-artigos-infancia-digital'
+  'p1/sociologia-juridica/u3': 'p1/sociologia-juridica/u3-artigos-infancia-digital',
+  'p1/filosofia-juridica/u3': 'p1/filosofia-juridica/u3-moderna-contemporanea'
 };

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CARREGADORES } from '@/app/carregamento/carregadores';
 import { quiz as quizSociologia } from '@/conteudo/p1/sociologia-juridica/u1/quiz';
 import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u1/quiz';
-import { quiz as quizFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3/quiz';
+import { quiz as quizFilosofiaU3 } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz';
 import { ROTULOS_CATEGORIA_QUIZ } from '@/conteudo/quiz/categorias';
 import type { PerguntaQuiz, PerguntaVerdadeiroOuFalso } from '@/core/unidade/tipos';
 

@@ -47,3 +47,28 @@ describe('progresso de unidade movida', () => {
     expect(store.registro.value.blocosLidos).toEqual([]);
   });
 });
+
+/**
+ * Filosofia AV3 (decisão R1 = A, 13/11/2026): o registro inteiro vai com a unidade,
+ * inclusive a semente e as respostas do quiz. A leitura por id de pergunta e por
+ * posição na semente só continua válida porque o quiz não muda nesta fatia.
+ */
+const CHAVE_ANTIGA_FILOSOFIA = 'p1/filosofia-juridica/u3';
+const CHAVE_NOVA_FILOSOFIA = 'p1/filosofia-juridica/u3-moderna-contemporanea';
+
+describe('progresso de unidade movida: Filosofia AV3', () => {
+  it('o registro inteiro (lidos, aba, semente e respostas do quiz) chega intacto à chave nova', () => {
+    const antigo: RegistroProgressoUnidade = {
+      versao: 1,
+      atualizadoEm: '2026-11-01T00:00:00.000Z',
+      blocosLidos: ['bloco-0', 'bloco-3'],
+      ultimaAba: 'quiz',
+      quizSemente: 2026,
+      quizRespostas: { 1: 2, 17: 0 },
+      quizFinalizado: false
+    };
+    const repositorio = repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo });
+    const store = criarStoreProgresso(repositorio, CHAVE_NOVA_FILOSOFIA);
+    expect(store.registro.value).toEqual(antigo);
+  });
+});

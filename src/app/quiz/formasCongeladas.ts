@@ -86,9 +86,7 @@ export const FORMAS_CONGELADAS: Readonly<Record<string, readonly FormaPergunta[]
     { id: 79, tipo: 'vf', alternativas: 2 },
     { id: 80, tipo: 'vf', alternativas: 2 }
   ],
-  'p1/filosofia-juridica/u3-decisao-perspectiva-racial': [
-
-  ],
+  'p1/filosofia-juridica/u3-decisao-perspectiva-racial': [],
   'p1/filosofia-juridica/u3-moderna-contemporanea': [
     { id: 1, tipo: 'mc', alternativas: 4 },
     { id: 2, tipo: 'mc', alternativas: 4 },

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { embaralharRodada, corrigirResposta, calcularPontuacao } from '@/core/quiz/motor';
-import type { IndiceAlternativa, PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
+import type {
+  IndiceAlternativa,
+  PerguntaMultiplaEscolha,
+  PerguntaQuiz
+} from '@/core/unidade/tipos';
 
 function perguntasDeTeste(): readonly PerguntaMultiplaEscolha[] {
   return [

@@ -117,7 +117,8 @@ describe('migrarRegistroLegado: tradução pela forma congelada', () => {
       const rodada = embaralharRodada(quiz, semente);
       const respostas: Record<number, IndiceAlternativa> = {};
       for (const pergunta of rodada.perguntas) {
-        respostas[pergunta.id] = (pergunta.id % pergunta.alternativasHtml.length) as IndiceAlternativa;
+        respostas[pergunta.id] = (pergunta.id %
+          pergunta.alternativasHtml.length) as IndiceAlternativa;
       }
       const saida = migrarRegistroLegado(
         legado({ quizSemente: semente, quizRespostas: respostas }),
@@ -171,8 +172,16 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
 
   it('Introdução e ECA: legado zera também com data inválida ou anterior ao crescimento', () => {
     for (const chave of [CHAVE_INTRO, CHAVE_ECA]) {
-      expect(migrarRegistroLegado(legado({ atualizadoEm: 'nao-e-data', quizSemente: 2026 }), chave).quizSemente).toBeUndefined();
-      expect(migrarRegistroLegado(legado({ atualizadoEm: '2026-11-01T00:00:00.000Z', quizSemente: 2026 }), chave).quizSemente).toBeUndefined();
+      expect(
+        migrarRegistroLegado(legado({ atualizadoEm: 'nao-e-data', quizSemente: 2026 }), chave)
+          .quizSemente
+      ).toBeUndefined();
+      expect(
+        migrarRegistroLegado(
+          legado({ atualizadoEm: '2026-11-01T00:00:00.000Z', quizSemente: 2026 }),
+          chave
+        ).quizSemente
+      ).toBeUndefined();
     }
   });
 

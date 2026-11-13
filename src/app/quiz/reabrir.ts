@@ -6,7 +6,10 @@ import type { RegistroProgressoUnidade } from '@/core/progresso/tipos';
  * finalizada e que ainda não tem resposta. Sem a lista da rodada, não reabre.
  */
 export function deveReabrirRodada(
-  registro: Pick<RegistroProgressoUnidade, 'quizFinalizado' | 'quizIdsDaRodada' | 'quizRespostasOriginais'>,
+  registro: Pick<
+    RegistroProgressoUnidade,
+    'quizFinalizado' | 'quizIdsDaRodada' | 'quizRespostasOriginais'
+  >,
   idsAtuais: readonly number[]
 ): boolean {
   if (registro.quizFinalizado !== true || registro.quizIdsDaRodada === undefined) return false;

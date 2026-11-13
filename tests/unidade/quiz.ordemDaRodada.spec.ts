@@ -18,16 +18,51 @@ function formaDe(perguntas: readonly PerguntaQuiz[]): FormaPergunta[] {
 }
 
 const SINTETICO: PerguntaQuiz[] = [
-  { id: 1, categoria: 'teoria', enunciadoHtml: 'a', explicacaoHtml: 'x', fonteExtra: false,
-    alternativasHtml: ['a', 'b', 'c', 'd'], correta: 0 },
-  { id: 2, categoria: 'teoria', enunciadoHtml: 'b', explicacaoHtml: 'x', fonteExtra: false,
-    tipo: 'verdadeiro-ou-falso', correta: true } as PerguntaQuiz,
-  { id: 3, categoria: 'teoria', enunciadoHtml: 'c', explicacaoHtml: 'x', fonteExtra: false,
-    alternativasHtml: ['1', '2', '3', '4', '5'], correta: 4 },
-  { id: 4, categoria: 'teoria', enunciadoHtml: 'd', explicacaoHtml: 'x', fonteExtra: false,
-    alternativasHtml: ['w', 'x', 'y', 'z'], correta: 2 },
-  { id: 5, categoria: 'teoria', enunciadoHtml: 'e', explicacaoHtml: 'x', fonteExtra: false,
-    tipo: 'verdadeiro-ou-falso', correta: false } as PerguntaQuiz
+  {
+    id: 1,
+    categoria: 'teoria',
+    enunciadoHtml: 'a',
+    explicacaoHtml: 'x',
+    fonteExtra: false,
+    alternativasHtml: ['a', 'b', 'c', 'd'],
+    correta: 0
+  },
+  {
+    id: 2,
+    categoria: 'teoria',
+    enunciadoHtml: 'b',
+    explicacaoHtml: 'x',
+    fonteExtra: false,
+    tipo: 'verdadeiro-ou-falso',
+    correta: true
+  } as PerguntaQuiz,
+  {
+    id: 3,
+    categoria: 'teoria',
+    enunciadoHtml: 'c',
+    explicacaoHtml: 'x',
+    fonteExtra: false,
+    alternativasHtml: ['1', '2', '3', '4', '5'],
+    correta: 4
+  },
+  {
+    id: 4,
+    categoria: 'teoria',
+    enunciadoHtml: 'd',
+    explicacaoHtml: 'x',
+    fonteExtra: false,
+    alternativasHtml: ['w', 'x', 'y', 'z'],
+    correta: 2
+  },
+  {
+    id: 5,
+    categoria: 'teoria',
+    enunciadoHtml: 'e',
+    explicacaoHtml: 'x',
+    fonteExtra: false,
+    tipo: 'verdadeiro-ou-falso',
+    correta: false
+  } as PerguntaQuiz
 ];
 
 describe('ordemDaRodada', () => {

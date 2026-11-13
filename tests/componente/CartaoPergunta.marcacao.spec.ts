@@ -34,7 +34,9 @@ function embaralhadaDe(pergunta: PerguntaQuiz): PerguntaEmbaralhada {
     ...comum,
     alternativasHtml: pergunta.alternativasHtml,
     indiceCorreto: pergunta.correta,
-    ordemOriginal: pergunta.alternativasHtml.map((_, i) => i) as PerguntaEmbaralhada['ordemOriginal']
+    ordemOriginal: pergunta.alternativasHtml.map(
+      (_, i) => i
+    ) as PerguntaEmbaralhada['ordemOriginal']
   };
 }
 

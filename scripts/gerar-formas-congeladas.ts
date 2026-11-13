@@ -28,9 +28,7 @@ function formaDe(pergunta: PerguntaQuiz): FormaPergunta {
 }
 
 function shaDoCommit(): string {
-  return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: RAIZ })
-    .toString()
-    .trim();
+  return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: RAIZ }).toString().trim();
 }
 
 function renderizar(formas: Record<string, readonly FormaPergunta[]>, sha: string): string {

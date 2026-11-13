@@ -96,7 +96,12 @@ function registrarRespostaDoQuiz(idPergunta: number, indiceExibido: IndiceAltern
 function reabrirSeCresceu(): void {
   const quiz = conteudo.value?.quiz;
   if (!quiz) return;
-  if (deveReabrirRodada(storeProgresso.value.registro.value, quiz.map((p) => p.id))) {
+  if (
+    deveReabrirRodada(
+      storeProgresso.value.registro.value,
+      quiz.map((p) => p.id)
+    )
+  ) {
     storeProgresso.value.atualizar({ quizFinalizado: false });
   }
 }

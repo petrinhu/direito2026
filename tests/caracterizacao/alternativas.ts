@@ -27,7 +27,9 @@ export function projetarAlternativas(quiz: readonly PerguntaQuiz[]): ImpressoesD
   const porId: Record<string, readonly string[]> = {};
   for (const pergunta of quiz) {
     const textos =
-      pergunta.tipo === 'verdadeiro-ou-falso' ? ALTERNATIVAS_VERDADEIRO_OU_FALSO : pergunta.alternativasHtml;
+      pergunta.tipo === 'verdadeiro-ou-falso'
+        ? ALTERNATIVAS_VERDADEIRO_OU_FALSO
+        : pergunta.alternativasHtml;
     porId[String(pergunta.id)] = textos.map(impressaoDaAlternativa);
   }
   return porId;
@@ -58,7 +60,8 @@ export function compararAlternativas(
       aceitas.push(...parte.aceitas);
     }
     for (const id of Object.keys(perguntasAtuais)) {
-      if (!(id in perguntasEsperadas)) aceitas.push(`${unidadeChave} pergunta ${id}: pergunta nova`);
+      if (!(id in perguntasEsperadas))
+        aceitas.push(`${unidadeChave} pergunta ${id}: pergunta nova`);
     }
   }
   for (const unidadeChave of Object.keys(atual)) {

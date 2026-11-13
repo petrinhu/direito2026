@@ -3,13 +3,20 @@ import { deveReabrirRodada } from '@/app/quiz/reabrir';
 import type { RegistroProgressoUnidade } from '@/core/progresso/tipos';
 import type { IndiceAlternativa } from '@/core/unidade/tipos';
 
-type Campos = Pick<RegistroProgressoUnidade, 'quizFinalizado' | 'quizIdsDaRodada' | 'quizRespostasOriginais'>;
+type Campos = Pick<
+  RegistroProgressoUnidade,
+  'quizFinalizado' | 'quizIdsDaRodada' | 'quizRespostasOriginais'
+>;
 
 /** Rodada de 3 perguntas, finalizada com todas respondidas. */
 const FINALIZADA: Campos = {
   quizFinalizado: true,
   quizIdsDaRodada: [1, 2, 3],
-  quizRespostasOriginais: { 1: 0 as IndiceAlternativa, 2: 1 as IndiceAlternativa, 3: 2 as IndiceAlternativa }
+  quizRespostasOriginais: {
+    1: 0 as IndiceAlternativa,
+    2: 1 as IndiceAlternativa,
+    3: 2 as IndiceAlternativa
+  }
 };
 
 describe('deveReabrirRodada (AV3-K4, decisão do líder: reabrir só as novas)', () => {
@@ -28,7 +35,12 @@ describe('deveReabrirRodada (AV3-K4, decisão do líder: reabrir só as novas)',
   it('cresceu, mas o aluno já respondeu as perguntas novas: não reabre', () => {
     const respondeuNovas: Campos = {
       ...FINALIZADA,
-      quizRespostasOriginais: { 1: 0 as IndiceAlternativa, 2: 1 as IndiceAlternativa, 3: 2 as IndiceAlternativa, 4: 0 as IndiceAlternativa }
+      quizRespostasOriginais: {
+        1: 0 as IndiceAlternativa,
+        2: 1 as IndiceAlternativa,
+        3: 2 as IndiceAlternativa,
+        4: 0 as IndiceAlternativa
+      }
     };
     expect(deveReabrirRodada(respondeuNovas, [1, 2, 3, 4])).toBe(false);
   });
@@ -38,6 +50,8 @@ describe('deveReabrirRodada (AV3-K4, decisão do líder: reabrir só as novas)',
   });
 
   it('sem quizIdsDaRodada (registro que não tem essa informação): não reabre', () => {
-    expect(deveReabrirRodada({ ...FINALIZADA, quizIdsDaRodada: undefined }, [1, 2, 3, 4])).toBe(false);
+    expect(deveReabrirRodada({ ...FINALIZADA, quizIdsDaRodada: undefined }, [1, 2, 3, 4])).toBe(
+      false
+    );
   });
 });

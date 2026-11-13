@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { criarStoreProgresso } from '@/app/stores/progresso';
 import type { RegistroProgressoUnidade, RepositorioProgresso } from '@/core/progresso/tipos';
 import { embaralharRodada } from '@/core/quiz/motor';
-import type { IndiceAlternativa, PerguntaMultiplaEscolha, PerguntaQuiz } from '@/core/unidade/tipos';
+import type {
+  IndiceAlternativa,
+  PerguntaMultiplaEscolha,
+  PerguntaQuiz
+} from '@/core/unidade/tipos';
 import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz/index';
 
 /**
@@ -65,7 +69,10 @@ function crescerQuiz(perguntas: readonly PerguntaQuiz[]): PerguntaQuiz[] {
     (p) =>
       ({
         ...p,
-        alternativasHtml: [...(p as PerguntaMultiplaEscolha).alternativasHtml, 'Quinta alternativa nova']
+        alternativasHtml: [
+          ...(p as PerguntaMultiplaEscolha).alternativasHtml,
+          'Quinta alternativa nova'
+        ]
       }) as PerguntaQuiz
   );
   const novas = Array.from(
@@ -95,7 +102,10 @@ describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
       quizRespostas: { 1: 2, 17: 0 },
       quizFinalizado: false
     };
-    const store = criarStoreProgresso(repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }), CHAVE_NOVA_FILOSOFIA);
+    const store = criarStoreProgresso(
+      repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }),
+      CHAVE_NOVA_FILOSOFIA
+    );
     expect(store.registro.value.blocosLidos).toEqual(['bloco-0', 'bloco-3']);
     expect(store.registro.value.ultimaAba).toBe('quiz');
   });
@@ -112,7 +122,10 @@ describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
       quizRespostas: respostasHoje,
       quizFinalizado: false
     };
-    const store = criarStoreProgresso(repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }), CHAVE_NOVA_FILOSOFIA);
+    const store = criarStoreProgresso(
+      repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }),
+      CHAVE_NOVA_FILOSOFIA
+    );
     const traduzidas = store.registro.value.quizRespostasOriginais;
     expect(traduzidas).toBeDefined();
     expect(store.registro.value.quizRespostas).toBeUndefined();

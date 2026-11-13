@@ -1,7 +1,7 @@
 import { capturarReferencias } from './apoio/referencias/capturar';
 import { gravarReferencias, lerReferenciasGravadas } from './apoio/referencias/gravar';
 import { resumirMudancas } from './apoio/referencias/resumo';
-import { compararAlternativas } from '../tests/caracterizacao/alternativas';
+import { executarAtualizacao } from './apoio/referencias/executarAtualizacao';
 
 /**
  * Regenera as referências de caracterização (tests/caracterizacao/*.esperado.json)
@@ -15,7 +15,8 @@ import { compararAlternativas } from '../tests/caracterizacao/alternativas';
  * com o arquivo gravado, e este comando só grava quando você roda.
  *
  * Piso de varredura (L-36): sem nenhuma unidade publicada, sai com erro em
- * vez de gravar referência vazia.
+ * vez de gravar referência vazia. A recusa de reordenação e remoção de alternativa
+ * fica em executarAtualizacao, que tem testes.
  */
 async function principal(): Promise<void> {
   const anterior = lerReferenciasGravadas();
@@ -24,19 +25,14 @@ async function principal(): Promise<void> {
     throw new Error('nenhuma unidade publicada encontrada: varredura vazia, nada foi gravado');
   }
   const resumo = resumirMudancas(anterior, atual);
-  const alternativas = compararAlternativas(anterior.alternativas ?? {}, atual.alternativas);
-  if (alternativas.reprovacoes.length > 0) {
-    for (const linha of alternativas.reprovacoes) console.error(`RECUSADO: ${linha}`);
-    console.error(
-      'atualizar-referencias: alternativa reordenada, removida ou fora do fim (AV3-K4). Nada foi gravado.'
-    );
-    process.exit(1);
-  }
-  await gravarReferencias(atual);
+  const codigo = await executarAtualizacao(anterior, atual, {
+    gravar: gravarReferencias,
+    emitir: (linha) => console.log(linha),
+    emitirErro: (linha) => console.error(linha)
+  });
+  if (codigo !== 0) process.exit(codigo);
 
-  console.log('atualizar-referencias: tests/caracterizacao/ regenerado a partir do estado atual.');
   for (const linha of resumo.linhas) console.log(linha);
-  for (const linha of alternativas.aceitas) console.log(`alternativas (aceita): ${linha}`);
   console.log(
     'Confira que o resumo mostra só o que você acrescentou. Depois commite junto com o conteúdo.'
   );

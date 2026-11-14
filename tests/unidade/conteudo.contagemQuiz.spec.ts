@@ -17,7 +17,7 @@ function mc(id: number, alternativas = 5): PerguntaQuiz {
     correta: 0,
     fonteExtra: false,
     explicacaoHtml: 'x'
-  } as PerguntaQuiz;
+  } as unknown as PerguntaQuiz;
 }
 
 function vf(id: number): PerguntaQuiz {
@@ -29,7 +29,7 @@ function vf(id: number): PerguntaQuiz {
     correta: true,
     fonteExtra: false,
     explicacaoHtml: 'x'
-  } as PerguntaQuiz;
+  } as unknown as PerguntaQuiz;
 }
 
 /** n perguntas: as primeiras `mcs` de múltipla escolha e o resto de verdadeiro ou falso. */
@@ -67,7 +67,7 @@ describe('quizConforme: no mínimo 80, com 40 de múltipla escolha e 40 de verda
 
   it('pergunta sem explicação reprova', () => {
     const quiz = quizCom(40, 40);
-    quiz[0] = { ...quiz[0]!, explicacaoHtml: '' } as PerguntaQuiz;
+    quiz[0] = { ...quiz[0]!, explicacaoHtml: '' } as unknown as PerguntaQuiz;
     expect(quizConforme(quiz)).toBe(false);
   });
 });

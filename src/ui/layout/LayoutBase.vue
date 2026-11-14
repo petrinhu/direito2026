@@ -196,6 +196,10 @@ onBeforeUnmount(() => {
       @keydown="aoTeclaNaGaveta"
       @click="aoCliqueNaGaveta"
     >
+      <!-- Primeiro item focável da gaveta: o foco do teclado entra por ele ao abrir (AV3-F0e). -->
+      <button type="button" class="layout-base__fechar-gaveta" @click="fecharGaveta">
+        Fechar menu
+      </button>
       <MenuCurriculo
         :curriculo="curriculo"
         :caminho-atual="caminhoAtual"
@@ -362,6 +366,35 @@ onBeforeUnmount(() => {
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
     z-index: 80;
+  }
+}
+
+/* Botão Fechar menu: só existe em tela estreita, onde a gaveta é sobreposição. Alvo de toque de 44 px
+   (mesmo token do botão de abrir), alinhado à direita no topo da gaveta, com a cor do texto dela. */
+.layout-base__fechar-gaveta {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .layout-base__fechar-gaveta {
+    display: block;
+    width: fit-content;
+    min-height: var(--alvo-toque-minimo, 44px);
+    min-width: var(--alvo-toque-minimo, 44px);
+    margin: var(--esp-3, 0.75rem) var(--esp-3, 0.75rem) 0 auto;
+    padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);
+    background: none;
+    border: 1px solid currentColor;
+    border-radius: var(--raio-md, 10px);
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .layout-base__fechar-gaveta:focus-visible {
+    outline: var(--foco-espessura, 2px) solid var(--cor-sidebar-texto, #faf9f5);
+    outline-offset: var(--foco-deslocamento, 2px);
   }
 }
 

@@ -81,8 +81,15 @@ function anterior(): void {
         :respondidas="respondidas"
         :total-quiz="rodada.perguntas.length"
       />
+      <!--
+        key pela pergunta: sem ela, o cartão é reaproveitado e os rádios trocam de grupo (name).
+        Um rádio marcado de uma pergunta, ao entrar no grupo da seguinte, pode desmarcar o correto
+        (defeito do QA de 14/11, b16b3c94: rádio sem marca em respostas salvas). Cartão novo por
+        pergunta evita essa junção.
+      -->
       <CartaoPergunta
         v-if="rodada.perguntas[indiceAtual]"
+        :key="rodada.perguntas[indiceAtual]!.id"
         :pergunta="rodada.perguntas[indiceAtual]!"
         :resposta-escolhida="respostasSalvas[rodada.perguntas[indiceAtual]!.id]"
         :letras="letras"

@@ -19,7 +19,14 @@ const PERIODO = 'p1';
 const CADEIRA = 'filosofia-juridica';
 const UNIDADE = 'u3-moderna-contemporanea';
 const CHAVE = `${PERIODO}/${CADEIRA}/${UNIDADE}`;
-const SEMENTE = 777;
+// A UI mostra a primeira pergunta da rodada. A semente é a primeira, a partir de 777, em que essa
+// pergunta é de múltipla escolha e muda de posição: só assim o clique prova a conversão de posição.
+const SEMENTE = (() => {
+  for (let s = 777; ; s++) {
+    const p = embaralharRodada(quiz, s).perguntas[0]!;
+    if ('alternativasHtml' in p && p.ordemOriginal.some((o, i) => o !== i)) return s;
+  }
+})();
 
 const conteudo: ConteudoUnidade = {
   meta: { rotulo: 'Unidade 3', estado: 'publicado', titulo: 't', subtitulo: 's', descricao: 'd' },
@@ -82,8 +89,13 @@ async function montar(repositorio: RepositorioMemoria) {
 
 describe('Unidade: resposta do quiz é gravada pela posição original (AV3-K4)', () => {
   it('clicar numa alternativa exibida grava a posição dessa alternativa no conteúdo', async () => {
-    const primeira = embaralharRodada(quiz, SEMENTE).perguntas[0]!;
-    // Só serve para provar a conversão se a posição exibida e a original forem diferentes.
+    // Só serve para provar a conversão se a posição exibida e a original forem diferentes. Com
+    // o conteúdo que cresce, a primeira pergunta da rodada pode ficar na ordem original: pega-se a
+    // primeira que muda de posição.
+    const primeira = embaralharRodada(quiz, SEMENTE).perguntas.find(
+      (p) =>
+        'alternativasHtml' in p && p.ordemOriginal.some((original, exibida) => original !== exibida)
+    )!;
     const k = primeira.ordemOriginal.findIndex((original, exibida) => original !== exibida);
     expect(k).toBeGreaterThanOrEqual(0);
 

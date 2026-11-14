@@ -6,7 +6,12 @@ import { CARREGADORES } from '@/app/carregamento/carregadores';
 import { embaralharRodada, ordemDaRodada } from '@/core/quiz/motor';
 import type { ChaveUnidade, RegistroProgressoUnidade } from '@/core/progresso/tipos';
 import type { FormaPergunta } from '@/core/quiz/tipos';
-import type { IndiceAlternativa, PerguntaQuiz } from '@/core/unidade/tipos';
+import type {
+  IndiceAlternativa,
+  PerguntaMultiplaEscolha,
+  PerguntaQuiz
+} from '@/core/unidade/tipos';
+import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz/index';
 import { quiz as quizTeoriaPura } from '@/conteudo/p1/intr-direito/u3-livro-teoria-pura/quiz/index';
 import { quiz as quizArtigos } from '@/conteudo/p1/sociologia-juridica/u3-artigos-infancia-digital/quiz/index';
 
@@ -157,18 +162,27 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
     expect(saida.quizRespostasOriginais).toEqual({});
   });
 
-  it('Filosofia u3: legado zera (AV3-F1, a unidade entrou na lista de quizzes que cresceram)', () => {
+  it('Filosofia u3: a tradução preserva o mesmo texto de alternativa de antes do crescimento', () => {
+    const chave = 'p1/filosofia-juridica/u3-moderna-contemporanea';
+    const semente = 2026;
+    // Rodada de antes do crescimento: a forma congelada da v1.9 (20 perguntas de 4 alternativas).
+    const hoje = ordemDaRodada(FORMAS_CONGELADAS[chave]!, semente);
+    const respostas: Record<number, IndiceAlternativa> = {};
+    for (const id of hoje.ids) respostas[id] = (id % 4) as IndiceAlternativa;
     const saida = migrarRegistroLegado(
-      legado({
-        atualizadoEm: '2026-11-01T00:00:00.000Z',
-        quizSemente: 2026,
-        quizRespostas: { 1: 2 as IndiceAlternativa }
-      }),
-      'p1/filosofia-juridica/u3-moderna-contemporanea'
+      legado({ quizSemente: semente, quizRespostas: respostas }),
+      chave
     );
-    expect(saida.quizSemente).toBeUndefined();
-    expect(saida.quizRespostas).toBeUndefined();
-    expect(saida.quizRespostasOriginais).toEqual({});
+    // Conteúdo vivo, já crescido: as alternativas antigas seguem nas posições 0 a 3.
+    const depois = embaralharRodada(quizFilosofia, semente);
+    for (const id of hoje.ids) {
+      const original = hoje.alternativas.get(id)![respostas[id]!]!;
+      const textoDeAntes = (quizFilosofia.find((p) => p.id === id) as PerguntaMultiplaEscolha)
+        .alternativasHtml[original];
+      const pergunta = depois.perguntas.find((p) => p.id === id)!;
+      const indiceDepois = pergunta.ordemOriginal.indexOf(saida.quizRespostasOriginais![id]!);
+      expect(pergunta.alternativasHtml[indiceDepois], `pergunta ${id}`).toBe(textoDeAntes);
+    }
   });
 
   it('ECA: legado zera mesmo com atualizadoEm depois do crescimento', () => {
@@ -211,12 +225,11 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
 });
 
 describe('migrarRegistroLegado: a lista de quizzes que cresceram é fixa, e os outros traduzem sem perda (AV3-K4)', () => {
-  it('a lista é exatamente Introdução u3 material, ECA Digital e Filosofia u3 (AV3-F1)', () => {
+  it('a lista é exatamente Introdução u3 material e ECA Digital', () => {
     expect([...QUIZZES_QUE_CRESCERAM].sort()).toEqual(
       [
         'p1/intr-direito/u3-material-norma-interpretacao',
-        'p1/sociologia-juridica/u3-eca-digital',
-        'p1/filosofia-juridica/u3-moderna-contemporanea'
+        'p1/sociologia-juridica/u3-eca-digital'
       ].sort()
     );
   });

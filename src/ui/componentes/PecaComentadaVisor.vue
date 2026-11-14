@@ -8,6 +8,13 @@ defineProps<{ peca: PecaComentada }>();
   <article class="peca-comentada">
     <h2>{{ peca.titulo }}</h2>
     <p class="peca-comentada__nota" v-html="peca.notaHtml" />
+    <nav aria-label="Sumário da petição" class="peca-comentada__sumario">
+      <ul role="list">
+        <li v-for="secao in peca.secoes" :key="secao.id">
+          <a :href="`#${secao.id}`">{{ secao.titulo }}</a>
+        </li>
+      </ul>
+    </nav>
     <section
       v-if="peca.enunciadoHtml"
       class="peca-comentada__enunciado"
@@ -54,6 +61,29 @@ defineProps<{ peca: PecaComentada }>();
   background: var(--cor-fundo-sutil, #f2efe6);
   padding: var(--esp-4, 1rem);
   border-radius: var(--raio-sm, 6px);
+}
+
+/* Mesmo padrão do sumário do Resumo (VisorResumo.vue). Lista sem marcador:
+   os títulos das seções já trazem a numeração ("2.1 Do Divórcio"). */
+.peca-comentada__sumario {
+  max-width: var(--largura-coluna-leitura, 760px);
+  margin-inline: auto;
+  padding-block: var(--esp-4, 1rem);
+}
+
+.peca-comentada__sumario ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.peca-comentada__sumario a {
+  /* inline-flex + padding: o piso de alvo (--alvo-toque-minimo, 44px dentro
+     do modo adaptado) vale de verdade num <a> inline. Ver VisorResumo.vue. */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--alvo-toque-minimo, 24px);
+  min-width: var(--alvo-toque-minimo, 24px);
+  padding-block: var(--esp-1, 0.25rem);
 }
 
 .peca-comentada__enunciado {
@@ -121,6 +151,10 @@ defineProps<{ peca: PecaComentada }>();
 @media print {
   .peca-comentada__grade {
     grid-template-columns: 1fr;
+  }
+
+  .peca-comentada__sumario {
+    display: none;
   }
 }
 </style>

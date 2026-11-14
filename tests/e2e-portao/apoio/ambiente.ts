@@ -129,7 +129,7 @@ export function semearContas(): void {
 }
 
 /** Sessões de testes anteriores somem: cookie de outro teste não pode valer no seguinte. */
-function esvaziarSessoes(): void {
+export function esvaziarSessoes(): void {
   const pasta = join(PRIVADO, 'sessoes');
   for (const nome of readdirSync(pasta)) rmSync(join(pasta, nome), { force: true });
 }
@@ -184,6 +184,61 @@ export function prepararAmbiente(dist: string): void {
   chmodSync(join(PRIVADO, 'acervo.json'), 0o600);
 
   montarApp(dist);
+  restaurarVersaoBase();
+}
+
+/** Versão do build sob teste: a do package.json da raiz (E2E_PORTAO_RAIZ ou a árvore de trabalho). */
+export function versaoDoBuild(): string {
+  const raiz = process.env.E2E_PORTAO_RAIZ ?? process.cwd();
+  const pacote = JSON.parse(readFileSync(join(raiz, 'package.json'), 'utf8')) as {
+    version: string;
+  };
+  return pacote.version;
+}
+
+/**
+ * Grava APP/atual/versao.json e a entrada dele no manifesto, como o separador faria. O portão só
+ * serve o que está no manifesto, então sem a entrada o /versao.json dá 404 (sem informação).
+ */
+function gravarVersaoPublicada(versao: string, historico: EntradaVersaoSintetica[]): void {
+  garantirSeguro(APP);
+  const atual = join(APP, 'atual');
+  const corpo = JSON.stringify({ versao, historico });
+  writeFileSync(join(atual, 'versao.json'), corpo);
+  const caminhoManifesto = join(atual, 'manifesto.json');
+  const manifesto = JSON.parse(readFileSync(caminhoManifesto, 'utf8')) as {
+    versao: string;
+    arquivos: Record<string, { tipo: string; bytes: number; md5: string }>;
+  };
+  manifesto.arquivos['versao.json'] = {
+    tipo: 'application/json; charset=utf-8',
+    bytes: Buffer.byteLength(corpo),
+    md5: createHash('md5').update(corpo).digest('hex')
+  };
+  writeFileSync(caminhoManifesto, JSON.stringify(manifesto));
+}
+
+/** Uma entrada do histórico de versões publicadas (formato de versao.json, separar-pacote). */
+export interface EntradaVersaoSintetica {
+  versao: string;
+  novidades: string[];
+}
+
+/** Estado base: a publicada é igual à do build, então a aba não mostra aviso. Roda antes e depois de cada teste. */
+export function restaurarVersaoBase(): void {
+  const base = versaoDoBuild();
+  gravarVersaoPublicada(base, [{ versao: base, novidades: [] }]);
+}
+
+/**
+ * Simula uma publicação nova: a publicada passa a ser `versao`, com `novidades`, e o histórico
+ * traz a versão do build logo atrás (o cliente para nela). Só texto sintético.
+ */
+export function publicarVersaoSintetica(versao: string, novidades: readonly string[]): void {
+  gravarVersaoPublicada(versao, [
+    { versao, novidades: [...novidades] },
+    { versao: versaoDoBuild(), novidades: [] }
+  ]);
 }
 
 /** Chave de um asset JS do app, para o teste de asset anônimo (sai do manifesto, não é fixa). */

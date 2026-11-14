@@ -27,6 +27,7 @@ $contas = [
     ['usuario' => 'admin-sintetico', 'senha' => 'senha-sintetica-admin-1', 'admin' => true, 'deveTrocar' => false],
     ['usuario' => 'comum-sintetico', 'senha' => 'senha-sintetica-comum-1', 'admin' => false, 'deveTrocar' => false],
     ['usuario' => 'troca-sintetica', 'senha' => 'senha-provisoria-1234', 'admin' => false, 'deveTrocar' => true],
+    ['usuario' => 'ana.paula', 'senha' => 'senha-sintetica-ana-1', 'admin' => false, 'deveTrocar' => false],
 ];
 
 $usuarios = [];

@@ -33,6 +33,8 @@ export const FRASE_RECUSA = 'Site exclusivo para público seleto!';
 export const CONTA_ADMIN = { usuario: 'admin-sintetico', senha: 'senha-sintetica-admin-1' };
 export const CONTA_COMUM = { usuario: 'comum-sintetico', senha: 'senha-sintetica-comum-1' };
 export const CONTA_TROCA = { usuario: 'troca-sintetica', senha: 'senha-provisoria-1234' };
+/** Login com ponto (nome composto do aviso de versão: "ana.paula" vira "Ana Paula", ratificado 46c). Espelho de semear.php. */
+export const CONTA_ANA_PAULA = { usuario: 'ana.paula', senha: 'senha-sintetica-ana-1' };
 /** Senha nova usada só na troca de senha de CONTA_TROCA (15 caracteres ou mais, D3). */
 export const SENHA_NOVA_TROCA = 'senha-nova-sintetica-99';
 

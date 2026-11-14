@@ -18,6 +18,11 @@ export interface ControladorCitacoes {
   /** Liga os escutadores de hoverable no próprio elemento do balão (seção 12.3). */
   ligarBalao(balao: HTMLElement): void;
   desligar(): void;
+  /**
+   * Chamado quando o NAVEGADOR fechou o balão (Esc, clique fora): o popover auto já está
+   * fechado, então só o estado do controlador precisa acompanhar (QA-BAL-D1).
+   */
+  registrarFechamento(): void;
 }
 
 const ATRASO_INTENCAO_HOVER_MS = 120;
@@ -35,6 +40,11 @@ export function criarControladorCitacoes(params: {
   dispositivos: () => IndiceDispositivos | undefined;
   aoAbrir: (dispositivoId: string, ancora: HTMLElement, ponto?: PontoPonteiro) => void;
   aoFechar: () => void;
+  /**
+   * Estado REAL do popover, lido na hora do clique. O fechamento nativo tem um evento toggle
+   * assíncrono; sem esta leitura, um clique que cai antes dele vê "aberto" já fechado (QA-BAL-D1).
+   */
+  estaAberto?: () => boolean;
 }): ControladorCitacoes {
   let regiaoAtual: HTMLElement | undefined;
   let balaoAtual: HTMLElement | undefined;
@@ -57,13 +67,23 @@ export function criarControladorCitacoes(params: {
     params.aoAbrir(id, botao, ponto);
   }
 
-  function fechar(): void {
+  /** Zera o estado de "aberto" sem avisar ninguém; quem chama decide o que mais fazer. */
+  function limparEstado(): void {
     if (!estado.aberto) return;
     estado.botaoAncora?.setAttribute('aria-expanded', 'false');
     (estado as { aberto: boolean }).aberto = false;
     (estado as { dispositivoId: string | undefined }).dispositivoId = undefined;
     (estado as { botaoAncora: HTMLElement | undefined }).botaoAncora = undefined;
+  }
+
+  function fechar(): void {
+    if (!estado.aberto) return;
+    limparEstado();
     params.aoFechar();
+  }
+
+  function registrarFechamento(): void {
+    limparEstado();
   }
 
   // Mouse: só dentro de hover fino, com intenção antes de abrir.
@@ -123,7 +143,10 @@ export function criarControladorCitacoes(params: {
   function aoClicar(evento: MouseEvent): void {
     const botao = ehBotaoCitacao(evento.target) ? evento.target : null;
     if (!botao) return;
-    if (estado.aberto && estado.botaoAncora === botao) {
+    // O clique é a intenção que vale: uma abertura por hover ainda pendente não pode disparar depois (QA-BAL-D1).
+    clearTimeout(temporizadorAbertura);
+    const abertoDeFato = estado.aberto && (params.estaAberto?.() ?? true);
+    if (abertoDeFato && estado.botaoAncora === botao) {
       fechar();
     } else {
       abrir(botao);
@@ -175,5 +198,5 @@ export function criarControladorCitacoes(params: {
     clearTimeout(temporizadorFechamento);
   }
 
-  return { estado, ligar, ligarBalao, desligar };
+  return { estado, ligar, ligarBalao, desligar, registrarFechamento };
 }

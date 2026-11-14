@@ -139,7 +139,8 @@ watch(
     controlador = criarControladorCitacoes({
       dispositivos: () => props.dispositivos,
       aoAbrir: abrir,
-      aoFechar: fechar
+      aoFechar: fechar,
+      estaAberto: () => balaoRef.value?.matches(':popover-open') ?? false
     });
     controlador.ligar(nova);
     // Ordem líder 22/09/2026, requisito hoverable: o balão precisa dos
@@ -158,7 +159,11 @@ onMounted(() => {
   // 'auto' entrega, de graça, fechamento por Esc e por clique fora (seção 12.2).
   balaoRef.value?.addEventListener('toggle', (evento: Event) => {
     const toggleEvento = evento as Event & { newState?: string };
-    if (toggleEvento.newState === 'closed') fechar();
+    if (toggleEvento.newState === 'closed') {
+      // O navegador fechou (Esc ou clique fora): o controlador precisa saber (QA-BAL-D1).
+      controlador?.registrarFechamento();
+      fechar();
+    }
   });
 });
 

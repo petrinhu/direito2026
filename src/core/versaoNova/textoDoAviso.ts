@@ -46,7 +46,8 @@ export function textoDoAviso(entrada: EntradaTextoAviso): TextoAviso {
 function resumoDaVersao(resumo: ResumoNovidades): string | null {
   if (resumo.rollback || resumo.itens.length === 0) return null;
   const partes = [...resumo.itens];
-  if (resumo.mais > 0) partes.push(`e mais ${resumo.mais} novidades`);
+  if (resumo.mais > 0)
+    partes.push(`e mais ${resumo.mais} ${resumo.mais === 1 ? 'novidade' : 'novidades'}`);
   if (resumo.foraDoHistorico) partes.push('e outras novidades');
   return partes.join('; ');
 }

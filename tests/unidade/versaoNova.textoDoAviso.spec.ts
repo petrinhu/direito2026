@@ -69,6 +69,18 @@ describe('textoDoAviso: nome, resumo e promessa de continuidade', () => {
     expect(t.frase).toBe('Ana Paula, o site foi atualizado.');
   });
 
+  it('D-F12-3: "e mais 1 novidade" no singular, "e mais 2 novidades" no plural', () => {
+    const um = textoDoAviso({
+      nome: 'Ana Paula',
+      resumo: { rollback: false, foraDoHistorico: false, itens: ['Novo: a'], mais: 1 },
+      sessaoTerminou: false,
+      continuaConectado: true,
+      avisoQuiz: null
+    });
+    expect(um.frase).toContain('; e mais 1 novidade.');
+    expect(um.frase).not.toContain('novidades');
+  });
+
   it('"e mais N novidades" e "e outras novidades" entram no resumo', () => {
     const comMais = textoDoAviso({
       nome: 'Ana Paula',

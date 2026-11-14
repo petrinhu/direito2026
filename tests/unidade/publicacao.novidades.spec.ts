@@ -92,7 +92,7 @@ describe('analisarNovidade: tipo, cadeira e texto', () => {
   it('endereço (www, http e domínio) recusa', () => {
     expect(analisarNovidade('usabilidade:veja www.exemplo.com', CURRICULO).ok).toBe(false);
     expect(analisarNovidade('usabilidade:veja https://exemplo.org', CURRICULO).ok).toBe(false);
-    expect(analisarNovidade('usabilidade:escreva a alguem@exemplo.com', CURRICULO).ok).toBe(false);
+    expect(analisarNovidade('usabilidade:escreva a alguem@example.com', CURRICULO).ok).toBe(false);
   });
 
   it('texto final de mais de 60 caracteres recusa', () => {

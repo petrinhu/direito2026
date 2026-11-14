@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { caminhoEmAreaRestrita } from '@/app/curriculo/areaRestrita';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
@@ -82,6 +82,30 @@ function fecharGaveta(): void {
   elementoAntesDeAbrir?.focus();
   elementoAntesDeAbrir = null;
 }
+
+/**
+ * Fechar por navegação (link do menu ou Voltar do navegador) não devolve o foco ao botão de
+ * abrir: a troca de rota já leva o foco ao conteúdo da página nova (router, afterEach), e
+ * devolvê-lo aqui disputaria com esse passo (AV3-F0e).
+ */
+function fecharPorNavegacao(): void {
+  gavetaAberta.value = false;
+  elementoAntesDeAbrir = null;
+}
+
+/** Link da página atual não troca de rota, então não muda caminhoAtual: o clique cobre esse caso. */
+function aoCliqueNaGaveta(evento: MouseEvent): void {
+  if (evento.target instanceof window.Element && evento.target.closest('a[href]')) {
+    fecharPorNavegacao();
+  }
+}
+
+watch(
+  () => props.caminhoAtual,
+  () => {
+    if (gavetaAberta.value) fecharPorNavegacao();
+  }
+);
 
 function aoTeclaNaGaveta(evento: KeyboardEvent): void {
   if (evento.key === 'Escape') {
@@ -170,6 +194,7 @@ onBeforeUnmount(() => {
       class="layout-base__gaveta"
       :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"
       @keydown="aoTeclaNaGaveta"
+      @click="aoCliqueNaGaveta"
     >
       <MenuCurriculo
         :curriculo="curriculo"

@@ -2,7 +2,7 @@
 
 Regras deste projeto para quem trabalha nele, seja pessoa ou agente de IA.
 
-Última revisão: 2026-11-07. Dono: líder do projeto.
+Última revisão: 2026-11-14. Dono: líder do projeto.
 
 ## Para que serve este arquivo
 
@@ -44,3 +44,12 @@ O checklist preenchido de cada deploy desse tipo fica em `docs/auditoria/deploys
 ## Publicação
 
 O passo a passo para publicar uma versão está em [`docs/publicacao.md`](docs/publicacao.md), na seção "Publicar uma versão". Não copie esse passo a passo para cá: se ele mudar, muda só lá.
+
+### Prioridade quando há vários pedidos em paralelo
+
+Regras do líder, dadas em 14/11/2026, na forma em que ele escreveu:
+
+- "LEI para este projeto: no caso de várias solicitacoes minhas em paralelo, a prioridade do projeto é SEMPRE atualizar as cadeiras".
+- "projetos paralelos podem ser feitos deploy separados, ao serem concluidos, sempre com warning."
+- "priorize deplpy de cadeiras antes do QA visual. Se o QA visual consertar algo, você atualiza e faz novo deploy>tag".
+- "nao quero versao de site "mais leve". A única versão alternativa é a de alto contraste".

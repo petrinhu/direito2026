@@ -810,28 +810,68 @@ provide(ESTADO_MENU, {
    mudam; claro e escuro ficam como estão. O hífen depende do lang do documento (index.html
    tem lang="pt-BR"): sem ele, hyphens: auto não tem dicionário. Os recuos somam, por isso
    o nível 5 aninhado (lista de abas dentro de um tópico) também reduz. */
+/* Palavra longa (decisão do líder, 13/11/2026, "Quebrar palavra longa (Recomendado)"): no modo
+   adaptado, só quando a palavra não cabe na linha ela quebra no fim da linha. O hífen (hyphens:
+   auto) vale onde o navegador tem dicionário; no Chromium desta máquina não há hífen, só a quebra.
+   Não muda a largura do menu nem o tamanho da letra. */
 :root[data-modo-adaptado='on'] .menu-curriculo {
   hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 :root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-2 {
   margin-left: 8px;
-  padding-left: 4px;
+  padding-left: 0;
 }
 
 :root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-3 {
-  margin-left: 8px;
-  padding-left: 4px;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 :root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-4 {
-  margin-left: calc(var(--menu-toggle) - 32px);
+  margin-left: 8px;
   padding-left: 0;
 }
 
+/* O Quiz (link sem triângulo, nível 4) começava 2 px à esquerda do rótulo Resumo no modo
+   adaptado (medido: quiz x=63, Resumo x=65). O recuo do link vai para 32 px, para os dois
+   começarem na mesma coluna. Só o link: os botões de grupo seguem como estão. */
+:root[data-modo-adaptado='on']
+  .menu-curriculo
+  .menu-curriculo__nivel-4
+  > li
+  > a.menu-curriculo__botao {
+  padding-left: 32px;
+}
+
+/* Modo adaptado, decisão CPO R-CPO-MENU-2 (13/11/2026): a aba com submenu (Resumo e seções
+   da Petição) vira link simples. O submenu de blocos e seções sai do menu lateral, porque é o
+   nível que estoura; a navegação dentro da página fica com o sumário do Resumo
+   (VisorResumo.vue:14). A Petição não tem sumário próprio (PecaComentadaVisor.vue:21 só dá id às
+   seções). O link ocupa a coluna do botão de seta (--menu-coluna-aba), igual às outras abas. */
+:root[data-modo-adaptado='on']
+  .menu-curriculo__linha:has(> .menu-curriculo__toggle--aba)
+  > .menu-curriculo__toggle--aba,
+:root[data-modo-adaptado='on']
+  .menu-curriculo__linha:has(> .menu-curriculo__toggle--aba)
+  + ul.menu-curriculo__nivel-5 {
+  display: none;
+}
+
+:root[data-modo-adaptado='on']
+  .menu-curriculo__linha:has(> .menu-curriculo__toggle--aba)
+  > .menu-curriculo__link-aba {
+  padding-left: var(--menu-coluna-aba);
+}
+
+/* Lista de nível 5: filhos de tópico, de grupo e de aba (Resumo). O texto do filho
+   começa 16 px dentro da própria lista (padding do link), e o texto do pai fica a 44 px
+   da borda da linha (botão de seta de 44 px). Com margem + padding de 36 px, o filho
+   começa 8 px à direita do pai. Medido antes desta correção: -25 px (QA b7ec9e30). */
 :root[data-modo-adaptado='on'] .menu-curriculo ul.menu-curriculo__nivel-5 {
-  margin-left: 2px;
-  padding-left: 0;
+  margin-left: 28px;
+  padding-left: 8px;
 }
 
 @media (max-width: 880px) {

@@ -143,6 +143,29 @@ for (const largura of LARGURAS) {
         medida.rolagemHorizontalDaGaveta,
         'rolagem horizontal própria da gaveta do currículo (px)'
       ).toBe(0);
+
+      // Alvo de toque (docs/modo-adaptado.md, seção 2): 44x44 em todo link e botão do menu, só no
+      // modo adaptado (no normal o botão de triângulo tem 32 px, por desenho).
+      if (estado.modoAdaptado) {
+        const pequenos = await page.evaluate(() =>
+          Array.from(
+            document.querySelectorAll<HTMLElement>(
+              'nav[aria-label="Currículo"] a, nav[aria-label="Currículo"] button'
+            )
+          )
+            .filter((el) => el.getClientRects().length > 0)
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return {
+                texto: (el.textContent ?? '').trim().slice(0, 30),
+                largura: Math.round(r.width * 10) / 10,
+                altura: Math.round(r.height * 10) / 10
+              };
+            })
+            .filter((alvo) => alvo.largura < 44 || alvo.altura < 44)
+        );
+        expect(pequenos, 'alvos do menu menores que 44x44').toEqual([]);
+      }
     });
   }
 }

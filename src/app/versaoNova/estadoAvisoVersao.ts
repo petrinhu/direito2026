@@ -71,3 +71,6 @@ export async function aoClicarRecarregar(
   deps.navegar();
   return 'navegou';
 }
+
+/** Reexportação para a camada de ui (ui não importa core direto: regra ui-nao-pula-app). */
+export { textoDoAviso } from '@/core/versaoNova/textoDoAviso';

@@ -2,28 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { textoDoAviso } from '@/core/versaoNova/textoDoAviso';
 
 /**
- * Variantes do texto do banner (AV-F2, seção 3.6 do plano, e a proposta do líder de 14/11).
- * Os textos fixos são de [PREENCHIMENTO DO AGENTE]: a ratificar pelo líder na revisão.
+ * Variantes do texto do banner (AV-F2, seção 3.6 do plano; texto do líder de 14/11/2026):
+ * "<Nome>, o site foi atualizado: <resumo>. [Recarregar a página] para ver a versão nova.
+ * Você volta para a página inicial e continua conectado, sem precisar digitar login e senha
+ * de novo." A redação do agente segue para a revisão do líder.
  */
-const COM_LISTA = {
+const COM_RESUMO = {
   rollback: false,
   foraDoHistorico: false,
   itens: ['Filosofia Jurídica (1º período) atualizada', 'Novo: rádio para estudar'],
   mais: 0
 };
 
-describe('textoDoAviso: nome, lista e promessa de continuidade', () => {
-  it('versão completa, com nome capitalizado e a lista', () => {
+describe('textoDoAviso: nome, resumo e promessa de continuidade', () => {
+  it('versão completa: nome, dois dois pontos, resumo e a continuidade', () => {
     const t = textoDoAviso({
       nome: 'Ana Paula',
-      resumo: COM_LISTA,
+      resumo: COM_RESUMO,
       sessaoTerminou: false,
       continuaConectado: true,
       avisoQuiz: null
     });
-    expect(t.titulo).toBe('Ana Paula, o site foi atualizado.');
-    expect(t.oQueMudou).toBe(
-      'O que mudou: Filosofia Jurídica (1º período) atualizada; Novo: rádio para estudar.'
+    expect(t.frase).toBe(
+      'Ana Paula, o site foi atualizado: Filosofia Jurídica (1º período) atualizada; Novo: rádio para estudar.'
     );
     expect(t.acao).toBe('Recarregar a página');
     expect(t.promessa).toBe(
@@ -31,22 +32,24 @@ describe('textoDoAviso: nome, lista e promessa de continuidade', () => {
     );
   });
 
-  it('sem nome, a variante fica sem nome', () => {
+  it('sem nome, a frase começa por "O site foi atualizado"', () => {
     expect(
       textoDoAviso({
         nome: '',
-        resumo: COM_LISTA,
+        resumo: COM_RESUMO,
         sessaoTerminou: false,
         continuaConectado: true,
         avisoQuiz: null
-      }).titulo
-    ).toBe('O site foi atualizado.');
+      }).frase
+    ).toBe(
+      'O site foi atualizado: Filosofia Jurídica (1º período) atualizada; Novo: rádio para estudar.'
+    );
   });
 
   it('mais de 110 min sem confirmação: sem a frase "e continua conectado"', () => {
     const t = textoDoAviso({
       nome: 'Ana Paula',
-      resumo: COM_LISTA,
+      resumo: COM_RESUMO,
       sessaoTerminou: false,
       continuaConectado: false,
       avisoQuiz: null
@@ -55,7 +58,7 @@ describe('textoDoAviso: nome, lista e promessa de continuidade', () => {
     expect(t.promessa).toContain('para ver a versão nova.');
   });
 
-  it('rollback: não há lista', () => {
+  it('rollback: sem resumo, a frase fica só no "o site foi atualizado"', () => {
     const t = textoDoAviso({
       nome: 'Ana Paula',
       resumo: { rollback: true, foraDoHistorico: false, itens: [], mais: 0 },
@@ -63,26 +66,26 @@ describe('textoDoAviso: nome, lista e promessa de continuidade', () => {
       continuaConectado: true,
       avisoQuiz: null
     });
-    expect(t.oQueMudou).toBeNull();
+    expect(t.frase).toBe('Ana Paula, o site foi atualizado.');
   });
 
-  it('mais itens: "e mais N novidades" e "e outras novidades" entram na lista', () => {
+  it('"e mais N novidades" e "e outras novidades" entram no resumo', () => {
     const comMais = textoDoAviso({
       nome: 'Ana Paula',
-      resumo: { ...COM_LISTA, mais: 2 },
+      resumo: { ...COM_RESUMO, mais: 2 },
       sessaoTerminou: false,
       continuaConectado: true,
       avisoQuiz: null
     });
-    expect(comMais.oQueMudou).toContain('; e mais 2 novidades.');
+    expect(comMais.frase).toContain('; e mais 2 novidades.');
     const fora = textoDoAviso({
       nome: 'Ana Paula',
-      resumo: { ...COM_LISTA, foraDoHistorico: true },
+      resumo: { ...COM_RESUMO, foraDoHistorico: true },
       sessaoTerminou: false,
       continuaConectado: true,
       avisoQuiz: null
     });
-    expect(fora.oQueMudou).toContain('; e outras novidades.');
+    expect(fora.frase).toContain('; e outras novidades.');
   });
 });
 
@@ -90,12 +93,12 @@ describe('textoDoAviso: sessão terminada e quiz de área restrita', () => {
   it('sessão terminada troca a ação por "Entrar de novo", sem prometer continuidade', () => {
     const t = textoDoAviso({
       nome: 'Ana Paula',
-      resumo: COM_LISTA,
+      resumo: COM_RESUMO,
       sessaoTerminou: true,
       continuaConectado: false,
       avisoQuiz: null
     });
-    expect(t.titulo).toBe('Sua sessão terminou.');
+    expect(t.frase).toBe('Sua sessão terminou.');
     expect(t.acao).toBe('Entrar de novo');
     expect(t.promessa).toBe('para ver a versão nova.');
   });
@@ -106,7 +109,7 @@ describe('textoDoAviso: sessão terminada e quiz de área restrita', () => {
     expect(
       textoDoAviso({
         nome: 'Ana Paula',
-        resumo: COM_LISTA,
+        resumo: COM_RESUMO,
         sessaoTerminou: false,
         continuaConectado: true,
         avisoQuiz: aviso

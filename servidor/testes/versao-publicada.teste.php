@@ -7,11 +7,9 @@ declare(strict_types=1);
  * versoes/<v>), e a versão publicada é o arquivo versao.json da própria versão, que o
  * manifesto declara como application/json. Conta sintética, conteúdo sintético (L-28).
  *
- * Cenários desta fatia: anônimo sem corpo; com sessão, JSON com no-store; troca de senha
- * pendente dá 403. O caso de trocar o ponteiro atual com a mesma sessão NÃO entra aqui: o
- * servidor de testes segue servindo a versão antiga depois da troca (diagnóstico de 14/11),
- * e corrigir isso mexe em public/api/**, que esta fatia não toca (L-70). O caso fica pendente
- * de decisão do líder.
+ * Cenários: anônimo sem corpo; com sessão, JSON com no-store; troca de senha pendente dá 403;
+ * trocar o ponteiro atual faz a MESMA sessão receber a versão nova (AV-F6b: causa é o cache de
+ * realpath do processo; o portão limpa o cache com clearstatcache(true)).
  */
 
 /** Uma versão sintética: index.html, versao.json e o manifesto que declara os dois. */
@@ -74,3 +72,16 @@ teste('versao.json: troca de senha pendente dá 403 sem corpo', function (): voi
     igual('', $r->corpo, 'troca pendente: sem corpo');
 });
 
+teste('versao.json: trocar o ponteiro atual faz a MESMA sessão receber a versão nova', function (): void {
+    $a = Ambiente::novo();
+    versaoPubSemearVersao($a, 'v1', '1.0.0.0', 'MARCA-V1');
+    versaoPubSemearVersao($a, 'v2', '2.0.0.0', 'MARCA-V2');
+    versaoPubApontar($a, 'v1');
+    $c = $a->entrar();
+    igual('1.0.0.0', $c->get('/versao.json')->json()['versao'] ?? null, 'antes da troca: versão');
+
+    versaoPubApontar($a, 'v2');
+
+    igual('2.0.0.0', $c->get('/versao.json')->json()['versao'] ?? null, 'depois da troca: versão');
+    contem('MARCA-V2', $c->get('/index.html')->corpo, 'depois da troca: index.html da versão nova');
+});

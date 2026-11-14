@@ -156,6 +156,10 @@ function d26_aviso_da_tela(?string $motivo): ?string
 /** Decisão completa do portão. Sempre termina com uma resposta (exit). */
 function d26_portao_decidir(): never
 {
+    // AV-F6b: o cache de realpath do PHP sobrevive entre pedidos no mesmo processo (php -S, e
+    // um SAPI de longa duração). Sem limpar, o link atual que a publicação troca continua
+    // apontando para a versão antiga até o cache expirar. clearstatcache(true) limpa esse cache.
+    clearstatcache(true);
     $metodo = (string) ($_SERVER['REQUEST_METHOD'] ?? '');
     if ($metodo !== 'GET' && $metodo !== 'HEAD') {
         d26_portao_vazio(405, ['Allow' => 'GET, HEAD']);

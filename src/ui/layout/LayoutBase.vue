@@ -46,6 +46,10 @@ const naPaginaInicial = computed(() => props.caminhoAtual === '');
 // Na página do calendário o quadro de contagem começa minimizado, sem escolha
 // gravada (ordem do orquestrador, para ratificação do líder, 20/10/2026).
 const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario');
+// No modo adaptado o quadro de prova não flutua: vai para o topo da coluna de conteúdo, em espaço
+// próprio do fluxo (AV3-F0f, decisão do CPO a ratificar pelo líder). É a mesma instância, só muda o
+// lugar, por Teleport. Fora do modo, o quadro segue na pilha inferior, como sempre.
+const cartaoNoConteudo = computed(() => props.storeModoAdaptado.efetivo.value);
 
 const emit = defineEmits<{ buscar: [string]; sair: [] }>();
 
@@ -176,6 +180,8 @@ onBeforeUnmount(() => {
       />
     </aside>
     <main id="conteudo-principal" tabindex="-1" class="layout-base__conteudo">
+      <!-- Alvo do quadro de prova no modo adaptado. Fica vazio, sem altura, fora dele. -->
+      <div id="quadro-prova-do-conteudo" class="layout-base__quadro-do-conteudo" />
       <slot />
     </main>
   </div>
@@ -194,7 +200,9 @@ onBeforeUnmount(() => {
   -->
   <div ref="pilhaRef" class="layout-base__inferior">
     <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
-    <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
+    <Teleport to="#quadro-prova-do-conteudo" :disabled="!cartaoNoConteudo">
+      <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
+    </Teleport>
     <BotaoHome v-if="!naPaginaInicial" />
   </div>
 </template>
@@ -270,6 +278,12 @@ onBeforeUnmount(() => {
 
 .layout-base__sobreposicao {
   display: none;
+}
+
+/* Alvo do quadro de prova: só ganha altura no modo adaptado, quando o quadro chega dentro dele. O
+   respiro até o conteúdo abaixo é o mesmo espaço entre blocos (AV3-F0f). */
+:root[data-modo-adaptado='on'] .layout-base__quadro-do-conteudo:not(:empty) {
+  padding-bottom: var(--esp-4, 1rem);
 }
 
 /* Topo do conteúdo: o respiro de cima é a altura do cabeçalho fixo, para o aviso e a faixa

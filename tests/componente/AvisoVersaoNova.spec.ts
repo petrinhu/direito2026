@@ -103,6 +103,27 @@ describe('AvisoVersaoNova', () => {
     expect(montado.find('a').text()).toBe('Entrar de novo');
   });
 
+  it('durante a consulta do clique o link não é desmontado (o pai esconde a versão no meio)', async () => {
+    let liberar: (r: ResultadoConsulta) => void = () => undefined;
+    const p = props({
+      consultar: vi.fn(
+        () =>
+          new Promise<ResultadoConsulta>((resolver) => {
+            liberar = resolver;
+          })
+      )
+    });
+    montado = mount(AvisoVersaoNova, { props: p });
+    const link = montado.find('a').element;
+    const clique = montado.find('a').trigger('click');
+    await montado.setProps({ versaoPublicada: null });
+    expect(montado.find('a').element).toBe(link);
+    liberar({ tipo: 'sessao-terminada' });
+    await clique;
+    await flushPromises();
+    expect(montado.text()).toContain('Sua sessão terminou.');
+  });
+
   it('clique com tecla modificadora deixa o navegador agir, sem consulta', async () => {
     const p = props();
     montado = mount(AvisoVersaoNova, { props: p });

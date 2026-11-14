@@ -30,9 +30,11 @@ const props = defineProps<{
 const sessaoTerminou = ref(false);
 
 // D-F12-2: a variante de sessão terminou fica na tela mesmo quando o controlador já esconde a versão
-// (a consulta devolveu 401/403). Sem ela, o aviso sumiria no clique, sem a orientação de entrar de novo.
+// (a consulta devolveu 401/403). Durante a consulta do clique, o aviso também fica montado: sem isso,
+// o link era desmontado no meio do clique e o Playwright repetia o clique no link novo.
+const emConsulta = ref(false);
 const texto = computed(() =>
-  props.versaoPublicada === null && !sessaoTerminou.value
+  props.versaoPublicada === null && !sessaoTerminou.value && !emConsulta.value
     ? null
     : textoDoAviso({
         nome: props.nome,
@@ -54,13 +56,18 @@ async function aoClicarLink(evento: MouseEvent): Promise<void> {
   // Na variante de sessão terminada o link já vai para a Home sem consultar de novo.
   if (!clicoPrimario(evento) || props.versaoPublicada === null || sessaoTerminou.value) return;
   evento.preventDefault();
-  const resultado = await aoClicarRecarregar({
-    versaoPublicada: props.versaoPublicada,
-    consultar: props.consultar,
-    marcarRecarregouPara: props.marcarRecarregouPara,
-    navegar: props.navegarParaInicio
-  });
-  if (resultado === 'sessao-terminada') sessaoTerminou.value = true;
+  emConsulta.value = true;
+  try {
+    const resultado = await aoClicarRecarregar({
+      versaoPublicada: props.versaoPublicada,
+      consultar: props.consultar,
+      marcarRecarregouPara: props.marcarRecarregouPara,
+      navegar: props.navegarParaInicio
+    });
+    if (resultado === 'sessao-terminada') sessaoTerminou.value = true;
+  } finally {
+    emConsulta.value = false;
+  }
 }
 
 function fechar(): void {

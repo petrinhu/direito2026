@@ -11,6 +11,10 @@
    ========================================================================== */
 
 :root {
+  --cor-aviso-versao-fundo: #ffd166;
+  --cor-aviso-versao-texto: #1a1200;
+  --cor-aviso-versao-foco: #0b3d91;
+  --opacidade-aviso-versao: 0.94;
   /* --- Tipografia ---------------------------------------------------- */
   /* Fontes de verdade da produção (pendência da onda, docs/design-visual.md:
      "hospedada no próprio site"): Cormorant Garamond (títulos do site
@@ -275,6 +279,10 @@
    escolheu nada manualmente (ausência do atributo data-theme). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+  --cor-aviso-versao-fundo: #ffd166;
+  --cor-aviso-versao-texto: #1a1200;
+  --cor-aviso-versao-foco: #0b3d91;
+  --opacidade-aviso-versao: 0.94;
     --cor-fundo: #12161c;
     --cor-fundo-elevado: #1a1f27;
     --cor-fundo-sutil: #1f242d;
@@ -364,6 +372,10 @@
    localStorage e aplica data-theme="dark" na tag <html>). Vale mesmo em
    sistema claro. */
 :root[data-theme="dark"] {
+  --cor-aviso-versao-fundo: #ffd166;
+  --cor-aviso-versao-texto: #1a1200;
+  --cor-aviso-versao-foco: #0b3d91;
+  --opacidade-aviso-versao: 0.94;
   /* Calendário (ordem do líder, 20/10/2026): cor de cada categoria de data.
      Fixa nos dois temas, porque a cor identifica o tipo de data e não muda
      com a preferência. Cada par está medido no portão de contraste
@@ -478,6 +490,10 @@
    preto, contraste máximo); ver docs/modo-adaptado.md, seções 2 e 3, para
    o raciocínio por trás de cada valor. ========================================================================== */
 :root[data-modo-adaptado="on"] {
+  --cor-aviso-versao-fundo: #ffd166;
+  --cor-aviso-versao-texto: #1a1200;
+  --cor-aviso-versao-foco: #0b3d91;
+  --opacidade-aviso-versao: 0.94;
   --escala-xs: 1.125rem;    /* 18px, era 13px */
   --escala-sm: 1.3125rem;   /* 21px, era 15px */
   --escala-base: 1.5rem;    /* 24px, era 17px */

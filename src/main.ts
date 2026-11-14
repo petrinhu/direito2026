@@ -7,6 +7,7 @@ import { criarStoreTema } from '@/app/stores/tema';
 import { criarStoreBusca } from '@/app/stores/busca';
 import { criarStoreModoAdaptado } from '@/app/stores/modoAdaptado';
 import {
+  CHAVE_AVISO_VERSAO,
   CHAVE_CLIENTE_RESTRITO,
   CHAVE_CURRICULO,
   CHAVE_REPOSITORIO,
@@ -19,14 +20,14 @@ import { criarClienteApi } from '@/app/restrito/clienteApi';
 import { criarAoNaoAutorizado, criarSessaoGlobal } from '@/app/sessao/sessaoGlobal';
 import { criarNavegadorReal } from '@/app/sessao/navegador';
 import { criarConferirNaTroca } from '@/app/sessao/conferirNaTroca';
+import { criarControladorAviso } from '@/app/versaoNova/controladorAviso';
+import { criarTransporteFetch } from '@/app/versaoNova/transporteFetch';
+import { criarTratadorDeFalhaDeModulo } from '@/app/versaoNova/falhaModulo';
 import {
   criarFonteVoltaNavegador,
   iniciarVigiaVoltaNavegador
 } from '@/app/sessao/vigiaVoltaNavegador';
-import {
-  criarTratadorFalhaModulo,
-  type ArmazenamentoRecarga
-} from '@/app/atualizacaoSW/recarregarAoFalharModulo';
+import type { ArmazenamentoRecarga } from '@/app/atualizacaoSW/recarregarAoFalharModulo';
 import '@/ui/estilos/fontes.css';
 import '@/ui/estilos/tokens.css';
 import '@/ui/estilos/base.css';
@@ -50,6 +51,30 @@ import '@/ui/estilos/impressao.css';
  */
 const CHAVE_MARCA_RECARGA_MODULO = 'caderno-direito:recarga-modulo-em';
 const JANELA_PROTECAO_LACO_MS = 10_000;
+
+/** Armazenamento da aba do banner de versão (dispensada e laço). Sem sessionStorage, o banner
+ *  ainda aparece; só não lembra o fechamento depois de um recarregamento. */
+function criarArmazenamentoAvisoReal(): {
+  lerChave(chave: string): string | null;
+  gravarChave(chave: string, valor: string): void;
+} {
+  return {
+    lerChave(chave) {
+      try {
+        return window.sessionStorage.getItem(chave);
+      } catch {
+        return null;
+      }
+    },
+    gravarChave(chave, valor) {
+      try {
+        window.sessionStorage.setItem(chave, valor);
+      } catch {
+        // sessionStorage bloqueado: o banner segue, sem a lembrança desta aba.
+      }
+    }
+  };
+}
 
 function criarArmazenamentoRecargaReal(): ArmazenamentoRecarga {
   return {
@@ -76,10 +101,6 @@ function criarArmazenamentoRecargaReal(): ArmazenamentoRecarga {
   };
 }
 
-window.addEventListener(
-  'vite:preloadError',
-  criarTratadorFalhaModulo(criarArmazenamentoRecargaReal(), () => window.location.reload())
-);
 
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();
@@ -107,6 +128,29 @@ async function bootstrap(): Promise<void> {
   app.provide(CHAVE_CLIENTE_RESTRITO, cliente);
   app.provide(CHAVE_SESSAO, sessao);
 
+  // Banner de versão nova (AV-F11): consulta com a sessão do site, vigia de D2 e falha de
+  // módulo que mostra o banner em vez de recarregar (D2b, ratificado pelo líder).
+  const avisoVersao = criarControladorAviso({
+    daAba: __VERSAO_SITE__,
+    transporte: criarTransporteFetch(),
+    relogio: { agora: () => Date.now() },
+    documento: document,
+    armazenamento: criarArmazenamentoAvisoReal(),
+    usuario: sessao.usuario,
+    navegarParaInicio: () => window.location.assign('/')
+  });
+  app.provide(CHAVE_AVISO_VERSAO, avisoVersao);
+  window.addEventListener(
+    'vite:preloadError',
+    criarTratadorDeFalhaDeModulo({
+      daAba: __VERSAO_SITE__,
+      dispensadaPara: () => avisoVersao.versaoDispensada(),
+      consultar: () => avisoVersao.consultar(),
+      armazenamento: criarArmazenamentoRecargaReal(),
+      recarregar: () => window.location.reload()
+    })
+  );
+
   const router = criarRouter();
   app.use(router);
 
@@ -117,6 +161,11 @@ async function bootstrap(): Promise<void> {
     conferir: () => sessao.conferirAoVoltar(),
     agora: () => Date.now()
   });
+  // Troca de rota (inclusive a inicial, que é a carga e não consulta) alimenta o vigia do banner.
+  router.afterEach((_para, _de, falha) => {
+    if (!falha) avisoVersao.aoTrocarRota();
+  });
+  avisoVersao.iniciar();
   router.afterEach((_para, de, falha) => {
     if (falha || de.matched.length === 0) return;
     conferirNaTroca();

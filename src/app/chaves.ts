@@ -6,6 +6,7 @@ import type { StoreBusca } from './stores/busca';
 import type { StoreModoAdaptado } from './stores/modoAdaptado';
 import type { ClienteApi } from './restrito/clienteApi';
 import type { SessaoGlobal } from './sessao/sessaoGlobal';
+import type { ControladorAviso } from './versaoNova/controladorAviso';
 
 /** Chaves de injeção do composition root (main.ts). Ver App.vue. */
 export const CHAVE_CURRICULO: InjectionKey<Curriculo> = Symbol('curriculo');
@@ -21,3 +22,5 @@ export const CHAVE_CLIENTE_RESTRITO: InjectionKey<ClienteApi> = Symbol('clienteR
 
 /** Sessão do site inteiro (usuário, admin, sair). Criada em main.ts. */
 export const CHAVE_SESSAO: InjectionKey<SessaoGlobal> = Symbol('sessao');
+/** Banner de versão nova (AV-F11). Criado em main.ts; App.vue monta a faixa. */
+export const CHAVE_AVISO_VERSAO: InjectionKey<ControladorAviso> = Symbol('avisoVersao');

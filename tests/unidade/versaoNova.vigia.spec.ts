@@ -16,7 +16,11 @@ function relogioFalso(inicio = 1_000_000) {
 
 function documentoFalso(estado: 'visible' | 'hidden' = 'visible') {
   const ouvintes: Array<() => void> = [];
-  const doc: DocumentoVisivel & { mudar(e: 'visible' | 'hidden'): void; ouvintes: number } = {
+  const doc: Omit<DocumentoVisivel, 'visibilityState'> & {
+    visibilityState: string;
+    mudar(e: 'visible' | 'hidden'): void;
+    ouvintes: number;
+  } = {
     visibilityState: estado,
     addEventListener: (_tipo, ouvinte) => ouvintes.push(ouvinte),
     removeEventListener: (_tipo, ouvinte) => {

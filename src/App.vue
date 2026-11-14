@@ -2,6 +2,7 @@
 import { computed, inject, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
+  CHAVE_AVISO_VERSAO,
   CHAVE_CURRICULO,
   CHAVE_REPOSITORIO,
   CHAVE_SESSAO,
@@ -11,6 +12,8 @@ import {
 } from '@/app/chaves';
 import { caminhoSuspendeModoAdaptado } from '@/app/curriculo/areaRestrita';
 import LayoutBase from '@/ui/layout/LayoutBase.vue';
+import AvisoVersaoPosicao from '@/ui/layout/AvisoVersaoPosicao.vue';
+import AvisoVersaoNova from '@/ui/componentes/AvisoVersaoNova.vue';
 
 const curriculo = inject(CHAVE_CURRICULO)!;
 const repositorio = inject(CHAVE_REPOSITORIO)!;
@@ -22,6 +25,8 @@ const storeModoAdaptado = inject(CHAVE_STORE_MODO_ADAPTADO)!;
 const sessao = inject(CHAVE_SESSAO, null);
 const usuario = computed(() => sessao?.usuario.value ?? '');
 const admin = computed(() => sessao?.admin.value ?? false);
+// Banner de versão nova (AV-F11). Sem a chave (teste sem o composition root), não aparece.
+const aviso = inject(CHAVE_AVISO_VERSAO, null);
 const route = useRoute();
 const router = useRouter();
 
@@ -52,4 +57,18 @@ function aoBuscar(termo: string): void {
   >
     <router-view />
   </LayoutBase>
+  <!-- Faixa fixa logo abaixo do cabeçalho, só depois do login (ratificado pelo líder, 46g). -->
+  <AvisoVersaoPosicao v-if="aviso && usuario !== ''">
+    <AvisoVersaoNova
+      :versao-publicada="aviso.visaoAgora().versaoPublicada"
+      :nome="aviso.visaoAgora().nome"
+      :resumo="aviso.visaoAgora().resumo"
+      :continua-conectado="aviso.visaoAgora().continuaConectado"
+      :aviso-quiz="aviso.visaoAgora().avisoQuiz"
+      :consultar="aviso.consultar"
+      :marcar-recarregou-para="aviso.marcarRecarregouPara"
+      :navegar-para-inicio="aviso.navegarParaInicio"
+      :ao-fechar="aviso.fechar"
+    />
+  </AvisoVersaoPosicao>
 </template>

@@ -14,7 +14,8 @@ export interface RelogioVigia {
 export interface OpcoesVigia {
   relogio: RelogioVigia;
   documento: DocumentoVisivel;
-  consultar(): void;
+  /** Devolve false quando a consulta não foi à rede (sem login): não ocupa o intervalo. */
+  consultar(): boolean | void;
   intervaloMinimoMs?: number;
 }
 
@@ -32,15 +33,14 @@ export interface VigiaVersaoPublicada {
 export function criarVigiaVersaoPublicada(opcoes: OpcoesVigia): VigiaVersaoPublicada {
   const { relogio, documento, consultar } = opcoes;
   const intervalo = opcoes.intervaloMinimoMs ?? INTERVALO_MINIMO_CONSULTA_MS;
-  let cargaFeita = false;
   let ultimaConsulta: number | null = null;
 
   function disparar(): void {
     if (documento.visibilityState !== 'visible') return;
     const agora = relogio.agora();
     if (ultimaConsulta !== null && agora - ultimaConsulta < intervalo) return;
-    ultimaConsulta = agora;
-    consultar();
+    const pediu = consultar();
+    if (pediu !== false) ultimaConsulta = agora;
   }
 
   return {
@@ -50,10 +50,6 @@ export function criarVigiaVersaoPublicada(opcoes: OpcoesVigia): VigiaVersaoPubli
       return () => documento.removeEventListener('visibilitychange', ouvinte);
     },
     aoTrocarRota() {
-      if (!cargaFeita) {
-        cargaFeita = true;
-        return;
-      }
       disparar();
     }
   };

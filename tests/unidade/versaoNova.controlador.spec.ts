@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { criarControladorAviso } from '@/app/versaoNova/controladorAviso';
 import { curriculo } from '@/conteudo/curriculo';
 import { FRASE_QUIZ_AREA_RESTRITA } from '@/app/versaoNova/avisoQuiz';
@@ -139,11 +139,25 @@ describe('criarControladorAviso', () => {
     expect(controlador.visaoAgora().avisoQuiz).toBeNull();
   });
 
-  it('a primeira troca de rota é a carga; a segunda consulta', async () => {
+  it('D-F12-1: sem login na troca, a consulta fica pendente e roda quando o login chega', async () => {
+    const { controlador, transporte, usuario } = criar({ usuario: '' });
+    controlador.iniciar();
+    controlador.aoTrocarRota();
+    controlador.aoTrocarRota();
+    await Promise.resolve();
+    expect(transporte).not.toHaveBeenCalled();
+    usuario.value = 'ana.paula';
+    await nextTick();
+    await Promise.resolve();
+    expect(transporte).toHaveBeenCalledTimes(1);
+  });
+
+  it('D-F12-1: a primeira troca de rota já consulta; a segunda, dentro do minuto, não', async () => {
     const { controlador, transporte } = criar();
     controlador.iniciar();
     controlador.aoTrocarRota();
-    expect(transporte).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(transporte).toHaveBeenCalledTimes(1);
     controlador.aoTrocarRota();
     await Promise.resolve();
     expect(transporte).toHaveBeenCalledTimes(1);

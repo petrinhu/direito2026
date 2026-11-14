@@ -60,11 +60,28 @@ describe('criarVigiaVersaoPublicada', () => {
     expect(consultas()).toBe(0);
   });
 
-  it('a primeira troca de rota é a carga da página e não consulta', () => {
+  it('D-F12-1: a primeira troca de rota depois de carregar consulta (a carga não fica isenta)', () => {
     const { vigia, consultas } = montar();
     vigia.iniciar();
     vigia.aoTrocarRota();
-    expect(consultas()).toBe(0);
+    expect(consultas()).toBe(1);
+  });
+
+  it('uma tentativa que não foi à rede (sem login) não ocupa o intervalo', () => {
+    const relogio = relogioFalso();
+    let pedidos = 0;
+    const vigia = criarVigiaVersaoPublicada({
+      relogio,
+      documento: documentoFalso(),
+      consultar: () => {
+        pedidos++;
+        return false;
+      }
+    });
+    vigia.iniciar();
+    vigia.aoTrocarRota();
+    vigia.aoTrocarRota();
+    expect(pedidos).toBe(2);
   });
 
   it('troca de rota depois da carga consulta', () => {

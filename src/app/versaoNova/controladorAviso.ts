@@ -1,4 +1,4 @@
-import { computed, ref, type ComputedRef } from 'vue';
+import { computed, ref, watch, type ComputedRef } from 'vue';
 import {
   consultarVersaoPublicada,
   type ResultadoConsulta,
@@ -99,12 +99,32 @@ export function criarControladorAviso(opcoes: OpcoesControlador): ControladorAvi
     return nova;
   }
 
+  // D-F12-1: a primeira troca de página depois de carregar consulta. Sem login ainda (a sessão
+  // chega depois da carga), a consulta fica pendente e roda quando o login chega.
+  let pendenteAteLogin = false;
+  function consultarSeLogado(): boolean {
+    if (opcoes.usuario.value === '') {
+      pendenteAteLogin = true;
+      return false;
+    }
+    void consultar();
+    return true;
+  }
+
+  watch(
+    () => opcoes.usuario.value,
+    (nome) => {
+      if (nome !== '' && pendenteAteLogin) {
+        pendenteAteLogin = false;
+        void consultar();
+      }
+    }
+  );
+
   const vigia = criarVigiaVersaoPublicada({
     relogio: opcoes.relogio,
     documento: opcoes.documento,
-    consultar: () => {
-      void consultar();
-    }
+    consultar: consultarSeLogado
   });
 
   function avisoQuizAtual(): string | null {

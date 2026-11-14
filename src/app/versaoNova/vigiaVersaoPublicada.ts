@@ -34,23 +34,30 @@ export function criarVigiaVersaoPublicada(opcoes: OpcoesVigia): VigiaVersaoPubli
   const { relogio, documento, consultar } = opcoes;
   const intervalo = opcoes.intervaloMinimoMs ?? INTERVALO_MINIMO_CONSULTA_MS;
   let ultimaConsulta: number | null = null;
+  let cargaFeita = false;
 
-  function disparar(): void {
+  /**
+   * A carga (primeira chamada) consulta, mas NÃO ocupa o intervalo: a troca logo em seguida
+   * ainda consulta (QA-F12, teste de 360 px: a consulta da carga bloqueava a aba que volta).
+   */
+  function disparar(carga: boolean): void {
     if (documento.visibilityState !== 'visible') return;
     const agora = relogio.agora();
-    if (ultimaConsulta !== null && agora - ultimaConsulta < intervalo) return;
+    if (!carga && ultimaConsulta !== null && agora - ultimaConsulta < intervalo) return;
     const pediu = consultar();
-    if (pediu !== false) ultimaConsulta = agora;
+    if (!carga && pediu !== false) ultimaConsulta = agora;
   }
 
   return {
     iniciar() {
-      const ouvinte = () => disparar();
+      const ouvinte = () => disparar(false);
       documento.addEventListener('visibilitychange', ouvinte);
       return () => documento.removeEventListener('visibilitychange', ouvinte);
     },
     aoTrocarRota() {
-      disparar();
+      const carga = !cargaFeita;
+      cargaFeita = true;
+      disparar(carga);
     }
   };
 }

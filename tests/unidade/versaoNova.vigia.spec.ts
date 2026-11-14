@@ -67,6 +67,23 @@ describe('criarVigiaVersaoPublicada', () => {
     expect(consultas()).toBe(1);
   });
 
+  it('a consulta da carga não ocupa o intervalo: a troca logo em seguida ainda consulta', () => {
+    const relogio = relogioFalso();
+    let pedidos = 0;
+    const vigia = criarVigiaVersaoPublicada({
+      relogio,
+      documento: documentoFalso(),
+      consultar: () => {
+        pedidos++;
+        return true;
+      }
+    });
+    vigia.iniciar();
+    vigia.aoTrocarRota();
+    vigia.aoTrocarRota();
+    expect(pedidos).toBe(2);
+  });
+
   it('uma tentativa que não foi à rede (sem login) não ocupa o intervalo', () => {
     const relogio = relogioFalso();
     let pedidos = 0;
@@ -84,12 +101,12 @@ describe('criarVigiaVersaoPublicada', () => {
     expect(pedidos).toBe(2);
   });
 
-  it('troca de rota depois da carga consulta', () => {
+  it('a carga e a troca seguinte consultam: a carga não ocupa o intervalo', () => {
     const { vigia, consultas } = montar();
     vigia.iniciar();
     vigia.aoTrocarRota();
     vigia.aoTrocarRota();
-    expect(consultas()).toBe(1);
+    expect(consultas()).toBe(2);
   });
 
   it('aba que volta a ficar visível consulta', () => {
@@ -107,20 +124,21 @@ describe('criarVigiaVersaoPublicada', () => {
     documento.mudar('hidden');
     documento.visibilityState = 'hidden';
     vigia.aoTrocarRota();
-    expect(consultas()).toBe(1);
+    expect(consultas()).toBe(2);
   });
 
-  it('intervalo mínimo de 60 s entre duas consultas', () => {
+  it('intervalo mínimo de 60 s entre duas consultas dos gatilhos (a carga fica de fora)', () => {
     const { relogio, vigia, consultas } = montar();
     vigia.iniciar();
     vigia.aoTrocarRota();
     vigia.aoTrocarRota();
-    relogio.avancar(30_000);
-    vigia.aoTrocarRota();
-    expect(consultas()).toBe(1);
+    expect(consultas()).toBe(2);
     relogio.avancar(30_000);
     vigia.aoTrocarRota();
     expect(consultas()).toBe(2);
+    relogio.avancar(30_000);
+    vigia.aoTrocarRota();
+    expect(consultas()).toBe(3);
   });
 
   it('dispensar o vigia remove o ouvinte de visibilidade', () => {

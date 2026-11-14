@@ -152,7 +152,7 @@ describe('criarControladorAviso', () => {
     expect(transporte).toHaveBeenCalledTimes(1);
   });
 
-  it('D-F12-1: a primeira troca de rota já consulta; a segunda, dentro do minuto, não', async () => {
+  it('D-F12-1: a carga consulta; a troca logo depois também; depois disso o minuto vale', async () => {
     const { controlador, transporte } = criar();
     controlador.iniciar();
     controlador.aoTrocarRota();
@@ -160,6 +160,9 @@ describe('criarControladorAviso', () => {
     expect(transporte).toHaveBeenCalledTimes(1);
     controlador.aoTrocarRota();
     await Promise.resolve();
-    expect(transporte).toHaveBeenCalledTimes(1);
+    expect(transporte).toHaveBeenCalledTimes(2);
+    controlador.aoTrocarRota();
+    await Promise.resolve();
+    expect(transporte).toHaveBeenCalledTimes(2);
   });
 });

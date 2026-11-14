@@ -104,6 +104,10 @@ defineProps<{ peca: PecaComentada }>();
   break-inside: avoid;
   page-break-inside: avoid;
   margin-block: var(--esp-6, 2rem);
+  /* A âncora do sumário cai no topo da seção, e o cabeçalho fixo cobre um fio do
+     título (scroll-padding-top em base.css conta a altura, mas não a fração de pixel).
+     Mesmo token da área restrita, que tem o mesmo defeito (area-restrita/estilo.css). */
+  scroll-margin-top: var(--esp-5, 1.5rem);
 }
 
 .peca-comentada__grade {

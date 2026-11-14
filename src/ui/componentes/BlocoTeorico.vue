@@ -80,6 +80,9 @@ onBeforeUnmount(() => observador?.disconnect());
 .bloco-teorico {
   max-width: var(--largura-coluna-leitura, 760px);
   margin-inline: auto;
+  /* Mesmo defeito da seção da Petição: o link do sumário do Resumo cai no topo do bloco
+     e o cabeçalho fixo pode cobrir o início dele (AV3-P1S, QA de 14/11). */
+  scroll-margin-top: var(--esp-5, 1.5rem);
   padding-block: var(--esp-7, 3rem);
   break-before: page;
   page-break-before: always;

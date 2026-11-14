@@ -50,6 +50,11 @@ async function posicionar(): Promise<void> {
   balao.style.removeProperty('left');
   balao.style.removeProperty('top');
 
+  // Faixa estreita: o CSS já encaixa o balão embaixo da tela (@media em .balao-dispositivo).
+  // Posicionar aqui com top/left inline o tiraria do rodapé e o soltaria no ponteiro, por
+  // cima do título de destino de um link do sumário (QA de 14/11, 360 px).
+  if (getComputedStyle(balao).getPropertyValue('--balao-encaixado').trim() === '1') return;
+
   // Sem "ponto do ponteiro" (o mouse não abriu o balão: foi clique, toque
   // ou teclado) o anchor positioning nativo se aplica normalmente, porque
   // aí faz sentido âncorar ao elemento inteiro.
@@ -199,6 +204,8 @@ onBeforeUnmount(() => controlador?.desligar());
   position-try-fallbacks: flip-block, flip-inline;
   position-visibility: anchors-visible;
   margin: 0;
+  /* Lida por posicionar(): 1 quando a faixa estreita encaixa o balão embaixo. */
+  --balao-encaixado: 0;
 }
 
 .balao-dispositivo__nota {
@@ -220,6 +227,7 @@ onBeforeUnmount(() => controlador?.desligar());
     max-inline-size: none;
     width: 100%;
     border-radius: var(--raio-lg, 16px) var(--raio-lg, 16px) 0 0;
+    --balao-encaixado: 1;
   }
 }
 </style>

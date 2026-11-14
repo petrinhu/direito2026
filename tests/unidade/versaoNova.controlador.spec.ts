@@ -14,17 +14,25 @@ const MINUTO = 60_000;
 function transporteDe(versao: string | 'sessao' | 'rede') {
   const transporte = vi.fn<Transporte>(async () => {
     if (versao === 'rede') throw new TypeError('Failed to fetch');
-    if (versao === 'sessao') return { status: 401, contentType: null, corpo: async () => '' } as RespostaVersao;
+    if (versao === 'sessao')
+      return { status: 401, contentType: null, corpo: async () => '' } as RespostaVersao;
     return {
       status: 200,
       contentType: 'application/json',
-      corpo: async () => JSON.stringify({ versao, historico: [{ versao, novidades: ['Novo: rádio para estudar'] }] })
+      corpo: async () =>
+        JSON.stringify({ versao, historico: [{ versao, novidades: ['Novo: rádio para estudar'] }] })
     } as RespostaVersao;
   });
   return transporte;
 }
 
-function criar(opcoes: { versao?: string | 'sessao' | 'rede'; usuario?: string; armazenado?: Record<string, string> } = {}) {
+function criar(
+  opcoes: {
+    versao?: string | 'sessao' | 'rede';
+    usuario?: string;
+    armazenado?: Record<string, string>;
+  } = {}
+) {
   let agora = 10_000_000_000;
   const dados: Record<string, string> = { ...(opcoes.armazenado ?? {}) };
   const transporte = transporteDe(opcoes.versao ?? '1.12.1.0');
@@ -33,7 +41,11 @@ function criar(opcoes: { versao?: string | 'sessao' | 'rede'; usuario?: string; 
     daAba: '1.12.0.0',
     transporte,
     relogio: { agora: () => agora },
-    documento: { visibilityState: 'visible', addEventListener: () => undefined, removeEventListener: () => undefined },
+    documento: {
+      visibilityState: 'visible',
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined
+    },
     armazenamento: {
       lerChave: (c) => dados[c] ?? null,
       gravarChave: (c, v) => {

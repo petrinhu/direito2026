@@ -10,7 +10,12 @@ import type { ResultadoConsulta } from '@/app/versaoNova/consultarVersaoPublicad
  * 401/403 troca para "Sua sessão terminou" sem navegar. Botão "Fechar aviso" dispensa e
  * leva o foco a #conteudo-principal. Nome do login entra só como texto.
  */
-const RESUMO = { rollback: false, foraDoHistorico: false, itens: ['Filosofia Jurídica (1º período) atualizada', 'Novo: rádio para estudar'], mais: 0 };
+const RESUMO = {
+  rollback: false,
+  foraDoHistorico: false,
+  itens: ['Filosofia Jurídica (1º período) atualizada', 'Novo: rádio para estudar'],
+  mais: 0
+};
 
 function props(sobrescrever: Record<string, unknown> = {}) {
   return {
@@ -19,7 +24,11 @@ function props(sobrescrever: Record<string, unknown> = {}) {
     resumo: RESUMO,
     continuaConectado: true,
     avisoQuiz: null,
-    consultar: vi.fn(async (): Promise<ResultadoConsulta> => ({ tipo: 'publicada', versao: '1.12.1.0', historico: [] })),
+    consultar: vi.fn(async (): Promise<ResultadoConsulta> => ({
+      tipo: 'publicada',
+      versao: '1.12.1.0',
+      historico: []
+    })),
     marcarRecarregouPara: vi.fn(),
     navegarParaInicio: vi.fn(),
     aoFechar: vi.fn(),
@@ -70,7 +79,9 @@ describe('AvisoVersaoNova', () => {
   });
 
   it('clique com 401: não navega e troca para "Sua sessão terminou"', async () => {
-    const p = props({ consultar: vi.fn(async (): Promise<ResultadoConsulta> => ({ tipo: 'sessao-terminada' })) });
+    const p = props({
+      consultar: vi.fn(async (): Promise<ResultadoConsulta> => ({ tipo: 'sessao-terminada' }))
+    });
     montado = mount(AvisoVersaoNova, { props: p });
     await montado.find('a').trigger('click');
     await flushPromises();

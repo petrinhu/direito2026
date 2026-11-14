@@ -20,7 +20,9 @@ describe('decidirEstadoAviso', () => {
   it('oculto sem resultado ou com sem informação', () => {
     const base = { daAba: '1.12.0.0', dispensadaPara: null, recarregouPara: null };
     expect(decidirEstadoAviso({ ...base, resultado: null })).toEqual({ tipo: 'oculto' });
-    expect(decidirEstadoAviso({ ...base, resultado: { tipo: 'sem-informacao' } })).toEqual({ tipo: 'oculto' });
+    expect(decidirEstadoAviso({ ...base, resultado: { tipo: 'sem-informacao' } })).toEqual({
+      tipo: 'oculto'
+    });
   });
 
   it('versão diferente da aba mostra o aviso com a publicada', () => {
@@ -47,7 +49,12 @@ describe('decidirEstadoAviso', () => {
   it('versão dispensada não volta, mas uma publicada nova volta', () => {
     const publicada = { tipo: 'publicada' as const, versao: '1.12.1.0', historico: [] };
     expect(
-      decidirEstadoAviso({ daAba: '1.12.0.0', resultado: publicada, dispensadaPara: '1.12.1.0', recarregouPara: null })
+      decidirEstadoAviso({
+        daAba: '1.12.0.0',
+        resultado: publicada,
+        dispensadaPara: '1.12.1.0',
+        recarregouPara: null
+      })
     ).toEqual({ tipo: 'oculto' });
     expect(
       decidirEstadoAviso({
@@ -89,12 +96,16 @@ describe('continuaConectado', () => {
 
   it('confirmação dentro do limite (110 min) mantém a frase', () => {
     const agora = 10_000_000_000;
-    expect(continuaConectado(agora - (LIMITE_CONTINUA_CONECTADO_MIN - 1) * MINUTO, agora)).toBe(true);
+    expect(continuaConectado(agora - (LIMITE_CONTINUA_CONECTADO_MIN - 1) * MINUTO, agora)).toBe(
+      true
+    );
   });
 
   it('confirmação além do limite tira a frase', () => {
     const agora = 10_000_000_000;
-    expect(continuaConectado(agora - (LIMITE_CONTINUA_CONECTADO_MIN + 1) * MINUTO, agora)).toBe(false);
+    expect(continuaConectado(agora - (LIMITE_CONTINUA_CONECTADO_MIN + 1) * MINUTO, agora)).toBe(
+      false
+    );
   });
 });
 

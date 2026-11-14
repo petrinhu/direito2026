@@ -43,7 +43,9 @@ const texto = computed(() =>
 
 /** Clique com modificador (nova aba, janela) segue o comportamento normal do navegador. */
 function clicoPrimario(evento: MouseEvent): boolean {
-  return evento.button === 0 && !evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey;
+  return (
+    evento.button === 0 && !evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey
+  );
 }
 
 async function aoClicarLink(evento: MouseEvent): Promise<void> {
@@ -86,7 +88,11 @@ function fechar(): void {
   align-items: center;
   gap: 1rem;
   padding: 0.5rem 1rem;
-  background: color-mix(in srgb, var(--cor-aviso-versao-fundo) calc(var(--opacidade-aviso-versao) * 100%), transparent);
+  background: color-mix(
+    in srgb,
+    var(--cor-aviso-versao-fundo) calc(var(--opacidade-aviso-versao) * 100%),
+    transparent
+  );
   color: var(--cor-aviso-versao-texto);
   animation: respiracao-aviso 4s ease-in-out infinite;
 }

@@ -16,7 +16,10 @@ const CORPO_VALIDO = JSON.stringify({
   historico: [{ versao: '1.12.1.0', novidades: ['Novo: rádio para estudar'] }]
 });
 
-function transporteQue(resposta: RespostaVersao | 'rede'): { transporte: Transporte; pedidos: PedidoVersao[] } {
+function transporteQue(resposta: RespostaVersao | 'rede'): {
+  transporte: Transporte;
+  pedidos: PedidoVersao[];
+} {
   const pedidos: PedidoVersao[] = [];
   const transporte: Transporte = async (url, opcoes) => {
     pedidos.push({ url, opcoes });

@@ -15,7 +15,11 @@ import { extrairVariaveisHex, recortarBlocoDeSeletorTopoDeArquivo } from '@/core
 const CAMINHO_TOKENS = resolve(__dirname, '../../src/ui/estilos/tokens.css');
 const PISO_TEXTO = 4.5;
 const PISO_NAO_TEXTO = 3;
-const TOKENS_COR = ['--cor-aviso-versao-fundo', '--cor-aviso-versao-texto', '--cor-aviso-versao-foco'];
+const TOKENS_COR = [
+  '--cor-aviso-versao-fundo',
+  '--cor-aviso-versao-texto',
+  '--cor-aviso-versao-foco'
+];
 
 const SELETORES = {
   claro: ':root {',
@@ -27,10 +31,13 @@ const SELETORES = {
 function lerBlocos(): Record<keyof typeof SELETORES, string> {
   const css = readFileSync(CAMINHO_TOKENS, 'utf-8');
   const blocos = {} as Record<keyof typeof SELETORES, string>;
-  for (const [nome, seletor] of Object.entries(SELETORES) as Array<[keyof typeof SELETORES, string]>) {
-    const bloco = seletor === SELETORES.escuroSistema
-      ? recortarDentroDeMedia(css, seletor)
-      : recortarBlocoDeSeletorTopoDeArquivo(css, seletor);
+  for (const [nome, seletor] of Object.entries(SELETORES) as Array<
+    [keyof typeof SELETORES, string]
+  >) {
+    const bloco =
+      seletor === SELETORES.escuroSistema
+        ? recortarDentroDeMedia(css, seletor)
+        : recortarBlocoDeSeletorTopoDeArquivo(css, seletor);
     if (bloco === undefined) throw new Error(`não achei o bloco ${seletor} em tokens.css`);
     blocos[nome] = bloco;
   }
@@ -53,13 +60,20 @@ function recortarDentroDeMedia(css: string, seletor: string): string | undefined
   return undefined;
 }
 
-function valorResolvido(blocos: Record<keyof typeof SELETORES, string>, nome: keyof typeof SELETORES, token: string): string | undefined {
+function valorResolvido(
+  blocos: Record<keyof typeof SELETORES, string>,
+  nome: keyof typeof SELETORES,
+  token: string
+): string | undefined {
   const proprio = extrairVariaveisHex(blocos[nome])[token];
   if (proprio !== undefined) return proprio;
   return extrairVariaveisHex(blocos.claro)[token];
 }
 
-function opacidade(blocos: Record<keyof typeof SELETORES, string>, nome: keyof typeof SELETORES): number | undefined {
+function opacidade(
+  blocos: Record<keyof typeof SELETORES, string>,
+  nome: keyof typeof SELETORES
+): number | undefined {
   const lido = (bloco: string) => /--opacidade-aviso-versao\s*:\s*([0-9.]+)\s*;/.exec(bloco)?.[1];
   const valor = lido(blocos[nome]) ?? lido(blocos.claro);
   return valor === undefined ? undefined : Number(valor);
@@ -94,7 +108,10 @@ describe('contraste do aviso de versão nova (AV-F8)', () => {
         const alfa = opacidade(blocos, nome)!;
         for (const pagina of EXTREMOS_DE_PAGINA) {
           const efetivo = comporSobre(fundo, alfa, pagina);
-          expect(calcularContraste(texto, efetivo), `texto sobre ${efetivo} (página ${pagina})`).toBeGreaterThanOrEqual(PISO_TEXTO);
+          expect(
+            calcularContraste(texto, efetivo),
+            `texto sobre ${efetivo} (página ${pagina})`
+          ).toBeGreaterThanOrEqual(PISO_TEXTO);
         }
       });
 
@@ -104,7 +121,9 @@ describe('contraste do aviso de versão nova (AV-F8)', () => {
         const alfa = opacidade(blocos, nome)!;
         for (const pagina of EXTREMOS_DE_PAGINA) {
           const efetivo = comporSobre(fundo, alfa, pagina);
-          expect(calcularContraste(foco, efetivo), `foco sobre ${efetivo}`).toBeGreaterThanOrEqual(PISO_NAO_TEXTO);
+          expect(calcularContraste(foco, efetivo), `foco sobre ${efetivo}`).toBeGreaterThanOrEqual(
+            PISO_NAO_TEXTO
+          );
         }
       });
     });
@@ -112,7 +131,9 @@ describe('contraste do aviso de versão nova (AV-F8)', () => {
 
   it('o escuro por preferência e o escuro por escolha têm os mesmos valores do banner', () => {
     for (const token of TOKENS_COR) {
-      expect(valorResolvido(blocos, 'escuroSistema', token)).toBe(valorResolvido(blocos, 'escuroEscolha', token));
+      expect(valorResolvido(blocos, 'escuroSistema', token)).toBe(
+        valorResolvido(blocos, 'escuroEscolha', token)
+      );
     }
     expect(opacidade(blocos, 'escuroSistema')).toBe(opacidade(blocos, 'escuroEscolha'));
   });

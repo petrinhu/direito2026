@@ -1,6 +1,14 @@
 import { computed, ref, type ComputedRef } from 'vue';
-import { consultarVersaoPublicada, type ResultadoConsulta, type Transporte } from './consultarVersaoPublicada';
-import { criarVigiaVersaoPublicada, type DocumentoVisivel, type RelogioVigia } from './vigiaVersaoPublicada';
+import {
+  consultarVersaoPublicada,
+  type ResultadoConsulta,
+  type Transporte
+} from './consultarVersaoPublicada';
+import {
+  criarVigiaVersaoPublicada,
+  type DocumentoVisivel,
+  type RelogioVigia
+} from './vigiaVersaoPublicada';
 import {
   CHAVE_DISPENSADA,
   CHAVE_RECARREGOU_PARA,
@@ -47,7 +55,12 @@ export interface ControladorAviso {
   navegarParaInicio(): void;
 }
 
-const SEM_NOVIDADES: ResumoNovidades = { rollback: false, foraDoHistorico: false, itens: [], mais: 0 };
+const SEM_NOVIDADES: ResumoNovidades = {
+  rollback: false,
+  foraDoHistorico: false,
+  itens: [],
+  mais: 0
+};
 
 /**
  * Estado do banner de versão nova (AV-F11): liga a consulta, o vigia, o armazenamento da aba

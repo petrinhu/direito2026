@@ -5,9 +5,7 @@ import { LIMITE_CONTINUA_CONECTADO_MIN } from '@/core/versaoNova/limites';
 export const CHAVE_DISPENSADA = 'caderno-direito:aviso-versao:dispensada';
 export const CHAVE_RECARREGOU_PARA = 'caderno-direito:aviso-versao:recarregou-para';
 
-export type EstadoAviso =
-  | { tipo: 'oculto' }
-  | { tipo: 'versao-nova'; publicada: string };
+export type EstadoAviso = { tipo: 'oculto' } | { tipo: 'versao-nova'; publicada: string };
 
 export interface EntradaEstado {
   daAba: string;
@@ -28,7 +26,9 @@ export function decidirEstadoAviso(entrada: EntradaEstado): EstadoAviso {
   if (publicada === daAba) return { tipo: 'oculto' };
   if (publicada === dispensadaPara) return { tipo: 'oculto' };
   if (publicada === recarregouPara) {
-    console.warn(`aviso de versão: a aba segue em ${daAba}, mas já se recarregou para ${publicada}`);
+    console.warn(
+      `aviso de versão: a aba segue em ${daAba}, mas já se recarregou para ${publicada}`
+    );
     return { tipo: 'oculto' };
   }
   return { tipo: 'versao-nova', publicada };

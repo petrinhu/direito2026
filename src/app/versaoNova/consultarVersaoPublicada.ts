@@ -33,7 +33,10 @@ export type Transporte = (url: string, opcoes: PedidoVersao['opcoes']) => Promis
 export async function consultarVersaoPublicada(transporte: Transporte): Promise<ResultadoConsulta> {
   let resposta: RespostaVersao;
   try {
-    resposta = await transporte(CAMINHO_VERSAO_PUBLICADA, { cache: 'no-store', credentials: 'same-origin' });
+    resposta = await transporte(CAMINHO_VERSAO_PUBLICADA, {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
   } catch {
     return { tipo: 'sem-informacao' };
   }

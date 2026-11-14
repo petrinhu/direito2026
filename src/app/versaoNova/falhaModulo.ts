@@ -1,4 +1,7 @@
-import type { ArmazenamentoRecarga, EventoFalhaModulo } from '@/app/atualizacaoSW/recarregarAoFalharModulo';
+import type {
+  ArmazenamentoRecarga,
+  EventoFalhaModulo
+} from '@/app/atualizacaoSW/recarregarAoFalharModulo';
 import type { ResultadoConsulta } from './consultarVersaoPublicada';
 
 /**
@@ -31,14 +34,18 @@ export async function tratarFalhaDeModulo(deps: DepsFalhaModulo): Promise<Desfec
 }
 
 /** Tratador para o evento vite:preloadError: cancela o padrão antes de decidir. */
-export function criarTratadorDeFalhaDeModulo(deps: DepsFalhaModulo): (evento: EventoFalhaModulo) => void {
+export function criarTratadorDeFalhaDeModulo(
+  deps: DepsFalhaModulo
+): (evento: EventoFalhaModulo) => void {
   return (evento) => {
     evento.preventDefault?.();
     void tratarFalhaDeModulo(deps);
   };
 }
 
-async function consultarSemFalhar(consultar: () => Promise<ResultadoConsulta>): Promise<ResultadoConsulta> {
+async function consultarSemFalhar(
+  consultar: () => Promise<ResultadoConsulta>
+): Promise<ResultadoConsulta> {
   try {
     return await consultar();
   } catch {

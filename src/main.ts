@@ -101,7 +101,6 @@ function criarArmazenamentoRecargaReal(): ArmazenamentoRecarga {
   };
 }
 
-
 async function bootstrap(): Promise<void> {
   const curriculo = await carregarCurriculo();
   const repositorio = criarRepositorioProgresso();

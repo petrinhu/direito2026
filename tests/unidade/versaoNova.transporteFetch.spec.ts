@@ -7,17 +7,29 @@ import { criarTransporteFetch } from '@/app/versaoNova/transporteFetch';
  */
 describe('criarTransporteFetch', () => {
   it('chama fetch com a URL e as opções de consulta', async () => {
-    const fetchFalso = vi.fn(async () => new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }));
+    const fetchFalso = vi.fn(
+      async () =>
+        new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })
+    );
     const transporte = criarTransporteFetch(fetchFalso as unknown as typeof fetch);
     await transporte('/versao.json', { cache: 'no-store', credentials: 'same-origin' });
-    expect(fetchFalso).toHaveBeenCalledWith('/versao.json', { cache: 'no-store', credentials: 'same-origin' });
+    expect(fetchFalso).toHaveBeenCalledWith('/versao.json', {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
   });
 
   it('devolve status, content-type e corpo da resposta', async () => {
     const fetchFalso = async () =>
-      new Response('{"versao":"1.12.1.0"}', { status: 200, headers: { 'content-type': 'application/json' } });
+      new Response('{"versao":"1.12.1.0"}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+      });
     const transporte = criarTransporteFetch(fetchFalso as unknown as typeof fetch);
-    const resposta = await transporte('/versao.json', { cache: 'no-store', credentials: 'same-origin' });
+    const resposta = await transporte('/versao.json', {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
     expect(resposta.status).toBe(200);
     expect(resposta.contentType).toContain('application/json');
     expect(await resposta.corpo()).toBe('{"versao":"1.12.1.0"}');
@@ -26,7 +38,10 @@ describe('criarTransporteFetch', () => {
   it('401 chega como status, sem lançar erro', async () => {
     const fetchFalso = async () => new Response('', { status: 401 });
     const transporte = criarTransporteFetch(fetchFalso as unknown as typeof fetch);
-    const resposta = await transporte('/versao.json', { cache: 'no-store', credentials: 'same-origin' });
+    const resposta = await transporte('/versao.json', {
+      cache: 'no-store',
+      credentials: 'same-origin'
+    });
     expect(resposta.status).toBe(401);
   });
 });

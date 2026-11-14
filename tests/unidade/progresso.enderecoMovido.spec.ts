@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { criarStoreProgresso } from '@/app/stores/progresso';
 import type { RegistroProgressoUnidade, RepositorioProgresso } from '@/core/progresso/tipos';
-import { embaralharRodada } from '@/core/quiz/motor';
-import type {
-  IndiceAlternativa,
-  PerguntaMultiplaEscolha,
-  PerguntaQuiz
-} from '@/core/unidade/tipos';
-import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz/index';
+import type { IndiceAlternativa } from '@/core/unidade/tipos';
 
 /**
  * Progresso de unidade movida (ordem do líder, 25/10/2026: "Levar para o endereço
@@ -63,34 +57,6 @@ describe('progresso de unidade movida', () => {
 const CHAVE_ANTIGA_FILOSOFIA = 'p1/filosofia-juridica/u3';
 const CHAVE_NOVA_FILOSOFIA = 'p1/filosofia-juridica/u3-moderna-contemporanea';
 
-/** Filosofia com uma 5ª alternativa no fim de cada pergunta e 60 perguntas novas (crescimento). */
-function crescerQuiz(perguntas: readonly PerguntaQuiz[]): PerguntaQuiz[] {
-  const comQuinta = perguntas.map(
-    (p) =>
-      ({
-        ...p,
-        alternativasHtml: [
-          ...(p as PerguntaMultiplaEscolha).alternativasHtml,
-          'Quinta alternativa nova'
-        ]
-      }) as PerguntaQuiz
-  );
-  const novas = Array.from(
-    { length: 60 },
-    (_, i) =>
-      ({
-        id: 21 + i,
-        categoria: 'filosofia-moderna',
-        enunciadoHtml: `Nova ${21 + i}`,
-        explicacaoHtml: 'x',
-        fonteExtra: false,
-        alternativasHtml: ['a', 'b', 'c', 'd'],
-        correta: 0
-      }) as unknown as PerguntaQuiz
-  );
-  return [...comQuinta, ...novas];
-}
-
 describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
   it('lidos e aba chegam intactos à chave nova', () => {
     const antigo: RegistroProgressoUnidade = {
@@ -110,35 +76,22 @@ describe('progresso de unidade movida: Filosofia AV3 e K4', () => {
     expect(store.registro.value.ultimaAba).toBe('quiz');
   });
 
-  it('a resposta legada chega traduzida e aponta o mesmo texto que apontava antes do quiz crescer', () => {
-    const semente = 2026;
-    const respostasHoje: Record<number, IndiceAlternativa> = { 1: 2, 4: 0, 9: 3, 12: 1, 17: 0 };
+  it('resposta legada de Filosofia u3 zera na leitura (decisão "Zerar todas as antigas", AV3-K4)', () => {
     const antigo: RegistroProgressoUnidade = {
       versao: 1,
       atualizadoEm: '2026-11-01T00:00:00.000Z',
       blocosLidos: [],
       ultimaAba: 'quiz',
-      quizSemente: semente,
-      quizRespostas: respostasHoje,
+      quizSemente: 2026,
+      quizRespostas: { 1: 2 as IndiceAlternativa, 4: 0 as IndiceAlternativa },
       quizFinalizado: false
     };
     const store = criarStoreProgresso(
       repositorioCom({ [CHAVE_ANTIGA_FILOSOFIA]: antigo }),
       CHAVE_NOVA_FILOSOFIA
     );
-    const traduzidas = store.registro.value.quizRespostasOriginais;
-    expect(traduzidas).toBeDefined();
+    expect(store.registro.value.quizSemente).toBeUndefined();
     expect(store.registro.value.quizRespostas).toBeUndefined();
-
-    const hoje = embaralharRodada(quizFilosofia, semente);
-    const depois = embaralharRodada(crescerQuiz(quizFilosofia), semente);
-    for (const [idStr, mostrada] of Object.entries(respostasHoje)) {
-      const id = Number(idStr);
-      const textoHoje = hoje.perguntas.find((p) => p.id === id)!.alternativasHtml[mostrada]!;
-      const pergunta = depois.perguntas.find((p) => p.id === id)!;
-      const indiceDepois = pergunta.ordemOriginal.indexOf(traduzidas![id]!);
-      expect(pergunta.alternativasHtml[indiceDepois]).toBe(textoHoje);
-    }
   });
 });
 

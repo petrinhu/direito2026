@@ -23,7 +23,20 @@ describe('respostasParaExibir: resposta pela posição original vira a posição
   });
 
   it('ignora posição original que a pergunta não tem', () => {
-    const rodada = embaralharRodada(quizFilosofia, SEMENTE);
+    // Fixture própria, com quatro alternativas: o conteúdo vivo da Filosofia ganhou a quinta
+    // (AV3-F1), e a posição 4 deixou de faltar nele.
+    const dePoucasAlternativas: PerguntaMultiplaEscolha[] = [
+      {
+        id: 1,
+        categoria: 'teoria',
+        enunciadoHtml: 'a',
+        explicacaoHtml: 'x',
+        fonteExtra: false,
+        alternativasHtml: ['a', 'b', 'c', 'd'],
+        correta: 0
+      }
+    ];
+    const rodada = embaralharRodada(dePoucasAlternativas, SEMENTE);
     expect(respostasParaExibir(rodada.perguntas, { 1: 4 as IndiceAlternativa })).toEqual({});
   });
 });

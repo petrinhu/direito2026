@@ -10,5 +10,6 @@ import type { ChaveUnidade } from '@/core/progresso/tipos';
  */
 export const QUIZZES_QUE_CRESCERAM: readonly ChaveUnidade[] = [
   'p1/intr-direito/u3-material-norma-interpretacao',
-  'p1/sociologia-juridica/u3-eca-digital'
+  'p1/sociologia-juridica/u3-eca-digital',
+  'p1/filosofia-juridica/u3-moderna-contemporanea'
 ];

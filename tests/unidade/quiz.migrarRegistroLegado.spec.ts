@@ -9,7 +9,6 @@ import type { FormaPergunta } from '@/core/quiz/tipos';
 import type { IndiceAlternativa, PerguntaQuiz } from '@/core/unidade/tipos';
 import { quiz as quizTeoriaPura } from '@/conteudo/p1/intr-direito/u3-livro-teoria-pura/quiz/index';
 import { quiz as quizArtigos } from '@/conteudo/p1/sociologia-juridica/u3-artigos-infancia-digital/quiz/index';
-import { quiz as quizFilosofia } from '@/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz/index';
 
 const CHAVE_INTRO = 'p1/intr-direito/u3-material-norma-interpretacao';
 const CHAVE_ECA = 'p1/sociologia-juridica/u3-eca-digital';
@@ -108,11 +107,10 @@ describe('migrarRegistroLegado: tradução pela forma congelada', () => {
     expect(saida.quizIdsDaRodada).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('com o conteúdo real, a tradução acerta em quiz com V/F (Teoria pura u3) e em Filosofia u3', () => {
+  it('com o conteúdo real, a tradução acerta em quiz com V/F (Teoria pura u3) e em Artigos', () => {
     const semente = 777;
     const casos: Array<{ chave: ChaveUnidade; quiz: readonly PerguntaQuiz[] }> = [
       { chave: 'p1/intr-direito/u3-livro-teoria-pura', quiz: quizTeoriaPura },
-      { chave: 'p1/filosofia-juridica/u3-moderna-contemporanea', quiz: quizFilosofia },
       { chave: CHAVE_ARTIGOS, quiz: quizArtigos }
     ];
     for (const { chave, quiz } of casos) {
@@ -159,6 +157,20 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
     expect(saida.quizRespostasOriginais).toEqual({});
   });
 
+  it('Filosofia u3: legado zera (AV3-F1, a unidade entrou na lista de quizzes que cresceram)', () => {
+    const saida = migrarRegistroLegado(
+      legado({
+        atualizadoEm: '2026-11-01T00:00:00.000Z',
+        quizSemente: 2026,
+        quizRespostas: { 1: 2 as IndiceAlternativa }
+      }),
+      'p1/filosofia-juridica/u3-moderna-contemporanea'
+    );
+    expect(saida.quizSemente).toBeUndefined();
+    expect(saida.quizRespostas).toBeUndefined();
+    expect(saida.quizRespostasOriginais).toEqual({});
+  });
+
   it('ECA: legado zera mesmo com atualizadoEm depois do crescimento', () => {
     const saida = migrarRegistroLegado(
       legado({
@@ -199,11 +211,12 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
 });
 
 describe('migrarRegistroLegado: a lista de quizzes que cresceram é fixa, e os outros traduzem sem perda (AV3-K4)', () => {
-  it('a lista é exatamente Introdução u3 material e ECA Digital', () => {
+  it('a lista é exatamente Introdução u3 material, ECA Digital e Filosofia u3 (AV3-F1)', () => {
     expect([...QUIZZES_QUE_CRESCERAM].sort()).toEqual(
       [
         'p1/intr-direito/u3-material-norma-interpretacao',
-        'p1/sociologia-juridica/u3-eca-digital'
+        'p1/sociologia-juridica/u3-eca-digital',
+        'p1/filosofia-juridica/u3-moderna-contemporanea'
       ].sort()
     );
   });

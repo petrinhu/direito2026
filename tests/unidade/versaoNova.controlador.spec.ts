@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { criarControladorAviso } from '@/app/versaoNova/controladorAviso';
+import { curriculo } from '@/conteudo/curriculo';
+import { FRASE_QUIZ_AREA_RESTRITA } from '@/app/versaoNova/avisoQuiz';
 import { CHAVE_DISPENSADA, CHAVE_RECARREGOU_PARA } from '@/app/versaoNova/estadoAvisoVersao';
 import type { RespostaVersao, Transporte } from '@/app/versaoNova/consultarVersaoPublicada';
 
@@ -113,6 +115,28 @@ describe('criarControladorAviso', () => {
     expect(controlador.visaoAgora().continuaConectado).toBe(true);
     avancar(111 * MINUTO);
     expect(controlador.visaoAgora().continuaConectado).toBe(false);
+  });
+
+  it('a frase do quiz segue a rota atual: aparece na área restrita e some numa cadeira comum (decisão 72)', () => {
+    let caminho = '/p/p1/juri-simulado';
+    const controlador = criarControladorAviso({
+      daAba: '1.12.0.0',
+      transporte: transporteDe('1.12.1.0'),
+      relogio: { agora: () => 0 },
+      documento: {
+        visibilityState: 'visible',
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined
+      },
+      armazenamento: { lerChave: () => null, gravarChave: () => undefined },
+      usuario: ref('ana.paula'),
+      navegarParaInicio: vi.fn(),
+      curriculo,
+      caminhoAtual: () => caminho
+    });
+    expect(controlador.visaoAgora().avisoQuiz).toBe(FRASE_QUIZ_AREA_RESTRITA);
+    caminho = '/p/p1/intr-direito';
+    expect(controlador.visaoAgora().avisoQuiz).toBeNull();
   });
 
   it('a primeira troca de rota é a carga; a segunda consulta', async () => {

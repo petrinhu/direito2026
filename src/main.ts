@@ -136,7 +136,9 @@ async function bootstrap(): Promise<void> {
     documento: document,
     armazenamento: criarArmazenamentoAvisoReal(),
     usuario: sessao.usuario,
-    navegarParaInicio: () => window.location.assign('/')
+    navegarParaInicio: () => window.location.assign('/'),
+    curriculo,
+    caminhoAtual: () => router.currentRoute.value.path
   });
   app.provide(CHAVE_AVISO_VERSAO, avisoVersao);
   window.addEventListener(

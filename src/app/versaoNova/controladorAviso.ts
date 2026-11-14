@@ -17,6 +17,8 @@ import {
   type EstadoAviso
 } from './estadoAvisoVersao';
 import { nomeDeExibicao } from '@/core/versaoNova/nomeDeExibicao';
+import type { Curriculo } from '@/core/curriculo/tipos';
+import { avisoQuizDoCaminho } from './avisoQuiz';
 import { novidadesDesde, type ResumoNovidades } from '@/core/versaoNova/novidadesDesde';
 
 export interface ArmazenamentoAviso {
@@ -41,6 +43,9 @@ export interface OpcoesControlador {
   /** Nome de login da sessão; vazio até o login. Sem login não há consulta. */
   usuario: { readonly value: string };
   navegarParaInicio: () => void;
+  /** Currículo e rota atual: a frase do quiz aparece nas áreas restritas (decisão 72). */
+  curriculo?: Curriculo;
+  caminhoAtual?: () => string;
 }
 
 export interface ControladorAviso {
@@ -102,6 +107,11 @@ export function criarControladorAviso(opcoes: OpcoesControlador): ControladorAvi
     }
   });
 
+  function avisoQuizAtual(): string | null {
+    if (!opcoes.curriculo || !opcoes.caminhoAtual) return null;
+    return avisoQuizDoCaminho(opcoes.curriculo, opcoes.caminhoAtual());
+  }
+
   return {
     estado,
     visaoAgora(): VisaoAviso {
@@ -112,7 +122,7 @@ export function criarControladorAviso(opcoes: OpcoesControlador): ControladorAvi
         nome: nomeDeExibicao(opcoes.usuario.value),
         resumo: versao === null ? SEM_NOVIDADES : novidadesDesde(historico, opcoes.daAba, versao),
         continuaConectado: continuaConectado(ultimaConfirmacao.value, opcoes.relogio.agora()),
-        avisoQuiz: null
+        avisoQuiz: avisoQuizAtual()
       };
     },
     consultar,

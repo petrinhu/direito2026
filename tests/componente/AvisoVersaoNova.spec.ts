@@ -90,6 +90,19 @@ describe('AvisoVersaoNova', () => {
     expect(montado.find('a').text()).toBe('Entrar de novo');
   });
 
+  it('D-F12-2: depois do 401 no clique, a variante "Sua sessão terminou" continua mesmo sem versão publicada', async () => {
+    const p = props({
+      consultar: vi.fn(async (): Promise<ResultadoConsulta> => ({ tipo: 'sessao-terminada' }))
+    });
+    montado = mount(AvisoVersaoNova, { props: p });
+    await montado.find('a').trigger('click');
+    await flushPromises();
+    // O controlador esconde a versão quando a consulta é de sessão terminada (estadoAvisoVersao).
+    await montado.setProps({ versaoPublicada: null });
+    expect(montado.text()).toContain('Sua sessão terminou.');
+    expect(montado.find('a').text()).toBe('Entrar de novo');
+  });
+
   it('clique com tecla modificadora deixa o navegador agir, sem consulta', async () => {
     const p = props();
     montado = mount(AvisoVersaoNova, { props: p });

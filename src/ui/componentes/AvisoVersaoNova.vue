@@ -29,8 +29,10 @@ const props = defineProps<{
 
 const sessaoTerminou = ref(false);
 
+// D-F12-2: a variante de sessão terminou fica na tela mesmo quando o controlador já esconde a versão
+// (a consulta devolveu 401/403). Sem ela, o aviso sumiria no clique, sem a orientação de entrar de novo.
 const texto = computed(() =>
-  props.versaoPublicada === null
+  props.versaoPublicada === null && !sessaoTerminou.value
     ? null
     : textoDoAviso({
         nome: props.nome,
@@ -49,7 +51,8 @@ function clicoPrimario(evento: MouseEvent): boolean {
 }
 
 async function aoClicarLink(evento: MouseEvent): Promise<void> {
-  if (!clicoPrimario(evento) || props.versaoPublicada === null) return;
+  // Na variante de sessão terminada o link já vai para a Home sem consultar de novo.
+  if (!clicoPrimario(evento) || props.versaoPublicada === null || sessaoTerminou.value) return;
   evento.preventDefault();
   const resultado = await aoClicarRecarregar({
     versaoPublicada: props.versaoPublicada,

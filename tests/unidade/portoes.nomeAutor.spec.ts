@@ -12,7 +12,8 @@ import { afterEach, describe, expect, it } from 'vitest';
  * VERIFICAR_TITULAR_ARQUIVO. Os casos de sabotagem vêm antes da prova de que a trava passa.
  */
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const SCRIPT = join(RAIZ, 'scripts/verificar-nome-autor.ts');
+// NOME_AUTOR_SCRIPT só existe para a sabotagem (L-27): aponta o spec para uma cópia do script fora da árvore.
+const SCRIPT = process.env.NOME_AUTOR_SCRIPT ?? join(RAIZ, 'scripts/verificar-nome-autor.ts');
 const TITULAR_SINTETICO = 'Ana Exposta Açucena';
 const FONTE_REL = 'src/conteudo/sobre/autoria.ts';
 const CABECALHO_CIFRA = Buffer.from('\0GITCRYPT\0');
@@ -60,7 +61,7 @@ function rodar(args: string[], env: Record<string, string>) {
   expect(r.stdout ?? '').toMatch(
     /verificar-nome-autor: encontrados=\d+ analisados=\d+ falharam=\d+/
   );
-  return { status: r.status ?? -1, saida: r.stdout ?? '' };
+  return { status: r.status ?? -1, saida: saida, resumo: r.stdout ?? '' };
 }
 
 describe('verificar-nome-autor: modo árvore', () => {
@@ -107,6 +108,7 @@ describe('verificar-nome-autor: modo árvore', () => {
     const raiz = repo({ 'src/a.ts': 'x\n' });
     const r = rodar(['--arvore', raiz], { VERIFICAR_TITULAR_ARQUIVO: join(raiz, 'nao-existe.ts') });
     expect(r.status).toBe(1);
+    expect(r.saida).toContain('ausente');
   });
 
   it('(g) fonte cifrada reprova, porque a trava só roda com a chave destravada', () => {
@@ -114,6 +116,7 @@ describe('verificar-nome-autor: modo árvore', () => {
     const cifrada = criarFonte(raiz, Buffer.concat([CABECALHO_CIFRA, Buffer.from('ab')]));
     const r = rodar(['--arvore', raiz], { VERIFICAR_TITULAR_ARQUIVO: cifrada });
     expect(r.status).toBe(1);
+    expect(r.saida).toContain('cifrada');
   });
 });
 
@@ -164,5 +167,69 @@ describe('verificar-nome-autor: modo pacote e resposta anônima', () => {
     expect(
       rodar(['--entrada', join(raiz, 'resposta.html')], { VERIFICAR_TITULAR_ARQUIVO: fonte }).status
     ).toBe(0);
+  });
+});
+
+/**
+ * Revisão de segurança (R1, 15/11): formas que o normalizador antigo deixava passar. Cada forma
+ * carrega o titular sintético, escrito de um jeito que um navegador ou um interpretador de
+ * JS/HTML desfaz. A trava tem de pegar todas, em arquivo de texto.
+ */
+const FORMAS_R1: ReadonlyArray<readonly [string, string]> = [
+  ['sem espaço entre as palavras', 'AnaExpostaAcucena'],
+  ['tag HTML entre as palavras', 'Ana<b></b>Exposta<i></i>Açucena'],
+  ['tag com atributo no meio', 'Ana<span class="x">Exposta</span>Açucena'],
+  ['largura zero U+200B', 'Ana​Exposta​Açucena'],
+  ['hífen suave U+00AD', 'Ana­Exposta Açucena'],
+  ['&nbsp; nomeado', 'Ana&nbsp;Exposta&nbsp;Açucena'],
+  ['espaço em entidade decimal', 'Ana&#32;Exposta&#32;Açucena'],
+  ['espaço em entidade hexadecimal', 'Ana&#x20;Exposta&#x20;Açucena'],
+  ['letra escrita com entidade nomeada', 'Ana Exposta A&ccedil;ucena'],
+  ['escape JS \\u0020', 'Ana\\u0020Exposta\\u0020Açucena'],
+  ['escape JS \\x20', 'Ana\\x20Exposta\\x20Açucena'],
+  ['percent-encoding', 'Ana%20Exposta%20A%C3%A7ucena']
+];
+
+/** Varredura de árvore com a fonte permitida já no índice, para os casos R1. */
+function varrer(arquivos: Record<string, string | Buffer>) {
+  const raiz = repo({
+    [FONTE_REL]: `export const TITULAR = '${TITULAR_SINTETICO}';\n`,
+    ...arquivos
+  });
+  return rodar(['--arvore', raiz], { VERIFICAR_TITULAR_ARQUIVO: join(raiz, FONTE_REL) });
+}
+
+describe('verificar-nome-autor: revisão R1, formas que escapavam', () => {
+  afterEach(() => {
+    if (tmp) rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it.each(FORMAS_R1)('(R1) %s, em arquivo de texto, reprova', (_descricao, forma) => {
+    const r = varrer({ 'docs/nota.md': `${forma}\n` });
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('docs/nota.md');
+  });
+
+  it('(R1) byte NUL no meio do arquivo de texto não é pulo: o nome é achado', () => {
+    const r = varrer({ 'webroot/entrada.html': Buffer.from(`\0<p>${TITULAR_SINTETICO}</p>`) });
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('webroot/entrada.html');
+  });
+
+  it('(R1) arquivo de texto com NUL, sem o nome, reprova com a mensagem de NUL', () => {
+    const r = varrer({ 'docs/x.md': Buffer.from('texto\0sem nome') });
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('NUL');
+  });
+
+  it('(R1) nome nos bytes de uma imagem reprova: extensão de binário não é isenção', () => {
+    const r = varrer({ 'imagens/x.png': Buffer.from(`\x89PNG\0${TITULAR_SINTETICO}`) });
+    expect(r.status).toBe(1);
+    expect(r.saida).toContain('imagens/x.png');
+  });
+
+  it('(R1) texto limpo, sem o titular em nenhuma forma, continua passando', () => {
+    const r = varrer({ 'docs/limpo.md': 'Texto de estudo sem o titular.\n' });
+    expect(r.status).toBe(0);
   });
 });

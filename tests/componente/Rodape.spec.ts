@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Rodape from '@/ui/layout/Rodape.vue';
 import { RepositorioMemoria } from '@/app/persistencia/RepositorioMemoria';
+import { CONTATO_EMAIL, TITULAR } from '@/app/rodape/titular';
 
 /**
  * Ordem do líder, 22/09/2026, verbatim: "ponha discretamente no rodapé
@@ -39,15 +40,17 @@ describe('Rodape', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-15T12:00:00Z'));
     const wrapper = mount(Rodape, { props: montarProps() });
-    expect(wrapper.text()).toContain(`v${pacote.version} · © 2026 Caderno de Direito`);
+    expect(wrapper.text()).toContain(`v${pacote.version} · © 2026 ${TITULAR} · Caderno de Direito`);
   });
 
   it('em 2030, a faixa de anos vem da data, não está escrita à mão', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2030-01-05T12:00:00Z'));
     const wrapper = mount(Rodape, { props: montarProps() });
-    expect(wrapper.text()).toContain(`v${pacote.version} · © 2026-2030 Caderno de Direito`);
-    expect(wrapper.text()).not.toContain('2026 Caderno de Direito');
+    expect(wrapper.text()).toContain(
+      `v${pacote.version} · © 2026-2030 ${TITULAR} · Caderno de Direito`
+    );
+    expect(wrapper.text()).not.toContain('© 2026 ');
   });
 
   it('mostra a linha de oferecimento com logo e link para drpetrus.top, abrindo em nova aba com noopener', () => {
@@ -91,5 +94,26 @@ describe('Rodape', () => {
     await botaoApagar.trigger('click');
 
     expect(repositorio.lerTema()).toBeUndefined();
+  });
+
+  it('o titular vem da fonte única e aparece como link mailto para o contato, sem outro nome na tela', () => {
+    const wrapper = mount(Rodape, { props: montarProps() });
+    const autor = wrapper.find('a.rodape__autor');
+    expect(autor.exists()).toBe(true);
+    expect(autor.text()).toBe(TITULAR);
+    expect(autor.attributes('href')).toBe(`mailto:${CONTATO_EMAIL}`);
+    expect(CONTATO_EMAIL).toBe('contato@drpetrus.top');
+  });
+
+  it('o alt do logo sai da mesma fonte, como "Dr. " mais o titular', () => {
+    const wrapper = mount(Rodape, { props: montarProps() });
+    expect(wrapper.find('img.rodape__logo').attributes('alt')).toBe(`Dr. ${TITULAR}`);
+  });
+
+  it('o link do nome tem contorno de foco visível no próprio estilo do componente', () => {
+    const fonte = readFileSync(resolve(__dirname, '../../src/ui/layout/Rodape.vue'), 'utf-8');
+    const bloco = fonte.slice(fonte.indexOf('.rodape__autor:focus-visible'));
+    expect(fonte).toContain('.rodape__autor:focus-visible');
+    expect(bloco.slice(0, 200)).toMatch(/outline:\s*var\(--foco-espessura/);
   });
 });

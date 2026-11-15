@@ -247,7 +247,7 @@ describe('entrada.css: impressão vence os três caminhos de tema', () => {
 });
 
 describe('aviso legal da entrada: visual do AvisoLegal.vue e contraste nos três temas', () => {
-  it('fundo e borda do aviso usam os mesmos tokens do AvisoLegal.vue, com largura de 70ch', () => {
+  it('fundo e borda do aviso usam os mesmos tokens do AvisoLegal.vue; login segue com 70ch (SB-F3, parte do backend)', () => {
     const avisoEntrada = corpoDoSeletor(ENTRADA, '.aviso-legal');
     const avisoInterno = corpoDoSeletor(
       AVISO_VUE.slice(AVISO_VUE.indexOf('<style scoped>')),
@@ -261,7 +261,7 @@ describe('aviso legal da entrada: visual do AvisoLegal.vue e contraste nos três
     expect(avisoEntrada).toMatch(/border:\s*2px solid var\(--cor-acento[,)]/);
     expect(avisoInterno).toMatch(/border:\s*2px solid var\(--cor-acento[,)]/);
     expect(avisoEntrada).toMatch(/max-width:\s*70ch/);
-    expect(avisoInterno).toMatch(/max-width:\s*70ch/);
+    expect(avisoInterno).toMatch(/max-width:\s*none/);
   });
 
   it('texto do aviso tem 4,5:1 e a borda de acento 3:1 contra o fundo real, em cada tema', () => {

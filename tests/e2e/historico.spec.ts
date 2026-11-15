@@ -1,0 +1,35 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { expect, test } from '@playwright/test';
+
+/**
+ * HIST-F4: páginas Novidades e Changelog no site construído (vite preview). A versão esperada vem do
+ * package.json do próprio repositório, nunca de um número escrito aqui. O QA roda este arquivo na fila
+ * pesada (a árvore viva não roda e2e).
+ */
+const VERSAO_DO_PACOTE = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'))
+  .version as string;
+
+test('Novidades mostra o título e a versão do pacote, com o texto didático em lista', async ({
+  page
+}) => {
+  await page.goto('/novidades');
+  await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(VERSAO_DO_PACOTE);
+  await expect(page.locator('section').first().getByRole('listitem').first()).toBeVisible();
+});
+
+test('Changelog mostra o registro técnico da versão do pacote', async ({ page }) => {
+  await page.goto('/changelog');
+  await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(VERSAO_DO_PACOTE);
+});
+
+test('o menu lateral leva às duas páginas, depois do Calendário', async ({ page }) => {
+  await page.goto('/p/p1/intr-direito/u1');
+  const topo = page.locator('.menu-curriculo__topo');
+  await expect(topo.getByRole('link', { name: 'Novidades' })).toBeVisible();
+  await topo.getByRole('link', { name: 'Novidades' }).click();
+  await expect(page).toHaveURL(/\/novidades$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeVisible();
+});

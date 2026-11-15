@@ -197,25 +197,33 @@ export function versaoDoBuild(): string {
 }
 
 /**
- * Grava APP/atual/versao.json e a entrada dele no manifesto, como o separador faria. O portão só
- * serve o que está no manifesto, então sem a entrada o /versao.json dá 404 (sem informação).
+ * Grava APP/atual/versao.json e a entrada dele no manifesto. O portão só serve o que está no
+ * manifesto, então sem a entrada o /versao.json dá 404 (sem informação).
  */
-function gravarVersaoPublicada(versao: string, historico: EntradaVersaoSintetica[]): void {
+function gravarVersaoBruta(
+  corpo: string,
+  entrada: { tipo: string; bytes: number; md5: string }
+): void {
   garantirSeguro(APP);
   const atual = join(APP, 'atual');
-  const corpo = JSON.stringify({ versao, historico });
   writeFileSync(join(atual, 'versao.json'), corpo);
   const caminhoManifesto = join(atual, 'manifesto.json');
   const manifesto = JSON.parse(readFileSync(caminhoManifesto, 'utf8')) as {
     versao: string;
     arquivos: Record<string, { tipo: string; bytes: number; md5: string }>;
   };
-  manifesto.arquivos['versao.json'] = {
+  manifesto.arquivos['versao.json'] = entrada;
+  writeFileSync(caminhoManifesto, JSON.stringify(manifesto));
+}
+
+/** Versão sintética (publicação simulada): grava o corpo e a entrada calculados aqui. */
+function gravarVersaoPublicada(versao: string, historico: EntradaVersaoSintetica[]): void {
+  const corpo = JSON.stringify({ versao, historico });
+  gravarVersaoBruta(corpo, {
     tipo: 'application/json; charset=utf-8',
     bytes: Buffer.byteLength(corpo),
     md5: createHash('md5').update(corpo).digest('hex')
-  };
-  writeFileSync(caminhoManifesto, JSON.stringify(manifesto));
+  });
 }
 
 /** Uma entrada do histórico de versões publicadas (formato de versao.json, separar-pacote). */
@@ -224,10 +232,22 @@ export interface EntradaVersaoSintetica {
   novidades: string[];
 }
 
-/** Estado base: a publicada é igual à do build, então a aba não mostra aviso. Roda antes e depois de cada teste. */
+/**
+ * Estado base: o versao.json que o BUILD gravou (dist-pacote/app, pelo separar-pacote), com a
+ * entrada do manifesto dele. A publicada é a do build, então a aba não mostra aviso. Roda antes e
+ * depois de cada teste. Falha se o md5 do arquivo não bater com o manifesto do build.
+ */
 export function restaurarVersaoBase(): void {
-  const base = versaoDoBuild();
-  gravarVersaoPublicada(base, [{ versao: base, novidades: [] }]);
+  const pacote = join(process.env.E2E_PORTAO_RAIZ ?? process.cwd(), 'dist-pacote', 'app');
+  const corpo = readFileSync(join(pacote, 'versao.json'), 'utf8');
+  const manifesto = JSON.parse(readFileSync(join(pacote, 'manifesto.json'), 'utf8')) as {
+    arquivos: Record<string, { tipo: string; bytes: number; md5: string }>;
+  };
+  const entrada = manifesto.arquivos['versao.json'];
+  if (entrada === undefined) throw new Error('manifesto do build sem versao.json');
+  const md5 = createHash('md5').update(corpo).digest('hex');
+  if (md5 !== entrada.md5) throw new Error('versao.json do build não confere com o manifesto dele');
+  gravarVersaoBruta(corpo, entrada);
 }
 
 /**

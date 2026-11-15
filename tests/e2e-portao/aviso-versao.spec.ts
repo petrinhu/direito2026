@@ -210,15 +210,108 @@ test('a faixa fica logo abaixo do cabeçalho, com a largura da janela, também d
   expect(rolado.largura).toBe(rolado.larguraDaJanela);
 });
 
-test('o cabeçalho não recolhe enquanto o aviso está na tela (D9 do plano, a confirmar)', async ({
+/** Espera o cabeçalho assentar: a mesma borda de baixo em duas leituras seguidas (fim da transição). */
+async function esperarCabecalhoAssentar(page: Page): Promise<void> {
+  let anterior = Number.NaN;
+  await expect
+    .poll(
+      async () => {
+        const atual = await page.evaluate(
+          () => document.querySelector('header')!.getBoundingClientRect().bottom
+        );
+        const assentou = atual === anterior;
+        anterior = atual;
+        return assentou;
+      },
+      { timeout: 5_000, intervals: [300] }
+    )
+    .toBe(true);
+}
+
+/** Entrada, publicação e consulta (gatilho de aba que volta a ficar visível), com o modo pedido. */
+async function entrarComModo(
+  page: Page,
+  largura: number,
+  modo: { tema: string; adaptado: boolean }
+): Promise<void> {
+  await page.setViewportSize({ width: largura, height: 800 });
+  await page.addInitScript((cfg) => {
+    localStorage.setItem('caderno-direito:v1:tema', cfg.tema);
+    localStorage.setItem('caderno-direito:v1:modo-adaptado', cfg.adaptado ? 'true' : 'false');
+    localStorage.setItem('caderno-direito:v1:aviso-armazenamento-visto', '1');
+  }, modo);
+  await entrarNoApp(page, CONTA_ANA_PAULA, '/');
+  publicarVersaoSintetica(VERSAO_NOVA, NOVIDADES);
+  const consulta = page.waitForResponse(ehConsulta);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await consulta;
+  await expect(page.locator(TEXTO_AVISO)).toBeVisible();
+}
+
+const MODOS_FAIXA = [
+  { nome: 'claro', tema: 'claro', adaptado: false },
+  { nome: 'adaptado', tema: 'claro', adaptado: true }
+];
+
+for (const largura of [1280, 360]) {
+  for (const modo of MODOS_FAIXA) {
+    test(`faixa colada à borda visível do cabeçalho e por cima do conteúdo, ${modo.nome} ${largura} px, em rolagem 0 e depois de rolar`, async ({
+      page
+    }) => {
+      await entrarComModo(page, largura, modo);
+
+      const conferir = async (etapa: string) => {
+        await esperarCabecalhoAssentar(page);
+        const medida = await page.evaluate(() => {
+          const cab = document.querySelector('header')!.getBoundingClientRect();
+          const faixa = document.querySelector('.aviso-versao-posicao')!.getBoundingClientRect();
+          // Borda de baixo VISÍVEL do cabeçalho: se ele saiu pela parte de cima, é 0.
+          const baseVisivel = Math.max(0, cab.bottom);
+          const alvo = document.elementFromPoint(faixa.left + faixa.width / 2, faixa.top + 2);
+          return {
+            baseVisivel,
+            topoDaFaixa: faixa.top,
+            pordeCima: alvo !== null && alvo.closest('.aviso-versao') !== null
+          };
+        });
+        expect(
+          medida.topoDaFaixa,
+          `${etapa}: a faixa tem de começar onde termina a parte visível do cabeçalho`
+        ).toBeCloseTo(medida.baseVisivel, 0);
+        expect(
+          medida.pordeCima,
+          `${etapa}: o topo da faixa tem de estar por cima do conteúdo`
+        ).toBe(true);
+      };
+
+      await conferir('rolagem 0');
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await conferir('depois de rolar');
+    });
+  }
+}
+
+test('adaptado 360 px: o início do texto do aviso não fica por baixo do cabeçalho, em rolagem 0 e depois de rolar', async ({
   page
 }) => {
-  await entrarEVerAviso(page);
+  await entrarComModo(page, 360, { tema: 'claro', adaptado: true });
+
+  const conferir = async (etapa: string) => {
+    await esperarCabecalhoAssentar(page);
+    const alvo = await page.evaluate(() => {
+      const texto = document.querySelector('.aviso-versao__texto')!.getBoundingClientRect();
+      const el = document.elementFromPoint(texto.left + 2, texto.top + 2);
+      return el !== null && el.closest('.aviso-versao') !== null;
+    });
+    expect(
+      alvo,
+      `${etapa}: no começo do texto, o elemento de cima tem de ser o próprio aviso`
+    ).toBe(true);
+  };
+
+  await conferir('rolagem 0');
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const topoDoCabecalho = await page.evaluate(
-    () => document.querySelector('header')!.getBoundingClientRect().top
-  );
-  expect(topoDoCabecalho).toBe(0);
+  await conferir('depois de rolar');
 });
 
 test('o centro do título da página não é coberto pelo aviso', async ({ page }) => {

@@ -76,8 +76,13 @@ function rodar(
   return { status: r.status, saida: `${r.stdout}${r.stderr}` };
 }
 
+/** Identidade só do repositório temporário, passada por -c: a config global da máquina não entra. */
 function git(cwd: string, ...args: string[]): string {
-  const r = spawnSync('git', args, { cwd, encoding: 'utf-8' });
+  const r = spawnSync(
+    'git',
+    ['-c', 'user.name=teste', '-c', 'user.email=teste@exemplo.invalid', ...args],
+    { cwd, encoding: 'utf-8' }
+  );
   if (r.status !== 0) throw new Error(`git ${args.join(' ')}: ${r.stderr}`);
   return r.stdout;
 }
@@ -134,11 +139,9 @@ describe('--novidade: recusa antes do commit e texto final (AV-F5)', () => {
     () => {
       const repo = repositorioTemporario();
       const antes = git(repo, 'rev-list', '--count', 'HEAD');
-      const r = rodar(
-        'TIPO=recurso\nvalidar_novidades_publicacao',
-        repo,
-        { NOVIDADES: [`usabilidade:rádio ${TRAVESSAO} estudar`] }
-      );
+      const r = rodar('TIPO=recurso\nvalidar_novidades_publicacao', repo, {
+        NOVIDADES: [`usabilidade:rádio ${TRAVESSAO} estudar`]
+      });
       expect(r.status).toBe(1);
       expect(r.saida).toContain('usabilidade');
       expect(r.saida).toContain('RECUSADO');
@@ -221,7 +224,9 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
       expect(stat).toContain('package.json');
       expect(stat).toContain('docs/versoes/novidades.json');
       expect(stat).toContain('2 files changed');
-      const novidades = JSON.parse(readFileSync(join(repo, 'docs/versoes/novidades.json'), 'utf-8'));
+      const novidades = JSON.parse(
+        readFileSync(join(repo, 'docs/versoes/novidades.json'), 'utf-8')
+      );
       expect(novidades.versoes[0]).toEqual({
         versao: '1.13.0.0',
         novidades: [TEXTO_USABILIDADE, 'tecnica']
@@ -239,7 +244,11 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
         join(clone, 'dist-pacote/app/versao.json'),
         JSON.stringify({ versao: '1.13.0.0', historico: [{ versao: '1.12.0.0', novidades: [] }] })
       );
-      const r = rodar('CLONE=\'' + clone + '\'\nVERSAO_NOVA=1.13.0.0\nconferir_historico_pacote', tmp, {});
+      const r = rodar(
+        "CLONE='" + clone + "'\nVERSAO_NOVA=1.13.0.0\nconferir_historico_pacote",
+        tmp,
+        {}
+      );
       expect(r.status).toBe(1);
       expect(r.saida).toContain('historico');
     },
@@ -253,9 +262,16 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
       mkdirSync(join(clone, 'dist-pacote/app'), { recursive: true });
       writeFileSync(
         join(clone, 'dist-pacote/app/versao.json'),
-        JSON.stringify({ versao: '1.13.0.0', historico: [{ versao: '1.13.0.0', novidades: ['tecnica'] }] })
+        JSON.stringify({
+          versao: '1.13.0.0',
+          historico: [{ versao: '1.13.0.0', novidades: ['tecnica'] }]
+        })
       );
-      const r = rodar('CLONE=\'' + clone + '\'\nVERSAO_NOVA=1.13.0.0\nconferir_historico_pacote', tmp, {});
+      const r = rodar(
+        "CLONE='" + clone + "'\nVERSAO_NOVA=1.13.0.0\nconferir_historico_pacote",
+        tmp,
+        {}
+      );
       expect(r.status, r.saida).toBe(0);
     },
     TIMEOUT
@@ -275,7 +291,9 @@ describe('poda vira quarentena, nunca rm (AV-F5, docs/publicacao.md)', () => {
         {}
       );
       expect(r.status, r.saida).toBe(0);
-      expect(readFileSync(join(app, 'desativadas/1.10.0.0-20261114/index.html'), 'utf-8')).toBe('velha');
+      expect(readFileSync(join(app, 'desativadas/1.10.0.0-20261114/index.html'), 'utf-8')).toBe(
+        'velha'
+      );
       expect(() => readFileSync(join(app, 'versoes/v1.10.0.0/index.html'))).toThrow();
     },
     TIMEOUT

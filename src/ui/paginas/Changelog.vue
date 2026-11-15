@@ -3,11 +3,12 @@ import { onMounted, ref } from 'vue';
 import { carregarHistorico, paginaChangelog } from '@/app/versoes/paginas';
 
 /**
- * Página Changelog (HIST-F2, ordem do líder de 14/11): o que mudou em cada versão, em linguagem simples.
+ * Página Changelog (HIST-F2, ordem do líder de 14/11): o registro técnico de cada versão.
  * Título focado ao abrir, uma seção por versão (h2 com versão e data) e cada alteração numa lista.
  */
 const titulo = ref<HTMLElement | null>(null);
-const carga = carregarHistorico();
+const props = defineProps<{ origem?: unknown }>();
+const carga = carregarHistorico(props.origem);
 const entradas = carga.ok ? paginaChangelog(carga.entradas) : [];
 
 onMounted(() => titulo.value?.focus());
@@ -17,7 +18,7 @@ onMounted(() => titulo.value?.focus());
   <article class="pagina-versoes">
     <h1 ref="titulo" tabindex="-1" class="pagina-versoes__titulo">Changelog</h1>
     <p class="pagina-versoes__intro">O registro técnico de cada versão do site.</p>
-    <p v-if="!carga.ok" role="status">Não foi possível carregar as changelog agora.</p>
+    <p v-if="!carga.ok" role="status">Não foi possível carregar o registro técnico agora.</p>
     <section
       v-for="entrada in entradas"
       :key="entrada.versao"

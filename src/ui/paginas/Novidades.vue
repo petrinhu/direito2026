@@ -7,7 +7,8 @@ import { carregarHistorico, paginaNovidades } from '@/app/versoes/paginas';
  * Título focado ao abrir, uma seção por versão (h2 com versão e data) e cada alteração numa lista.
  */
 const titulo = ref<HTMLElement | null>(null);
-const carga = carregarHistorico();
+const props = defineProps<{ origem?: unknown }>();
+const carga = carregarHistorico(props.origem);
 const entradas = carga.ok ? paginaNovidades(carga.entradas) : [];
 
 onMounted(() => titulo.value?.focus());

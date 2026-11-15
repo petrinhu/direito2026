@@ -99,6 +99,8 @@ PACKAGE_ALTERADO=0
 RELEASE_FEITO=0
 TAG_CRIADA=0
 DEPLOY_INICIADO=0
+# Publicado no ar e no git; só a poda pode ter falhado depois disso (ao_sair não trata como remoto parcial).
+PUBLICADO=0
 DIVERGENCIAS=0
 PUSH_MAIN_FEITO=0
 PUSH_TAG_FEITO=0
@@ -817,17 +819,42 @@ conferir_historico_pacote() {
 # Poda (AV-F5): mantém duas versões (a nova e a anterior, que é o rollback). A mais velha vai para a
 # quarentena (desativadas/), por MOVIMENTO, nunca por rm. Apagar só por ordem expressa do líder, 48 h
 # depois da publicação, com assinatura (sub-fase 5.3 da L-70).
-podar_versoes() {
-  local -a versoes=() apagar=()
-  local versao data
-  conferir_destino_seguro "$DESTINO_APP"
+# Versões que a poda move: todas, menos as duas mais novas. Só leitura: nada é escrito no destino.
+versoes_a_podar() {
+  local -a versoes=()
   mapfile -t versoes < <(no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
     grep -E '^v[0-9.]+$' | sort -V -r || true)
   if [ "${#versoes[@]}" -le 2 ]; then
-    echo "publicar: poda: ${#versoes[@]} versão(ões) no destino, nada a mover"
     return 0
   fi
-  apagar=("${versoes[@]:2}")
+  printf '%s\n' "${versoes[@]:2}"
+}
+
+# Pré-checagem SÓ DE LEITURA, antes de qualquer escrita pública (AV-F5, OS-1): o teto da poda e a
+# colisão na quarentena. Se falhar, recusa antes de trocar o ponteiro ou enviar qualquer coisa.
+checar_poda_previa() {
+  local -a apagar=()
+  local versao
+  conferir_destino_seguro "$DESTINO_APP"
+  mapfile -t apagar < <(versoes_a_podar)
+  [ "${#apagar[@]}" -le "$TETO_VERSOES" ] ||
+    recusar "poda prevista (${#apagar[@]}) passa do teto de $TETO_VERSOES; nada foi publicado"
+  for versao in ${apagar[@]+"${apagar[@]}"}; do
+    no_destino "cd '$DESTINO_APP' && test ! -e 'desativadas/${versao#v}-$(date +%Y%m%d)'" ||
+      recusar "a quarentena de $versao já está ocupada; nada foi publicado"
+  done
+}
+
+# Poda (quarentena): a última etapa da publicação, depois do ar conferido e do envio ao git (AV-F5).
+podar_versoes() {
+  local -a apagar=()
+  local versao data
+  conferir_destino_seguro "$DESTINO_APP"
+  mapfile -t apagar < <(versoes_a_podar)
+  if [ "${#apagar[@]}" -eq 0 ]; then
+    echo "publicar: poda: nada a mover"
+    return 0
+  fi
   [ "${#apagar[@]}" -le "$TETO_VERSOES" ] ||
     recusar "poda prevista (${#apagar[@]}) passa do teto de $TETO_VERSOES; nada foi movido"
   data="$(date +%Y%m%d)"
@@ -836,18 +863,19 @@ podar_versoes() {
     [[ "$versao" =~ ^v[0-9.]+$ ]] || recusar "nome de versão fora do padrão: não movo"
     conferir_destino_seguro "$DESTINO_APP/versoes/$versao"
     no_destino "$(comando_quarentena "${versao#v}" "$data")" ||
-      recusar "quarentena de $versao falhou (o ponteiro atual não mudou por causa dela)"
+      recusar "quarentena de $versao falhou (a versão no ar não mudou por causa dela)"
   done
 }
 
+# Fase pública, sem a poda: pré-checagem, anterior, envio do app e do webroot, e o ponteiro.
 publicar_versao() {
   local anterior
+  checar_poda_previa
   anterior="$(anterior_no_destino)"
   echo "publicar: versão anterior no destino: ${anterior:-nenhuma (primeira publicação com este comando)}"
   enviar_app
   enviar_webroot "$DESTINO_WEBROOT"
   trocar_ponteiro
-  podar_versoes
 }
 
 # Lista dos caminhos que o anônimo não pode receber: os do app novo e os do anterior.
@@ -1136,6 +1164,10 @@ ao_sair() {
   local codigo=$?
   # Incondicional: sucesso ou falha, o clone (com a chave do git-crypt) sai.
   apagar_clone || echo "publicar: AVISO: não consegui apagar o clone; apague por caminho exato: $CLONE" >&2
+  # Publicado e só a poda falhou: o aviso "poda pendente" já foi dado por principal. Não é remoto parcial.
+  if [ "$codigo" -ne 0 ] && [ "$PUBLICADO" = 1 ]; then
+    exit "$codigo"
+  fi
   if [ "$codigo" -ne 0 ]; then
     if [ "$DEPLOY_INICIADO" = 1 ]; then
       echo "publicar: ABORTADO após iniciar o deploy (código $codigo). O remoto pode estar parcial." >&2
@@ -1244,6 +1276,13 @@ principal() {
   conferir_ar
   enviar_ao_git
   apagar_pacote_versao "$VERSAO_NOVA"
+  # A versão já está no ar, conferida e no git. A poda é a última etapa (AV-F5, OS-1): se ela falhar,
+  # nada é desfeito; sai com código 3 e avisa só da poda, sem a mensagem de remoto parcial.
+  PUBLICADO=1
+  (podar_versoes) || {
+    echo "publicar: publicado, poda pendente: v$VERSAO_NOVA está no ar, conferida e no git; a quarentena da versão antiga falhou e pode ser refeita." >&2
+    exit 3
+  }
   echo "publicado: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 

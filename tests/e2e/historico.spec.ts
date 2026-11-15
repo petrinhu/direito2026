@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -7,14 +7,18 @@ import { expect, test } from '@playwright/test';
  * package.json do próprio repositório, nunca de um número escrito aqui. O QA roda este arquivo na fila
  * pesada (a árvore viva não roda e2e).
  */
-const VERSAO_DO_PACOTE = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'))
-  .version as string;
+// ESM (package.json "type": "module"): o caminho sai de import.meta.url.
+const VERSAO_DO_PACOTE = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../package.json', import.meta.url)), 'utf-8')
+).version as string;
 
 test('Novidades mostra o título e a versão do pacote, com o texto didático em lista', async ({
   page
 }) => {
   await page.goto('/novidades');
-  await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeFocused();
+  // Convenção do site: o roteador leva o foco a #conteudo-principal depois da troca de página.
+  await expect(page.locator('#conteudo-principal')).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeVisible();
   // No estado A (histórico gravado antes do release) o topo é a seguinte: a versão do pacote tem de existir na lista.
   await expect(
     page.getByRole('heading', { level: 2 }).filter({ hasText: VERSAO_DO_PACOTE })
@@ -24,7 +28,8 @@ test('Novidades mostra o título e a versão do pacote, com o texto didático em
 
 test('Changelog mostra o registro técnico da versão do pacote', async ({ page }) => {
   await page.goto('/changelog');
-  await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeFocused();
+  await expect(page.locator('#conteudo-principal')).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeVisible();
   await expect(
     page.getByRole('heading', { level: 2 }).filter({ hasText: VERSAO_DO_PACOTE })
   ).toBeVisible();

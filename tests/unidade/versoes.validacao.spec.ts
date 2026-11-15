@@ -31,7 +31,15 @@ function entrada(versao: string, sobrescrever: Record<string, unknown> = {}) {
 describe('ehVersao', () => {
   it('aceita A.B.C.D e recusa outros formatos', () => {
     expect(ehVersao('1.13.0.0')).toBe(true);
-    for (const ruim of ['1.13', '1.13.0', 'v1.13.0.0', '1.13.0.0.0', 'abc', '', 1 as unknown as string]) {
+    for (const ruim of [
+      '1.13',
+      '1.13.0',
+      'v1.13.0.0',
+      '1.13.0.0.0',
+      'abc',
+      '',
+      1 as unknown as string
+    ]) {
       expect(ehVersao(ruim as string), String(ruim)).toBe(false);
     }
   });

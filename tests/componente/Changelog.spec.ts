@@ -21,10 +21,10 @@ afterEach(() => {
 });
 
 describe('página Changelog', () => {
-  it('tem um único h1 com o nome da página e o foco nele ao abrir', () => {
+  it('tem um único h1 com o nome da página e não toma o foco ao abrir', () => {
     w = mount(Changelog, { attachTo: document.body });
     expect(w.findAll('h1').map((h) => h.text())).toEqual(['Changelog']);
-    expect(document.activeElement?.tagName).toBe('H1');
+    expect(document.activeElement?.tagName).not.toBe('H1');
   });
 
   it('cada alteração da versão mais nova é um item técnico', () => {

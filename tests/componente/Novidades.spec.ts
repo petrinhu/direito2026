@@ -30,9 +30,9 @@ describe('página Novidades', () => {
     expect(titulos[0]!.text()).toBe('Novidades');
   });
 
-  it('o título recebe o foco quando a página abre', () => {
+  it('a página não toma o foco ao abrir: o roteador leva o foco ao conteúdo (convenção do site)', () => {
     w = mount(Novidades, { attachTo: document.body });
-    expect(document.activeElement?.tagName).toBe('H1');
+    expect(document.activeElement?.tagName).not.toBe('H1');
   });
 
   it('uma seção por versão, a mais nova primeiro, com h2 e data', () => {

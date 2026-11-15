@@ -77,20 +77,41 @@ function abrirGaveta(): void {
   });
 }
 
-function fecharGaveta(): void {
+// Deslize de fechar, igual à transição de transform do CSS (--transicao-rapida, 150 ms).
+const DURACAO_DO_DESLIZE_MS = 150;
+const saindo = ref(false);
+let fimDoDeslize: number | undefined;
+
+/**
+ * Fecha pela pessoa (botão, Esc, véu, link, Voltar): a gaveta segue visível durante o deslize e só
+ * então sai da ordem de Tab. A troca de largura com a gaveta fechada não passa por aqui: ela fica
+ * oculta já no primeiro quadro (AV3-F0g, E2).
+ */
+function fecharComDeslize(): void {
   gavetaAberta.value = false;
+  saindo.value = true;
+  window.clearTimeout(fimDoDeslize);
+  fimDoDeslize = window.setTimeout(() => {
+    saindo.value = false;
+  }, DURACAO_DO_DESLIZE_MS);
+}
+
+function fecharGaveta(): void {
+  fecharComDeslize();
   elementoAntesDeAbrir?.focus();
   elementoAntesDeAbrir = null;
 }
 
 /**
  * Fechar por navegação (link do menu ou Voltar do navegador) não devolve o foco ao botão de
- * abrir: a troca de rota já leva o foco ao conteúdo da página nova (router, afterEach), e
- * devolvê-lo aqui disputaria com esse passo (AV3-F0e).
+ * abrir: o foco vai ao conteúdo (AV3-F0e). Vai já aqui, no clique, e não só depois da troca de
+ * rota: o link da página atual não troca de rota, e sem isso o foco ficaria no link dentro da
+ * gaveta já fechada (AV3-F0g, ii).
  */
 function fecharPorNavegacao(): void {
-  gavetaAberta.value = false;
+  fecharComDeslize();
   elementoAntesDeAbrir = null;
+  document.getElementById('conteudo-principal')?.focus({ preventScroll: true });
 }
 
 /** Link da página atual não troca de rota, então não muda caminhoAtual: o clique cobre esse caso. */
@@ -158,6 +179,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  window.clearTimeout(fimDoDeslize);
   observadorPilha?.disconnect();
   observadorPilha = undefined;
   document.documentElement.style.removeProperty('scroll-padding-bottom');
@@ -192,7 +214,10 @@ onBeforeUnmount(() => {
       id="gaveta-do-curriculo"
       ref="gavetaRef"
       class="layout-base__gaveta"
-      :class="{ 'layout-base__gaveta--aberta': gavetaAberta }"
+      :class="{
+        'layout-base__gaveta--aberta': gavetaAberta,
+        'layout-base__gaveta--saindo': saindo
+      }"
       @keydown="aoTeclaNaGaveta"
       @click="aoCliqueNaGaveta"
     >
@@ -346,11 +371,18 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 880px) {
+  /*
+    Fechada, a gaveta sai da ordem de Tab e da árvore de acessibilidade (visibility) já no primeiro
+    quadro, também quando a largura muda com ela fechada (AV3-F0g, E2). Só o fechamento pela pessoa
+    (classe --saindo, mantida pelo script durante o deslize) a deixa visível até o deslize acabar.
+    CSS no mesmo breakpoint: a 1280 px a gaveta segue navegável (AV3-F0g, iii).
+  */
   .layout-base__gaveta {
     position: fixed;
     inset-block: 0;
     left: 0;
     transform: translateX(-100%);
+    visibility: hidden;
     transition: transform var(--transicao-rapida, 150ms ease);
     z-index: 90;
     overflow-y: auto;
@@ -358,6 +390,16 @@ onBeforeUnmount(() => {
 
   .layout-base__gaveta--aberta {
     transform: translateX(0);
+  }
+
+  .layout-base__gaveta--aberta,
+  .layout-base__gaveta--saindo {
+    visibility: visible;
+  }
+
+  /* Adaptado: sem deslize, a gaveta fechada some já (sem resto visível fora da tela). */
+  :root[data-modo-adaptado='on'] .layout-base__gaveta--saindo {
+    visibility: hidden;
   }
 
   .layout-base__sobreposicao {
@@ -415,6 +457,10 @@ onBeforeUnmount(() => {
 @media (max-width: 880px) and (prefers-reduced-motion: reduce) {
   .layout-base__gaveta {
     transition: none;
+  }
+
+  .layout-base__gaveta--saindo {
+    visibility: hidden;
   }
 }
 

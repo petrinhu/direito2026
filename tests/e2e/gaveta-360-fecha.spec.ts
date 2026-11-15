@@ -141,6 +141,30 @@ function expectAlvoAlcancavel(
   expect(medida.pelaPropria, `${nome} coberto por ${medida.cobridoPor} (${quando})`).toBe(true);
 }
 
+/**
+ * Cada tecla Tab, da primeira à última: se o foco caiu dentro da gaveta e em qual item. Mede a
+ * ordem real do teclado, sem presumir qual item vem antes.
+ */
+async function passosDeTab(
+  page: Page,
+  quantos: number
+): Promise<{ dentro: boolean; nome: string }[]> {
+  const passos: { dentro: boolean; nome: string }[] = [];
+  for (let i = 0; i < quantos; i++) {
+    await page.keyboard.press('Tab');
+    passos.push(
+      await page.evaluate(() => {
+        const ativo = document.activeElement;
+        const gaveta = document.getElementById('gaveta-do-curriculo');
+        const dentro = gaveta !== null && ativo !== null && gaveta.contains(ativo);
+        const nome = (ativo?.textContent ?? '').replace(/\s+/g, ' ').trim();
+        return { dentro, nome: nome || (ativo?.tagName.toLowerCase() ?? 'nada') };
+      })
+    );
+  }
+  return passos;
+}
+
 for (const { rotulo, estado } of MODOS) {
   test(`gaveta 360 px, ${rotulo}: link para outra página fecha a gaveta e leva o foco ao conteúdo`, async ({
     page
@@ -162,10 +186,13 @@ for (const { rotulo, estado } of MODOS) {
     await abrirGaveta(page);
 
     await page.locator(LINK_CALENDARIO).click();
+    // Logo depois do clique, antes de qualquer espera: o foco já precisa estar no conteúdo (AV3-F0g, ii).
+    expect(await focoNoConteudo(page), 'foco logo depois do clique no link da página atual').toBe(
+      true
+    );
 
     await expect(page).toHaveURL(/\/calendario$/);
     await expectGavetaFechada(page);
-    await expect.poll(() => focoNoConteudo(page)).toBe(true);
   });
 
   test(`gaveta 360 px, ${rotulo}: Esc fecha a gaveta e devolve o foco ao botão que a abriu`, async ({
@@ -263,6 +290,137 @@ for (const { rotulo, estado } of MODOS) {
       await expectGavetaFechada(page);
       await expect(page.locator(GATILHO)).toBeFocused();
     });
+  });
+
+  test(`gaveta 360 px, ${rotulo}: Voltar do navegador com a gaveta aberta fecha a gaveta`, async ({
+    page
+  }) => {
+    await abrirPagina(page, 360, estado, ROTA_UNIDADE);
+    await abrirGaveta(page);
+    await page.locator(LINK_CALENDARIO).click();
+    await expect(page).toHaveURL(/\/calendario$/);
+    await abrirGaveta(page);
+
+    await page.goBack();
+
+    await expect(page).toHaveURL(/\/p\/p1\/intr-direito\/u1$/);
+    await expectGavetaFechada(page);
+  });
+
+  test(`gaveta 360 px, ${rotulo}: com a gaveta fechada, nenhum item da gaveta recebe foco por Tab`, async ({
+    page
+  }) => {
+    await abrirPagina(page, 360, estado, ROTA_UNIDADE);
+
+    const passos = await passosDeTab(page, 60);
+
+    expect(
+      passos.filter((p) => p.dentro).map((p) => p.nome),
+      'itens da gaveta fechada que receberam foco por Tab'
+    ).toEqual([]);
+  });
+
+  test(`gaveta 360 px, ${rotulo}: com a gaveta aberta, o Tab fica preso dentro dela`, async ({
+    page
+  }) => {
+    await abrirPagina(page, 360, estado, ROTA_UNIDADE);
+    await abrirGaveta(page);
+    await expect.poll(() => focoDentroDaGaveta(page)).toBe(true);
+
+    const passos = await passosDeTab(page, 25);
+
+    expect(
+      passos.filter((p) => !p.dentro).map((p) => p.nome),
+      'Tab que saiu da gaveta aberta'
+    ).toEqual([]);
+  });
+
+  test(`gaveta 1280 px, ${rotulo}: o menu lateral segue navegável por Tab`, async ({ page }) => {
+    await abrirPagina(page, 1280, estado, ROTA_UNIDADE);
+
+    const passos = await passosDeTab(page, 60);
+
+    expect(
+      passos.filter((p) => p.dentro).map((p) => p.nome),
+      'itens do menu lateral alcançados por Tab'
+    ).toContain('Calendário');
+  });
+
+  test(`gaveta 1280 → 360 px, ${rotulo}: com a gaveta fechada, a troca de largura a deixa oculta em todo quadro`, async ({
+    page
+  }) => {
+    await abrirPagina(page, 1280, estado, ROTA_UNIDADE);
+    await page.evaluate(() => {
+      const w = window as unknown as { visibilidades: string[]; fim: Promise<void> };
+      w.visibilidades = [];
+      w.fim = new Promise<void>((resolver) => {
+        window.addEventListener(
+          'resize',
+          () => {
+            const inicio = window.performance.now();
+            const quadro = (): void => {
+              const gaveta = document.getElementById('gaveta-do-curriculo');
+              w.visibilidades.push(gaveta ? getComputedStyle(gaveta).visibility : 'sem gaveta');
+              if (window.performance.now() - inicio < 300) requestAnimationFrame(quadro);
+              else resolver();
+            };
+            quadro();
+          },
+          { once: true }
+        );
+      });
+    });
+
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.evaluate(() => (window as unknown as { fim: Promise<void> }).fim);
+
+    const visibilidades = await page.evaluate(
+      () => (window as unknown as { visibilidades: string[] }).visibilidades
+    );
+    expect(visibilidades.length, 'quadros medidos depois da troca').toBeGreaterThan(5);
+    expect(
+      visibilidades.filter((v) => v !== 'hidden'),
+      'quadros com a gaveta fechada ainda visível depois da troca para 360 px'
+    ).toEqual([]);
+  });
+
+  test(`gaveta 360 px, ${rotulo}: fechar pelo botão mantém a gaveta visível durante o deslize`, async ({
+    page
+  }) => {
+    await abrirPagina(page, 360, estado, ROTA_UNIDADE);
+    await abrirGaveta(page);
+    await page.evaluate(() => {
+      const w = window as unknown as { visibilidades: string[]; fim: Promise<void> };
+      w.visibilidades = [];
+      w.fim = new Promise<void>((resolver) => {
+        window.addEventListener(
+          'click',
+          () => {
+            const inicio = window.performance.now();
+            const quadro = (): void => {
+              const gaveta = document.getElementById('gaveta-do-curriculo');
+              w.visibilidades.push(gaveta ? getComputedStyle(gaveta).visibility : 'sem gaveta');
+              if (window.performance.now() - inicio < 300) requestAnimationFrame(quadro);
+              else resolver();
+            };
+            quadro();
+          },
+          { once: true, capture: true }
+        );
+      });
+    });
+
+    await page.getByRole('button', { name: NOME_BOTAO_FECHAR }).click();
+    await page.evaluate(() => (window as unknown as { fim: Promise<void> }).fim);
+
+    const visibilidades = await page.evaluate(
+      () => (window as unknown as { visibilidades: string[] }).visibilidades
+    );
+    // No modo adaptado não há deslize (transição none): a gaveta some já, sem quadro visível.
+    if (!estado.modoAdaptado) {
+      expect(visibilidades[0], 'visibilidade no primeiro quadro do fechamento').toBe('visible');
+    }
+    expect(visibilidades[visibilidades.length - 1], 'visibilidade no último quadro').toBe('hidden');
   });
 
   test(`gaveta 1280 px, ${rotulo}: a gaveta segue visível, o botão segue oculto e o link não a fecha`, async ({

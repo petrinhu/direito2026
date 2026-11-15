@@ -35,11 +35,22 @@ test('Changelog mostra o registro técnico da versão do pacote', async ({ page 
   ).toBeVisible();
 });
 
-test('o menu lateral leva às duas páginas, depois do Calendário', async ({ page }) => {
+test('o menu lateral leva às duas páginas, no bloco próprio depois dos períodos', async ({
+  page
+}) => {
   await page.goto('/p/p1/intr-direito/u1');
-  const topo = page.locator('.menu-curriculo__topo');
-  await expect(topo.getByRole('link', { name: 'Novidades' })).toBeVisible();
-  await topo.getByRole('link', { name: 'Novidades' }).click();
+  // Ordem do líder (15/11): Novidades e Changelog têm bloco próprio, separado dos períodos e da conta.
+  const bloco = page.locator('.menu-curriculo__historico-lista');
+  await expect(bloco.getByRole('link', { name: 'Novidades' })).toBeVisible();
+  await expect(bloco.getByRole('link', { name: 'Novidades' })).toHaveAttribute(
+    'href',
+    '/novidades'
+  );
+  await expect(bloco.getByRole('link', { name: 'Changelog' })).toHaveAttribute(
+    'href',
+    '/changelog'
+  );
+  await bloco.getByRole('link', { name: 'Novidades' }).click();
   await expect(page).toHaveURL(/\/novidades$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeVisible();
 });

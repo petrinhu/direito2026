@@ -126,6 +126,9 @@ function montarFixture(): Fixture {
   escrever(join(raiz, '.gitattributes'), 'segredo/** filter=git-crypt diff=git-crypt\n');
   escrever(join(raiz, 'segredo/nota.txt'), 'conteúdo sintético cifrado\n');
   escrever(join(raiz, 'src/conteudo/p1/cad/u1/dispositivos.ts'), 'export const d = [];\n');
+  // AV-F5: a entrada de novidades é gravada aqui; a trava de termos lê uma lista sintética.
+  escrever(join(raiz, 'docs/versoes/novidades.json'), '{"versoes": []}\n');
+  escrever(join(home, 'termos-sinteticos.txt'), 'termosintetico\n');
   escrever(
     join(raiz, 'scripts/preci.sh'),
     '#!/usr/bin/env bash\n# preci falso: nunca roda aqui, só marca a chamada no ensaio sintético.\nexit 0\n'
@@ -143,7 +146,7 @@ function montarFixture(): Fixture {
   chmodSync(caixa, 0o755);
 
   git(raiz, ['add', '.gitattributes', '.gitignore', 'package.json', 'segredo/nota.txt']);
-  git(raiz, ['add', 'src', 'scripts']);
+  git(raiz, ['add', 'src', 'scripts', 'docs']);
   git(raiz, ['commit', '-q', '-m', 'teste: base sintetica']);
   git(raiz, ['remote', 'add', 'github', bare]);
   git(raiz, ['push', '-q', 'github', 'main']);
@@ -162,6 +165,9 @@ function ambientePublicar(f: Fixture): Record<string, string | undefined> {
     CADERNO_CHAVE_GIT_CRYPT: f.chave,
     CADERNO_RESTRITO: f.restrito,
     CADERNO_RESTRITO_JURI: '',
+    // A ponte de novidades roda o código real (tsconfig e currículo); a trava lê lista sintética.
+    PUBLICAR_CODIGO: RAIZ_REPO,
+    VERIFICAR_PROIBICOES_TERMOS: join(f.home, 'termos-sinteticos.txt'),
     // Ensaio local: nenhum ssh para a hospedagem real neste teste (destino vazio = local).
     PUBLICAR_DESTINO_HOST: '',
     PUBLICAR_DESTINO_RAIZ: join(f.home, 'domains', 'drpetrus.top')
@@ -188,7 +194,7 @@ async function publicarComSinal(f: Fixture, sinal: Sinal): Promise<Saida> {
   const log = join(pastaTemporaria('publicar-sinal-log-'), 'saida.txt');
   const fd = openSync(log, 'w');
   try {
-    const filho = spawn('bash', ['scripts/publicar.sh', 'recurso'], {
+    const filho = spawn('bash', ['scripts/publicar.sh', 'recurso', '--novidade', 'tecnica'], {
       cwd: f.raiz,
       env: ambientePublicar(f),
       stdio: ['ignore', fd, fd]

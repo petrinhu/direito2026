@@ -59,6 +59,9 @@ CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-/home/petrus/IDrive/Documentos/direito/si
 # JSON privado da Júri e pasta do acervo (imagens/ e acervo.json): sem padrão de propósito.
 CADERNO_RESTRITO_JURI="${CADERNO_RESTRITO_JURI:-}"
 CADERNO_ACERVO_JURI="${CADERNO_ACERVO_JURI:-}"
+# Código da ponte de novidades e de versão (AV-F5). Em produção é a própria árvore. Os specs de
+# fixture apontam PUBLICAR_CODIGO para o código real, porque a fixture não tem tsconfig nem currículo.
+CODIGO="${PUBLICAR_CODIGO:-$RAIZ}"
 
 # Funções de cópia dos dispositivos.ts (biblioteca sem efeito ao ser carregada).
 # shellcheck source=scripts/apoio/dispositivos-publicacao.sh
@@ -86,6 +89,10 @@ ESPACO=""
 PACOTE_LOCAL=""
 REGRAS=""
 CAMINHOS=""
+# Novidades da versão (AV-F5): --novidade repetível; ITENS_NOVIDADE guarda o formato estruturado
+# (tipo:valor ou tecnica), nunca o texto final, e é o que vai para docs/versoes/novidades.json.
+NOVIDADES=()
+ITENS_NOVIDADE=()
 
 # Estado para desfazer só o que foi criado aqui (lido pelo trap de saída).
 PACKAGE_ALTERADO=0
@@ -136,6 +143,15 @@ ler_argumentos() {
         FORCADA_DEFINIDA=1
         shift
         ;;
+      --novidade)
+        [ $# -ge 2 ] || uso
+        NOVIDADES+=("$2")
+        shift 2
+        ;;
+      --novidade=*)
+        NOVIDADES+=("${1#--novidade=}")
+        shift
+        ;;
       -*)
         echo "publicar: opção desconhecida: $1" >&2
         uso
@@ -151,6 +167,7 @@ ler_argumentos() {
     [ -z "$TIPO" ] || recusar "--concluir não recebe tipo: a versão vem do package.json do HEAD"
     [ "$SECO" = 0 ] || recusar "--seco não se aplica a --concluir"
     [ "$FORCADA_DEFINIDA" = 0 ] || recusar "--concluir não recebe --versao"
+    [ "${#NOVIDADES[@]}" -eq 0 ] || recusar "--concluir não recebe --novidade: a novidade já foi gravada no commit de release"
     return 0
   fi
   [ -n "$TIPO" ] || uso
@@ -331,14 +348,48 @@ conferir_destino_seguro() {
     recusar "destino com symlink, fora do caminho esperado ou inacessível: $caminho (nada foi tocado)"
 }
 
+# Novidades (AV-F5, docs/publicacao.md, "Aviso de versão nova"). Recusa antes de qualquer commit:
+# recurso e correcao exigem ao menos uma --novidade; construcao não aceita nenhuma (leva tecnica);
+# cada item passa pela validação e pelas travas (scripts/apoio/novidades-cli.ts). Mostra o texto
+# final, como o aluno vai vê-lo. Nada é gravado aqui.
+validar_novidades_publicacao() {
+  local erro saida rc=0
+  erro="$(mktemp)"
+  # O CLI roda a partir de $CODIGO: é lá que moram o tsconfig (alias @/core) e o node_modules.
+  saida="$(cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/novidades-cli.ts" validar "$TIPO" \
+    ${NOVIDADES[@]+"${NOVIDADES[@]}"} 2> "$erro")" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    sed 's/^/publicar: /' "$erro" >&2 || true
+    rm -f -- "$erro"
+    recusar "novidade ausente ou inválida (nada foi commitado nem marcado)"
+  fi
+  rm -f -- "$erro"
+  ITENS_NOVIDADE=()
+  local bruto final
+  while IFS=$'\t' read -r bruto final; do
+    [ -n "$bruto" ] || continue
+    ITENS_NOVIDADE+=("$bruto")
+    echo "publicar: novidade (texto final): $final"
+  done <<< "$saida"
+  [ "${#ITENS_NOVIDADE[@]}" -gt 0 ] || recusar "nenhum item de novidade validado"
+}
+
+# Acrescenta a entrada desta versão em docs/versoes/novidades.json, no topo (itens estruturados).
+gravar_entrada_novidades() {
+  (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/novidades-cli.ts" gravar \
+    "$RAIZ/docs/versoes/novidades.json" "$VERSAO_NOVA" ${ITENS_NOVIDADE[@]+"${ITENS_NOVIDADE[@]}"}) >/dev/null ||
+    recusar "não consegui gravar a entrada de novidades em docs/versoes/novidades.json (nada foi commitado)"
+}
+
 gravar_e_commitar() {
   local alterados mensagem
   PACKAGE_ALTERADO=1
-  node --import tsx scripts/apoio/versao-cli.ts gravar package.json "$VERSAO_NOVA" >/dev/null
-  alterados="$(git status --porcelain --untracked-files=no)"
-  [ "$alterados" = " M package.json" ] ||
-    recusar "esperava só package.json alterado, veio: $alterados"
-  git diff -- package.json
+  (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/versao-cli.ts" gravar "$RAIZ/package.json" "$VERSAO_NOVA") >/dev/null
+  gravar_entrada_novidades
+  alterados="$(git status --porcelain --untracked-files=no | sort)"
+  [ "$alterados" = $' M docs/versoes/novidades.json\n M package.json' ] ||
+    recusar "esperava só package.json e docs/versoes/novidades.json alterados, veio: $alterados"
+  git diff -- package.json docs/versoes/novidades.json
   mensagem="$ESPACO/mensagem-release.txt"
   {
     printf 'chore(release): v%s\n' "$VERSAO_NOVA"
@@ -347,12 +398,12 @@ gravar_e_commitar() {
       printf '\n%s\n' "$PUBLICAR_ATRIBUICAO"
     fi
   } > "$mensagem"
-  git commit -q -F "$mensagem" -- package.json
+  git commit -q -F "$mensagem" -- package.json docs/versoes/novidades.json
   PACKAGE_ALTERADO=0
   RELEASE_FEITO=1
   SHA_RELEASE="$(git rev-parse HEAD)"
-  [ "$(git diff-tree --no-commit-id --name-only -r HEAD)" = "package.json" ] ||
-    recusar "o commit de release tocou arquivos além de package.json"
+  [ "$(git diff-tree --no-commit-id --name-only -r HEAD | sort)" = $'docs/versoes/novidades.json\npackage.json' ] ||
+    recusar "o commit de release tocou arquivos além de package.json e docs/versoes/novidades.json"
   git show --stat --format='%h %s' HEAD
 }
 
@@ -745,25 +796,47 @@ enviar_webroot() {
   echo "publicar: webroot enviado para $destino"
 }
 
-# Poda: mantém duas versões (a nova e a anterior, que é o rollback). Apaga por nome exato, listado antes (L-53).
+# Comando remoto da quarentena (AV-F5, docs/publicacao.md): MOVE a versão para
+# desativadas/<versão>-<data>, em pasta 700, sem sobrescrever e sem apagar nada. Nunca rm.
+# Recebe a versão sem o v (1.10.0.0) e a data (AAAAMMDD); imprime o comando para no_destino.
+comando_quarentena() {
+  local versao="$1" data="$2" alvo
+  alvo="$versao-$data"
+  printf "cd '%s' && mkdir -p -m 700 desativadas && test ! -e 'desativadas/%s' && mv -- 'versoes/v%s' 'desativadas/%s'" \
+    "$DESTINO_APP" "$alvo" "$versao" "$alvo"
+}
+
+# Confere, depois do preci no clone, que o histórico do pacote começa pela versão nova (AV-F5). Se
+# não começar, recusa: o ao_sair desfaz o commit e a tag locais, como já faz para o preci.
+conferir_historico_pacote() {
+  (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/novidades-cli.ts" conferir-historico \
+    "$CLONE/dist-pacote/app/versao.json" "$VERSAO_NOVA") ||
+    recusar "versao.json do pacote: historico[0] não é a versão nova; desfaço o commit e a tag locais"
+}
+
+# Poda (AV-F5): mantém duas versões (a nova e a anterior, que é o rollback). A mais velha vai para a
+# quarentena (desativadas/), por MOVIMENTO, nunca por rm. Apagar só por ordem expressa do líder, 48 h
+# depois da publicação, com assinatura (sub-fase 5.3 da L-70).
 podar_versoes() {
   local -a versoes=() apagar=()
-  local versao
+  local versao data
   conferir_destino_seguro "$DESTINO_APP"
   mapfile -t versoes < <(no_destino "cd '$DESTINO_APP' 2>/dev/null && ls -1 versoes 2>/dev/null || true" |
     grep -E '^v[0-9.]+$' | sort -V -r || true)
   if [ "${#versoes[@]}" -le 2 ]; then
-    echo "publicar: poda: ${#versoes[@]} versão(ões) no destino, nada a apagar"
+    echo "publicar: poda: ${#versoes[@]} versão(ões) no destino, nada a mover"
     return 0
   fi
   apagar=("${versoes[@]:2}")
   [ "${#apagar[@]}" -le "$TETO_VERSOES" ] ||
-    recusar "poda prevista (${#apagar[@]}) passa do teto de $TETO_VERSOES; nada foi apagado"
-  echo "publicar: poda: apagando por nome exato: ${apagar[*]}"
+    recusar "poda prevista (${#apagar[@]}) passa do teto de $TETO_VERSOES; nada foi movido"
+  data="$(date +%Y%m%d)"
+  echo "publicar: poda: movendo para a quarentena (desativadas/): ${apagar[*]}"
   for versao in "${apagar[@]}"; do
-    [[ "$versao" =~ ^v[0-9.]+$ ]] || recusar "nome de versão fora do padrão: não apago"
+    [[ "$versao" =~ ^v[0-9.]+$ ]] || recusar "nome de versão fora do padrão: não movo"
     conferir_destino_seguro "$DESTINO_APP/versoes/$versao"
-    no_destino "rm -rf -- '$DESTINO_APP/versoes/$versao'" || recusar "poda de $versao falhou"
+    no_destino "$(comando_quarentena "${versao#v}" "$data")" ||
+      recusar "quarentena de $versao falhou (o ponteiro atual não mudou por causa dela)"
   done
 }
 
@@ -1052,8 +1125,8 @@ desfazer_release() {
     TAG_CRIADA=0
   fi
   git reset -q --soft HEAD~1 || return 0
-  git restore --staged -- package.json || true
-  git checkout -- package.json || true
+  git restore --staged -- package.json docs/versoes/novidades.json || true
+  git checkout -- package.json docs/versoes/novidades.json || true
   RELEASE_FEITO=0
   PACKAGE_ALTERADO=0
   echo "publicar: desfeito: commit de release e tag local v$VERSAO_NOVA removidos; package.json de volta a $VERSAO_ATUAL" >&2
@@ -1083,7 +1156,7 @@ ao_sair() {
       fi
     else
       if [ "$PACKAGE_ALTERADO" = 1 ]; then
-        git checkout -- package.json >/dev/null 2>&1 || true
+        git checkout -- package.json docs/versoes/novidades.json >/dev/null 2>&1 || true
         PACKAGE_ALTERADO=0
       fi
       if [ "$RELEASE_FEITO" = 1 ]; then
@@ -1136,6 +1209,8 @@ principal() {
   conferir_branch_e_arvore
   calcular_versoes
   conferir_tag_local
+  # Novidades antes do --seco e antes de qualquer commit: recusa com falha visível, sem gravar nada.
+  validar_novidades_publicacao
   if [ "$SECO" = 1 ]; then
     imprimir_plano
     exit 0
@@ -1155,6 +1230,7 @@ principal() {
     exit 4
   fi
   conferir_pacote_local
+  conferir_historico_pacote
   guardar_pacote
   preparar_regras
   if [ "$MODO" = preparar ]; then

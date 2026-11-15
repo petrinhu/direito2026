@@ -7,14 +7,20 @@
  *   SAIDA/app/manifesto.json  {"versao", "arquivos": {"<caminho>":{"tipo","bytes","md5"}}} de cada
  *                    arquivo do app, exceto o próprio manifesto. Mesmo formato que o portão PHP lê
  *                    (portao.php, d26_portao_manifesto): `tipo` é o Content-Type (LU-F4.3, L-15).
+ *   SAIDA/app/versao.json     histórico do aviso de versão nova (AV-F4): {"versao", "historico"},
+ *                    montado de docs/versoes/novidades.json e do currículo. Teto: 10 versões, 4 KB.
+ *                    Entra no manifesto, como qualquer arquivo do app.
  *
  * Falha fechada: dist ausente ou vazio, arquivo sem lista (extensão, api fora da regra,
- * 404.html, nome reservado), item obrigatório ausente, saída que engole o dist. A saída
- * anterior é apagada só em SAIDA/webroot e SAIDA/app, e só depois de todas as checagens
- * passarem. Depois de escrever, reconta o que foi escrito.
+ * 404.html, nome reservado, versao.json vindo do build), item obrigatório ausente, novidades
+ * inválidas ou ilegíveis, saída que engole o dist. A saída anterior é apagada só em
+ * SAIDA/webroot e SAIDA/app, e só depois de todas as checagens passarem. Depois de escrever,
+ * confere a listagem gravada (obrigatórios presentes) e reconta o que foi escrito.
  *
- * Variáveis (opcionais): DIST_PATH (padrão dist/), PACOTE_SAIDA (padrão dist-pacote/).
+ * Variáveis (opcionais): DIST_PATH (padrão dist/), PACOTE_SAIDA (padrão dist-pacote/),
+ * NOVIDADES_JSON (padrão docs/versoes/novidades.json), CONTEUDO_RAIZ (padrão src/conteudo/).
  */
+import { createHash } from 'node:crypto';
 import {
   copyFileSync,
   existsSync,
@@ -26,19 +32,25 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { curriculoDoDisco, RAIZ_DO_CONTEUDO } from './apoio/conteudoDoDisco';
 import {
+  GERADOS_NO_APP,
   OBRIGATORIOS_APP,
   OBRIGATORIOS_WEBROOT,
+  VERSAO_PUBLICADA,
   classificar,
   listarArquivos,
   md5Do,
   tipoDoApp
 } from './apoio/pacotePublico';
+import { montarVersaoPublicada, lerNovidades, type ResultadoVersao } from './apoio/versaoPublicada';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, '..');
 const DIST = resolve(process.env.DIST_PATH ?? join(RAIZ, 'dist'));
 const SAIDA = resolve(process.env.PACOTE_SAIDA ?? join(RAIZ, 'dist-pacote'));
+const NOVIDADES = resolve(process.env.NOVIDADES_JSON ?? join(RAIZ, 'docs/versoes/novidades.json'));
+const CONTEUDO = resolve(process.env.CONTEUDO_RAIZ ?? RAIZ_DO_CONTEUDO);
 
 function ehPasta(caminho: string): boolean {
   return statSync(caminho, { throwIfNoEntry: false })?.isDirectory() ?? false;
@@ -68,7 +80,44 @@ function versaoDoPacote(): string {
   return pacote.version;
 }
 
-function escreverPacote(webroot: readonly string[], app: readonly string[]): void {
+/** Lê docs/versoes/novidades.json e o currículo, e monta o texto do versao.json. Não grava nada. */
+async function montarVersaoDoPacote(): Promise<ResultadoVersao<{ versao: string; corpo: string }>> {
+  let versao: string;
+  try {
+    versao = versaoDoPacote();
+  } catch (erro) {
+    return { ok: false, motivo: mensagem(erro) };
+  }
+  let bytes: Buffer;
+  try {
+    bytes = readFileSync(NOVIDADES);
+  } catch (erro) {
+    const ausente = (erro as { code?: unknown }).code === 'ENOENT';
+    return {
+      ok: false,
+      motivo: ausente
+        ? 'novidades.json ausente (esperado em docs/versoes/novidades.json)'
+        : `novidades.json ilegível: ${mensagem(erro)}`
+    };
+  }
+  const lida = lerNovidades(bytes);
+  if (!lida.ok) return lida;
+  let curriculo: Awaited<ReturnType<typeof curriculoDoDisco>>;
+  try {
+    curriculo = await curriculoDoDisco(CONTEUDO);
+  } catch (erro) {
+    return { ok: false, motivo: `currículo ilegível: ${mensagem(erro)}` };
+  }
+  const montada = montarVersaoPublicada({ versaoDoPacote: versao, entradas: lida.valor, curriculo });
+  return montada.ok ? { ok: true, valor: { versao, corpo: montada.valor } } : montada;
+}
+
+function escreverPacote(
+  webroot: readonly string[],
+  app: readonly string[],
+  versao: string,
+  versaoJson: string
+): void {
   rmSync(join(SAIDA, 'webroot'), { recursive: true, force: true });
   rmSync(join(SAIDA, 'app'), { recursive: true, force: true });
   for (const caminho of webroot) {
@@ -87,11 +136,19 @@ function escreverPacote(webroot: readonly string[], app: readonly string[]): voi
       md5: md5Do(origem)
     };
   }
-  const manifesto = { versao: versaoDoPacote(), arquivos };
+  const destinoVersao = join(SAIDA, 'app', VERSAO_PUBLICADA);
+  mkdirSync(dirname(destinoVersao), { recursive: true });
+  writeFileSync(destinoVersao, versaoJson);
+  arquivos[VERSAO_PUBLICADA] = {
+    tipo: tipoDoApp(VERSAO_PUBLICADA) ?? '',
+    bytes: Buffer.byteLength(versaoJson, 'utf-8'),
+    md5: createHash('md5').update(versaoJson).digest('hex')
+  };
+  const manifesto = { versao, arquivos };
   writeFileSync(join(SAIDA, 'app', 'manifesto.json'), `${JSON.stringify(manifesto, null, 2)}\n`);
 }
 
-function principal(): number {
+async function principal(): Promise<number> {
   if (!ehPasta(DIST)) {
     console.error(`separar-pacote: pasta ausente: ${DIST} (rode 'npm run build' antes)`);
     return 1;
@@ -114,25 +171,36 @@ function principal(): number {
   const { webroot, app, razoes } = classificar(caminhos);
   if (razoes.length > 0) return reprovar(razoes, caminhos.length, razoes.length);
 
+  // O versao.json não vem do dist: o separador o gera, então conta como previsto.
   const ausentes = [
     ...faltantes(OBRIGATORIOS_WEBROOT, webroot).map((c) => `ausente no webroot: ${c}`),
-    ...faltantes(OBRIGATORIOS_APP, app).map((c) => `ausente no app: ${c}`)
+    ...faltantes(OBRIGATORIOS_APP, [...app, ...GERADOS_NO_APP]).map((c) => `ausente no app: ${c}`)
   ];
   if (ausentes.length > 0) return reprovar(ausentes, caminhos.length, ausentes.length);
   if (webroot.length === 0 || app.length === 0) {
     return reprovar(['webroot ou app vazio é varredura quebrada (piso)'], caminhos.length, 1);
   }
 
-  escreverPacote(webroot, app);
+  const montada = await montarVersaoDoPacote();
+  if (!montada.ok) return reprovar([montada.motivo], caminhos.length, 1);
+
+  escreverPacote(webroot, app, montada.valor.versao, montada.valor.corpo);
 
   const escritosWebroot = existsSync(join(SAIDA, 'webroot'))
     ? listarArquivos(join(SAIDA, 'webroot'))
     : [];
   const escritosApp = listarArquivos(join(SAIDA, 'app'));
-  if (escritosWebroot.length !== webroot.length || escritosApp.length !== app.length + 1) {
+  const ausentesNaSaida = faltantes(OBRIGATORIOS_APP, escritosApp).map(
+    (c) => `ausente na saída gravada: ${c}`
+  );
+  if (ausentesNaSaida.length > 0) {
+    return reprovar(ausentesNaSaida, caminhos.length, ausentesNaSaida.length);
+  }
+  const esperadosApp = app.length + GERADOS_NO_APP.length;
+  if (escritosWebroot.length !== webroot.length || escritosApp.length !== esperadosApp) {
     return reprovar(
       [
-        `conferência pós-escrita divergiu: webroot ${escritosWebroot.length}/${webroot.length}, app ${escritosApp.length}/${app.length + 1}`
+        `conferência pós-escrita divergiu: webroot ${escritosWebroot.length}/${webroot.length}, app ${escritosApp.length}/${esperadosApp}`
       ],
       caminhos.length,
       1
@@ -143,9 +211,13 @@ function principal(): number {
     `separar-pacote: encontrados=${caminhos.length} analisados=${caminhos.length} falharam=0`
   );
   console.log(
-    `separar-pacote: webroot=${webroot.length} app=${app.length} manifesto=${app.length} (em ${SAIDA})`
+    `separar-pacote: webroot=${webroot.length} app=${app.length} manifesto=${escritosApp.length - 1} (em ${SAIDA})`
   );
   return 0;
 }
 
-process.exitCode = principal();
+function mensagem(erro: unknown): string {
+  return erro instanceof Error ? erro.message : String(erro);
+}
+
+process.exitCode = await principal();

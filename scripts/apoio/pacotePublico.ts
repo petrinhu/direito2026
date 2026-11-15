@@ -42,13 +42,24 @@ export const OBRIGATORIOS_WEBROOT: readonly string[] = [
   'api/saude.php'
 ];
 
-/** O app precisa ter estes. */
-export const OBRIGATORIOS_APP: readonly string[] = ['index.html'];
+export const MANIFESTO_APP = 'manifesto.json';
+/** Histórico de versões do aviso (AV-F4): gerado pelo separador a partir de docs/versoes/novidades.json. */
+export const VERSAO_PUBLICADA = 'versao.json';
+
+/** Arquivos do app que o separador escreve por conta própria: nunca vêm do dist. */
+export const GERADOS_NO_APP: readonly string[] = [MANIFESTO_APP, VERSAO_PUBLICADA];
+
+/** O app precisa ter estes na saída (o separador confere a listagem gravada). */
+export const OBRIGATORIOS_APP: readonly string[] = ['index.html', VERSAO_PUBLICADA];
 
 /** Nomes que não podem vir do build (o separador os recusa). */
 export const RESERVADOS: ReadonlyMap<string, string> = new Map([
   ['404.html', '404 estático saiu (plano 7.3): nenhum 404.html deve ser gerado'],
-  ['manifesto.json', 'nome reservado: o manifesto do app é gerado pelo separador']
+  [MANIFESTO_APP, 'nome reservado: o manifesto do app é gerado pelo separador'],
+  [
+    VERSAO_PUBLICADA,
+    'nome reservado: o versao.json do aviso é gerado pelo separador a partir de docs/versoes/novidades.json'
+  ]
 ]);
 
 /** Tipo (Content-Type) por extensão do app. Lista fechada: extensão fora dela reprova. */

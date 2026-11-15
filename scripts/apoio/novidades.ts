@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Curriculo } from '../../src/core/curriculo/tipos';
 
 /**
@@ -25,14 +25,15 @@ const MAXIMO_TEXTO_FINAL = 60;
 const TECNICA_TEXTO = 'Melhoria técnica';
 const USABILIDADE = /^[\p{L}\p{N} ,.():']+$/u;
 const ENDERECO = /https?:\/\/|www\.|@|\b[\w-]+\.(com|br|org|net|gov|edu|io)\b/i;
-const TRAVESSOES = /[–—]/;
+const TRAVESSOES = /[\u2013\u2014]/;
 
 /**
  * Trava de termos pelo script de R3, sem imprimir nada: só o código de saída conta. A
  * lista de termos mora fora do repositório (VERIFICAR_PROIBICOES_TERMOS, ou o padrão).
  */
 export function verificarComScript(texto: string): boolean {
-  const script = resolve(__dirname, '../verificar-proibicoes.sh');
+  // ESM (package.json "type": "module"): não existe __dirname; o caminho sai de import.meta.url.
+  const script = fileURLToPath(new URL('../verificar-proibicoes.sh', import.meta.url));
   const r = spawnSync('bash', [script, '-'], { input: texto, stdio: ['pipe', 'ignore', 'ignore'] });
   return r.status === 0;
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Portão de e-mail (EM-B1, plano-sessao-unica.md 8.1.1; L-36): nenhum endereço de e-mail nos arquivos
-# rastreados fora da lista permitida (example.com, example.org e nao-responda@drpetrus.top). Varre
+# rastreados fora da lista permitida (example.com, example.org, nao-responda@drpetrus.top e
+# contato@drpetrus.top, este último por ordem do líder, item 90 da ratificação de 13/11). Varre
 # SOMENTE os arquivos de `git ls-files` da raiz dada, e imprime encontrados/analisados/falharam SEMPRE.
 # Uso: verificar-emails.sh [raiz-do-repositorio]   (sem argumento: a raiz deste repositório)
 # Sai com 1 se algum arquivo tiver endereço fora da lista, se algum arquivo não puder ser lido, ou se
@@ -10,7 +11,7 @@ set -uo pipefail
 
 RAIZ="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 PADRAO='[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
-PERMITIDOS='@(example\.com|example\.org)$|^nao-responda@drpetrus\.top$'
+PERMITIDOS='@(example\.com|example\.org)$|^nao-responda@drpetrus\.top$|^contato@drpetrus\.top$'
 
 encontrados=0
 analisados=0

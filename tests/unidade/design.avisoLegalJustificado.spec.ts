@@ -35,8 +35,14 @@ describe('AvisoLegal: parágrafo justificado com recuo (modo padrão)', () => {
     expect(regraPadrao).toBeDefined();
   });
 
-  it('o texto é justificado (text-align: justify)', () => {
-    expect(regraPadrao).toMatch(/text-align:\s*justify\s*;/);
+  it('até 880 px o texto fica alinhado à esquerda (text-align: left), sem buraco entre palavras', () => {
+    expect(regraPadrao).toMatch(/text-align:\s*left\s*;/);
+  });
+
+  it('acima de 880 px o texto volta a ser justificado (achado do QA: em 360 px o texto justificado abria espaços largos)', () => {
+    expect(estilo).toMatch(
+      /@media \(min-width:\s*881px\)\s*\{\s*\.aviso-legal__texto\s*\{\s*text-align:\s*justify\s*;/
+    );
   });
 
   it('a primeira linha de cada parágrafo tem recuo de 2em (text-indent)', () => {
@@ -67,5 +73,21 @@ describe('AvisoLegal: modo adaptado sem justificar e sem recuo', () => {
 
   it('no modo adaptado não há recuo de primeira linha (text-indent: 0)', () => {
     expect(regraAdaptado).toMatch(/text-indent:\s*0\s*;/);
+  });
+});
+
+const ENTRADA_CSS = readFileSync(resolve(__dirname, '../../public/entrada.css'), 'utf-8');
+
+describe('tela de entrada: mesmo alinhamento do componente (revisão R1 do QA)', () => {
+  const regraEntrada = ENTRADA_CSS.match(/(?:^|\n)\.aviso-legal__texto\s*\{([^}]*)\}/)?.[1];
+
+  it('até 880 px o texto da entrada fica alinhado à esquerda', () => {
+    expect(regraEntrada).toMatch(/text-align:\s*left\s*;/);
+  });
+
+  it('acima de 880 px o texto da entrada volta a ser justificado', () => {
+    expect(ENTRADA_CSS).toMatch(
+      /@media \(min-width:\s*881px\)\s*\{\s*\.aviso-legal__texto\s*\{\s*text-align:\s*justify\s*;/
+    );
   });
 });

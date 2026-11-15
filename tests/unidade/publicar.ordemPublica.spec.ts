@@ -98,8 +98,10 @@ const NO_DESTINO = `no_destino() {
 }`;
 
 function roteiro(alvo: 'principal' | 'podar', c: Cenario, log: string, espaco: string): string {
+  // enviar_app, na função real, marca DEPLOY_INICIADO=1 antes do primeiro escrito no destino.
   const stubs = ETAPAS.map(
-    (nome) => `${nome}() { echo ${nome} >> "$LOG"; [ "\${FALHA:-}" != ${nome} ]; }`
+    (nome) =>
+      `${nome}() { ${nome === 'enviar_app' ? 'DEPLOY_INICIADO=1; ' : ''}echo ${nome} >> "$LOG"; [ "\${FALHA:-}" != ${nome} ]; }`
   );
   return [
     'set -euo pipefail',
@@ -265,6 +267,23 @@ describe('ordem da fase pública (AV-F5, OS-1)', () => {
       const r = executar('podar', { versoes: OITO_VERSOES });
       expect(r.status).not.toBe(0);
       expect(r.saida).toContain('teto');
+      expect(r.chamadas).not.toContain('no_destino:mv');
+    },
+    TIMEOUT
+  );
+
+  it(
+    'falha em conferir_ar, depois do ponteiro, mantém o aviso ABORTADO, o remoto parcial e o diagnóstico, e não sai com 3',
+    () => {
+      const r = executar('principal', { versoes: TRES_VERSOES, falha: 'conferir_ar' });
+      expect(r.status, r.saida).toBe(1);
+      expect(r.saida).toContain('ABORTADO após iniciar o deploy');
+      expect(r.saida).toContain('O remoto pode estar parcial');
+      expect(r.saida).toContain('arquivos de diagnóstico mantidos');
+      expect(r.saida).not.toContain('poda pendente');
+      expect(r.chamadas).toContain('trocar_ponteiro');
+      expect(r.chamadas).toContain('conferir_ar');
+      expect(r.chamadas).not.toContain('enviar_ao_git');
       expect(r.chamadas).not.toContain('no_destino:mv');
     },
     TIMEOUT

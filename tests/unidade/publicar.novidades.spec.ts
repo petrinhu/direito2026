@@ -68,9 +68,9 @@ function rodar(
       ...process.env,
       VERIFICAR_PROIBICOES_TERMOS: termos,
       GIT_AUTHOR_NAME: 'teste',
-      GIT_AUTHOR_EMAIL: 'teste@exemplo.invalid',
+      GIT_AUTHOR_EMAIL: 'teste@example.com',
       GIT_COMMITTER_NAME: 'teste',
-      GIT_COMMITTER_EMAIL: 'teste@exemplo.invalid'
+      GIT_COMMITTER_EMAIL: 'teste@example.com'
     }
   });
   return { status: r.status, saida: `${r.stdout}${r.stderr}` };
@@ -80,7 +80,7 @@ function rodar(
 function git(cwd: string, ...args: string[]): string {
   const r = spawnSync(
     'git',
-    ['-c', 'user.name=teste', '-c', 'user.email=teste@exemplo.invalid', ...args],
+    ['-c', 'user.name=teste', '-c', 'user.email=teste@example.com', ...args],
     { cwd, encoding: 'utf-8' }
   );
   if (r.status !== 0) throw new Error(`git ${args.join(' ')}: ${r.stderr}`);

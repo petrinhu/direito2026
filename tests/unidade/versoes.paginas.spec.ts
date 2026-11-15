@@ -52,7 +52,9 @@ describe('carregarHistorico', () => {
   });
 
   it('um histórico inválido não carrega: devolve os erros, sem lançar', () => {
-    const r = carregarHistorico([{ versao: 'v1', data: '2026-11-15', didatico: ['x'], tecnico: [] }]);
+    const r = carregarHistorico([
+      { versao: 'v1', data: '2026-11-15', didatico: ['x'], tecnico: [] }
+    ]);
     expect(r.ok).toBe(false);
   });
 });

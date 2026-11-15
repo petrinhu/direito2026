@@ -72,11 +72,13 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
     expect(w.text()).not.toContain('Sair');
   });
 
-  it('ordem: Calendário, Gerenciar usuários, Trocar senha, Sair, e só então o período', () => {
+  it('ordem: Calendário, Novidades, Changelog, Gerenciar usuários, Trocar senha, Sair, e só então o período', () => {
     const w = montar({ usuario: 'admin-teste', admin: true });
     const rotulos = w.findAll('nav a, nav button').map((el) => el.text().trim());
-    expect(rotulos.slice(0, 5)).toEqual([
+    expect(rotulos.slice(0, 7)).toEqual([
       'Calendário',
+      'Novidades',
+      'Changelog',
       'Gerenciar usuários',
       'Trocar senha',
       'Sair',

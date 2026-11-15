@@ -9,7 +9,9 @@ import Novidades from '@/ui/paginas/Novidades.vue';
  * HIST-F2 (ordem do líder de 14/11, item 62): página Novidades, didática. Título h1, uma seção por
  * versão (h2 com a versão e a data), cada alteração numa lista semântica (li). Foco no título ao abrir.
  */
-const HISTORICO = JSON.parse(readFileSync(resolve(__dirname, '../../src/dados/versoes/historico.json'), 'utf-8'));
+const HISTORICO = JSON.parse(
+  readFileSync(resolve(__dirname, '../../src/dados/versoes/historico.json'), 'utf-8')
+);
 const MAIS_NOVA = [...HISTORICO].reverse()[0];
 
 let w: VueWrapper | undefined;
@@ -43,7 +45,10 @@ describe('página Novidades', () => {
 
   it('cada alteração é um item de lista e vem do texto didático', () => {
     w = mount(Novidades, { attachTo: document.body });
-    const itens = w.find('section').findAll('li').map((li) => li.text());
+    const itens = w
+      .find('section')
+      .findAll('li')
+      .map((li) => li.text());
     expect(itens).toEqual(MAIS_NOVA.didatico);
   });
 });

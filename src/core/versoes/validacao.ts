@@ -45,7 +45,8 @@ function ehDataReal(texto: unknown): boolean {
 }
 
 function errosDaEntrada(entrada: unknown, indice: number): string[] {
-  if (typeof entrada !== 'object' || entrada === null) return [`entrada ${indice}: não é um objeto`];
+  if (typeof entrada !== 'object' || entrada === null)
+    return [`entrada ${indice}: não é um objeto`];
   const e = entrada as Record<string, unknown>;
   const rotulo = typeof e.versao === 'string' ? e.versao : `entrada ${indice}`;
   const erros: string[] = [];

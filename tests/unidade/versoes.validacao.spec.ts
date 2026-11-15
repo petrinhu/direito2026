@@ -19,7 +19,13 @@ const HISTORICO_REAL = JSON.parse(
 );
 
 function entrada(versao: string, sobrescrever: Record<string, unknown> = {}) {
-  return { versao, data: '2026-11-15', didatico: ['Item didático.'], tecnico: ['Item técnico.'], ...sobrescrever };
+  return {
+    versao,
+    data: '2026-11-15',
+    didatico: ['Item didático.'],
+    tecnico: ['Item técnico.'],
+    ...sobrescrever
+  };
 }
 
 describe('ehVersao', () => {

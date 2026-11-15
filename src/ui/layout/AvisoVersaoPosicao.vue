@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
  * Posiciona o banner de versão nova como faixa fixa logo ABAIXO do cabeçalho (ratificado pelo
- * líder, 46d e 46g). O topo é a altura medida do cabeçalho (--altura-cabecalho, publicada pela
- * BarraTopo quando ela está fixa; 0px quando não está). Não empurra o conteúdo: fica por cima.
+ * líder, 46d e 46g). O topo é a borda de baixo VISÍVEL do cabeçalho (--base-visivel-cabecalho,
+ * publicada pela BarraTopo a cada rolagem; 0px quando ele saiu da tela). Não empurra o conteúdo.
  */
 </script>
 
@@ -15,7 +15,7 @@
 <style scoped>
 .aviso-versao-posicao {
   position: fixed;
-  top: var(--altura-cabecalho, 0px);
+  top: var(--base-visivel-cabecalho, 0px);
   left: 0;
   right: 0;
   z-index: 50;

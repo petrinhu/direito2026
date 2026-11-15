@@ -21,7 +21,8 @@ describe('AvisoVersaoPosicao', () => {
   it('fica fixa no topo da janela, abaixo do cabeçalho medido, em toda a largura', () => {
     const css = readFileSync(CAMINHO, 'utf-8');
     expect(css).toMatch(/position:\s*fixed/);
-    expect(css).toMatch(/top:\s*var\(--altura-cabecalho/);
+    // D-F13-1/2: o topo é a borda de baixo VISÍVEL do cabeçalho (publicada por BarraTopo), não a altura reservada.
+    expect(css).toMatch(/top:\s*var\(--base-visivel-cabecalho/);
     expect(css).toMatch(/left:\s*0/);
     expect(css).toMatch(/right:\s*0/);
   });

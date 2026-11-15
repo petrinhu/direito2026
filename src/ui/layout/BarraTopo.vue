@@ -67,6 +67,7 @@ function aoRolar(): void {
     else if (atual < ultimoScrollY) oculta.value = false;
   }
   ultimoScrollY = atual;
+  publicarBordaVisivel();
 }
 
 /**
@@ -99,6 +100,19 @@ function publicarAlturaReservada(): void {
     '--altura-cabecalho',
     fixo ? `${cabecalho.offsetHeight}px` : '0px'
   );
+  publicarBordaVisivel();
+}
+
+/**
+ * Borda de baixo VISÍVEL do cabeçalho, no mínimo 0 (D-F13-1 e D-F13-2, regra do líder 46g/81): a faixa
+ * do aviso começa exatamente aqui. Quando o cabeçalho recolhe ou rola para fora, a borda desce; a
+ * altura reservada (--altura-cabecalho) não muda, por isso não serve para isto.
+ */
+function publicarBordaVisivel(): void {
+  const cabecalho = raiz.value;
+  if (!cabecalho) return;
+  const base = Math.max(0, cabecalho.getBoundingClientRect().bottom);
+  document.documentElement.style.setProperty('--base-visivel-cabecalho', `${base}px`);
 }
 
 watch(() => props.storeModoAdaptado.efetivo.value, publicarAlturaReservada, { flush: 'post' });
@@ -108,6 +122,8 @@ onMounted(() => {
   window.addEventListener('resize', publicarAlturaReservada);
   aoRolar();
   publicarAlturaReservada();
+  // Fim da transição de recolher: o último scroll pode ter sido antes de a animação terminar.
+  raiz.value?.addEventListener('transitionend', publicarBordaVisivel);
   if (typeof window.ResizeObserver === 'function' && raiz.value) {
     const observador = new window.ResizeObserver(publicarAlturaReservada);
     observador.observe(raiz.value);
@@ -119,7 +135,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', aoRolar);
   window.removeEventListener('resize', publicarAlturaReservada);
   observadorDeTamanho?.disconnect();
+  raiz.value?.removeEventListener('transitionend', publicarBordaVisivel);
   document.documentElement.style.removeProperty('--altura-cabecalho');
+  document.documentElement.style.removeProperty('--base-visivel-cabecalho');
 });
 </script>
 

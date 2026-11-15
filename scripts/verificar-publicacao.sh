@@ -85,6 +85,13 @@ conferir_tela_de_entrada() {
   else
     falhou "tela de entrada anônima com termo proibido, ou termos não lidos (verificar-proibicoes)"
   fi
+
+  # Nome do titular (SB-F7): a resposta anônima não pode trazê-lo.
+  if node --import tsx "$RAIZ/scripts/verificar-nome-autor.ts" --entrada "$TMP/raiz.b" >/dev/null 2>&1; then
+    passou "tela de entrada anônima sem o nome do titular"
+  else
+    falhou "tela de entrada anônima com o nome do titular, ou não lido (verificar-nome-autor)"
+  fi
 }
 
 # 2. Rota inexistente: mesma tela da raiz. Token e destino variam por requisição: saem antes de comparar.

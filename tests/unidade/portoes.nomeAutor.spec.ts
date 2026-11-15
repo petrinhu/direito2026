@@ -18,6 +18,15 @@ const FONTE_REL = 'src/conteudo/sobre/autoria.ts';
 const CABECALHO_CIFRA = Buffer.from('\0GITCRYPT\0');
 
 let tmp: string;
+const fontesTemporarias: string[] = [];
+
+function fonteSintetica(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'trava-nome-fonte-'));
+  fontesTemporarias.push(dir);
+  const caminho = join(dir, 'fonte.ts');
+  writeFileSync(caminho, `export const TITULAR = '${TITULAR_SINTETICO}';\n`);
+  return caminho;
+}
 
 function criarFonte(raiz: string, conteudo?: Buffer | string): string {
   const caminho = join(raiz, FONTE_REL);
@@ -111,6 +120,7 @@ describe('verificar-nome-autor: modo árvore', () => {
 describe('verificar-nome-autor: modo pacote e resposta anônima', () => {
   afterEach(() => {
     if (tmp) rmSync(tmp, { recursive: true, force: true });
+    for (const dir of fontesTemporarias.splice(0)) rmSync(dir, { recursive: true, force: true });
   });
 
   function pacote(arquivos: Record<string, string>): string {
@@ -123,38 +133,30 @@ describe('verificar-nome-autor: modo pacote e resposta anônima', () => {
     return raiz;
   }
 
-  const env = (raiz: string) => ({
-    VERIFICAR_TITULAR_ARQUIVO: join(raiz, '..', 'nao-usado-no-pacote.ts')
-  });
-
   it('(d) nome em app/index.html do pacote reprova', () => {
     const raiz = pacote({ 'app/index.html': `<p>${TITULAR_SINTETICO}</p>` });
-    const fonte = join(raiz, 'fonte.ts');
-    writeFileSync(fonte, `export const TITULAR = '${TITULAR_SINTETICO}';\n`);
-    const r = rodar(['--pacote', raiz], { VERIFICAR_TITULAR_ARQUIVO: fonte, ...env(raiz) });
+    const fonte = fonteSintetica();
+    const r = rodar(['--pacote', raiz], { VERIFICAR_TITULAR_ARQUIVO: fonte });
     expect(r.status).toBe(1);
   });
 
   it('(e) nome no webroot do pacote reprova', () => {
     const raiz = pacote({ 'webroot/entrada.css': `/* ${TITULAR_SINTETICO} */` });
-    const fonte = join(raiz, 'fonte.ts');
-    writeFileSync(fonte, `export const TITULAR = '${TITULAR_SINTETICO}';\n`);
+    const fonte = fonteSintetica();
     const r = rodar(['--pacote', raiz], { VERIFICAR_TITULAR_ARQUIVO: fonte });
     expect(r.status).toBe(1);
   });
 
   it('o nome dentro de app/*.js é a exceção estreita e passa', () => {
     const raiz = pacote({ 'app/rodape-abc.js': `const t="${TITULAR_SINTETICO}";` });
-    const fonte = join(raiz, 'fonte.ts');
-    writeFileSync(fonte, `export const TITULAR = '${TITULAR_SINTETICO}';\n`);
+    const fonte = fonteSintetica();
     const r = rodar(['--pacote', raiz], { VERIFICAR_TITULAR_ARQUIVO: fonte });
     expect(r.status).toBe(0);
   });
 
   it('(f) nome na resposta anônima do servidor reprova; sem o nome, passa', () => {
     const raiz = pacote({ 'resposta.html': `<p>${TITULAR_SINTETICO}</p>` });
-    const fonte = join(raiz, 'fonte.ts');
-    writeFileSync(fonte, `export const TITULAR = '${TITULAR_SINTETICO}';\n`);
+    const fonte = fonteSintetica();
     expect(
       rodar(['--entrada', join(raiz, 'resposta.html')], { VERIFICAR_TITULAR_ARQUIVO: fonte }).status
     ).toBe(1);

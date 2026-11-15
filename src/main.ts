@@ -162,7 +162,7 @@ async function bootstrap(): Promise<void> {
     conferir: () => sessao.conferirAoVoltar(),
     agora: () => Date.now()
   });
-  // Troca de rota (inclusive a inicial, que é a carga e não consulta) alimenta o vigia do banner.
+  // Troca de rota (inclusive a inicial, que é a carga e consulta, decisão 74) alimenta o vigia do banner.
   router.afterEach((_para, _de, falha) => {
     if (!falha) avisoVersao.aoTrocarRota();
   });

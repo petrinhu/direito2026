@@ -22,13 +22,14 @@ export interface OpcoesVigia {
 export interface VigiaVersaoPublicada {
   /** Liga o gatilho de aba que volta a ficar visível. Devolve a função que desliga. */
   iniciar(): () => void;
-  /** Chamado a cada troca de rota. A primeira é a carga da página e não consulta. */
+  /** Chamado a cada troca de rota. A primeira é a carga da página e também consulta (decisão 74). */
   aoTrocarRota(): void;
 }
 
 /**
  * Vigia de D2: consulta só quando a aba está visível e o intervalo mínimo passou. Sem
- * timer (D3 opção A): nada acontece sem gatilho. Não consulta na carga.
+ * timer (D3 opção A): nada acontece sem gatilho. A carga consulta (decisão 74), mas não
+ * ocupa o intervalo: a troca logo em seguida ainda consulta.
  */
 export function criarVigiaVersaoPublicada(opcoes: OpcoesVigia): VigiaVersaoPublicada {
   const { relogio, documento, consultar } = opcoes;

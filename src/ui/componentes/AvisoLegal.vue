@@ -40,17 +40,23 @@ import { AVISO_LEGAL } from '@/app/rodape/avisoLegal';
 }
 
 /*
-  Justificado com recuo de primeira linha. hyphens: auto (com lang="pt-BR"
-  no próprio <p>) evita os buracos grandes entre palavras que a justificação
-  causa em linhas curtas.
+  Até 880 px, alinhado à esquerda: no QA, em 360 px, o texto justificado abria espaços largos entre
+  as palavras. Acima de 880 px, justificado com recuo de primeira linha. hyphens: auto (com
+  lang="pt-BR" no próprio <p>) reduz os buracos que a justificação causa em linhas curtas.
 */
 .aviso-legal__texto {
   margin: 0;
   font-size: var(--escala-base, 1.0625rem);
   line-height: 1.6;
-  text-align: justify;
+  text-align: left;
   text-indent: 2em;
   hyphens: auto;
+}
+
+@media (min-width: 881px) {
+  .aviso-legal__texto {
+    text-align: justify;
+  }
 }
 
 /*

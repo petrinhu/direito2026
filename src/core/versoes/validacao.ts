@@ -52,19 +52,18 @@ function errosDaEntrada(entrada: unknown, indice: number): string[] {
   const erros: string[] = [];
   if (!ehVersao(e.versao)) erros.push(`${rotulo}: versão fora do formato A.B.C.D`);
   if (!ehDataReal(e.data)) erros.push(`${rotulo}: data inválida (use AAAA-MM-DD)`);
-  let itens = 0;
   for (const campo of ['didatico', 'tecnico'] as const) {
     const lista = e[campo];
     if (!Array.isArray(lista)) {
       erros.push(`${rotulo}: ${campo} não é uma lista`);
       continue;
     }
+    // Cada lista precisa de pelo menos um item: a página Novidades e a Changelog mostram as duas.
+    if (lista.length === 0) erros.push(`${rotulo}: ${campo} sem nenhum item`);
     for (const item of lista) {
-      itens++;
       for (const erro of validarItem(item)) erros.push(`${rotulo}: ${campo}: ${erro}`);
     }
   }
-  if (itens === 0) erros.push(`${rotulo}: sem nenhum item (didático e técnico vazios)`);
   return erros;
 }
 

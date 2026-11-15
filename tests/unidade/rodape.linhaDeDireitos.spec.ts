@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { montarLinhaDeDireitos } from '@/core/rodape/linhaDeDireitos';
+import { montarLinhaDeDireitos, partesDaLinhaDeDireitos } from '@/core/rodape/linhaDeDireitos';
 
 /**
  * Decisão do líder, 20/10/2026, verbatim: "quero que a tag vá junto do
@@ -47,5 +47,54 @@ describe('montarLinhaDeDireitos', () => {
     for (const saida of saidas) {
       expect(saida).not.toMatch(TRAVESSOES);
     }
+  });
+});
+
+/**
+ * Titular sintético de propósito: o nome real não entra em nenhum spec (SB-F7). O quarto
+ * parâmetro é o titular, que na tela vira link (SB-F5); titular vazio mantém o formato de hoje.
+ */
+const TITULAR_SINTETICO = 'Fulana de Tal Exemplo';
+
+describe('montarLinhaDeDireitos com titular (SB-F4)', () => {
+  it('no ano de lançamento, põe o titular entre o ano e o nome do caderno', () => {
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2026, TITULAR_SINTETICO)).toBe(
+      'v1.0.0.0 · © 2026 Fulana de Tal Exemplo · Caderno de Direito'
+    );
+  });
+
+  it('com a faixa de anos, o titular vem depois da faixa', () => {
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2027, TITULAR_SINTETICO)).toBe(
+      'v1.0.0.0 · © 2026-2027 Fulana de Tal Exemplo · Caderno de Direito'
+    );
+  });
+
+  it('titular vazio ou só com espaços devolve o formato de hoje, sem "undefined" nem vão duplo', () => {
+    const formatoDeHoje = 'v1.0.0.0 · © 2026 Caderno de Direito';
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2026, '')).toBe(formatoDeHoje);
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2026, '   ')).toBe(formatoDeHoje);
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2026)).toBe(formatoDeHoje);
+  });
+
+  it('tira espaços das bordas do titular', () => {
+    expect(montarLinhaDeDireitos('1.0.0.0', 2026, 2026, '  Fulana de Tal Exemplo  ')).toBe(
+      'v1.0.0.0 · © 2026 Fulana de Tal Exemplo · Caderno de Direito'
+    );
+  });
+
+  it('separa a linha em antes, titular e depois, para a tela pôr o link no meio', () => {
+    expect(partesDaLinhaDeDireitos('1.0.0.0', 2026, 2026, TITULAR_SINTETICO)).toEqual({
+      antes: 'v1.0.0.0 · © 2026 ',
+      titular: TITULAR_SINTETICO,
+      depois: ' · Caderno de Direito'
+    });
+  });
+
+  it('sem titular, as partes devolvem a linha inteira em antes e nada no link', () => {
+    expect(partesDaLinhaDeDireitos('1.0.0.0', 2026, 2026, '')).toEqual({
+      antes: 'v1.0.0.0 · © 2026 Caderno de Direito',
+      titular: '',
+      depois: ''
+    });
   });
 });

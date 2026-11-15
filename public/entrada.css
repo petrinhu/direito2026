@@ -233,8 +233,8 @@ button {
 }
 
 /*
-  Aviso legal de site não oficial. Fundo, borda e largura são os do AvisoLegal.vue (--cor-fundo-sutil,
-  --cor-acento, 70ch, limitada pela tela). Sem o modo adaptado: a tela de entrada não tem JavaScript,
+  Aviso legal de site não oficial. Fundo e borda são os do AvisoLegal.vue (--cor-fundo-sutil,
+  --cor-acento). A largura é a da tela, com a folga lateral de .entrada-rodape (SB-F3: sem teto de 70ch). Sem o modo adaptado: a tela de entrada não tem JavaScript,
   então não recebe o atributo data-modo-adaptado. Só tokens que esta tela já repete de tokens.css.
 */
 .entrada-rodape {
@@ -243,7 +243,6 @@ button {
 
 .aviso-legal {
   box-sizing: border-box;
-  max-width: 70ch;
   margin: 2rem auto 0;
   padding: 1rem 1.5rem;
   background: var(--cor-fundo-sutil);

@@ -247,7 +247,7 @@ describe('entrada.css: impressão vence os três caminhos de tema', () => {
 });
 
 describe('aviso legal da entrada: visual do AvisoLegal.vue e contraste nos três temas', () => {
-  it('fundo e borda do aviso usam os mesmos tokens do AvisoLegal.vue; login segue com 70ch (SB-F3, parte do backend)', () => {
+  it('fundo e borda do aviso usam os mesmos tokens do AvisoLegal.vue; login sem teto de largura (SB-F3, parte da tela de entrada)', () => {
     const avisoEntrada = corpoDoSeletor(ENTRADA, '.aviso-legal');
     const avisoInterno = corpoDoSeletor(
       AVISO_VUE.slice(AVISO_VUE.indexOf('<style scoped>')),
@@ -260,7 +260,9 @@ describe('aviso legal da entrada: visual do AvisoLegal.vue e contraste nos três
     expect(fundoInterno).toMatch(/var\(--cor-fundo-sutil[,)]/);
     expect(avisoEntrada).toMatch(/border:\s*2px solid var\(--cor-acento[,)]/);
     expect(avisoInterno).toMatch(/border:\s*2px solid var\(--cor-acento[,)]/);
-    expect(avisoEntrada).toMatch(/max-width:\s*70ch/);
+    // SB-F3: o teto de 70ch sai da tela de entrada; o aviso ocupa a largura da tela, com a folga de .entrada-rodape.
+    expect(avisoEntrada).not.toMatch(/max-width\s*:/);
+    expect(avisoEntrada).not.toMatch(/70ch/);
     expect(avisoInterno).toMatch(/max-width:\s*none/);
   });
 

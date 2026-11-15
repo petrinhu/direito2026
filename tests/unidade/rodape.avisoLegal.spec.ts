@@ -10,7 +10,7 @@ import { AVISO_LEGAL } from '@/core/rodape/avisoLegal';
  * ordem do líder.
  */
 const TEXTO_APROVADO =
-  'Aviso: este site não é oficial e não tem vínculo com a instituição de ensino nem com seus professores. É um projeto pessoal, independente e gratuito, feito para apoiar os estudos da turma de Direito. O conteúdo foi preparado a partir de materiais de aula, mas a seleção, a redação e eventuais erros são de responsabilidade exclusiva do autor, e não dos professores nem da instituição. O material é oferecido como está, apenas para estudo, sem garantia de exatidão ou atualização, e não substitui as aulas, a bibliografia indicada nem orientação jurídica profissional.';
+  'Aviso: este site não é oficial e não tem vínculo com a instituição de ensino nem com seus professores. É um projeto pessoal, independente e gratuito, feito para apoiar os estudos da turma de Direito. O acesso a ele é uma concessão, pois se trata de um site privado e pago exclusivamente pelo desenvolvedor; incluir e excluir acessos é direito exclusivo dele e de quem ele determinar. O conteúdo foi preparado a partir de materiais de aula, mas a seleção, a redação e eventuais erros são de responsabilidade exclusiva do autor, e não dos professores nem da instituição. O material é oferecido como está, apenas para estudo, sem garantia de exatidão ou atualização, e não substitui as aulas, a bibliografia indicada nem orientação jurídica profissional.';
 
 describe('AVISO_LEGAL (conteúdo editável do aviso do rodapé)', () => {
   it('monta exatamente o texto aprovado pelo líder, rótulo e corpo juntos', () => {

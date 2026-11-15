@@ -15,14 +15,19 @@ test('Novidades mostra o título e a versão do pacote, com o texto didático em
 }) => {
   await page.goto('/novidades');
   await expect(page.getByRole('heading', { level: 1, name: 'Novidades' })).toBeFocused();
-  await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(VERSAO_DO_PACOTE);
+  // No estado A (histórico gravado antes do release) o topo é a seguinte: a versão do pacote tem de existir na lista.
+  await expect(
+    page.getByRole('heading', { level: 2 }).filter({ hasText: VERSAO_DO_PACOTE })
+  ).toBeVisible();
   await expect(page.locator('section').first().getByRole('listitem').first()).toBeVisible();
 });
 
 test('Changelog mostra o registro técnico da versão do pacote', async ({ page }) => {
   await page.goto('/changelog');
   await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeFocused();
-  await expect(page.getByRole('heading', { level: 2 }).first()).toContainText(VERSAO_DO_PACOTE);
+  await expect(
+    page.getByRole('heading', { level: 2 }).filter({ hasText: VERSAO_DO_PACOTE })
+  ).toBeVisible();
 });
 
 test('o menu lateral leva às duas páginas, depois do Calendário', async ({ page }) => {

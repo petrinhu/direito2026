@@ -57,8 +57,10 @@ function aoBuscar(termo: string): void {
   >
     <router-view />
   </LayoutBase>
-  <!-- Faixa fixa logo abaixo do cabeçalho, só depois do login (ratificado pelo líder, 46g). -->
-  <AvisoVersaoPosicao v-if="aviso && usuario !== ''">
+  <!-- Faixa fixa logo abaixo do cabeçalho (ratificado pelo líder, 46g). Só aparece algo depois do login:
+       o controlador só consulta com usuário, e sem versão nova ou variante de sessão a faixa fica vazia. -->
+  <!-- Sem usuário a faixa segue montada: a variante "Sua sessão terminou" (D-F12-2) depende dela. -->
+  <AvisoVersaoPosicao v-if="aviso">
     <AvisoVersaoNova
       :versao-publicada="aviso.visaoAgora().versaoPublicada"
       :nome="aviso.visaoAgora().nome"

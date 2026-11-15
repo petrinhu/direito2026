@@ -57,6 +57,7 @@ export const FORA: ReadonlyArray<readonly [RegExp, string]> = [
     /^src\/conteudo\/(avisoLegal|curriculo|tipos)\.ts$|^src\/conteudo\/calendario\/|^src\/conteudo\/quiz\/categorias\.ts$|^src\/conteudo\/p\d+\/[^/]+\/cadeira\.ts$/,
     'calendário, aviso legal, currículo, cadeira, tipos e categorias: não é texto de estudo (E6)'
   ],
+  [/^src\/conteudo\/sobre\//, 'autoria e textos da página Sobre: não é texto de estudo (E6)'],
   [/^src\/dados\//, 'dados de dispositivos em JSON: fora da fonte (E6), limite declarado'],
   [/^docs\//, 'documentação interna: não é texto de estudo e não chega ao leitor (E6, E7)'],
   [/^TODO\.md$/, 'registro interno de pendências (E7)'],

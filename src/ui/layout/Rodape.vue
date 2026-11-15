@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
-import { montarLinhaDeDireitos } from '@/app/rodape/linhaDeDireitos';
+import { partesDaLinhaDeDireitos } from '@/app/rodape/linhaDeDireitos';
+import { CONTATO_EMAIL, TITULAR } from '@/app/rodape/titular';
 import { apagarTudoComConfirmacao } from '@/app/persistencia/apagarTudoComConfirmacao';
 // Import (não caminho cru em public/): achado do líder, medido no site já
 // publicado, 22/09/2026 - arquivo em public/ tem nome fixo, e
@@ -19,11 +20,13 @@ import logoOferecimento from './oferecimento-logo.png';
  *
  * A versão vem da constante de build __VERSAO_SITE__ (campo "version" do
  * package.json, ver vite.config.ts). A forma da linha é decidida em
- * montarLinhaDeDireitos (src/core/rodape).
+ * partesDaLinhaDeDireitos (src/core/rodape).
  */
 const ANO_INICIAL = 2026;
 const anoAtual = new Date().getFullYear();
-const linhaDireitos = montarLinhaDeDireitos(__VERSAO_SITE__, ANO_INICIAL, anoAtual);
+const partesDireitos = partesDaLinhaDeDireitos(__VERSAO_SITE__, ANO_INICIAL, anoAtual, TITULAR);
+const textoAltLogo = `Dr. ${TITULAR}`;
+const linkContato = `mailto:${CONTATO_EMAIL}`;
 
 const props = defineProps<{ repositorio: RepositorioProgresso }>();
 
@@ -37,8 +40,9 @@ function apagar(): void {
     Três coisas decididas pelo líder em 21/09/2026 (seção 6 da
     arquitetura): aviso de material de estudo sem valor oficial, aviso de
     progresso salvo no navegador, e nome/ano (este último agora expresso
-    na linha de direitos, ver comentário abaixo). Sem autoria, sem
-    instituição, sem contato: ponto mais sensível de R3, coberto por
+    na linha de direitos, ver comentário abaixo). Sem instituição e sem
+    contato de professor: o titular aparece só depois do login, como link (SB-F5); ponto
+    mais sensível de R3, coberto por
     scripts/verificar-proibicoes.sh.
 
     A linha de oferecimento é ordem do líder, 22/09/2026, verbatim:
@@ -71,13 +75,19 @@ function apagar(): void {
           :src="logoOferecimento"
           width="95"
           height="53"
-          alt="Dr. Petrus Silva Costa"
+          :alt="textoAltLogo"
           class="rodape__logo"
         />
         <span>Caderno de Direito é um oferecimento de drpetrus.top</span>
       </a>
     </p>
-    <p class="rodape__direitos">{{ linhaDireitos }}</p>
+    <p class="rodape__direitos">
+      {{ partesDireitos.antes
+      }}<a v-if="partesDireitos.titular !== ''" :href="linkContato" class="rodape__autor">{{
+        partesDireitos.titular
+      }}</a
+      >{{ partesDireitos.depois }}
+    </p>
     <p>Material de estudo sem valor oficial.</p>
     <p>
       O progresso fica salvo neste navegador.
@@ -139,6 +149,20 @@ function apagar(): void {
    creme: o anel do site (--cor-foco) contrasta com ele nos dois temas e no modo
    adaptado. A cor do texto da superfície escura sumia no claro (creme sobre creme). */
 .rodape__link-oferecimento:focus-visible {
+  outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
+  outline-offset: var(--foco-deslocamento, 2px);
+}
+
+/*
+  Nome do titular, link para o e-mail de contato (ordem do líder, 15/11/2026). Herda a cor da linha
+  de direitos e tem o mesmo anel de foco do rodapé: o foco visível é exigência de acessibilidade, não detalhe.
+*/
+.rodape__autor {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.rodape__autor:focus-visible {
   outline: var(--foco-espessura, 2px) solid var(--cor-foco, var(--cor-primaria, #163a5f));
   outline-offset: var(--foco-deslocamento, 2px);
 }

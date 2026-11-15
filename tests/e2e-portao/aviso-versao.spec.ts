@@ -360,6 +360,10 @@ test('sessão apagada antes do clique: o aviso vira "Sua sessão terminou" e nã
   page
 }) => {
   await entrarEVerAviso(page);
+  // A troca de rota dispara a conferência de sessão (/api/sessao.php), que sai sem esperar. Se ela
+  // ainda estiver em voo quando as sessões somem, volta sem sessão e a página recarrega. Espera
+  // a rede assentar antes de apagar, para que o teste mostre o caminho do 401 do aviso.
+  await page.waitForLoadState('networkidle');
   const antes = new URL(page.url()).pathname;
   esvaziarSessoes();
 

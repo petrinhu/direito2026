@@ -8,7 +8,7 @@
  * public/.htaccess no mesmo commit, senão os portões reprovam de propósito.
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 /** Regra de passagem direta de literais (`- [L]`), como texto de RewriteRule. */
@@ -133,6 +133,23 @@ export function listarArquivos(pasta: string, base: string = pasta): string[] {
       const caminho = join(pasta, entrada.name);
       if (entrada.isDirectory()) return listarArquivos(caminho, base);
       return [relative(base, caminho).split(sep).join('/')];
+    })
+    .sort();
+}
+
+/**
+ * Caminhos relativos (com `/`) de todo link simbólico dentro da pasta, ordenados. Lê com lstat:
+ * um link nunca é seguido, então o alvo de fora do dist não entra no pacote (OS-2, revisão F4).
+ * Não lista o conteúdo do link; a pasta-raiz é checada pelo chamador.
+ */
+export function linksSimbolicos(pasta: string, base: string = pasta): string[] {
+  return readdirSync(pasta)
+    .flatMap((nome) => {
+      const caminho = join(pasta, nome);
+      const meta = lstatSync(caminho);
+      if (meta.isSymbolicLink()) return [relative(base, caminho).split(sep).join('/')];
+      if (meta.isDirectory()) return linksSimbolicos(caminho, base);
+      return [];
     })
     .sort();
 }

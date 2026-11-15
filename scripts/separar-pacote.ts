@@ -11,7 +11,8 @@
  *                    montado de docs/versoes/novidades.json e do currículo. Teto: 10 versões, 4 KB.
  *                    Entra no manifesto, como qualquer arquivo do app.
  *
- * Falha fechada: dist ausente ou vazio, arquivo sem lista (extensão, api fora da regra,
+ * Falha fechada: dist ausente ou vazio, link simbólico no dist (nunca seguido), arquivo sem
+ * lista (extensão, api fora da regra,
  * 404.html, nome reservado, versao.json vindo do build), item obrigatório ausente, novidades
  * inválidas ou ilegíveis, saída que engole o dist. A saída anterior é apagada só em
  * SAIDA/webroot e SAIDA/app, e só depois de todas as checagens passarem. Depois de escrever,
@@ -24,6 +25,7 @@ import { createHash } from 'node:crypto';
 import {
   copyFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -39,6 +41,7 @@ import {
   OBRIGATORIOS_WEBROOT,
   VERSAO_PUBLICADA,
   classificar,
+  linksSimbolicos,
   listarArquivos,
   md5Do,
   tipoDoApp
@@ -108,7 +111,11 @@ async function montarVersaoDoPacote(): Promise<ResultadoVersao<{ versao: string;
   } catch (erro) {
     return { ok: false, motivo: `currículo ilegível: ${mensagem(erro)}` };
   }
-  const montada = montarVersaoPublicada({ versaoDoPacote: versao, entradas: lida.valor, curriculo });
+  const montada = montarVersaoPublicada({
+    versaoDoPacote: versao,
+    entradas: lida.valor,
+    curriculo
+  });
   return montada.ok ? { ok: true, valor: { versao, corpo: montada.valor } } : montada;
 }
 
@@ -158,6 +165,15 @@ async function principal(): Promise<number> {
       'separar-pacote: saída não pode ser o dist, a raiz do repositório, nem conter o dist'
     );
     return 1;
+  }
+
+  // Link simbólico não é seguido: qualquer um no dist reprova antes de copiar (OS-2, revisão F4).
+  const links = [...(lstatSync(DIST).isSymbolicLink() ? ['.'] : []), ...linksSimbolicos(DIST)];
+  if (links.length > 0) {
+    const linhas = links.map(
+      (link) => `link simbólico recusado no dist: ${link} (o pacote não segue links)`
+    );
+    return reprovar(linhas, links.length, links.length);
   }
 
   const caminhos = listarArquivos(DIST);

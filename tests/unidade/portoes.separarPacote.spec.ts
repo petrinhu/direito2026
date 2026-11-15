@@ -8,6 +8,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -147,6 +148,36 @@ describe('separador do pacote', () => {
     expect(saidaCompleta(r)).toContain(
       `encontrados=${WEBROOT_ESPERADO.length + APP_ESPERADO.length} analisados=${WEBROOT_ESPERADO.length + APP_ESPERADO.length} falharam=0`
     );
+  });
+
+  it('link simbólico para fora do dist reprova, sem copiar o alvo (OS-2, rc 1 e mensagem clara)', () => {
+    const segredo = join(tmp, 'fora-do-dist.txt');
+    writeFileSync(segredo, 'conteudo fora do dist\n');
+    symlinkSync(segredo, join(dist, 'assets/vazamento.txt'));
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('link simbólico recusado');
+    expect(saidaCompleta(r)).toContain('assets/vazamento.txt');
+    expect(existsSync(join(saida, 'app'))).toBe(false);
+  });
+
+  it('link simbólico para dentro do dist também reprova (qualquer link, não só o que sai)', () => {
+    symlinkSync(join(dist, 'index.html'), join(dist, 'assets/atalho.html'));
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('link simbólico recusado');
+    expect(existsSync(join(saida, 'app'))).toBe(false);
+  });
+
+  it('pasta que é link simbólico para fora do dist reprova', () => {
+    const fora = join(tmp, 'pasta-externa');
+    mkdirSync(fora);
+    writeFileSync(join(fora, 'x.js'), 'externo\n');
+    symlinkSync(fora, join(dist, 'assets/linkdir'));
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saidaCompleta(r)).toContain('link simbólico recusado');
+    expect(existsSync(join(saida, 'app'))).toBe(false);
   });
 
   it.each([

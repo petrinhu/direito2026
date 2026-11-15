@@ -98,6 +98,17 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Conta.vue')
   },
   {
+    // Histórico de versões (HIST-F3): páginas didática e técnica, antes do coringa.
+    path: '/novidades',
+    name: 'novidades',
+    component: () => import('@/ui/paginas/Novidades.vue')
+  },
+  {
+    path: '/changelog',
+    name: 'changelog',
+    component: () => import('@/ui/paginas/Changelog.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'nao-encontrado',
     component: () => import('@/ui/paginas/NaoEncontrado.vue')

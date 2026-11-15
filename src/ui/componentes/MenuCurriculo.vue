@@ -157,6 +157,24 @@ provide(ESTADO_MENU, {
           Calendário
         </RouterLink>
       </li>
+      <li>
+        <RouterLink
+          to="/novidades"
+          class="menu-curriculo__historico"
+          :aria-current="ehAtual('novidades', caminhoAtual) ? 'page' : undefined"
+        >
+          Novidades
+        </RouterLink>
+      </li>
+      <li>
+        <RouterLink
+          to="/changelog"
+          class="menu-curriculo__historico"
+          :aria-current="ehAtual('changelog', caminhoAtual) ? 'page' : undefined"
+        >
+          Changelog
+        </RouterLink>
+      </li>
     </ul>
     <MenuSessao v-if="usuario" :admin="admin" :caminho-atual="caminhoAtual" @sair="emit('sair')" />
     <ul class="menu-curriculo__nivel-1">

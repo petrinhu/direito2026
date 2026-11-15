@@ -53,6 +53,37 @@ describe('analisarNovidade: tipo, cadeira e texto', () => {
     expect(r.ok && textoFinalDoItem(r.item)).toBe('Novo: rádio para estudar');
   });
 
+  it('novo, melhorado e corrigido viram "Novo:", "Melhorado:" e "Corrigido:" (decisão 101)', () => {
+    const novo = analisarNovidade('novo:rádio para estudar', CURRICULO);
+    expect(novo.ok && textoFinalDoItem(novo.item)).toBe('Novo: rádio para estudar');
+    const melhorado = analisarNovidade('melhorado:busca no índice', CURRICULO);
+    expect(melhorado.ok && textoFinalDoItem(melhorado.item)).toBe('Melhorado: busca no índice');
+    const corrigido = analisarNovidade('corrigido:menu lateral no celular', CURRICULO);
+    expect(corrigido.ok && textoFinalDoItem(corrigido.item)).toBe(
+      'Corrigido: menu lateral no celular'
+    );
+  });
+
+  it('melhorado e corrigido seguem as mesmas regras do texto: 3 a 40, sem endereço, sem travessão', () => {
+    for (const tipo of ['melhorado', 'corrigido']) {
+      expect(analisarNovidade(`${tipo}:ab`, CURRICULO).ok).toBe(false);
+      expect(analisarNovidade(`${tipo}:${'a'.repeat(41)}`, CURRICULO).ok).toBe(false);
+      expect(analisarNovidade(`${tipo}:veja www.exemplo.com`, CURRICULO).ok).toBe(false);
+      expect(analisarNovidade(`${tipo}:rádio — estudar`, CURRICULO).ok).toBe(false);
+      expect(analisarNovidade(`${tipo}:${'a'.repeat(40)}`, CURRICULO).ok).toBe(true);
+    }
+  });
+
+  it('melhorado e corrigido passam pela trava de termos, como o usabilidade', () => {
+    // Controle positivo: sem ele, um tipo desconhecido também recusaria e o caso passaria por engano.
+    const limpo = analisarNovidade('corrigido:menu lateral', CURRICULO, verificarComScript);
+    expect(limpo.ok).toBe(true);
+    const r = analisarNovidade(`corrigido:${TERMO_SINTETICO}`, CURRICULO, verificarComScript);
+    expect(r.ok).toBe(false);
+    const m = analisarNovidade(`melhorado:${TERMO_SINTETICO}`, CURRICULO, verificarComScript);
+    expect(m.ok).toBe(false);
+  });
+
   it('tecnica vira "Melhoria técnica"', () => {
     const r = analisarNovidade('tecnica', CURRICULO);
     expect(r.ok && textoFinalDoItem(r.item)).toBe('Melhoria técnica');

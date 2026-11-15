@@ -9,10 +9,24 @@ import type { Curriculo } from '../../src/core/curriculo/tipos';
  */
 export type TipoPublicacao = 'recurso' | 'correcao' | 'construcao';
 
+/** Rótulo do item de uso no banner (decisão 101 do líder: "Novo, Melhorado, Corrigido"). */
+export type RotuloDeUso = 'Novo' | 'Melhorado' | 'Corrigido';
+
 export type ItemNovidade =
   | { tipo: 'cadeira'; periodo: string; cadeira: string; texto: string }
-  | { tipo: 'usabilidade'; texto: string }
+  | { tipo: 'uso'; rotulo: RotuloDeUso; texto: string }
   | { tipo: 'tecnica' };
+
+/**
+ * Tipos de item de uso aceitos na linha de comando. `usabilidade:` é o nome antigo de `novo:`
+ * e continua valendo (vira "Novo:").
+ */
+const ROTULOS_DE_USO: ReadonlyMap<string, RotuloDeUso> = new Map([
+  ['novo', 'Novo'],
+  ['melhorado', 'Melhorado'],
+  ['corrigido', 'Corrigido'],
+  ['usabilidade', 'Novo']
+]);
 
 export type Resultado<T> = { ok: true; item: T } | { ok: false; motivo: string };
 
@@ -53,6 +67,7 @@ export function analisarNovidade(
   const tipo = doisPontos < 0 ? bruto : bruto.slice(0, doisPontos);
   const valor = doisPontos < 0 ? '' : bruto.slice(doisPontos + 1);
 
+  const rotulo = ROTULOS_DE_USO.get(tipo);
   let item: ItemNovidade;
   if (tipo === 'tecnica' && valor === '') {
     item = { tipo: 'tecnica' };
@@ -60,12 +75,15 @@ export function analisarNovidade(
     const r = acharCadeira(valor, curriculo);
     if (!r.ok) return r;
     item = r.item;
-  } else if (tipo === 'usabilidade') {
-    const motivo = motivoDeUsabilidade(valor);
+  } else if (rotulo !== undefined) {
+    const motivo = motivoDeUsabilidade(tipo, valor);
     if (motivo !== null) return { ok: false, motivo };
-    item = { tipo: 'usabilidade', texto: valor };
+    item = { tipo: 'uso', rotulo, texto: valor };
   } else {
-    return { ok: false, motivo: `tipo de novidade desconhecido: "${tipo}"` };
+    return {
+      ok: false,
+      motivo: `tipo de novidade desconhecido: "${tipo}" (use novo, melhorado, corrigido, tecnica ou cadeira)`
+    };
   }
 
   const final = textoFinalDoItem(item);
@@ -80,7 +98,7 @@ export function analisarNovidade(
 
 export function textoFinalDoItem(item: ItemNovidade): string {
   if (item.tipo === 'cadeira') return `${item.texto}`;
-  if (item.tipo === 'usabilidade') return `Novo: ${item.texto}`;
+  if (item.tipo === 'uso') return `${item.rotulo}: ${item.texto}`;
   return TECNICA_TEXTO;
 }
 
@@ -116,7 +134,7 @@ function acharCadeira(valor: string, curriculo: Curriculo): Resultado<ItemNovida
   if (cadeira.restrita) {
     return {
       ok: false,
-      motivo: 'área restrita não é anunciada por nome: use tecnica ou usabilidade'
+      motivo: 'área restrita não é anunciada por nome: use tecnica ou novo, melhorado, corrigido'
     };
   }
   return {
@@ -130,12 +148,12 @@ function acharCadeira(valor: string, curriculo: Curriculo): Resultado<ItemNovida
   };
 }
 
-function motivoDeUsabilidade(texto: string): string | null {
+/** As mesmas regras valem para novo, melhorado e corrigido; `tipo` só aparece na mensagem. */
+function motivoDeUsabilidade(tipo: string, texto: string): string | null {
   const tamanho = [...texto].length;
-  if (tamanho < 3 || tamanho > 40) return 'usabilidade precisa ter de 3 a 40 caracteres';
-  if (!USABILIDADE.test(texto))
-    return "usabilidade só aceita letras, dígitos, espaço e , . ( ) : '";
-  if (ENDERECO.test(texto)) return 'usabilidade não pode trazer endereço';
-  if (TRAVESSOES.test(texto)) return 'usabilidade não pode ter travessão';
+  if (tamanho < 3 || tamanho > 40) return `${tipo} precisa ter de 3 a 40 caracteres`;
+  if (!USABILIDADE.test(texto)) return `${tipo} só aceita letras, dígitos, espaço e , . ( ) : '`;
+  if (ENDERECO.test(texto)) return `${tipo} não pode trazer endereço`;
+  if (TRAVESSOES.test(texto)) return `${tipo} não pode ter travessão`;
   return null;
 }

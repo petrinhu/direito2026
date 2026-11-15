@@ -53,8 +53,11 @@ function arrumar(novidades: readonly string[]): string[] {
   return [...base].sort((x, y) => ordem(x) - ordem(y));
 }
 
+/** Rótulos de item de uso (decisão 101): Novo, Melhorado e Corrigido, todos no mesmo grupo. */
+const ROTULO_DE_USO = /^(Novo|Melhorado|Corrigido): /;
+
 function ordem(item: string): number {
   if (item === TECNICA) return 2;
-  if (item.startsWith('Novo: ')) return 1;
+  if (ROTULO_DE_USO.test(item)) return 1;
   return 0;
 }

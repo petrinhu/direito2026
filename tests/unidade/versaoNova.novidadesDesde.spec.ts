@@ -12,6 +12,28 @@ const HISTORICO: EntradaHistorico[] = [
   { versao: '1.10.0.0', novidades: ['Direito Civil (2º período) atualizada'] }
 ];
 
+describe('novidadesDesde: rótulos de uso (decisão 101)', () => {
+  it('Melhorado e Corrigido ficam no grupo de uso, depois da cadeira e antes da técnica', () => {
+    const historico: EntradaHistorico[] = [
+      {
+        versao: '2.0.0.0',
+        novidades: [
+          'Corrigido: menu lateral no celular',
+          'Filosofia Jurídica (1º período) atualizada',
+          'Melhorado: busca no índice',
+          'Melhoria técnica'
+        ]
+      },
+      { versao: '1.9.0.0', novidades: ['Novo: rádio'] }
+    ];
+    expect(novidadesDesde(historico, '1.9.0.0', '2.0.0.0').itens).toEqual([
+      'Filosofia Jurídica (1º período) atualizada',
+      'Corrigido: menu lateral no celular',
+      'Melhorado: busca no índice'
+    ]);
+  });
+});
+
 describe('novidadesDesde: versões puladas entram, a da aba fica de fora', () => {
   it('a aba em 1.10.1.0 recebe o que veio depois: a cadeira, o recurso, e a técnica sai', () => {
     expect(novidadesDesde(HISTORICO, '1.10.1.0', '1.11.0.0')).toEqual({

@@ -18,13 +18,25 @@ import { AVISO_LEGAL } from '@/app/rodape/avisoLegal';
 */
 .aviso-legal {
   box-sizing: border-box;
-  max-width: 70ch;
-  margin: var(--esp-6, 2rem) auto var(--esp-4, 1rem);
+  max-width: none;
+  margin: var(--esp-6, 2rem) 0 var(--esp-4, 1rem);
   padding: var(--esp-4, 1rem) var(--esp-5, 1.5rem);
   background: var(--cor-fundo-sutil, #f2efe6);
   border: 2px solid var(--cor-acento, #7c621c);
   border-radius: var(--raio-sm, 6px);
   color: var(--cor-texto, #1c1c1c);
+}
+
+/*
+  Largura inteira (ordem do líder, item 40 da ratificação de 13/11): até 880 px, o quadro vai de
+  borda a borda, sem margem lateral. Acima disso, 16 px de cada lado, a mesma folga do botão Home.
+  O ponto 880 px é o da gaveta do menu (LayoutBase.vue).
+*/
+@media (min-width: 881px) {
+  .aviso-legal {
+    margin-left: var(--esp-4, 1rem);
+    margin-right: var(--esp-4, 1rem);
+  }
 }
 
 /*

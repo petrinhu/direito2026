@@ -44,6 +44,15 @@ const BUILD = JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf-8')) as {
   version: string;
 };
 
+/**
+ * Versões dos casos, relativas ao package.json (nunca literais): a versão atual muda a cada
+ * release, e o clone de release já traz a versão nova. "Mais nova" é uma versão de MAIOR
+ * seguinte; "antiga" é 0.1.0.N, sempre menor que qualquer versão publicada.
+ */
+const MAIOR = Number(BUILD.version.split('.')[0]);
+const VERSAO_MAIS_NOVA = `${MAIOR + 1}.0.0.0`;
+const versaoAntiga = (n: number): string => `0.1.0.${n}`;
+
 let tmp: string;
 let dist: string;
 let saida: string;
@@ -267,27 +276,30 @@ describe('versao.json do pacote (AV-F4, plano do aviso de versão)', () => {
   });
 
   it('entrada do histórico mais nova que o package.json reprova', () => {
-    escreverNovidades([{ versao: '1.13.0.0', novidades: ['tecnica'] }]);
+    escreverNovidades([{ versao: VERSAO_MAIS_NOVA, novidades: ['tecnica'] }]);
     const r = rodar();
     expect(r.status).toBe(1);
-    expect(saidaCompleta(r)).toContain('1.13.0.0');
+    expect(saidaCompleta(r)).toContain(VERSAO_MAIS_NOVA);
     expect(saidaCompleta(r)).toContain('package.json');
     expect(existsSync(join(saida, 'app'))).toBe(false);
   });
 
   it('entrada da versão do package.json entra no topo do histórico (gêmeo positivo)', () => {
     escreverNovidades([
-      { versao: '1.12.0.0', novidades: ['tecnica'] },
+      { versao: versaoAntiga(1), novidades: ['tecnica'] },
       { versao: BUILD.version, novidades: ['tecnica'] }
     ]);
     const r = rodar();
     expect(r.status).toBe(0);
-    expect(versaoPublicada().historico.map((e) => e.versao)).toEqual([BUILD.version, '1.12.0.0']);
+    expect(versaoPublicada().historico.map((e) => e.versao)).toEqual([
+      BUILD.version,
+      versaoAntiga(1)
+    ]);
   });
 
-  it('histórico com mais de 10 corta nas 10 mais novas, em ordem numérica (1.11.0.10 vem antes de 1.11.0.9)', () => {
+  it('histórico com mais de 10 corta nas 10 mais novas, em ordem numérica (0.1.0.10 vem antes de 0.1.0.9)', () => {
     const versoes = Array.from({ length: 12 }, (_, i) => ({
-      versao: `1.11.0.${i + 1}`,
+      versao: `0.1.0.${i + 1}`,
       novidades: ['tecnica']
     })).reverse();
     escreverNovidades(versoes);
@@ -295,16 +307,16 @@ describe('versao.json do pacote (AV-F4, plano do aviso de versão)', () => {
     expect(r.status).toBe(0);
     const historico = versaoPublicada().historico.map((e) => e.versao);
     expect(historico).toHaveLength(10);
-    expect(historico[0]).toBe('1.11.0.12');
-    expect(historico[9]).toBe('1.11.0.3');
-    expect(historico).not.toContain('1.11.0.1');
-    expect(historico).not.toContain('1.11.0.2');
+    expect(historico[0]).toBe('0.1.0.12');
+    expect(historico[9]).toBe('0.1.0.3');
+    expect(historico).not.toContain('0.1.0.1');
+    expect(historico).not.toContain('0.1.0.2');
   });
 
   it('arquivo acima de 4 KB reprova, com a razão do teto', () => {
     // 10 versões, 5 novidades cada, com letras acentuadas (2 bytes em UTF-8): passa de 4096 bytes.
     const versoes = Array.from({ length: 10 }, (_, v) => ({
-      versao: `1.11.0.${v + 1}`,
+      versao: `0.1.0.${v + 1}`,
       novidades: Array.from(
         { length: 5 },
         (_, n) => `usabilidade:${'é'.repeat(37)}${String(v * 5 + n).padStart(2, '0')}`
@@ -318,7 +330,7 @@ describe('versao.json do pacote (AV-F4, plano do aviso de versão)', () => {
 
   it('o mesmo formato com texto ASCII curto cabe no teto (gêmeo positivo do teto de 4 KB)', () => {
     const versoes = Array.from({ length: 10 }, (_, v) => ({
-      versao: `1.11.0.${v + 1}`,
+      versao: `0.1.0.${v + 1}`,
       novidades: Array.from(
         { length: 5 },
         (_, n) => `usabilidade:Tocador de radio ${String(v * 5 + n).padStart(2, '0')}`
@@ -374,12 +386,12 @@ describe('versao.json do pacote (AV-F4, plano do aviso de versão)', () => {
   });
 
   it('sem entrada para a versão do package.json: o histórico não inventa a versão nova (aviso sem lista)', () => {
-    escreverNovidades([{ versao: '1.12.0.0', novidades: ['tecnica'] }]);
+    escreverNovidades([{ versao: versaoAntiga(1), novidades: ['tecnica'] }]);
     const r = rodar();
     expect(r.status).toBe(0);
     const publicado = versaoPublicada();
     expect(publicado.versao).toBe(BUILD.version);
-    expect(publicado.historico.map((e) => e.versao)).toEqual(['1.12.0.0']);
+    expect(publicado.historico.map((e) => e.versao)).toEqual([versaoAntiga(1)]);
     expect(publicado.historico.some((e) => e.versao === BUILD.version)).toBe(false);
   });
 

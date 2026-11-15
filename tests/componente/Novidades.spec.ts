@@ -53,4 +53,29 @@ describe('página Novidades', () => {
       .map((li) => li.text());
     expect(itens).toEqual(MAIS_NOVA.didatico);
   });
+  it('cada seção aponta, por aria-labelledby, para o h2 dela (não para outro elemento)', () => {
+    w = mount(Novidades, { attachTo: document.body });
+    for (const secao of w.findAll('section')) {
+      const id = secao.attributes('aria-labelledby');
+      expect(id, 'aria-labelledby').toBeTruthy();
+      expect(secao.find(`#${id}`).element.tagName).toBe('H2');
+    }
+  });
+
+  it('as alterações estão numa lista (ul com li), não em blocos soltos', () => {
+    w = mount(Novidades, { attachTo: document.body });
+    for (const secao of w.findAll('section')) {
+      expect(secao.find('ul').exists()).toBe(true);
+      expect(secao.findAll('ul > li').length).toBeGreaterThan(0);
+    }
+  });
+
+  it('com um histórico inválido, a página não mostra versões e diz que não carregou', () => {
+    w = mount(Novidades, {
+      attachTo: document.body,
+      props: { origem: [{ versao: 'x', data: '2026-11-15', didatico: ['a'], tecnico: ['b'] }] }
+    });
+    expect(w.findAll('section').length).toBe(0);
+    expect(w.text()).toContain('Não foi possível carregar as novidades agora.');
+  });
 });

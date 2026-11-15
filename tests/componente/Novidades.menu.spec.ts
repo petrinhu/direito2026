@@ -25,4 +25,9 @@ describe('MenuCurriculo: Novidades e Changelog', () => {
     expect(w.find('a[href="/novidades"]').attributes('aria-current')).toBe('page');
     expect(w.find('a[href="/changelog"]').attributes('aria-current')).toBeUndefined();
   });
+  it('na rota /changelog, o link do Changelog recebe aria-current="page" e o de Novidades não', () => {
+    const w = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: 'changelog' } });
+    expect(w.find('a[href="/changelog"]').attributes('aria-current')).toBe('page');
+    expect(w.find('a[href="/novidades"]').attributes('aria-current')).toBeUndefined();
+  });
 });

@@ -26,4 +26,19 @@ describe('rotas do histórico', () => {
     expect(indice('/novidades')).toBeLessThan(coringa);
     expect(indice('/changelog')).toBeLessThan(coringa);
   });
+  it('/novidades carrega a página Novidades, e /changelog a página Changelog', async () => {
+    const porCaminho = (caminho: string) => rotas.find((x) => x.path === caminho)!;
+    const novidades = (
+      await (
+        porCaminho('/novidades').component as () => Promise<{ default: { __name?: string } }>
+      )()
+    ).default;
+    const changelog = (
+      await (
+        porCaminho('/changelog').component as () => Promise<{ default: { __name?: string } }>
+      )()
+    ).default;
+    expect(novidades.__name).toBe('Novidades');
+    expect(changelog.__name).toBe('Changelog');
+  });
 });

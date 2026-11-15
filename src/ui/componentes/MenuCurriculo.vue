@@ -157,26 +157,8 @@ provide(ESTADO_MENU, {
           Calendário
         </RouterLink>
       </li>
-      <li>
-        <RouterLink
-          to="/novidades"
-          class="menu-curriculo__historico"
-          :aria-current="ehAtual('novidades', caminhoAtual) ? 'page' : undefined"
-        >
-          Novidades
-        </RouterLink>
-      </li>
-      <li>
-        <RouterLink
-          to="/changelog"
-          class="menu-curriculo__historico"
-          :aria-current="ehAtual('changelog', caminhoAtual) ? 'page' : undefined"
-        >
-          Changelog
-        </RouterLink>
-      </li>
     </ul>
-    <MenuSessao v-if="usuario" :admin="admin" :caminho-atual="caminhoAtual" @sair="emit('sair')" />
+    <hr class="menu-curriculo__separador" />
     <ul class="menu-curriculo__nivel-1">
       <li v-for="periodo in curriculo" :key="periodo.id">
         <button
@@ -370,6 +352,29 @@ provide(ESTADO_MENU, {
         </ul>
       </li>
     </ul>
+    <hr class="menu-curriculo__separador" />
+    <ul class="menu-curriculo__historico-lista">
+      <li>
+        <RouterLink
+          to="/novidades"
+          class="menu-curriculo__historico"
+          :aria-current="ehAtual('novidades', caminhoAtual) ? 'page' : undefined"
+        >
+          Novidades
+        </RouterLink>
+      </li>
+      <li>
+        <RouterLink
+          to="/changelog"
+          class="menu-curriculo__historico"
+          :aria-current="ehAtual('changelog', caminhoAtual) ? 'page' : undefined"
+        >
+          Changelog
+        </RouterLink>
+      </li>
+    </ul>
+    <hr v-if="usuario" class="menu-curriculo__separador" />
+    <MenuSessao v-if="usuario" :admin="admin" :caminho-atual="caminhoAtual" @sair="emit('sair')" />
   </nav>
 </template>
 
@@ -384,14 +389,24 @@ provide(ESTADO_MENU, {
 .menu-curriculo__topo {
   padding-bottom: var(--esp-2, 0.5rem);
   margin-bottom: var(--esp-2, 0.5rem);
-  border-bottom: 1px solid rgba(184, 192, 204, 0.35);
 }
 /* Bloco da conta (LU-F3.2): mesmo separador do topo. O Sair é botão, então zera o
    estilo nativo para parecer com os links do bloco. */
 .menu-curriculo__sessao {
   padding-bottom: var(--esp-2, 0.5rem);
   margin-bottom: var(--esp-2, 0.5rem);
-  border-bottom: 1px solid rgba(184, 192, 204, 0.35);
+}
+/*
+  Separadores entre os setores do menu (ordem do líder, 15/11: linhas douradas no tom do site). A cor
+  é o token --cor-friso, ouro claro já usado sobre o azul da fachada: 3:1 ou mais contra a lateral nos
+  quatro blocos, medido em tests/unidade/design.separadorMenuContraste.spec.ts. Sem cor escrita à mão.
+*/
+.menu-curriculo__separador {
+  border: 0;
+  border-top: 1px solid var(--cor-friso);
+  height: 0;
+  margin: var(--esp-2, 0.5rem) 0;
+  background: none;
 }
 /* Itens do bloco da conta começam na coluna do Calendário (padding de .menu-curriculo a, esp-4).
    A regra de link de árvore zera o padding-left, e sem este recuo os itens encostavam na borda

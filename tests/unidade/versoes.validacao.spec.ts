@@ -31,7 +31,7 @@ function entrada(versao: string, sobrescrever: Record<string, unknown> = {}) {
 describe('ehVersao', () => {
   it('aceita A.B.C.D e recusa outros formatos', () => {
     expect(ehVersao('1.13.0.0')).toBe(true);
-    for (const ruim of ['1.13', 'v1.13.0.0', '1.13.0.0.0', 'abc', '', 1 as unknown as string]) {
+    for (const ruim of ['1.13', '1.13.0', 'v1.13.0.0', '1.13.0.0.0', 'abc', '', 1 as unknown as string]) {
       expect(ehVersao(ruim as string), String(ruim)).toBe(false);
     }
   });
@@ -72,6 +72,20 @@ describe('validarHistorico', () => {
 
   it('recusa entrada sem nenhum item (didático e técnico vazios)', () => {
     expect(validarHistorico([entrada('1.13.0.0', { didatico: [], tecnico: [] })]).ok).toBe(false);
+  });
+
+  it('recusa didático vazio com técnico preenchido, e o contrário (cada lista precisa de um item)', () => {
+    expect(validarHistorico([entrada('1.13.0.0', { didatico: [] })]).ok).toBe(false);
+    expect(validarHistorico([entrada('1.13.0.0', { tecnico: [] })]).ok).toBe(false);
+  });
+
+  it('valida o técnico como valida o didático (item de 181 caracteres reprova)', () => {
+    expect(validarHistorico([entrada('1.13.0.0', { tecnico: ['x'.repeat(181)] })]).ok).toBe(false);
+  });
+
+  it('conta caracteres por código, não por unidade UTF-16 (180 caracteres com emoji passam)', () => {
+    expect(validarItem('a'.repeat(179) + '😀')).toEqual([]);
+    expect(validarItem('a'.repeat(180) + '😀')).not.toEqual([]);
   });
 
   it('recusa versões repetidas ou fora da ordem do arquivo (estrita, mais antiga primeiro)', () => {

@@ -14,7 +14,8 @@ const CHAVE = 'p1/filosofia-juridica/u3-moderna-contemporanea';
 
 function perguntaDe(id: number): { id: number; correta: number } {
   const p = (quiz as unknown as { id: number; correta?: number }[]).find((x) => x.id === id);
-  if (p === undefined || p.correta === undefined) throw new Error(`pergunta ${id} sem índice correto`);
+  if (p === undefined || p.correta === undefined)
+    throw new Error(`pergunta ${id} sem índice correto`);
   return { id: p.id, correta: p.correta };
 }
 

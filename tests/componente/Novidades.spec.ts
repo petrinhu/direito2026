@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it, afterEach } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import Novidades from '@/ui/paginas/Novidades.vue';
+import { formatarData } from '@/app/versoes/paginas';
 
 /**
  * HIST-F2 (ordem do líder de 14/11, item 62): página Novidades, didática. Título h1, uma seção por
@@ -40,7 +41,8 @@ describe('página Novidades', () => {
     expect(secoes.length).toBe(HISTORICO.length);
     const primeiro = w.find('h2');
     expect(primeiro.text()).toContain(MAIS_NOVA.versao);
-    expect(primeiro.text()).toContain('15/11/2026');
+    // A data vem do próprio histórico: a próxima publicação muda a data sem quebrar este spec.
+    expect(primeiro.text()).toContain(formatarData(MAIS_NOVA.data));
   });
 
   it('cada alteração é um item de lista e vem do texto didático', () => {

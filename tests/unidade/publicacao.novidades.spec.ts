@@ -95,6 +95,18 @@ describe('analisarNovidade: tipo, cadeira e texto', () => {
     expect(analisarNovidade('usabilidade:escreva a alguem@example.com', CURRICULO).ok).toBe(false);
   });
 
+  it('qualquer domínio recusa, inclusive TLD fora da lista antiga (.top, .site, .app)', () => {
+    expect(analisarNovidade('usabilidade:acesse meusite.top', CURRICULO).ok).toBe(false);
+    expect(analisarNovidade('usabilidade:acesse loja.site', CURRICULO).ok).toBe(false);
+    expect(analisarNovidade('usabilidade:acesse painel.app', CURRICULO).ok).toBe(false);
+  });
+
+  it('texto normal com ponto final continua aceito (gêmeo positivo do domínio)', () => {
+    expect(analisarNovidade('usabilidade:Filosofia atualizada.', CURRICULO).ok).toBe(true);
+    expect(analisarNovidade('usabilidade:Tocador de rádio. Novo', CURRICULO).ok).toBe(true);
+    expect(analisarNovidade('usabilidade:Revisão do art.12 do texto', CURRICULO).ok).toBe(true);
+  });
+
   it('texto final de mais de 60 caracteres recusa', () => {
     const nome = 'N'.repeat(60);
     const curriculo: Curriculo = [

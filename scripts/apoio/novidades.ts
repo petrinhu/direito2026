@@ -24,7 +24,9 @@ const MAXIMO_POR_VERSAO = 5;
 const MAXIMO_TEXTO_FINAL = 60;
 const TECNICA_TEXTO = 'Melhoria técnica';
 const USABILIDADE = /^[\p{L}\p{N} ,.():']+$/u;
-const ENDERECO = /https?:\/\/|www\.|@|\b[\w-]+\.(com|br|org|net|gov|edu|io)\b/i;
+// Domínio: qualquer TLD (letras depois do ponto), não só uma lista. Ponto seguido de espaço ou
+// de número ("Filosofia atualizada.", "art.12") não casa.
+const ENDERECO = /https?:\/\/|www\.|@|\b[\p{L}\p{N}-]+\.\p{L}{2,}\b/iu;
 const TRAVESSOES = /[\u2013\u2014]/;
 
 /**

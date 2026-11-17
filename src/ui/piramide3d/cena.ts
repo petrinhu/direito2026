@@ -40,6 +40,7 @@ import { medidorDoCanvas, pintarFace, pintarFacePonta, type CoresDaFace } from '
 import { aplicarPosicoesDaPeca } from './geometriaPeca';
 import { aplicarLimpeza } from './limpeza';
 import { ouvirContextoDoWebgl } from './contexto';
+import { OPCOES_DO_CORPO_COMUM } from './materialCorpo';
 
 const FOV_V = 26;
 const D = 9.7; // distância da câmera ao centro da pirâmide
@@ -389,15 +390,7 @@ export function criarCena({
           depthWrite: false,
           side: THREE.DoubleSide
         })
-      : new THREE.MeshStandardMaterial({
-          vertexColors: true,
-          roughness: 0.55,
-          metalness: 0.05,
-          flatShading: true,
-          transparent: true,
-          opacity: 1,
-          side: THREE.DoubleSide
-        });
+      : new THREE.MeshStandardMaterial(OPCOES_DO_CORPO_COMUM);
     mat.userData.base = fantasma ? 0.22 : 1;
     const malha = new THREE.Mesh(geo, mat);
     const razao = fantasma ? RAZAO_BLOCO : ehPonta(dims) ? 0 : RAZAO_FATIA;

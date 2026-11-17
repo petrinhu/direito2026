@@ -233,6 +233,7 @@ teste('presença: excluir a conta pelo painel apaga o arquivo de presença', fun
     verdadeiro(is_file(presencaArquivo($a, 'ana')), 'o arquivo existe antes');
     $r = $adm->post('/api/usuarios.php', ['acao' => 'excluir', 'usuario' => 'ana']);
     igual(200, $r->status, 'excluída pelo painel');
+    clearstatcache(); // o arquivo mudou em outro processo (o servidor): sem limpar, is_file lê o cache de stat
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'o arquivo sai junto com a conta');
 });
 
@@ -245,6 +246,7 @@ teste('presença: excluir pelo CLI apaga o arquivo de presença da conta removid
     file_put_contents($arqBia, json_encode(['m' => str_repeat('b', 64), 'v' => 1, 'a' => time(), 'c' => time()], JSON_THROW_ON_ERROR));
     [$rc, $out, $err] = rodarCliScript('remover-conta.php', [$priv, 'ana'], '');
     igual(0, $rc, "saída: $out $err");
+    clearstatcache();
     verdadeiro(!is_file($arqAna), 'a presença de ana sai com a conta');
     verdadeiro(is_file($arqBia), 'a presença de bia fica');
     apagarArvore($dir);
@@ -260,9 +262,11 @@ teste('presença: a faxina do login apaga a presença com mais de 13 h', functio
         $d['a'] = time() - 13 * 3600 - 60;
         return $d;
     });
-    $a->entrar();
+    // Sessão única: o login novo do admin derruba o $adm anterior, então o painel vem do login novo.
+    $outro = $a->entrar();
+    clearstatcache(); // o arquivo mudou em outro processo (o servidor): sem limpar, is_file lê o cache de stat
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'o login de outra conta faxina a presença velha de ana');
-    igual(false, presencaLinha($adm, 'ana')['conectado'] ?? null, 'sem arquivo, sem sessão aberta');
+    igual(false, presencaLinha($outro, 'ana')['conectado'] ?? null, 'sem arquivo, sem sessão aberta');
 });
 
 teste('presença: não admin recebe 403 na listagem e a resposta não traz o campo conectado', function (): void {

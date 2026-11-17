@@ -18,7 +18,7 @@ const D26_PRE_NOME = '__Host-d26pre';
 const D26_DISP_NOME = '__Host-d26disp';
 const D26_PRIVADO_NOME = 'direito2026_privado';
 /** Subpastas do privado único: imagens/ é da Júri, mas o privado é um só. */
-const D26_SUBPASTAS = ['sessoes', 'conteudo', 'imagens'];
+const D26_SUBPASTAS = ['sessoes', 'conteudo', 'imagens', 'presenca'];
 const D26_SESSAO_OCIOSIDADE = 7200;
 const D26_SESSAO_VALIDADE = 43200;
 const D26_CORPO_MAX = 8192;

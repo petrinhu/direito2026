@@ -499,7 +499,7 @@ function d26_conta_achar(array $dados, string $login): ?array
  *
  * @return array<string, mixed>
  */
-function d26_conta_publica(array $c, ?int $agora = null): array
+function d26_conta_publica(array $c, ?int $agora = null, bool $conectado = false): array
 {
     $agora ??= time();
     return [
@@ -518,6 +518,8 @@ function d26_conta_publica(array $c, ?int $agora = null): array
         // Uso simultâneo (BL-B1): só o contador e o instante do bloqueio. Nunca os marcadores de aparelho e de queda.
         'usoSimultaneo' => (int) ($c['usoSimultaneo'] ?? 0),
         'bloqueadaEm' => is_array($c['bloqueada'] ?? null) ? (int) $c['bloqueada']['em'] : null,
+        // Sessão aberta (ADM-F3): calculada por quem lista, a partir da presença. Este arquivo não lê a presença.
+        'conectado' => $conectado,
     ];
 }
 

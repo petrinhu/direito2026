@@ -85,8 +85,8 @@ describe('Redação u3 AV3-R1-B: quiz de 44 perguntas (22 e 22)', () => {
 
   it('perguntas 41 a 44 são das categorias de direitos básicos e fato, fundamento e pedido; fonteExtra só em 44', () => {
     const esperadas: Record<number, string> = {
-      41: 'direitos-basicos',
-      42: 'direitos-basicos',
+      41: 'consumo-direitos-basicos',
+      42: 'consumo-direitos-basicos',
       43: 'fato-fundamento-pedido',
       44: 'fato-fundamento-pedido'
     };

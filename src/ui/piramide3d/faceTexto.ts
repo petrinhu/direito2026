@@ -7,9 +7,11 @@ import {
   fonteCorpo,
   fonteNome,
   fonteRotulo,
+  layoutDaPonta,
   leiaute
 } from '@/app/piramide3d/nucleo';
 import type { LeiauteFace, Medidor } from '@/core/piramide3d/layoutFace';
+import type { LayoutDaPonta } from '@/core/piramide3d/layoutPonta';
 import type { NivelFigura3d } from '@/core/piramide3d/tipos';
 
 /** Cores da face (variáveis --pir-face-* de estilo.css, lidas por figura.ts). */
@@ -120,5 +122,64 @@ export function pintarFace({
     ex.linhas.forEach((l, i) => g.fillText(l.t, ex.texto.x, ex.texto.y + (i + 0.5) * ex.hLinha));
   }
 
+  return { canvas, layout: lay };
+}
+
+/**
+ * Face de ponta (topo da pirâmide): triângulo, com a altura da textura igual à da face (Apx = Lpx · a),
+ * e o texto na parte de baixo, em linhas que cabem no triângulo (layoutDaPonta). A cor e a família
+ * das fontes são as das outras fatias.
+ */
+export function pintarFacePonta({
+  info,
+  Lpx,
+  a,
+  cores,
+  escala,
+  medida,
+  fInicial
+}: {
+  readonly info: NivelFigura3d;
+  readonly Lpx: number;
+  readonly a: number;
+  readonly cores: CoresDaFace;
+  readonly escala: number;
+  readonly medida: Medidor;
+  readonly fInicial: number;
+}): { canvas: HTMLCanvasElement; layout: LayoutDaPonta | null } {
+  const t = { W: Lpx, H: Lpx * a };
+  const lay = layoutDaPonta(
+    medida,
+    { nome: info.nome, explicacao: info.explicacao, rotulo: info.rotulo, exemplo: info.exemplo },
+    t,
+    { nome: (f) => fonteNome(f, FATOR_NOME), corpo: fonteCorpo, rotulo: fonteRotulo },
+    { fInicial, fMinimo: 12, margem: 8 }
+  );
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(Lpx * escala);
+  canvas.height = Math.round(t.H * escala);
+  const g = canvas.getContext('2d');
+  if (!g) throw new Error('canvas 2D indisponível para pintar a face de ponta');
+  g.setTransform(canvas.width / Lpx, 0, 0, canvas.height / t.H, 0, 0);
+  const degrade = g.createLinearGradient(0, 0, 0, t.H);
+  degrade.addColorStop(0, cores.topo);
+  degrade.addColorStop(1, cores.base);
+  g.fillStyle = degrade;
+  g.fillRect(0, 0, Lpx, t.H);
+  if (lay) {
+    g.textBaseline = 'middle';
+    g.textAlign = 'center';
+    const cor = {
+      nome: cores.nome,
+      explicacao: cores.explicacao,
+      rotulo: cores.exemploRotulo,
+      exemplo: cores.exemploTexto
+    };
+    for (const l of lay.linhas) {
+      g.font = l.fonte;
+      g.fillStyle = cor[l.cor];
+      g.fillText(l.t, l.x, l.y);
+    }
+  }
   return { canvas, layout: lay };
 }

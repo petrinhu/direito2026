@@ -55,6 +55,19 @@ export function blocosNorma(): [Fatia, Fatia] {
 }
 
 /** Dimensões de uma peça em repouso: tronco de seção quadrada, por isso PB=LB e PT=LT. */
+/**
+ * Razão largura do topo / largura da base no repouso. No voo, a peça mantém essa proporção: o topo
+ * fica ponta (PONTA), e não um tronco com a razão da fatia comum.
+ */
+export function razaoDoRepouso(d: DimensoesTronco): number {
+  return d.LB > 0 ? d.LT / d.LB : 0;
+}
+
+/** Topo da pirâmide: a fatia cuja largura do topo é quase zero (a ponta). */
+export function ehPonta(d: DimensoesTronco): boolean {
+  return razaoDoRepouso(d) < 0.05;
+}
+
 export function dimsRepouso(f: Fatia): DimensoesTronco {
   return { LB: f.LB, LT: f.LT, PB: f.LB, PT: f.LT, h: f.topo - f.base };
 }

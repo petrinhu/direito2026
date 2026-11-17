@@ -17,6 +17,8 @@ import {
   TG_V,
   arestasTronco,
   centroFaceFrente,
+  ehPonta,
+  razaoDoRepouso,
   blocosNorma,
   cantosFaceFrente,
   cantosTronco,
@@ -34,7 +36,7 @@ import {
 import type { LeiauteFace } from '@/core/piramide3d/layoutFace';
 import type { PerfilFigura } from '@/core/piramide3d/perfil';
 import type { DimensoesTronco, NivelFigura3d, Ponto, Retangulo } from '@/core/piramide3d/tipos';
-import { medidorDoCanvas, pintarFace, type CoresDaFace } from './faceTexto';
+import { medidorDoCanvas, pintarFace, pintarFacePonta, type CoresDaFace } from './faceTexto';
 import { aplicarPosicoesDaPeca } from './geometriaPeca';
 
 const FOV_V = 26;
@@ -307,6 +309,8 @@ export function criarCena({
   };
 
   let ativo: string | null = null;
+  // Retângulos que a ponta não pode cruzar no voo (selo, botões acima da cena), em px do canvas.
+  let vizinhosDoVoo: Retangulo[] = [];
   let cenaRect: Retangulo = { x: 0, y: 0, w: 1, h: 1 };
   let shiftX = 0;
   let tamanhoAtual = { w: 0, h: 0 };
@@ -380,7 +384,7 @@ export function criarCena({
         });
     mat.userData.base = fantasma ? 0.22 : 1;
     const malha = new THREE.Mesh(geo, mat);
-    const razao = fantasma ? RAZAO_BLOCO : RAZAO_FATIA;
+    const razao = fantasma ? RAZAO_BLOCO : ehPonta(dims) ? 0 : RAZAO_FATIA;
     const pele: Pele = new THREE.Mesh(
       geometriaPele(razao),
       new THREE.MeshBasicMaterial({
@@ -659,6 +663,7 @@ export function criarCena({
   function setAtivo(nivel: string | null): void {
     if (nivel === ativo) return;
     ativo = nivel;
+    if (nivel !== null) vizinhosDoVoo = lerVizinhosDoVoo();
     if (nivel === null) emVoo = true; // a volta começa com o canvas ainda em tela cheia
     const agora = performance.now();
     for (const L of niveis.values()) {
@@ -691,6 +696,19 @@ export function criarCena({
   }
 
   // Retângulos da cena e do canvas, na hora da chamada. O canvas em voo é a janela.
+  // Vizinhos da ponta no voo: botões acima da cena, selo "7 dias" e cabeçalho, no canvas (que é a janela no voo).
+  // No voo o canvas é fixo em (0, 0): as coordenadas da janela são as do canvas. Antes do voo ele está no fluxo.
+  function lerVizinhosDoVoo(): Retangulo[] {
+    const elementos: { getBoundingClientRect(): DOMRect }[] = [
+      ...(cenaEl.closest('figure')?.querySelectorAll('.figura-piramide3d__controles') ?? []),
+      ...document.querySelectorAll('.quadro-prova, .barra-topo')
+    ];
+    return elementos.map((el) => {
+      const b = el.getBoundingClientRect();
+      return { x: b.left, y: b.top, w: b.width, h: b.height };
+    });
+  }
+
   function lerRetangulos(): { r: DOMRect; c: DOMRect } {
     const r = cenaEl.getBoundingClientRect();
     const c = canvas.getBoundingClientRect();
@@ -711,8 +729,10 @@ export function criarCena({
         rc,
         rv,
         apxPedido: apxDe(L, rv),
-        razao: L.razao,
-        D
+        razao: razaoDoRepouso(L.dimsR),
+        D,
+        alturaRelativa: L.dimsR.h / L.dimsR.LB,
+        obstaculos: vizinhosDoVoo
       });
       return {
         dims: v.d,
@@ -748,16 +768,29 @@ export function criarCena({
   function pintarNivel(L: Peca, alvo: AlvoTextura): void {
     const info = textos.get(L.nivel);
     if (!info) throw new Error(`nível "${L.nivel}" sem texto no conteúdo`);
-    const r = pintarFace({
-      info,
-      Lpx: alvo.Lpx,
-      AmaxPx: alvo.AmaxPx,
-      razao: L.razao,
-      cores: paleta.faceCores,
-      escala: alvo.escala,
-      medida,
-      ornamento: L.nivel === NORMA_FUNDAMENTAL
-    });
+    const ponta = ehPonta(L.dimsR);
+    const r = ponta
+      ? pintarFacePonta({
+          info,
+          Lpx: alvo.Lpx,
+          a: L.dimsR.h / L.dimsR.LB,
+          cores: paleta.faceCores,
+          escala: alvo.escala,
+          medida,
+          // Sem teto fixo: o layout escolhe o maior corpo que cabe no triângulo (o teto de 24 px deixava a
+          // ponta pequena no voo, com o corpo abaixo de 12 px na tela).
+          fInicial: alvo.Lpx / 12
+        })
+      : pintarFace({
+          info,
+          Lpx: alvo.Lpx,
+          AmaxPx: alvo.AmaxPx,
+          razao: L.razao,
+          cores: paleta.faceCores,
+          escala: alvo.escala,
+          medida,
+          ornamento: L.nivel === NORMA_FUNDAMENTAL
+        });
     const tex = new THREE.CanvasTexture(r.canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     // Sem mipmap: com mipmap o rótulo "Exemplo" ficava com 12 px na cor exata, abaixo do mínimo.
@@ -765,7 +798,7 @@ export function criarCena({
     tex.magFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
     if (L.tex.textura) L.tex.textura.dispose();
-    L.tex = { chave: alvo.chave, textura: tex, layout: r.layout };
+    L.tex = { chave: alvo.chave, textura: tex, layout: ponta ? null : (r.layout as LeiauteFace) };
     // Envio à placa já na pintura: sem isso, o primeiro uso (no meio do voo) paga a subida inteira.
     renderer.initTexture(tex);
     L.pele.material.map = tex;
@@ -1044,7 +1077,16 @@ export function criarCena({
       };
       aplicarProjecao(camVoo, rc, rv);
       camVoo.updateMatrixWorld(true);
-      const v = poseDeVoo({ camera: camVoo, rc, rv, apxPedido: apxDe(L, rv), razao: L.razao, D });
+      const v = poseDeVoo({
+        camera: camVoo,
+        rc,
+        rv,
+        apxPedido: apxDe(L, rv),
+        razao: razaoDoRepouso(L.dimsR),
+        D,
+        alturaRelativa: L.dimsR.h / L.dimsR.LB,
+        obstaculos: vizinhosDoVoo
+      });
       return poligonoDe(
         v.d,
         new THREE.Quaternion(v.Q.x, v.Q.y, v.Q.z, v.Q.w),

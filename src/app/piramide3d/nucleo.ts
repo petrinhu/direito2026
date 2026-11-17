@@ -5,6 +5,8 @@ export {
   ALTURA,
   GIRO,
   arestasTronco,
+  ehPonta,
+  razaoDoRepouso,
   centroFaceFrente,
   blocosNorma,
   cantosFaceFrente,
@@ -41,3 +43,4 @@ export {
   fonteRotulo,
   leiaute
 } from '@/core/piramide3d/layoutFace';
+export { layoutDaPonta } from '@/core/piramide3d/layoutPonta';

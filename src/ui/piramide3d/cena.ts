@@ -34,6 +34,7 @@ import type { LeiauteFace } from '@/core/piramide3d/layoutFace';
 import type { PerfilFigura } from '@/core/piramide3d/perfil';
 import type { DimensoesTronco, NivelFigura3d, Ponto, Retangulo } from '@/core/piramide3d/tipos';
 import { medidorDoCanvas, pintarFace, type CoresDaFace } from './faceTexto';
+import { aplicarPosicoesDaPeca } from './geometriaPeca';
 
 const FOV_V = 26;
 const D = 9.7; // distância da câmera ao centro da pirâmide
@@ -671,9 +672,7 @@ export function criarCena({
     L.dims = dims;
     posicionarPele(L.pele, dims);
     const pos = posicoesTronco(dims);
-    const posicao = L.geo.getAttribute('position') as THREE.BufferAttribute;
-    posicao.array.set(pos);
-    posicao.needsUpdate = true;
+    aplicarPosicoesDaPeca(L.geo, pos);
     const cor = L.geo.getAttribute('color') as THREE.BufferAttribute;
     aplicarPontos(cor.array, L.cBase, L.cTopo, pos, dims.h);
     cor.needsUpdate = true;

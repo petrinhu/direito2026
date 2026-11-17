@@ -38,6 +38,7 @@ import type { PerfilFigura } from '@/core/piramide3d/perfil';
 import type { DimensoesTronco, NivelFigura3d, Ponto, Retangulo } from '@/core/piramide3d/tipos';
 import { medidorDoCanvas, pintarFace, pintarFacePonta, type CoresDaFace } from './faceTexto';
 import { aplicarPosicoesDaPeca } from './geometriaPeca';
+import { aplicarLimpeza } from './limpeza';
 
 const FOV_V = 26;
 const D = 9.7; // distância da câmera ao centro da pirâmide
@@ -906,15 +907,17 @@ export function criarCena({
     fatorVoo =
       ativo !== null ? eVeil : algumaVolta && pVeil !== null ? 1 - easeInOutCubic(pVeil) : 0;
 
-    // Véu: a cor de limpeza do canvas escurece a página atrás da fatia em voo.
-    if (ativo !== null) {
-      const cor = ativo === NORMA_FUNDAMENTAL ? new THREE.Color('#070f1c') : paleta.fundo;
-      renderer.setClearColor(cor, (ativo === NORMA_FUNDAMENTAL ? 0.82 : 0.6) * eVeil);
-    } else if (algumaVolta && pVeil !== null) {
-      renderer.setClearColor(paleta.fundo, 0.6 * (1 - easeInOutCubic(pVeil)));
-    } else {
-      renderer.setClearColor(0x000000, 0);
-    }
+    // Sem véu: a cor de limpeza fica transparente em todo estado (decisão do líder, "Tirar o véu").
+    aplicarLimpeza(
+      renderer,
+      ativo === NORMA_FUNDAMENTAL
+        ? 'norma-fundamental'
+        : ativo !== null
+          ? 'voo'
+          : algumaVolta
+            ? 'volta'
+            : 'repouso'
+    );
 
     // Partículas: deriva lenta e cintilação.
     if (!reduzido) {

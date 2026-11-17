@@ -110,6 +110,8 @@ export interface EntradaPoseDeVoo {
   readonly alturaRelativa?: number;
   /** Retângulos vizinhos da ponta, em px do canvas (selo, botões). A ponta não pode cruzá-los. */
   readonly obstaculos?: readonly Retangulo[];
+  /** Altura real do cabeçalho fixo, em px do canvas: o ápice do voo fica abaixo dela (QA rodada 6). */
+  readonly margemSuperior?: number;
 }
 
 export interface PoseDeVoo {
@@ -210,16 +212,23 @@ export function poseDaPontaComFracao(entrada: EntradaPoseDeVoo, fracao: number):
   const apice = ehApice(entrada);
   const padrao = apice ? deslocamentoVerticalDaPonta(rc, rv) : rv.h / 2 - (rc.y - rv.y + rc.h / 2);
   if (!apice) return poseComDeslocamento(entrada, padrao, fracao);
-  const alvoApice = Math.max(rc.y - rv.y + FOLGA_APICE_ACIMA_DA_CENA, 0.07 * rv.h);
+  const alvoApice = Math.max(
+    rc.y - rv.y + FOLGA_APICE_ACIMA_DA_CENA,
+    (entrada.margemSuperior ?? 0) + FOLGA_TOPO_FRACAO * rv.h,
+    0.07 * rv.h
+  );
   let oy = padrao;
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 4; i++) {
     const v = poseComDeslocamento(entrada, oy, fracao);
-    const alto = rotacionar({ x: 0, y: v.d.h / 2, z: v.d.PT / 2 }, v.Q);
-    const y = pontoNaTelaDoVoo(somar(v.P, alto), camera, rc, rv).y;
+    // O ápice é o ponto mais alto do contorno projetado (os 8 cantos do tronco).
+    const y = Math.min(...poligonoDaPontaNaTela(v, camera, rc, rv).map((p) => p.y));
     oy += alvoApice - y;
   }
   return poseComDeslocamento(entrada, oy, fracao);
 }
+
+/** Folga do ápice abaixo do cabeçalho fixo, em fração da altura da janela (a folga de 5% do voo). */
+export const FOLGA_TOPO_FRACAO = 0.05;
 
 /** Folga, em px, que a ponta mantém de cada vizinho (encostar no canto não basta). */
 export const FOLGA_VIZINHO = 8;

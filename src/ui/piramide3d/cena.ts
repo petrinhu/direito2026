@@ -328,6 +328,8 @@ export function criarCena({
   let ativo: string | null = null;
   // Retângulos que a ponta não pode cruzar no voo (selo, botões acima da cena), em px do canvas.
   let vizinhosDoVoo: Retangulo[] = [];
+  // Altura real do cabeçalho fixo no início do voo: o ápice fica abaixo dela (QA rodada 6).
+  let margemSuperiorDoVoo = 0;
   let cenaRect: Retangulo = { x: 0, y: 0, w: 1, h: 1 };
   let shiftX = 0;
   let tamanhoAtual = { w: 0, h: 0 };
@@ -672,7 +674,10 @@ export function criarCena({
   function setAtivo(nivel: string | null): void {
     if (nivel === ativo) return;
     ativo = nivel;
-    if (nivel !== null) vizinhosDoVoo = lerVizinhosDoVoo();
+    if (nivel !== null) {
+      vizinhosDoVoo = lerVizinhosDoVoo();
+      margemSuperiorDoVoo = lerAlturaDoCabecalho();
+    }
     if (nivel === null) emVoo = true; // a volta começa com o canvas ainda em tela cheia
     const agora = performance.now();
     for (const L of niveis.values()) {
@@ -706,6 +711,12 @@ export function criarCena({
 
   // Retângulos da cena e do canvas, na hora da chamada. O canvas em voo é a janela.
   // Vizinhos da ponta no voo: botões acima da cena, selo "7 dias" e cabeçalho, no canvas (que é a janela no voo).
+  // Bottom do cabeçalho fixo, em px da janela (o canvas do voo é a janela inteira). Escondido, conta como 0.
+  function lerAlturaDoCabecalho(): number {
+    const barra = document.querySelector('.barra-topo');
+    return barra ? Math.max(0, barra.getBoundingClientRect().bottom) : 0;
+  }
+
   // No voo o canvas é fixo em (0, 0): as coordenadas da janela são as do canvas. Antes do voo ele está no fluxo.
   function lerVizinhosDoVoo(): Retangulo[] {
     const elementos: { getBoundingClientRect(): DOMRect }[] = [
@@ -741,7 +752,8 @@ export function criarCena({
         razao: razaoDoRepouso(L.dimsR),
         D,
         alturaRelativa: L.dimsR.h / L.dimsR.LB,
-        obstaculos: vizinhosDoVoo
+        obstaculos: vizinhosDoVoo,
+        margemSuperior: margemSuperiorDoVoo
       });
       return {
         dims: v.d,
@@ -1097,7 +1109,8 @@ export function criarCena({
         razao: razaoDoRepouso(L.dimsR),
         D,
         alturaRelativa: L.dimsR.h / L.dimsR.LB,
-        obstaculos: vizinhosDoVoo
+        obstaculos: vizinhosDoVoo,
+        margemSuperior: margemSuperiorDoVoo
       });
       return poligonoDe(
         v.d,

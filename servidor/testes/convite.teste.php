@@ -627,6 +627,33 @@ teste('convite: C15 corrida: um 303 e um M2; o hash gravado é o do vencedor', f
     igual(hash('sha256', $token), $conta['conviteUsado'] ?? null, 'o consumo ficou com o vencedor');
 });
 
+// ---- C15b (SE4): o perdedor do CAS não zera o contador, mesmo que o zero viesse antes do CAS -----
+
+teste('convite: C15b o perdedor do CAS para antes da gravação e não zera o contador reinjetado depois do vencedor', function (): void {
+    $a = Ambiente::novo(['workers' => 4]);
+    $token = cvb2Convidar($a, 'ana');
+    $perdedor = $a->cliente();
+    $csrfP = cvb2Campo(cvb2Pagina($perdedor, $token)->corpo, 'csrf');
+    $vencedor = $a->cliente();
+    $csrfV = cvb2Campo(cvb2Pagina($vencedor, $token)->corpo, 'csrf');
+
+    // O perdedor passa pela classificação do link (válido) e fica parado antes do CAS.
+    pausaLigar($a, 'convite-antes-gravar', 'ana');
+    $reqP = cvb2PostSemEsperar($perdedor, cvb2Campos($token, $csrfP, 'SenhaPerdedoraSE4-2026'));
+    pausaEsperarChegada($reqP, $a, 'convite-antes-gravar');
+    // O vencedor grava enquanto o perdedor espera (o marcador casa com ninguém, como em C15).
+    file_put_contents($a->priv . '/pausa-convite-antes-gravar', 'ninguem');
+    igual(303, cvb2Enviar($vencedor, cvb2Campos($token, $csrfV, 'SenhaVencedoraSE4-2026'))->status, 'o vencedor grava e entra');
+    pausaSoltar($a, 'convite-antes-gravar');
+    // Falhas da conta chegam depois da vitória: o contador tem de sobreviver ao perdedor.
+    cvb2Falhas($a, 10, 0, 0);
+
+    cvb2Mensagem(cvb2ConcluirPost($reqP), 410, CVB2_M2);
+    $t = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true, 512, JSON_THROW_ON_ERROR);
+    $kc = hash('sha256', 'conta' . "\0" . 'ana');
+    igual(10, count($t['c'][$kc]['f'] ?? []), 'o perdedor do CAS não zera a conta (o zero só vem depois do CAS vencido)');
+});
+
 // ---- C16: senha curta, igual ao login ou repetição diferente: 400 e o link segue valendo ------
 
 teste('convite: C16 senha curta, igual ao login ou repetição diferente: tela com a mensagem, 400, e o link segue valendo', function (): void {

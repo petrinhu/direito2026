@@ -445,6 +445,11 @@ class FiguraTresD implements FiguraMontada {
     }
   }
 
+  /** Pede um quadro (usado pela cena quando o contexto WebGL é restaurado). */
+  pedirQuadroPublico(): void {
+    this.pedirQuadro();
+  }
+
   private pedirQuadro(): void {
     if (this.rafId || !this.visivel) return;
     this.rafId = requestAnimationFrame((t) => this.quadro(t));
@@ -477,6 +482,8 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
   const dom = montarDom(opcoes.palco, opcoes.dados);
   const textos = new Map(opcoes.dados.niveis.map((n) => [n.nivel, n]));
   let cena: Cena;
+  // Preenchido depois de montar a figura: a cena pede um quadro quando o contexto WebGL volta.
+  let pedirQuadroDaFigura: (() => void) | undefined;
   try {
     cena = criarCena({
       canvas: dom.canvas,
@@ -485,13 +492,14 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
       paleta: lerPaleta(opcoes.palco),
       escuro: opcoes.escuro,
       reduzido: opcoes.reduzido,
-      textos
+      textos,
+      aoRestaurarContexto: () => pedirQuadroDaFigura?.()
     });
   } catch {
     opcoes.palco.replaceChildren();
     return null;
   }
-  return new FiguraTresD(
+  const figura = new FiguraTresD(
     opcoes.palco,
     opcoes.dados,
     cena,
@@ -499,4 +507,6 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
     somDaPagina(opcoes.reduzido),
     perfil
   );
+  pedirQuadroDaFigura = () => figura.pedirQuadroPublico();
+  return figura;
 }

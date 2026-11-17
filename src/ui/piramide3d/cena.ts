@@ -39,6 +39,7 @@ import type { DimensoesTronco, NivelFigura3d, Ponto, Retangulo } from '@/core/pi
 import { medidorDoCanvas, pintarFace, pintarFacePonta, type CoresDaFace } from './faceTexto';
 import { aplicarPosicoesDaPeca } from './geometriaPeca';
 import { aplicarLimpeza } from './limpeza';
+import { ouvirContextoDoWebgl } from './contexto';
 
 const FOV_V = 26;
 const D = 9.7; // distância da câmera ao centro da pirâmide
@@ -85,6 +86,8 @@ export interface OpcoesCena {
   readonly escuro: boolean;
   readonly reduzido: boolean;
   readonly textos: ReadonlyMap<string, NivelFigura3d>;
+  /** Pede um quadro novo quando o contexto WebGL é restaurado (a cena volta a desenhar). */
+  readonly aoRestaurarContexto?: () => void;
 }
 
 export interface ProjecaoRotulo {
@@ -257,7 +260,8 @@ export function criarCena({
   paleta,
   escuro,
   reduzido,
-  textos
+  textos,
+  aoRestaurarContexto
 }: OpcoesCena): Cena {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -265,6 +269,17 @@ export function criarCena({
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.setClearColor(0x000000, 0);
+  // Contexto WebGL perdido: a cena não desenha até a restauração (o navegador restaura por causa do preventDefault).
+  let contextoPerdido = false;
+  ouvirContextoDoWebgl(canvas, {
+    onPerdido: () => {
+      contextoPerdido = true;
+    },
+    onRestaurado: () => {
+      contextoPerdido = false;
+      aoRestaurarContexto?.();
+    }
+  });
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -972,6 +987,7 @@ export function criarCena({
   prepararRepouso();
 
   function render(): void {
+    if (contextoPerdido) return;
     renderer.render(scene, camera);
   }
 

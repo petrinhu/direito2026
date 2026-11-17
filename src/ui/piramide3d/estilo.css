@@ -211,12 +211,18 @@
 }
 
 /* Palco do voo: o canvas da figura é o mesmo; em voo vira a janela inteira. */
+/* Ordem de empilhamento do voo (QA rodada 5): abaixo do cabeçalho (z 60, BarraTopo.vue) e dos cartões
+   flutuantes (z 50, LayoutBase.vue, .layout-base__inferior), e acima do conteúdo da página (auto). */
+:root {
+  --pir-z-voo: 40;
+}
+
 .pir-tela--voo {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1000;
+  z-index: var(--pir-z-voo);
 }
 
 .pir-sobreposicao,

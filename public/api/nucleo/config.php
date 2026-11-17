@@ -31,7 +31,9 @@ const D26_AVISO_NOME = '__Host-d26aviso';
 const D26_AVISO_VALIDADE = 600;
 const D26_AVISO_OUTRO_APARELHO = 'outro-aparelho';
 const D26_AVISO_BLOQUEADA = 'bloqueada';
-const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO, D26_AVISO_BLOQUEADA];
+/** Senha criada no convite sem entrada (SE-F2): o login não entrou, e a entrada mostra o texto da senha nova. */
+const D26_AVISO_SENHA_CRIADA = 'senha-criada';
+const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO, D26_AVISO_BLOQUEADA, D26_AVISO_SENHA_CRIADA];
 
 /**
  * Uso simultâneo (BL-B1, plano-sessao-unica.md 9.1.1 e 9.1.3, decisões do líder de 08/11/2026): N = 5 minutos

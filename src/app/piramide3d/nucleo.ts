@@ -7,6 +7,7 @@ export {
   arestasTronco,
   ehPonta,
   razaoDoRepouso,
+  razaoDoVoo,
   centroFaceFrente,
   blocosNorma,
   cantosFaceFrente,

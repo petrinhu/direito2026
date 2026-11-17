@@ -179,3 +179,11 @@ export function centroFaceFrente(d: DimensoesTronco): [number, number, number] {
   );
   return [soma[0] / 4, soma[1] / 4, soma[2] / 4];
 }
+
+/**
+ * Razão topo/base com que a peça voa. A ponta (topo quase fechado) usa a razão de repouso do próprio nível;
+ * as fatias comuns usam a razão da peça (0,84), como na 1.15.3.0.
+ */
+export function razaoDoVoo(d: DimensoesTronco, razaoDaPeca: number): number {
+  return ehPonta(d) ? razaoDoRepouso(d) : razaoDaPeca;
+}

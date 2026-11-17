@@ -153,3 +153,16 @@ export function cantosFaceFrente(d: DimensoesTronco): [Canto, Canto, Canto, Cant
   const c = cantosTronco(d);
   return [canto(c, 0), canto(c, 1), canto(c, 5), canto(c, 4)];
 }
+
+/**
+ * Centro da face da frente, no espaço da peça (média dos quatro cantos). É a âncora dos rótulos: o
+ * eixo da peça (z = 0) fica atrás da face e aparece mais alto na tela (PIR-LINHAS).
+ */
+export function centroFaceFrente(d: DimensoesTronco): [number, number, number] {
+  const c = cantosFaceFrente(d);
+  const soma = c.reduce<[number, number, number]>(
+    (s, [x, y, z]) => [s[0] + x, s[1] + y, s[2] + z],
+    [0, 0, 0]
+  );
+  return [soma[0] / 4, soma[1] / 4, soma[2] / 4];
+}

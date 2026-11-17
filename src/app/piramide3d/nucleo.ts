@@ -5,6 +5,7 @@ export {
   ALTURA,
   GIRO,
   arestasTronco,
+  centroFaceFrente,
   blocosNorma,
   cantosFaceFrente,
   cantosTronco,

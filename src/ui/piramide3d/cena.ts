@@ -16,6 +16,7 @@ import {
   PLANO_PROXIMO,
   TG_V,
   arestasTronco,
+  centroFaceFrente,
   blocosNorma,
   cantosFaceFrente,
   cantosTronco,
@@ -1001,7 +1002,13 @@ export function criarCena({
     // Rótulos: ponto de ancoragem no centro do nível, em px da cena (repouso).
     projetar(chaveNivel: string) {
       const L = niveis.get(chaveNivel);
-      if (L) return projetarRepouso(new THREE.Vector3(shiftX, (L.baseR + L.topoR) / 2, 0));
+      if (L) {
+        const base = repousoDe(L);
+        const centro = new THREE.Vector3(...centroFaceFrente(L.dimsR))
+          .applyQuaternion(base.Q)
+          .add(base.P);
+        return projetarRepouso(centro);
+      }
       const a = ancoras.get(chaveNivel);
       if (a) return projetarRepouso(new THREE.Vector3(shiftX + a.x, a.y, 0));
       return { x: 0, y: 0 };

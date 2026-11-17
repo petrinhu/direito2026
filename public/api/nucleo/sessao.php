@@ -7,7 +7,6 @@ if (!defined('D26_API')) {
 }
 
 require_once __DIR__ . '/correio.php'; // o aviso de uso simultâneo sai daqui, depois da resposta (BL-B2)
-require_once __DIR__ . '/presenca.php'; // ADM-F3: a presença sai daqui (login, atividade, sair), nunca da lista de inicio.php
 
 /**
  * Sessão server-side em PRIV/sessoes (pasta própria, não a compartilhada).
@@ -142,7 +141,6 @@ function d26_sessao_reavaliar(string $priv, bool $avisar, bool $contar = true): 
         return $sessao;
     }
     $_SESSION['atividade'] = $agora;
-    d26_sessao_presenca_se_preciso($priv, $agora);
     return $sessao;
 }
 
@@ -237,41 +235,10 @@ function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $
     }
     $_SESSION['atividade'] = $agora;
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
-    // ADM-F3: a presença nasce no login (o LED vê a sessão no primeiro pedido do admin); a faxina de 13 h roda aqui.
-    d26_presenca_faxina($priv, $agora);
-    if ($vigente !== null) {
-        d26_presenca_gravar($priv, $usuario, d26_presenca_marcador($vigente), $versao, (int) $_SESSION['criada'], $agora);
-        $_SESSION['presencaEm'] = $agora;
-    }
 }
 
-/**
- * Grava a presença desta sessão se a última gravação tem mais de D26_PRESENCA_GRAVACAO segundos (ADM-F3): duas
- * chamadas dentro de um minuto gravam uma vez. Sem marcador, versão ou criação na sessão, não grava.
- */
-function d26_sessao_presenca_se_preciso(string $priv, int $agora): void
-{
-    if ($agora - (int) ($_SESSION['presencaEm'] ?? 0) <= D26_PRESENCA_GRAVACAO) {
-        return;
-    }
-    $marcador = $_SESSION['vigente'] ?? null;
-    $usuario = $_SESSION['usuario'] ?? null;
-    if (!is_string($marcador) || !is_string($usuario) || !is_int($_SESSION['versao'] ?? null) || !is_int($_SESSION['criada'] ?? null)) {
-        return;
-    }
-    d26_presenca_gravar($priv, $usuario, d26_presenca_marcador($marcador), $_SESSION['versao'], $_SESSION['criada'], $agora);
-    $_SESSION['presencaEm'] = $agora;
-}
-
-/**
- * Encerra a sessão. Antes, apaga a presença dela (ADM-F3), só se a presença ainda é do marcador desta sessão: a de
- * um aparelho novo não sai com o aparelho velho.
- */
 function d26_sessao_encerrar(): void
 {
-    if (session_status() === PHP_SESSION_ACTIVE && is_string($_SESSION['usuario'] ?? null) && is_string($_SESSION['vigente'] ?? null)) {
-        d26_presenca_apagar(d26_priv(), $_SESSION['usuario'], d26_presenca_marcador($_SESSION['vigente']));
-    }
     d26_cookie_sessao_expirar();
     if (session_status() === PHP_SESSION_ACTIVE) {
         $_SESSION = [];

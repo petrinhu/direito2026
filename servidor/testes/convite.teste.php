@@ -333,7 +333,7 @@ teste('convite: C10 nenhum token gerado nos testes aparece em nenhum arquivo do 
 
 // ---- CV-B2: página pública do convite (GET inofensivo, POST com CAS e limite por IP) -----------
 // Textos do líder (M1, M2, M3 e "digitar duas vezes") colados verbatim. "Criar senha", "Criar senha e
-// entrar", "Senha criada. Entre com a senha nova." e a mensagem de repetição divergente são
+// entrar", "Senha criada. Entre pela tela de entrada." e a mensagem de repetição divergente são
 // decisão autônoma do orquestrador, a ratificar.
 
 const CVB2_M1 = 'Este link venceu. Peça um novo a quem administra o site.';
@@ -627,33 +627,6 @@ teste('convite: C15 corrida: um 303 e um M2; o hash gravado é o do vencedor', f
     igual(hash('sha256', $token), $conta['conviteUsado'] ?? null, 'o consumo ficou com o vencedor');
 });
 
-// ---- C15b (SE4): o perdedor do CAS não zera o contador, mesmo que o zero viesse antes do CAS -----
-
-teste('convite: C15b o perdedor do CAS para antes da gravação e não zera o contador reinjetado depois do vencedor', function (): void {
-    $a = Ambiente::novo(['workers' => 4]);
-    $token = cvb2Convidar($a, 'ana');
-    $perdedor = $a->cliente();
-    $csrfP = cvb2Campo(cvb2Pagina($perdedor, $token)->corpo, 'csrf');
-    $vencedor = $a->cliente();
-    $csrfV = cvb2Campo(cvb2Pagina($vencedor, $token)->corpo, 'csrf');
-
-    // O perdedor passa pela classificação do link (válido) e fica parado antes do CAS.
-    pausaLigar($a, 'convite-antes-gravar', 'ana');
-    $reqP = cvb2PostSemEsperar($perdedor, cvb2Campos($token, $csrfP, 'SenhaPerdedoraSE4-2026'));
-    pausaEsperarChegada($reqP, $a, 'convite-antes-gravar');
-    // O vencedor grava enquanto o perdedor espera (o marcador casa com ninguém, como em C15).
-    file_put_contents($a->priv . '/pausa-convite-antes-gravar', 'ninguem');
-    igual(303, cvb2Enviar($vencedor, cvb2Campos($token, $csrfV, 'SenhaVencedoraSE4-2026'))->status, 'o vencedor grava e entra');
-    pausaSoltar($a, 'convite-antes-gravar');
-    // Falhas da conta chegam depois da vitória: o contador tem de sobreviver ao perdedor.
-    cvb2Falhas($a, 10, 0, 0);
-
-    cvb2Mensagem(cvb2ConcluirPost($reqP), 410, CVB2_M2);
-    $t = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true, 512, JSON_THROW_ON_ERROR);
-    $kc = hash('sha256', 'conta' . "\0" . 'ana');
-    igual(10, count($t['c'][$kc]['f'] ?? []), 'o perdedor do CAS não zera a conta (o zero só vem depois do CAS vencido)');
-});
-
 // ---- C16: senha curta, igual ao login ou repetição diferente: 400 e o link segue valendo ------
 
 teste('convite: C16 senha curta, igual ao login ou repetição diferente: tela com a mensagem, 400, e o link segue valendo', function (): void {
@@ -785,127 +758,37 @@ teste('convite: C21 nenhuma resposta de convite.php emite __Host-d26aviso, nem c
     }
 });
 
-// ---- C22: login depois do CAS com a conta e o usuário+IP cheios: o convite entra e zera -------
+// ---- C22: o login falha depois do CAS: a senha foi criada e entra pela tela de entrada ---------
 
-/** Injeta marcas de falha em tentativas.json para ana (conta e usuário+IP) e para o IP do cliente (127.0.0.1). */
-function cvb2Falhas(Ambiente $a, int $conta, int $usuarioIp, int $ip): array
-{
-    $agora = time();
+teste('convite: C22 o login falha depois do CAS: "Senha criada. Entre pela tela de entrada." e a senha nova entra pela tela de entrada', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    // Limite da conta forçado: 10 falhas agora, então o login seguinte dá espera depois do CAS.
     $kc = hash('sha256', 'conta' . "\0" . 'ana');
-    $ku = hash('sha256', 'ana' . "\0" . '127.0.0.1');
-    $ki = hash('sha256', 'ip' . "\0" . '127.0.0.1');
-    $d = ['u' => [], 'ip' => [], 'c' => []];
-    if ($conta > 0) {
-        $d['c'][$kc] = ['f' => array_fill(0, $conta, $agora)];
-    }
-    if ($usuarioIp > 0) {
-        $d['u'][$ku] = ['n' => $usuarioIp, 'ult' => $agora, 'l' => $kc];
-    }
-    if ($ip > 0) {
-        $d['ip'][$ki] = ['f' => array_fill(0, $ip, $agora)];
-    }
-    file_put_contents($a->priv . '/tentativas.json', json_encode($d, JSON_THROW_ON_ERROR));
-    return ['kc' => $kc, 'ku' => $ku, 'ki' => $ki];
-}
-
-/** Último Set-Cookie da resposta (o que vale por último para o navegador). */
-function cvb2UltimoCookie(Resposta $r): string
-{
-    $cookies = $r->cabecalhos['set-cookie'] ?? [];
-    return (string) end($cookies);
-}
-
-teste('convite: C22 o login falha depois do CAS (10 falhas na conta, 6 no usuário+IP): 303 com sessão, zera a conta e o usuário+IP, e mantém as marcas de IP', function (): void {
-    $a = Ambiente::novo();
-    $token = cvb2Convidar($a, 'ana');
-    $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
-    $chaves = cvb2Falhas($a, 10, 6, 3);
+    file_put_contents($a->priv . '/tentativas.json', json_encode(
+        ['u' => [], 'ip' => [], 'c' => [$kc => ['f' => array_fill(0, 10, time())]]],
+        JSON_THROW_ON_ERROR
+    ));
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
-    igual(303, $r->status, 'a senha foi criada e entra, mesmo com o limite da conta cheio');
-    igual('/', $r->cabecalho('location'), 'destino /');
-    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 303');
-    igual(true, $c->get('/api/sessao.php')->json()['autenticado'] ?? null, 'sessão aberta na conta do convite');
-    $t = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true);
-    igual(false, array_key_exists($chaves['kc'], $t['c'] ?? []), 'a chave da conta sai do tentativas.json');
-    igual(false, array_key_exists($chaves['ku'], $t['u'] ?? []), 'a chave usuário+IP sai do tentativas.json');
-    verdadeiro(count($t['ip'][$chaves['ki']]['f'] ?? []) >= 3, 'a chave de IP mantém as 3 marcas injetadas');
-});
-
-teste('convite: C22b 30 falhas de IP injetadas na pausa do CAS: 303 para / sem sessão, com o aviso senha-criada de 600 s, e a tela mostra o aviso e expira o cookie', function (): void {
-    $a = Ambiente::novo(['workers' => 4]);
-    $token = cvb2Convidar($a, 'ana');
-    $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
-    pausaLigar($a, 'convite-antes-gravar', 'ana');
-    $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
-    pausaEsperarChegada($req, $a, 'convite-antes-gravar');
-    cvb2Falhas($a, 0, 0, 30);
-    pausaSoltar($a, 'convite-antes-gravar');
-    $r = cvb2ConcluirPost($req);
-    igual(303, $r->status, 'senha criada: 303 mesmo sem o login');
-    igual('/', $r->cabecalho('location'), 'destino /');
-    igual('"cache"', $r->cabecalho('clear-site-data'), 'Clear-Site-Data exato');
-    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 303');
+    igual(200, $r->status, 'a senha foi criada: tela de sucesso sem sessão');
+    contem('Senha criada. Entre pela tela de entrada.', $r->corpo, 'texto de sucesso sem entrada automática');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer da tela de senha criada');
+    contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer na tela de senha criada');
+    igual(CVB2_CSP_TELA, $r->cabecalho('content-security-policy'), 'CSP da tela de senha criada');
     igual(false, $c->get('/api/sessao.php')->json()['autenticado'] ?? null, 'sem sessão aberta');
-    contem(D26_AVISO_NOME . '=senha-criada; Max-Age=600', cvb2UltimoCookie($r), 'o último Set-Cookie é o aviso senha-criada, de 600 s');
-    $c->cookies[D26_AVISO_NOME] = 'senha-criada';
-    $tela = $c->get('/', PORTAO_NAVEGACAO);
-    contem('Senha criada. Entre com a senha nova.', $tela->corpo, 'a entrada mostra o texto do aviso');
-    contem('role="alert"', $tela->corpo, 'o aviso sai em role="alert"');
-    contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $tela->cabecalhos['set-cookie'] ?? []), 'a entrada expira o cookie do aviso');
-});
 
-teste('convite: C22c conta já bloqueada: o convite grava a senha e dá 303 com o aviso bloqueada, sem sessão', function (): void {
-    $a = Ambiente::novo();
-    $token = cvb2Convidar($a, 'ana');
-    conviteEditarConta($a->priv, 'ana', static function (array $c): array {
-        $c['bloqueada'] = ['em' => time(), 'motivo' => 'uso-simultaneo'];
-        return $c;
-    });
-    $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
-    $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
-    igual(303, $r->status, 'a senha foi criada e o login recusa a conta bloqueada');
-    igual('/', $r->cabecalho('location'), 'destino /');
-    igual(false, $c->get('/api/sessao.php')->json()['autenticado'] ?? null, 'sem sessão');
-    contem(D26_AVISO_NOME . '=bloqueada; Max-Age=600', cvb2UltimoCookie($r), 'último aviso: bloqueada');
-    $conta = conviteConta($a, 'ana');
-    verdadeiro(password_verify(CVB2_SENHA, (string) $conta['hash']), 'a senha nova ficou gravada');
-});
-
-teste('convite: C22d GET, POST com senha curta e POST com link usado não zeram a conta, o usuário+IP nem a categoria de envio', function (): void {
-    $a = Ambiente::novo();
-    $token = cvb2Convidar($a, 'ana');
-    $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
-    $chaves = cvb2Falhas($a, 10, 6, 0);
-    $ke = hash('sha256', 'econta' . "\0" . 'ana');
-    $d = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true);
-    $d['c'][$ke] = ['f' => [time(), time()]];
-    file_put_contents($a->priv . '/tentativas.json', json_encode($d, JSON_THROW_ON_ERROR));
-    $confere = static function () use ($a, $chaves, $ke): void {
-        $t = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true);
-        igual(10, count($t['c'][$chaves['kc']]['f'] ?? []), 'a conta conserva as 10 marcas');
-        igual(6, $t['u'][$chaves['ku']]['n'] ?? null, 'o usuário+IP conserva as 6 falhas');
-        igual(2, count($t['c'][$ke]['f'] ?? []), 'a categoria de envio fica intacta');
-    };
-    cvb2Pagina($c, $token);
-    $confere();
-    $curta = cvb2Enviar($c, cvb2Campos($token, $csrf, 'curta'));
-    igual(400, $curta->status, 'senha curta');
-    $confere();
-
-    $b = Ambiente::novo();
-    $tokenB = cvb2Convidar($b, 'ana');
-    $cb = $b->cliente();
-    $csrfB = cvb2Campo(cvb2Pagina($cb, $tokenB)->corpo, 'csrf');
-    igual(303, cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA))->status, 'primeiro POST cria a senha');
-    $chavesB = cvb2Falhas($b, 10, 6, 0);
-    $usado = cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
-    igual(410, $usado->status, 'link usado: M2');
-    $tb = json_decode((string) file_get_contents($b->priv . '/tentativas.json'), true);
-    igual(10, count($tb['c'][$chavesB['kc']]['f'] ?? []), 'link usado: a conta conserva as 10 marcas');
+    $a->zerarTentativas();
+    $e = $a->cliente();
+    $tela = $e->get('/', PORTAO_NAVEGACAO);
+    $entra = $e->enviar('POST', '/api/acesso.php', http_build_query([
+        'usuario' => 'ana',
+        'senha' => CVB2_SENHA,
+        'csrf' => cvb2Campo($tela->corpo, 'csrf'),
+        'destino' => '/',
+    ]), ['Content-Type' => 'application/x-www-form-urlencoded', 'X-CSRF-Token' => null]);
+    igual(303, $entra->status, 'a senha nova entra pela tela de entrada');
 });
 
 // ---- C23: Referrer-Policy strict-origin nas respostas do convite (o token vai na URL) ------------
@@ -974,21 +857,20 @@ teste('convite: C26 a criação de senha expira o cookie de aviso que veio no pe
     igual(303, $entrou->status, 'criou e entrou');
     contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $entrou->cabecalhos['set-cookie'] ?? []), 'o aviso que veio no pedido sai do navegador (303)');
 
-    // Login que falha depois do CAS (IP cheio na pausa, como em C22b): 303 para /, e o último Set-Cookie é o aviso senha-criada.
-    $b = Ambiente::novo(['workers' => 4]);
+    // Mesma regra quando o login falha depois do CAS (limite forçado, como em C22): a senha já foi criada.
+    $b = Ambiente::novo();
     $tokenB = cvb2Convidar($b, 'ana');
     $d = $b->cliente();
     $csrfB = cvb2Campo(cvb2Pagina($d, $tokenB)->corpo, 'csrf');
+    $kc = hash('sha256', 'conta' . "\0" . 'ana');
+    file_put_contents($b->priv . '/tentativas.json', json_encode(
+        ['u' => [], 'ip' => [], 'c' => [$kc => ['f' => array_fill(0, 10, time())]]],
+        JSON_THROW_ON_ERROR
+    ));
     $d->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
-    pausaLigar($b, 'convite-antes-gravar', 'ana');
-    $req = cvb2PostSemEsperar($d, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
-    pausaEsperarChegada($req, $b, 'convite-antes-gravar');
-    cvb2Falhas($b, 0, 0, 30);
-    pausaSoltar($b, 'convite-antes-gravar');
-    $criada = cvb2ConcluirPost($req);
-    igual(303, $criada->status, 'senha criada sem entrada: 303 para /');
-    contem(D26_AVISO_NOME . '=senha-criada; Max-Age=600', cvb2UltimoCookie($criada), 'o último aviso é senha-criada, não a expiração');
-    naoContem(D26_AVISO_NOME . '=; Max-Age=0', cvb2UltimoCookie($criada), 'o último Set-Cookie não é a expiração');
+    $criada = cvb2Enviar($d, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
+    igual(200, $criada->status, 'senha criada sem entrada');
+    contem(D26_AVISO_NOME . '=; Max-Age=0', implode(' | ', $criada->cabecalhos['set-cookie'] ?? []), 'o aviso sai também na tela de senha criada (200)');
 });
 
 // ---- C27: a tela de erro de senha (400) reenvia o formulário: mesma política no cabeçalho e no meta ----

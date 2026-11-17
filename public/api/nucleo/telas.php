@@ -112,6 +112,7 @@ const D26_CONVITE_M2 = 'Este link já foi usado. Se não foi você, avise quem a
 const D26_CONVITE_M3 = 'Este link não vale. Peça um novo a quem administra o site.';
 /** Decisão autônoma do orquestrador, a ratificar: a repetição que não confere com a senha nova. */
 const D26_CONVITE_REPETICAO = 'A repetição não confere com a senha nova.';
+const D26_CONVITE_CRIADA = 'Senha criada. Entre pela tela de entrada.';
 
 /**
  * Tela do convite (CV-B2): usuário somente leitura, senha nova com a regra de 15 caracteres, repetição (R10),
@@ -180,6 +181,13 @@ function d26_tela_esqueci_enviado(): string
         . '<p><a href="/">Voltar para a entrada</a></p>');
 }
 
+/** Senha criada sem entrar (o login automático falhou depois da gravação). Aviso informativo, com o endereço /. */
+function d26_tela_criada(): string
+{
+    return d26_tela_documento(D26_CONVITE_CRIADA, '<h1>Caderno de Direito</h1><p class="entrada-aviso" role="alert">'
+        . d26_tela_e(D26_CONVITE_CRIADA) . '</p><p><a href="/">Tela de entrada</a></p>', true);
+}
+
 /**
  * Texto da conta bloqueada por uso simultâneo (BL-B1), verbatim da ordem do líder de 08/11/2026. Usado na tela de
  * entrada (aviso e 403 do login) e no mapa de avisos. Não alterar sem nova ordem do líder.
@@ -192,7 +200,6 @@ function d26_tela_texto_aviso(string $codigo): ?string
     return match ($codigo) {
         D26_AVISO_OUTRO_APARELHO => 'Sua conta foi aberta em outro aparelho. Entre de novo para continuar aqui.',
         D26_AVISO_BLOQUEADA => D26_TEXTO_BLOQUEIO,
-        D26_AVISO_SENHA_CRIADA => 'Senha criada. Entre com a senha nova.',
         default => null,
     };
 }

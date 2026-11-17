@@ -15,8 +15,8 @@ require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: o aviso E4 
  * própria senha e já entra. GET mostra a tela e não grava nada (a pré-visualização de mensageiro não consome
  * o link). POST consome o link num compare-and-swap e entra. Todo pedido passa pelo limite por IP, e só a falha
  * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as respostas saem com "strict-origin".
- * O sucesso do POST (senha criada) expira o cookie de aviso de outro aparelho que veio no pedido (plano 1.2) quando
- * a pessoa entra; sem entrada, o 303 vai para / com o aviso senha-criada (ou bloqueada) na entrada (SE-F2). Decisão do orquestrador (plano 1.2, revisão rev-cv-b2.md).
+ * O sucesso do POST (senha criada) expira o cookie de aviso de outro aparelho que veio no pedido (plano 1.2);
+ * o convite nunca emite esse cookie (C21). Decisão do orquestrador (plano 1.2, revisão rev-cv-b2.md).
  */
 d26_metodo(['GET', 'POST']);
 $priv = d26_priv();
@@ -79,21 +79,15 @@ if ($gravou !== 'ok') {
     d26_convite_recusar(d26_convite_classificar(d26_contas_listar($priv), $token, time())['estado']);
 }
 
-// Senha criada (CAS ok). O limite da conta e o do usuário+IP ligados a ela zeram agora: depois do CAS e fora do
-// lock de usuarios.json (tentativas.json vem antes de usuarios.json, docs/publicacao.md). O IP e a categoria de envio
-// ficam como estão, e só a senha nova é que vale para a conta.
-d26_limite_desbloquear_conta($priv, $login);
+// Senha criada (CAS ok): o aviso de outro aparelho que veio no pedido sai do navegador, no 303 e na tela sem entrada.
+d26_aviso_consumir();
 
-// Entrar é o mesmo caminho do login (limite, aparelho, sessão única, cookies).
+// A senha já está criada. Entrar é o mesmo caminho do login (limite, aparelho, sessão única, cookies).
 $entrada = d26_login_executar($priv, $login, $nova);
 if ($entrada['estado'] === 'entrou') {
-    // O aviso de outro aparelho que veio no pedido sai do navegador: a pessoa entrou.
-    d26_aviso_consumir();
     d26_convite_responder_e_avisar(303, 'text/plain; charset=utf-8', d26_tela_csp(), '', ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA], $priv, $login, $email);
 }
-// Não entrou: a senha está criada e a entrada mostra o aviso (bloqueada, ou senha criada). Location fixo.
-d26_aviso_emitir($entrada['estado'] === 'bloqueada' ? D26_AVISO_BLOQUEADA : D26_AVISO_SENHA_CRIADA);
-d26_convite_responder_e_avisar(303, 'text/plain; charset=utf-8', d26_tela_csp(), '', ['Location' => '/', 'Clear-Site-Data' => D26_CLEAR_SITE_DATA], $priv, $login, $email);
+d26_convite_responder_e_avisar(200, 'text/html; charset=utf-8', PORTAO_CSP_TELA, d26_tela_criada(), [], $priv, $login, $email);
 
 /**
  * Entrega a resposta do convite e só depois manda o aviso de senha criada (E4, 8.1.4). A ordem é a do desenho:

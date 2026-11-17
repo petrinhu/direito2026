@@ -23,7 +23,7 @@ require __DIR__ . '/apoio/admin.php';
 
 $cmd = 'remover-conta';
 d26_cli_protegido($cmd);
-d26_cli_carregar_nucleo($cmd, ['config', 'armazenamento', 'contas', 'presenca']);
+d26_cli_carregar_nucleo($cmd, ['config', 'armazenamento', 'contas']);
 
 [$pos] = d26_cli_separar($cmd, array_slice($argv, 1), []);
 if (count($pos) !== 2) {
@@ -34,9 +34,6 @@ $login = $pos[1];
 d26_cli_login($cmd, $login);
 
 $status = d26_admin_cli_remover($priv, $login);
-if ($status === 'ok') {
-    d26_presenca_apagar($priv, $login, null); // ADM-F3: a presença da conta removida sai junto
-}
 match ($status) {
     'ok' => print("Conta removida: $login.\n"),
     'nao-encontrado' => d26_cli_falha($cmd, 'conta não encontrada; nada foi alterado'),

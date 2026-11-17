@@ -43,7 +43,7 @@ $telas = [
     'convite M3' => d26_tela_mensagem(D26_CONVITE_M3, true),
     'esqueci' => d26_tela_esqueci('tok'),
     'esqueci enviado' => d26_tela_esqueci_enviado(),
-    'entrada com aviso de senha criada' => d26_tela_entrada('tok', '/', null, d26_tela_texto_aviso(D26_AVISO_SENHA_CRIADA)),
+    'criada' => d26_tela_criada(),
     'indisponível' => d26_tela_indisponivel(),
     'aviso legal (rodapé da entrada)' => d26_tela_aviso_legal(),
 ];

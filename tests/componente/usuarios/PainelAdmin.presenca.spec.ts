@@ -53,4 +53,13 @@ describe('PainelAdmin: luz de sessão (LED)', () => {
     expect(w.get('tbody tr th').text()).toContain('sem informação');
     w.unmount();
   });
+
+  it('o texto da luz tem a classe que o libera no modo adaptado (ar-led-texto), além de ficar oculto por padrão', async () => {
+    const w = montar([linha('ana', true)]);
+    await flushPromises();
+    const texto = w.get('tbody tr th .ar-visualmente-oculto');
+    expect(texto.classes()).toContain('ar-visualmente-oculto');
+    expect(texto.classes()).toContain('ar-led-texto');
+    w.unmount();
+  });
 });

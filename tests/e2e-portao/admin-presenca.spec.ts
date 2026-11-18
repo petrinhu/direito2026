@@ -146,3 +146,46 @@ test('presenca: a luz de ana.paula fica verde com a sessão aberta, vermelha dep
     await pessoaContexto.close();
   }
 });
+
+/** Medida do texto da luz: clip-path calculado e largura na tela (0 ou 1 px quando está oculto). */
+async function medirTextoDaLuz(texto: Locator): Promise<{ clip: string; largura: number }> {
+  const caixa = await texto.boundingBox();
+  const clip = await texto.evaluate((el) => getComputedStyle(el).clipPath);
+  return { clip, largura: caixa?.width ?? 0 };
+}
+
+test('presenca: o texto da luz aparece no modo adaptado, em 1280 e em 360, e fica oculto no tema claro (ADM-F4c)', async ({
+  page
+}) => {
+  test.setTimeout(180_000);
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  const linha = linhaDaConta(page);
+  await expect(linha.locator('th')).toContainText(SEM_SESSAO);
+  // Seletor que existe antes e depois do conserto; a classe ar-led-texto é conferida à parte.
+  const texto = linha.locator('th .ar-visualmente-oculto');
+
+  await mudarModo(page, 'adaptado');
+  await expect.soft(texto, 'texto da luz tem a classe ar-led-texto').toHaveClass(/ar-led-texto/);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const medida1280 = await medirTextoDaLuz(texto);
+  expect.soft(medida1280.clip, 'modo adaptado a 1280: texto sem recorte').toBe('none');
+  expect.soft(medida1280.largura, 'modo adaptado a 1280: texto com largura').toBeGreaterThan(1);
+
+  await page.setViewportSize({ width: 360, height: 800 });
+  const medida360 = await medirTextoDaLuz(texto);
+  expect.soft(medida360.clip, 'modo adaptado a 360: texto sem recorte').toBe('none');
+  expect.soft(medida360.largura, 'modo adaptado a 360: texto com largura').toBeGreaterThan(1);
+  const rolagem = await page.evaluate(() => ({
+    larguraTotal: document.documentElement.scrollWidth,
+    larguraDaTela: document.documentElement.clientWidth
+  }));
+  expect
+    .soft(rolagem.larguraTotal, 'modo adaptado a 360: sem rolagem horizontal')
+    .toBeLessThanOrEqual(rolagem.larguraDaTela);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await mudarModo(page, 'claro');
+  const claro = await medirTextoDaLuz(texto);
+  expect.soft(claro.clip, 'tema claro sem adaptado: texto recortado').not.toBe('none');
+  expect.soft(claro.largura, 'tema claro sem adaptado: texto oculto').toBeLessThanOrEqual(1);
+});

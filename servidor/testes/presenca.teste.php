@@ -438,8 +438,9 @@ teste('presença: falha ao gravar a presença não derruba o login: entra, sem t
     // Marcador fresco: a faxina não roda nos logins, e o glob de *.json não é o assunto deste caso.
     touch($a->priv . '/presenca/.faxina');
     $um = $a->entrar('ana', PRESENCA_SENHA_ANA);
-    $dois = $a->entrar('ana', PRESENCA_SENHA_ANA);
     igual(true, $um->get('/api/sessao.php')->json()['autenticado'] ?? null, 'a primeira sessão vale');
+    // Segundo login da mesma conta: a sessão única derruba a primeira, então a checagem da primeira vem antes.
+    $dois = $a->entrar('ana', PRESENCA_SENHA_ANA);
     igual(true, $dois->get('/api/sessao.php')->json()['autenticado'] ?? null, 'a segunda sessão vale');
     clearstatcache();
     igual([], glob($a->priv . '/presenca/*.tmp') ?: [], 'nenhum temporário sobra');

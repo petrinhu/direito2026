@@ -220,6 +220,8 @@ describe('página Sobre, nome longo de pacote na célula (SB-F13, modo adaptado 
     const fonte = readFileSync(resolve(process.cwd(), 'src/ui/paginas/Sobre.vue'), 'utf-8');
     const bloco = /\.pagina-sobre__tabela td\s*\{([^}]*)\}/.exec(fonte);
     expect(bloco, 'regra base de td ausente').not.toBeNull();
-    expect(bloco![1]).toMatch(/overflow-wrap:\s*anywhere/);
+    // Comentário não aplica regra: a declaração precisa valer fora de /* */.
+    const semComentario = bloco![1].replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(semComentario).toMatch(/overflow-wrap:\s*anywhere/);
   });
 });

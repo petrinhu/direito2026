@@ -104,6 +104,7 @@ export interface FrenteRepouso {
 export interface Cena {
   setAtivo(nivel: string | null): void;
   animar(agora: number, dt: number): boolean;
+  canvasEmVoo(): boolean;
   render(): void;
   redimensionar(dpr: number): void;
   opacidadeRotulos(): number;
@@ -334,6 +335,7 @@ export function criarCena({
   let shiftX = 0;
   let tamanhoAtual = { w: 0, h: 0 };
   let emVoo = false; // true enquanto a volta ainda está em curso (o canvas segue em tela cheia)
+  let canvasVoo = false; // o estado de voo aplicado por último ao canvas (a classe pir-tela--voo)
   let fatorVoo = 0; // 0 em repouso, 1 com a fatia inteira em voo; comanda o véu e os rótulos
   let dpr = 1;
   const tMontagem = performance.now();
@@ -841,6 +843,7 @@ export function criarCena({
     // Estado do palco primeiro: em voo, o canvas vira a janela; só então se lê o retângulo dele.
     const voo = ativo !== null || emVoo;
     canvas.classList.toggle('pir-tela--voo', voo);
+    canvasVoo = voo;
     const { r: cenaR, c: canvasR } = lerRetangulos();
     const cw = Math.max(1, Math.round(cenaR.width));
     const ch = Math.max(1, Math.round(cenaR.height));
@@ -1049,6 +1052,10 @@ export function criarCena({
     setAtivo,
     animar,
     render,
+    // Canvas em tela cheia (voo): o laço de quadros não pode parar só porque a figura saiu da tela.
+    canvasEmVoo() {
+      return canvasVoo;
+    },
     redimensionar(novoDpr: number) {
       dpr = novoDpr || 1;
     },

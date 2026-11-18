@@ -451,7 +451,7 @@ class FiguraTresD implements FiguraMontada {
   }
 
   private pedirQuadro(): void {
-    if (this.rafId || !this.visivel) return;
+    if (this.rafId || !(this.visivel || this.cena.canvasEmVoo())) return;
     this.rafId = requestAnimationFrame((t) => this.quadro(t));
   }
 
@@ -468,7 +468,8 @@ class FiguraTresD implements FiguraMontada {
     const anim = this.cena.animar(t, dt);
     this.cena.render();
     this.atualizarRotulos();
-    if (anim && this.visivel) {
+    // Canvas em voo é fixo na janela inteira: segue animando mesmo com a figura fora da tela.
+    if (anim && (this.visivel || this.cena.canvasEmVoo())) {
       this.rafId = requestAnimationFrame((t2) => this.quadro(t2));
     } else {
       this.ultimoT = 0;

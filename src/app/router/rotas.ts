@@ -109,6 +109,12 @@ export const rotas: RouteRecordRaw[] = [
     component: () => import('@/ui/paginas/Changelog.vue')
   },
   {
+    // Sobre (SB-F8): antes do coringa, como as páginas de histórico acima.
+    path: '/sobre',
+    name: 'sobre',
+    component: () => import('@/ui/paginas/Sobre.vue')
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'nao-encontrado',
     component: () => import('@/ui/paginas/NaoEncontrado.vue')

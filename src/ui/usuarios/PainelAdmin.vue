@@ -112,10 +112,10 @@ const atualizadoEm = ref('');
 
 async function carregar(): Promise<void> {
   const r = await props.administrar((c) => c.listarUsuarios());
-  ultimaLeitura = Date.now();
-  atualizadoEm.value = formatarDataHora(new Date(ultimaLeitura).toISOString()).slice(-8);
   carregando.value = false;
   if (r.ok) {
+    ultimaLeitura = Date.now();
+    atualizadoEm.value = formatarDataHora(new Date(ultimaLeitura).toISOString()).slice(-8);
     usuarios.value = r.valor;
     erro.value = '';
   } else {

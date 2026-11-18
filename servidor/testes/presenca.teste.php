@@ -358,3 +358,29 @@ teste('presença: escrita atômica: nenhum arquivo temporário sobra na pasta, e
     igual([], glob($a->priv . '/presenca/*.tmp') ?: [], 'nenhum .tmp sobra');
     igual(0600, fileperms(presencaArquivo($a, 'ana')) & 0777, 'a presença final sai com 600');
 });
+
+teste('presença: uma atividade dentro de 60 s não regrava a presença (o limite de gravação vale de verdade)', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    // Atividade de 30 s atrás: se o servidor regravar, a atividade vira "agora" e o caso pega. Não depende do mesmo segundo.
+    $sentinela = time() - 30;
+    presencaEditarArquivo($a, 'ana', static fn (array $d): array => ['m' => $d['m'], 'v' => $d['v'], 'a' => $sentinela, 'c' => $d['c']]);
+    $ana->get('/api/sessao.php');
+    igual($sentinela, presencaLerArquivo($a, 'ana')['a'], 'dentro de 60 s a atividade gravada não muda');
+    igual(true, presencaLinha($adm, 'ana')['conectado'] ?? null, 'segue conectada');
+});
+
+teste('presença: marcador divergente com a mesma versão dá conectado false no LED', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    igual(true, presencaLinha($adm, 'ana')['conectado'] ?? null, 'antes da troca: conectada');
+    // Só o marcador muda; versão, atividade e criação ficam como estão.
+    presencaEditarArquivo($a, 'ana', static fn (array $d): array => ['m' => str_repeat('0', 64), 'v' => $d['v'], 'a' => $d['a'], 'c' => $d['c']]);
+    igual(false, presencaLinha($adm, 'ana')['conectado'] ?? null, 'marcador de outra sessão não acende o LED');
+});

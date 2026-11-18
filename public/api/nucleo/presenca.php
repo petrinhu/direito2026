@@ -120,7 +120,12 @@ function d26_presenca_ler(string $priv, string $login): ?array
     if (!is_file($arq)) {
         return null;
     }
-    $d = json_decode((string) file_get_contents($arq), true);
+    // Arquivo que some ou não lê dá null, como o ilegível: a listagem não cai em 500 (ADM-F6e).
+    $bruto = @file_get_contents($arq);
+    if ($bruto === false) {
+        return null;
+    }
+    $d = json_decode($bruto, true);
     if (!is_array($d) || !is_string($d['m'] ?? null) || !is_int($d['v'] ?? null) || !is_int($d['a'] ?? null) || !is_int($d['c'] ?? null)) {
         return null;
     }
@@ -184,7 +189,7 @@ function d26_presenca_faxina(string $priv, int $agora): void
         return;
     }
     foreach (glob($priv . '/presenca/*.json') ?: [] as $arq) {
-        $d = json_decode((string) file_get_contents($arq), true);
+        $d = json_decode((string) @file_get_contents($arq), true);
         if (!is_array($d) || !is_int($d['a'] ?? null) || $agora - $d['a'] > D26_PRESENCA_FAXINA) {
             @unlink($arq);
         }

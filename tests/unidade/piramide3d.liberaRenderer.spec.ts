@@ -8,7 +8,8 @@ import { criarCena } from '@/ui/piramide3d/cena';
 const falso = vi.hoisted(() => ({
   ultimo: null as null | { dispose: () => void; forceContextLoss: () => void },
   dispose: vi.fn(),
-  forceContextLoss: vi.fn()
+  forceContextLoss: vi.fn(),
+  falharDispose: false
 }));
 
 vi.mock('three', async (importOriginal) => {
@@ -19,6 +20,7 @@ vi.mock('three', async (importOriginal) => {
     }
     dispose(): void {
       falso.dispose();
+      if (falso.falharDispose) throw new Error('falha ao liberar');
     }
     forceContextLoss(): void {
       falso.forceContextLoss();
@@ -50,5 +52,28 @@ describe('criarCena com falha depois de criar o renderer', () => {
     expect(falso.ultimo).not.toBeNull();
     expect(falso.dispose).toHaveBeenCalledTimes(1);
     expect(falso.forceContextLoss).toHaveBeenCalledTimes(1);
+  });
+  it('se a liberação também lança, o contexto é perdido mesmo assim e o erro original sobrevive', () => {
+    falso.dispose.mockClear();
+    falso.forceContextLoss.mockClear();
+    falso.falharDispose = true;
+    const opcoes = {
+      canvas: document.createElement('canvas'),
+      cenaEl: document.createElement('div'),
+      perfil: {},
+      paleta: {},
+      escuro: false,
+      reduzido: false,
+      textos: new Map()
+    } as unknown as OpcoesCena;
+
+    try {
+      expect(() => criarCena(opcoes)).toThrow('falha depois de criado');
+      // Montagem válida: a liberação foi tentada e falhou.
+      expect(falso.dispose).toHaveBeenCalledTimes(1);
+      expect(falso.forceContextLoss).toHaveBeenCalledTimes(1);
+    } finally {
+      falso.falharDispose = false;
+    }
   });
 });

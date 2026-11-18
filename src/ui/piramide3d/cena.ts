@@ -255,15 +255,28 @@ interface AlvoTextura {
   readonly chave: string;
 }
 
+// Sem a perda forçada, o contexto fica preso até o coletor de lixo, e a página pode perder o limite de contextos.
+// O forceContextLoss roda mesmo se o dispose lançar.
+function liberarRenderer(renderer: THREE.WebGLRenderer): void {
+  try {
+    renderer.dispose();
+  } finally {
+    renderer.forceContextLoss();
+  }
+}
+
 /** Cria o renderer e a cena. Se a montagem falhar depois do renderer, o contexto WebGL é liberado antes de relançar. */
 export function criarCena(opcoes: OpcoesCena): Cena {
   const renderer = new THREE.WebGLRenderer({ canvas: opcoes.canvas, antialias: true, alpha: true });
   try {
     return montarCena(opcoes, renderer);
   } catch (erro) {
-    // Sem isto o contexto fica preso até o coletor de lixo, e a página pode perder o limite de contextos.
-    renderer.dispose();
-    renderer.forceContextLoss();
+    // Uma falha na liberação não pode engolir o erro original: ela só vai ao console.
+    try {
+      liberarRenderer(renderer);
+    } catch (falhaDaLiberacao) {
+      console.warn('[piramide3d] o renderer não liberou o contexto', falhaDaLiberacao);
+    }
     throw erro;
   }
 }

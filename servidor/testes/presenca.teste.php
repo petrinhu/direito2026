@@ -278,3 +278,82 @@ teste('presença: não admin recebe 403 na listagem e a resposta não traz o cam
     igual(403, $r->status, 'não admin');
     naoContem('conectado', $r->corpo, 'o campo não sai para quem não administra');
 });
+
+/** Presença velha (13 h e um minuto), gravada direto: simula conta que parou de usar o sistema há muito tempo. */
+function presencaEscreverVelha(Ambiente $a, string $login): void
+{
+    $velha = time() - 13 * 3600 - 60;
+    file_put_contents(presencaArquivo($a, $login), json_encode(['m' => str_repeat('0', 64), 'v' => 1, 'a' => $velha, 'c' => $velha], JSON_THROW_ON_ERROR));
+    chmod(presencaArquivo($a, $login), 0600);
+}
+
+/** Marcador da faxina oportunista: o mtime dele é a última faxina. Envelhecê-lo libera a próxima. */
+function presencaEnvelhecerFaxina(Ambiente $a, int $segundos): void
+{
+    $m = $a->priv . '/presenca/.faxina';
+    verdadeiro(is_file($m), 'o marcador da faxina existe depois do primeiro login');
+    touch($m, time() - $segundos);
+    clearstatcache();
+}
+
+teste('presença: desativar a conta pelo painel apaga o arquivo de presença', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    verdadeiro(is_file(presencaArquivo($a, 'ana')), 'o arquivo existe antes');
+    $r = $adm->post('/api/usuarios.php', ['acao' => 'desativar', 'usuario' => 'ana']);
+    igual(200, $r->status, 'desativada pelo painel');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'desativar a conta tira a presença: sem sessão aberta para uma conta inativa');
+});
+
+teste('presença: a faxina roda numa atividade de outra conta, e só volta a rodar depois de 10 minutos', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $a->semearUsuario('bia', PRESENCA_SENHA_ANA, false, false);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    presencaEscreverVelha($a, 'bia');
+    presencaEnvelhecerFaxina($a, 601);
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'bia')), 'a atividade de ana apagou a presença velha de bia (faxina oportunista)');
+
+    presencaEscreverVelha($a, 'bia');
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    verdadeiro(is_file(presencaArquivo($a, 'bia')), 'dentro de 10 minutos a faxina não roda de novo: a presença velha segue');
+    presencaEnvelhecerFaxina($a, 601);
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'bia')), 'passados 10 minutos, a próxima atividade faxina de novo');
+    igual(200, $adm->get('/api/usuarios.php')->status, 'o painel segue 200');
+});
+
+teste('presença: a abertura do painel também faxina a presença velha, com a mesma janela de 10 minutos', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    presencaEscreverVelha($a, 'ana');
+    presencaEnvelhecerFaxina($a, 601);
+    igual(200, $adm->get('/api/usuarios.php')->status, 'o painel abre');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'a abertura do painel apagou a presença com mais de 13 h');
+});
+
+teste('presença: escrita atômica: nenhum arquivo temporário sobra na pasta, e a presença final é 600', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    igual([], glob($a->priv . '/presenca/*.tmp') ?: [], 'nenhum .tmp sobra');
+    igual(0600, fileperms(presencaArquivo($a, 'ana')) & 0777, 'a presença final sai com 600');
+});

@@ -24,6 +24,8 @@ const D26_PRESENCA_GRAVACAO = 60;
 const D26_PRESENCA_FAXINA = 46800;
 /** Intervalo mínimo entre duas passagens da faxina, em qualquer atividade ou na abertura do painel (segundos). */
 const D26_PRESENCA_FAXINA_JANELA = 600;
+/** Temporário da escrita atômica mais velho que isto (segundos) é órfão e a faxina apaga. Escrita em curso dura ms. */
+const D26_PRESENCA_TMP_ORFAO = 300;
 
 /** Caminho do arquivo de presença da conta. O nome traz o hash do login, não o login. */
 function d26_presenca_arquivo(string $priv, string $login): string
@@ -172,6 +174,12 @@ function d26_presenca_faxina(string $priv, int $agora): void
         $d = json_decode((string) file_get_contents($arq), true);
         if (!is_array($d) || !is_int($d['a'] ?? null) || $agora - $d['a'] > D26_PRESENCA_FAXINA) {
             @unlink($arq);
+        }
+    }
+    // Temporário da escrita atômica mais velho que D26_PRESENCA_TMP_ORFAO é órfão: o processo morreu antes do rename.
+    foreach (glob($priv . '/presenca/*.tmp') ?: [] as $tmp) {
+        if ($agora - (int) @filemtime($tmp) > D26_PRESENCA_TMP_ORFAO) {
+            @unlink($tmp);
         }
     }
 }

@@ -18,6 +18,7 @@ if ($conta['admin'] !== true) {
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
     $agora = time();
+    d26_presenca_faxina_oportunista($priv, $agora); // ADM-F6b: a abertura do painel também faxina (no máximo a cada 10 min)
     d26_responder(200, ['ok' => true, 'usuarios' => array_map(
         static fn (array $c): array => d26_conta_publica($c, $agora, d26_presenca_conectada_conta($priv, $c, $agora)),
         d26_contas_listar($priv)
@@ -170,8 +171,9 @@ if ($acao === 'desbloquear') {
         d26_log_erro_em($priv, 'usuarios', 'desbloquear: contadores não zerados (' . get_class($e) . ')');
     }
 }
-// ADM-F3: a presença da conta excluída sai junto, depois do ok da exclusão.
-if ($acao === 'excluir') {
+// ADM-F3: a presença da conta excluída sai junto, depois do ok da exclusão. ADM-F6b: desativada também sai (sem
+// conta ativa não há sessão aberta para mostrar).
+if ($acao === 'excluir' || $acao === 'desativar') {
     d26_presenca_apagar($priv, $alvo, null);
 }
 d26_responder(200, ['ok' => true]);

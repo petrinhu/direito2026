@@ -263,6 +263,7 @@ teste('presença: a faxina do login apaga a presença com mais de 13 h', functio
         return $d;
     });
     // Sessão única: o login novo do admin derruba o $adm anterior, então o painel vem do login novo.
+    presencaEnvelhecerFaxina($a, 601); // ADM-F6b: a faxina tem janela de 10 min; o login do ana acabou de passar por ela
     $outro = $a->entrar();
     clearstatcache(); // o arquivo mudou em outro processo (o servidor): sem limpar, is_file lê o cache de stat
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'o login de outra conta faxina a presença velha de ana');

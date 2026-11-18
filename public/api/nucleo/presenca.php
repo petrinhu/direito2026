@@ -22,6 +22,8 @@ if (!defined('D26_API')) {
 const D26_PRESENCA_GRAVACAO = 60;
 /** Presença mais velha que isso é apagada pela faxina do login (13 h). */
 const D26_PRESENCA_FAXINA = 46800;
+/** Intervalo mínimo entre duas passagens da faxina, em qualquer atividade ou na abertura do painel (segundos). */
+const D26_PRESENCA_FAXINA_JANELA = 600;
 
 /** Caminho do arquivo de presença da conta. O nome traz o hash do login, não o login. */
 function d26_presenca_arquivo(string $priv, string $login): string
@@ -43,8 +45,37 @@ function d26_presenca_gravar(string $priv, string $login, string $m, int $versao
         return;
     }
     $arq = d26_presenca_arquivo($priv, $login);
-    file_put_contents($arq, json_encode(['m' => $m, 'v' => $versao, 'a' => $agora, 'c' => $criada], JSON_THROW_ON_ERROR), LOCK_EX);
-    chmod($arq, 0600);
+    $dados = json_encode(['m' => $m, 'v' => $versao, 'a' => $agora, 'c' => $criada], JSON_THROW_ON_ERROR);
+    // Escrita atômica: o temporário nasce com 600 antes de receber o conteúdo, e o rename troca tudo de uma vez.
+    // Assim o leitor nunca vê arquivo parcial, e a presença final nunca sai com permissão mais aberta.
+    $tmp = $arq . '.' . bin2hex(random_bytes(6)) . '.tmp';
+    touch($tmp);
+    chmod($tmp, 0600);
+    file_put_contents($tmp, $dados, LOCK_EX);
+    if (!rename($tmp, $arq)) {
+        @unlink($tmp);
+        d26_log_erro_em($priv, 'presenca', 'gravação da presença falhou (rename)');
+    }
+}
+
+/**
+ * Faxina oportunista (ADM-F6b): roda numa atividade qualquer (sessão reavaliada, login, abertura do painel), no máximo
+ * uma vez a cada D26_PRESENCA_FAXINA_JANELA segundos. O marcador .faxina guarda a última passagem no mtime. Não é
+ * JSON, então o glob da faxina não o apaga nem o lê.
+ */
+function d26_presenca_faxina_oportunista(string $priv, int $agora): void
+{
+    $pasta = $priv . '/presenca';
+    if (!is_dir($pasta)) {
+        return;
+    }
+    $marcador = $pasta . '/.faxina';
+    clearstatcache(true, $marcador);
+    if (is_file($marcador) && $agora - (int) filemtime($marcador) < D26_PRESENCA_FAXINA_JANELA) {
+        return;
+    }
+    touch($marcador, $agora);
+    d26_presenca_faxina($priv, $agora);
 }
 
 /**
@@ -91,6 +122,10 @@ function d26_presenca_ler(string $priv, string $login): ?array
 function d26_presenca_conectada(array $conta, ?array $presenca, int $agora): bool
 {
     if ($presenca === null || ($conta['ativo'] ?? null) !== true || array_key_exists('bloqueada', $conta)) {
+        return false;
+    }
+    // Presença com mais de 13 h conta como ausente, mesmo que ainda não tenha sido apagada pela faxina.
+    if ($agora - $presenca['a'] > D26_PRESENCA_FAXINA) {
         return false;
     }
     if (!is_string($conta['sessaoVigente'] ?? null) || (int) ($conta['versaoSessao'] ?? -1) !== $presenca['v']) {

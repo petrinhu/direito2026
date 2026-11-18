@@ -142,6 +142,7 @@ function d26_sessao_reavaliar(string $priv, bool $avisar, bool $contar = true): 
         return $sessao;
     }
     $_SESSION['atividade'] = $agora;
+    d26_presenca_faxina_oportunista($priv, $agora);
     d26_sessao_presenca_se_preciso($priv, $agora);
     return $sessao;
 }
@@ -238,7 +239,7 @@ function d26_sessao_autenticar(string $priv, string $usuario, string $uid, int $
     $_SESSION['atividade'] = $agora;
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
     // ADM-F3: a presença nasce no login (o LED vê a sessão no primeiro pedido do admin); a faxina de 13 h roda aqui.
-    d26_presenca_faxina($priv, $agora);
+    d26_presenca_faxina_oportunista($priv, $agora);
     if ($vigente !== null) {
         d26_presenca_gravar($priv, $usuario, d26_presenca_marcador($vigente), $versao, (int) $_SESSION['criada'], $agora);
         $_SESSION['presencaEm'] = $agora;

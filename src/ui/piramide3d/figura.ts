@@ -502,7 +502,9 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
       textos,
       aoRestaurarContexto: () => pedirQuadroDaFigura?.()
     });
-  } catch {
+  } catch (erro) {
+    // Sem a cena, a versão plana fica no lugar. O aviso deixa a causa à vista de quem investiga.
+    console.warn('[piramide3d] a cena 3D não abriu; a versão plana fica no lugar', erro);
     opcoes.palco.replaceChildren();
     return null;
   }

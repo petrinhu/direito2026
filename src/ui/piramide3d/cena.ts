@@ -255,17 +255,23 @@ interface AlvoTextura {
   readonly chave: string;
 }
 
-export function criarCena({
-  canvas,
-  cenaEl,
-  perfil,
-  paleta,
-  escuro,
-  reduzido,
-  textos,
-  aoRestaurarContexto
-}: OpcoesCena): Cena {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+/** Cria o renderer e a cena. Se a montagem falhar depois do renderer, o contexto WebGL é liberado antes de relançar. */
+export function criarCena(opcoes: OpcoesCena): Cena {
+  const renderer = new THREE.WebGLRenderer({ canvas: opcoes.canvas, antialias: true, alpha: true });
+  try {
+    return montarCena(opcoes, renderer);
+  } catch (erro) {
+    // Sem isto o contexto fica preso até o coletor de lixo, e a página pode perder o limite de contextos.
+    renderer.dispose();
+    renderer.forceContextLoss();
+    throw erro;
+  }
+}
+
+function montarCena(
+  { canvas, cenaEl, perfil, paleta, escuro, reduzido, textos, aoRestaurarContexto }: OpcoesCena,
+  renderer: THREE.WebGLRenderer
+): Cena {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;

@@ -461,3 +461,38 @@ teste('presença: falha no marcador da faxina não derruba o login, e a faxina r
     $log = (string) @file_get_contents($a->priv . '/erros.log');
     igual(1, substr_count($log, 'faxina da presença falhou'), 'a falha do marcador entra uma vez no erros.log');
 });
+
+teste('presença: arquivo de presença ilegível dá conectado false na listagem, sem 500', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    chmod(presencaArquivo($a, 'ana'), 0000);
+    clearstatcache();
+    // Sem esta guarda, um ambiente com privilégio leria o arquivo 0000 e o caso não provaria nada (L-36: falha alto).
+    if (@file_get_contents(presencaArquivo($a, 'ana')) !== false) {
+        falhar('o ambiente lê arquivo 0000 (privilégio): o caso não prova nada');
+    }
+    $linha = presencaLinha($adm, 'ana');
+    igual(false, $linha['conectado'] ?? null, 'arquivo ilegível conta como sem sessão aberta');
+    chmod(presencaArquivo($a, 'ana'), 0600);
+});
+
+teste('presença: a faxina termina com arquivo ilegível na pasta, e a listagem responde 200', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    chmod(presencaArquivo($a, 'ana'), 0000);
+    clearstatcache();
+    if (@file_get_contents(presencaArquivo($a, 'ana')) !== false) {
+        falhar('o ambiente lê arquivo 0000 (privilégio): o caso não prova nada');
+    }
+    // Marcador envelhecido: a abertura do painel roda a faxina, que pega o arquivo ilegível.
+    presencaEnvelhecerFaxina($a, 700);
+    igual(200, $adm->get('/api/usuarios.php')->status, 'a listagem responde 200 com a faxina e o arquivo ilegível');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'a faxina apagou o arquivo ilegível');
+});

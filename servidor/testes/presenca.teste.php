@@ -448,6 +448,56 @@ teste('presença: falha ao gravar a presença não derruba o login: entra, sem t
     igual(1, substr_count($log, 'gravação da presença falhou'), 'uma linha só no erros.log, mesmo com dois logins');
 });
 
+teste('presença: a linha antiga "gravação da presença falhou (rename)" não impede o aviso novo', function (): void {
+    $a = Ambiente::novo();
+    presencaFalharGravacao($a);
+    // Linha de hoje no formato real de d26_log_erro_em (respostas.php:123), com o texto da versão antiga.
+    file_put_contents($a->priv . '/erros.log', gmdate('c') . ' presenca gravação da presença falhou (rename)' . "\n");
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    igual(1, presencaAvisosNoLog($a, 'gravação da presença falhou'), 'o aviso novo entra mesmo com a linha antiga no log');
+});
+
+teste('presença: a mesma frase no mesmo dia gera uma linha só, mesmo com dois logins', function (): void {
+    $a = Ambiente::novo();
+    presencaFalharGravacao($a);
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    igual(1, presencaAvisosNoLog($a, 'gravação da presença falhou'), 'uma linha por frase por dia');
+});
+
+teste('presença: a mesma frase de um dia anterior não impede a linha de hoje', function (): void {
+    $a = Ambiente::novo();
+    presencaFalharGravacao($a);
+    // Último segundo de ontem em America/Recife. Em UTC ele já cai no dia de hoje, por isso o carimbo sai com gmdate.
+    $ontem = (new DateTimeImmutable('today', new DateTimeZone('America/Recife')))->modify('-1 second')->getTimestamp();
+    file_put_contents($a->priv . '/erros.log', gmdate('c', $ontem) . ' presenca gravação da presença falhou' . "\n");
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    igual(2, presencaAvisosNoLog($a, 'gravação da presença falhou'), 'a linha de ontem fica e a de hoje entra');
+});
+
+/** Pasta no lugar do arquivo da conta: a gravação da presença falha sem depender de permissão (ADM-F6h). */
+function presencaFalharGravacao(Ambiente $a): void
+{
+    presencaAna($a);
+    presencaPasta($a);
+    mkdir(presencaArquivo($a, 'ana'), 0700);
+    // Marcador fresco: a faxina não roda nos logins e o glob de *.json não é o assunto destes casos.
+    touch($a->priv . '/presenca/.faxina');
+}
+
+/** Linhas do erros.log cujo resto, depois do primeiro espaço, é exatamente "presenca <frase>" (sem casar pedaço). */
+function presencaAvisosNoLog(Ambiente $a, string $frase): int
+{
+    $n = 0;
+    foreach (explode("\n", (string) @file_get_contents($a->priv . '/erros.log')) as $linha) {
+        $partes = explode(' ', $linha, 2);
+        if (count($partes) === 2 && $partes[1] === 'presenca ' . $frase) {
+            $n++;
+        }
+    }
+    return $n;
+}
+
 teste('presença: falha no marcador da faxina não derruba o login, e a faxina roda mesmo assim', function (): void {
     $a = Ambiente::novo();
     presencaAna($a);

@@ -56,6 +56,7 @@ function d26_presenca_gravar(string $priv, string $login, string $m, int $versao
         && @chmod($tmp, 0600)
         && @file_put_contents($tmp, $dados, LOCK_EX) === strlen($dados);
     if ($ok) {
+        d26_teste_pausar('presenca-antes-rename', $login); // no-op em produção (ADM-F6f)
         $ok = @rename($tmp, $arq);
     }
     if (!$ok) {

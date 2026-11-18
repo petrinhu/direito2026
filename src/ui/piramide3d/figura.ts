@@ -135,6 +135,8 @@ class FiguraTresD implements FiguraMontada {
   private visivel = true;
   private rafId = 0;
   private ultimoT = 0;
+  // Falha seguida: só a primeira da sequência vai ao console; volta a registrar depois de um quadro bom.
+  private falhaEmCurso = false;
   private saidaHoverTimer: ReturnType<typeof setTimeout> | 0 = 0;
   private ignorarRolagemAte = 0;
   private readonly observadorPosicao: IntersectionObserver | undefined;
@@ -471,8 +473,12 @@ class FiguraTresD implements FiguraMontada {
       anim = this.cena.animar(t, dt);
       this.cena.render();
       this.atualizarRotulos();
+      this.falhaEmCurso = false;
     } catch (erro) {
-      console.error('[piramide3d] quadro falhou; o próximo quadro tenta de novo', erro);
+      if (!this.falhaEmCurso) {
+        console.error('[piramide3d] quadro falhou; o próximo quadro tenta de novo', erro);
+      }
+      this.falhaEmCurso = true;
     }
     // Canvas em voo é fixo na janela inteira: segue animando mesmo com a figura fora da tela.
     if (anim && (this.visivel || this.cena.canvasEmVoo())) {

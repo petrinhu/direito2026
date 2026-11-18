@@ -249,4 +249,23 @@ describe('voo da pirâmide quando a figura sai da tela', () => {
     avancar(1);
     expect(falsa.quadros).toBe(2);
   });
+  it('uma falha que se repete quadro a quadro registra um erro só, e volta a registrar depois de um quadro bom', () => {
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const registros = (): number =>
+      erro.mock.calls.filter((c) => String(c[0]).includes('[piramide3d]')).length;
+    montar();
+    palco.querySelector<HTMLButtonElement>('button.pir-rotulo')?.focus();
+
+    falsa.lancarNoRender = 30;
+    avancar(30);
+    // Montagem válida: os trinta quadros rodaram e todos falharam.
+    expect(falsa.quadros).toBe(30);
+    expect(registros()).toBe(1);
+
+    // Um quadro bom encerra a sequência; a falha seguinte volta a ser registrada.
+    avancar(1);
+    falsa.lancarNoRender = 1;
+    avancar(1);
+    expect(registros()).toBe(2);
+  });
 });

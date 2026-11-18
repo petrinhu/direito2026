@@ -10,7 +10,7 @@ import { PAPEIS_DAS_DEPENDENCIAS } from '@/conteudo/sobre/papeis';
 
 /**
  * SB-F8, página Sobre (esqueleto). Os textos finais vêm da SB-F11 (ux-writer); aqui
- * a estrutura é a da seção 4 do plano, e o texto provisório fica marcado como tal.
+ * a estrutura é a da seção 4 do plano.
  * O nome do titular entra SÓ por TITULAR (autoria.ts, via app/rodape/titular): nunca escrito à mão.
  */
 

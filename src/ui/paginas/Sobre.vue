@@ -37,7 +37,7 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
 
     <section class="pagina-sobre__secao" data-secao="projeto" aria-labelledby="sobre-projeto">
       <h2 id="sobre-projeto">{{ TEXTOS_SOBRE.projeto.titulo }}</h2>
-      <p>{{ TEXTOS_SOBRE.projeto.provisorio }}</p>
+      <p>{{ TEXTOS_SOBRE.projeto.texto }}</p>
       <p>{{ TEXTOS_SOBRE.projeto.introLista }}</p>
       <ul>
         <li v-for="rotulo in rotulosDoSite" :key="rotulo">{{ rotulo }}</li>
@@ -58,7 +58,7 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
       aria-labelledby="sobre-tecnologias"
     >
       <h2 id="sobre-tecnologias">{{ TEXTOS_SOBRE.tecnologias.titulo }}</h2>
-      <p>{{ TEXTOS_SOBRE.tecnologias.provisorio }}</p>
+      <p>{{ TEXTOS_SOBRE.tecnologias.texto }}</p>
       <ul class="pagina-sobre__lista">
         <li v-for="dep in tecnologiasDestacadas" :key="dep.nome">
           {{ dep.nome }} {{ dep.versao }}
@@ -68,13 +68,18 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
 
     <section class="pagina-sobre__secao" data-secao="para-nerds" aria-labelledby="sobre-para-nerds">
       <h2 id="sobre-para-nerds">{{ TEXTOS_SOBRE.paraNerds.titulo }}</h2>
-      <p>{{ TEXTOS_SOBRE.paraNerds.provisorio }}</p>
-      <p>Versão do site: {{ PILHA.versaoSite }}. Node do build: {{ PILHA.versaoNode }}.</p>
+      <p>{{ TEXTOS_SOBRE.paraNerds.texto }}</p>
+      <p>
+        {{ TEXTOS_SOBRE.paraNerds.versaoSite }}: {{ PILHA.versaoSite }}.
+        {{ TEXTOS_SOBRE.paraNerds.versaoNode }}: {{ PILHA.versaoNode }}.
+      </p>
 
       <div class="pagina-sobre__tabela">
         <table>
           <caption>
-            Dependências de execução
+            {{
+              TEXTOS_SOBRE.paraNerds.tabelaExecucao
+            }}
           </caption>
           <thead>
             <tr>
@@ -98,7 +103,9 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
       <div class="pagina-sobre__tabela">
         <table>
           <caption>
-            Dependências de construção e teste
+            {{
+              TEXTOS_SOBRE.paraNerds.tabelaConstrucao
+            }}
           </caption>
           <thead>
             <tr>

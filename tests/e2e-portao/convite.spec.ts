@@ -9,8 +9,15 @@ import {
   type Page
 } from '@playwright/test';
 import { definirRoteiroSmtp, resetarPrivado } from './apoio/ambiente';
-import { capturar, entrarNoApp, esperarApp, esperarEntrada } from './apoio/acoes';
+import {
+  capturar,
+  entrarNoApp,
+  esperarApp,
+  esperarEntrada,
+  preencherEntrada
+} from './apoio/acoes';
 import { CONTA_ADMIN, ORIGEM, REMETENTE_DO_SITE } from './apoio/constantes';
+import { forcarLimite } from './apoio/limiteForcado';
 import {
   caminhoDoLinkNoCorpo,
   conversasDesde,
@@ -1523,4 +1530,150 @@ for (const viewport of AMBOS_OS_VIEWPORTS) {
       false
     );
   });
+}
+
+/**
+ * SE-F3 (plano P4 v2, seção 2): a senha criada pelo link não depende do limite que estava cheio. Antes da SE-F2 o
+ * POST devolvia a tela "Senha criada. Entre pela tela de entrada." e a pessoa não entrava. Com a SE-F2 o limite da
+ * conta zera depois do CAS e a senha entra na Home; com o IP barrado ou a conta bloqueada, cai na entrada com o
+ * aviso certo. Os casos são vermelhos contra a7b6191, o pai da SE-F2 (64198da).
+ */
+const AVISO_SENHA_CRIADA_NA_ENTRADA = 'Senha criada. Entre com a senha nova.';
+const AVISO_BLOQUEIO_NA_ENTRADA = /foi bloqueada porque foi usada em dois aparelhos/;
+
+test('convite: com o limite da conta cheio, a senha criada pelo "Esqueci a senha" abre a Home logado (SE-F3)', async ({
+  page,
+  browser
+}) => {
+  test.setTimeout(240_000);
+  const capturas = marcarCapturas();
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  const criada = await criarContaPelaApi(page);
+  expect(criada.status, 'criar pela API').toBe(200);
+  const e1 = await linkDoEmail(capturas, { para: EMAIL_CONVIDADO, assunto: E1_ASSUNTO });
+
+  const primeira = await novaPessoa(browser);
+  try {
+    const aparelho = await primeira.newPage();
+    await abrirLink(aparelho, e1.link);
+    await esperarFormularioDoConvite(aparelho);
+    await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'primeira senha, antes do limite');
+  } finally {
+    await primeira.close();
+  }
+
+  // Controle: com o limite da conta cheio, a senha certa não entra. Sem isto, o caso podia nascer verde por engano.
+  forcarLimite('conta', LOGIN_CONVIDADO);
+  const controle = await novaPessoa(browser);
+  try {
+    const aparelho = await controle.newPage();
+    await aparelho.goto('/');
+    await esperarEntrada(aparelho);
+    await preencherEntrada(aparelho, { usuario: LOGIN_CONVIDADO, senha: SENHA_PRIMEIRA });
+    await expect(aparelho.getByRole('alert')).toBeVisible();
+    expect(await sessaoAutenticada(controle), 'controle: o limite barra a entrada com a senha certa').toBe(
+      false
+    );
+  } finally {
+    await controle.close();
+  }
+
+  const pessoa = await novaPessoa(browser);
+  try {
+    const aparelho = await pessoa.newPage();
+    await aparelho.goto('/');
+    await esperarEntrada(aparelho);
+    await aparelho.getByRole('link', { name: 'Esqueci a senha' }).click();
+    await expect(aparelho.getByRole('heading', { name: 'Esqueci a senha' })).toBeVisible();
+
+    const antesDoPedido = marcarCapturas();
+    await aparelho.getByLabel('Usuário ou e-mail').fill(LOGIN_CONVIDADO);
+    await aparelho.getByRole('button', { name: 'Enviar link' }).click();
+    await expect(aparelho.getByRole('alert')).toHaveText(FRASE_UNICA_DO_ESQUECI);
+    const e2 = await linkDoEmail(antesDoPedido, { para: EMAIL_CONVIDADO, assunto: E2_ASSUNTO });
+
+    await abrirLink(aparelho, e2.link);
+    await esperarFormularioDoConvite(aparelho);
+    // criarSenhaPeloConvite espera o app: se a senha nova não entrar, o caso falha aqui com a tela que ficou.
+    await criarSenhaPeloConvite(aparelho, SENHA_DO_ESQUECI, 'senha nova pelo Esqueci, com o limite cheio');
+    expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo Esqueci com o limite cheio').toBe(true);
+  } finally {
+    await pessoa.close();
+  }
+});
+
+test('convite: conta bloqueada por uso em dois aparelhos: a senha criada pelo link cai na entrada com o aviso de bloqueio (SE-F3)', async ({
+  page,
+  browser
+}) => {
+  test.setTimeout(180_000);
+  const capturas = marcarCapturas();
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  const criada = await criarContaPelaApi(page);
+  expect(criada.status, 'criar pela API').toBe(200);
+  const e1 = await linkDoEmail(capturas, { para: EMAIL_CONVIDADO, assunto: E1_ASSUNTO });
+  forcarLimite('bloqueada', LOGIN_CONVIDADO);
+
+  const pessoa = await novaPessoa(browser);
+  try {
+    const aparelho = await pessoa.newPage();
+    await abrirLink(aparelho, e1.link);
+    await esperarFormularioDoConvite(aparelho);
+    const post = await enviarFormulario(aparelho, SENHA_PRIMEIRA, SENHA_PRIMEIRA);
+    exigirPostComOrigemPropria(post, 303, 'senha criada com a conta bloqueada');
+    await esperarEntrada(aparelho);
+    await expect(aparelho.getByRole('alert')).toContainText(AVISO_BLOQUEIO_NA_ENTRADA);
+    expect(await sessaoAutenticada(pessoa), 'sem sessão com a conta bloqueada').toBe(false);
+  } finally {
+    await pessoa.close();
+  }
+});
+
+/**
+ * Captura da entrada com o aviso senha-criada (SE-F3, L-13). O fluxo real (senha gravada e login barrado depois do
+ * POST) só acontece quando o limite enche entre a checagem e a gravação, na pausa convite-antes-gravar do servidor,
+ * que o navegador não alcança: essa cobertura é do servidor (C22b). Aqui o aviso chega pelo cookie que o 303 emitiria,
+ * e o que se mede é a tela de entrada e a expiração do cookie no GET.
+ */
+for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
+  for (const modo of ['claro', 'escuro', 'adaptado'] as const) {
+    test(`convite: a entrada com o aviso de senha criada aparece, expira o cookie e não abre sessão (${largura} px, ${modo}) (SE-F3)`, async ({
+      browser
+    }, testInfo) => {
+      const contexto = await browser.newContext({
+        viewport: { width: largura, height: altura },
+        colorScheme: modo === 'escuro' ? 'dark' : 'light'
+      });
+      try {
+        if (modo === 'adaptado') {
+          await contexto.addInitScript(
+            (chave) => localStorage.setItem(chave, 'true'),
+            CHAVE_MODO_ADAPTADO
+          );
+        }
+        const aparelho = await contexto.newPage();
+        await aparelho.goto('/');
+        await esperarEntrada(aparelho);
+        // O cookie __Host- não aceita o domínio que o Playwright monta a partir da url: planta-se pela própria página
+        // (localhost é contexto seguro, então o Secure vale) e recarrega-se, como o 303 faria.
+        await aparelho.evaluate(() => {
+          document.cookie = '__Host-d26aviso=senha-criada; Path=/; Secure; SameSite=Lax';
+        });
+        await expect
+          .poll(async () => (await contexto.cookies()).some((c) => c.name === '__Host-d26aviso'))
+          .toBe(true);
+        await aparelho.reload();
+        await esperarEntrada(aparelho);
+        await expect(aparelho.getByRole('alert')).toHaveText(AVISO_SENHA_CRIADA_NA_ENTRADA);
+        await expect(aparelho.locator('#app')).toHaveCount(0);
+        await expect
+          .poll(async () => (await contexto.cookies()).some((c) => c.name === '__Host-d26aviso'))
+          .toBe(false);
+        expect(await sessaoAutenticada(contexto), 'sem sessão na entrada com o aviso').toBe(false);
+        await capturar(aparelho, `entrada-senha-criada-${testInfo.project.name}-${modo}-${largura}`);
+      } finally {
+        await contexto.close();
+      }
+    });
+  }
 }

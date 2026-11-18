@@ -73,9 +73,9 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
   });
 
   // Ordem do líder (15/11, item 104): Calendário, separador, os períodos, separador, Novidades e
-  // Changelog, separador, e por último a conta. O link "Sobre" (item 107) entra logo abaixo de
-  // Changelog, no mesmo bloco, junto com a página Sobre (SB-F9): ainda não existe.
-  it('ordem: Calendário, os períodos, Novidades, Changelog, e por último a conta (admin)', () => {
+  // Changelog, separador, e por último a conta. O link "Sobre" (item 107) fica logo abaixo de
+  // Changelog, no mesmo bloco (SB-F9).
+  it('ordem: Calendário, os períodos, Novidades, Changelog, Sobre, e por último a conta (admin)', () => {
     const w = montar({ usuario: 'admin-teste', admin: true });
     const topo = w
       .findAll('nav > ul > li > a, nav > ul > li > button')
@@ -85,6 +85,7 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
       '1º período',
       'Novidades',
       'Changelog',
+      'Sobre',
       'Gerenciar usuários',
       'Trocar senha',
       'Sair'
@@ -101,6 +102,7 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
       '1º período',
       'Novidades',
       'Changelog',
+      'Sobre',
       'Trocar senha',
       'Sair'
     ]);

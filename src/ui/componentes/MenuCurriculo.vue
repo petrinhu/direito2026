@@ -372,6 +372,15 @@ provide(ESTADO_MENU, {
           Changelog
         </RouterLink>
       </li>
+      <li>
+        <RouterLink
+          to="/sobre"
+          class="menu-curriculo__historico"
+          :aria-current="ehAtual('sobre', caminhoAtual) ? 'page' : undefined"
+        >
+          Sobre
+        </RouterLink>
+      </li>
     </ul>
     <hr v-if="usuario" class="menu-curriculo__separador" />
     <MenuSessao v-if="usuario" :admin="admin" :caminho-atual="caminhoAtual" @sair="emit('sair')" />

@@ -1050,11 +1050,15 @@ teste('convite: C29 falha ao zerar o contador depois do CAS: a senha fica criada
     pausaSoltar($a, 'convite-antes-gravar');
     // Espera a linha do erro (sem sleep fixo); teto de 10 s. Só depois de achar ou estourar, solta o lock.
     $limite = microtime(true) + 10;
-    while (microtime(true) < $limite && !str_contains((string) @file_get_contents($a->priv . '/erros.log'), 'contadores não zerados')) {
+    $registrou = str_contains((string) @file_get_contents($a->priv . '/erros.log'), 'contadores não zerados');
+    while (!$registrou && microtime(true) < $limite) {
         usleep(10000);
+        $registrou = str_contains((string) @file_get_contents($a->priv . '/erros.log'), 'contadores não zerados');
     }
     flock($trava, LOCK_UN);
     fclose($trava);
+    // Asserção própria, ANTES do status: sem a linha, o caso falha aqui, e não em 303 vs 503 (o login bate no lock que esta espera segura).
+    verdadeiro($registrou, 'o erro do zerar foi registrado no erros.log');
     $r = cvb2ConcluirPost($req);
     igual(303, $r->status, 'a senha criada leva à entrada mesmo sem zerar');
     igual('/', $r->cabecalho('location'), 'destino /');

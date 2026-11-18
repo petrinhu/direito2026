@@ -14,7 +14,7 @@ if (!defined('D26_API')) {
  * conferindo, dentro da ociosidade (D26_SESSAO_OCIOSIDADE) e da validade (D26_SESSAO_VALIDADE).
  *
  * O web nunca cria a pasta: só o CLI provisiona (D26_SUBPASTAS). Sem a pasta, nada é gravado, a leitura dá null e a
- * falha vai uma vez por processo para o erros.log. Este arquivo é carregado por sessao.php (e pelo CLI de remoção),
+ * falha vai uma vez por dia (America/Recife), por frase, para o erros.log. Este arquivo é carregado por sessao.php (e pelo CLI de remoção),
  * nunca pela lista de inicio.php, por causa da janela do rsync (plano, seção 3).
  */
 
@@ -39,7 +39,7 @@ function d26_presenca_marcador(string $marcador): string
     return hash('sha256', $marcador);
 }
 
-/** Grava a presença. Sem a pasta (o CLI não provisionou), não grava e registra uma vez por processo. */
+/** Grava a presença. Sem a pasta (o CLI não provisionou), não grava e registra uma vez por dia. */
 function d26_presenca_gravar(string $priv, string $login, string $m, int $versao, int $criada, int $agora): void
 {
     if (!is_dir($priv . '/presenca')) {
@@ -89,20 +89,49 @@ function d26_presenca_faxina_oportunista(string $priv, int $agora): void
 }
 
 /**
- * Uma linha por frase, nunca uma a cada pedido: a falha não pode encher o erros.log. A marca estática evita reler o
- * arquivo no mesmo processo; a leitura do erros.log cobre os outros processos do servidor, que também atendem pedidos.
+ * Uma linha por frase e por dia (America/Recife), nunca uma a cada pedido: a falha não pode encher o erros.log. A dedupe
+ * casa a LINHA INTEIRA "presenca <frase>" do dia de hoje, nunca um pedaço de frase: a frase nova não pode dar por já
+ * registrado o "(rename)" de uma versão antiga. A marca estática evita reler o arquivo no mesmo processo, e vai
+ * chaveada por pasta e dia, para não valer no dia seguinte num processo de longa duração.
  */
 function d26_presenca_avisar(string $priv, string $frase): void
 {
     static $avisadas = [];
-    if (isset($avisadas[$frase])) {
+    $hoje = d26_presenca_dia(time());
+    $chave = $priv . "\0" . $hoje . "\0" . $frase;
+    if (isset($avisadas[$chave])) {
         return;
     }
-    $avisadas[$frase] = true;
-    if (str_contains((string) @file_get_contents($priv . '/erros.log'), $frase)) {
+    $avisadas[$chave] = true;
+    if (d26_presenca_ja_avisada_hoje($priv, $frase, $hoje)) {
         return;
     }
     d26_log_erro_em($priv, 'presenca', $frase);
+}
+
+/** Dia (Y-m-d) de um instante no fuso de Recife, sem mexer no fuso global do processo (como correio.php:702). */
+function d26_presenca_dia(int $instante): string
+{
+    return (new DateTimeImmutable('@' . $instante))->setTimezone(new DateTimeZone('America/Recife'))->format('Y-m-d');
+}
+
+/**
+ * Há no erros.log uma linha "presenca <frase>" cujo carimbo cai no dia $hoje? Carimbo que não decodifica não conta, e a
+ * linha vira só uma linha a mais, nunca um bloqueio. strtotime devolve false sem aviso, então a leitura não lança.
+ */
+function d26_presenca_ja_avisada_hoje(string $priv, string $frase, string $hoje): bool
+{
+    foreach (explode("\n", (string) @file_get_contents($priv . '/erros.log')) as $linha) {
+        $partes = explode(' ', $linha, 2);
+        if (count($partes) !== 2 || $partes[1] !== 'presenca ' . $frase) {
+            continue;
+        }
+        $instante = strtotime($partes[0]);
+        if ($instante !== false && d26_presenca_dia($instante) === $hoje) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** Pasta ausente: a frase de sempre, com a mesma dedupe de d26_presenca_avisar. */

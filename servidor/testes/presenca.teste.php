@@ -384,3 +384,47 @@ teste('presença: marcador divergente com a mesma versão dá conectado false no
     presencaEditarArquivo($a, 'ana', static fn (array $d): array => ['m' => str_repeat('0', 64), 'v' => $d['v'], 'a' => $d['a'], 'c' => $d['c']]);
     igual(false, presencaLinha($adm, 'ana')['conectado'] ?? null, 'marcador de outra sessão não acende o LED');
 });
+
+teste('presença: a faxina apaga o temporário órfão da escrita atômica (mais de 5 min)', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    // Órfão: o processo morreu entre o touch e o rename. Tem a forma <arquivo>.json.<rand>.tmp e 10 min de idade.
+    $orfao = $a->priv . '/presenca/' . hash('sha256', 'presenca' . "\0" . 'bia') . '.json.abcdef012345.tmp';
+    file_put_contents($orfao, json_encode(['m' => str_repeat('0', 64), 'v' => 1, 'a' => time() - 600, 'c' => time() - 600], JSON_THROW_ON_ERROR));
+    chmod($orfao, 0600);
+    touch($orfao, time() - 600);
+    presencaEnvelhecerFaxina($a, 601);
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    verdadeiro(!is_file($orfao), 'a faxina varre o temporário órfão de mais de 5 min');
+});
+
+teste('presença: a faxina poupa um temporário recente, de escrita em curso', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    $emCurso = $a->priv . '/presenca/' . hash('sha256', 'presenca' . "\0" . 'carla') . '.json.fedcba543210.tmp';
+    file_put_contents($emCurso, '{}');
+    chmod($emCurso, 0600);
+    presencaEnvelhecerFaxina($a, 601);
+    $ana->get('/api/sessao.php');
+    clearstatcache();
+    verdadeiro(is_file($emCurso), 'um temporário de agora pode ser escrita em curso: a faxina não mexe');
+});
+
+teste('presença: sair apaga o arquivo de presença da própria conta (não só o LED)', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar();
+    $ana = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    verdadeiro(is_file(presencaArquivo($a, 'ana')), 'o arquivo existe antes de sair');
+    igual(200, $ana->post('/api/sair.php', [])->status, 'saiu');
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'sair tira o registro de presença');
+});

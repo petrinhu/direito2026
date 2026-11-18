@@ -12,14 +12,15 @@ import type { Curriculo } from '@/core/curriculo/tipos';
 const curriculo: Curriculo = [{ id: 'p1', numero: 1, rotulo: '1º período', cadeiras: [] }];
 
 describe('MenuCurriculo: Novidades e Changelog', () => {
-  it('os dois links apontam para as páginas, em bloco próprio depois dos períodos (ordem de 15/11)', () => {
+  it('os links de Novidades, Changelog e Sobre apontam para as páginas, em bloco próprio depois dos períodos (ordem de 15/11)', () => {
     const w = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
     const topo = w.find('.menu-curriculo__topo');
     expect(topo.findAll('a').map((a) => a.text())).toEqual(['Calendário']);
     const bloco = w.find('.menu-curriculo__historico-lista');
-    expect(bloco.findAll('a').map((a) => a.text())).toEqual(['Novidades', 'Changelog']);
+    expect(bloco.findAll('a').map((a) => a.text())).toEqual(['Novidades', 'Changelog', 'Sobre']);
     expect(bloco.find('a[href="/novidades"]').exists()).toBe(true);
     expect(bloco.find('a[href="/changelog"]').exists()).toBe(true);
+    expect(bloco.find('a[href="/sobre"]').exists()).toBe(true);
     const periodos = w.find('.menu-curriculo__nivel-1').element;
     // DOCUMENT_POSITION_FOLLOWING (4): o bloco de Novidades vem depois da lista de períodos.
     expect(periodos.compareDocumentPosition(bloco.element) & 4).toBeTruthy();

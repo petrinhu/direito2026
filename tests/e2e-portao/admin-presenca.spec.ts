@@ -1,7 +1,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { join } from 'node:path';
 import { resetarPrivado } from './apoio/ambiente';
-import { capturar, entrarNoApp, esperarApp, esperarEntrada } from './apoio/acoes';
-import { CONTA_ADMIN, CONTA_ANA_PAULA } from './apoio/constantes';
+import { entrarNoApp, esperarApp, esperarEntrada } from './apoio/acoes';
+import { CONTA_ADMIN, CONTA_ANA_PAULA, PASTA_CAPTURAS } from './apoio/constantes';
 
 /**
  * ADM-F5 (plano P4 v2, seção 2): a luz de sessão e a coluna "Último acesso" do painel do admin, de ponta a ponta.
@@ -26,6 +27,15 @@ test.beforeEach(() => resetarPrivado());
 
 function linhaDaConta(page: Page): Locator {
   return page.getByRole('row').filter({ hasText: ALVO });
+}
+
+/**
+ * Captura a tabela inteira (cabeçalho, luz e coluna Último acesso). Com a janela alta, a tabela cai no meio da tela:
+ * a barra fixa do topo e o cartão de prazo do canto não cobrem a linha da conta (medido: cobriam a coluna).
+ */
+async function capturarTabela(page: Page, nome: string): Promise<void> {
+  await page.setViewportSize({ width: 1280, height: 2000 });
+  await page.getByRole('region', { name: 'Tabela de usuários' }).screenshot({ path: join(PASTA_CAPTURAS, `${nome}.png`) });
 }
 
 /** Relê a lista pelo botão Atualizar (ADM-F4). Sem o botão, o caso falha em segundos, não no limite do teste. */
@@ -108,7 +118,7 @@ test('presenca: a luz de ana.paula fica verde com a sessão aberta, vermelha dep
     for (const modo of ['claro', 'escuro', 'adaptado'] as const) {
       await mudarModo(page, modo);
       await expect(linha.locator('.ar-led--verde')).toHaveCount(1);
-      await capturar(page, `admin-presenca-${testInfo.project.name}-verde-${modo}`);
+      await capturarTabela(page, `admin-presenca-${testInfo.project.name}-verde-${modo}`);
     }
 
     await sairDaConta(pessoa);
@@ -120,7 +130,7 @@ test('presenca: a luz de ana.paula fica verde com a sessão aberta, vermelha dep
     for (const modo of ['claro', 'escuro', 'adaptado'] as const) {
       await mudarModo(page, modo);
       await expect(linha.locator('.ar-led--vermelho')).toHaveCount(1);
-      await capturar(page, `admin-presenca-${testInfo.project.name}-vermelho-${modo}`);
+      await capturarTabela(page, `admin-presenca-${testInfo.project.name}-vermelho-${modo}`);
     }
   } finally {
     await pessoaContexto.close();

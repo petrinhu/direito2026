@@ -1,3 +1,4 @@
+/* global WebGL2RenderingContext */
 // Mede o que o navegador do leitor aguenta. Nada aqui faz rede. É a única parte de src/app/piramide3d
 // que lê janela, canvas e tema; o resto recebe fatos já medidos.
 
@@ -8,11 +9,23 @@ export function temWebGL2(): boolean {
   if (webgl2Cache !== null) return webgl2Cache;
   try {
     const tela = document.createElement('canvas');
-    webgl2Cache = tela.getContext('webgl2') !== null;
+    const contexto = tela.getContext('webgl2');
+    // A resposta já está decidida antes de liberar: uma falha na liberação não muda o resultado.
+    webgl2Cache = contexto !== null;
+    liberarContexto(contexto);
   } catch {
     webgl2Cache = false;
   }
   return webgl2Cache;
+}
+
+// A sondagem abre um contexto só para perguntar. Sem liberá-lo, cada carga de página deixa um a mais.
+function liberarContexto(contexto: WebGL2RenderingContext | null): void {
+  try {
+    contexto?.getExtension('WEBGL_lose_context')?.loseContext();
+  } catch {
+    // Só higiene: a resposta da sondagem já foi gravada.
+  }
 }
 
 /** Tamanho da janela útil, sem a barra de rolagem. */

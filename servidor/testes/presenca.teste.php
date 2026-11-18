@@ -523,3 +523,20 @@ teste('presença: a faxina termina com arquivo ilegível na pasta, e a listagem 
     clearstatcache();
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'a faxina apagou o arquivo ilegível');
 });
+
+teste('presença: a presença final é 600 mesmo com umask 0022 no processo', function (): void {
+    require_once __DIR__ . '/apoio/nucleo.php';
+    require_once RAIZ_REPO . '/public/api/nucleo/presenca.php';
+    $priv = dirTemporario();
+    mkdir($priv . '/presenca', 0700);
+    // O pedido real tem umask 0077 (inicio.php:13); aqui o processo põe 0022, que deixaria o temporário em 644.
+    $velho = umask(0022);
+    try {
+        d26_presenca_gravar($priv, 'ana', str_repeat('a', 64), 1, time(), time());
+    } finally {
+        umask($velho);
+    }
+    $arq = d26_presenca_arquivo($priv, 'ana');
+    igual(0600, fileperms($arq) & 0777, 'modo da presença final sem o umask do pedido');
+    igual(0, count(glob($priv . '/presenca/*.tmp') ?: []), 'nenhum temporário sobra');
+}, false);

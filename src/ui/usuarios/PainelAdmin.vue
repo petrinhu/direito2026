@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
+import { formatarDataHora } from '@/app/calendario/dataHoraDoSite';
 import {
   loginValido,
   type Administrar,
   type ClienteApi,
   type UsuarioAdmin
 } from '@/app/sessao/administracao';
+import { podeReler } from './releituraAdmin';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */
@@ -91,14 +93,6 @@ function formatarFalhaDeEnvio(instante: string | null | undefined): string {
     : `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
 }
 
-function formatarData(valor: string | null): string {
-  if (!valor) return 'Nunca';
-  const data = new Date(valor);
-  return Number.isNaN(data.getTime())
-    ? valor
-    : data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-}
-
 /** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
 function classeDoLed(conectado: boolean | undefined): string {
   if (conectado === true) return 'ar-led--verde';
@@ -112,8 +106,14 @@ function textoDaSessao(conectado: boolean | undefined): string {
   return 'sem informação';
 }
 
+let ultimaLeitura = 0;
+/** Hora da última leitura, em HH:MM:SS (fuso de Recife), para o texto "Atualizado às". */
+const atualizadoEm = ref('');
+
 async function carregar(): Promise<void> {
   const r = await props.administrar((c) => c.listarUsuarios());
+  ultimaLeitura = Date.now();
+  atualizadoEm.value = formatarDataHora(new Date(ultimaLeitura).toISOString()).slice(-8);
   carregando.value = false;
   if (r.ok) {
     usuarios.value = r.valor;
@@ -302,8 +302,22 @@ async function jaEnviei(): Promise<void> {
   (destino ?? tituloDaSecao.value)?.focus();
 }
 
-onMounted(carregar);
+function atualizar(): void {
+  void carregar();
+}
+
+/** Volta da aba: relê a lista, sem passar do limite de 30 s (podeReler). */
+function aoVoltarAba(): void {
+  if (document.visibilityState === 'visible' && podeReler(Date.now(), ultimaLeitura))
+    void carregar();
+}
+
+onMounted(() => {
+  void carregar();
+  document.addEventListener('visibilitychange', aoVoltarAba);
+});
 onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', aoVoltarAba);
   dispensarLink();
   fecharTrocaDeEmail();
 });
@@ -377,6 +391,10 @@ onBeforeUnmount(() => {
       </button>
     </form>
 
+    <div class="ar-admin__atualizar">
+      <button type="button" class="ar-botao" @click="atualizar">Atualizar</button>
+      <p v-if="atualizadoEm" class="ar-admin__hora">Atualizado às {{ atualizadoEm }}</p>
+    </div>
     <p v-if="carregando" role="status">Carregando usuários…</p>
     <div
       v-else
@@ -420,7 +438,7 @@ onBeforeUnmount(() => {
               >
               <span v-else-if="u.convite === 'vencido'"> · Convite vencido</span>
             </td>
-            <td data-rotulo="Último acesso">{{ formatarData(u.ultimoLogin) }}</td>
+            <td data-rotulo="Último acesso">{{ formatarDataHora(u.ultimoLogin) }}</td>
             <td data-rotulo="Ações">
               <form
                 v-if="editandoEmail === u.usuario"

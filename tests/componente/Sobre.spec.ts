@@ -7,6 +7,7 @@ import { TITULAR } from '@/app/rodape/titular';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotas } from '@/app/router/rotas';
 import { PAPEIS_DAS_DEPENDENCIAS } from '@/conteudo/sobre/papeis';
+import { TEXTOS_SOBRE } from '@/conteudo/sobre/textos';
 
 /**
  * SB-F8, página Sobre (esqueleto). Os textos finais vêm da SB-F11 (ux-writer); aqui
@@ -174,5 +175,41 @@ describe('rota /sobre', () => {
     const indiceCoringa = rotas.findIndex((r) => r.name === 'nao-encontrado');
     expect(indiceSobre).toBeGreaterThanOrEqual(0);
     expect(indiceSobre).toBeLessThan(indiceCoringa);
+  });
+});
+
+describe('página Sobre, tabelas da seção Para nerds em tela estreita (SB-F13, A1 e A2)', () => {
+  it('cada contêiner de tabela é região rolável focável, com nome pela seção', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const contineres = secaoComTitulo('Para nerds').findAll('.pagina-sobre__tabela');
+    expect(contineres).toHaveLength(2);
+    for (const contorno of contineres) {
+      expect(contorno.attributes('tabindex')).toBe('0');
+      expect(contorno.attributes('role')).toBe('region');
+      const idDoNome = contorno.attributes('aria-labelledby');
+      expect(idDoNome).toBeDefined();
+      expect(idDoNome).not.toBe('sobre-para-nerds');
+      expect(w.find(`#${idDoNome}`).exists()).toBe(true);
+    }
+    const nomes = contineres.map((c) => c.attributes('aria-labelledby'));
+    expect(new Set(nomes).size).toBe(nomes.length);
+    expect(w.find('#sobre-tabela-execucao').text()).toBe(TEXTOS_SOBRE.paraNerds.tabelaExecucao);
+    expect(w.find('#sobre-tabela-construcao').text()).toBe(TEXTOS_SOBRE.paraNerds.tabelaConstrucao);
+  });
+
+  it('cada célula de corpo traz o cabeçalho da coluna em data-label (par rótulo/valor)', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const tabelas = secaoComTitulo('Para nerds').findAll('table');
+    for (const tabela of tabelas) {
+      const cabecalhos = tabela.findAll('thead th').map((th) => th.text());
+      expect(cabecalhos).toEqual(['Nome', 'Versão', 'Licença', 'Papel']);
+      for (const linha of tabela.findAll('tbody tr')) {
+        const celulas = linha.findAll('td');
+        expect(celulas).toHaveLength(cabecalhos.length);
+        celulas.forEach((td, i) => {
+          expect(td.attributes('data-label')).toBe(cabecalhos[i]);
+        });
+      }
+    }
   });
 });

@@ -74,9 +74,14 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
         {{ TEXTOS_SOBRE.paraNerds.versaoNode }}: {{ PILHA.versaoNode }}.
       </p>
 
-      <div class="pagina-sobre__tabela">
+      <div
+        class="pagina-sobre__tabela"
+        tabindex="0"
+        role="region"
+        aria-labelledby="sobre-tabela-execucao"
+      >
         <table>
-          <caption>
+          <caption id="sobre-tabela-execucao">
             {{
               TEXTOS_SOBRE.paraNerds.tabelaExecucao
             }}
@@ -91,18 +96,23 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
           </thead>
           <tbody>
             <tr v-for="dep in dependenciasDeExecucao" :key="dep.nome">
-              <td>{{ dep.nome }}</td>
-              <td>{{ dep.versao }}</td>
-              <td>{{ dep.licenca }}</td>
-              <td>{{ dep.papel }}</td>
+              <td data-label="Nome">{{ dep.nome }}</td>
+              <td data-label="Versão">{{ dep.versao }}</td>
+              <td data-label="Licença">{{ dep.licenca }}</td>
+              <td data-label="Papel">{{ dep.papel }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="pagina-sobre__tabela">
+      <div
+        class="pagina-sobre__tabela"
+        tabindex="0"
+        role="region"
+        aria-labelledby="sobre-tabela-construcao"
+      >
         <table>
-          <caption>
+          <caption id="sobre-tabela-construcao">
             {{
               TEXTOS_SOBRE.paraNerds.tabelaConstrucao
             }}
@@ -117,10 +127,10 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
           </thead>
           <tbody>
             <tr v-for="dep in dependenciasDeConstrucao" :key="dep.nome">
-              <td>{{ dep.nome }}</td>
-              <td>{{ dep.versao }}</td>
-              <td>{{ dep.licenca }}</td>
-              <td>{{ dep.papel }}</td>
+              <td data-label="Nome">{{ dep.nome }}</td>
+              <td data-label="Versão">{{ dep.versao }}</td>
+              <td data-label="Licença">{{ dep.licenca }}</td>
+              <td data-label="Papel">{{ dep.papel }}</td>
             </tr>
           </tbody>
         </table>
@@ -140,21 +150,76 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
   margin-block: var(--esp-6, 2rem);
 }
 
+/*
+ * Mobile-first: abaixo de 641px cada linha vira um bloco, e o rótulo da coluna
+ * vem de data-label (::before). O cabeçalho some dessa tela, mas o par rótulo/valor
+ * continua na árvore de acessibilidade. A partir de 641px volta a ser tabela.
+ */
 .pagina-sobre__tabela {
-  overflow-x: auto;
   margin-block: var(--esp-4, 1rem);
 }
 
-.pagina-sobre__tabela table {
-  border-collapse: collapse;
+.pagina-sobre__tabela table,
+.pagina-sobre__tabela tbody {
+  display: block;
   width: 100%;
 }
 
-.pagina-sobre__tabela th,
-.pagina-sobre__tabela td {
-  text-align: start;
-  padding: var(--esp-2, 0.5rem);
+.pagina-sobre__tabela thead {
+  display: none;
+}
+
+.pagina-sobre__tabela tr {
+  display: block;
   border-bottom: 1px solid currentColor;
-  vertical-align: top;
+  padding-block: var(--esp-2, 0.5rem);
+}
+
+.pagina-sobre__tabela td {
+  display: block;
+  text-align: start;
+  padding-block: var(--esp-1, 0.25rem);
+}
+
+.pagina-sobre__tabela td::before {
+  content: attr(data-label);
+  display: block;
+  font-weight: 700;
+}
+
+@media (min-width: 641px) {
+  .pagina-sobre__tabela {
+    overflow-x: auto;
+  }
+
+  .pagina-sobre__tabela table {
+    display: table;
+    border-collapse: collapse;
+  }
+
+  .pagina-sobre__tabela thead {
+    display: table-header-group;
+  }
+
+  .pagina-sobre__tabela tbody {
+    display: table-row-group;
+  }
+
+  .pagina-sobre__tabela tr {
+    display: table-row;
+    padding-block: 0;
+  }
+
+  .pagina-sobre__tabela th,
+  .pagina-sobre__tabela td {
+    display: table-cell;
+    padding: var(--esp-2, 0.5rem);
+    border-bottom: 1px solid currentColor;
+    vertical-align: top;
+  }
+
+  .pagina-sobre__tabela td::before {
+    content: none;
+  }
 }
 </style>

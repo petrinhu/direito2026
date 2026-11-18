@@ -190,11 +190,10 @@ describe('página Sobre, tabelas da seção Para nerds em tela estreita (SB-F13,
       expect(contorno.attributes('role')).toBe('region');
       const idDoNome = contorno.attributes('aria-labelledby');
       expect(idDoNome).toBeDefined();
-      expect(idDoNome).not.toBe('sobre-para-nerds');
-      expect(w.find(`#${idDoNome}`).exists()).toBe(true);
+      expect(contorno.find('caption').attributes('id')).toBe(idDoNome);
     }
     const nomes = contineres.map((c) => c.attributes('aria-labelledby'));
-    expect(new Set(nomes).size).toBe(nomes.length);
+    expect(nomes).toEqual(['sobre-tabela-execucao', 'sobre-tabela-construcao']);
     expect(w.find('#sobre-tabela-execucao').text()).toBe(TEXTOS_SOBRE.paraNerds.tabelaExecucao);
     expect(w.find('#sobre-tabela-construcao').text()).toBe(TEXTOS_SOBRE.paraNerds.tabelaConstrucao);
   });

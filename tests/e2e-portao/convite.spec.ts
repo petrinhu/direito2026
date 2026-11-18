@@ -1085,7 +1085,7 @@ async function medidasDoPainel(page: Page, logins: readonly string[]): Promise<M
     const tabela = document.querySelector<HTMLElement>('.ar-tabela-rolavel')!;
     const linhas = logins.map((login) => {
       const linha = Array.from(document.querySelectorAll('tbody tr')).find(
-        (tr) => tr.querySelector('th')?.textContent?.trim() === login
+        (tr) => tr.querySelector('th [id$="-nome-' + login + '"]')?.textContent?.trim() === login
       )!;
       const celula = (rotulo: string): HTMLElement =>
         linha.querySelector<HTMLElement>(`td[data-rotulo="${rotulo}"]`)!;

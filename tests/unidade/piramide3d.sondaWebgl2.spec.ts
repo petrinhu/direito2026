@@ -22,4 +22,23 @@ describe('temWebGL2 libera o contexto que a sondagem abriu', () => {
     expect(tela.getContext).toHaveBeenCalledWith('webgl2');
     expect(perder).toHaveBeenCalledTimes(1);
   });
+  it('se liberar o contexto lança, a resposta da sondagem continua valendo', async () => {
+    const contexto = {
+      getExtension: vi.fn(() => ({
+        loseContext: (): void => {
+          throw new Error('perda recusada');
+        }
+      }))
+    };
+    const tela = { getContext: vi.fn(() => contexto) };
+    vi.spyOn(document, 'createElement').mockReturnValue(tela as unknown as HTMLElement);
+
+    const { temWebGL2 } = await import('@/app/piramide3d/ambiente');
+
+    const resposta = temWebGL2();
+
+    // Montagem válida: a liberação foi de fato tentada e falhou.
+    expect(contexto.getExtension).toHaveBeenCalledWith('WEBGL_lose_context');
+    expect(resposta).toBe(true);
+  });
 });

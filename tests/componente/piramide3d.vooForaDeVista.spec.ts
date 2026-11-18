@@ -11,7 +11,9 @@ import type { Ponto } from '@/core/piramide3d/tipos';
 const falsa = vi.hoisted(() => ({
   ultima: null as null | { canvasEmVoo(): boolean },
   quadros: 0,
-  lancarNoRender: 0
+  lancarNoRender: 0,
+  lancarNoAnimar: 0,
+  reduzido: false
 }));
 
 vi.mock('@/ui/piramide3d/controleSom', () => ({
@@ -38,6 +40,10 @@ vi.mock('@/ui/piramide3d/cena', () => ({
       },
       animar(): boolean {
         falsa.quadros += 1;
+        if (falsa.lancarNoAnimar > 0) {
+          falsa.lancarNoAnimar -= 1;
+          throw new Error('falha sintética em animar');
+        }
         const voo = ativo !== null || emVoo;
         opcoes.canvas.classList.toggle('pir-tela--voo', voo);
         aplicado = voo;
@@ -47,9 +53,10 @@ vi.mock('@/ui/piramide3d/cena', () => ({
           algumaVolta = voltaRestante > 0;
         }
         const proximoVoo = ativo !== null || algumaVolta;
+        const mudou = proximoVoo !== voo;
         emVoo = proximoVoo;
-        // Partículas com movimento normal: a cena pede quadro sempre (cena.ts:943).
-        return true;
+        // Movimento normal: as partículas pedem quadro sempre (cena.ts:943). Reduzido: só transição ou volta.
+        return !falsa.reduzido || mudou || algumaVolta;
       },
       canvasEmVoo(): boolean {
         return aplicado;
@@ -135,6 +142,8 @@ beforeEach(() => {
   vi.stubGlobal('IntersectionObserver', ObservadorFalso);
   falsa.quadros = 0;
   falsa.lancarNoRender = 0;
+  falsa.lancarNoAnimar = 0;
+  falsa.reduzido = false;
 
   const figura = document.createElement('figure');
   palco = document.createElement('div');
@@ -198,6 +207,44 @@ describe('voo da pirâmide quando a figura sai da tela', () => {
     expect(falsa.quadros).toBe(1);
     const registros = erro.mock.calls.filter((c) => String(c[0]).includes('[piramide3d]'));
     expect(registros).toHaveLength(1);
+
+    avancar(1);
+    expect(falsa.quadros).toBe(2);
+  });
+  it('fechar a fatia com o laço parado e a figura fora da tela pede quadro', () => {
+    const canvas = montar();
+    const botao = palco.querySelector<HTMLButtonElement>('button.pir-rotulo');
+    expect(botao).not.toBeNull();
+
+    // Movimento reduzido: com a fatia aberta e parada, o laço para de pedir quadros.
+    falsa.reduzido = true;
+    botao?.focus();
+    avancar(3);
+    expect(canvas.classList.contains('pir-tela--voo')).toBe(true);
+    const quadrosComFatiaParada = falsa.quadros;
+    avancar(5);
+    // Montagem válida: o laço de fato parou com a fatia aberta.
+    expect(falsa.quadros).toBe(quadrosComFatiaParada);
+
+    // A figura sai da tela e a pessoa fecha a fatia: o canvas ainda está em voo, então precisa de quadro.
+    ObservadorFalso.ultimo?.aoCruzar([{ isIntersecting: false }]);
+    botao?.blur();
+    avancar(10);
+
+    expect(falsa.quadros).toBeGreaterThan(quadrosComFatiaParada);
+    expect(canvas.classList.contains('pir-tela--voo')).toBe(false);
+  });
+
+  it('quando animar lança, o laço segue no quadro seguinte', () => {
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    montar();
+    palco.querySelector<HTMLButtonElement>('button.pir-rotulo')?.focus();
+
+    falsa.lancarNoAnimar = 1;
+    avancar(1);
+    // Montagem válida: o quadro de fato rodou e falhou dentro de animar.
+    expect(falsa.quadros).toBe(1);
+    expect(erro.mock.calls.filter((c) => String(c[0]).includes('[piramide3d]'))).toHaveLength(1);
 
     avancar(1);
     expect(falsa.quadros).toBe(2);

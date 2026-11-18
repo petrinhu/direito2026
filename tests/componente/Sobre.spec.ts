@@ -73,6 +73,9 @@ describe('página Sobre, autoria e crédito', () => {
     expect(secaoComTitulo('Autoria').text()).toContain(
       'O código foi escrito por Claude, inteligência artificial da Anthropic.'
     );
+    expect(secaoComTitulo('Autoria').text()).toContain(
+      'O Caderno de Direito não tem vínculo com a Anthropic e não é apoiado nem patrocinado por ela.'
+    );
   });
 });
 

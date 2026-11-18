@@ -14,7 +14,10 @@ import { TITULAR } from '../../src/conteudo/sobre/autoria';
  */
 
 function normalizado(texto: string): string {
-  return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+  return texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
 }
 
 test.beforeEach(() => resetarPrivado());
@@ -26,9 +29,10 @@ test('sobre: sem sessão, /sobre devolve a tela de entrada e o nome do titular n
   const resposta = await request.get('/sobre');
   const corpo = await resposta.text();
   expect(corpo.includes(TITULAR), 'nome exato na resposta sem sessão').toBe(false);
-  expect(normalizado(corpo).includes(normalizado(TITULAR)), 'nome normalizado na resposta sem sessão').toBe(
-    false
-  );
+  expect(
+    normalizado(corpo).includes(normalizado(TITULAR)),
+    'nome normalizado na resposta sem sessão'
+  ).toBe(false);
 
   await page.goto('/sobre');
   await esperarEntrada(page);

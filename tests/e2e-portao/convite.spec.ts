@@ -9,13 +9,7 @@ import {
   type Page
 } from '@playwright/test';
 import { definirRoteiroSmtp, resetarPrivado } from './apoio/ambiente';
-import {
-  capturar,
-  entrarNoApp,
-  esperarApp,
-  esperarEntrada,
-  preencherEntrada
-} from './apoio/acoes';
+import { capturar, entrarNoApp, esperarApp, esperarEntrada, preencherEntrada } from './apoio/acoes';
 import { CONTA_ADMIN, ORIGEM, REMETENTE_DO_SITE } from './apoio/constantes';
 import { forcarLimite } from './apoio/limiteForcado';
 import {
@@ -1571,9 +1565,10 @@ test('convite: com o limite da conta cheio, a senha criada pelo "Esqueci a senha
     await esperarEntrada(aparelho);
     await preencherEntrada(aparelho, { usuario: LOGIN_CONVIDADO, senha: SENHA_PRIMEIRA });
     await expect(aparelho.getByRole('alert')).toBeVisible();
-    expect(await sessaoAutenticada(controle), 'controle: o limite barra a entrada com a senha certa').toBe(
-      false
-    );
+    expect(
+      await sessaoAutenticada(controle),
+      'controle: o limite barra a entrada com a senha certa'
+    ).toBe(false);
   } finally {
     await controle.close();
   }
@@ -1595,8 +1590,14 @@ test('convite: com o limite da conta cheio, a senha criada pelo "Esqueci a senha
     await abrirLink(aparelho, e2.link);
     await esperarFormularioDoConvite(aparelho);
     // criarSenhaPeloConvite espera o app: se a senha nova não entrar, o caso falha aqui com a tela que ficou.
-    await criarSenhaPeloConvite(aparelho, SENHA_DO_ESQUECI, 'senha nova pelo Esqueci, com o limite cheio');
-    expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo Esqueci com o limite cheio').toBe(true);
+    await criarSenhaPeloConvite(
+      aparelho,
+      SENHA_DO_ESQUECI,
+      'senha nova pelo Esqueci, com o limite cheio'
+    );
+    expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo Esqueci com o limite cheio').toBe(
+      true
+    );
   } finally {
     await pessoa.close();
   }
@@ -1670,7 +1671,10 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
           .poll(async () => (await contexto.cookies()).some((c) => c.name === '__Host-d26aviso'))
           .toBe(false);
         expect(await sessaoAutenticada(contexto), 'sem sessão na entrada com o aviso').toBe(false);
-        await capturar(aparelho, `entrada-senha-criada-${testInfo.project.name}-${modo}-${largura}`);
+        await capturar(
+          aparelho,
+          `entrada-senha-criada-${testInfo.project.name}-${modo}-${largura}`
+        );
       } finally {
         await contexto.close();
       }

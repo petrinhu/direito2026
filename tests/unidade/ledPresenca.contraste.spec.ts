@@ -42,7 +42,11 @@ function contraste(a: string, b: string): number {
 
 const temas: [string, () => string][] = [
   ['claro', () => bloco(/:root \{/)],
-  ['escuro pelo sistema', () => bloco(/:root:not\(\[data-theme="light"\]\) \{/, /@media \(prefers-color-scheme: dark\) \{/)],
+  [
+    'escuro pelo sistema',
+    () =>
+      bloco(/:root:not\(\[data-theme="light"\]\) \{/, /@media \(prefers-color-scheme: dark\) \{/)
+  ],
   ['escuro escolhido', () => bloco(/:root\[data-theme="dark"\] \{/)],
   ['modo adaptado', () => bloco(/:root\[data-modo-adaptado="on"\] \{/)]
 ];

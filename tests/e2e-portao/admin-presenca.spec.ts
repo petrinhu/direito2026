@@ -35,7 +35,9 @@ function linhaDaConta(page: Page): Locator {
  */
 async function capturarTabela(page: Page, nome: string): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 2000 });
-  await page.getByRole('region', { name: 'Tabela de usuários' }).screenshot({ path: join(PASTA_CAPTURAS, `${nome}.png`) });
+  await page
+    .getByRole('region', { name: 'Tabela de usuários' })
+    .screenshot({ path: join(PASTA_CAPTURAS, `${nome}.png`) });
 }
 
 /** Relê a lista pelo botão Atualizar (ADM-F4). Sem o botão, o caso falha em segundos, não no limite do teste. */
@@ -51,8 +53,14 @@ function instanteDeRecife(texto: string): number {
     /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/
   ) as RegExpMatchArray;
   return (
-    Date.UTC(Number(ano), Number(mes) - 1, Number(dia), Number(hora), Number(minuto), Number(segundo)) +
-    DESLOCAMENTO_RECIFE_MS
+    Date.UTC(
+      Number(ano),
+      Number(mes) - 1,
+      Number(dia),
+      Number(hora),
+      Number(minuto),
+      Number(segundo)
+    ) + DESLOCAMENTO_RECIFE_MS
   );
 }
 
@@ -108,12 +116,14 @@ test('presenca: a luz de ana.paula fica verde com a sessão aberta, vermelha dep
     const ultimoAcesso = linha.locator('td[data-rotulo="Último acesso"]');
     await expect(ultimoAcesso).toHaveText(FORMATO_ULTIMO_ACESSO);
     const instante = instanteDeRecife((await ultimoAcesso.textContent()) ?? '');
-    expect(instante, 'último acesso dentro da janela do login, na hora de Recife').toBeGreaterThanOrEqual(
-      antesDoLogin - FOLGA_MS
-    );
-    expect(instante, 'último acesso dentro da janela do login, na hora de Recife').toBeLessThanOrEqual(
-      depoisDoLogin + FOLGA_MS
-    );
+    expect(
+      instante,
+      'último acesso dentro da janela do login, na hora de Recife'
+    ).toBeGreaterThanOrEqual(antesDoLogin - FOLGA_MS);
+    expect(
+      instante,
+      'último acesso dentro da janela do login, na hora de Recife'
+    ).toBeLessThanOrEqual(depoisDoLogin + FOLGA_MS);
 
     for (const modo of ['claro', 'escuro', 'adaptado'] as const) {
       await mudarModo(page, modo);

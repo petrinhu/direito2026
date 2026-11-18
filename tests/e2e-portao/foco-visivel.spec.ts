@@ -129,6 +129,7 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
   });
 
   const TOLERANCIA = 0.5;
+  const TOLERANCIA_DE_CENTRO = 2;
   const ativo = document.activeElement as HTMLElement | null;
   if (!ativo || ativo === document.body || ativo === document.documentElement) return sem({});
 
@@ -237,11 +238,22 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
   };
   // Elemento mais alto que a janela não cabe na vertical por definição: só o eixo horizontal vale.
   const maisAltoQueAJanela = r.height > alturaJanela + TOLERANCIA;
+  // Centralizar o alvo pede rolagem além do fim da página quando ele está perto do rodapé. O
+  // navegador para no limite e o centro do alvo fica longe do centro da janela. Nesse caso o corte
+  // vertical é aceito pelo limite de rolagem, desde que o meio do alvo continue dentro da janela
+  // (o anel aparece nos lados visíveis; os itens (c) e (e) e o corte horizontal seguem valendo).
+  const centroDoAlvo = (r.top + r.bottom) / 2;
+  const pelLimiteDeRolagem =
+    Math.abs(centroDoAlvo - alturaJanela / 2) > TOLERANCIA_DE_CENTRO &&
+    centroDoAlvo >= 0 &&
+    centroDoAlvo < alturaJanela;
   let cortadoPor = '';
   if (
     caixa.esq < -TOLERANCIA ||
     caixa.dir > larguraJanela + TOLERANCIA ||
-    (!maisAltoQueAJanela && (caixa.topo < -TOLERANCIA || caixa.base > alturaJanela + TOLERANCIA))
+    (!maisAltoQueAJanela &&
+      !pelLimiteDeRolagem &&
+      (caixa.topo < -TOLERANCIA || caixa.base > alturaJanela + TOLERANCIA))
   ) {
     cortadoPor = 'janela';
   }
@@ -415,7 +427,9 @@ const ALVOS_A: readonly AlvoA[] = [
     larguras: [360]
   },
   { nome: 'primeira linha da lista de cadeiras', seletor: 'a.linha', larguras: LARGURAS },
-  // A11Y-FOCO-3: a região rolável da tabela do painel, mais alta que a janela.
+  // A11Y-FOCO-3: a região rolável da tabela do painel. Mede 744 px: a 1280 (janela de 800 px) ela
+  // cabe na vertical e o centralizar não tem como rolar além do fim da página; a 360 (janela de
+  // 740 px) ela passa 4 px da janela e cai na regra de altura (maisAltoQueAJanela).
   {
     nome: 'região rolável da tabela do painel',
     seletor: 'div.ar-tabela-rolavel',

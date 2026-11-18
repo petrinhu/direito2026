@@ -41,9 +41,15 @@ for (const largura of [360, 390]) {
         .toBe(true);
       await botaoGaveta.click();
 
+      // O Sair fica abaixo da dobra dentro da gaveta, que rola (LayoutBase.vue, gaveta a 360 e 390).
+      // Rola-se a gaveta até ele antes de medir; sem isso o teste mede um ponto fora da área visível.
       const sair = page.locator('.menu-curriculo__sair');
+      await sair.scrollIntoViewIfNeeded();
       await expect
-        .poll(() => alcancavel(sair), { message: 'o aviso cobre o botão Sair do menu' })
+        .poll(() => alcancavel(sair), {
+          message:
+            'o botão Sair não é alcançável (fora da área visível ou coberto) mesmo após rolar a gaveta até ele'
+        })
         .toBe(true);
     });
 

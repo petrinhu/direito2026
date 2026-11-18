@@ -419,9 +419,10 @@ onBeforeUnmount(() => {
         </thead>
         <tbody>
           <tr v-for="u in usuarios" :key="u.usuario">
-            <th :id="`${idBase}-linha-${u.usuario}`" scope="row">
+            <th scope="row">
               <span class="ar-led" :class="classeDoLed(u.conectado)" aria-hidden="true"></span>
-              {{ u.usuario }}
+              <!-- Só o nome: o botão de trocar e-mail o usa como nome acessível, sem o estado da luz. -->
+              <span :id="`${idBase}-nome-${u.usuario}`">{{ u.usuario }}</span>
               <span class="ar-visualmente-oculto">{{ textoDaSessao(u.conectado) }}</span>
             </th>
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
@@ -495,7 +496,7 @@ onBeforeUnmount(() => {
                   class="ar-botao"
                   data-acao="trocar-email"
                   :data-usuario="u.usuario"
-                  :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-linha-${u.usuario}`"
+                  :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-nome-${u.usuario}`"
                   @click="abrirTrocaDeEmail(u)"
                 >
                   Trocar e-mail
@@ -549,7 +550,7 @@ onBeforeUnmount(() => {
                     class="ar-botao"
                     data-acao="trocar-email"
                     :data-usuario="u.usuario"
-                    :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-linha-${u.usuario}`"
+                    :aria-labelledby="`${idBase}-trocar-${u.usuario} ${idBase}-nome-${u.usuario}`"
                     @click="abrirTrocaDeEmail(u)"
                   >
                     Trocar e-mail

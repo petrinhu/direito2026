@@ -465,9 +465,15 @@ class FiguraTresD implements FiguraMontada {
     this.rafId = 0;
     const dt = this.ultimoT ? Math.min((t - this.ultimoT) / 1000, 0.05) : 0.016;
     this.ultimoT = t;
-    const anim = this.cena.animar(t, dt);
-    this.cena.render();
-    this.atualizarRotulos();
+    // Uma falha num quadro não pode matar o laço em silêncio: registra e tenta o quadro seguinte.
+    let anim = true;
+    try {
+      anim = this.cena.animar(t, dt);
+      this.cena.render();
+      this.atualizarRotulos();
+    } catch (erro) {
+      console.error('[piramide3d] quadro falhou; o próximo quadro tenta de novo', erro);
+    }
     // Canvas em voo é fixo na janela inteira: segue animando mesmo com a figura fora da tela.
     if (anim && (this.visivel || this.cena.canvasEmVoo())) {
       this.rafId = requestAnimationFrame((t2) => this.quadro(t2));

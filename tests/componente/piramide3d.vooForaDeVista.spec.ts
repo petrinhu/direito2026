@@ -8,7 +8,9 @@ import { criarFigura } from '@/ui/piramide3d/figura';
 import type { OpcoesFigura } from '@/app/piramide3d/tiposMotor';
 
 const falsa = vi.hoisted(() => ({
-  ultima: null as null | { canvasEmVoo(): boolean }
+  ultima: null as null | { canvasEmVoo(): boolean },
+  quadros: 0,
+  lancarNoRender: 0
 }));
 
 vi.mock('@/ui/piramide3d/controleSom', () => ({
@@ -34,6 +36,7 @@ vi.mock('@/ui/piramide3d/cena', () => ({
         }
       },
       animar(): boolean {
+        falsa.quadros += 1;
         const voo = ativo !== null || emVoo;
         opcoes.canvas.classList.toggle('pir-tela--voo', voo);
         aplicado = voo;
@@ -50,7 +53,12 @@ vi.mock('@/ui/piramide3d/cena', () => ({
       canvasEmVoo(): boolean {
         return aplicado;
       },
-      render(): void {},
+      render(): void {
+        if (falsa.lancarNoRender > 0) {
+          falsa.lancarNoRender -= 1;
+          throw new Error('falha sintética');
+        }
+      },
       redimensionar(): void {},
       opacidadeRotulos(): number {
         return 1;
@@ -80,6 +88,7 @@ interface Agendado {
 }
 
 let fila: Agendado[] = [];
+const falhasNaFila: unknown[] = [];
 let proximoId = 1;
 let agora = 0;
 
@@ -88,7 +97,14 @@ function avancar(quadros: number): void {
     agora += 16;
     const atuais = fila;
     fila = [];
-    for (const a of atuais) a.cb(agora);
+    // Como no navegador: uma exceção num callback de quadro é reportada e não derruba a fila.
+    for (const a of atuais) {
+      try {
+        a.cb(agora);
+      } catch (erro) {
+        falhasNaFila.push(erro);
+      }
+    }
   }
 }
 
@@ -116,6 +132,8 @@ beforeEach(() => {
     fila = fila.filter((a) => a.id !== id);
   });
   vi.stubGlobal('IntersectionObserver', ObservadorFalso);
+  falsa.quadros = 0;
+  falsa.lancarNoRender = 0;
 
   const figura = document.createElement('figure');
   palco = document.createElement('div');
@@ -126,6 +144,7 @@ beforeEach(() => {
 afterEach(() => {
   document.body.replaceChildren();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   falsa.ultima = null;
   ObservadorFalso.ultimo = null;
 });
@@ -165,5 +184,21 @@ describe('voo da pirâmide quando a figura sai da tela', () => {
     avancar(10);
 
     expect(canvas.classList.contains('pir-tela--voo')).toBe(false);
+  });
+  it('uma exceção num quadro não mata o laço: o erro vai ao console e o quadro seguinte roda', () => {
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    montar();
+    palco.querySelector<HTMLButtonElement>('button.pir-rotulo')?.focus();
+
+    falsa.lancarNoRender = 1;
+    avancar(1);
+
+    // Montagem válida: um quadro rodou e a falha foi registrada uma vez, com o prefixo da figura.
+    expect(falsa.quadros).toBe(1);
+    const registros = erro.mock.calls.filter((c) => String(c[0]).includes('[piramide3d]'));
+    expect(registros).toHaveLength(1);
+
+    avancar(1);
+    expect(falsa.quadros).toBe(2);
   });
 });

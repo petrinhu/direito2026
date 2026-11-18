@@ -423,7 +423,9 @@ onBeforeUnmount(() => {
               <span class="ar-led" :class="classeDoLed(u.conectado)" aria-hidden="true"></span>
               <!-- Só o nome: o botão de trocar e-mail o usa como nome acessível, sem o estado da luz. -->
               <span :id="`${idBase}-nome-${u.usuario}`">{{ u.usuario }}</span>
-              <span class="ar-visualmente-oculto">{{ textoDaSessao(u.conectado) }}</span>
+              <span class="ar-visualmente-oculto ar-led-texto">{{
+                textoDaSessao(u.conectado)
+              }}</span>
             </th>
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
             <td data-rotulo="E-mail">{{ u.email ?? '' }}</td>

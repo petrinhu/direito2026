@@ -245,6 +245,18 @@
   border: 0;
 }
 
+/* Modo adaptado: o texto da luz de sessão fica visível, numa linha abaixo do nome, para não colar "anaSessão aberta". */
+:root[data-modo-adaptado='on'] .ar-led-texto {
+  position: static;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
 /* Administração */
 .ar-admin {
   display: grid;

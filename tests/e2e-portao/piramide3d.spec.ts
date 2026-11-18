@@ -118,6 +118,16 @@ async function centralizar(page: Page, seletor: string): Promise<void> {
     .toBe('livre');
 }
 
+/**
+ * Quanto rolar para a figura sair toda da janela. A figura do 3D tem mais de 3 alturas de janela,
+ * então o piso de 3 alturas não basta: sem sair da janela a montagem é inválida (o teste falha antes
+ * da asserção do canvas). O piso de 3 alturas fica como mínimo.
+ */
+function distanciaParaSair(figura: { y: number; height: number } | null, altura: number): number {
+  const base = figura ? Math.ceil(figura.y + figura.height) + altura : 0;
+  return Math.max(3 * altura, base);
+}
+
 /** Medida da versão plana: caixa de cada <text> dentro do viewBox, sem cruzar outra, letra de 14 px. */
 async function medirPlana(page: Page, id: string) {
   return page.locator(`#${id} .figura-piramide__plana svg`).evaluate((svg) => {
@@ -369,6 +379,68 @@ test.describe('a 1280 px, com WebGL: a figura entra em 3D', () => {
     await expect(som).toHaveText(inicial === 'Som ligado' ? 'Som desligado' : 'Som ligado');
     expect(escuta.bloqueios, 'bloqueios de CSP no som').toEqual([]);
     expect(escuta.errosDePagina, 'erros de página no som').toEqual([]);
+  });
+
+  test('rolar com a roda do mouse durante a volta tira o canvas da janela (PIR-H7)', async ({
+    page
+  }) => {
+    const escuta = escutar(page);
+    await abrirUnidade(page, 'bloco-13');
+    await expect(page.locator('#figura-piramide-kelsen')).toHaveAttribute('data-3d', 'on');
+    await centralizar(page, '#figura-piramide-kelsen .figura-piramide3d');
+    const botao = page.locator('#figura-piramide-kelsen button.pir-rotulo', {
+      hasText: 'Regulamentos'
+    });
+    await expect(botao).toBeVisible();
+    const caixa = await botao.boundingBox();
+    expect(caixa).not.toBeNull();
+    await page.mouse.move(caixa!.x + caixa!.width / 2, caixa!.y + caixa!.height / 2);
+    const tela = page.locator('#figura-piramide-kelsen canvas.pir-tela');
+    await expect(tela).toHaveClass(/pir-tela--voo/);
+    await expect(page.locator('#figura-piramide-kelsen .pir-leitor')).toContainText('Regulamentos');
+    const figura0 = await page.locator('#figura-piramide-kelsen').boundingBox();
+    const vp = page.viewportSize()!;
+    await page.mouse.wheel(0, distanciaParaSair(figura0, vp.height));
+    await page.waitForTimeout(2000);
+    // Montagem inválida, nunca verde: a figura precisa ter saído da janela antes da asserção do canvas.
+    const figura = await page.locator('#figura-piramide-kelsen').boundingBox();
+    expect(figura, 'a figura existe na página').not.toBeNull();
+    expect(
+      figura!.y + figura!.height < 0 || figura!.y > vp.height,
+      'a figura saiu da janela (senão a montagem é inválida)'
+    ).toBe(true);
+    await expect(tela).not.toHaveClass(/pir-tela--voo/);
+    expect(escuta.errosDePagina, 'erros de página na rolagem durante a volta').toEqual([]);
+  });
+
+  test('rolar pelo teclado durante a volta tira o canvas da janela (PIR-H7)', async ({ page }) => {
+    const escuta = escutar(page);
+    await abrirUnidade(page, 'bloco-13');
+    await expect(page.locator('#figura-piramide-kelsen')).toHaveAttribute('data-3d', 'on');
+    await centralizar(page, '#figura-piramide-kelsen .figura-piramide3d');
+    const botao = page.locator('#figura-piramide-kelsen button.pir-rotulo', {
+      hasText: 'Regulamentos'
+    });
+    await expect(botao).toBeVisible();
+    const tela = page.locator('#figura-piramide-kelsen canvas.pir-tela');
+    await botao.focus();
+    await expect(tela).toHaveClass(/pir-tela--voo/);
+    await expect(page.locator('#figura-piramide-kelsen .pir-leitor')).toContainText('Regulamentos');
+    const figura0 = await page.locator('#figura-piramide-kelsen').boundingBox();
+    // A janela de 150 ms de figura.ts:30 precisa passar antes da rolagem por teclado.
+    await page.waitForTimeout(300);
+    const vp = page.viewportSize()!;
+    await page.evaluate((px) => window.scrollBy(0, px), distanciaParaSair(figura0, vp.height));
+    await page.waitForTimeout(2000);
+    // Montagem inválida, nunca verde: a figura precisa ter saído da janela antes da asserção do canvas.
+    const figura = await page.locator('#figura-piramide-kelsen').boundingBox();
+    expect(figura, 'a figura existe na página').not.toBeNull();
+    expect(
+      figura!.y + figura!.height < 0 || figura!.y > vp.height,
+      'a figura saiu da janela (senão a montagem é inválida)'
+    ).toBe(true);
+    await expect(tela).not.toHaveClass(/pir-tela--voo/);
+    expect(escuta.errosDePagina, 'erros de página na rolagem por teclado').toEqual([]);
   });
 });
 

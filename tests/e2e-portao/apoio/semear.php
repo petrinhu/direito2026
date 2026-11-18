@@ -45,9 +45,16 @@ foreach ($contas as $conta) {
     ];
 }
 
-foreach (['sessoes', 'conteudo', 'imagens'] as $sub) {
+foreach (['sessoes', 'conteudo', 'imagens', 'presenca'] as $sub) {
     if (!is_dir($priv . '/' . $sub)) {
         mkdir($priv . '/' . $sub, 0700, true);
+    }
+}
+// A pasta presenca/ é provisionada à mão no deploy (plano P4 v2, ordem segura, passo 3); sem ela a presença não grava
+// (d26_presenca_gravar). Presença de testes anteriores sai junto com o reset, como as sessões.
+foreach (glob($priv . '/presenca/*') ?: [] as $arquivoDePresenca) {
+    if (is_file($arquivoDePresenca)) {
+        unlink($arquivoDePresenca);
     }
 }
 

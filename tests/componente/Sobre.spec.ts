@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mount, type VueWrapper } from '@vue/test-utils';
 import axe from 'axe-core';
@@ -211,5 +213,14 @@ describe('página Sobre, tabelas da seção Para nerds em tela estreita (SB-F13,
         });
       }
     }
+  });
+});
+
+describe('página Sobre, nome longo de pacote na célula (SB-F13, modo adaptado a 360 px)', () => {
+  it('a célula quebra palavra longa (overflow-wrap: anywhere), sem estourar a tela estreita', () => {
+    const fonte = readFileSync(resolve(process.cwd(), 'src/ui/paginas/Sobre.vue'), 'utf-8');
+    const bloco = /\.pagina-sobre__tabela td\s*\{([^}]*)\}/.exec(fonte);
+    expect(bloco, 'regra base de td ausente').not.toBeNull();
+    expect(bloco![1]).toMatch(/overflow-wrap:\s*anywhere/);
   });
 });

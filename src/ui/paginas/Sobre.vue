@@ -179,6 +179,8 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
   display: block;
   text-align: start;
   padding-block: var(--esp-1, 0.25rem);
+  /* Nome longo de pacote (ex.: @fullcalendar/interaction) não tem espaço para quebrar a 360 px. */
+  overflow-wrap: anywhere;
 }
 
 .pagina-sobre__tabela td::before {

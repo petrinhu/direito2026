@@ -1034,3 +1034,30 @@ teste('convite: C28 Origin null ou de outro site é 403 origem com qualquer Sec-
     $navegador = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => $c->origem(), 'Sec-Fetch-Site' => 'same-origin']);
     igual(303, $navegador->status, 'Origin próprio com same-origin (o pedido do navegador real) cria a senha');
 });
+
+// ---- C29: falha ao zerar o contador depois do CAS: a senha fica criada, a pessoa entra e o erro vai ao erros.log ----
+teste('convite: C29 falha ao zerar o contador depois do CAS: a senha fica criada, a pessoa entra e o erros.log registra', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    pausaLigar($a, 'convite-antes-gravar', 'ana');
+    $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
+    pausaEsperarChegada($req, $a, 'convite-antes-gravar');
+    // Segura o lock de tentativas.json: o zerar do CAS espera D26_LOCK_TETO_MS e lança D26Indisponivel.
+    $trava = fopen($a->priv . '/tentativas.json.lock', 'c');
+    flock($trava, LOCK_EX);
+    pausaSoltar($a, 'convite-antes-gravar');
+    // Espera a linha do erro (sem sleep fixo); teto de 10 s. Só depois de achar ou estourar, solta o lock.
+    $limite = microtime(true) + 10;
+    while (microtime(true) < $limite && !str_contains((string) @file_get_contents($a->priv . '/erros.log'), 'contadores não zerados')) {
+        usleep(10000);
+    }
+    flock($trava, LOCK_UN);
+    fclose($trava);
+    $r = cvb2ConcluirPost($req);
+    igual(303, $r->status, 'a senha criada leva à entrada mesmo sem zerar');
+    igual('/', $r->cabecalho('location'), 'destino /');
+    verdadeiro(password_verify(CVB2_SENHA, (string) conviteConta($a, 'ana')['hash']), 'a senha nova ficou gravada');
+    contem('contadores não zerados (D26Indisponivel)', (string) file_get_contents($a->priv . '/erros.log'), 'o erro foi registrado');
+});

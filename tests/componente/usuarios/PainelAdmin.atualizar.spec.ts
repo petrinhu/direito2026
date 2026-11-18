@@ -88,7 +88,9 @@ describe('PainelAdmin: último acesso e Atualizar', () => {
     });
     await flushPromises();
     expect(administrar).toHaveBeenCalledTimes(1);
-    expect.soft(w.text(), 'leitura falhou: não há hora de atualização').not.toMatch(/Atualizado às/);
+    expect
+      .soft(w.text(), 'leitura falhou: não há hora de atualização')
+      .not.toMatch(/Atualizado às/);
 
     vi.setSystemTime(new Date('2026-11-17T12:00:10-03:00'));
     document.dispatchEvent(new Event('visibilitychange'));

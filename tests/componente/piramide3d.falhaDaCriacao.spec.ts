@@ -6,7 +6,7 @@ import { criarFigura } from '@/ui/piramide3d/figura';
 import type { OpcoesFigura } from '@/app/piramide3d/tiposMotor';
 
 const cena = vi.hoisted(() => ({
-  criar: vi.fn((): never => {
+  criar: vi.fn<(...args: unknown[]) => never>(() => {
     throw new Error('contexto indisponível');
   })
 }));

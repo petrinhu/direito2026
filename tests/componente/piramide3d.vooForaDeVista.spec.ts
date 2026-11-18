@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { criarFigura } from '@/ui/piramide3d/figura';
 import type { OpcoesFigura } from '@/app/piramide3d/tiposMotor';
+import type { Ponto } from '@/core/piramide3d/tipos';
 
 const falsa = vi.hoisted(() => ({
   ultima: null as null | { canvasEmVoo(): boolean },
@@ -66,10 +67,10 @@ vi.mock('@/ui/piramide3d/cena', () => ({
       projetar(): { x: number; y: number } {
         return { x: 0, y: 0 };
       },
-      silhuetas(): Map<string, never> {
+      silhuetas(): Map<string, Ponto[]> {
         return new Map();
       },
-      frentes(): Map<string, never> {
+      frentes(): Map<string, { poligono: Ponto[]; profundidade: number }> {
         return new Map();
       },
       poligonoFinal(): null {

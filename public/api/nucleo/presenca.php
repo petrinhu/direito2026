@@ -1,0 +1,142 @@
+<?php
+declare(strict_types=1);
+
+if (!defined('D26_API')) {
+    http_response_code(404);
+    exit;
+}
+
+/**
+ * Presença de sessão aberta por conta (ADM-F3, plano P4 v2, seção 2). Um arquivo por conta em PRIV/presenca/, com
+ * quatro chaves: m (sha256 do marcador de sessão única), v (versão da sessão), a (última atividade gravada) e c
+ * (criação da sessão). Sem IP, sem id de sessão e sem histórico. O LED "Sessão aberta" é a regra de
+ * d26_sessao_avaliar aplicada a esse arquivo e à conta: conta ativa e sem bloqueio, mesma versão, marcador
+ * conferindo, dentro da ociosidade (D26_SESSAO_OCIOSIDADE) e da validade (D26_SESSAO_VALIDADE).
+ *
+ * O web nunca cria a pasta: só o CLI provisiona (D26_SUBPASTAS). Sem a pasta, nada é gravado, a leitura dá null e a
+ * falha vai uma vez por processo para o erros.log. Este arquivo é carregado por sessao.php (e pelo CLI de remoção),
+ * nunca pela lista de inicio.php, por causa da janela do rsync (plano, seção 3).
+ */
+
+/** Intervalo mínimo entre duas gravações de atividade na mesma sessão (segundos). */
+const D26_PRESENCA_GRAVACAO = 60;
+/** Presença mais velha que isso é apagada pela faxina do login (13 h). */
+const D26_PRESENCA_FAXINA = 46800;
+
+/** Caminho do arquivo de presença da conta. O nome traz o hash do login, não o login. */
+function d26_presenca_arquivo(string $priv, string $login): string
+{
+    return $priv . '/presenca/' . hash('sha256', 'presenca' . "\0" . $login) . '.json';
+}
+
+/** Hash do marcador de sessão única, o que a presença guarda no lugar do marcador. */
+function d26_presenca_marcador(string $marcador): string
+{
+    return hash('sha256', $marcador);
+}
+
+/** Grava a presença. Sem a pasta (o CLI não provisionou), não grava e registra uma vez por processo. */
+function d26_presenca_gravar(string $priv, string $login, string $m, int $versao, int $criada, int $agora): void
+{
+    if (!is_dir($priv . '/presenca')) {
+        d26_presenca_avisar_ausente($priv);
+        return;
+    }
+    $arq = d26_presenca_arquivo($priv, $login);
+    file_put_contents($arq, json_encode(['m' => $m, 'v' => $versao, 'a' => $agora, 'c' => $criada], JSON_THROW_ON_ERROR), LOCK_EX);
+    chmod($arq, 0600);
+}
+
+/**
+ * Uma linha só: a pasta ausente não pode encher o erros.log a cada pedido. A marca estática evita reler o arquivo no
+ * mesmo processo; a leitura do erros.log cobre os outros processos do servidor, que também atendem pedidos.
+ */
+function d26_presenca_avisar_ausente(string $priv): void
+{
+    static $avisado = false;
+    if ($avisado) {
+        return;
+    }
+    $avisado = true;
+    if (str_contains((string) @file_get_contents($priv . '/erros.log'), 'pasta presenca/ ausente')) {
+        return;
+    }
+    d26_log_erro_em($priv, 'presenca', 'pasta presenca/ ausente: a presença não é gravada até o CLI provisionar a pasta');
+}
+
+/** Presença da conta, ou null (sem pasta, sem arquivo ou arquivo que não tem a forma certa). */
+function d26_presenca_ler(string $priv, string $login): ?array
+{
+    if (!is_dir($priv . '/presenca')) {
+        return null;
+    }
+    $arq = d26_presenca_arquivo($priv, $login);
+    if (!is_file($arq)) {
+        return null;
+    }
+    $d = json_decode((string) file_get_contents($arq), true);
+    if (!is_array($d) || !is_string($d['m'] ?? null) || !is_int($d['v'] ?? null) || !is_int($d['a'] ?? null) || !is_int($d['c'] ?? null)) {
+        return null;
+    }
+    return $d;
+}
+
+/**
+ * O LED: a conta está com sessão aberta? Mesma regra de d26_sessao_avaliar, aplicada à presença gravada: conta ativa,
+ * sem bloqueio, mesma versão, marcador conferindo e dentro das duas janelas.
+ *
+ * @param array<string, mixed> $conta
+ * @param array{m: string, v: int, a: int, c: int}|null $presenca
+ */
+function d26_presenca_conectada(array $conta, ?array $presenca, int $agora): bool
+{
+    if ($presenca === null || ($conta['ativo'] ?? null) !== true || array_key_exists('bloqueada', $conta)) {
+        return false;
+    }
+    if (!is_string($conta['sessaoVigente'] ?? null) || (int) ($conta['versaoSessao'] ?? -1) !== $presenca['v']) {
+        return false;
+    }
+    if ($agora - $presenca['a'] > D26_SESSAO_OCIOSIDADE || $agora - $presenca['c'] > D26_SESSAO_VALIDADE) {
+        return false;
+    }
+    return hash_equals($presenca['m'], d26_presenca_marcador($conta['sessaoVigente']));
+}
+
+/** Atalho da listagem: lê a presença da conta e aplica a regra. */
+function d26_presenca_conectada_conta(string $priv, array $conta, int $agora): bool
+{
+    return d26_presenca_conectada($conta, d26_presenca_ler($priv, (string) $conta['usuario']), $agora);
+}
+
+/**
+ * Apaga a presença da conta. Com $m, só apaga se a presença ainda for daquele marcador: sair de um aparelho velho não
+ * apaga a presença de um aparelho novo. Com $m null (exclusão da conta), apaga de qualquer jeito.
+ */
+function d26_presenca_apagar(string $priv, string $login, ?string $m): void
+{
+    $arq = d26_presenca_arquivo($priv, $login);
+    if (!is_file($arq)) {
+        return;
+    }
+    if ($m !== null) {
+        $p = d26_presenca_ler($priv, $login);
+        if ($p === null || !hash_equals($p['m'], $m)) {
+            return;
+        }
+    }
+    @unlink($arq);
+}
+
+/** Faxina do login: apaga presença com mais de D26_PRESENCA_FAXINA segundos, e a ilegível. */
+function d26_presenca_faxina(string $priv, int $agora): void
+{
+    if (!is_dir($priv . '/presenca')) {
+        return;
+    }
+    foreach (glob($priv . '/presenca/*.json') ?: [] as $arq) {
+        $d = json_decode((string) file_get_contents($arq), true);
+        if (!is_array($d) || !is_int($d['a'] ?? null) || $agora - $d['a'] > D26_PRESENCA_FAXINA) {
+            @unlink($arq);
+        }
+    }
+}

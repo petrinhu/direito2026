@@ -18,7 +18,7 @@ const D26_PRE_NOME = '__Host-d26pre';
 const D26_DISP_NOME = '__Host-d26disp';
 const D26_PRIVADO_NOME = 'direito2026_privado';
 /** Subpastas do privado único: imagens/ é da Júri, mas o privado é um só. */
-const D26_SUBPASTAS = ['sessoes', 'conteudo', 'imagens'];
+const D26_SUBPASTAS = ['sessoes', 'conteudo', 'imagens', 'presenca'];
 const D26_SESSAO_OCIOSIDADE = 7200;
 const D26_SESSAO_VALIDADE = 43200;
 const D26_CORPO_MAX = 8192;
@@ -31,7 +31,9 @@ const D26_AVISO_NOME = '__Host-d26aviso';
 const D26_AVISO_VALIDADE = 600;
 const D26_AVISO_OUTRO_APARELHO = 'outro-aparelho';
 const D26_AVISO_BLOQUEADA = 'bloqueada';
-const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO, D26_AVISO_BLOQUEADA];
+/** Senha criada no convite sem entrada (SE-F2): o login não entrou, e a entrada mostra o texto da senha nova. */
+const D26_AVISO_SENHA_CRIADA = 'senha-criada';
+const D26_AVISOS = [D26_AVISO_OUTRO_APARELHO, D26_AVISO_BLOQUEADA, D26_AVISO_SENHA_CRIADA];
 
 /**
  * Uso simultâneo (BL-B1, plano-sessao-unica.md 9.1.1 e 9.1.3, decisões do líder de 08/11/2026): N = 5 minutos

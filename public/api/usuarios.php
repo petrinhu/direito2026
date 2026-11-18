@@ -19,7 +19,7 @@ if ($conta['admin'] !== true) {
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET') {
     $agora = time();
     d26_responder(200, ['ok' => true, 'usuarios' => array_map(
-        static fn (array $c): array => d26_conta_publica($c, $agora),
+        static fn (array $c): array => d26_conta_publica($c, $agora, d26_presenca_conectada_conta($priv, $c, $agora)),
         d26_contas_listar($priv)
     )]);
 }
@@ -169,6 +169,10 @@ if ($acao === 'desbloquear') {
     } catch (Throwable $e) {
         d26_log_erro_em($priv, 'usuarios', 'desbloquear: contadores não zerados (' . get_class($e) . ')');
     }
+}
+// ADM-F3: a presença da conta excluída sai junto, depois do ok da exclusão.
+if ($acao === 'excluir') {
+    d26_presenca_apagar($priv, $alvo, null);
 }
 d26_responder(200, ['ok' => true]);
 

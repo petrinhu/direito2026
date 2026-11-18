@@ -90,6 +90,8 @@
      MODO CLARO (padrão)
      ====================================================================== */
   --cor-fundo: #faf9f5;
+  --led-verde: #2f7d4f;
+  --led-vermelho: #b3261e;
   --cor-fundo-elevado: #ffffff;
   --cor-fundo-sutil: #f2efe6;
   --cor-borda: #dcd7c8;
@@ -279,6 +281,8 @@
    escolheu nada manualmente (ausência do atributo data-theme). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+  --led-verde: #5fbf86;
+  --led-vermelho: #f2877e;
   --cor-aviso-versao-fundo: #ffd166;
   --cor-aviso-versao-texto: #1a1200;
   --cor-aviso-versao-foco: #0b3d91;
@@ -372,6 +376,8 @@
    localStorage e aplica data-theme="dark" na tag <html>). Vale mesmo em
    sistema claro. */
 :root[data-theme="dark"] {
+  --led-verde: #5fbf86;
+  --led-vermelho: #f2877e;
   --cor-aviso-versao-fundo: #ffd166;
   --cor-aviso-versao-texto: #1a1200;
   --cor-aviso-versao-foco: #0b3d91;
@@ -490,6 +496,8 @@
    preto, contraste máximo); ver docs/modo-adaptado.md, seções 2 e 3, para
    o raciocínio por trás de cada valor. ========================================================================== */
 :root[data-modo-adaptado="on"] {
+  --led-verde: #1b6b3a;
+  --led-vermelho: #a5180f;
   --cor-aviso-versao-fundo: #ffd166;
   --cor-aviso-versao-texto: #1a1200;
   --cor-aviso-versao-foco: #0b3d91;

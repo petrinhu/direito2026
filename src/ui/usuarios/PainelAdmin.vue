@@ -99,6 +99,19 @@ function formatarData(valor: string | null): string {
     : data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+/** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
+function classeDoLed(conectado: boolean | undefined): string {
+  if (conectado === true) return 'ar-led--verde';
+  if (conectado === false) return 'ar-led--vermelho';
+  return 'ar-led--sem';
+}
+
+function textoDaSessao(conectado: boolean | undefined): string {
+  if (conectado === true) return 'Sessão aberta';
+  if (conectado === false) return 'Sem sessão aberta';
+  return 'sem informação';
+}
+
 async function carregar(): Promise<void> {
   const r = await props.administrar((c) => c.listarUsuarios());
   carregando.value = false;
@@ -388,7 +401,11 @@ onBeforeUnmount(() => {
         </thead>
         <tbody>
           <tr v-for="u in usuarios" :key="u.usuario">
-            <th :id="`${idBase}-linha-${u.usuario}`" scope="row">{{ u.usuario }}</th>
+            <th :id="`${idBase}-linha-${u.usuario}`" scope="row">
+              <span class="ar-led" :class="classeDoLed(u.conectado)" aria-hidden="true"></span>
+              {{ u.usuario }}
+              <span class="ar-visualmente-oculto">{{ textoDaSessao(u.conectado) }}</span>
+            </th>
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
             <td data-rotulo="E-mail">{{ u.email ?? '' }}</td>
             <td data-rotulo="Estado">

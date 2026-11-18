@@ -29,6 +29,8 @@ export interface UsuarioAdmin {
   readonly email?: string | null;
   /** Instante (ISO 8601) do último e-mail que o site tentou mandar a esta conta e não saiu. Ausente ou `null`: sem falha pendente. */
   readonly envioFalhouEm?: string | null;
+  /** Sessão aberta e válida agora (pelas regras da sessão do servidor). Ausente em servidor antigo. */
+  readonly conectado?: boolean;
 }
 
 /**

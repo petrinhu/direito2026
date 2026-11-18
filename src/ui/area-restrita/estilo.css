@@ -334,6 +334,30 @@
   outline-offset: calc(var(--foco-espessura, 2px) * -1);
 }
 
+/* Luz de sessão (ADM-F4): verde cheio com sessão aberta; vermelho vazado sem ela; neutro sem o campo. */
+.ar-led {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.ar-led--verde {
+  background: var(--led-verde);
+}
+
+.ar-led--vermelho {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--led-vermelho);
+}
+
+.ar-led--sem {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--cor-texto-sutil, currentColor);
+}
+
 .ar-tabela {
   width: 100%;
   border-collapse: collapse;

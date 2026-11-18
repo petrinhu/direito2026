@@ -74,4 +74,27 @@ describe('PainelAdmin: último acesso e Atualizar', () => {
     expect(administrar).toHaveBeenCalledTimes(2);
     w.unmount();
   });
+
+  it('uma leitura que falha não mostra "Atualizado às" nem conta como leitura', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-17T12:00:00-03:00'));
+    const administrar = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, mensagem: 'sem conexão' })
+      .mockResolvedValue({ ok: true, valor: [linha('ana', null)] });
+    const w = mount(PainelAdmin, {
+      props: { usuarioAtual: 'petrus', administrar: administrar as never },
+      attachTo: document.body
+    });
+    await flushPromises();
+    expect(administrar).toHaveBeenCalledTimes(1);
+    expect.soft(w.text(), 'leitura falhou: não há hora de atualização').not.toMatch(/Atualizado às/);
+
+    vi.setSystemTime(new Date('2026-11-17T12:00:10-03:00'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+    expect(administrar, 'a falha não marcou leitura: a volta da aba relê').toHaveBeenCalledTimes(2);
+    expect(w.text()).toMatch(/Atualizado às \d{2}:\d{2}:\d{2}/);
+    w.unmount();
+  });
 });

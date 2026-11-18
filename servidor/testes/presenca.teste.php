@@ -479,6 +479,33 @@ teste('presença: arquivo de presença ilegível dá conectado false na listagem
     chmod(presencaArquivo($a, 'ana'), 0600);
 });
 
+teste('presença: escrita atômica: durante a troca, a presença antiga segue inteira e o temporário já é 600', function (): void {
+    $a = Ambiente::novo();
+    presencaPasta($a);
+    presencaAna($a);
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    $p1 = (string) file_get_contents(presencaArquivo($a, 'ana'));
+    $m1 = presencaLerArquivo($a, 'ana')['m'];
+    // Segunda aba: o login para no ponto entre o temporário pronto e o rename (login.php:97 sem lock).
+    pausaLigar($a, 'presenca-antes-rename', 'ana');
+    $segunda = $a->clienteComSessao();
+    $req = suLoginSemEsperar($segunda, 'ana', PRESENCA_SENHA_ANA);
+    pausaEsperarChegada($req, $a, 'presenca-antes-rename');
+    clearstatcache();
+    igual($p1, (string) file_get_contents(presencaArquivo($a, 'ana')), 'durante a troca, a presença antiga segue inteira');
+    $tmps = glob($a->priv . '/presenca/*.tmp') ?: [];
+    igual(1, count($tmps), 'um temporário na pasta: o da troca em curso');
+    igual(0600, fileperms($tmps[0]) & 0777, 'o temporário já nasce com 600');
+    $novo = json_decode((string) file_get_contents($tmps[0]), true);
+    verdadeiro(is_array($novo) && is_string($novo['m'] ?? null) && $novo['m'] !== $m1, 'o temporário traz a presença nova, com outro marcador');
+    pausaSoltar($a, 'presenca-antes-rename');
+    [$status] = suConcluirLogin($req);
+    igual(200, $status, 'a segunda aba conclui o login');
+    clearstatcache();
+    igual([], glob($a->priv . '/presenca/*.tmp') ?: [], 'nenhum temporário sobra depois da troca');
+    verdadeiro(presencaLerArquivo($a, 'ana')['m'] !== $m1, 'a presença agora é a nova');
+});
+
 teste('presença: a faxina termina com arquivo ilegível na pasta, e a listagem responde 200', function (): void {
     $a = Ambiente::novo();
     presencaPasta($a);

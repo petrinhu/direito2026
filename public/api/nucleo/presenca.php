@@ -50,13 +50,17 @@ function d26_presenca_gravar(string $priv, string $login, string $m, int $versao
     $dados = json_encode(['m' => $m, 'v' => $versao, 'a' => $agora, 'c' => $criada], JSON_THROW_ON_ERROR);
     // Escrita atômica: o temporário nasce com 600 antes de receber o conteúdo, e o rename troca tudo de uma vez.
     // Assim o leitor nunca vê arquivo parcial, e a presença final nunca sai com permissão mais aberta.
+    // Falha de disco não derruba o login (ADM-F6d): cada retorno é conferido e a falha entra uma vez no erros.log.
     $tmp = $arq . '.' . bin2hex(random_bytes(6)) . '.tmp';
-    touch($tmp);
-    chmod($tmp, 0600);
-    file_put_contents($tmp, $dados, LOCK_EX);
-    if (!rename($tmp, $arq)) {
+    $ok = @touch($tmp)
+        && @chmod($tmp, 0600)
+        && @file_put_contents($tmp, $dados, LOCK_EX) === strlen($dados);
+    if ($ok) {
+        $ok = @rename($tmp, $arq);
+    }
+    if (!$ok) {
         @unlink($tmp);
-        d26_log_erro_em($priv, 'presenca', 'gravação da presença falhou (rename)');
+        d26_presenca_avisar($priv, 'gravação da presença falhou');
     }
 }
 
@@ -76,25 +80,34 @@ function d26_presenca_faxina_oportunista(string $priv, int $agora): void
     if (is_file($marcador) && $agora - (int) filemtime($marcador) < D26_PRESENCA_FAXINA_JANELA) {
         return;
     }
-    touch($marcador, $agora);
+    // Sem o marcador a faxina segue assim mesmo (ADM-F6d): a retenção de 13 h vale mais que varrer a pasta a cada pedido.
+    if (!@touch($marcador, $agora)) {
+        d26_presenca_avisar($priv, 'faxina da presença falhou (marcador)');
+    }
     d26_presenca_faxina($priv, $agora);
 }
 
 /**
- * Uma linha só: a pasta ausente não pode encher o erros.log a cada pedido. A marca estática evita reler o arquivo no
- * mesmo processo; a leitura do erros.log cobre os outros processos do servidor, que também atendem pedidos.
+ * Uma linha por frase, nunca uma a cada pedido: a falha não pode encher o erros.log. A marca estática evita reler o
+ * arquivo no mesmo processo; a leitura do erros.log cobre os outros processos do servidor, que também atendem pedidos.
  */
+function d26_presenca_avisar(string $priv, string $frase): void
+{
+    static $avisadas = [];
+    if (isset($avisadas[$frase])) {
+        return;
+    }
+    $avisadas[$frase] = true;
+    if (str_contains((string) @file_get_contents($priv . '/erros.log'), $frase)) {
+        return;
+    }
+    d26_log_erro_em($priv, 'presenca', $frase);
+}
+
+/** Pasta ausente: a frase de sempre, com a mesma dedupe de d26_presenca_avisar. */
 function d26_presenca_avisar_ausente(string $priv): void
 {
-    static $avisado = false;
-    if ($avisado) {
-        return;
-    }
-    $avisado = true;
-    if (str_contains((string) @file_get_contents($priv . '/erros.log'), 'pasta presenca/ ausente')) {
-        return;
-    }
-    d26_log_erro_em($priv, 'presenca', 'pasta presenca/ ausente: a presença não é gravada até o CLI provisionar a pasta');
+    d26_presenca_avisar($priv, 'pasta presenca/ ausente: a presença não é gravada até o CLI provisionar a pasta');
 }
 
 /** Presença da conta, ou null (sem pasta, sem arquivo ou arquivo que não tem a forma certa). */

@@ -2,12 +2,12 @@ import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, mergeConfig } from 'vite';
 import { defineConfig as defineVitestConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
-import { definicoesDeVersao } from './vite.config';
+import { definicoesDeVersao, definicoesDoStack } from './vite.config';
 
 export default mergeConfig(
   defineConfig({
     plugins: [vue()],
-    define: definicoesDeVersao,
+    define: { ...definicoesDeVersao, ...definicoesDoStack },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))

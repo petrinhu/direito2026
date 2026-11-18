@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { montarStack, type LockfileLido, type PacoteLido } from './src/core/sobre/montarStack';
 
 /**
  * Versão do site (campo "version" do package.json) entra no código como
@@ -12,10 +13,25 @@ import vue from '@vitejs/plugin-vue';
  */
 const pacote = JSON.parse(
   readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8')
-) as { version: string };
+) as PacoteLido;
 
 export const definicoesDeVersao = {
   __VERSAO_SITE__: JSON.stringify(pacote.version)
+};
+
+/**
+ * Pilha e versões da página Sobre (declaradas em src/stack-site.d.ts). Lidas do
+ * lockfile instalado, nunca da faixa do package.json. O papel de cada
+ * dependência fica FORA desta constante, em src/conteudo/sobre/papeis.ts:
+ * este arquivo não pode importar conteúdo cifrado, senão a config quebra no
+ * clone sem chave.
+ */
+const lockfile = JSON.parse(
+  readFileSync(fileURLToPath(new URL('./package-lock.json', import.meta.url)), 'utf-8')
+) as LockfileLido;
+
+export const definicoesDoStack = {
+  __STACK_SITE__: JSON.stringify(montarStack(pacote, lockfile, process.versions.node))
 };
 
 /**
@@ -95,7 +111,7 @@ export function nomeDoPedaco(pedaco: PedacoDoBuild): string {
 
 export default defineConfig({
   base: '/',
-  define: definicoesDeVersao,
+  define: { ...definicoesDeVersao, ...definicoesDoStack },
   plugins: [vue(), removerFonteIconesDoCalendario()],
   resolve: {
     alias: {

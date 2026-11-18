@@ -428,3 +428,35 @@ teste('presença: sair apaga o arquivo de presença da própria conta (não só 
     clearstatcache();
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'sair tira o registro de presença');
 });
+
+teste('presença: falha ao gravar a presença não derruba o login: entra, sem temporário que sobre, e uma linha só no erros.log', function (): void {
+    $a = Ambiente::novo();
+    presencaAna($a);
+    presencaPasta($a);
+    // Uma pasta no lugar do arquivo: o rename do temporário falha (Is a directory). Sem depender de permissão.
+    mkdir(presencaArquivo($a, 'ana'), 0700);
+    // Marcador fresco: a faxina não roda nos logins, e o glob de *.json não é o assunto deste caso.
+    touch($a->priv . '/presenca/.faxina');
+    $um = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    $dois = $a->entrar('ana', PRESENCA_SENHA_ANA);
+    igual(true, $um->get('/api/sessao.php')->json()['autenticado'] ?? null, 'a primeira sessão vale');
+    igual(true, $dois->get('/api/sessao.php')->json()['autenticado'] ?? null, 'a segunda sessão vale');
+    clearstatcache();
+    igual([], glob($a->priv . '/presenca/*.tmp') ?: [], 'nenhum temporário sobra');
+    $log = (string) @file_get_contents($a->priv . '/erros.log');
+    igual(1, substr_count($log, 'gravação da presença falhou'), 'uma linha só no erros.log, mesmo com dois logins');
+});
+
+teste('presença: falha no marcador da faxina não derruba o login, e a faxina roda mesmo assim', function (): void {
+    $a = Ambiente::novo();
+    presencaAna($a);
+    presencaPasta($a);
+    presencaEscreverVelha($a, 'bia');
+    // Link para pasta que não existe: o touch do marcador falha, sem depender de permissão.
+    symlink($a->priv . '/nao-existe/x', $a->priv . '/presenca/.faxina');
+    $a->entrar('ana', PRESENCA_SENHA_ANA);
+    clearstatcache();
+    verdadeiro(!is_file(presencaArquivo($a, 'bia')), 'a faxina rodou mesmo sem o marcador: a presença velha foi apagada');
+    $log = (string) @file_get_contents($a->priv . '/erros.log');
+    igual(1, substr_count($log, 'faxina da presença falhou'), 'a falha do marcador entra uma vez no erros.log');
+});

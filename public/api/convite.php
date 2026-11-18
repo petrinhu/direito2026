@@ -81,8 +81,13 @@ if ($gravou !== 'ok') {
 
 // Senha criada (CAS ok). O limite da conta e o do usuário+IP ligados a ela zeram agora: depois do CAS e fora do
 // lock de usuarios.json (tentativas.json vem antes de usuarios.json, docs/publicacao.md). O IP e a categoria de envio
-// ficam como estão, e só a senha nova é que vale para a conta.
-d26_limite_desbloquear_conta($priv, $login);
+// ficam como estão, e só a senha nova é que vale para a conta. Zerar é alívio, não condição de sucesso: a senha já
+// está criada, então falha aqui vira só registro no erros.log e a pessoa segue para a entrada (SE-F5).
+try {
+    d26_limite_desbloquear_conta($priv, $login);
+} catch (Throwable $e) {
+    d26_log_erro_em($priv, 'convite', 'contadores não zerados (' . get_class($e) . ')');
+}
 
 // Entrar é o mesmo caminho do login (limite, aparelho, sessão única, cookies).
 $entrada = d26_login_executar($priv, $login, $nova);

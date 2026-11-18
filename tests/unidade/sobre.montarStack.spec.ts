@@ -1,4 +1,3 @@
-/* global __STACK_SITE__ -- constante de build (vite.config.ts, define); global do eslint declarado aqui, sem tocar eslint.config.js */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { describe, expect, it } from 'vitest';

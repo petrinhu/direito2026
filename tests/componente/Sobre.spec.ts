@@ -6,6 +6,7 @@ import Sobre from '@/ui/paginas/Sobre.vue';
 import { TITULAR } from '@/app/rodape/titular';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotas } from '@/app/router/rotas';
+import { PAPEIS_DAS_DEPENDENCIAS } from '@/conteudo/sobre/papeis';
 
 /**
  * SB-F8, página Sobre (esqueleto). Os textos finais vêm da SB-F11 (ux-writer); aqui
@@ -98,6 +99,63 @@ describe('página Sobre, acessibilidade', () => {
       rules: { 'color-contrast': { enabled: false } }
     });
     expect(resultado.violations.map((v) => v.id)).toEqual([]);
+  });
+});
+
+describe('página Sobre, pilha gerada no build (SB-F10)', () => {
+  const pilha = __STACK_SITE__;
+  const deExecucao = pilha.dependencias.filter((d) => d.grupo === 'execucao');
+  const deConstrucao = pilha.dependencias.filter((d) => d.grupo === 'construcao');
+
+  it('Tecnologias traz Vue, Vue Router, TypeScript e Vite com a versão instalada', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const texto = secaoComTitulo('Tecnologias').text();
+    for (const nome of ['vue', 'vue-router', 'typescript', 'vite']) {
+      const dep = pilha.dependencias.find((d) => d.nome === nome);
+      expect(dep, nome).toBeDefined();
+      expect(texto, nome).toContain(`${nome} ${dep!.versao}`);
+    }
+  });
+
+  it('Para nerds mostra a versão do site e a do Node do build', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const texto = secaoComTitulo('Para nerds').text();
+    expect(texto).toContain(pilha.versaoSite);
+    expect(texto).toContain(pilha.versaoNode);
+  });
+
+  it('Para nerds tem tabela de execução e tabela de construção, com nome, versão, licença e papel', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const tabelas = secaoComTitulo('Para nerds').findAll('table');
+    expect(tabelas).toHaveLength(2);
+    const [tabelaExecucao, tabelaConstrucao] = tabelas;
+    const pares = [
+      [tabelaExecucao!, deExecucao],
+      [tabelaConstrucao!, deConstrucao]
+    ] as const;
+    for (const [tabela, deps] of pares) {
+      expect(tabela.find('caption').exists()).toBe(true);
+      const linhas = tabela.findAll('tbody tr');
+      expect(linhas).toHaveLength(deps.length);
+      deps.forEach((dep, i) => {
+        const celulas = linhas[i]!.findAll('td').map((td) => td.text());
+        expect(celulas).toEqual([
+          dep.nome,
+          dep.versao,
+          dep.licenca,
+          PAPEIS_DAS_DEPENDENCIAS[dep.nome]
+        ]);
+        expect(PAPEIS_DAS_DEPENDENCIAS[dep.nome]?.length ?? 0).toBeGreaterThan(0);
+      });
+    }
+  });
+
+  it('nenhum número de PHP nem dado de servidor aparece na página (decisão do CISO)', () => {
+    w = mount(Sobre, { attachTo: document.body });
+    const texto = w.text();
+    expect(texto).not.toMatch(/PHP\s*v?\d/i);
+    expect(texto).not.toMatch(/memory_cost|time_cost|default-src|LiteSpeed|Hostinger/i);
+    expect(texto).not.toMatch(/openssl|\bv8\b/i);
   });
 });
 

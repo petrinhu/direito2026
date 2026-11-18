@@ -44,8 +44,11 @@ const GLOBAIS_NAVEGADOR = {
 
 // __VERSAO_SITE__: constante de build (vite.config.ts, define), vale no src
 // e nos testes; declarada em src/versao-site.d.ts para o TypeScript.
+// __STACK_SITE__: pilha e versões do build (vite.config.ts, define), declarada em
+// src/stack-site.d.ts para o TypeScript.
 const GLOBAIS_COMUNS = {
   __VERSAO_SITE__: 'readonly',
+  __STACK_SITE__: 'readonly',
   console: 'readonly',
   setTimeout: 'readonly',
   clearTimeout: 'readonly',

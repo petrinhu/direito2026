@@ -64,17 +64,60 @@ function seletorDoTitulo(caminho: string): string {
   return caminho === '/' ? '#titulo-caderno' : 'main h1, main h2';
 }
 
+const LARGURAS_DO_CABECALHO = [320, 360, 412, 768, 1280];
+
+/**
+ * Falha de produto já conhecida (catálogo do TODO.md: E2E-G1-320 e
+ * E2E-G1A-ADAPTADO). Cada entrada aponta UMA combinação rota × modo × largura
+ * com medida. Só essa combinação recebe `test.fail()` e o ID no título: quando
+ * o conserto chegar, o caso fica vermelho e a marca sai.
+ *
+ * Medidas: `/p/p1/intr-direito/u1`, modo normal, 320px, cabeçalho fixo de 266px
+ * contra o teto de 256px (A3, relatorio.txt, item 1c). O modo adaptado a 360px
+ * (E2E-G1A-ADAPTADO) não tem rota medida nesta lista e ainda não foi marcado.
+ */
+interface FalhaConhecida {
+  id: string;
+  caminho: string;
+  modoAdaptado: boolean;
+  largura: number;
+  motivo: string;
+}
+
+const FALHAS_CONHECIDAS: readonly FalhaConhecida[] = [
+  {
+    id: 'E2E-G1-320',
+    caminho: '/p/p1/intr-direito/u1',
+    modoAdaptado: false,
+    largura: 320,
+    motivo: 'cabeçalho fixo de 266px contra o teto de 256px (E2E-G1-320)'
+  }
+];
+
+function falhaConhecida(
+  caminho: string,
+  modoAdaptado: boolean,
+  largura: number
+): FalhaConhecida | undefined {
+  return FALHAS_CONHECIDAS.find(
+    (f) => f.caminho === caminho && f.modoAdaptado === modoAdaptado && f.largura === largura
+  );
+}
+
 for (const caminho of caminhosParaCabecalho(curriculo)) {
   for (const modoAdaptado of [false, true]) {
-    const rotuloModo = modoAdaptado ? 'modo adaptado' : 'modo normal';
-    test(`título de ${caminho} fica visível abaixo do cabeçalho, ${rotuloModo}`, async ({
-      page
-    }) => {
-      await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado });
-      await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
-      await page.goto(caminho);
-      await page.locator(seletorDoTitulo(caminho)).first().waitFor({ state: 'visible' });
-      for (const largura of [320, 360, 412, 768, 1280]) {
+    for (const largura of LARGURAS_DO_CABECALHO) {
+      const rotuloModo = modoAdaptado ? 'modo adaptado' : 'modo normal';
+      const falha = falhaConhecida(caminho, modoAdaptado, largura);
+      const prefixo = falha ? `[${falha.id}] ` : '';
+      test(`${prefixo}título de ${caminho} fica visível abaixo do cabeçalho, ${rotuloModo}, ${largura}px`, async ({
+        page
+      }) => {
+        if (falha) test.fail(true, falha.motivo);
+        await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado });
+        await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
+        await page.goto(caminho);
+        await page.locator(seletorDoTitulo(caminho)).first().waitFor({ state: 'visible' });
         await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
         await esperarLayoutAssentar(page);
         const medida = await page.evaluate<MedidaTitulo, string>((seletor) => {
@@ -108,8 +151,8 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
             `${rotulo}: cabeçalho fixo ocupa ${medida.alturaCabecalho.toFixed(0)}px`
           ).toBeLessThanOrEqual(ALTURA_DA_JANELA * FRACAO_MAXIMA_DO_CABECALHO_FIXO);
         }
-      }
-    });
+      });
+    }
   }
 }
 

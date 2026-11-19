@@ -18,6 +18,21 @@ interface ItemTrilha {
   readonly href: string;
 }
 
+const HIFEN_MOLE = '­';
+
+/** Texto que aparece na tela: hífen mole nos pontos de sílaba e espaço final preso. */
+function textoVisivel(rotulo: string): string {
+  return rotuloSemViuva(hifenizarRotulo(rotulo));
+}
+
+/**
+ * Nome acessível (WCAG 2.5.3): o mesmo texto visível, sem o U+00AD. Assim o
+ * nome contém o que a pessoa vê, inclusive o U+00A0 de rotuloSemViuva.
+ */
+function nomeAcessivel(rotulo: string): string {
+  return textoVisivel(rotulo).replaceAll(HIFEN_MOLE, '');
+}
+
 /**
  * Itens da unidade na trilha. Unidade simples: um item (o rótulo AVN). Tópico de
  * grupo (uN-grupo-topico): um item só (ex.: Livro da AV3), que leva à cadeira; o
@@ -84,10 +99,10 @@ const itens = computed<ItemTrilha[]>(() => {
       >
         <a
           :href="item.href"
-          :aria-label="item.rotulo"
+          :aria-label="nomeAcessivel(item.rotulo)"
           :aria-current="indice === itens.length - 1 ? 'page' : undefined"
         >
-          {{ rotuloSemViuva(hifenizarRotulo(item.rotulo)) }}
+          {{ textoVisivel(item.rotulo) }}
         </a>
       </li>
     </ol>
@@ -261,6 +276,12 @@ const itens = computed<ItemTrilha[]>(() => {
 :root[data-modo-adaptado='on'] .trilha-navegacao li {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* hyphens: none (e não o padrão manual) faz o navegador ignorar o U+00AD: sem
+   isto, a quebra do modo adaptado mostra hífen onde o modo normal não mostra. */
+:root[data-modo-adaptado='on'] .trilha-navegacao a {
+  hyphens: none;
 }
 
 :root[data-modo-adaptado='on']

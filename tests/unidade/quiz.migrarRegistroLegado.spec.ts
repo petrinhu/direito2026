@@ -112,11 +112,11 @@ describe('migrarRegistroLegado: tradução pela forma congelada', () => {
     expect(saida.quizIdsDaRodada).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('com o conteúdo real, a tradução acerta em quiz com V/F (Teoria pura u3) e em Artigos', () => {
+  it('com o conteúdo real, a tradução acerta em quiz com V/F (Teoria pura u3)', () => {
     const semente = 777;
+    // Artigos u3 fica fora: cresceu de 40 para 41 e tem teste próprio, com a rodada da forma congelada.
     const casos: Array<{ chave: ChaveUnidade; quiz: readonly PerguntaQuiz[] }> = [
-      { chave: 'p1/intr-direito/u3-livro-teoria-pura', quiz: quizTeoriaPura },
-      { chave: CHAVE_ARTIGOS, quiz: quizArtigos }
+      { chave: 'p1/intr-direito/u3-livro-teoria-pura', quiz: quizTeoriaPura }
     ];
     for (const { chave, quiz } of casos) {
       const rodada = embaralharRodada(quiz, semente);
@@ -178,6 +178,29 @@ describe('migrarRegistroLegado: Introdução u3 e ECA zeram todo legado (opção
     for (const id of hoje.ids) {
       const original = hoje.alternativas.get(id)![respostas[id]!]!;
       const textoDeAntes = (quizFilosofia.find((p) => p.id === id) as PerguntaMultiplaEscolha)
+        .alternativasHtml[original];
+      const pergunta = depois.perguntas.find((p) => p.id === id)!;
+      const indiceDepois = pergunta.ordemOriginal.indexOf(saida.quizRespostasOriginais![id]!);
+      expect(pergunta.alternativasHtml[indiceDepois], `pergunta ${id}`).toBe(textoDeAntes);
+    }
+  });
+
+  it('Artigos u3 (cresceu de 40 para 41): a tradução pela forma congelada preserva o texto de antes', () => {
+    const chave = CHAVE_ARTIGOS;
+    const semente = 2026;
+    // Rodada de antes do crescimento: a forma congelada de 40 perguntas, como na Filosofia u3.
+    const hoje = ordemDaRodada(FORMAS_CONGELADAS[chave]!, semente);
+    const respostas: Record<number, IndiceAlternativa> = {};
+    for (const id of hoje.ids) respostas[id] = (id % 4) as IndiceAlternativa;
+    const saida = migrarRegistroLegado(
+      legado({ quizSemente: semente, quizRespostas: respostas }),
+      chave
+    );
+    // Conteúdo vivo, já com a pergunta 41: as alternativas antigas seguem com o mesmo texto.
+    const depois = embaralharRodada(quizArtigos, semente);
+    for (const id of hoje.ids) {
+      const original = hoje.alternativas.get(id)![respostas[id]!]!;
+      const textoDeAntes = (quizArtigos.find((p) => p.id === id) as PerguntaMultiplaEscolha)
         .alternativasHtml[original];
       const pergunta = depois.perguntas.find((p) => p.id === id)!;
       const indiceDepois = pergunta.ordemOriginal.indexOf(saida.quizRespostasOriginais![id]!);

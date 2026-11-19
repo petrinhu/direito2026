@@ -5,6 +5,7 @@ import { lerIdDeUnidade } from '@/app/curriculo/idDeUnidade';
 import { resolverRota } from '@/app/curriculo/resolverRota';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
+import { hifenizarRotulo } from '@/app/curriculo/hifenizarRotulo';
 
 const props = defineProps<{
   curriculo: Curriculo;
@@ -81,8 +82,12 @@ const itens = computed<ItemTrilha[]>(() => {
         :key="`${item.href}-${indice}`"
         :class="{ 'trilha-navegacao__atual': indice === itens.length - 1 }"
       >
-        <a :href="item.href" :aria-current="indice === itens.length - 1 ? 'page' : undefined">
-          {{ rotuloSemViuva(item.rotulo) }}
+        <a
+          :href="item.href"
+          :aria-label="item.rotulo"
+          :aria-current="indice === itens.length - 1 ? 'page' : undefined"
+        >
+          {{ rotuloSemViuva(hifenizarRotulo(item.rotulo)) }}
         </a>
       </li>
     </ol>
@@ -188,9 +193,9 @@ const itens = computed<ItemTrilha[]>(() => {
 
 /* anywhere (e não break-word) porque só ele entra no min-content do item flex:
    com break-word, uma palavra longa como "Mnemônicos" não quebra e o `ol`
-   recortava o excedente a 360px. hyphens: auto separa por sílaba quando o
-   dicionário do lang="pt-BR" (index.html) existe; sem ele, a rede anywhere
-   quebra no ponto que couber, sem hífen e sem perder letra. */
+   recortava o excedente a 360px. Os nomes das abas já trazem U+00AD nos pontos
+   de sílaba (hifenizarRotulo), que é o que quebra sem dicionário; hyphens: auto
+   fica como reforço onde o navegador tem o dicionário do lang="pt-BR". */
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
   display: flex;
   align-items: center;

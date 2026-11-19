@@ -31,7 +31,9 @@ const curriculo: Curriculo = [
 ];
 
 function textosDaTrilha(wrapper: ReturnType<typeof mount>): string[] {
-  return wrapper.findAll('li').map((li) => li.text().replace(/\s+/g, ' ').trim());
+  return wrapper
+    .findAll('li')
+    .map((li) => li.text().replaceAll('\u00ad', '').replace(/\s+/g, ' ').trim());
 }
 
 describe('TrilhaNavegacao: tópico de grupo', () => {

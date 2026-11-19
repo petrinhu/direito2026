@@ -62,7 +62,7 @@ describe('TrilhaNavegacao', () => {
     expect(links[1]!.attributes('href')).toBe('/p/p1/intr-direito');
     expect(links[2]!.text().replace(/\u00a0/g, ' ')).toBe('Unidade 1');
     expect(links[2]!.attributes('href')).toBe('/p/p1/intr-direito/u1');
-    expect(links[3]!.text()).toBe('Resumo');
+    expect(links[3]!.text().replaceAll('\u00ad', '')).toBe('Resumo');
     expect(links[3]!.attributes('aria-current')).toBe('page');
   });
 
@@ -71,7 +71,8 @@ describe('TrilhaNavegacao', () => {
       props: { curriculo: curriculoDeTeste(), caminhoAtual: 'p/p1/intr-direito/u1/peticao' }
     });
     const links = wrapper.findAll('a');
-    expect(links[3]!.text()).toBe('Petição comentada');
+    // O texto visível leva U+00AD entre sílabas (hifenizarRotulo); o rótulo é o mesmo.
+    expect(links[3]!.text().replaceAll('­', '')).toBe('Petição comentada');
     expect(links[3]!.attributes('href')).toBe('/p/p1/intr-direito/u1/peticao');
   });
 

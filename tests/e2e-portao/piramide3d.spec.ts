@@ -263,6 +263,22 @@ test.describe('a 1280 px, com WebGL: a figura entra em 3D', () => {
     expect(escuta.pedidosDoMotor.length).toBeGreaterThanOrEqual(1);
   });
 
+  // PIR-T3b (escrito, NÃO rodado: roda na vez pesada com GPU). Perda sem restauração: o prazo de 3 s da
+  // figura vence e a versão plana volta. A asserção de 5000 ms tem folga sobre os 3 s do prazo.
+  test('contexto WebGL que não volta em 5 s devolve a figura à versão plana (PIR-T3b)', async ({
+    page
+  }) => {
+    await abrirUnidade(page, 'bloco-13');
+    const kelsen = page.locator('#figura-piramide-kelsen');
+    await expect(kelsen).toHaveAttribute('data-3d', 'on');
+    await kelsen.locator('canvas.pir-tela').evaluate((canvas: HTMLCanvasElement) => {
+      const gl = canvas.getContext('webgl2');
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    });
+    await expect(kelsen).not.toHaveAttribute('data-3d', 'on', { timeout: 5000 });
+    await expect(kelsen.locator('ol.figura-piramide__lista')).toBeVisible();
+  });
+
   test('axe sem violação nas duas figuras, em 3D', async ({ page }) => {
     await abrirUnidade(page, 'bloco-13');
     await expect(page.locator('#figura-piramide-kelsen')).toHaveAttribute('data-3d', 'on');

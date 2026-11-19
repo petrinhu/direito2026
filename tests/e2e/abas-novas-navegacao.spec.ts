@@ -47,11 +47,11 @@ test('o menu lateral leva às abas novas', async ({ page }) => {
   const menu = page.getByRole('navigation', { name: 'Currículo' });
   await abrirSeFechado(menu.getByRole('button', { name: '1º período' }));
   await abrirSeFechado(menu.getByRole('button', { name: 'Filosofia Jurídica' }));
+  // Ancorado na lista da cadeira: outras cadeiras também têm um "submenu de AV1".
+  // O antigo `li:has(a[href=BASE]).last()` pegava o bloco mais interno, que não
+  // contém o botão do AV1.
   await abrirSeFechado(
-    page
-      .locator(`li:has(a[href="${BASE}"])`)
-      .last()
-      .getByRole('button', { name: /submenu de AV1/ })
+    menu.locator('#lista-filosofia-juridica').getByRole('button', { name: /submenu de AV1/ })
   );
   await expect(menu.locator(`a[href="${BASE}/mapa"]`)).toHaveCount(1);
   await expect(menu.locator(`a[href="${BASE}/fichamento"]`)).toHaveCount(1);

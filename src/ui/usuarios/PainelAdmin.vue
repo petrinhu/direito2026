@@ -7,7 +7,7 @@ import {
   type ClienteApi,
   type UsuarioAdmin
 } from '@/app/sessao/administracao';
-import { podeReler } from './releituraAdmin';
+import { podeReler } from '@/app/usuarios/releituraAdmin';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */

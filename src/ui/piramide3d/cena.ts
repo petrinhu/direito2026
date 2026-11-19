@@ -87,6 +87,8 @@ export interface OpcoesCena {
   readonly escuro: boolean;
   readonly reduzido: boolean;
   readonly textos: ReadonlyMap<string, NivelFigura3d>;
+  /** Aviso: o contexto WebGL foi perdido. Se não voltar a tempo, a figura desiste do 3D. */
+  readonly aoPerderContexto?: () => void;
   /** Pede um quadro novo quando o contexto WebGL é restaurado (a cena volta a desenhar). */
   readonly aoRestaurarContexto?: () => void;
 }
@@ -282,7 +284,17 @@ export function criarCena(opcoes: OpcoesCena): Cena {
 }
 
 function montarCena(
-  { canvas, cenaEl, perfil, paleta, escuro, reduzido, textos, aoRestaurarContexto }: OpcoesCena,
+  {
+    canvas,
+    cenaEl,
+    perfil,
+    paleta,
+    escuro,
+    reduzido,
+    textos,
+    aoPerderContexto,
+    aoRestaurarContexto
+  }: OpcoesCena,
   renderer: THREE.WebGLRenderer
 ): Cena {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -295,6 +307,7 @@ function montarCena(
   ouvirContextoDoWebgl(canvas, {
     onPerdido: () => {
       contextoPerdido = true;
+      aoPerderContexto?.();
     },
     onRestaurado: () => {
       contextoPerdido = false;
@@ -1164,8 +1177,7 @@ function montarCena(
           }
         }
       });
-      renderer.dispose();
-      renderer.forceContextLoss();
+      liberarRenderer(renderer);
     }
   };
 }

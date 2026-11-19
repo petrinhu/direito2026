@@ -4,7 +4,7 @@
 // Cena falsa, mas com a escuta real do canvas (ouvirContextoDoWebgl), ligada como em cena.ts:montarCena.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import FiguraPiramide from '@/ui/piramide3d/FiguraPiramide.vue';
 import { criarFigura } from '@/ui/piramide3d/figura';
 import { ouvirContextoDoWebgl } from '@/ui/piramide3d/contexto';
@@ -174,6 +174,8 @@ describe('PIR-PLANA: contexto WebGL que não volta devolve a versão plana', () 
 
     vi.advanceTimersByTime(1);
     expect(figura.hasAttribute('data-3d')).toBe(false);
+    // O hidden do Vue chega ao DOM no próximo tick, como no navegador.
+    await nextTick();
     expect(figura.querySelector('.figura-piramide3d')?.hasAttribute('hidden')).toBe(true);
     expect(lista?.textContent).toBe(textoAntes);
   });

@@ -8,6 +8,8 @@ export interface OpcoesFigura {
   readonly dados: DadosFigura3d;
   readonly reduzido: boolean;
   readonly escuro: boolean;
+  /** A figura desiste do 3D (o contexto WebGL não voltou a tempo): a tela volta à versão plana. */
+  readonly aoDesistir?: () => void;
 }
 
 /** Uma figura montada: a tela redimensiona quando a página muda e destrói quando sai. */

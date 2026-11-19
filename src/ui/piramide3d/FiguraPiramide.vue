@@ -66,12 +66,40 @@ function desmontar(): void {
   deixarDeOuvirSom?.();
   deixarDeOuvirSom = null;
   som.value = null;
-  if (montada) {
-    montada.destruir();
-    montada = null;
+  const figuraMontada = montada;
+  montada = null;
+  try {
+    figuraMontada?.destruir();
+  } catch (erro) {
+    // Uma falha ao liberar não pode deixar o 3D na tela: a versão plana volta do mesmo jeito.
+    console.warn('[piramide3d] a figura não liberou tudo ao sair do 3D', erro);
+  } finally {
+    em3d.value = false;
+    marcarFigura(false);
   }
-  em3d.value = false;
-  marcarFigura(false);
+}
+
+function itemDaLista(nivel: string): HTMLElement | undefined {
+  return Array.from(figura?.querySelectorAll<HTMLElement>('li[data-nivel]') ?? []).find(
+    (li) => li.dataset.nivel === nivel
+  );
+}
+
+/**
+ * O contexto WebGL não voltou a tempo (PIR-T3b): a figura sai do 3D. Se o foco estava num rótulo,
+ * vai para o item equivalente da lista, que fica na página nos dois modos.
+ */
+function desistirDoTresD(): void {
+  const ativo = document.activeElement;
+  const nivel = ativo instanceof HTMLElement ? ativo.dataset.nivel : undefined;
+  const estavaNoTresD = ativo instanceof HTMLElement && (raiz.value?.contains(ativo) ?? false);
+  falhou = true;
+  desmontar();
+  if (!estavaNoTresD) return;
+  const destino = nivel ? itemDaLista(nivel) : figura;
+  if (!destino) return;
+  destino.tabIndex = -1;
+  destino.focus();
 }
 
 async function montar(): Promise<void> {
@@ -89,7 +117,8 @@ async function montar(): Promise<void> {
       chave: props.chave,
       dados: props.dados,
       reduzido: reduzido.value,
-      escuro: temaEscuro()
+      escuro: temaEscuro(),
+      aoDesistir: desistirDoTresD
     });
     if (!criada) {
       falhou = true;

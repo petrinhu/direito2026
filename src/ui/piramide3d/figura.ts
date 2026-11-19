@@ -28,6 +28,7 @@ const BORDA_ESQ = 0.3; // onde a coluna esquerda encosta na área da pirâmide
 const BORDA_DIR = 0.66; // onde a coluna direita começa
 const TOLERANCIA_SAIDA_MS = 120; // o mouse pode sair da zona por este tempo sem fechar
 const IGNORAR_ROLAGEM_FOCO_MS = 150; // rolagem que o próprio foco provoca não fecha a fatia
+const PRAZO_CONTEXTO_MS = 3000; // sem webglcontextrestored neste prazo, a figura desiste do 3D (PIR-T3b)
 const NS_SVG = 'http://www.w3.org/2000/svg';
 
 interface ItemRotulo {
@@ -137,6 +138,7 @@ class FiguraTresD implements FiguraMontada {
   private ultimoT = 0;
   // Falha seguida: só a primeira da sequência vai ao console; volta a registrar depois de um quadro bom.
   private falhaEmCurso = false;
+  private prazoContexto: ReturnType<typeof setTimeout> | 0 = 0;
   private saidaHoverTimer: ReturnType<typeof setTimeout> | 0 = 0;
   private ignorarRolagemAte = 0;
   private readonly observadorPosicao: IntersectionObserver | undefined;
@@ -148,7 +150,8 @@ class FiguraTresD implements FiguraMontada {
     private readonly cena: Cena,
     private readonly dom: ReturnType<typeof montarDom>,
     private readonly som: Som,
-    perfil: (typeof PERFIS)['kelsen']
+    perfil: (typeof PERFIS)['kelsen'],
+    private readonly aoDesistir: () => void
   ) {
     this.perfil = perfil;
     this.nomes = new Map(dados.niveis.map((n) => [n.nivel, n]));
@@ -181,6 +184,8 @@ class FiguraTresD implements FiguraMontada {
   }
 
   destruir(): void {
+    clearTimeout(this.prazoContexto);
+    this.prazoContexto = 0;
     this.fecharTudo();
     this.pararQuadro();
     this.removerEventos?.();
@@ -447,8 +452,19 @@ class FiguraTresD implements FiguraMontada {
     }
   }
 
-  /** Pede um quadro (usado pela cena quando o contexto WebGL é restaurado). */
-  pedirQuadroPublico(): void {
+  /** A cena avisa que o contexto WebGL foi perdido: se ele não voltar no prazo, a figura desiste do 3D. */
+  contextoPerdido(): void {
+    if (this.prazoContexto) return;
+    this.prazoContexto = setTimeout(() => {
+      this.prazoContexto = 0;
+      this.aoDesistir();
+    }, PRAZO_CONTEXTO_MS);
+  }
+
+  /** O contexto voltou a tempo: cancela o prazo e pede quadro. */
+  contextoRestaurado(): void {
+    clearTimeout(this.prazoContexto);
+    this.prazoContexto = 0;
     this.pedirQuadro();
   }
 
@@ -495,8 +511,8 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
   const dom = montarDom(opcoes.palco, opcoes.dados);
   const textos = new Map(opcoes.dados.niveis.map((n) => [n.nivel, n]));
   let cena: Cena;
-  // Preenchido depois de montar a figura: a cena pede um quadro quando o contexto WebGL volta.
-  let pedirQuadroDaFigura: (() => void) | undefined;
+  // Preenchido depois de montar a figura: a cena avisa a figura quando o contexto WebGL some ou volta.
+  let figuraCriada: FiguraTresD | undefined;
   try {
     cena = criarCena({
       canvas: dom.canvas,
@@ -506,7 +522,8 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
       escuro: opcoes.escuro,
       reduzido: opcoes.reduzido,
       textos,
-      aoRestaurarContexto: () => pedirQuadroDaFigura?.()
+      aoPerderContexto: () => figuraCriada?.contextoPerdido(),
+      aoRestaurarContexto: () => figuraCriada?.contextoRestaurado()
     });
   } catch (erro) {
     // Sem a cena, a versão plana fica no lugar. O aviso deixa a causa à vista de quem investiga.
@@ -520,8 +537,9 @@ export function criarFigura(opcoes: OpcoesFigura): FiguraMontada | null {
     cena,
     dom,
     somDaPagina(opcoes.reduzido),
-    perfil
+    perfil,
+    opcoes.aoDesistir ?? (() => undefined)
   );
-  pedirQuadroDaFigura = () => figura.pedirQuadroPublico();
+  figuraCriada = figura;
   return figura;
 }

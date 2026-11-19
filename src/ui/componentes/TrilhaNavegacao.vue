@@ -182,14 +182,23 @@ const itens = computed<ItemTrilha[]>(() => {
   flex: 1 1 auto;
 }
 
+/* anywhere (e não break-word) porque só ele entra no min-content do item flex:
+   com break-word, uma palavra longa como "Mnemônicos" não quebra e o `ol`
+   recortava o excedente a 360px. */
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
   display: flex;
   align-items: center;
   min-width: 0;
   min-height: 44px;
   line-height: 1.3;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   white-space: normal;
+}
+
+/* Página atual: nunca abaixo de 64px, para o nome quebrar em até 2 linhas
+   sem virar uma coluna de letras (ordem do líder, 20/10/2026). */
+:root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual a {
+  min-width: 64px;
 }
 
 @container (max-width: 20.99rem) {

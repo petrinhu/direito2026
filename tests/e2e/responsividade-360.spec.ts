@@ -169,7 +169,8 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
  * controle; os itens intermediários saem da árvore (display:none) quando não
  * cabem com o piso, e o que continua na ordem de foco tem largura legível e
  * não é cortado (nunca um link de 0px, que seria foco invisível);
- * texto que não cabe termina em reticências, nunca corte seco.
+ * o nome inteiro cabe em até 2 linhas (ordem do líder de 20/10/2026); texto que
+ * não cabe nunca termina em reticências nem em corte seco.
  */
 const LARGURAS_DA_TRILHA = [
   ...Array.from({ length: 61 }, (_, indice) => 320 + indice * 16),
@@ -245,11 +246,10 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
             ) {
               achados.push(`"${texto}" cortado pela caixa da trilha`);
             }
+            // Ordem de 20/10: o nome inteiro cabe em até 2 linhas. Qualquer
+            // estouro reprova, corte seco ou reticências.
             if (link.scrollWidth > link.clientWidth + 1) {
-              const estilo = getComputedStyle(link);
-              if (estilo.textOverflow !== 'ellipsis' || estilo.overflow !== 'hidden') {
-                achados.push(`"${texto}" cortado sem reticências`);
-              }
+              achados.push(`"${texto}" cortado (nome não coube inteiro)`);
             }
           }
           const atual = lista.querySelector<HTMLElement>('li:last-child a')!;

@@ -97,7 +97,8 @@ function desistirDoTresD(): void {
   falhou = true;
   desmontar();
   if (!estavaNoTresD) return;
-  const destino = nivel ? itemDaLista(nivel) : figura;
+  // Sem o item equivalente na lista, o foco vai para a figura: nunca se perde no body.
+  const destino = (nivel ? itemDaLista(nivel) : undefined) ?? figura;
   if (!destino) return;
   destino.tabIndex = -1;
   destino.focus();

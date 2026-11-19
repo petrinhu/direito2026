@@ -104,7 +104,7 @@ beforeEach(() => {
   falso.dispose.mockClear();
   falso.forceContextLoss.mockClear();
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
-    () => contextoDe2dFalso() as RenderingContext
+    () => contextoDe2dFalso() as CanvasRenderingContext2D
   );
   // O jsdom não tem document.fonts: a cena só pede o carregamento das fontes e espera.
   Object.defineProperty(document, 'fonts', {

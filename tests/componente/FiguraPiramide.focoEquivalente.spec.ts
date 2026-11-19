@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/* global DOMRect, FrameRequestCallback */
+/* global DOMRect */
 // PIR-PLANA (M1, M2): quando a figura volta à versão plana, o foco vai para o item EQUIVALENTE da lista,
 // não para o primeiro. A lista é a de produção (resumo.ts), e o seletor li[data-nivel] tem de casar com ela.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

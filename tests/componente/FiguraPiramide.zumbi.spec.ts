@@ -113,22 +113,11 @@ let montado: VueWrapper | undefined;
 let figura: HTMLElement;
 let fila: Agendado[] = [];
 let proximoId = 1;
-let agora = 0;
-
-function avancar(quadros: number): void {
-  for (let i = 0; i < quadros; i++) {
-    agora += 16;
-    const atuais = fila;
-    fila = [];
-    for (const a of atuais) a.cb(agora);
-  }
-}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('IntersectionObserver', ObservadorFalso);
   fila = [];
-  agora = 0;
   proximoId = 1;
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
     const id = proximoId++;

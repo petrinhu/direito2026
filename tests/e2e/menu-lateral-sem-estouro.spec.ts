@@ -118,11 +118,18 @@ for (const largura of LARGURAS) {
       await abrirAv3DeFilosofia(page, largura);
       await esperarLayoutAssentar(page);
 
-      const medida = await medirGaveta(page, '.estado-em-breve');
+      // Mede o link "Perspectiva racial e o não-dito" (unidade com acesso direto, sem
+      // selo "em breve": src/conteudo/p1/filosofia-juridica/cadeira.ts:13). A premissa
+      // antiga, o selo "em breve" desse item, não existe mais e deixava a medida presa
+      // a elementos ocultos (.estado-em-breve, width 0).
+      const medida = await medirGaveta(
+        page,
+        'a[href="/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial"]'
+      );
       expect(medida.textosMedidos, 'o laço de medida precisa ter visto texto').toBeGreaterThan(0);
       expect(
-        medida.textosForaDaBorda.filter((t) => t.includes('em breve')),
-        'selo "em breve" que passa da borda da gaveta'
+        medida.textosForaDaBorda,
+        'o link "Perspectiva racial e o não-dito" passa da borda da gaveta'
       ).toEqual([]);
     });
 

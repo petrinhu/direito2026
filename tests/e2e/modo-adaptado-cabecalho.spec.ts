@@ -1,4 +1,4 @@
-import { test, expect } from './apoio/sessaoDoEstudo';
+import { test, expect, type Page } from './apoio/sessaoDoEstudo';
 import { calcularContraste } from '../../src/core/design/contraste';
 import {
   caminhosParaCabecalho,
@@ -37,6 +37,21 @@ interface MedidaTitulo {
   fundoCabecalho: number;
   topoTitulo: number;
   titulo: string;
+}
+
+/**
+ * Espera um título VISÍVEL do seletor. O `main` tem um h2 do calendário modal
+ * (ModalCalendario.vue:88) que fica oculto dentro de um `<dialog>` fechado. O
+ * `.first()` antigo pegava esse h2 oculto e esperava por ele até o timeout.
+ */
+async function esperarTituloVisivel(page: Page, seletor: string): Promise<void> {
+  await page.waitForFunction(
+    (s) =>
+      Array.from(document.querySelectorAll<HTMLElement>(s)).some(
+        (el) => el.getClientRects().length > 0
+      ),
+    seletor
+  );
 }
 
 /**
@@ -111,7 +126,7 @@ for (const largura of [360, 1280]) {
     await prepararEstadoInicial(page, { tema: 'escuro', modoAdaptado: true });
     await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
     await page.goto('/p/p1/sociologia-juridica/u1');
-    await page.locator('main h1, main h2').first().waitFor({ state: 'visible' });
+    await esperarTituloVisivel(page, 'main h1, main h2');
     await page.evaluate(() => window.scrollTo(0, 900));
     await expect(page.locator('.barra-topo')).toHaveClass(/barra-topo--rolado/);
     await esperarLayoutAssentar(page);

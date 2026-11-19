@@ -87,8 +87,7 @@ function itemDaLista(nivel: string): HTMLElement | undefined {
 
 /**
  * O contexto WebGL não voltou a tempo, ou a falha de quadro se repetiu (PIR-T3b, PIR-H8): a figura sai do 3D.
- * Se o foco estava num rótulo,
- * vai para o item equivalente da lista, que fica na página nos dois modos.
+ * Se o foco estava num rótulo, vai para o item equivalente da lista, que fica na página nos dois modos.
  */
 function desistirDoTresD(): void {
   const ativo = document.activeElement;

@@ -259,6 +259,8 @@ interface AlvoTextura {
 
 // Sem a perda forçada, o contexto fica preso até o coletor de lixo, e a página pode perder o limite de contextos.
 // O forceContextLoss roda mesmo se o dispose lançar.
+// A escuta do contexto sai ANTES desta função: a perda forçada dispara webglcontextlost no canvas, e esse
+// evento não pode chegar à figura, que pode já estar destruída (PIR-PLANA, B1).
 function liberarRenderer(renderer: THREE.WebGLRenderer): void {
   try {
     renderer.dispose();
@@ -267,12 +269,36 @@ function liberarRenderer(renderer: THREE.WebGLRenderer): void {
   }
 }
 
+interface EstadoDoContexto {
+  // Enquanto o contexto está perdido, a cena não desenha.
+  perdido: boolean;
+  // Tira a escuta do canvas. Chamado antes de qualquer liberação que possa perder o contexto.
+  desligar: () => void;
+}
+
+function ligarContexto(opcoes: OpcoesCena): EstadoDoContexto {
+  const estado: EstadoDoContexto = { perdido: false, desligar: () => undefined };
+  estado.desligar = ouvirContextoDoWebgl(opcoes.canvas, {
+    onPerdido: () => {
+      estado.perdido = true;
+      opcoes.aoPerderContexto?.();
+    },
+    onRestaurado: () => {
+      estado.perdido = false;
+      opcoes.aoRestaurarContexto?.();
+    }
+  });
+  return estado;
+}
+
 /** Cria o renderer e a cena. Se a montagem falhar depois do renderer, o contexto WebGL é liberado antes de relançar. */
 export function criarCena(opcoes: OpcoesCena): Cena {
   const renderer = new THREE.WebGLRenderer({ canvas: opcoes.canvas, antialias: true, alpha: true });
+  const contexto = ligarContexto(opcoes);
   try {
-    return montarCena(opcoes, renderer);
+    return montarCena(opcoes, renderer, contexto);
   } catch (erro) {
+    contexto.desligar();
     // Uma falha na liberação não pode engolir o erro original: ela só vai ao console.
     try {
       liberarRenderer(renderer);
@@ -284,37 +310,15 @@ export function criarCena(opcoes: OpcoesCena): Cena {
 }
 
 function montarCena(
-  {
-    canvas,
-    cenaEl,
-    perfil,
-    paleta,
-    escuro,
-    reduzido,
-    textos,
-    aoPerderContexto,
-    aoRestaurarContexto
-  }: OpcoesCena,
-  renderer: THREE.WebGLRenderer
+  { canvas, cenaEl, perfil, paleta, escuro, reduzido, textos }: OpcoesCena,
+  renderer: THREE.WebGLRenderer,
+  contexto: EstadoDoContexto
 ): Cena {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.setClearColor(0x000000, 0);
-  // Contexto WebGL perdido: a cena não desenha até a restauração (o navegador restaura por causa do preventDefault).
-  let contextoPerdido = false;
-  ouvirContextoDoWebgl(canvas, {
-    onPerdido: () => {
-      contextoPerdido = true;
-      aoPerderContexto?.();
-    },
-    onRestaurado: () => {
-      contextoPerdido = false;
-      aoRestaurarContexto?.();
-    }
-  });
-
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -1027,7 +1031,7 @@ function montarCena(
   prepararRepouso();
 
   function render(): void {
-    if (contextoPerdido) return;
+    if (contexto.perdido) return;
     renderer.render(scene, camera);
   }
 
@@ -1177,6 +1181,7 @@ function montarCena(
           }
         }
       });
+      contexto.desligar();
       liberarRenderer(renderer);
     }
   };

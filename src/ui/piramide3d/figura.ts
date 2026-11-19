@@ -141,6 +141,8 @@ class FiguraTresD implements FiguraMontada {
   private falhaEmCurso = false;
   private falhasSeguidas = 0;
   private prazoContexto: ReturnType<typeof setTimeout> | 0 = 0;
+  // Figura destruída: a cena pode ainda avisar (a liberação perde o contexto), e esses avisos não valem mais.
+  private destruida = false;
   private saidaHoverTimer: ReturnType<typeof setTimeout> | 0 = 0;
   private ignorarRolagemAte = 0;
   private readonly observadorPosicao: IntersectionObserver | undefined;
@@ -186,6 +188,7 @@ class FiguraTresD implements FiguraMontada {
   }
 
   destruir(): void {
+    this.destruida = true;
     clearTimeout(this.prazoContexto);
     this.prazoContexto = 0;
     this.fecharTudo();
@@ -456,7 +459,7 @@ class FiguraTresD implements FiguraMontada {
 
   /** A cena avisa que o contexto WebGL foi perdido: se ele não voltar no prazo, a figura desiste do 3D. */
   contextoPerdido(): void {
-    if (this.prazoContexto) return;
+    if (this.destruida || this.prazoContexto) return;
     this.prazoContexto = setTimeout(() => {
       this.prazoContexto = 0;
       this.aoDesistir();
@@ -465,6 +468,7 @@ class FiguraTresD implements FiguraMontada {
 
   /** O contexto voltou a tempo: cancela o prazo e pede quadro. */
   contextoRestaurado(): void {
+    if (this.destruida) return;
     clearTimeout(this.prazoContexto);
     this.prazoContexto = 0;
     this.pedirQuadro();

@@ -119,7 +119,10 @@ async function montar(): Promise<void> {
       dados: props.dados,
       reduzido: reduzido.value,
       escuro: temaEscuro(),
-      aoDesistir: desistirDoTresD
+      aoDesistir: () => {
+        // Um prazo de figura antiga (desmontada por troca de tema ou tamanho) não derruba a figura atual.
+        if (minhaGeracao === geracao) desistirDoTresD();
+      }
     });
     if (!criada) {
       falhou = true;

@@ -16,7 +16,11 @@ export interface RotaDoCurriculo {
   /** Nome legível para o relatório do teste. */
   readonly nome: string;
   readonly tipo: 'periodo' | 'cadeira' | 'unidade';
-  /** Cadeira de acesso restrito: o h1 é o da splash de login, e o conteúdo exige sessão. */
+  /**
+   * Cadeira de acesso restrito. O h1 é o da área restrita (splash de login), salvo
+   * a Júri, que tem página própria e abre com o nome da cadeira: o login é o do
+   * site, sem senha própria (decisão de login único de 07/11/2026, docs/arquitetura.md:1360).
+   */
   readonly restrita?: true;
 }
 
@@ -35,7 +39,7 @@ export function rotasDoCurriculo(curriculo: Curriculo): RotaDoCurriculo[] {
       if (cadeira.estado !== 'publicado') continue;
       rotas.push({
         caminho: `/p/${periodo.id}/${cadeira.id}`,
-        h1: cadeira.restrita ? TITULO_AREA_RESTRITA : cadeira.nome,
+        h1: cadeira.restrita && cadeira.area !== 'juri' ? TITULO_AREA_RESTRITA : cadeira.nome,
         nome: cadeira.nome,
         tipo: 'cadeira',
         ...(cadeira.restrita ? { restrita: true as const } : {})

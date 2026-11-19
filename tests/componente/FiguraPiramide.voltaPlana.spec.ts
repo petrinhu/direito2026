@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/* global DOMRect */
+/* global DOMRect, FrameRequestCallback */
 // PIR-PLANA (PIR-T3b): contexto WebGL que não volta em 3 s devolve a figura à versão plana.
 // Cena falsa, mas com a escuta real do canvas (ouvirContextoDoWebgl), ligada como em cena.ts:montarCena.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +21,9 @@ const carregador = vi.hoisted(() => ({ carregarMotor: vi.fn() }));
 const falsa = vi.hoisted(() => ({
   contextosVivos: 0,
   dispose: 0,
-  disposeLanca: false
+  disposeLanca: false,
+  quadros: 0,
+  falhasNoRender: 0
 }));
 
 vi.mock('@/app/piramide3d/ambiente', () => ambiente);
@@ -45,8 +47,16 @@ vi.mock('@/ui/piramide3d/cena', () => ({
     });
     return {
       setAtivo: (): void => undefined,
-      animar: (): boolean => false,
-      render: (): void => undefined,
+      animar: (): boolean => {
+        falsa.quadros += 1;
+        return true;
+      },
+      render: (): void => {
+        if (falsa.falhasNoRender > 0) {
+          falsa.falhasNoRender -= 1;
+          throw new Error('falha sintética no quadro');
+        }
+      },
       canvasEmVoo: (): boolean => false,
       redimensionar: (): void => undefined,
       opacidadeRotulos: (): number => 1,
@@ -96,14 +106,41 @@ const DADOS = {
   ]
 };
 
+interface Agendado {
+  readonly id: number;
+  readonly cb: FrameRequestCallback;
+}
+
 let montado: VueWrapper | undefined;
 let figura: HTMLElement;
+let fila: Agendado[] = [];
+let proximoId = 1;
+let agora = 0;
+
+// Quadros rodam só quando o teste manda: como no navegador, cada avanço executa a fila atual.
+function avancar(quadros: number): void {
+  for (let i = 0; i < quadros; i++) {
+    agora += 16;
+    const atuais = fila;
+    fila = [];
+    for (const a of atuais) a.cb(agora);
+  }
+}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
   vi.stubGlobal('IntersectionObserver', ObservadorFalso);
-  vi.stubGlobal('requestAnimationFrame', () => 1);
-  vi.stubGlobal('cancelAnimationFrame', () => undefined);
+  fila = [];
+  agora = 0;
+  proximoId = 1;
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+    const id = proximoId++;
+    fila.push({ id, cb });
+    return id;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+    fila = fila.filter((a) => a.id !== id);
+  });
   vi.stubGlobal(
     'matchMedia',
     vi.fn(() => ({
@@ -121,6 +158,8 @@ beforeEach(() => {
   falsa.contextosVivos = 0;
   falsa.dispose = 0;
   falsa.disposeLanca = false;
+  falsa.quadros = 0;
+  falsa.falhasNoRender = 0;
 
   // A versão plana: a lista de níveis, que fica na página nos dois modos.
   figura = document.createElement('figure');
@@ -222,5 +261,57 @@ describe('PIR-PLANA: contexto WebGL que não volta devolve a versão plana', () 
 
     expect(figura.getAttribute('data-3d')).toBe('on');
     expect(falsa.dispose).toBe(0);
+  });
+});
+
+describe('PIR-PLANA (2º caso do PIR-H8): falhas de quadro seguidas devolvem a versão plana', () => {
+  it('três falhas de quadro seguidas tiram a figura do 3D e nenhum quadro roda depois', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await montarEmTresD();
+    figura
+      .querySelector<HTMLButtonElement>('button.pir-rotulo[data-nivel="regulamentos"]')
+      ?.focus();
+
+    falsa.falhasNoRender = Infinity;
+    avancar(3);
+    // Montagem válida: os três quadros rodaram e falharam.
+    expect(falsa.quadros).toBe(3);
+    expect(figura.hasAttribute('data-3d')).toBe(false);
+
+    avancar(3);
+    expect(falsa.quadros).toBe(3);
+    expect(falsa.contextosVivos).toBe(0);
+  });
+
+  it('duas falhas seguidas não desmontam: o laço segue com o 3D', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await montarEmTresD();
+    figura
+      .querySelector<HTMLButtonElement>('button.pir-rotulo[data-nivel="regulamentos"]')
+      ?.focus();
+
+    falsa.falhasNoRender = 2;
+    avancar(2);
+    expect(falsa.quadros).toBe(2);
+    expect(figura.getAttribute('data-3d')).toBe('on');
+    avancar(1);
+    expect(falsa.quadros).toBe(3);
+  });
+
+  it('um quadro bom zera a contagem: uma falha, um quadro bom e mais duas falhas seguem com o 3D', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await montarEmTresD();
+    figura
+      .querySelector<HTMLButtonElement>('button.pir-rotulo[data-nivel="regulamentos"]')
+      ?.focus();
+
+    falsa.falhasNoRender = 1;
+    avancar(1);
+    avancar(1);
+    falsa.falhasNoRender = 2;
+    avancar(2);
+    // Montagem válida: os quatro quadros rodaram.
+    expect(falsa.quadros).toBe(4);
+    expect(figura.getAttribute('data-3d')).toBe('on');
   });
 });

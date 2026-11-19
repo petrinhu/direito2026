@@ -39,6 +39,16 @@ interface MedidaTitulo {
   titulo: string;
 }
 
+/**
+ * Seletor do título que a regra mede. Na home, o título da página é o h1 da
+ * fachada (`#titulo-caderno`, FachadaTemplo.vue:94), que fica fora do `main`:
+ * a home mede esse h1, não o h2 "1º período" (decisão do CPO de 19/11/2026,
+ * a ratificar pelo líder). Nas demais páginas, o título do conteúdo.
+ */
+function seletorDoTitulo(caminho: string): string {
+  return caminho === '/' ? '#titulo-caderno' : 'main h1, main h2';
+}
+
 for (const caminho of caminhosParaCabecalho(curriculo)) {
   for (const modoAdaptado of [false, true]) {
     const rotuloModo = modoAdaptado ? 'modo adaptado' : 'modo normal';
@@ -48,13 +58,13 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
       await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado });
       await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
       await page.goto(caminho);
-      await page.locator('main h1, main h2').first().waitFor({ state: 'visible' });
+      await page.locator(seletorDoTitulo(caminho)).first().waitFor({ state: 'visible' });
       for (const largura of [320, 360, 412, 768, 1280]) {
         await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
         await esperarLayoutAssentar(page);
-        const medida = await page.evaluate<MedidaTitulo>(() => {
+        const medida = await page.evaluate<MedidaTitulo, string>((seletor) => {
           const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
-          const titulo = document.querySelector<HTMLElement>('main h1, main h2')!;
+          const titulo = document.querySelector<HTMLElement>(seletor)!;
           const caixaCabecalho = cabecalho.getBoundingClientRect();
           return {
             posicao: getComputedStyle(cabecalho).position,
@@ -63,7 +73,7 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
             topoTitulo: titulo.getBoundingClientRect().top,
             titulo: titulo.textContent?.trim().slice(0, 50) ?? ''
           };
-        });
+        }, seletorDoTitulo(caminho));
         const rotulo = `${caminho}, ${rotuloModo}, ${largura}px (título "${medida.titulo}")`;
         expect(
           medida.topoTitulo,

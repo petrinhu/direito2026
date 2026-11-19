@@ -94,3 +94,20 @@ describe('trilha de navegação, modo normal: nome inteiro em até 2 linhas', ()
     expect(estilo).not.toMatch(/white-space:\s*nowrap/);
   });
 });
+
+/**
+ * Modo adaptado: o hífen mole (U+00AD) dos rótulos não pode mudar nada. Com
+ * hyphens: manual (padrão do navegador) o U+00AD vira quebra com hífen visível
+ * na trilha, que quebra mais linhas nesse modo. Por isso o link do modo
+ * adaptado leva hyphens: none, e o navegador ignora o U+00AD.
+ */
+describe('trilha de navegação, modo adaptado: hífen mole inerte', () => {
+  const regras = regrasDo(estiloSemComentarios());
+  const SELETOR_LINK_ADAPTADO = ":root[data-modo-adaptado='on'] .trilha-navegacao a";
+
+  it('o link do modo adaptado tem hyphens: none (o U+00AD não vira hífen visível)', () => {
+    const corpo = corpoDoSeletor(regras, SELETOR_LINK_ADAPTADO);
+    expect(corpo, 'regra do link no modo adaptado não encontrada').not.toBe('');
+    expect(corpo).toMatch(/(?<![-\w])hyphens:\s*none\s*;/);
+  });
+});

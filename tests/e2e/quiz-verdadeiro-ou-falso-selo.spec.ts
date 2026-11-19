@@ -12,6 +12,9 @@ import { quiz as quizSociologiaArtigos } from '../../src/conteudo/p1/sociologia-
 import { quiz as quizSociologiaEca } from '../../src/conteudo/p1/sociologia-juridica/u3-eca-digital/quiz';
 import { quiz as quizFilosofiaU1 } from '../../src/conteudo/p1/filosofia-juridica/u1/quiz';
 import { quiz as quizFilosofiaU3 } from '../../src/conteudo/p1/filosofia-juridica/u3-moderna-contemporanea/quiz';
+import { quiz as quizFilosofiaDecisao } from '../../src/conteudo/p1/filosofia-juridica/u3-decisao-perspectiva-racial/quiz';
+import { quiz as quizRedacaoGeladeira } from '../../src/conteudo/p1/redacao-juridica-1/u3-material-caso-geladeira/quiz';
+import { quiz as quizRedacaoPeticao } from '../../src/conteudo/p1/redacao-juridica-1/u3-material-peticao-consumidor/quiz';
 import type { PerguntaQuiz } from '../../src/core/unidade/tipos';
 import { rotasDeUnidades } from './apoio/rotasDoCurriculo';
 import { prepararEstadoInicial, type EstadoInicial } from './apoio/estadoInicial';
@@ -170,7 +173,12 @@ const QUIZ_POR_UNIDADE: Record<string, readonly PerguntaQuiz[]> = {
   'p1/sociologia-juridica/u3-artigos-infancia-digital': quizSociologiaArtigos,
   'p1/sociologia-juridica/u3-eca-digital': quizSociologiaEca,
   'p1/filosofia-juridica/u1': quizFilosofiaU1,
-  'p1/filosofia-juridica/u3-moderna-contemporanea': quizFilosofiaU3
+  'p1/filosofia-juridica/u3-moderna-contemporanea': quizFilosofiaU3,
+  // Sem pergunta do professor (origem 'professor'): aqui o certo é zero selos, e o
+  // teste confere que a tela não põe selo em nenhuma verdadeiro ou falso destas.
+  'p1/filosofia-juridica/u3-decisao-perspectiva-racial': quizFilosofiaDecisao,
+  'p1/redacao-juridica-1/u3-material-caso-geladeira': quizRedacaoGeladeira,
+  'p1/redacao-juridica-1/u3-material-peticao-consumidor': quizRedacaoPeticao
 };
 
 function perguntasDoProfessor(caminho: string): readonly PerguntaQuiz[] {

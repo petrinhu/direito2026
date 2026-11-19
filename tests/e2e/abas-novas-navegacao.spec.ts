@@ -148,7 +148,8 @@ test('fichamento: filtra por período, por termo e anuncia o total', async ({ pa
   await expect(page.locator('article.ficha')).toHaveCount(12);
   await page.getByLabel('Período ou fase').selectOption('era:media');
   await expect(page.locator('article.ficha')).toHaveCount(4);
-  await expect(page.getByRole('status')).toHaveText('4 fichas');
+  // Escopo no fichamento: o aviso de versão também é role="status" (.aviso-versao).
+  await expect(page.locator('section.fichamento').getByRole('status')).toHaveText('4 fichas');
   await page.getByLabel('Período ou fase').selectOption('todos');
   await page.getByLabel('Buscar nas fichas').fill('ockham');
   // A ficha de Escoto também cita Ockham: o esperado vem dos dados, não de um número fixo.
@@ -159,7 +160,9 @@ test('fichamento: filtra por período, por termo e anuncia o total', async ({ pa
   await expect(page.locator('#ficha-ockham')).toBeVisible();
   await expect(page.locator('#ficha-platao')).toHaveCount(0);
   await page.getByLabel('Buscar nas fichas').fill('zzzz');
-  await expect(page.getByRole('status')).toHaveText('Nenhuma ficha encontrada');
+  await expect(page.locator('section.fichamento').getByRole('status')).toHaveText(
+    'Nenhuma ficha encontrada'
+  );
   await page.getByRole('button', { name: 'Limpar filtros' }).click();
   await expect(page.locator('article.ficha')).toHaveCount(12);
 });

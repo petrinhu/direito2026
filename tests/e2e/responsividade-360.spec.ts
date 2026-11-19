@@ -199,7 +199,8 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
       for (const largura of LARGURAS_DA_TRILHA) {
         await page.setViewportSize({ width: largura, height: 800 });
         await esperarLayoutAssentar(page, { doTopo: true });
-        const problemas = await page.evaluate((piso) => {
+        const parametrosDaPagina = [PISO_DA_PAGINA_ATUAL_PX, !modoAdaptado] as const;
+        const problemas = await page.evaluate(([piso, modoNormal]) => {
           const achados: string[] = [];
           const lista = document.querySelector<HTMLElement>('.trilha-navegacao ol')!;
           const caixaLista = lista.getBoundingClientRect();
@@ -266,14 +267,16 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
           // altura da caixa: o link tem min-height 44px (alvo de toque), que já
           // passa de 2 linhas de 16px com line-height 1.3. Zero linha medida
           // também reprova, senão a medida vazia passaria como verde.
+          // 2 linhas é regra do modo normal; decisão do líder de 19/11. No modo
+          // adaptado o limite não se aplica, mas zero linha continua reprovando.
           const faixaDoTexto = document.createRange();
           faixaDoTexto.selectNodeContents(atual);
           const linhasDoAtual = new Set(
             Array.from(faixaDoTexto.getClientRects(), (r) => Math.round(r.top))
           ).size;
-          if (linhasDoAtual < 1 || linhasDoAtual > 2) {
+          if (linhasDoAtual < 1 || (modoNormal && linhasDoAtual > 2)) {
             achados.push(
-              `página atual "${textoAtual}" com ${linhasDoAtual} linha(s) de texto (esperado de 1 a 2)`
+              `página atual "${textoAtual}" com ${linhasDoAtual} linha(s) de texto (${modoNormal ? 'esperado de 1 a 2' : 'esperado ao menos 1'})`
             );
           }
           if (
@@ -291,7 +294,7 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
             achados.push(`página atual "${textoAtual}" coberta por outro elemento`);
           }
           return achados;
-        }, PISO_DA_PAGINA_ATUAL_PX);
+        }, parametrosDaPagina);
         expect(problemas, `${caminho}, ${rotuloModo}, ${largura}px`).toEqual([]);
       }
     });

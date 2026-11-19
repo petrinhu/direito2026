@@ -50,9 +50,12 @@ describe('trilha de navegação, modo normal: nome inteiro em até 2 linhas', ()
   });
 
   it('o piso de 64px não vaza para o modo adaptado', () => {
+    // Só seletores que começam por `:root[data-modo-adaptado='on']`; o
+    // `:root:not([data-modo-adaptado='on'])` é o modo normal e fica fora.
     const regrasAdaptado = [...fonte.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) =>
-      /data-modo-adaptado='on'/.test(m[1] ?? '')
+      (m[1] ?? '').trim().startsWith(":root[data-modo-adaptado='on']")
     );
+    expect(regrasAdaptado.length, 'nenhuma regra do modo adaptado encontrada').toBeGreaterThan(0);
     for (const m of regrasAdaptado) {
       expect(m[2]).not.toMatch(/min-width:\s*64px/);
     }

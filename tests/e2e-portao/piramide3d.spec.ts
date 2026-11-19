@@ -263,20 +263,54 @@ test.describe('a 1280 px, com WebGL: a figura entra em 3D', () => {
     expect(escuta.pedidosDoMotor.length).toBeGreaterThanOrEqual(1);
   });
 
-  // PIR-T3b (escrito, NÃO rodado: roda na vez pesada com GPU). Perda sem restauração: o prazo de 3 s da
-  // figura vence e a versão plana volta. A asserção de 5000 ms tem folga sobre os 3 s do prazo.
-  test('contexto WebGL que não volta em 5 s devolve a figura à versão plana (PIR-T3b)', async ({
+  // PIR-T3b (escrito, NÃO rodado: roda na vez pesada, com swiftshader). Perda sem restauração: o prazo de
+  // 3 s da figura vence e a versão plana volta. A asserção de 5000 ms tem folga sobre os 3 s do prazo.
+  // Prova o aceite do A1 (PIR-PLANA): o foco vai para o item equivalente da lista, a plana volta, e o
+  // canvas sai do DOM (o palco é trocado e o renderer é liberado, figura.ts:203 e cena.ts:266-268).
+  test('contexto WebGL que não volta em 5 s devolve a figura à versão plana, com foco e sem canvas vivo (PIR-T3b)', async ({
     page
   }) => {
     await abrirUnidade(page, 'bloco-13');
     const kelsen = page.locator('#figura-piramide-kelsen');
     await expect(kelsen).toHaveAttribute('data-3d', 'on');
-    await kelsen.locator('canvas.pir-tela').evaluate((canvas: HTMLCanvasElement) => {
+    // Rótulo do meio, não o primeiro: o nível vem do próprio botão, sem string fixa.
+    const botao = kelsen.locator('button.pir-rotulo', { hasText: 'Regulamentos' });
+    await expect(botao).toBeVisible();
+    const nivel = await botao.getAttribute('data-nivel');
+    expect(nivel, 'o rótulo traz o nível do item da lista').not.toBeNull();
+    const niveis = await kelsen
+      .locator('li[data-nivel]')
+      .evaluateAll((lis) => lis.map((li) => (li as HTMLElement).dataset.nivel));
+    expect(niveis.indexOf(nivel!), 'o rótulo do teste fica no meio da lista').toBeGreaterThan(0);
+    expect(niveis.indexOf(nivel!)).toBeLessThan(niveis.length - 1);
+    await botao.focus();
+    await expect(botao).toBeFocused();
+    // Antes da perda a plana está escondida: sem isso, a volta abaixo não provaria nada.
+    await expect(kelsen.locator('.figura-piramide__plana')).toBeHidden();
+    // Handle do canvas tomado antes da perda: depois da volta ele não pode estar conectado ao DOM.
+    const tela = await kelsen.locator('canvas.pir-tela').elementHandle();
+    expect(tela, 'o canvas existe antes da perda').not.toBeNull();
+    const perda = await kelsen.locator('canvas.pir-tela').evaluate((canvas: HTMLCanvasElement) => {
       const gl = canvas.getContext('webgl2');
-      gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      const ext = gl?.getExtension('WEBGL_lose_context') ?? null;
+      ext?.loseContext();
+      return { gl: gl !== null, ext: ext !== null, perdido: gl?.isContextLost() ?? null };
     });
+    // Montagem inválida nunca fica verde: a perda tem de ter acontecido de fato.
+    expect(perda).toEqual({ gl: true, ext: true, perdido: true });
     await expect(kelsen).not.toHaveAttribute('data-3d', 'on', { timeout: 5000 });
+    // Foco: o item equivalente ao rótulo, na lista que fica na página nos dois modos.
+    await expect(kelsen.locator(`li[data-nivel="${nivel}"]`)).toBeFocused();
+    // A plana é o que a regra display:none esconde, então é ela que prova a volta.
+    await expect(kelsen.locator('.figura-piramide__plana svg')).toBeVisible();
+    await expect(kelsen.locator('.figura-piramide3d')).toBeHidden();
+    // A lista é irmã da plana (fora dela, estilo.css:36-38), então fica visível nos dois modos: não prova a volta.
     await expect(kelsen.locator('ol.figura-piramide__lista')).toBeVisible();
+    // Nenhum canvas vivo: o canvas tomado antes da perda saiu do DOM. O contexto que segue perdido é o do
+    // loseContext acima, então ele não prova a liberação; o que este e2e prova é a saída do canvas do DOM.
+    // O forceContextLoss da produção fica com o teste unitário (mutante E de cena.ts:268).
+    await expect(kelsen.locator('canvas.pir-tela')).toHaveCount(0);
+    expect(await tela!.evaluate((c: HTMLCanvasElement) => c.isConnected)).toBe(false);
   });
 
   test('axe sem violação nas duas figuras, em 3D', async ({ page }) => {

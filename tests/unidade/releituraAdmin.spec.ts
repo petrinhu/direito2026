@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INTERVALO_RELEITURA_MS, podeReler } from '@/ui/usuarios/releituraAdmin';
+import { INTERVALO_RELEITURA_MS, podeReler } from '@/core/usuarios/releituraAdmin';
 
 /** ADM-F4 (fatia 2): a releitura da lista na volta da aba acontece no máximo 1 vez a cada 30 s. */
 describe('releitura da lista do admin', () => {

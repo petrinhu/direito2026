@@ -261,6 +261,21 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
               `página atual "${textoAtual}" com ${caixaAtual.width.toFixed(0)}px (mínimo ${exigido.toFixed(0)}px)`
             );
           }
+          // Ordem de 20/10: o nome da página atual cabe em até 2 linhas. Conta
+          // as linhas de texto (tops distintos dos retângulos do texto), e não a
+          // altura da caixa: o link tem min-height 44px (alvo de toque), que já
+          // passa de 2 linhas de 16px com line-height 1.3. Zero linha medida
+          // também reprova, senão a medida vazia passaria como verde.
+          const faixaDoTexto = document.createRange();
+          faixaDoTexto.selectNodeContents(atual);
+          const linhasDoAtual = new Set(
+            Array.from(faixaDoTexto.getClientRects(), (r) => Math.round(r.top))
+          ).size;
+          if (linhasDoAtual < 1 || linhasDoAtual > 2) {
+            achados.push(
+              `página atual "${textoAtual}" com ${linhasDoAtual} linha(s) de texto (esperado de 1 a 2)`
+            );
+          }
           if (
             caixaAtual.left < caixaLista.left - 0.5 ||
             caixaAtual.right > caixaLista.right + 0.5 ||

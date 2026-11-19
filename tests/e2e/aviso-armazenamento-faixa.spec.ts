@@ -32,7 +32,7 @@ test('1280x720: a faixa não cobre o campo de busca na primeira visita e não pa
   expect(caixa!.height).toBeLessThanOrEqual(ALTURA_MAXIMA_1280);
 });
 
-test('360x640: o aviso é bloco do fluxo, antes do campo de busca, e rola com a página', async ({
+test('360x640: o aviso é bloco do fluxo, não cobre o campo de busca, e rola com a página', async ({
   page
 }) => {
   await page.setViewportSize({ width: 360, height: 640 });
@@ -43,10 +43,13 @@ test('360x640: o aviso é bloco do fluxo, antes do campo de busca, e rola com a 
   await expect(faixa).toBeVisible();
   const posicao = await faixa.evaluate((el) => getComputedStyle(el).position);
   expect(['static', 'relative']).toContain(posicao);
-  const antesDoCampo = await page.evaluate(() => {
-    const aviso = document.querySelector('.aviso-armazenamento');
-    const campo = document.querySelector('#campo-busca-input');
-    return Boolean(aviso && campo && aviso.compareDocumentPosition(campo) & 4);
+  // A ordem na página não é decisão de produto: o aviso fica logo abaixo da barra,
+  // depois do campo (LayoutBase.vue:191 e :208). O que o líder decidiu é que o aviso
+  // não cobre nada, então a asserção é essa, a mesma do teste de 1280 px.
+  const cobreOCampo = await page.locator('#campo-busca-input').evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const noCentro = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return Boolean(noCentro?.closest('.aviso-armazenamento'));
   });
-  expect(antesDoCampo).toBe(true);
+  expect(cobreOCampo, 'o aviso cobre o centro do campo de busca a 360x640').toBe(false);
 });

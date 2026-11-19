@@ -256,10 +256,11 @@ describe('voo da pirâmide quando a figura sai da tela', () => {
     montar();
     palco.querySelector<HTMLButtonElement>('button.pir-rotulo')?.focus();
 
-    falsa.lancarNoRender = 30;
-    avancar(30);
-    // Montagem válida: os trinta quadros rodaram e todos falharam.
-    expect(falsa.quadros).toBe(30);
+    // Duas falhas seguidas, abaixo do limite de três (PIR-PLANA): o laço segue e só o primeiro erro é registrado.
+    falsa.lancarNoRender = 2;
+    avancar(2);
+    // Montagem válida: os dois quadros rodaram e os dois falharam.
+    expect(falsa.quadros).toBe(2);
     expect(registros()).toBe(1);
 
     // Um quadro bom encerra a sequência; a falha seguinte volta a ser registrada.

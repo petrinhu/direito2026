@@ -29,6 +29,7 @@ const BORDA_DIR = 0.66; // onde a coluna direita começa
 const TOLERANCIA_SAIDA_MS = 120; // o mouse pode sair da zona por este tempo sem fechar
 const IGNORAR_ROLAGEM_FOCO_MS = 150; // rolagem que o próprio foco provoca não fecha a fatia
 const PRAZO_CONTEXTO_MS = 3000; // sem webglcontextrestored neste prazo, a figura desiste do 3D (PIR-T3b)
+const LIMITE_FALHAS_SEGUIDAS = 3; // falhas de quadro seguidas que devolvem a figura à versão plana (PIR-PLANA)
 const NS_SVG = 'http://www.w3.org/2000/svg';
 
 interface ItemRotulo {
@@ -138,6 +139,7 @@ class FiguraTresD implements FiguraMontada {
   private ultimoT = 0;
   // Falha seguida: só a primeira da sequência vai ao console; volta a registrar depois de um quadro bom.
   private falhaEmCurso = false;
+  private falhasSeguidas = 0;
   private prazoContexto: ReturnType<typeof setTimeout> | 0 = 0;
   private saidaHoverTimer: ReturnType<typeof setTimeout> | 0 = 0;
   private ignorarRolagemAte = 0;
@@ -490,11 +492,18 @@ class FiguraTresD implements FiguraMontada {
       this.cena.render();
       this.atualizarRotulos();
       this.falhaEmCurso = false;
+      this.falhasSeguidas = 0;
     } catch (erro) {
       if (!this.falhaEmCurso) {
         console.error('[piramide3d] quadro falhou; o próximo quadro tenta de novo', erro);
       }
       this.falhaEmCurso = true;
+      this.falhasSeguidas += 1;
+      if (this.falhasSeguidas >= LIMITE_FALHAS_SEGUIDAS) {
+        // Falha que se repete não se recupera sozinha: a figura desiste do 3D e o laço para aqui.
+        this.aoDesistir();
+        return;
+      }
     }
     // Canvas em voo é fixo na janela inteira: segue animando mesmo com a figura fora da tela.
     if (anim && (this.visivel || this.cena.canvasEmVoo())) {

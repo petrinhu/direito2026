@@ -66,8 +66,14 @@ function opcoesDeTeste(aoPerderContexto: () => void): OpcoesCena {
     areia: corDe('#d8c9a3'),
     sombra: corDe('#050505'),
     faceCores: {
-      topo: '#1', base: '#2', faixa: '#3', nome: '#4', explicacao: '#5',
-      exemploTexto: '#6', exemploRotulo: '#7', filete: '#8'
+      topo: '#1',
+      base: '#2',
+      faixa: '#3',
+      nome: '#4',
+      explicacao: '#5',
+      exemploTexto: '#6',
+      exemploRotulo: '#7',
+      filete: '#8'
     }
   };
   return {

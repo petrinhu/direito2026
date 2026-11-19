@@ -149,7 +149,9 @@ describe('M1: o foco vai para o item equivalente, não para o primeiro', () => {
   it('foco no rótulo do meio: depois da versão plana, o foco está no li do meio', async () => {
     montarPlana(NIVEIS);
     const canvas = await montarEmTresD();
-    const meio = figura.querySelector<HTMLButtonElement>('button.pir-rotulo[data-nivel="normas-gerais"]');
+    const meio = figura.querySelector<HTMLButtonElement>(
+      'button.pir-rotulo[data-nivel="normas-gerais"]'
+    );
     meio?.focus();
     // Montagem válida: o foco estava de fato no rótulo do meio.
     expect(document.activeElement).toBe(meio);
@@ -157,17 +159,13 @@ describe('M1: o foco vai para o item equivalente, não para o primeiro', () => {
     perderSemRestaurar(canvas);
 
     expect(figura.hasAttribute('data-3d')).toBe(false);
-    expect(document.activeElement).toBe(
-      figura.querySelector('li[data-nivel="normas-gerais"]')
-    );
+    expect(document.activeElement).toBe(figura.querySelector('li[data-nivel="normas-gerais"]'));
   });
 });
 
 describe('M2: a lista de produção casa com o seletor, e o foco nunca se perde no body', () => {
   it('o conteúdo real da figura Kelsen tem li[data-nivel] iguais aos níveis dos dados 3D', () => {
-    const bloco = resumo.find((b) =>
-      b.figuras3d?.some((f) => f.alvo === 'figura-piramide-kelsen')
-    );
+    const bloco = resumo.find((b) => b.figuras3d?.some((f) => f.alvo === 'figura-piramide-kelsen'));
     const dados = bloco?.figuras3d?.find((f) => f.alvo === 'figura-piramide-kelsen')?.dados;
     expect(bloco).toBeDefined();
     expect(dados).toBeDefined();

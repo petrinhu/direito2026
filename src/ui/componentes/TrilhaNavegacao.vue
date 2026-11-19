@@ -178,27 +178,28 @@ const itens = computed<ItemTrilha[]>(() => {
   min-width: 0;
 }
 
+/* Página atual: nunca abaixo de 64px, para o nome quebrar em até 2 linhas sem
+   virar uma coluna de letras (ordem do líder, 20/10/2026). O piso fica no li,
+   o flex item que o ol encolhe: no a filho, o piso transbordaria o li. */
 :root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual {
   flex: 1 1 auto;
+  min-width: 64px;
 }
 
 /* anywhere (e não break-word) porque só ele entra no min-content do item flex:
    com break-word, uma palavra longa como "Mnemônicos" não quebra e o `ol`
-   recortava o excedente a 360px. */
+   recortava o excedente a 360px. hyphens: auto separa por sílaba quando o
+   dicionário do lang="pt-BR" (index.html) existe; sem ele, a rede anywhere
+   quebra no ponto que couber, sem hífen e sem perder letra. */
 :root:not([data-modo-adaptado='on']) .trilha-navegacao a {
   display: flex;
   align-items: center;
   min-width: 0;
   min-height: 44px;
   line-height: 1.3;
+  hyphens: auto;
   overflow-wrap: anywhere;
   white-space: normal;
-}
-
-/* Página atual: nunca abaixo de 64px, para o nome quebrar em até 2 linhas
-   sem virar uma coluna de letras (ordem do líder, 20/10/2026). */
-:root:not([data-modo-adaptado='on']) .trilha-navegacao .trilha-navegacao__atual a {
-  min-width: 64px;
 }
 
 @container (max-width: 20.99rem) {

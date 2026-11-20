@@ -78,7 +78,7 @@ teste('convite-casca: C3.4 50 GET de clientes novos e 50 do IP com o limite chei
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $bloqueado = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($bloqueado, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($bloqueado)->corpo, 'csrf');
     for ($i = 0; $i < 30; $i++) {
         cvb2Enviar($bloqueado, cvb2Campos(str_repeat('0', 64), $csrf, CVB2_SENHA));
     }
@@ -116,13 +116,11 @@ teste('convite-casca: C3.6 cinquenta GET não mudam nenhum arquivo do privado (s
     igual($antes, cascaInstantaneo($a->priv), 'nenhum arquivo do privado mudou');
 });
 
-teste('convite-casca: C3.7 GET com t na URL, com t de link inexistente e sem t: a mesma casca (o t é ignorado)', function (): void {
+teste('convite-casca: C3.7 GET com outro parâmetro, sem t: a mesma casca (o link antigo com t é o 303 da C5)', function (): void {
     $a = Ambiente::novo();
-    $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
     $semT = cascaSemNonce($c->get('/api/convite.php', PORTAO_NAVEGACAO)->corpo);
-    $comT = $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO);
-    igual(200, $comT->status, 'com t válido: casca, não 303 (o 303 é da C5)');
-    igual($semT, cascaSemNonce($comT->corpo), 'mesma casca com e sem t');
-    naoContem($token, $comT->corpo, 'o token não aparece na casca');
+    $outro = $c->get('/api/convite.php?x=1', PORTAO_NAVEGACAO);
+    igual(200, $outro->status, 'outro parâmetro: casca, não 303');
+    igual($semT, cascaSemNonce($outro->corpo), 'mesma casca com outro parâmetro');
 });

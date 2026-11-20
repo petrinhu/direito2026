@@ -506,7 +506,7 @@ teste('e-mail: E23t senha criada pelo link envia E4 depois do 303; sem e-mail, n
         // O aviso sai depois de terminar a resposta: uma pausa logo depois do término segura a conexão ao SMTP.
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         verdadeiro($csrf !== '', 'a página traz o CSRF');
         file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
@@ -522,14 +522,14 @@ teste('e-mail: E23t senha criada pelo link envia E4 depois do 303; sem e-mail, n
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'sem.email', null);
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
         igual(false, is_file($falso['conversa']), 'conta sem e-mail: nenhuma conexão');
     });
     emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         $r = cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
         igual(303, $r->status, 'a falha do E4 não muda o 303');
         igual('/', $r->cabecalho('location'), 'destino continua /');
@@ -602,7 +602,7 @@ teste('e-mail: EM-B3 sem término de resposta do servidor, o aviso E4 registra e
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
         emailB3Mensagem(correioConversaFinal($falso));
         $log = (string) @file_get_contents($a->priv . '/erros.log');
@@ -730,7 +730,7 @@ teste('e-mail: E26t a tela de entrada tem o link "Esqueci a senha"; M1 e M3 tamb
         contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $m3->corpo, 'M3 tem o link');
         $usado = cvb2Convidar($a, 'bia');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $usado)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         $d = $a->cliente();
         $csrfD = cvb2CsrfPelaEntrada($d);
         igual(303, cvb2Enviar($c, cvb2Campos($usado, $csrf, EMB3_SENHA_NOVA))->status, 'consome o link');

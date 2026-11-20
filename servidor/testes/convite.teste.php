@@ -357,10 +357,10 @@ function cvb2Convidar(Ambiente $a, string $login): string
     return conviteTokenDe($a->entrar()->post('/api/usuarios.php', ['acao' => 'criar', 'usuario' => $login, 'email' => $login . '@example.com']));
 }
 
-/** Página do convite (GET) como a navegação a faz. */
-function cvb2Pagina(Cliente $c, string $token): Resposta
+/** Casca do convite (GET sem t, V17-C3): traz o csrf do cookie pré. O token não entra mais no GET (C5). */
+function cvb2Casca(Cliente $c): Resposta
 {
-    return $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO);
+    return $c->get('/api/convite.php', PORTAO_NAVEGACAO);
 }
 
 /** @return array<string, string> campos do formulário da tela do convite */
@@ -527,21 +527,18 @@ function cvb2ConcluirPost(array $req): Resposta
     return new Resposta($status, $cabs, substr($bruto, $tamanho));
 }
 
-// ---- C11: GET com t na URL: a casca, sem o token na página e sem gravar (C3) -----------------
+// ---- C11: GET com t na URL (link antigo, C5): 303 para o fragmento, sem corpo e sem gravar -------
 
-teste('convite: C11 GET com t na URL: 200 com a casca, sem o token na página, no-store, referrer strict-origin, nada gravado', function (): void {
+teste('convite: C11 GET com t na URL: 303 para /api/convite.php#t=, sem corpo, no-store, referrer strict-origin, nada gravado', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $antes = hash_file('sha256', $a->priv . '/usuarios.json');
-    $r = cvb2Pagina($a->cliente(), $token);
-    igual(200, $r->status, 'casca');
+    $r = $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO);
+    igual(303, $r->status, 'link antigo vai para o fragmento');
+    igual('/api/convite.php#t=' . $token, $r->cabecalho('location'), 'Location com o token só no fragmento');
     igual('private, no-store', $r->cabecalho('cache-control'), 'sem cache');
     igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer só com a origem');
-    contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer');
-    naoContem($token, $r->corpo, 'o token não volta na página');
-    contem('<form id="convite-form" method="post" action="/api/convite.php" hidden>', $r->corpo, 'formulário escondido, endereço fixo');
-    contem('<input type="hidden" name="t" value="">', $r->corpo, 'campo t vazio');
-    contem('name="csrf"', $r->corpo, 'CSRF do cookie pré');
+    igual('', $r->corpo, 'o 303 não tem corpo');
     igual($antes, hash_file('sha256', $a->priv . '/usuarios.json'), 'o GET não grava usuarios.json');
 });
 
@@ -551,7 +548,7 @@ teste('convite: C12 POST válido: 303 para / com Clear-Site-Data, sessão da con
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     verdadeiro($csrf !== '', 'a página traz o CSRF');
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $r->status, 'criou a senha e entrou');
@@ -575,9 +572,9 @@ teste('convite: C13 o mesmo link de novo, por outro navegador e pelo mesmo: M2 c
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $d = $a->cliente();
-    $csrfD = cvb2Campo(cvb2Pagina($d, $token)->corpo, 'csrf');
+    $csrfD = cvb2Campo(cvb2Casca($d)->corpo, 'csrf');
     igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA))->status, 'primeiro uso');
     cvb2Mensagem(cvb2Enviar($d, cvb2Campos($token, $csrfD, CVB2_SENHA)), 410, CVB2_M2);
     cvb2Mensagem(cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA)), 410, CVB2_M2);
@@ -589,7 +586,7 @@ teste('convite: C14 link vencido: M1 com 410 no POST; vencer entre o GET e o POS
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $x = $a->cliente();
-    $csrfX = cvb2Campo(cvb2Pagina($x, $token)->corpo, 'csrf');
+    $csrfX = cvb2Campo(cvb2Casca($x)->corpo, 'csrf');
     conviteEditarConta($a->priv, 'ana', static function (array $c): array {
         $c['convite']['expiraEm'] = time() - 1;
         return $c;
@@ -599,7 +596,7 @@ teste('convite: C14 link vencido: M1 com 410 no POST; vencer entre o GET e o POS
     $b = Ambiente::novo();
     $tokenB = cvb2Convidar($b, 'bia');
     $c = $b->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $tokenB)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     conviteEditarConta($b->priv, 'bia', static function (array $conta): array {
         $conta['convite']['expiraEm'] = time() - 1;
         return $conta;
@@ -617,7 +614,7 @@ teste('convite: C14b CAS: o link que vence durante o Argon2id dá M1 e nada grav
     $a = Ambiente::novo(['workers' => 4]);
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
 
     pausaLigar($a, 'convite-antes-gravar', 'ana');
     $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
@@ -640,9 +637,9 @@ teste('convite: C15 corrida: um 303 e um M2; o hash gravado é o do vencedor', f
     $a = Ambiente::novo(['workers' => 4]);
     $token = cvb2Convidar($a, 'ana');
     $A = $a->cliente();
-    $csrfA = cvb2Campo(cvb2Pagina($A, $token)->corpo, 'csrf');
+    $csrfA = cvb2Campo(cvb2Casca($A)->corpo, 'csrf');
     $B = $a->cliente();
-    $csrfB = cvb2Campo(cvb2Pagina($B, $token)->corpo, 'csrf');
+    $csrfB = cvb2Campo(cvb2Casca($B)->corpo, 'csrf');
 
     pausaLigar($a, 'convite-antes-gravar', 'ana');
     $reqA = cvb2PostSemEsperar($A, cvb2Campos($token, $csrfA, 'SenhaCorridaA-2026'));
@@ -666,9 +663,9 @@ teste('convite: C15b o perdedor do CAS para antes da gravação e não zera o co
     $a = Ambiente::novo(['workers' => 4]);
     $token = cvb2Convidar($a, 'ana');
     $perdedor = $a->cliente();
-    $csrfP = cvb2Campo(cvb2Pagina($perdedor, $token)->corpo, 'csrf');
+    $csrfP = cvb2Campo(cvb2Casca($perdedor)->corpo, 'csrf');
     $vencedor = $a->cliente();
-    $csrfV = cvb2Campo(cvb2Pagina($vencedor, $token)->corpo, 'csrf');
+    $csrfV = cvb2Campo(cvb2Casca($vencedor)->corpo, 'csrf');
 
     // O perdedor passa pela classificação do link (válido) e fica parado antes do CAS.
     pausaLigar($a, 'convite-antes-gravar', 'ana');
@@ -693,7 +690,7 @@ teste('convite: C16 senha curta, igual ao login ou repetição diferente: tela c
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
 
     $curta = cvb2Enviar($c, cvb2Campos($token, $csrf, 'Curta-1'));
     igual(400, $curta->status, 'senha curta');
@@ -707,7 +704,7 @@ teste('convite: C16 senha curta, igual ao login ou repetição diferente: tela c
     $b = Ambiente::novo();
     $tokenB = cvb2Convidar($b, 'ana-convite-longo');
     $cb = $b->cliente();
-    $csrfB = cvb2Campo(cvb2Pagina($cb, $tokenB)->corpo, 'csrf');
+    $csrfB = cvb2Campo(cvb2Casca($cb)->corpo, 'csrf');
     $igualAoLogin = cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, 'ana-convite-longo'));
     igual(400, $igualAoLogin->status, 'senha igual ao login');
     contem('A senha não pode ser igual ao nome de usuário.', $igualAoLogin->corpo, 'mensagem do login');
@@ -725,7 +722,7 @@ teste('convite: C17 sem cookie pré ou sem o HMAC: 403; Origin de outro site: 40
     igual(403, cvb2Enviar($a->cliente(), cvb2Campos($token, 'qualquer', CVB2_SENHA))->status, 'sem cookie pré');
 
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     igual(403, cvb2Enviar($c, cvb2Campos($token, str_repeat('0', 64), CVB2_SENHA))->status, 'sem o HMAC do cookie pré');
     igual(403, cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => 'http://site-de-outro.example'])->status, 'Origin de outro site');
     igual(400, $c->post('/api/convite.php', ['t' => $token, 'senhaNova' => CVB2_SENHA])->status, 'corpo JSON');
@@ -738,7 +735,7 @@ teste('convite: C18 30 falhas de token do mesmo IP: a seguinte dá 429; um link 
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     for ($i = 0; $i < 30; $i++) {
         igual(404, cvb2Enviar($c, cvb2Campos(str_repeat('0', 64), $csrf, CVB2_SENHA))->status, "falha de token $i");
     }
@@ -759,7 +756,7 @@ teste('convite: C19 t ausente, lista, 63 ou 65 hex, maiúsculas: M3 com 404, e n
     $c = $a->cliente();
     $log = $a->priv . '/erros.log';
     $antes = is_file($log) ? (string) file_get_contents($log) : '';
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $pedidos = [
         [],
         ['t' => [$token]],
@@ -783,7 +780,7 @@ teste('convite: C20 navegador com sessão de outra conta: depois do POST a sess�
     $outro = $a->entrar('bia', 'SenhaDaBia-Teste1');
     $token = cvb2Convidar($a, 'ana');
     $antesBia = conviteConta($a, 'bia');
-    $csrf = cvb2Campo(cvb2Pagina($outro, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($outro)->corpo, 'csrf');
     igual(303, cvb2Enviar($outro, cvb2Campos($token, $csrf, CVB2_SENHA))->status, 'criou a senha no mesmo navegador');
     igual('ana', $outro->get('/api/sessao.php')->json()['usuario'] ?? null, 'a sessão agora é da conta do convite');
     igual($antesBia, conviteConta($a, 'bia'), 'a conta da outra pessoa ficou igual');
@@ -795,7 +792,7 @@ teste('convite: C21 nenhuma resposta de convite.php emite __Host-d26aviso, nem c
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     // O aviso vai no jar: Cliente::enviar troca o cabeçalho Cookie pelo jar, então um Cookie avulso nunca chegava.
     $c->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
     $respostas = [
@@ -854,7 +851,7 @@ teste('convite: C22 o login falha depois do CAS (10 falhas na conta, 6 no usuár
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $chaves = cvb2Falhas($a, 10, 6, 3);
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $r->status, 'a senha foi criada e entra, mesmo com o limite da conta cheio');
@@ -871,7 +868,7 @@ teste('convite: C22b 30 falhas de IP injetadas na pausa do CAS: 303 para / sem s
     $a = Ambiente::novo(['workers' => 4]);
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     pausaLigar($a, 'convite-antes-gravar', 'ana');
     $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     pausaEsperarChegada($req, $a, 'convite-antes-gravar');
@@ -899,7 +896,7 @@ teste('convite: C22c conta já bloqueada: o convite grava a senha e dá 303 com 
         return $c;
     });
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $r->status, 'a senha foi criada e o login recusa a conta bloqueada');
     igual('/', $r->cabecalho('location'), 'destino /');
@@ -913,7 +910,7 @@ teste('convite: C22d GET, POST com senha curta e POST com link usado não zeram 
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $chaves = cvb2Falhas($a, 10, 6, 0);
     $ke = hash('sha256', 'econta' . "\0" . 'ana');
     $d = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true);
@@ -925,7 +922,7 @@ teste('convite: C22d GET, POST com senha curta e POST com link usado não zeram 
         igual(6, $t['u'][$chaves['ku']]['n'] ?? null, 'o usuário+IP conserva as 6 falhas');
         igual(2, count($t['c'][$ke]['f'] ?? []), 'a categoria de envio fica intacta');
     };
-    cvb2Pagina($c, $token);
+    cvb2Casca($c);
     $confere();
     $curta = cvb2Enviar($c, cvb2Campos($token, $csrf, 'curta'));
     igual(400, $curta->status, 'senha curta');
@@ -934,7 +931,7 @@ teste('convite: C22d GET, POST com senha curta e POST com link usado não zeram 
     $b = Ambiente::novo();
     $tokenB = cvb2Convidar($b, 'ana');
     $cb = $b->cliente();
-    $csrfB = cvb2Campo(cvb2Pagina($cb, $tokenB)->corpo, 'csrf');
+    $csrfB = cvb2Campo(cvb2Casca($cb)->corpo, 'csrf');
     igual(303, cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA))->status, 'primeiro POST cria a senha');
     $chavesB = cvb2Falhas($b, 10, 6, 0);
     $usado = cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
@@ -949,7 +946,7 @@ teste('convite: C23 o 303 de sucesso sai com Referrer-Policy strict-origin', fun
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $r->status, 'criou e entrou');
     igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer do 303');
@@ -965,7 +962,7 @@ teste('convite: C24 os 403 e o 400 do formulário saem com Referrer-Policy stric
     igual('strict-origin', $semCookie->cabecalho('referrer-policy'), 'referrer do 403 sem cookie pré');
 
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $origem = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA), ['Origin' => 'http://site-de-outro.example']);
     igual(403, $origem->status, 'Origin de outro site');
     igual('strict-origin', $origem->cabecalho('referrer-policy'), 'referrer do 403 de Origin');
@@ -981,7 +978,7 @@ teste('convite: C24b usuarios.json corrompido: o 503 do handler global sai com s
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     file_put_contents($a->priv . '/usuarios.json', '{quebrado');
     $r = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(503, $r->status, 'falha do servidor');
@@ -1005,7 +1002,7 @@ teste('convite: C26 a criação de senha expira o cookie de aviso que veio no pe
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $c->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
     $entrou = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     igual(303, $entrou->status, 'criou e entrou');
@@ -1015,7 +1012,7 @@ teste('convite: C26 a criação de senha expira o cookie de aviso que veio no pe
     $b = Ambiente::novo(['workers' => 4]);
     $tokenB = cvb2Convidar($b, 'ana');
     $d = $b->cliente();
-    $csrfB = cvb2Campo(cvb2Pagina($d, $tokenB)->corpo, 'csrf');
+    $csrfB = cvb2Campo(cvb2Casca($d)->corpo, 'csrf');
     $d->cookies[D26_AVISO_NOME] = D26_AVISO_OUTRO_APARELHO;
     pausaLigar($b, 'convite-antes-gravar', 'ana');
     $req = cvb2PostSemEsperar($d, cvb2Campos($tokenB, $csrfB, CVB2_SENHA));
@@ -1034,7 +1031,7 @@ teste('convite: C27 a tela de erro de senha (400) sai com strict-origin no cabe�
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $erro = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA, CVB2_SENHA . '-outra'));
     igual(400, $erro->status, 'repetição diferente');
     igual('strict-origin', $erro->cabecalho('referrer-policy'), 'referrer da tela de erro');
@@ -1050,7 +1047,7 @@ teste('convite: C28 Origin null ou de outro site é 403 origem com qualquer Sec-
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $antes = hash_file('sha256', $a->priv . '/usuarios.json');
     $recusas = [
         'null com same-origin' => ['Origin' => 'null', 'Sec-Fetch-Site' => 'same-origin'],
@@ -1077,7 +1074,7 @@ teste('convite: C29 falha ao zerar o contador depois do CAS: a senha fica criada
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
-    $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     pausaLigar($a, 'convite-antes-gravar', 'ana');
     $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA));
     pausaEsperarChegada($req, $a, 'convite-antes-gravar');

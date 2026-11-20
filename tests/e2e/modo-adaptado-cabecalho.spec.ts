@@ -359,6 +359,42 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
   }
 }
 
+/**
+ * E2E-G1-320 no tema escuro (QA da F1, 20/11/2026): a 349 px o cabeçalho fixo do modo normal tinha
+ * 265,8 px no escuro e 210,9 px no claro, então a borda medida no claro não vale no escuro. Mede só a
+ * altura, no modo normal, nas bordas da regra e um passo fora de cada uma.
+ */
+const LARGURAS_DO_TEMA_ESCURO = [...new Set([348, 349, 351, 352])];
+
+for (const caminho of caminhosParaCabecalho(curriculo)) {
+  for (const largura of LARGURAS_DO_TEMA_ESCURO) {
+    test(`cabeçalho fixo de ${caminho} cabe em 40% da janela, tema escuro, modo normal, ${largura}px`, async ({
+      page
+    }) => {
+      await prepararEstadoInicial(page, { tema: 'escuro', modoAdaptado: false });
+      await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
+      await page.goto(caminho);
+      await esperarTituloVisivel(page, seletorDoTitulo(caminho));
+      await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
+      await esperarLayoutAssentar(page);
+      const medida = await page.evaluate(() => {
+        const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
+        return {
+          tema: document.documentElement.getAttribute('data-theme'),
+          posicao: getComputedStyle(cabecalho).position,
+          altura: cabecalho.getBoundingClientRect().height
+        };
+      });
+      expect(medida.tema, 'tema escuro aplicado').toBe('dark');
+      expect(medida.posicao, 'cabeçalho do modo normal é fixo').toBe('fixed');
+      expect(
+        medida.altura,
+        `${caminho}, tema escuro, ${largura}px: cabeçalho fixo ocupa ${medida.altura.toFixed(0)}px`
+      ).toBeLessThanOrEqual(ALTURA_DA_JANELA * FRACAO_MAXIMA_DO_CABECALHO_FIXO);
+    });
+  }
+}
+
 interface TextoDoCabecalho {
   elemento: string;
   cor: string;

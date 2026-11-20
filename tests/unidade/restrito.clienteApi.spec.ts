@@ -160,7 +160,10 @@ describe('clienteApi', () => {
       ['endereço de outro site', `https://outro.invalid/api/convite.php#t=${TOKEN_FALSO}`],
       ['token curto', '/api/convite.php#t=abc'],
       ['token em maiúsculas', `/api/convite.php#t=${TOKEN_FALSO.toUpperCase()}`],
-      ['forma antiga, com ?t= e token válido (o servidor não manda mais)', `/api/convite.php?t=${TOKEN_FALSO}`],
+      [
+        'forma antiga, com ?t= e token válido (o servidor não manda mais)',
+        `/api/convite.php?t=${TOKEN_FALSO}`
+      ],
       ['não é texto', 42]
     ])('convite fora da forma (%s) é resposta inválida', async (_nome, convite) => {
       await expect(agir({ convite })).rejects.toMatchObject({

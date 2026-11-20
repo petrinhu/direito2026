@@ -96,3 +96,40 @@ test('em 320px, com o modo adaptado ligado, o botão do quadro de prova cabe no 
     false
   );
 });
+
+/**
+ * Ordem visual do topo do quadro (revisão da 1.16.3.0, achado I-3). Com a quebra da C31
+ * (QuadroProva.vue, .quadro-prova__topo), a pílula fica antes do botão na tela, como no DOM e no Tab
+ * (WCAG 1.3.2). Em 14/11, na u1, a 320 px a linha quebra (pílula em 707 px, botão em 778 px, medido na
+ * revisão); a guarda de quebra impede o teste de passar sem a quebra acontecer. No X3 (wrap-reverse) a
+ * guarda passa e a ordem reprova.
+ */
+test('em 320px, com o modo adaptado ligado, o topo do quadro quebra na ordem do DOM', async ({
+  page
+}) => {
+  await ligarModoAdaptado(page, '/p/p1/intr-direito/u1');
+  await page.locator('.quadro-prova__topo').waitFor({ state: 'visible' });
+  await esperarLayoutAssentar(page);
+  const m = await page.evaluate(() => {
+    const pilula = document
+      .querySelector<HTMLElement>('.quadro-prova__pilula')!
+      .getBoundingClientRect();
+    const botao = document
+      .querySelector<HTMLElement>('.quadro-prova__alternar')!
+      .getBoundingClientRect();
+    return {
+      pilulaTopo: pilula.top,
+      pilulaFundo: pilula.bottom,
+      botaoTopo: botao.top,
+      botaoFundo: botao.bottom
+    };
+  });
+  const rotulo = `pílula em ${m.pilulaTopo.toFixed(1)}, botão em ${m.botaoTopo.toFixed(1)}`;
+  // Quebrou quando as duas caixas não se cruzam na vertical; com align-items: center, só o topo diferente não prova.
+  const quebrou = m.botaoTopo >= m.pilulaFundo - 1 || m.pilulaTopo >= m.botaoFundo - 1;
+  expect(quebrou, `a linha do topo quebrou (${rotulo})`).toBe(true);
+  expect(
+    m.botaoTopo,
+    `o botão fica abaixo da pílula, na ordem do DOM (${rotulo})`
+  ).toBeGreaterThanOrEqual(m.pilulaFundo - 1);
+});

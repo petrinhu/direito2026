@@ -11,7 +11,7 @@ const HTACCESS_NOVO = [
   'RewriteRule ^ - [F,L]',
   'RewriteRule ^api/nucleo(/|$) - [F,L]',
   'RewriteRule ^api/[a-z0-9/-]+\\.php$ - [L]',
-  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$ - [L]',
+  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$ - [L]',
   'RewriteRule ^api(/|$) - [R=404,L]',
   'RewriteRule ^ api/portao.php [L]'
 ].join('\n');
@@ -46,6 +46,14 @@ describe('extrairRegras: regras de reescrita do .htaccess, em ordem', () => {
     expect(veredito('entrada.css', regras)).toBe('passa');
     expect(veredito('icones/favicon.svg', regras)).toBe('passa');
     expect(veredito('icones/faviconXsvg', regras)).toBe('portao');
+  });
+
+  it('convite.js passa direto (V17-C10); convite.jsx, convite.js.bak e xconvite.js vão ao portão (borda fechada)', () => {
+    const regras = extrairRegras(HTACCESS_NOVO);
+    expect(veredito('convite.js', regras)).toBe('passa');
+    expect(veredito('convite.jsx', regras)).toBe('portao');
+    expect(veredito('convite.js.bak', regras)).toBe('portao');
+    expect(veredito('xconvite.js', regras)).toBe('portao');
   });
 
   it('as duas fontes públicas da tela de entrada passam direto, e o .htaccess real traz a mesma regra', () => {

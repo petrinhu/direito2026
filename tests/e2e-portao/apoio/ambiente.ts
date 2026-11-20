@@ -41,6 +41,7 @@ const SO_WEBROOT = new Set([
   'sw.js',
   'robots.txt',
   'entrada.css',
+  'convite.js',
   'icones/favicon.svg',
   'fontes/inter-400.woff2',
   'fontes/cormorant-garamond-700.woff2',

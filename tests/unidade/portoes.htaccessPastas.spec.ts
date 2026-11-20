@@ -62,6 +62,7 @@ beforeEach(() => {
     'sw.js',
     'robots.txt',
     'entrada.css',
+    'convite.js',
     'icones/favicon.svg',
     'fontes/inter-400.woff2',
     'fontes/cormorant-garamond-700.woff2',
@@ -124,6 +125,30 @@ describe('portão do .htaccess e das pastas do pacote', () => {
     expect(r.status).toBe(1);
     expect(saida(r)).toContain('robots.txt');
   });
+
+  it('convite.js sem a liberação literal no .htaccess reprova (V17-C10)', () => {
+    sabotarRegras((t) => t.replace('|convite\\.js', ''));
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saida(r)).toContain('convite.js');
+  });
+
+  it('convite.js liberado e ausente do pacote reprova (V17-C10)', () => {
+    rmSync(join(dist, 'convite.js'));
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(saida(r)).toContain('convite.js');
+  });
+
+  it.each(['convite.jsx', 'convite.js.bak', 'xconvite.js'])(
+    '%s não ganha passagem direta com a liberação de convite.js (borda fechada, L-43)',
+    (arquivo) => {
+      plantar(arquivo, 'conteudo sintetico');
+      const r = rodar();
+      expect(r.status).toBe(0);
+      expect(saida(r)).toContain('divergências=0');
+    }
+  );
 
   it('api/nucleo/.htaccess ausente reprova', () => {
     rmSync(join(dist, 'api/nucleo/.htaccess'));

@@ -7,7 +7,7 @@
  *  1. as regras de passagem são exatamente a lista fechada PASSAGENS_ESPERADAS
  *     (qualquer liberação nova reprova, mesmo sem arquivo em dist);
  *  2. em dist, o que o .htaccess deixa passar direto é exatamente o que se espera:
- *     LITERAIS (sw.js, robots.txt, entrada.css, icones/favicon.svg, as duas fontes) e os endpoints
+ *     LITERAIS (sw.js, robots.txt, entrada.css, convite.js, icones/favicon.svg, as duas fontes) e os endpoints
  *     api/**.php fora de api/nucleo; cada um existe e passa; nada mais passa;
  *  3. api/nucleo/ é negado (regra F), com o .htaccess da pasta presente;
  *  4. dist/.htaccess é igual ao público (VERIFICAR_HTACCESS_REFERENCIA, padrão

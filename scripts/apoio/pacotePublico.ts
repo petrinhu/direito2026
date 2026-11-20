@@ -13,7 +13,7 @@ import { join, relative, sep } from 'node:path';
 
 /** Regra de passagem direta de literais (`- [L]`), como texto de RewriteRule. */
 const PASSAGEM_LITERAIS =
-  '^(sw\\.js|robots\\.txt|entrada\\.css|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$';
+  '^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$';
 /** Regra de passagem direta dos endpoints da API, como texto de RewriteRule. */
 const PASSAGEM_API = '^api/[a-z0-9/-]+\\.php$';
 
@@ -25,6 +25,7 @@ export const LITERAIS: readonly string[] = [
   'sw.js',
   'robots.txt',
   'entrada.css',
+  'convite.js',
   'icones/favicon.svg',
   'fontes/inter-400.woff2',
   'fontes/cormorant-garamond-700.woff2'

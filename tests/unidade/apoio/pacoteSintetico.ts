@@ -13,6 +13,7 @@ export const WEBROOT_ESPERADO: readonly string[] = [
   'robots.txt',
   'sw.js',
   'entrada.css',
+  'convite.js',
   'icones/favicon.svg',
   'fontes/inter-400.woff2',
   'fontes/cormorant-garamond-700.woff2',

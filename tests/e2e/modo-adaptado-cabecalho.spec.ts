@@ -117,12 +117,15 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
         await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado });
         await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
         await page.goto(caminho);
-        await page.locator(seletorDoTitulo(caminho)).first().waitFor({ state: 'visible' });
+        await esperarTituloVisivel(page, seletorDoTitulo(caminho));
         await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
         await esperarLayoutAssentar(page);
         const medida = await page.evaluate<MedidaTitulo, string>((seletor) => {
           const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
-          const titulo = document.querySelector<HTMLElement>(seletor)!;
+          // O primeiro título com caixa de layout: o h2 oculto do modal não conta.
+          const titulo = Array.from(document.querySelectorAll<HTMLElement>(seletor)).find(
+            (el) => el.getClientRects().length > 0
+          )!;
           const caixaCabecalho = cabecalho.getBoundingClientRect();
           return {
             posicao: getComputedStyle(cabecalho).position,

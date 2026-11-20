@@ -142,9 +142,9 @@ test.beforeEach(() => resetarPrivado());
 /** Abre o link sem deixar o token em mensagem de erro (o Playwright cita a URL ao falhar). */
 async function abrirLink(page: Page, link: string): Promise<void> {
   try {
-    // Documento novo a cada link, como o e-mail abre numa aba nova: sem isso, um link com outro fragmento sobre a
-    // URL da página de resultado do POST vira navegação de fragmento (sem recarregar, sem o convite.js).
-    await page.goto('about:blank');
+    // Como colar o link na barra de endereço da mesma aba, sem documento novo antes (D13). Na casca isto é
+    // navegação de fragmento, que o convite.js ouve por hashchange; nas telas de resultado do POST, que moram em
+    // /api/convite.php?envio, é carga nova da casca.
     await page.goto(link);
   } catch (erro) {
     const motivo = erro instanceof Error ? erro.message : String(erro);
@@ -1882,6 +1882,33 @@ test('V17-C8 caso 4: com JavaScript e sem fragmento (cliente que cortou o #), o 
       await expect(aparelho.locator('#convite-aviso')).toHaveText(AVISO_LINK_INCOMPLETO);
       await expect(aparelho.locator('#convite-form')).toBeHidden();
       expect(await postsDoContexto(pedidos), 'caso 4: nenhum POST sem o fragmento').toBe(0);
+    } finally {
+      await pessoa.close();
+    }
+  } finally {
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 4b: colar o link completo na mesma aba, sobre o aviso de link incompleto, libera o formulário (D13)', async ({
+  browser
+}) => {
+  test.setTimeout(180_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    anotarToken('4', caminho);
+    const semFragmento = caminho.replace(/#t=[0-9a-f]{64}$/, '');
+    const pessoa = await novaPessoa(browser);
+    try {
+      const aparelho = await pessoa.newPage();
+      await abrirLink(aparelho, `${ORIGEM}${semFragmento}`);
+      await expect(aparelho.locator('#convite-aviso')).toHaveText(AVISO_LINK_INCOMPLETO);
+      await abrirLink(aparelho, `${ORIGEM}${caminho}`);
+      await esperarFormularioDoConvite(aparelho);
+      expect(new URL(aparelho.url()).hash, 'caso 4b: a barra fica sem o fragmento').toBe('');
+      await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 4b, link colado na mesma aba');
+      expect(await sessaoAutenticada(pessoa), 'caso 4b: sessão aberta pelo link colado').toBe(true);
     } finally {
       await pessoa.close();
     }

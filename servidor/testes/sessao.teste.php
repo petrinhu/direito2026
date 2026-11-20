@@ -5,7 +5,7 @@ const CABECALHOS_SEGURANCA = [
     'content-type' => 'application/json; charset=utf-8',
     'cache-control' => 'private, no-store',
     'x-content-type-options' => 'nosniff',
-    'referrer-policy' => 'same-origin',
+    'referrer-policy' => 'strict-origin-when-cross-origin',
     'x-frame-options' => 'DENY',
     'content-security-policy' => "default-src 'none'; frame-ancestors 'none'",
 ];

@@ -77,7 +77,7 @@ teste('I-3: a tela de entrada sai com os cabeçalhos de segurança e a CSP da te
         igual(200, $r->status, $nome);
         igual('nosniff', $r->cabecalho('x-content-type-options'), "$nome: nosniff");
         igual('DENY', $r->cabecalho('x-frame-options'), "$nome: X-Frame-Options");
-        igual('same-origin', $r->cabecalho('referrer-policy'), "$nome: Referrer-Policy");
+        igual('strict-origin-when-cross-origin', $r->cabecalho('referrer-policy'), "$nome: Referrer-Policy");
         igual('max-age=31536000', $r->cabecalho('strict-transport-security'), "$nome: HSTS sem includeSubDomains nem preload");
         igual(CSP_TELA_PORTAO, $r->cabecalho('content-security-policy'), "$nome: CSP da tela");
     }

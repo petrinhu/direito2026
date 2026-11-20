@@ -299,6 +299,21 @@ onBeforeUnmount(() => {
   }
 }
 
+/*
+  Celular muito estreito (até 340px), modo normal: o cabeçalho fixo passava de
+  256px (E2E-G1-320, 266px a 320px). Corta só o espaço vertical: o respiro de
+  cima e de baixo da faixa e o espaço entre as linhas caem de 0.5rem para
+  0.25rem. Fonte, alvo de toque e ordem de Tab não mudam. Acima de 340px a
+  regra não vale, então 341px segue como estava (V4). O modo adaptado tem a
+  própria faixa e não entra aqui.
+*/
+@media (max-width: 340px) {
+  :root:not([data-modo-adaptado='on']) .barra-topo__linha {
+    padding-block: var(--esp-1, 0.25rem);
+    row-gap: var(--esp-1, 0.25rem);
+  }
+}
+
 .barra-topo__trilha {
   margin-right: auto;
   min-width: 0;

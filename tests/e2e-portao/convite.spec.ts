@@ -8,7 +8,9 @@ import {
   type Locator,
   type Page
 } from '@playwright/test';
-import { definirRoteiroSmtp, resetarPrivado } from './apoio/ambiente';
+import { definirRoteiroSmtp, PRIVADO, resetarPrivado } from './apoio/ambiente';
+import { appendFileSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { capturar, entrarNoApp, esperarApp, esperarEntrada, preencherEntrada } from './apoio/acoes';
 import { CONTA_ADMIN, ORIGEM, REMETENTE_DO_SITE } from './apoio/constantes';
 import { forcarLimite } from './apoio/limiteForcado';
@@ -45,10 +47,15 @@ const SENHA_SEGUNDA = 'senha-do-convite-dois-456';
 const SENHA_REPETICAO_ERRADA = 'senha-do-convite-outra-789';
 const REPETICAO_NAO_CONFERE = 'A repetição não confere com a senha nova.';
 
-const FORMA_DO_LINK = new RegExp(`^${ORIGEM}/api/convite\\.php\\?t=[0-9a-f]{64}$`);
+const FORMA_DO_LINK = new RegExp(`^${ORIGEM}/api/convite\\.php#t=[0-9a-f]{64}$`);
+/** Token em qualquer das formas (legado `?t=` ou atual `#t=`): só para extrair, nunca para imprimir. */
+const TOKEN_NO_LINK = /[?#]t=([0-9a-f]{64})/;
+const FRASE_COPIA_DO_EMAIL =
+  'Se o link não funcionar, copie este código no campo de URL do seu navegador:';
 
 /** Textos do líder (R8, 7.5 do plano), verbatim. */
 const M2 = 'Este link já foi usado. Se não foi você, avise quem administra o site.';
+const M1 = 'Este link venceu. Peça um novo a quem administra o site.';
 const M3 = 'Este link não vale. Peça um novo a quem administra o site.';
 const TITULO_REDEFINIR = `Link para nova senha de ${LOGIN_CONVIDADO}:`;
 const TEXTO_VALIDADE =
@@ -78,6 +85,8 @@ const e1Corpo = (login: string): string =>
     '',
     'Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.',
     '<link>',
+    FRASE_COPIA_DO_EMAIL,
+    '<link>',
     '',
     'Se você não esperava esta mensagem, pode ignorá-la.',
     '',
@@ -92,6 +101,8 @@ const e2Corpo = (login: string): string =>
     '',
     'Para criar a senha nova, abra o link abaixo. Ele vale por 24 horas e só pode ser usado uma vez. Até lá, a senha atual continua valendo.',
     '<link>',
+    FRASE_COPIA_DO_EMAIL,
+    '<link>',
     '',
     'Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.'
   ].join('\n');
@@ -103,6 +114,8 @@ const e3Corpo = (login: string): string =>
     `Quem administra o site redefiniu a senha do usuário ${login}. A senha antiga parou de valer.`,
     '',
     'Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.',
+    '<link>',
+    FRASE_COPIA_DO_EMAIL,
     '<link>',
     '',
     'Esta caixa não recebe respostas.'
@@ -129,6 +142,9 @@ test.beforeEach(() => resetarPrivado());
 /** Abre o link sem deixar o token em mensagem de erro (o Playwright cita a URL ao falhar). */
 async function abrirLink(page: Page, link: string): Promise<void> {
   try {
+    // Documento novo a cada link, como o e-mail abre numa aba nova: sem isso, um link com outro fragmento sobre a
+    // URL da página de resultado do POST vira navegação de fragmento (sem recarregar, sem o convite.js).
+    await page.goto('about:blank');
     await page.goto(link);
   } catch (erro) {
     const motivo = erro instanceof Error ? erro.message : String(erro);
@@ -439,12 +455,10 @@ async function esperarMensagem(page: Page, texto: string): Promise<void> {
   await expect(page.locator('#app')).toHaveCount(0);
 }
 
-/** Só o formulário do convite: sem o app, com o usuário somente leitura. */
+/** Só o formulário do convite (casca C3, sem campo de usuário): sem o app. */
 async function esperarFormularioDoConvite(page: Page): Promise<void> {
   await expect(page.locator('#senhaNova')).toBeVisible();
   await expect(page.locator('#app')).toHaveCount(0);
-  await expect(page.locator('input[name="usuario"]')).toHaveValue(LOGIN_CONVIDADO);
-  await expect(page.locator('input[name="usuario"]')).toHaveAttribute('readonly', '');
 }
 
 /** O que o navegador mandou no POST do formulário do convite, lido de todos os cabeçalhos do pedido. */
@@ -497,6 +511,24 @@ async function criarSenhaPeloConvite(page: Page, senha: string, etapa: string): 
   await esperarApp(page);
 }
 
+/**
+ * Link que não cria senha (usado, vencido ou que não vale): o GET só mostra a casca (C3), sem consultar o link, e a
+ * mensagem (M1, M2 ou M3) sai do POST, com o status do desenho (410, 410 ou 404). Decisão Q3 do líder: não conferir antes.
+ */
+async function tentarLinkPeloFormulario(
+  page: Page,
+  link: string,
+  mensagem: string,
+  statusEsperado: number,
+  etapa: string
+): Promise<void> {
+  await abrirLink(page, link);
+  await esperarFormularioDoConvite(page);
+  const post = await enviarFormulario(page, SENHA_PRIMEIRA, SENHA_PRIMEIRA);
+  exigirPostComOrigemPropria(post, statusEsperado, etapa);
+  await esperarMensagem(page, mensagem);
+}
+
 /** Pedido feito por um contexto, reduzido ao que E1 e E2 comparam. O Referer fica na memória: nunca vai a mensagem. */
 interface PedidoVisto {
   readonly metodo: string;
@@ -535,7 +567,7 @@ function gravarPedidos(contexto: BrowserContext): { vistos: () => Promise<Pedido
  * do Referer nunca é impresso. "Sem `?`" não serve: o Referer das fontes é `entrada.css?v=...`, e isso é legítimo.
  */
 function exigirRefererSemToken(pedidos: readonly PedidoVisto[], link: string): void {
-  const token = /[?&]t=([0-9a-f]{64})/.exec(link)?.[1] ?? '';
+  const token = TOKEN_NO_LINK.exec(link)?.[1] ?? '';
   expect(token.length, 'E2: o token foi extraído do link').toBe(64);
   expect(
     pedidos.filter((p) => !p.cabecalhosLidos).length,
@@ -689,8 +721,7 @@ test('convite: o admin cria a conta pelo painel com e-mail, o link vem no e-mail
   const pedidosDaPessoa = gravarPedidos(pessoa);
   try {
     const aparelho = await pessoa.newPage();
-    await abrirLink(aparelho, linkDoCriar);
-    await esperarMensagem(aparelho, M3);
+    await tentarLinkPeloFormulario(aparelho, linkDoCriar, M3, 404, 'link trocado pelo Redefinir');
 
     // E2 olha os pedidos da pessoa desde a abertura deste link até chegar ao app.
     const pedidosAntesDoLink = (await pedidosDaPessoa.vistos()).length;
@@ -717,8 +748,7 @@ test('convite: o admin cria a conta pelo painel com e-mail, o link vem no e-mail
     );
 
     // 12. O mesmo link de novo: M2, sem formulário.
-    await abrirLink(aparelho, link);
-    await esperarMensagem(aparelho, M2);
+    await tentarLinkPeloFormulario(aparelho, link, M2, 410, 'link já usado');
     await aparelho.goto('/');
     await esperarApp(aparelho);
     expect(await sessaoAutenticada(pessoa), 'sessão ainda aberta antes do Redefinir').toBe(true);
@@ -747,8 +777,7 @@ test('convite: o admin cria a conta pelo painel com e-mail, o link vem no e-mail
     expect(await sessaoAutenticada(pessoa), 'sessão derrubada pelo Redefinir').toBe(false);
 
     // 15. O link já usado virou M3 (o Redefinir apaga o registro do uso) e o novo funciona.
-    await abrirLink(aparelho, link);
-    await esperarMensagem(aparelho, M3);
+    await tentarLinkPeloFormulario(aparelho, link, M3, 404, 'link do Redefinir anterior');
     await abrirLink(aparelho, linkNovo);
     await esperarFormularioDoConvite(aparelho);
     await criarSenhaPeloConvite(aparelho, SENHA_SEGUNDA, 'link novo depois do Redefinir');
@@ -1423,7 +1452,7 @@ test('convite: quando o e-mail não sai o painel diz e mostra o link; e-mail rep
   const pessoa = await novaPessoa(browser);
   try {
     const aparelho = await pessoa.newPage();
-    await abrirLink(aparelho, `${ORIGEM}${new URL(link).pathname}${new URL(link).search}`);
+    await abrirLink(aparelho, `${ORIGEM}${new URL(link).pathname}${new URL(link).hash}`);
     await esperarFormularioDoConvite(aparelho);
   } finally {
     await pessoa.close();
@@ -1680,4 +1709,281 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
       }
     });
   }
+}
+
+/*
+ * V17-C8 (plano da onda 1.17, seção 3): o convite inteiro com o token no fragmento (#t=), sem JavaScript, com o
+ * script bloqueado, com o fragmento cortado, com o link legado (?t=) e com o link usado ou vencido. Os seis casos
+ * rodam em 7039b0f com reprovação nos casos 1 a 5 (vermelho) e em HEAD com verde (chromium e brave).
+ *
+ * Medida de log (critério 4.2): quando V17_C8_TOKENS aponta para um arquivo, cada caso anota "caso<TAB>token"
+ * nele, fora do repositório, para a contagem no log do php -S. Nada disso aparece em mensagem de teste.
+ */
+
+const AVISO_SEM_JS =
+  'Para criar a sua senha, esta página precisa do JavaScript ligado no navegador. Ligue o JavaScript e abra de novo o link do e-mail.';
+const AVISO_LINK_INCOMPLETO =
+  'O link chegou incompleto. Abra o e-mail, copie o endereço completo e cole na barra de endereço do navegador.';
+
+function pegarToken(caminho: string): string {
+  return TOKEN_NO_LINK.exec(caminho)?.[1] ?? '';
+}
+
+/** Anota o token do caso no arquivo da medida, se houver. Só grava; nunca imprime. */
+function anotarToken(caso: string, caminho: string): void {
+  const arquivo = process.env.V17_C8_TOKENS;
+  const token = pegarToken(caminho);
+  if (!arquivo || token.length !== 64) return;
+  appendFileSync(arquivo, `${caso}\t${token}\n`, { mode: 0o600 });
+}
+
+/** Admin logado no painel, num contexto próprio. O chamador fecha o contexto. */
+async function adminLogado(browser: Browser): Promise<{ contexto: BrowserContext; page: Page }> {
+  const contexto = await novaPessoa(browser);
+  const page = await contexto.newPage();
+  await entrarNoApp(page, CONTA_ADMIN, '/usuarios');
+  return { contexto, page };
+}
+
+/** Cria a conta pela API do admin e devolve o caminho do convite como o painel o recebe (sem a origem). */
+async function criarConviteParaCaso(admin: Page, usuario: string): Promise<string> {
+  const resposta = await criarContaPelaApi(admin, usuario, `${usuario}@example.com`);
+  expect(resposta.status, `criar ${usuario} pela API`).toBe(200);
+  return resposta.caminho;
+}
+
+/** Conta quantos pedidos POST o contexto fez desde que foi aberto (nada pode gravar sem POST). */
+function postsDoContexto(pedidos: { vistos: () => Promise<PedidoVisto[]> }): Promise<number> {
+  return pedidos.vistos().then((lista) => lista.filter((p) => p.metodo === 'POST').length);
+}
+
+test('V17-C8 caso 1: com JavaScript, do e-mail sintético à senha criada e à Home; a barra de endereço fica sem o fragmento', async ({
+  browser
+}) => {
+  test.setTimeout(180_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  const pessoa = await novaPessoa(browser);
+  try {
+    const capturas = marcarCapturas();
+    await criarPeloFormulario(admin, LOGIN_CONVIDADO, EMAIL_CONVIDADO);
+    await expect(admin.getByText(TITULO_CRIAR, { exact: true })).toBeVisible();
+    const e1 = await linkDoEmail(capturas, { para: EMAIL_CONVIDADO, assunto: E1_ASSUNTO });
+    anotarToken('1', e1.link);
+    exigirEmailIgualAoDoLider(e1.email, {
+      para: EMAIL_CONVIDADO,
+      assunto: E1_ASSUNTO,
+      corpo: e1Corpo(LOGIN_CONVIDADO)
+    });
+
+    const aparelho = await pessoa.newPage();
+    await abrirLink(aparelho, e1.link);
+    await esperarFormularioDoConvite(aparelho);
+    await expect(aparelho.locator('[role="status"]')).toHaveText('Link lido. Crie a sua senha.');
+    await expect(aparelho.locator('#convite-aviso')).toBeHidden();
+    const semFragmento = await aparelho.evaluate(() => location.hash === '');
+    expect(semFragmento, 'a barra de endereço ficou sem o fragmento depois da carga').toBe(true);
+
+    await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 1');
+    expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo convite (caso 1)').toBe(true);
+    const naHome = await aparelho.evaluate(() => location.pathname === '/');
+    expect(naHome, 'caso 1: a pessoa chegou à Home').toBe(true);
+  } finally {
+    await pessoa.close();
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 2: sem JavaScript, o aviso aparece, o formulário fica escondido e nada grava', async ({
+  browser
+}) => {
+  test.setTimeout(120_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    anotarToken('2', caminho);
+    const usuariosAntes = readFileSync(join(PRIVADO, 'usuarios.json'));
+
+    const pessoa = await browser.newContext({
+      ...devices['Desktop Chrome'],
+      baseURL: ORIGEM,
+      javaScriptEnabled: false
+    });
+    try {
+      const pedidos = gravarPedidos(pessoa);
+      const aparelho = await pessoa.newPage();
+      await abrirLink(aparelho, `${ORIGEM}${caminho}`);
+      await expect(aparelho.locator('#convite-aviso')).toHaveText(AVISO_SEM_JS);
+      await expect(aparelho.locator('#convite-aviso')).toBeVisible();
+      await expect(aparelho.locator('#convite-form')).toBeHidden();
+      expect(await postsDoContexto(pedidos), 'caso 2: nenhum POST sem JavaScript').toBe(0);
+    } finally {
+      await pessoa.close();
+    }
+    const nadaGravou = readFileSync(join(PRIVADO, 'usuarios.json')).equals(usuariosAntes);
+    expect(nadaGravou, 'caso 2: usuarios.json igual byte a byte depois da visita').toBe(true);
+  } finally {
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 3: com o convite.js bloqueado, o mesmo aviso aparece e o formulário fica escondido', async ({
+  browser
+}) => {
+  test.setTimeout(120_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    anotarToken('3', caminho);
+
+    const pessoa = await novaPessoa(browser);
+    let bloqueados = 0;
+    await pessoa.route(
+      (url) => url.pathname === '/convite.js',
+      async (rota) => {
+        bloqueados += 1;
+        await rota.abort();
+      }
+    );
+    try {
+      const pedidos = gravarPedidos(pessoa);
+      const aparelho = await pessoa.newPage();
+      await abrirLink(aparelho, `${ORIGEM}${caminho}`);
+      await expect(aparelho.locator('#convite-aviso')).toHaveText(AVISO_SEM_JS);
+      await expect(aparelho.locator('#convite-form')).toBeHidden();
+      expect(
+        bloqueados,
+        'caso 3: o pedido de /convite.js foi abortado pelo menos uma vez'
+      ).toBeGreaterThan(0);
+      expect(await postsDoContexto(pedidos), 'caso 3: nenhum POST com o script bloqueado').toBe(0);
+    } finally {
+      await pessoa.close();
+    }
+  } finally {
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 4: com JavaScript e sem fragmento (cliente que cortou o #), o aviso de link incompleto aparece', async ({
+  browser
+}) => {
+  test.setTimeout(120_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    anotarToken('4', caminho);
+    const semFragmento = caminho.replace(/#t=[0-9a-f]{64}$/, '');
+    expect(semFragmento.includes('#'), 'caso 4: o caminho de teste não tem fragmento').toBe(false);
+
+    const pessoa = await novaPessoa(browser);
+    try {
+      const pedidos = gravarPedidos(pessoa);
+      const aparelho = await pessoa.newPage();
+      await abrirLink(aparelho, `${ORIGEM}${semFragmento}`);
+      await expect(aparelho.locator('#convite-aviso')).toHaveText(AVISO_LINK_INCOMPLETO);
+      await expect(aparelho.locator('#convite-form')).toBeHidden();
+      expect(await postsDoContexto(pedidos), 'caso 4: nenhum POST sem o fragmento').toBe(0);
+    } finally {
+      await pessoa.close();
+    }
+  } finally {
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 5: link legado com ?t= leva por 303 ao fragmento, mostra o formulário e cria a senha', async ({
+  browser
+}) => {
+  test.setTimeout(180_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    const token = pegarToken(caminho);
+    anotarToken('5', caminho);
+    const pessoa = await novaPessoa(browser);
+    try {
+      const aparelho = await pessoa.newPage();
+      const resposta = await aparelho.goto(`${ORIGEM}/api/convite.php?t=${token}`);
+      const primeiro = await resposta?.request().redirectedFrom()?.response();
+      expect(primeiro?.status(), 'caso 5: o link legado responde 303').toBe(303);
+      const destino = primeiro?.headers()['location'] ?? '';
+      expect(destino === `/api/convite.php#t=${token}`, 'caso 5: o 303 leva ao fragmento').toBe(
+        true
+      );
+      await esperarFormularioDoConvite(aparelho);
+      await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 5, link legado');
+      expect(await sessaoAutenticada(pessoa), 'caso 5: sessão aberta pelo link legado').toBe(true);
+    } finally {
+      await pessoa.close();
+    }
+  } finally {
+    await contextoAdmin.close();
+  }
+});
+
+test('V17-C8 caso 6: link usado mostra M2 e link vencido mostra M1, ambos depois do POST, sem consultar antes', async ({
+  browser
+}) => {
+  test.setTimeout(240_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  const pessoa = await novaPessoa(browser);
+  try {
+    const caminhoUsado = await criarConviteParaCaso(admin, LOGIN_CONVIDADO);
+    anotarToken('6', caminhoUsado);
+    const aparelho = await pessoa.newPage();
+    await abrirLink(aparelho, `${ORIGEM}${caminhoUsado}`);
+    await esperarFormularioDoConvite(aparelho);
+    await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 6, uso que cria a senha');
+    await tentarLinkPeloFormulario(
+      aparelho,
+      `${ORIGEM}${caminhoUsado}`,
+      M2,
+      410,
+      'caso 6, link usado'
+    );
+
+    const caminhoVencido = await criarConviteParaCaso(admin, 'vencido-sintetico');
+    anotarToken('6', caminhoVencido);
+    const arquivo = join(PRIVADO, 'usuarios.json');
+    const modoAntes = statSync(arquivo).mode;
+    const hashAntes = pegarHashDoConvite(arquivo, 'vencido-sintetico');
+    const dados = JSON.parse(readFileSync(arquivo, 'utf8')) as {
+      usuarios: { usuario: string; convite?: { expiraEm: number } }[];
+    };
+    const conta = dados.usuarios.find((c) => c.usuario === 'vencido-sintetico');
+    expect(conta?.convite !== undefined, 'caso 6: a conta vencida tem convite pendente').toBe(true);
+    conta!.convite!.expiraEm = 1;
+    writeFileSync(arquivo, JSON.stringify(dados, null, 2));
+    const mudou = pegarHashDoConvite(arquivo, 'vencido-sintetico');
+    expect(mudou === hashAntes, 'caso 6: o hash do convite não mudou ao vencer').toBe(true);
+    expect(statSync(arquivo).mode === modoAntes, 'caso 6: modo do usuarios.json preservado').toBe(
+      true
+    );
+    const venceu = pegarExpiracao(arquivo, 'vencido-sintetico') === 1;
+    expect(venceu, 'caso 6: a expiração chegou ao arquivo antes do POST').toBe(true);
+
+    await tentarLinkPeloFormulario(
+      aparelho,
+      `${ORIGEM}${caminhoVencido}`,
+      M1,
+      410,
+      'caso 6, link vencido'
+    );
+  } finally {
+    await pessoa.close();
+    await contextoAdmin.close();
+  }
+});
+
+function pegarHashDoConvite(arquivo: string, usuario: string): string {
+  const dados = JSON.parse(readFileSync(arquivo, 'utf8')) as {
+    usuarios: { usuario: string; convite?: { hash: string } }[];
+  };
+  return dados.usuarios.find((c) => c.usuario === usuario)?.convite?.hash ?? '';
+}
+
+function pegarExpiracao(arquivo: string, usuario: string): number {
+  const dados = JSON.parse(readFileSync(arquivo, 'utf8')) as {
+    usuarios: { usuario: string; convite?: { expiraEm: number } }[];
+  };
+  return dados.usuarios.find((c) => c.usuario === usuario)?.convite?.expiraEm ?? -1;
 }

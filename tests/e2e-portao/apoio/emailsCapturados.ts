@@ -148,10 +148,13 @@ export function caminhoDoLinkNoCorpo(corpo: string): string | undefined {
   return achado?.[1];
 }
 
-/** O corpo com o link trocado por `<link>`, para comparar com o texto do líder sem deixar o token em mensagem. */
+/**
+ * O corpo com todos os links trocados por `<link>`, para comparar com o texto do líder sem deixar o token em
+ * mensagem. O e-mail traz o endereço DUAS vezes (link e cópia, C2): sem `g`, a segunda linha vazaria o token.
+ */
 export function corpoSemLink(corpo: string): string {
   const origem = ORIGEM_NO_EMAIL.replace(/[.]/g, '\\.');
-  return corpo.replace(new RegExp(`^${origem}/api/convite\\.php#t=[0-9a-f]{64}$`, 'm'), '<link>');
+  return corpo.replace(new RegExp(`^${origem}/api/convite\\.php#t=[0-9a-f]{64}$`, 'gm'), '<link>');
 }
 
 /** Verdadeiro se, depois da marca, nenhuma mensagem completa (do DATA ao ponto final) chegou ao SMTP falso. */

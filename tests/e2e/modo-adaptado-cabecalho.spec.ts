@@ -67,30 +67,290 @@ function seletorDoTitulo(caminho: string): string {
 const LARGURAS_DO_CABECALHO = [320, 360, 412, 768, 1280];
 
 /**
- * Falha de produto já conhecida (catálogo do TODO.md: E2E-G1-320 e
- * E2E-G1A-ADAPTADO). Cada entrada aponta UMA combinação rota × modo × largura
- * com medida. Só essa combinação recebe `test.fail()` e o ID no título: quando
- * o conserto chegar, o caso fica vermelho e a marca sai.
- *
- * Medidas: `/p/p1/intr-direito/u1`, modo normal, 320px, cabeçalho fixo de 266px
- * contra o teto de 256px (A3, relatorio.txt, item 1c). O modo adaptado a 360px
- * (E2E-G1A-ADAPTADO) não tem rota medida nesta lista e ainda não foi marcado.
+ * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma
+ * largura e um modo, e a lista exata das rotas que o mapa vermelho do M0 mediu
+ * (relatório do M0, camada 2, base b1 = 810d537). Total por projeto: 55 + 162 + 12 = 229 casos. Só essas
+ * combinações recebem `test.fail()` e o ID no título: quando o conserto chegar,
+ * o caso fica vermelho e a marca sai. Qualquer vermelho fora desta lista é item
+ * novo da INBOX, com marca própria (regra D5 do plano).
  */
-interface FalhaConhecida {
+interface GrupoDeFalha {
   id: string;
-  caminho: string;
-  modoAdaptado: boolean;
   largura: number;
+  modoAdaptado: boolean;
   motivo: string;
+  rotas: readonly string[];
 }
 
-const FALHAS_CONHECIDAS: readonly FalhaConhecida[] = [
+const FALHAS_CONHECIDAS: readonly GrupoDeFalha[] = [
   {
     id: 'E2E-G1-320',
-    caminho: '/p/p1/intr-direito/u1',
-    modoAdaptado: false,
     largura: 320,
-    motivo: 'cabeçalho fixo de 266px contra o teto de 256px (E2E-G1-320)'
+    modoAdaptado: false,
+    motivo: 'cabeçalho fixo acima de 256px a 320px, modo normal (E2E-G1-320)',
+    rotas: [
+      '/p/p1/filosofia-juridica/u1',
+      '/p/p1/filosofia-juridica/u1/fichamento',
+      '/p/p1/filosofia-juridica/u1/mapa',
+      '/p/p1/filosofia-juridica/u1/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/fichamento',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mapa',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
+      '/p/p1/intr-direito/u1',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/fichamento',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mapa',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/texto',
+      '/p/p1/intr-direito/u3-livro-teoria-pura',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/fichamento',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mapa',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/texto',
+      '/p/p1/intr-direito/u3-livro-textura-aberta',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/fichamento',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mapa',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/texto',
+      '/p/p1/intr-direito/u3-material-danos-morais',
+      '/p/p1/intr-direito/u3-material-danos-morais/fichamento',
+      '/p/p1/intr-direito/u3-material-danos-morais/mapa',
+      '/p/p1/intr-direito/u3-material-danos-morais/mnemonicos',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mapa',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos',
+      '/p/p1/redacao-juridica-1/u1',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos',
+      '/p/p1/sociologia-juridica/u1',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital',
+      '/p/p1/sociologia-juridica/u3-eca-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital/texto'
+    ]
+  },
+  {
+    id: 'E2E-G1A-ADAPTADO',
+    largura: 360,
+    modoAdaptado: true,
+    motivo: 'modo adaptado: título fora da primeira tela (E2E-G1A-ADAPTADO)',
+    rotas: [
+      '/p/p1/filosofia-juridica/u1',
+      '/p/p1/filosofia-juridica/u1/fichamento',
+      '/p/p1/filosofia-juridica/u1/mapa',
+      '/p/p1/filosofia-juridica/u1/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/fichamento',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mapa',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
+      '/p/p1/intr-direito/u1',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/fichamento',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mapa',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/texto',
+      '/p/p1/intr-direito/u3-livro-teoria-pura',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/fichamento',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mapa',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/texto',
+      '/p/p1/intr-direito/u3-livro-textura-aberta',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/fichamento',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mapa',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/texto',
+      '/p/p1/intr-direito/u3-material-danos-morais',
+      '/p/p1/intr-direito/u3-material-danos-morais/fichamento',
+      '/p/p1/intr-direito/u3-material-danos-morais/mapa',
+      '/p/p1/intr-direito/u3-material-danos-morais/mnemonicos',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mapa',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos',
+      '/p/p1/redacao-juridica-1/u1',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos',
+      '/p/p1/sociologia-juridica/u1',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital',
+      '/p/p1/sociologia-juridica/u3-eca-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital/texto'
+    ]
+  },
+  {
+    id: 'E2E-G1A-ADAPTADO',
+    largura: 412,
+    modoAdaptado: true,
+    motivo: 'modo adaptado: título fora da primeira tela (E2E-G1A-ADAPTADO)',
+    rotas: [
+      '/p/p1/filosofia-juridica/u1',
+      '/p/p1/filosofia-juridica/u1/fichamento',
+      '/p/p1/filosofia-juridica/u1/mapa',
+      '/p/p1/filosofia-juridica/u1/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/fichamento',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mapa',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
+      '/p/p1/intr-direito/u1',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/fichamento',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mapa',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/texto',
+      '/p/p1/intr-direito/u3-livro-teoria-pura',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/fichamento',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mapa',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/texto',
+      '/p/p1/intr-direito/u3-livro-textura-aberta',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/fichamento',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mapa',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/texto',
+      '/p/p1/intr-direito/u3-material-danos-morais',
+      '/p/p1/intr-direito/u3-material-danos-morais/fichamento',
+      '/p/p1/intr-direito/u3-material-danos-morais/mapa',
+      '/p/p1/intr-direito/u3-material-danos-morais/mnemonicos',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mapa',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos',
+      '/p/p1/redacao-juridica-1/u1',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos',
+      '/p/p1/sociologia-juridica/u1',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital',
+      '/p/p1/sociologia-juridica/u3-eca-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital/texto'
+    ]
+  },
+  {
+    id: 'E2E-G1A-ADAPTADO',
+    largura: 768,
+    modoAdaptado: true,
+    motivo: 'modo adaptado: título fora da primeira tela (E2E-G1A-ADAPTADO)',
+    rotas: [
+      '/p/p1/filosofia-juridica/u1/fichamento',
+      '/p/p1/filosofia-juridica/u1/mapa',
+      '/p/p1/filosofia-juridica/u1/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/fichamento',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mapa',
+      '/p/p1/filosofia-juridica/u3-decisao-perspectiva-racial/mnemonicos',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/fichamento',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mapa',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-regras-primarias-secundarias/texto',
+      '/p/p1/intr-direito/u3-livro-teoria-pura',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/fichamento',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mapa',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-teoria-pura/texto',
+      '/p/p1/intr-direito/u3-livro-textura-aberta',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/fichamento',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mapa',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/mnemonicos',
+      '/p/p1/intr-direito/u3-livro-textura-aberta/texto',
+      '/p/p1/intr-direito/u3-material-danos-morais',
+      '/p/p1/intr-direito/u3-material-danos-morais/fichamento',
+      '/p/p1/intr-direito/u3-material-danos-morais/mapa',
+      '/p/p1/intr-direito/u3-material-danos-morais/mnemonicos',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/fichamento',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mapa',
+      '/p/p1/intr-direito/u3-material-norma-interpretacao/mnemonicos',
+      '/p/p1/redacao-juridica-1/u1',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-artigos-infancia-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital',
+      '/p/p1/sociologia-juridica/u3-eca-digital/fichamento',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mapa',
+      '/p/p1/sociologia-juridica/u3-eca-digital/mnemonicos',
+      '/p/p1/sociologia-juridica/u3-eca-digital/texto'
+    ]
+  },
+  {
+    id: 'E2E-ADAPTADO-FIXO-1280',
+    largura: 1280,
+    modoAdaptado: true,
+    motivo: 'modo adaptado a 1280px: cabeçalho fixo acima de 256px (E2E-ADAPTADO-FIXO-1280)',
+    rotas: [
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
+      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
+      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos'
+    ]
   }
 ];
 
@@ -98,9 +358,9 @@ function falhaConhecida(
   caminho: string,
   modoAdaptado: boolean,
   largura: number
-): FalhaConhecida | undefined {
+): GrupoDeFalha | undefined {
   return FALHAS_CONHECIDAS.find(
-    (f) => f.caminho === caminho && f.modoAdaptado === modoAdaptado && f.largura === largura
+    (g) => g.largura === largura && g.modoAdaptado === modoAdaptado && g.rotas.includes(caminho)
   );
 }
 

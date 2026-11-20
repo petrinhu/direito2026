@@ -748,6 +748,20 @@ teste('convite: C18 30 falhas de token do mesmo IP: a seguinte dá 429; um link 
     igual(303, cvb2EnviarDeOutroIp($c, cvb2Campos($token, $csrf, CVB2_SENHA), '127.0.0.2')->status, 'link válido de outro IP segue entrando');
 });
 
+// ---- C18b: a reserva do IP volta a cada link válido (C4, mutante M6 de convite.php:47) ---------
+
+teste('convite: C18b 31 links válidos seguidos do mesmo IP entram: o sucesso devolve a reserva, e só a falha conta', function (): void {
+    $a = Ambiente::novo();
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
+    $status = [];
+    for ($i = 1; $i <= 31; $i++) {
+        $token = cvb2Convidar($a, 'conta' . $i);
+        $status[] = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA))->status;
+    }
+    igual(array_fill(0, 31, 303), $status, '31 POST válidos do mesmo IP: todos 303, nenhum 429');
+});
+
 // ---- C19: t ausente, lista, 63 ou 65 hex, maiúsculas: M3 com 404 e nada no erros.log ---------
 
 teste('convite: C19 t ausente, lista, 63 ou 65 hex, maiúsculas: M3 com 404, e nenhuma linha nova no erros.log com o valor enviado', function (): void {

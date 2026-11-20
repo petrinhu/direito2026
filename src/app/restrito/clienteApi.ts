@@ -63,8 +63,8 @@ export type AcaoUsuario =
       readonly usuario: string;
     };
 
-/** Caminho do convite que o servidor devolve ao criar e ao redefinir: o painel compõe o endereço com `location.origin`. */
-const CAMINHO_CONVITE = /^\/api\/convite\.php\?t=[0-9a-f]{64}$/;
+/** Caminho do convite que o servidor devolve ao criar e ao redefinir: o token vai no fragmento (#t=), nunca na consulta. O painel compõe o endereço com `location.origin`. */
+const CAMINHO_CONVITE = /^\/api\/convite\.php#t=[0-9a-f]{64}$/;
 
 export interface ClienteApi {
   sessao(): Promise<RespostaSessao>;

@@ -7,7 +7,7 @@ import type { ResultadoAdministracao } from '@/app/sessao/administracao';
 
 /** Token sintético: 64 hex, a forma do convite, sem valor real. */
 const TOKEN = 'ab12'.repeat(16);
-const CAMINHO_CONVITE = `/api/convite.php?t=${TOKEN}`;
+const CAMINHO_CONVITE = `/api/convite.php#t=${TOKEN}`;
 /** Origem que não é a do jsdom nem a de produção: só `location.origin` explica o endereço composto. */
 const ORIGEM_DE_TESTE = 'https://origem-de-teste.invalid';
 const TEXTO_VALIDADE =
@@ -390,7 +390,7 @@ describe('PainelAdmin, link de convite (CV-F1)', () => {
     const acaoUsuario = vi
       .fn()
       .mockResolvedValueOnce({ convite: CAMINHO_CONVITE })
-      .mockResolvedValueOnce({ convite: `/api/convite.php?t=${outro}` });
+      .mockResolvedValueOnce({ convite: `/api/convite.php#t=${outro}` });
     vi.stubGlobal('location', { ...window.location, origin: ORIGEM_DE_TESTE });
     const { w } = montar({ acaoUsuario });
     await flushPromises();

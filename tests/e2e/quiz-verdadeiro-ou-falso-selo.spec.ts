@@ -29,12 +29,11 @@ const curriculo = await curriculoDoDisco();
  * selo como texto sem fundo colorido no modo adaptado, duas opções fixas sem
  * letra, resposta por teclado e largura útil a 320px e 360px.
  *
- * Nenhum quiz publicado até esta data tem verdadeiro ou falso nem selo, então
- * cada teste varre a rodada inteira lendo o que a TELA mostra e, se a unidade
- * não tiver nenhum dos dois, se declara ignorado (skip) com o motivo. Um
- * teste que não encontra nada e passa seria portão falso; por isso o skip é
- * explícito. Passam a rodar sozinhos quando a unidade de Filosofia Jurídica
- * for publicada.
+ * Cada teste varre a rodada inteira lendo o que a TELA mostra e confere os
+ * selos contra a origem de cada pergunta no conteúdo, sem fixar quantos selos
+ * a unidade deve ter. Se a unidade não tiver nenhum dos dois, o teste se
+ * declara ignorado (skip) com o motivo: um teste que não encontra nada e
+ * passa seria portão falso, por isso o skip é explícito.
  *
  * Este arquivo não foi executado por quem o escreveu (L-50, só o QA roda
  * navegador, em caixa isolada); só `playwright test --list` foi conferido.
@@ -174,8 +173,8 @@ const QUIZ_POR_UNIDADE: Record<string, readonly PerguntaQuiz[]> = {
   'p1/sociologia-juridica/u3-eca-digital': quizSociologiaEca,
   'p1/filosofia-juridica/u1': quizFilosofiaU1,
   'p1/filosofia-juridica/u3-moderna-contemporanea': quizFilosofiaU3,
-  // Sem pergunta do professor (origem 'professor'): aqui o certo é zero selos, e o
-  // teste confere que a tela não põe selo em nenhuma verdadeiro ou falso destas.
+  // Pode haver perguntas de origem 'professor' nesta unidade e pode não haver: o teste
+  // não fixa a quantidade de selos, só confere a tela contra a origem lida do conteúdo.
   'p1/filosofia-juridica/u3-decisao-perspectiva-racial': quizFilosofiaDecisao,
   'p1/redacao-juridica-1/u3-material-caso-geladeira': quizRedacaoGeladeira,
   'p1/redacao-juridica-1/u3-material-peticao-consumidor': quizRedacaoPeticao

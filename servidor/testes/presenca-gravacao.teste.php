@@ -92,3 +92,15 @@ teste('presença: falha ao gravar a presença não derruba o login: entra, sem t
     $log = (string) @file_get_contents($a->priv . '/erros.log');
     igual(1, substr_count($log, 'gravação da presença falhou'), 'uma linha só no erros.log, mesmo com dois logins');
 });
+
+teste('presença: o arquivo gravado é igual byte a byte ao formato do ar (5a500eb), com entrada fixa', function (): void {
+    require_once RAIZ_REPO . '/public/api/nucleo/presenca.php';
+    $priv = dirTemporario();
+    mkdir($priv . '/presenca', 0700);
+    d26_presenca_gravar($priv, 'ana', str_repeat('ab', 32), 3, 1700000000, 1700000060);
+    igual(
+        '{"m":"abababababababababababababababababababababababababababababababab","v":3,"a":1700000060,"c":1700000000}',
+        (string) file_get_contents(d26_presenca_arquivo($priv, 'ana')),
+        'bytes iguais aos do json_encode de 5a500eb (presenca.php:50): ordem m, v, a, c, sem espaço e sem quebra de linha'
+    );
+}, false);

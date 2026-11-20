@@ -122,14 +122,14 @@ describe('clienteApi', () => {
           ]
         }
       },
-      { json: { ok: true, convite: `/api/convite.php?t=${TOKEN_FALSO}`, email: 'falhou' } },
+      { json: { ok: true, convite: `/api/convite.php#t=${TOKEN_FALSO}`, email: 'falhou' } },
       { json: { ok: true } }
     ]);
     const cliente = criarClienteApi({ buscar: f.buscar });
     await cliente.sessao();
     expect((await cliente.listarUsuarios())[0]!.usuario).toBe('a');
     expect(await cliente.acaoUsuario({ acao: 'redefinir', usuario: 'b' })).toEqual({
-      convite: `/api/convite.php?t=${TOKEN_FALSO}`,
+      convite: `/api/convite.php#t=${TOKEN_FALSO}`,
       email: 'falhou'
     });
     await cliente.acaoUsuario({ acao: 'excluir', usuario: 'b' });
@@ -157,9 +157,13 @@ describe('clienteApi', () => {
     });
 
     it.each([
-      ['endereço de outro site', `https://outro.invalid/api/convite.php?t=${TOKEN_FALSO}`],
-      ['token curto', '/api/convite.php?t=abc'],
-      ['token em maiúsculas', `/api/convite.php?t=${TOKEN_FALSO.toUpperCase()}`],
+      ['endereço de outro site', `https://outro.invalid/api/convite.php#t=${TOKEN_FALSO}`],
+      ['token curto', '/api/convite.php#t=abc'],
+      ['token em maiúsculas', `/api/convite.php#t=${TOKEN_FALSO.toUpperCase()}`],
+      [
+        'forma antiga, com ?t= e token válido (o servidor não manda mais)',
+        `/api/convite.php?t=${TOKEN_FALSO}`
+      ],
       ['não é texto', 42]
     ])('convite fora da forma (%s) é resposta inválida', async (_nome, convite) => {
       await expect(agir({ convite })).rejects.toMatchObject({
@@ -170,7 +174,7 @@ describe('clienteApi', () => {
   });
 
   describe('e-mail da conta (EM-F1)', () => {
-    const convite = `/api/convite.php?t=${TOKEN_FALSO}`;
+    const convite = `/api/convite.php#t=${TOKEN_FALSO}`;
 
     async function agir(corpo: Record<string, unknown>) {
       const f = criarFetchFalso([sessaoAnonima, { json: { ok: true, ...corpo } }]);

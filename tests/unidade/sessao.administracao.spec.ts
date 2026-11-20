@@ -73,7 +73,7 @@ describe('criarAdministrar, tradução de erro da administração', () => {
 describe('criarAdministrar, ação sobre usuário com convite (CV-F1)', () => {
   it('o caminho do convite chega intacto ao painel e a senha provisória não existe mais no contrato', async () => {
     const cliente = criarClienteFalso();
-    const caminho = `/api/convite.php?t=${'0123456789abcdef'.repeat(4)}`;
+    const caminho = `/api/convite.php#t=${'0123456789abcdef'.repeat(4)}`;
     cliente.acaoUsuario.mockResolvedValueOnce({ convite: caminho } as never);
     const administrar = criarAdministrar(cliente, vi.fn());
     const r = await administrar((c) => c.acaoUsuario({ acao: 'redefinir', usuario: 'ana' }));
@@ -93,7 +93,7 @@ describe('criarAdministrar, ação sobre usuário com convite (CV-F1)', () => {
 describe('criarAdministrar, e-mail da conta (EM-F1)', () => {
   it('o resultado do envio do e-mail chega ao painel junto com o caminho do convite', async () => {
     const cliente = criarClienteFalso();
-    const caminho = `/api/convite.php?t=${'0123456789abcdef'.repeat(4)}`;
+    const caminho = `/api/convite.php#t=${'0123456789abcdef'.repeat(4)}`;
     cliente.acaoUsuario.mockResolvedValueOnce({ convite: caminho, email: 'enviado' } as never);
     const administrar = criarAdministrar(cliente, vi.fn());
     const r = await administrar((c) =>

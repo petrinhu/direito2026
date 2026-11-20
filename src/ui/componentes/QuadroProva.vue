@@ -178,8 +178,12 @@ function abrirCalendario(): void {
   max-width: min(100%, 22rem);
 }
 
+/* Quebra quando não cabe (WCAG 2.2, técnica C31; E2E-G1-320): a 320 px no modo adaptado a linha
+   tinha 295 px de conteúdo em 218 px e a página rolava 26 px de lado. Sem order nem reverse, para a
+   ordem de Tab seguir a visual. */
 .quadro-prova__topo {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--esp-3, 0.75rem);
@@ -250,6 +254,9 @@ function abrirCalendario(): void {
 }
 
 .quadro-prova__alternar {
+  /* Nunca menor que o próprio texto (E2E-G1-320): com o piso de 44 px o botão encolhia até ele e o
+     texto de 79 px vazava da caixa. */
+  flex-shrink: 0;
   min-height: 44px;
   min-width: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);

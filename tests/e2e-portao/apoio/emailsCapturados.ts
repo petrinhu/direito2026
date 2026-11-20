@@ -141,17 +141,17 @@ export async function esperarEmail(
   return achado!;
 }
 
-/** A linha do corpo que é só o link: sozinho na própria linha (8.1.6), com a origem do site em produção. */
+/** A linha do corpo que é só o link: sozinho na própria linha (8.1.6), com a origem do site em produção. O token vai no fragmento (C1). */
 export function caminhoDoLinkNoCorpo(corpo: string): string | undefined {
   const origem = ORIGEM_NO_EMAIL.replace(/[.]/g, '\\.');
-  const achado = new RegExp(`^${origem}(/api/convite\\.php\\?t=[0-9a-f]{64})$`, 'm').exec(corpo);
+  const achado = new RegExp(`^${origem}(/api/convite\\.php#t=[0-9a-f]{64})$`, 'm').exec(corpo);
   return achado?.[1];
 }
 
 /** O corpo com o link trocado por `<link>`, para comparar com o texto do líder sem deixar o token em mensagem. */
 export function corpoSemLink(corpo: string): string {
   const origem = ORIGEM_NO_EMAIL.replace(/[.]/g, '\\.');
-  return corpo.replace(new RegExp(`^${origem}/api/convite\\.php\\?t=[0-9a-f]{64}$`, 'm'), '<link>');
+  return corpo.replace(new RegExp(`^${origem}/api/convite\\.php#t=[0-9a-f]{64}$`, 'm'), '<link>');
 }
 
 /** Verdadeiro se, depois da marca, nenhuma mensagem completa (do DATA ao ponto final) chegou ao SMTP falso. */

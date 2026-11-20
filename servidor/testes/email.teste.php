@@ -419,6 +419,8 @@ function emailB3CorpoConvite(string $login, string $link): string
     return "Olá.\n\n"
         . "Foi criado um acesso para você, com o usuário {$login}.\n\n"
         . "Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
         . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.";
@@ -430,6 +432,8 @@ function emailB3CorpoRedefinicao(string $login, string $link): string
     return "Olá.\n\n"
         . "Quem administra o site redefiniu a senha do usuário {$login}. A senha antiga parou de valer.\n\n"
         . "Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Esta caixa não recebe respostas.";
 }

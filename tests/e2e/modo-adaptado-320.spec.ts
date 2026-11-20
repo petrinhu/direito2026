@@ -11,7 +11,15 @@ import { test, expect } from './apoio/sessaoDoEstudo';
  */
 test.use({ viewport: { width: 320, height: 800 } });
 
+/**
+ * Relógio fixo (E2E-G1-320, decisão de 20/11/2026): a faixa do quadro de prova muda o tamanho da
+ * pílula (QuadroProva.vue) e, com ela, a largura da linha do topo. Sem data fixa o resultado depende
+ * do dia em que o teste roda. 14/11/2026 é a data da sonda da a11y que mediu 346 px contra 320.
+ */
+const DATA_FIXA = '2026-11-14T12:00:00-03:00';
+
 async function ligarModoAdaptado(page: import('@playwright/test').Page, caminho: string) {
+  await page.clock.setFixedTime(new Date(DATA_FIXA));
   await page.addInitScript(() => {
     localStorage.setItem('caderno-direito:v1:modo-adaptado', 'true');
   });
@@ -43,4 +51,34 @@ test('em 320px, com o modo adaptado ligado, a página de unidade não estoura a 
   expect(larguraDocumento, `scrollWidth ${larguraDocumento} vs clientWidth ${larguraJanela}`).toBe(
     larguraJanela
   );
+});
+
+test('em 320px, com o modo adaptado ligado, o botão do quadro de prova cabe no próprio texto', async ({
+  page
+}) => {
+  await ligarModoAdaptado(page, '/p/p1/intr-direito/u1');
+  await page.locator('aside.quadro-prova .quadro-prova__alternar').waitFor({ state: 'visible' });
+
+  const botao = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>('aside.quadro-prova .quadro-prova__alternar')!;
+    const caixa = el.getBoundingClientRect();
+    const alvo = document.elementFromPoint(
+      caixa.left + caixa.width / 2,
+      caixa.top + caixa.height / 2
+    );
+    return {
+      larguraTexto: el.scrollWidth,
+      larguraBotao: el.clientWidth,
+      largura: caixa.width,
+      altura: caixa.height,
+      coberto: !(alvo === el || el.contains(alvo))
+    };
+  });
+
+  expect(botao.larguraTexto, 'texto do botão não passa da largura do botão').toBeLessThanOrEqual(
+    botao.larguraBotao
+  );
+  expect(botao.largura, 'alvo de toque com 44 px de largura').toBeGreaterThanOrEqual(44);
+  expect(botao.altura, 'alvo de toque com 44 px de altura').toBeGreaterThanOrEqual(44);
+  expect(botao.coberto, 'botão não coberto por outro elemento').toBe(false);
 });

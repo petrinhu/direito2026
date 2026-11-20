@@ -19,9 +19,11 @@ const curriculo = await curriculoDoDisco();
  * navegador real (jsdom não faz layout):
  *
  * 1. no topo da página, o primeiro título (h1 ou h2 do conteúdo) começa
- *    abaixo do cabeçalho e aparece na primeira tela; se o cabeçalho for
- *    fixo, ocupa no máximo 40% da altura da janela (senão tem de sair do
- *    fluxo fixo);
+ *    abaixo do cabeçalho, e a PRIMEIRA LINHA dele (topo mais altura de linha)
+ *    cabe na primeira tela de 640 px (aceite A2 da onda, plano 3.1; antes
+ *    deste spec só pedia o topo abaixo de 640, o que deixou passar o F5-01);
+ *    se o cabeçalho for fixo, ocupa no máximo 40% da altura da janela (senão
+ *    tem de sair do fluxo fixo);
  * 2. depois de rolar, todo texto do cabeçalho mantém contraste >= 7:1 contra
  *    o fundo REAL em que está (o do próprio elemento composto com os dos
  *    ancestrais), nunca contra "o fundo da página" em geral.
@@ -36,6 +38,7 @@ interface MedidaTitulo {
   alturaCabecalho: number;
   fundoCabecalho: number;
   topoTitulo: number;
+  linhaTitulo: number;
   titulo: string;
 }
 
@@ -121,11 +124,14 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
             (el) => el.getClientRects().length > 0
           )!;
           const caixaCabecalho = cabecalho.getBoundingClientRect();
+          // Altura de linha em px; se o line-height for "normal", cai na altura do título (mesmo critério da sonda reva2).
+          const linha = parseFloat(getComputedStyle(titulo).lineHeight);
           return {
             posicao: getComputedStyle(cabecalho).position,
             alturaCabecalho: caixaCabecalho.height,
             fundoCabecalho: caixaCabecalho.bottom,
             topoTitulo: titulo.getBoundingClientRect().top,
+            linhaTitulo: Number.isFinite(linha) ? linha : titulo.getBoundingClientRect().height,
             titulo: titulo.textContent?.trim().slice(0, 50) ?? ''
           };
         }, seletorDoTitulo(caminho));
@@ -138,9 +144,9 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
         // medido, 433px de cabeçalho): ali só vale "abaixo do cabeçalho".
         if (largura >= LARGURA_MINIMA_DA_PRIMEIRA_TELA) {
           expect(
-            medida.topoTitulo,
-            `${rotulo}: o título começa dentro da primeira tela`
-          ).toBeLessThan(ALTURA_DA_JANELA);
+            medida.topoTitulo + medida.linhaTitulo,
+            `${rotulo}: a primeira linha do título termina na primeira tela (topo ${medida.topoTitulo.toFixed(1)} + linha ${medida.linhaTitulo.toFixed(1)})`
+          ).toBeLessThanOrEqual(ALTURA_DA_JANELA);
         }
         if (medida.posicao === 'fixed') {
           expect(

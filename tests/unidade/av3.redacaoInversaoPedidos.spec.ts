@@ -138,7 +138,8 @@ describe('Redação u3 AV3-R2: perguntas 45 a 52 (prazos, garantia e arrependime
         expect(p?.correta, 'gabarito da pergunta ' + id).toBe(gabaritoVf);
       } else {
         expect(p?.tipo, 'tipo da pergunta ' + id).not.toBe('verdadeiro-ou-falso');
-        expect(p?.alternativasHtml, 'alternativas da pergunta ' + id).toHaveLength(5);
+        const multipla = p?.tipo !== 'verdadeiro-ou-falso' ? p : undefined;
+        expect(multipla?.alternativasHtml, 'alternativas da pergunta ' + id).toHaveLength(5);
         expect(p?.correta, 'correta da pergunta ' + id).toBeGreaterThanOrEqual(0);
         expect(p?.correta, 'correta da pergunta ' + id).toBeLessThan(5);
       }

@@ -1780,12 +1780,12 @@ test('V17-C8 caso 1: com JavaScript, do e-mail sintético à senha criada e à H
     await esperarFormularioDoConvite(aparelho);
     await expect(aparelho.locator('[role="status"]')).toHaveText('Link lido. Crie a sua senha.');
     await expect(aparelho.locator('#convite-aviso')).toBeHidden();
-    const semFragmento = await aparelho.evaluate(() => location.hash === '');
+    const semFragmento = await aparelho.evaluate(() => window.location.hash === '');
     expect(semFragmento, 'a barra de endereço ficou sem o fragmento depois da carga').toBe(true);
 
     await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 1');
     expect(await sessaoAutenticada(pessoa), 'sessão aberta pelo convite (caso 1)').toBe(true);
-    const naHome = await aparelho.evaluate(() => location.pathname === '/');
+    const naHome = await aparelho.evaluate(() => window.location.pathname === '/');
     expect(naHome, 'caso 1: a pessoa chegou à Home').toBe(true);
   } finally {
     await pessoa.close();

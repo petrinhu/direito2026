@@ -64,7 +64,8 @@ function seletorDoTitulo(caminho: string): string {
   return caminho === '/' ? '#titulo-caderno' : 'main h1, main h2';
 }
 
-const LARGURAS_DO_CABECALHO = [320, 360, 412, 768, 1280];
+// 340 e 348 são as bordas da faixa de 341 a 348 px (F1-b, D15): a regra vai até 348 px.
+const LARGURAS_DO_CABECALHO = [320, 340, 341, 348, 349, 360, 412, 768, 1280];
 
 /**
  * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma

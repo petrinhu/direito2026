@@ -58,8 +58,8 @@ function aoRolar(): void {
   // todo (requisito do líder, "botão visível no cabeçalho, em toda
   // página"), e um cabeçalho que soma e some é movimento que o modo existe
   // para eliminar (docs/modo-adaptado.md, seção 6). Exceção registrada em
-  // docs/modo-adaptado.md, seção 4.1: até 880px o cabeçalho do modo não é
-  // fixo, então o botão fica no topo de cada página, não em toda rolagem.
+  // docs/modo-adaptado.md, seção 4.1: em toda largura o cabeçalho do modo não
+  // é fixo, então o botão fica no topo de cada página, não em toda rolagem.
   if (!prefereMenosMovimento && !props.storeModoAdaptado.efetivo.value) {
     // Limiar de 80px antes de recolher: evita esconder o cabeçalho por
     // um tremor mínimo de rolagem logo no topo da página.
@@ -246,26 +246,24 @@ onBeforeUnmount(() => {
 }
 
 /*
-  Modo adaptado em tela estreita: o cabeçalho sai do fluxo fixo e rola junto
+  Modo adaptado, em toda largura: o cabeçalho sai do fluxo fixo e rola junto
   com a página (achado do QA, 28/09/2026: a 360px ele tinha 433px, cobria o
   título e passava de 2/3 da altura de uma janela de 640px). Com o texto
   maior do modo e a trilha sem reticências (seção 4), nenhum arranjo cabe em
   40% da tela; a pessoa alcança o botão do modo e o tema no topo de cada
-  página, e o título nunca fica escondido. Acima de 880px (mesmo ponto de
-  quebra da gaveta) continua fixo. --altura-cabecalho vira 0px por
+  página, e o título nunca fica escondido. Desde a 1.16.2.0 vale em toda largura
+  (E2E-ADAPTADO-FIXO-1280: a 881px o fixo chegava a 483px). --altura-cabecalho vira 0px por
   publicarAlturaReservada (script acima). A onda e o fio de progresso
   penduram fora da faixa: sem fio (não há o que acompanhar num cabeçalho que
   rola), e a onda ganha margem para não cobrir o início do conteúdo.
 */
-@media (max-width: 880px) {
-  :root[data-modo-adaptado='on'] .barra-topo {
-    position: relative;
-    margin-bottom: var(--esp-4, 1rem);
-  }
+:root[data-modo-adaptado='on'] .barra-topo {
+  position: relative;
+  margin-bottom: var(--esp-4, 1rem);
+}
 
-  :root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
-    display: none;
-  }
+:root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
+  display: none;
 }
 
 .barra-topo--fixa {

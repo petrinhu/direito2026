@@ -151,16 +151,19 @@ const GABARITO_PROFESSOR_UD: ReadonlyArray<readonly [number, boolean]> = [
 ];
 
 describe('Filosofia u3 AV3: perguntas 89 a 92 são do professor (verdadeiro ou falso, origem professor)', () => {
-  it.each(GABARITO_PROFESSOR_UD)('pergunta %i: verdadeiro ou falso, categoria revisao, gabarito %s', (id, correta) => {
-    const p = quiz.find((q) => q.id === id);
-    expect(p?.tipo).toBe('verdadeiro-ou-falso');
-    expect(p?.origem).toBe('professor');
-    expect(p?.categoria).toBe('revisao');
-    expect(p?.fonteExtra).toBe(false);
-    expect(p?.gabaritoDoCaderno).toBeUndefined();
-    expect(p?.correta).toBe(correta);
-    expect(String(p?.explicacaoHtml ?? '').trim()).not.toBe('');
-  });
+  it.each(GABARITO_PROFESSOR_UD)(
+    'pergunta %i: verdadeiro ou falso, categoria revisao, gabarito %s',
+    (id, correta) => {
+      const p = quiz.find((q) => q.id === id);
+      expect(p?.tipo).toBe('verdadeiro-ou-falso');
+      expect(p?.origem).toBe('professor');
+      expect(p?.categoria).toBe('revisao');
+      expect(p?.fonteExtra).toBe(false);
+      expect(p?.gabaritoDoCaderno).toBeUndefined();
+      expect(p?.correta).toBe(correta);
+      expect(String(p?.explicacaoHtml ?? '').trim()).not.toBe('');
+    }
+  );
 
   it('texto das perguntas 89 a 92 não tem travessão nem URL', () => {
     for (const p of quiz.filter((q) => q.id >= 89 && q.id <= 92)) {

@@ -29,6 +29,8 @@ for (const caminho of ROTAS) {
     test(`modo adaptado, ${caminho}: primeira linha do título na primeira tela de ${faixa.de} a ${faixa.ate}px`, async ({
       page
     }) => {
+      // Uma página mede até 256 larguras, e o teto padrão do Playwright é de 30 s por teste. O mais lento
+      // levou 8,6 s no blink (revisão da 1.16.3.0); os 10 min são teto contra travamento, não estimativa.
       test.setTimeout(10 * 60_000);
       await page.clock.setFixedTime(new Date(DATA_FIXA));
       await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
@@ -54,6 +56,8 @@ for (const caminho of ROTAS) {
           };
         });
         medidas++;
+        // Meio pixel de folga, a mesma do spec do cabeçalho (modo-adaptado-cabecalho.spec.ts:142): o topo do
+        // título e o fundo do cabeçalho vêm em frações de pixel.
         if (m.topo < m.fundoCabecalho - 0.5 || m.topo + m.linha > ALTURA_DA_JANELA) {
           falhas.push(
             `${largura}px: topo ${m.topo.toFixed(1)} + linha ${m.linha.toFixed(1)}, cabeçalho até ${m.fundoCabecalho.toFixed(1)}`

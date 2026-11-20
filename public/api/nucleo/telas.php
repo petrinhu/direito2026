@@ -123,7 +123,7 @@ function d26_tela_convite(string $login, string $token, string $csrf, ?string $e
     $titulo = $erro ?? 'Criar senha';
     $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
     return d26_tela_documento($titulo, '<h1>Criar senha</h1>' . $erroHtml
-        . '<form method="post" action="/api/convite.php">'
+        . '<form method="post" action="/api/convite.php?envio">'
         . '<label for="usuario">Usuário</label>'
         . '<input id="usuario" name="usuario" type="text" value="' . d26_tela_e($login) . '" autocomplete="username" readonly>'
         . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
@@ -284,7 +284,7 @@ function d26_tela_convite_casca(string $csrf, string $nonce): string
     $corpo = '<h1>Criar senha</h1>'
         . '<p id="convite-aviso">Para criar a sua senha, esta página precisa do JavaScript ligado no navegador. Ligue o JavaScript e abra de novo o link do e-mail.</p>'
         . '<p role="status" id="convite-status"></p>'
-        . '<form id="convite-form" method="post" action="/api/convite.php" hidden>'
+        . '<form id="convite-form" method="post" action="/api/convite.php?envio" hidden>'
         . '<input type="hidden" name="t" value="">'
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($csrf) . '">'
         . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'

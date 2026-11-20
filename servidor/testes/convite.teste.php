@@ -1113,3 +1113,26 @@ teste('convite: C29 falha ao zerar o contador depois do CAS: a senha fica criada
     verdadeiro(password_verify(CVB2_SENHA, (string) conviteConta($a, 'ana')['hash']), 'a senha nova ficou gravada');
     contem('contadores não zerados (D26Indisponivel)', (string) file_get_contents($a->priv . '/erros.log'), 'o erro foi registrado');
 });
+
+// ---- D13: o resultado do POST mora em /api/convite.php?envio; colar o link ali vira carga nova da casca ----------
+
+teste('convite: D13 a casca e a tela 400 enviam para /api/convite.php?envio, que cria a senha; o POST sem ?envio segue aceito', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $casca = cvb2Casca($c);
+    $csrf = cvb2Campo($casca->corpo, 'csrf');
+    contem('<form id="convite-form" method="post" action="/api/convite.php?envio" hidden>', $casca->corpo, 'a casca envia para ?envio');
+    $form = ['Content-Type' => 'application/x-www-form-urlencoded', 'X-CSRF-Token' => null];
+    $curta = $c->enviar('POST', '/api/convite.php?envio', http_build_query(cvb2Campos($token, $csrf, 'Curta-1')), $form);
+    igual(400, $curta->status, 'senha curta pelo ?envio');
+    contem('<form method="post" action="/api/convite.php?envio">', $curta->corpo, 'a tela 400 reenvia para ?envio');
+    $ok = $c->enviar('POST', '/api/convite.php?envio', http_build_query(cvb2Campos($token, $csrf, CVB2_SENHA)), $form);
+    igual(303, $ok->status, 'o POST com ?envio cria a senha e entra');
+
+    $b = Ambiente::novo();
+    $tokenB = cvb2Convidar($b, 'ana');
+    $cb = $b->cliente();
+    $csrfB = cvb2Campo(cvb2Casca($cb)->corpo, 'csrf');
+    igual(303, cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA))->status, 'o POST sem ?envio (casca aberta antes da publicação) segue aceito');
+});

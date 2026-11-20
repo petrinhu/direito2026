@@ -40,7 +40,7 @@ teste('convite-casca: C3.1 GET sem t: 200 com a casca, formulário escondido, ca
     igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer só com a origem');
     igual('private, no-store', $r->cabecalho('cache-control'), 'sem cache');
     contem('<meta name="referrer" content="strict-origin">', $r->corpo, 'meta de referrer');
-    contem('<form id="convite-form" method="post" action="/api/convite.php" hidden>', $r->corpo, 'formulário escondido, endereço fixo');
+    contem('<form id="convite-form" method="post" action="/api/convite.php?envio" hidden>', $r->corpo, 'formulário escondido, envio em ?envio (D13)');
     contem('<input type="hidden" name="t" value="">', $r->corpo, 'campo t vazio dentro do formulário');
     contem('<p id="convite-aviso">Para criar a sua senha, esta página precisa do JavaScript ligado no navegador. Ligue o JavaScript e abra de novo o link do e-mail.</p>', $r->corpo, 'aviso visível por padrão, texto do líder');
     contem('<p role="status" id="convite-status"></p>', $r->corpo, 'região de status do script');

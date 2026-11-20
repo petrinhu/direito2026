@@ -251,15 +251,27 @@ onBeforeUnmount(() => {
   título e passava de 2/3 da altura de uma janela de 640px). Com o texto
   maior do modo e a trilha sem reticências (seção 4), nenhum arranjo cabe em
   40% da tela; a pessoa alcança o botão do modo e o tema no topo de cada
-  página, e o título nunca fica escondido. Desde a 1.16.2.0 vale em toda largura
+  página, e o título nunca fica escondido. Desde a 1.16.3.0 vale em toda largura
   (E2E-ADAPTADO-FIXO-1280: a 881px o fixo chegava a 483px). --altura-cabecalho vira 0px por
   publicarAlturaReservada (script acima). A onda e o fio de progresso
   penduram fora da faixa: sem fio (não há o que acompanhar num cabeçalho que
-  rola), e a onda ganha margem para não cobrir o início do conteúdo.
+  rola), e a onda ganha margem até 880 px para não cobrir o início do conteúdo.
 */
 :root[data-modo-adaptado='on'] .barra-topo {
   position: relative;
   margin-bottom: var(--esp-4, 1rem);
+}
+
+/*
+  Acima de 880 px o cabeçalho do modo rola sem a margem de baixo (F5-01, decisão do líder de
+  20/11/2026): a margem levava a primeira linha do título a 643 px a 881 px, fora da primeira
+  tela de 640 px. A onda volta a pender sobre os primeiros 14 px abaixo do cabeçalho, como
+  quando ele era fixo nessa faixa. Até 880 px a margem fica.
+*/
+@media (min-width: 881px) {
+  :root[data-modo-adaptado='on'] .barra-topo {
+    margin-bottom: 0;
+  }
 }
 
 :root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {

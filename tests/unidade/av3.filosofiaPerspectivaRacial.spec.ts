@@ -3,8 +3,8 @@ import { quiz } from '../../src/conteudo/p1/filosofia-juridica/u3-decisao-perspe
 import { quizConforme } from '../../scripts/apoio/contagemQuiz';
 
 /**
- * Filosofia u3 (perspectiva racial, AV3, decisão do CPO de 16/11/2026): quiz de 88 perguntas,
- * 44 de múltipla escolha e 44 de verdadeiro ou falso. O gabarito das perguntas 1 a 80 é o que
+ * Filosofia u3 (perspectiva racial, AV3, decisão do CPO de 16/11/2026): quiz de 92 perguntas,
+ * 44 de múltipla escolha e 48 de verdadeiro ou falso (44 do conteúdo da AV3 e 4 do professor, ids 89 a 92). O gabarito das perguntas 1 a 80 é o que
  * estava publicado: a resposta salva de quem já respondeu continua certa (o teste fixa os valores).
  */
 const GABARITO_PUBLICADO: ReadonlyArray<readonly [number, number | boolean]> = [
@@ -101,11 +101,11 @@ function textoDaPergunta(p: {
   return [p.enunciadoHtml, ...(p.alternativasHtml ?? []), p.explicacaoHtml ?? ''].join(' ');
 }
 
-describe('Filosofia u3 AV3: quiz de 88 perguntas (44 e 44)', () => {
-  it('88 perguntas, ids de 1 a 88 sem buraco, 44 de múltipla escolha e 44 de verdadeiro ou falso', () => {
-    expect(quiz).toHaveLength(88);
-    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 88 }, (_, i) => i + 1));
-    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(44);
+describe('Filosofia u3 AV3: quiz de 92 perguntas (44 e 48)', () => {
+  it('92 perguntas, ids de 1 a 92 sem buraco, 44 de múltipla escolha e 48 de verdadeiro ou falso', () => {
+    expect(quiz).toHaveLength(92);
+    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 92 }, (_, i) => i + 1));
+    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(48);
     expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(44);
   });
 
@@ -126,19 +126,47 @@ describe('Filosofia u3 AV3: quiz de 88 perguntas (44 e 44)', () => {
   });
 
   it('perguntas 81 a 88 são da categoria perspectiva-racial; fonteExtra só em 82 e 88', () => {
-    expect(quiz.slice(80)).toHaveLength(8);
-    for (const p of quiz.slice(80)) {
+    expect(quiz.slice(80, 88)).toHaveLength(8);
+    for (const p of quiz.slice(80, 88)) {
       expect(p.categoria, 'categoria da pergunta ' + p.id).toBe('perspectiva-racial');
       expect(p.fonteExtra, 'fonteExtra da pergunta ' + p.id).toBe(p.id === 82 || p.id === 88);
     }
   });
 
   it('texto ao aluno das perguntas novas não tem travessão, URL nem o nome da instituição', () => {
-    for (const p of quiz.slice(80)) {
+    for (const p of quiz.slice(80, 88)) {
       const texto = textoDaPergunta(p);
       expect(TRAVESSAO.test(texto), 'travessão na pergunta ' + p.id).toBe(false);
       expect(URL.test(texto), 'URL na pergunta ' + p.id).toBe(false);
       expect(texto.includes('J\u00fari'), 'menção a área restrita na pergunta ' + p.id).toBe(false);
+    }
+  });
+});
+
+const GABARITO_PROFESSOR_UD: ReadonlyArray<readonly [number, boolean]> = [
+  [89, false],
+  [90, true],
+  [91, false],
+  [92, false]
+];
+
+describe('Filosofia u3 AV3: perguntas 89 a 92 são do professor (verdadeiro ou falso, origem professor)', () => {
+  it.each(GABARITO_PROFESSOR_UD)('pergunta %i: verdadeiro ou falso, categoria revisao, gabarito %s', (id, correta) => {
+    const p = quiz.find((q) => q.id === id);
+    expect(p?.tipo).toBe('verdadeiro-ou-falso');
+    expect(p?.origem).toBe('professor');
+    expect(p?.categoria).toBe('revisao');
+    expect(p?.fonteExtra).toBe(false);
+    expect(p?.gabaritoDoCaderno).toBeUndefined();
+    expect(p?.correta).toBe(correta);
+    expect(String(p?.explicacaoHtml ?? '').trim()).not.toBe('');
+  });
+
+  it('texto das perguntas 89 a 92 não tem travessão nem URL', () => {
+    for (const p of quiz.filter((q) => q.id >= 89 && q.id <= 92)) {
+      const texto = textoDaPergunta(p);
+      expect(TRAVESSAO.test(texto), 'travessão na pergunta ' + p.id).toBe(false);
+      expect(URL.test(texto), 'URL na pergunta ' + p.id).toBe(false);
     }
   });
 });

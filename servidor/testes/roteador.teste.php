@@ -23,7 +23,7 @@ teste('lista fechada: .htaccess e roteador de dev servem direto os mesmos públi
     $roteador = publicosDoRoteador();
     sort($htaccess);
     sort($roteador);
-    igual(['entrada.css', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
+    igual(['convite.js', 'entrada.css', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
     igual($htaccess, $roteador, 'públicos: .htaccess e roteador');
     $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
     $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
@@ -41,6 +41,12 @@ teste('roteador: rota sem sessão cai na tela de entrada do portão, público se
     naoContem('<title>spa</title>', $tela->corpo, 'nunca o index do docroot');
     $publico = Ambiente::novo();
     contem('font-size', $publico->cliente()->get('/entrada.css')->corpo, 'público sem conteúdo é servido direto');
+    $convite = $publico->cliente()->get('/convite.js');
+    igual(200, $convite->status, 'convite.js sai direto, sem login (V17-C10)');
+    contem('javascript', (string) $convite->cabecalho('content-type'), 'convite.js com tipo JavaScript');
+    foreach (['/convite.jsx', '/xconvite.js', '/convite.js.bak'] as $caminho) {
+        igual(401, $publico->cliente()->get($caminho)->status, "$caminho fora da liberação: vai ao portão, anônimo 401");
+    }
     foreach (['/api/', '/api/nao-existe.php', '/api/nao-existe', '/api/nucleo-x.php', '/api/nucleo.php'] as $caminho) {
         $r = $c->get($caminho);
         igual(404, $r->status, $caminho);
@@ -61,7 +67,7 @@ teste('roteador: público presente sai direto; público ausente é 404 e não ca
     igual(401, $c->get('/manifest.webmanifest')->status, 'manifesto não é público: vai ao portão, anônimo 401');
     igual(401, $c->get('/assets/busca-indice.json')->status, 'índice de busca vai ao portão, anônimo 401');
     $copia = Ambiente::novo(['docroot' => 'copia'])->cliente();
-    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2'] as $caminho) {
+    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/convite.js', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2'] as $caminho) {
         igual(404, $copia->get($caminho)->status, "$caminho ausente: 404 do roteador, sem portão");
     }
 });

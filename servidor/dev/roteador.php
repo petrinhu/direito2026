@@ -9,7 +9,7 @@ declare(strict_types=1);
  *
  *  - /api/nucleo é negado (403, como o [F,L] do .htaccess);
  *  - /api/<arquivo>.php existente é executado; qualquer outro /api/... é 404;
- *  - os públicos sem conteúdo (sw.js, robots.txt, entrada.css, ícone) saem direto,
+ *  - os públicos sem conteúdo (sw.js, robots.txt, entrada.css, convite.js, ícone) saem direto,
  *    e, se faltarem, são 404, não portão;
  *  - todo o resto passa pelo portão, api/portao.php.
  *
@@ -43,7 +43,7 @@ if (str_contains($caminho, "\0") || str_contains($caminho, '..')) {
 
 // Mesma forma que o Apache vê: caminho sem a barra inicial. As strings são as do .htaccess.
 $relativo = ltrim($caminho, '/');
-$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'icones/favicon.svg', 'fontes/inter-400.woff2', 'fontes/cormorant-garamond-700.woff2'];
+$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'convite.js', 'icones/favicon.svg', 'fontes/inter-400.woff2', 'fontes/cormorant-garamond-700.woff2'];
 $padraoApi = '^api/[a-z0-9/-]+\.php$';
 
 if (preg_match('#^api/nucleo(/|$)#D', $relativo) === 1) {

@@ -29,6 +29,13 @@ if ($postagem) {
     d26_exigir_formulario_seguro($priv);
 }
 
+// Casca sem o token (V17-C3): todo GET responde a casca, com ou sem `t` (ignorado aqui). Não lê conta, não reserva
+// o limite por IP, não grava e nunca responde 3xx. O CSRF vem do cookie pré.
+if (!$postagem) {
+    $nonce = d26_tela_nonce();
+    d26_portao_tela(200, d26_tela_convite_casca(d26_csrf_pre_atual($priv), $nonce), d26_tela_csp_convite($nonce), D26_REFERRER_API);
+}
+
 // Reserva do IP antes de olhar o token: sem formato de login, só a chave de IP é tocada (plano 7.1.6).
 $reserva = time();
 $limite = d26_limite_reservar_detalhado($priv, '', $ip, $reserva);
@@ -47,10 +54,6 @@ if ($consulta['estado'] !== 'valido' || $token === null || !is_array($consulta['
 d26_limite_sucesso($priv, '', $ip, $reserva, false);
 $conta = $consulta['conta'];
 $login = (string) $conta['usuario'];
-
-if (!$postagem) {
-    d26_portao_tela(200, d26_tela_convite($login, $token, d26_csrf_pre_atual($priv)), PORTAO_CSP_TELA, D26_REFERRER_API);
-}
 
 $csrf = d26_csrf_pre_atual($priv);
 $nova = is_string($_POST['senhaNova'] ?? null) ? $_POST['senhaNova'] : '';

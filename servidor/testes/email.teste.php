@@ -686,14 +686,20 @@ function emb4PostDeIp(Cliente $c, string $ip, string $csrf, string $usuario): in
 function emb4Link(?string $conversa): string
 {
     $m = emailB3Mensagem($conversa);
-    preg_match('#https://direito2026\.drpetrus\.top/api/convite\.php\?t=[0-9a-f]{64}#', $m['corpo'], $x) === 1 || falhar('o E2 traz o link de criar senha');
+    preg_match('~https://direito2026\.drpetrus\.top/api/convite\.php#t=[0-9a-f]{64}~', $m['corpo'], $x) === 1 || falhar('o E2 traz o link de criar senha com #t=');
     return $x[0];
 }
 
 /** Caminho + query de um link absoluto (o teste abre o link pelo servidor local). */
 function emb4Caminho(string $link): string
 {
-    return (string) parse_url($link, PHP_URL_PATH) . '?' . (string) parse_url($link, PHP_URL_QUERY);
+    return (string) parse_url($link, PHP_URL_PATH) . '#' . (string) parse_url($link, PHP_URL_FRAGMENT);
+}
+
+/** Token do link de criar senha: o que vem depois de "t=" no fragmento (C1). */
+function emb4Token(string $link): string
+{
+    return substr((string) parse_url($link, PHP_URL_FRAGMENT), strlen('t='));
 }
 
 /** Linhas do erros.log que registram tentativa de envio (etapa=...): sobe quando algum envio tenta conectar. */
@@ -804,7 +810,7 @@ teste('e-mail: E29t o pedido não muda hash, versaoSessao, aparelhos nem sessão
         $link = emb4Link(correioConversaFinal($falso));
         $cp = $a->cliente();
         // C4 (V17-C3): a casca não traz o token; ele vem do link do e-mail, e o csrf vem da casca.
-        $token = substr(emb4Caminho($link), strlen('/api/convite.php?t='));
+        $token = emb4Token($link);
         $pagina = $cp->get('/api/convite.php', PORTAO_NAVEGACAO);
         igual(200, $pagina->status, 'a casca do convite abre');
         igual(303, cvb2Enviar($cp, cvb2Campos($token, cvb2Campo($pagina->corpo, 'csrf'), EMB3_SENHA_NOVA))->status, 'cria a senha nova');
@@ -921,7 +927,7 @@ teste('e-mail: E34t o pedido substitui o convite pendente que o admin gerou: o l
         $c = $a->cliente();
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
         igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
-        $novo = substr(emb4Caminho(emb4Link(correioConversaFinal($falso))), strlen('/api/convite.php?t='));
+        $novo = emb4Token(emb4Link(correioConversaFinal($falso)));
         cvb2Mensagem(cvb2Enviar($c, cvb2Campos($antigo, $csrf, CVB2_SENHA)), 404, CVB2_M3);
         igual(303, cvb2Enviar($c, cvb2Campos($novo, $csrf, CVB2_SENHA))->status, 'o link novo abre e cria a senha');
     });

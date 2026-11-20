@@ -30,8 +30,8 @@ function conviteTokenDe(Resposta $r): string
 {
     $corpo = $r->json();
     verdadeiro(
-        preg_match('#^/api/convite\.php\?t=([0-9a-f]{64})$#', (string) ($corpo['convite'] ?? ''), $m) === 1,
-        'a resposta traz o caminho do convite com 64 hex'
+        preg_match('~^/api/convite\.php#t=([0-9a-f]{64})$~', (string) ($corpo['convite'] ?? ''), $m) === 1,
+        'a resposta traz o caminho do convite com o token só no fragmento #t= (C1)'
     );
     return $m[1];
 }

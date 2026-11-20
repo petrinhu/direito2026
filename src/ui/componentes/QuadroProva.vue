@@ -254,9 +254,6 @@ function abrirCalendario(): void {
 }
 
 .quadro-prova__alternar {
-  /* Nunca menor que o próprio texto (E2E-G1-320): com o piso de 44 px o botão encolhia até ele e o
-     texto de 79 px vazava da caixa. */
-  flex-shrink: 0;
   min-height: 44px;
   min-width: 44px;
   padding: var(--esp-2, 0.5rem) var(--esp-3, 0.75rem);

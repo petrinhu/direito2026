@@ -580,7 +580,7 @@ const D26_CORREIO_ASSUNTO_ESQUECI = 'Link para criar uma senha nova';
 
 /**
  * E1, convite do criar (plano-sessao-unica.md 8.1.9, texto ratificado em R14). O link vai sozinho numa linha,
- * logo depois da frase que pede para abri-lo.
+ * logo depois da frase que pede para abri-lo; abaixo dele, a frase de cópia (L2 de 19/11) e o mesmo endereço de novo.
  *
  * @return array{destinatario: string, assunto: string, corpo: string}
  */
@@ -590,6 +590,8 @@ function d26_correio_msg_convite(string $destino, string $login, string $link): 
         "Olá.\n\n"
         . "Foi criado um acesso para você, com o usuário {$login}.\n\n"
         . "Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
         . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.");
@@ -606,6 +608,8 @@ function d26_correio_msg_redefinicao(string $destino, string $login, string $lin
         "Olá.\n\n"
         . "Quem administra o site redefiniu a senha do usuário {$login}. A senha antiga parou de valer.\n\n"
         . "Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Esta caixa não recebe respostas.");
 }
@@ -634,6 +638,8 @@ function d26_correio_msg_esqueci(string $destino, string $login, string $link): 
         "Olá.\n\n"
         . "Pediram uma senha nova para o usuário {$login}.\n\n"
         . "Para criar a senha nova, abra o link abaixo. Ele vale por 24 horas e só pode ser usado uma vez. Até lá, a senha atual continua valendo.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.");
 }

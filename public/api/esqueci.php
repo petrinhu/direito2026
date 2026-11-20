@@ -34,7 +34,7 @@ d26_esqueci_sequencia(
     $priv,
     static function (): void {
         $corpo = d26_tela_esqueci_enviado();
-        d26_portao_cabecalhos(200, 'text/html; charset=utf-8', PORTAO_CSP_TELA, strlen($corpo), 'same-origin');
+        d26_portao_cabecalhos(200, 'text/html; charset=utf-8', PORTAO_CSP_TELA, strlen($corpo), 'strict-origin-when-cross-origin');
         echo $corpo;
         while (ob_get_level() > 0) {
             ob_end_flush();

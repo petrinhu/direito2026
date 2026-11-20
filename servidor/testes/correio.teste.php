@@ -13,7 +13,7 @@ require_once __DIR__ . '/cli-apoio.php';
 const CORREIO_SENHA_SINTETICA = 'SenhaSmtpSintetica-EM-B2-7731';
 /** Login do SMTP, sintético e DIFERENTE do remetente (EM-SMTP-APELIDO): vive em smtp.usuario, nunca no código. */
 const CORREIO_LOGIN_SINTETICO = 'caixa-dona@example.com';
-const CORREIO_CORPO_PADRAO = "Olá.\n\nAbra o link abaixo.\nhttps://direito2026.drpetrus.top/api/convite.php?t="
+const CORREIO_CORPO_PADRAO = "Olá.\n\nAbra o link abaixo.\nhttps://direito2026.drpetrus.top/api/convite.php#t="
     . 'abababababababababababababababababababababababababababababababab' . "\n\nNão responda.\n";
 
 /** Carrega o módulo novo só dentro do teste: sem o arquivo, o teste falha (Red), não o runner. */
@@ -211,7 +211,7 @@ teste('e-mail: E10t envio bem-sucedido: EHLO, AUTH PLAIN, MAIL FROM, um RCPT, ca
 
         $corpoDecodificado = quoted_printable_decode($corpoFio);
         igual(str_replace("\n", "\r\n", CORREIO_CORPO_PADRAO), $corpoDecodificado, 'corpo decodificado igual, byte a byte (LF do envio vira CRLF na mensagem)');
-        $link = 'https://direito2026.drpetrus.top/api/convite.php?t=' . str_repeat('ab', 32);
+        $link = 'https://direito2026.drpetrus.top/api/convite.php#t=' . str_repeat('ab', 32);
         verdadeiro(in_array($link, explode("\r\n", $corpoDecodificado), true), 'o link inteiro numa linha depois de decodificar');
     } finally {
         correioFecharSmtpFalso($falso);

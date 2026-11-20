@@ -46,7 +46,7 @@ teste('e-mail: D-1 convite: a resposta (303) é escrita e o término volta antes
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         igual(0, ordemLinhasSincronas($a), 'antes do pedido, nenhuma linha envio-sincrono');
         file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));

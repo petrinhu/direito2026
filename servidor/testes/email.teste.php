@@ -419,6 +419,8 @@ function emailB3CorpoConvite(string $login, string $link): string
     return "Olá.\n\n"
         . "Foi criado um acesso para você, com o usuário {$login}.\n\n"
         . "Para criar a sua senha, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
         . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.";
@@ -430,6 +432,8 @@ function emailB3CorpoRedefinicao(string $login, string $link): string
     return "Olá.\n\n"
         . "Quem administra o site redefiniu a senha do usuário {$login}. A senha antiga parou de valer.\n\n"
         . "Para criar a senha nova, abra o link abaixo. Ele vale por 48 horas e só pode ser usado uma vez.\n"
+        . "{$link}\n"
+        . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Esta caixa não recebe respostas.";
 }
@@ -506,7 +510,7 @@ teste('e-mail: E23t senha criada pelo link envia E4 depois do 303; sem e-mail, n
         // O aviso sai depois de terminar a resposta: uma pausa logo depois do término segura a conexão ao SMTP.
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         verdadeiro($csrf !== '', 'a página traz o CSRF');
         file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
@@ -522,14 +526,14 @@ teste('e-mail: E23t senha criada pelo link envia E4 depois do 303; sem e-mail, n
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'sem.email', null);
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
         igual(false, is_file($falso['conversa']), 'conta sem e-mail: nenhuma conexão');
     });
     emailB3Com(['rcpt' => ['550 caixa de destino recusada']], function (Ambiente $a): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         $r = cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
         igual(303, $r->status, 'a falha do E4 não muda o 303');
         igual('/', $r->cabecalho('location'), 'destino continua /');
@@ -602,7 +606,7 @@ teste('e-mail: EM-B3 sem término de resposta do servidor, o aviso E4 registra e
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA))->status, 'criou a senha');
         emailB3Mensagem(correioConversaFinal($falso));
         $log = (string) @file_get_contents($a->priv . '/erros.log');
@@ -686,14 +690,20 @@ function emb4PostDeIp(Cliente $c, string $ip, string $csrf, string $usuario): in
 function emb4Link(?string $conversa): string
 {
     $m = emailB3Mensagem($conversa);
-    preg_match('#https://direito2026\.drpetrus\.top/api/convite\.php\?t=[0-9a-f]{64}#', $m['corpo'], $x) === 1 || falhar('o E2 traz o link de criar senha');
+    preg_match('~https://direito2026\.drpetrus\.top/api/convite\.php#t=[0-9a-f]{64}~', $m['corpo'], $x) === 1 || falhar('o E2 traz o link de criar senha com #t=');
     return $x[0];
 }
 
 /** Caminho + query de um link absoluto (o teste abre o link pelo servidor local). */
 function emb4Caminho(string $link): string
 {
-    return (string) parse_url($link, PHP_URL_PATH) . '?' . (string) parse_url($link, PHP_URL_QUERY);
+    return (string) parse_url($link, PHP_URL_PATH) . '#' . (string) parse_url($link, PHP_URL_FRAGMENT);
+}
+
+/** Token do link de criar senha: o que vem depois de "t=" no fragmento (C1). */
+function emb4Token(string $link): string
+{
+    return substr((string) parse_url($link, PHP_URL_FRAGMENT), strlen('t='));
 }
 
 /** Linhas do erros.log que registram tentativa de envio (etapa=...): sobe quando algum envio tenta conectar. */
@@ -720,17 +730,21 @@ teste('e-mail: E26t a tela de entrada tem o link "Esqueci a senha"; M1 e M3 tamb
         contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $entrada->corpo, 'link na entrada');
         $vencido = bin2hex(random_bytes(32));
         emailB3Semear($a, 'ana', 'ana@example.com', ['convite' => ['hash' => hash('sha256', $vencido), 'expiraEm' => time() - 60]]);
-        $m1 = $a->cliente()->get('/api/convite.php?t=' . $vencido, PORTAO_NAVEGACAO);
+        $m1c = $a->cliente();
+        $m1 = cvb2Enviar($m1c, cvb2Campos($vencido, cvb2CsrfPelaEntrada($m1c), CVB2_SENHA));
         cvb2Mensagem($m1, 410, CVB2_M1);
         contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $m1->corpo, 'M1 tem o link');
-        $m3 = $a->cliente()->get('/api/convite.php?t=' . bin2hex(random_bytes(32)), PORTAO_NAVEGACAO);
+        $m3c = $a->cliente();
+        $m3 = cvb2Enviar($m3c, cvb2Campos(bin2hex(random_bytes(32)), cvb2CsrfPelaEntrada($m3c), CVB2_SENHA));
         cvb2Mensagem($m3, 404, CVB2_M3);
         contem('<a href="/api/esqueci.php">Esqueci a senha</a>', $m3->corpo, 'M3 tem o link');
         $usado = cvb2Convidar($a, 'bia');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $usado)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
+        $d = $a->cliente();
+        $csrfD = cvb2CsrfPelaEntrada($d);
         igual(303, cvb2Enviar($c, cvb2Campos($usado, $csrf, EMB3_SENHA_NOVA))->status, 'consome o link');
-        $m2 = cvb2Pagina($a->cliente(), $usado);
+        $m2 = cvb2Enviar($d, cvb2Campos($usado, $csrfD, EMB3_SENHA_NOVA));
         cvb2Mensagem($m2, 410, CVB2_M2);
         naoContem('esqueci.php', $m2->corpo, 'M2 sem o link');
     });
@@ -799,9 +813,10 @@ teste('e-mail: E29t o pedido não muda hash, versaoSessao, aparelhos nem sessão
         }
         $link = emb4Link(correioConversaFinal($falso));
         $cp = $a->cliente();
-        $pagina = $cp->get(emb4Caminho($link), PORTAO_NAVEGACAO);
-        igual(200, $pagina->status, 'o link de E2 abre a página do convite');
-        $token = cvb2Campo($pagina->corpo, 't');
+        // C4 (V17-C3): a casca não traz o token; ele vem do link do e-mail, e o csrf vem da casca.
+        $token = emb4Token($link);
+        $pagina = $cp->get('/api/convite.php', PORTAO_NAVEGACAO);
+        igual(200, $pagina->status, 'a casca do convite abre');
         igual(303, cvb2Enviar($cp, cvb2Campos($token, cvb2Campo($pagina->corpo, 'csrf'), EMB3_SENHA_NOVA))->status, 'cria a senha nova');
         $entrou = $a->entrar('ana', EMB3_SENHA_NOVA);
         verdadeiro($entrou instanceof Cliente, 'a senha nova entra');
@@ -916,9 +931,9 @@ teste('e-mail: E34t o pedido substitui o convite pendente que o admin gerou: o l
         $c = $a->cliente();
         $csrf = cvb2Campo(emb4Pagina($c)->corpo, 'csrf');
         igual(200, emb4Enviar($c, $csrf, 'ana')->status, 'pedido');
-        $novo = substr(emb4Caminho(emb4Link(correioConversaFinal($falso))), strlen('/api/convite.php?t='));
-        cvb2Mensagem(cvb2Pagina($a->cliente(), $antigo), 404, CVB2_M3);
-        igual(200, cvb2Pagina($a->cliente(), $novo)->status, 'o link novo abre');
+        $novo = emb4Token(emb4Link(correioConversaFinal($falso)));
+        cvb2Mensagem(cvb2Enviar($c, cvb2Campos($antigo, $csrf, CVB2_SENHA)), 404, CVB2_M3);
+        igual(303, cvb2Enviar($c, cvb2Campos($novo, $csrf, CVB2_SENHA))->status, 'o link novo abre e cria a senha');
     });
 });
 

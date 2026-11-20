@@ -29,6 +29,26 @@ if ($postagem) {
     d26_exigir_formulario_seguro($priv);
 }
 
+// Link antigo com ?t= (V17-C5, decisão Q2 do líder, 48 h): só leva ao fragmento. Não lê conta, não toca o limite e
+// não grava o token; o uso é contado sem o token. Formato errado é M3 (404), também sem ler conta.
+if (!$postagem && array_key_exists('t', $_GET)) {
+    $legado = $_GET['t'];
+    if (!is_string($legado) || preg_match('/^[0-9a-f]{64}$/D', $legado) !== 1) {
+        d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3, true), PORTAO_CSP_TELA, D26_REFERRER_API);
+    }
+    d26_convite_legado_contar($priv);
+    d26_portao_cabecalhos(303, 'text/plain; charset=utf-8', PORTAO_CSP_TELA, 0, D26_REFERRER_API);
+    header('Location: /api/convite.php#t=' . $legado);
+    exit;
+}
+
+// Casca sem o token (V17-C3): todo GET responde a casca, com ou sem `t` (ignorado aqui). Não lê conta, não reserva
+// o limite por IP, não grava e nunca responde 3xx. O CSRF vem do cookie pré.
+if (!$postagem) {
+    $nonce = d26_tela_nonce();
+    d26_portao_tela(200, d26_tela_convite_casca(d26_csrf_pre_atual($priv), $nonce), d26_tela_csp_convite($nonce), D26_REFERRER_API);
+}
+
 // Reserva do IP antes de olhar o token: sem formato de login, só a chave de IP é tocada (plano 7.1.6).
 $reserva = time();
 $limite = d26_limite_reservar_detalhado($priv, '', $ip, $reserva);
@@ -47,10 +67,6 @@ if ($consulta['estado'] !== 'valido' || $token === null || !is_array($consulta['
 d26_limite_sucesso($priv, '', $ip, $reserva, false);
 $conta = $consulta['conta'];
 $login = (string) $conta['usuario'];
-
-if (!$postagem) {
-    d26_portao_tela(200, d26_tela_convite($login, $token, d26_csrf_pre_atual($priv)), PORTAO_CSP_TELA, D26_REFERRER_API);
-}
 
 $csrf = d26_csrf_pre_atual($priv);
 $nova = is_string($_POST['senhaNova'] ?? null) ? $_POST['senhaNova'] : '';
@@ -152,4 +168,22 @@ function d26_convite_recusar(string $estado): never
         d26_portao_tela(410, d26_tela_mensagem(D26_CONVITE_M2), PORTAO_CSP_TELA, D26_REFERRER_API);
     }
     d26_portao_tela(404, d26_tela_mensagem(D26_CONVITE_M3, true), PORTAO_CSP_TELA, D26_REFERRER_API); // M3 leva o link de EM-B4
+}
+
+/**
+ * Conta um uso de link antigo em convite-legado.json, sem o token, com teto de 3 dias (o arquivo não cresce sem limite,
+ * porque o GET é anônimo). Falha de gravação vai só ao erros.log: o 303 já é a resposta.
+ */
+function d26_convite_legado_contar(string $priv): void
+{
+    try {
+        $dia = date('Y-m-d');
+        d26_atualizar_json($priv . '/convite-legado.json', ['dias' => []], static function (array &$d) use ($dia): void {
+            $d['dias'][$dia] = (int) ($d['dias'][$dia] ?? 0) + 1;
+            ksort($d['dias']);
+            $d['dias'] = array_slice($d['dias'], -3, null, true);
+        });
+    } catch (Throwable $e) {
+        d26_log_erro_em($priv, 'convite-legado', 'contador não gravado (' . get_class($e) . ')');
+    }
 }

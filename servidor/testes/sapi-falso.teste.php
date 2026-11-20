@@ -8,7 +8,7 @@ function sapiFalsoConvite(string $stub): void
     emailB3Com([], function (Ambiente $a, array $falso): void {
         $token = emailB3SemearConvite($a, 'ana', 'ana@example.com');
         $c = $a->cliente();
-        $csrf = cvb2Campo(cvb2Pagina($c, $token)->corpo, 'csrf');
+        $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
         file_put_contents($a->priv . '/pausa-senha-criada-antes-aviso', '*');
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
         pausaEsperarChegada($req, $a, 'senha-criada-antes-aviso');

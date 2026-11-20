@@ -249,3 +249,51 @@ function d26_tela_indisponivel(): string
     return d26_tela_documento('Caderno de Direito', '<h1>Caderno de Direito</h1>'
         . '<p>Serviço indisponível no momento. Tente de novo em instantes.</p>');
 }
+
+/** CSP da casca do convite (V17-C3): a única tela com script. script-src leva só o nonce desta resposta. */
+function d26_tela_csp_convite(string $nonce): string
+{
+    return "default-src 'none'; script-src 'nonce-" . $nonce . "'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+}
+
+/** Nonce novo em cada resposta da casca: 16 bytes aleatórios em base64, 128 bits (web.dev, Strict CSP). */
+function d26_tela_nonce(): string
+{
+    return base64_encode(random_bytes(16));
+}
+
+/** Doze primeiros hex do sha256 de convite.js, no mesmo padrão de d26_tela_versao_css. Sem o arquivo, "0". */
+function d26_tela_versao_js(): string
+{
+    static $versao = null;
+    if ($versao !== null) {
+        return $versao;
+    }
+    $arquivo = dirname(__DIR__, 2) . '/convite.js';
+    $versao = is_file($arquivo) ? substr((string) hash_file('sha256', $arquivo), 0, 12) : '0';
+    return $versao;
+}
+
+/**
+ * Casca da página do convite (V17-C3). Não tem token: ele chega pelo fragmento #t= e o script o copia para o campo t.
+ * O aviso de JavaScript aparece por padrão e o script o esconde; a região de status fica FORA do formulário, que nasce
+ * com `hidden`. Contrato com convite.js (C6): #convite-aviso, #convite-form, input[name="t"], [role="status"].
+ */
+function d26_tela_convite_casca(string $csrf, string $nonce): string
+{
+    $corpo = '<h1>Criar senha</h1>'
+        . '<p id="convite-aviso">Para criar a sua senha, esta página precisa do JavaScript ligado no navegador. Ligue o JavaScript e abra de novo o link do e-mail.</p>'
+        . '<p role="status" id="convite-status"></p>'
+        . '<form id="convite-form" method="post" action="/api/convite.php" hidden>'
+        . '<input type="hidden" name="t" value="">'
+        . '<input type="hidden" name="csrf" value="' . d26_tela_e($csrf) . '">'
+        . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
+        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required aria-describedby="senhaNova-ajuda">'
+        . '<p id="senhaNova-ajuda">A senha precisa ter pelo menos 15 caracteres.</p>'
+        . '<label for="senhaRepetida">Repita a senha</label>'
+        . '<input id="senhaRepetida" name="senhaRepetida" type="password" autocomplete="new-password" minlength="15" required>'
+        . '<button type="submit">Criar senha e entrar</button>'
+        . '</form>';
+    $script = '<script nonce="' . $nonce . '" src="/convite.js?v=' . d26_tela_versao_js() . '" defer></script>';
+    return d26_tela_documento('Criar senha', $corpo, true, $script);
+}

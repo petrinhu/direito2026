@@ -431,10 +431,14 @@ function d26_contas_consumir_convite(string $priv, string $login, string $uid, s
     return $resultado === 'ok' ? 'ok' : 'divergente';
 }
 
-/** Caminho que a API devolve ao admin. O painel compõe a origem; o servidor nunca usa o Host. */
+/**
+ * Caminho que a API devolve ao admin (V17-C1): o token vai no FRAGMENTO, nunca na query. O navegador não manda o
+ * fragmento ao servidor, então ele não entra no log de acesso nem no Referer; o script da casca o lê e limpa. O painel
+ * compõe a origem; o servidor nunca usa o Host.
+ */
 function d26_convite_caminho(string $token): string
 {
-    return '/api/convite.php?t=' . $token;
+    return '/api/convite.php#t=' . $token;
 }
 
 /**

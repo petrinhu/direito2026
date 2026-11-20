@@ -30,7 +30,7 @@ const ANUNCIO_LIDO = 'Link lido. Crie a sua senha.';
 
 const CASCA = `
   <p id="convite-aviso">${AVISO_SEM_JS}</p>
-  <form id="convite-form" method="post" action="${CAMINHO}" hidden>
+  <form id="convite-form" method="post" action="${CAMINHO}?envio" hidden>
     <input type="hidden" name="t" value="">
     <button type="submit">Criar a senha</button>
   </form>
@@ -57,12 +57,23 @@ function abrirEm(caminhoComFragmento: string): void {
   window.history.replaceState(null, '', caminhoComFragmento);
 }
 
+/** Ouvintes que o script põe na janela: saem ao fim de cada caso, porque o jsdom é um só para o arquivo inteiro. */
+const ouvintesDaJanela: Array<Parameters<typeof window.removeEventListener>> = [];
+const adicionarNaJanela = window.addEventListener.bind(window);
+
 beforeEach(() => {
   document.body.innerHTML = CASCA;
   abrirEm(CAMINHO);
+  vi.spyOn(window, 'addEventListener').mockImplementation(
+    (...argumentos: Parameters<typeof window.addEventListener>) => {
+      ouvintesDaJanela.push([argumentos[0], argumentos[1]]);
+      adicionarNaJanela(...argumentos);
+    }
+  );
 });
 
 afterEach(() => {
+  for (const argumentos of ouvintesDaJanela.splice(0)) window.removeEventListener(...argumentos);
   vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
@@ -159,5 +170,65 @@ describe('convite.js, link incompleto ou sem fragmento', () => {
     expect(formulario().hidden).toBe(true);
     expect(campoT().value).toBe('');
     expect(anuncio().textContent).toBe('');
+  });
+});
+
+describe('convite.js, link colado na mesma aba (hashchange, D13)', () => {
+  function colarNaMesmaAba(fim: string): void {
+    window.history.replaceState(null, '', `${CAMINHO}${fim}`);
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+  }
+
+  it('depois do aviso de link incompleto, o link colado libera o formulário e sai da barra', () => {
+    rodarScript();
+    expect(aviso().textContent).toBe(AVISO_INCOMPLETO);
+
+    colarNaMesmaAba(`#t=${TOKEN}`);
+
+    expect(campoT().value).toBe(TOKEN);
+    expect(formulario().hidden).toBe(false);
+    expect(aviso().hidden).toBe(true);
+    expect(anuncio().textContent).toBe(ANUNCIO_LIDO);
+    expect(window.location.hash).toBe('');
+  });
+
+  it('chama replaceState ANTES de gravar o token também no caminho do hashchange', () => {
+    rodarScript();
+    window.history.replaceState(null, '', `${CAMINHO}#t=${TOKEN}`);
+    const original = window.history.replaceState.bind(window.history);
+    const valorNoMomento: string[] = [];
+    vi.spyOn(window.history, 'replaceState').mockImplementation((estado, titulo, url) => {
+      valorNoMomento.push(campoT().value);
+      original(estado, titulo, url);
+    });
+
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+
+    expect(valorNoMomento).toEqual(['']);
+    expect(campoT().value).toBe(TOKEN);
+  });
+
+  it('com um link já lido, o link colado depois vence e também sai da barra', () => {
+    const OUTRO = 'fedcba9876543210'.repeat(4);
+    abrirEm(`${CAMINHO}#t=${TOKEN}`);
+    rodarScript();
+
+    colarNaMesmaAba(`#t=${OUTRO}`);
+
+    expect(campoT().value).toBe(OUTRO);
+    expect(window.location.hash).toBe('');
+    expect(formulario().hidden).toBe(false);
+  });
+
+  it('fragmento que não é token, com o formulário já aberto, não muda nada', () => {
+    abrirEm(`${CAMINHO}#t=${TOKEN}`);
+    rodarScript();
+
+    colarNaMesmaAba('#t=curto');
+
+    expect(campoT().value).toBe(TOKEN);
+    expect(formulario().hidden).toBe(false);
+    expect(aviso().hidden).toBe(true);
+    expect(aviso().textContent).toBe(AVISO_SEM_JS);
   });
 });

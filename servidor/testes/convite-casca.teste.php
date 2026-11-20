@@ -93,12 +93,15 @@ teste('convite-casca: C3.4 50 GET de clientes novos e 50 do IP com o limite chei
     igual(array_fill(0, 100, 200), $status, 'cem GET: todos 200');
 });
 
-teste('convite-casca: C3.5 sem usuarios.json no privado, o GET da casca continua 200 (a casca não lê contas)', function (): void {
+teste('convite-casca: C3.5 com usuarios.json ausente ou corrompido, o GET da casca continua 200 (a casca não lê contas)', function (): void {
+    // Corrompido, e não só ausente: ausente, a leitura de contas devolve vazio sem falhar e um mutante que lê passaria.
     $a = Ambiente::novo();
-    unlink($a->priv . '/usuarios.json');
+    file_put_contents($a->priv . '/usuarios.json', '{quebrado');
     $r = $a->cliente()->get('/api/convite.php', PORTAO_NAVEGACAO);
-    igual(200, $r->status, 'casca sem usuarios.json');
+    igual(200, $r->status, 'casca com usuarios.json corrompido');
     contem('<form id="convite-form"', $r->corpo, 'a casca segue completa');
+    unlink($a->priv . '/usuarios.json');
+    igual(200, $a->cliente()->get('/api/convite.php', PORTAO_NAVEGACAO)->status, 'casca sem usuarios.json');
 });
 
 teste('convite-casca: C3.6 cinquenta GET não mudam nenhum arquivo do privado (sha256 antes e depois, aquecido com um GET)', function (): void {

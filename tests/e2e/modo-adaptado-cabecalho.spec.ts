@@ -65,14 +65,15 @@ function seletorDoTitulo(caminho: string): string {
 }
 
 // 340 e 348 são as bordas da faixa de 341 a 348 px (F1-b, D15): a regra vai até 348 px.
-const LARGURAS_DO_CABECALHO = [320, 340, 341, 348, 349, 360, 412, 768, 1280];
+// 881 e 1024 px: modo adaptado acima de 880 px (E2E-ADAPTADO-FIXO-1280, F2c).
+const LARGURAS_DO_CABECALHO = [320, 340, 341, 348, 349, 360, 412, 768, 881, 1024, 1280];
 
 /**
  * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma
  * largura e um modo, e a lista exata das rotas que o mapa vermelho do M0 mediu
  * (relatório do M0, camada 2, base b1 = 810d537). O E2E-G1-320 (55 casos a
  * 320 px) saiu desta lista na F1 (21ddb0c, vermelho; 5fa7133, conserto). Por
- * projeto, ficam marcados 12 casos (o E2E-G1A-ADAPTADO saiu no Ramo B da F2). Só essas combinações recebem
+ * projeto, não fica nenhum caso marcado (o E2E-G1A-ADAPTADO saiu no Ramo B da F2 e o E2E-ADAPTADO-FIXO-1280 na F2c). Só essas combinações recebem
  * `test.fail()` e o ID no título: quando o conserto chegar, o caso fica
  * vermelho e a marca sai. Qualquer vermelho fora desta lista é item novo da
  * INBOX, com marca própria (regra D5 do plano).
@@ -85,28 +86,7 @@ interface GrupoDeFalha {
   rotas: readonly string[];
 }
 
-const FALHAS_CONHECIDAS: readonly GrupoDeFalha[] = [
-  {
-    id: 'E2E-ADAPTADO-FIXO-1280',
-    largura: 1280,
-    modoAdaptado: true,
-    motivo: 'modo adaptado a 1280px: cabeçalho fixo acima de 256px (E2E-ADAPTADO-FIXO-1280)',
-    rotas: [
-      '/p/p1/filosofia-juridica/u3-moderna-contemporanea',
-      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/fichamento',
-      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mapa',
-      '/p/p1/filosofia-juridica/u3-moderna-contemporanea/mnemonicos',
-      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira',
-      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/fichamento',
-      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mapa',
-      '/p/p1/redacao-juridica-1/u3-material-caso-geladeira/mnemonicos',
-      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor',
-      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/fichamento',
-      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mapa',
-      '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/mnemonicos'
-    ]
-  }
-];
+const FALHAS_CONHECIDAS: readonly GrupoDeFalha[] = [];
 
 function falhaConhecida(
   caminho: string,

@@ -5,6 +5,9 @@ import { quiz } from '../../src/conteudo/p1/redacao-juridica-1/u3-material-petic
  * Redação u3 (petição de consumidor, AV3-R1-B, decisão do CPO de 16/11/2026): quiz de 44 perguntas,
  * 22 de múltipla escolha e 22 de verdadeiro ou falso. As perguntas 1 a 40 mantêm o gabarito
  * publicado: a resposta salva de quem já respondeu continua certa.
+ *
+ * AV3-R2 (prazos, garantia e arrependimento): as perguntas 45 a 52 entram no fim, e o total passa a
+ * 52 perguntas, 26 de múltipla escolha e 26 de verdadeiro ou falso (ids de 1 a 52, sem buraco).
  */
 const GABARITO_PUBLICADO: ReadonlyArray<readonly [number, number | boolean]> = [
   [1, 2],
@@ -60,12 +63,12 @@ function textoDaPergunta(p: {
   return [p.enunciadoHtml, ...(p.alternativasHtml ?? []), p.explicacaoHtml ?? ''].join(' ');
 }
 
-describe('Redação u3 AV3-R1-B: quiz de 44 perguntas (22 e 22)', () => {
-  it('44 perguntas, ids de 1 a 44 sem buraco, 22 de múltipla escolha e 22 de verdadeiro ou falso', () => {
-    expect(quiz).toHaveLength(44);
-    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 44 }, (_, i) => i + 1));
-    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(22);
-    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(22);
+describe('Redação u3 AV3-R1-B e AV3-R2: quiz de 52 perguntas (26 e 26)', () => {
+  it('52 perguntas, ids de 1 a 52 sem buraco, 26 de múltipla escolha e 26 de verdadeiro ou falso', () => {
+    expect(quiz).toHaveLength(52);
+    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 52 }, (_, i) => i + 1));
+    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(26);
+    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(26);
   });
 
   it('múltipla escolha tem cinco alternativas e correta dentro da faixa', () => {
@@ -90,8 +93,8 @@ describe('Redação u3 AV3-R1-B: quiz de 44 perguntas (22 e 22)', () => {
       43: 'fato-fundamento-pedido',
       44: 'fato-fundamento-pedido'
     };
-    expect(quiz.slice(40)).toHaveLength(4);
-    for (const p of quiz.slice(40)) {
+    expect(quiz.slice(40, 44)).toHaveLength(4);
+    for (const p of quiz.slice(40, 44)) {
       expect(p.categoria, 'categoria da pergunta ' + p.id).toBe(esperadas[p.id]);
       expect(p.fonteExtra, 'fonteExtra da pergunta ' + p.id).toBe(p.id === 44);
     }
@@ -105,4 +108,40 @@ describe('Redação u3 AV3-R1-B: quiz de 44 perguntas (22 e 22)', () => {
       expect(texto.includes('J\u00fari'), 'menção a área restrita na pergunta ' + p.id).toBe(false);
     }
   });
+});
+
+/**
+ * Tabela da seção 3 do plano AV3-R2, fixada antes do texto (L-43). Cada linha: id, forma ('me' ou
+ * 'vf'), gabarito do verdadeiro ou falso (null na múltipla escolha) e categoria.
+ */
+const TABELA_45_A_52: ReadonlyArray<readonly [number, 'me' | 'vf', boolean | null, string]> = [
+  [45, 'me', null, 'consumo-prazos-garantias'],
+  [46, 'vf', true, 'consumo-prazos-garantias'],
+  [47, 'me', null, 'consumo-responsabilidade'],
+  [48, 'vf', false, 'consumo-responsabilidade'],
+  [49, 'me', null, 'consumo-prazos-garantias'],
+  [50, 'vf', false, 'consumo-prazos-garantias'],
+  [51, 'me', null, 'consumo-prazos-garantias'],
+  [52, 'vf', true, 'consumo-prazos-garantias']
+];
+
+describe('Redação u3 AV3-R2: perguntas 45 a 52 (prazos, garantia e arrependimento)', () => {
+  it.each(TABELA_45_A_52)(
+    'pergunta %i: forma, gabarito, categoria e fonteExtra conforme a tabela do plano',
+    (id, forma, gabaritoVf, categoria) => {
+      const p = quiz.find((q) => q.id === id);
+      expect(p, 'pergunta ' + id).toBeDefined();
+      expect(p?.categoria, 'categoria da pergunta ' + id).toBe(categoria);
+      expect(p?.fonteExtra, 'fonteExtra da pergunta ' + id).toBe(false);
+      if (forma === 'vf') {
+        expect(p?.tipo, 'tipo da pergunta ' + id).toBe('verdadeiro-ou-falso');
+        expect(p?.correta, 'gabarito da pergunta ' + id).toBe(gabaritoVf);
+      } else {
+        expect(p?.tipo, 'tipo da pergunta ' + id).not.toBe('verdadeiro-ou-falso');
+        expect(p?.alternativasHtml, 'alternativas da pergunta ' + id).toHaveLength(5);
+        expect(p?.correta, 'correta da pergunta ' + id).toBeGreaterThanOrEqual(0);
+        expect(p?.correta, 'correta da pergunta ' + id).toBeLessThan(5);
+      }
+    }
+  );
 });

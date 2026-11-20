@@ -341,11 +341,16 @@ onBeforeUnmount(() => {
   }
 }
 
-/* No modo adaptado a linha inteira vale só de 341px para cima. Medido: em 320px
+/* No modo adaptado a linha inteira vale de 341px a 1023px. Medido: em 320px
    ela põe o botão Tema para baixo do quadro de prova (barra de 477px); de 341px
    a 640px não cobre nada e tira a trilha de 368 a 400px do aperto que a QA
-   apontou. Abaixo de 341px a trilha segue ao lado da busca, como na linha de base. */
-@media (min-width: 341px) and (max-width: 640px) {
+   apontou. Abaixo de 341px a trilha segue ao lado da busca, como na linha de base.
+   De 641px a 1023px (E2E-A2-SERRA, decisão do líder de 20/11/2026): sem a linha
+   inteira, de 772 a 993px a trilha dividia a linha, quebrava nível por nível e o
+   cabeçalho chegava a 827px, com o título fora da primeira tela de 640px. Com ela,
+   nas 5 rotas medidas no blink, o cabeçalho nunca passou do da linha de base, e de
+   1024px para cima não mudou. */
+@media (min-width: 341px) and (max-width: 1023px) {
   :root[data-modo-adaptado='on'] .barra-topo__trilha {
     flex-basis: 100%;
   }

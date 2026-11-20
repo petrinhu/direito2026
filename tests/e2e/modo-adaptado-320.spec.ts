@@ -1,4 +1,5 @@
 import { test, expect } from './apoio/sessaoDoEstudo';
+import { esperarLayoutAssentar } from './apoio/estadoInicial';
 
 /**
  * Critério 2 da especificação (docs/modo-adaptado.md, seção 8): em 320px de
@@ -57,21 +58,29 @@ test('em 320px, com o modo adaptado ligado, o botão do quadro de prova cabe no 
   page
 }) => {
   await ligarModoAdaptado(page, '/p/p1/intr-direito/u1');
-  await page.locator('aside.quadro-prova .quadro-prova__alternar').waitFor({ state: 'visible' });
+  const localBotao = page.locator('aside.quadro-prova .quadro-prova__alternar');
+  await localBotao.waitFor({ state: 'visible' });
+  // Fora da janela, elementFromPoint devolve null (CSSOM View), e a 320 x 800 o botão pode ficar
+  // abaixo da primeira tela: sem rolar até ele, "coberto" media "fora da janela" (E2E-G1-320).
+  await localBotao.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await esperarLayoutAssentar(page);
 
   const botao = await page.evaluate(() => {
     const el = document.querySelector<HTMLElement>('aside.quadro-prova .quadro-prova__alternar')!;
     const caixa = el.getBoundingClientRect();
-    const alvo = document.elementFromPoint(
-      caixa.left + caixa.width / 2,
-      caixa.top + caixa.height / 2
-    );
+    const centroY = caixa.top + caixa.height / 2;
+    const alvo = document.elementFromPoint(caixa.left + caixa.width / 2, centroY);
     return {
       larguraTexto: el.scrollWidth,
       larguraBotao: el.clientWidth,
       largura: caixa.width,
       altura: caixa.height,
-      coberto: !(alvo === el || el.contains(alvo))
+      centroNaJanela: centroY >= 0 && centroY < window.innerHeight,
+      noCentro:
+        alvo === null
+          ? 'nada'
+          : `${alvo.tagName.toLowerCase()}.${alvo.getAttribute('class') ?? ''}`,
+      coberto: !(alvo !== null && (alvo === el || el.contains(alvo)))
     };
   });
 
@@ -80,5 +89,10 @@ test('em 320px, com o modo adaptado ligado, o botão do quadro de prova cabe no 
   );
   expect(botao.largura, 'alvo de toque com 44 px de largura').toBeGreaterThanOrEqual(44);
   expect(botao.altura, 'alvo de toque com 44 px de altura').toBeGreaterThanOrEqual(44);
-  expect(botao.coberto, 'botão não coberto por outro elemento').toBe(false);
+  expect(botao.centroNaJanela, 'centro do botão dentro da janela depois de rolar até ele').toBe(
+    true
+  );
+  expect(botao.coberto, `botão não coberto por outro elemento (no centro: ${botao.noCentro})`).toBe(
+    false
+  );
 });

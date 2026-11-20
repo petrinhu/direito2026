@@ -11,6 +11,7 @@ import type { ChaveAba } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade, IndiceAlternativa } from '@/core/unidade/tipos';
 import type { IndiceDispositivos } from '@/core/dispositivos/tipos';
 import AbasUnidade from '../componentes/AbasUnidade.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
 import NaoEncontrado from './NaoEncontrado.vue';
 import VisorResumo from '../componentes/VisorResumo.vue';
@@ -173,6 +174,7 @@ const contagemBlocos = computed(() =>
   <NaoEncontrado v-else-if="!abaExiste" />
   <div v-else ref="regiaoConteudoRef" class="pagina-unidade">
     <h1>{{ referenciaUnidade.titulo }}</h1>
+    <AlvoQuadroProva />
     <IndicadorProgresso
       v-if="conteudo && aba === 'resumo'"
       :lidos="contagemBlocos.lidos"

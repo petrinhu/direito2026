@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  provide,
+  ref,
+  shallowRef,
+  watch
+} from 'vue';
 import { caminhoEmAreaRestrita } from '@/app/curriculo/areaRestrita';
 import type { Curriculo } from '@/core/curriculo/tipos';
 import type { RepositorioProgresso } from '@/core/progresso/tipos';
@@ -13,6 +22,7 @@ import AvisoArmazenamento from '../componentes/AvisoArmazenamento.vue';
 import AvisoLegal from '../componentes/AvisoLegal.vue';
 import QuadroProva from '../componentes/QuadroProva.vue';
 import BotaoHome from '../componentes/BotaoHome.vue';
+import { CHAVE_ALVO_QUADRO_APOS_TITULO } from '../componentes/alvoQuadroProva';
 
 const props = withDefaults(
   defineProps<{
@@ -50,6 +60,17 @@ const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario')
 // próprio do fluxo (AV3-F0f, decisão do CPO a ratificar pelo líder). É a mesma instância, só muda o
 // lugar, por Teleport. Fora do modo, o quadro segue na pilha inferior, como sempre.
 const cartaoNoConteudo = computed(() => props.storeModoAdaptado.efetivo.value);
+// E2E-G1A-ADAPTADO (decisão do CTO de 20/11/2026, a ratificar pelo líder): na página de unidade o quadro
+// vai para logo depois do título, ainda dentro de main, para o título caber na primeira tela. A página
+// entrega esse lugar (AlvoQuadroProva.vue). O alvo é o próprio elemento, não um seletor, para que uma
+// página nova nunca herde o alvo de uma página que já saiu. Sem ele, vale o topo do conteúdo.
+const alvoAposTitulo = shallowRef<HTMLElement | null>(null);
+provide(CHAVE_ALVO_QUADRO_APOS_TITULO, (elemento) => {
+  alvoAposTitulo.value = elemento;
+});
+const alvoDoQuadro = computed<string | HTMLElement>(
+  () => alvoAposTitulo.value ?? '#quadro-prova-do-conteudo'
+);
 
 const emit = defineEmits<{ buscar: [string]; sair: [] }>();
 
@@ -254,7 +275,7 @@ onBeforeUnmount(() => {
   -->
   <div ref="pilhaRef" class="layout-base__inferior">
     <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
-    <Teleport to="#quadro-prova-do-conteudo" :disabled="!cartaoNoConteudo">
+    <Teleport :to="alvoDoQuadro" :disabled="!cartaoNoConteudo">
       <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
     </Teleport>
     <BotaoHome v-if="!naPaginaInicial" />

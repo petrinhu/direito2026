@@ -69,10 +69,12 @@ const LARGURAS_DO_CABECALHO = [320, 360, 412, 768, 1280];
 /**
  * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma
  * largura e um modo, e a lista exata das rotas que o mapa vermelho do M0 mediu
- * (relatório do M0, camada 2, base b1 = 810d537). Total por projeto: 55 + 162 + 12 = 229 casos. Só essas
- * combinações recebem `test.fail()` e o ID no título: quando o conserto chegar,
- * o caso fica vermelho e a marca sai. Qualquer vermelho fora desta lista é item
- * novo da INBOX, com marca própria (regra D5 do plano).
+ * (relatório do M0, camada 2, base b1 = 810d537). O E2E-G1-320 (55 casos a
+ * 320 px) saiu desta lista na F1 (21ddb0c, vermelho; 5fa7133, conserto). Por
+ * projeto, ficam marcados 162 + 12 = 174 casos. Só essas combinações recebem
+ * `test.fail()` e o ID no título: quando o conserto chegar, o caso fica
+ * vermelho e a marca sai. Qualquer vermelho fora desta lista é item novo da
+ * INBOX, com marca própria (regra D5 do plano).
  */
 interface GrupoDeFalha {
   id: string;

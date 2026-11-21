@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatarDataHora, formatarHora, normalizarHora24 } from '@/core/calendario/dataHora';
+import {
+  formatarDataHora,
+  formatarFalhaDeEnvio,
+  formatarHora,
+  formatarPrazo,
+  normalizarHora24
+} from '@/core/calendario/dataHora';
 
 /**
  * ADM-F1 (último login no painel): data e hora em dd/mm/aaaa HH:MM:SS, no fuso do calendário
@@ -42,6 +48,34 @@ describe('formatarHora', () => {
 
   it('meia-noite de Recife sai como 00:00:00, nunca 24', () => {
     expect(formatarHora(new Date('2026-11-15T03:00:00Z'))).toBe('00:00:00');
+  });
+});
+
+/**
+ * ADM-FUSO-PRAZO: o prazo do convite e a falha de envio saem em dd/mm hh:mm no fuso de Recife, como o
+ * último login. Os instantes ficam perto da meia-noite UTC, para o dia virar só pelo fuso.
+ */
+describe('formatarPrazo', () => {
+  it('epoch em segundos vira dd/mm hh:mm no fuso de Recife (02:30Z de 15/11 é 23:30 de 14/11)', () => {
+    expect(formatarPrazo(Date.UTC(2026, 10, 15, 2, 30) / 1000)).toBe('14/11 23:30');
+  });
+
+  it('sem valor, ou valor que não é número: vazio', () => {
+    expect(formatarPrazo(null)).toBe('');
+    expect(formatarPrazo(undefined)).toBe('');
+    expect(formatarPrazo(Number.NaN)).toBe('');
+  });
+});
+
+describe('formatarFalhaDeEnvio', () => {
+  it('instante ISO vira dd/mm hh:mm no fuso de Recife', () => {
+    expect(formatarFalhaDeEnvio('2026-11-15T02:30:00Z')).toBe('14/11 23:30');
+  });
+
+  it('sem valor, ou valor que não é data: vazio', () => {
+    expect(formatarFalhaDeEnvio(null)).toBe('');
+    expect(formatarFalhaDeEnvio(undefined)).toBe('');
+    expect(formatarFalhaDeEnvio('não é data')).toBe('');
   });
 });
 

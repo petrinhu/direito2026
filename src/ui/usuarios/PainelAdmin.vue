@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
-import { formatarDataHora, formatarHora } from '@/app/calendario/dataHoraDoSite';
+import {
+  formatarDataHora,
+  formatarFalhaDeEnvio,
+  formatarHora,
+  formatarPrazo
+} from '@/app/calendario/dataHoraDoSite';
 import {
   loginValido,
   type Administrar,
@@ -76,26 +81,6 @@ const fraseDoEnvio = computed(() => {
   if (atual?.envio === 'falhou') return 'O e-mail não saiu. Copie o link e envie por outro canal.';
   return '';
 });
-
-function dois(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-/** Prazo do convite: o servidor manda epoch em segundos; o painel mostra dd/mm hh:mm no fuso de quem olha. */
-function formatarPrazo(epochSegundos: number | null | undefined): string {
-  if (typeof epochSegundos !== 'number') return '';
-  const d = new Date(epochSegundos * 1000);
-  return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
-}
-
-/** Instante ISO da última falha de envio, em dd/mm hh:mm no fuso de quem olha. Valor que não é data: nada a mostrar. */
-function formatarFalhaDeEnvio(instante: string | null | undefined): string {
-  if (typeof instante !== 'string') return '';
-  const d = new Date(instante);
-  return Number.isNaN(d.getTime())
-    ? ''
-    : `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
-}
 
 /** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
 function classeDoLed(conectado: boolean | undefined): string {

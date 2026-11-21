@@ -13,9 +13,11 @@ const ORIGEM_DE_TESTE = 'https://origem-de-teste.invalid';
 const TEXTO_VALIDADE =
   'Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.';
 
-/** Epoch em segundos (como o servidor manda), montado por componentes locais: o teste não depende do fuso. */
-const PRAZO_LOCAL = new Date(2026, 10, 13, 9, 5, 0);
-const PRAZO_EPOCH = Math.floor(PRAZO_LOCAL.getTime() / 1000);
+/**
+ * Epoch em segundos (como o servidor manda): 09:05 de Recife (UTC-3), fixado em UTC. O painel mostra no fuso de
+ * Recife, então o teste não depende do fuso da máquina onde roda.
+ */
+const PRAZO_EPOCH = Math.floor(Date.UTC(2026, 10, 13, 12, 5, 0) / 1000);
 
 const usuarios: UsuarioAdmin[] = [
   {
@@ -727,8 +729,8 @@ describe('PainelAdmin, e-mail da conta (EM-F1)', () => {
       expect((await linha([antigo as unknown as UsuarioAdmin])).estado).not.toContain('Sem e-mail');
     });
 
-    it('falha de envio gravada: "E-mail não saiu em dd/mm hh:mm", no fuso de quem olha', async () => {
-      const instante = new Date(2026, 10, 13, 9, 5, 0);
+    it('falha de envio gravada: "E-mail não saiu em dd/mm hh:mm", no fuso de Recife', async () => {
+      const instante = new Date(Date.UTC(2026, 10, 13, 12, 5, 0));
       const r = await linha([conta({ envioFalhouEm: instante.toISOString() })]);
       expect(r.estado).toContain('E-mail não saiu em 13/11 09:05');
     });

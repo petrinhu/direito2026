@@ -3,7 +3,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import {
   formatarDataHora,
   formatarFalhaDeEnvio,
-  formatarHora,
   formatarPrazo
 } from '@/app/calendario/dataHoraDoSite';
 import {
@@ -12,8 +11,9 @@ import {
   type ClienteApi,
   type UsuarioAdmin
 } from '@/app/sessao/administracao';
-import { podeReler } from '@/app/usuarios/releituraAdmin';
 import { usarRolagemLateral } from '@/ui/componentes/rolagemLateral';
+import { classeDoLed, textoDaSessao } from '@/ui/usuarios/luzDeSessao';
+import { usarReleituraDaLista } from '@/ui/usuarios/releituraDaLista';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */
@@ -82,29 +82,14 @@ const fraseDoEnvio = computed(() => {
   return '';
 });
 
-/** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
-function classeDoLed(conectado: boolean | undefined): string {
-  if (conectado === true) return 'ar-led--verde';
-  if (conectado === false) return 'ar-led--vermelho';
-  return 'ar-led--sem';
-}
-
-function textoDaSessao(conectado: boolean | undefined): string {
-  if (conectado === true) return 'Sessão aberta';
-  if (conectado === false) return 'Sem sessão aberta';
-  return 'sem informação';
-}
-
-let ultimaLeitura = 0;
-/** Hora da última leitura, em HH:MM:SS (fuso de Recife), para o texto "Atualizado às". */
-const atualizadoEm = ref('');
+/** Hora da última leitura (HH:MM:SS, fuso de Recife) e a releitura na volta da aba. */
+const { atualizadoEm, marcarLeitura } = usarReleituraDaLista(() => void carregar());
 
 async function carregar(): Promise<void> {
   const r = await props.administrar((c) => c.listarUsuarios());
   carregando.value = false;
   if (r.ok) {
-    ultimaLeitura = Date.now();
-    atualizadoEm.value = formatarHora(new Date(ultimaLeitura));
+    marcarLeitura();
     usuarios.value = r.valor;
     erro.value = '';
   } else {
@@ -295,18 +280,10 @@ function atualizar(): void {
   void carregar();
 }
 
-/** Volta da aba: relê a lista, sem passar do limite de 30 s (podeReler). */
-function aoVoltarAba(): void {
-  if (document.visibilityState === 'visible' && podeReler(Date.now(), ultimaLeitura))
-    void carregar();
-}
-
 onMounted(() => {
   void carregar();
-  document.addEventListener('visibilitychange', aoVoltarAba);
 });
 onBeforeUnmount(() => {
-  document.removeEventListener('visibilitychange', aoVoltarAba);
   dispensarLink();
   fecharTrocaDeEmail();
 });

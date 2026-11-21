@@ -7,13 +7,15 @@ cd "$(dirname "$0")/.."
 
 falhou=0
 passo() {
-  local nome="$1"
+  local nome="$1" inicio=$SECONDS
   shift
-  echo "── $nome ──"
   if ! "$@"; then
+    echo "── $nome ── $((SECONDS - inicio))s"
     echo "FALHOU: $nome" >&2
     falhou=1
+    return 0
   fi
+  echo "── $nome ── $((SECONDS - inicio))s"
 }
 
 # Portões da cifra (plano do CTO do login único, 6.2 a 6.3; L-36). Primeiro: se o git-crypt
@@ -50,8 +52,8 @@ passo "e-mail fora da lista (sem endereço real na árvore; EM-B1)" bash scripts
 passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
 
 if [ "$falhou" -ne 0 ]; then
-  echo "preci: um ou mais passos falharam" >&2
+  echo "preci: um ou mais passos falharam (total ${SECONDS}s)" >&2
   exit 1
 fi
 
-echo "preci: tudo verde"
+echo "preci: tudo verde (total ${SECONDS}s)"

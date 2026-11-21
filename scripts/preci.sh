@@ -5,27 +5,24 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-falhou=0
+# Todo passo sai aqui no primeiro que falhar: nenhum passo seguinte roda. publicar.sh lê só o
+# código de saída e as linhas "FALHOU:" do log, então um único FALHOU é o que ele precisa.
 passo() {
   local nome="$1" inicio=$SECONDS
   shift
-  if ! "$@"; then
+  if "$@"; then
     echo "── $nome ── $((SECONDS - inicio))s"
-    echo "FALHOU: $nome" >&2
-    falhou=1
     return 0
   fi
   echo "── $nome ── $((SECONDS - inicio))s"
+  echo "FALHOU: $nome" >&2
+  echo "preci: parou neste passo, os seguintes não rodaram (total ${SECONDS}s)" >&2
+  exit 1
 }
 
 # Portões da cifra (plano do CTO do login único, 6.2 a 6.3; L-36). Primeiro: se o git-crypt
-# falhar, nenhum portão seguinte roda sobre ciphertext (T7). Desvio declarado do padrão
-# "passo" (que segue até o fim): aqui a saída é imediata, de propósito.
+# falhar, nenhum portão seguinte roda sobre ciphertext (T7). Sai no próprio passo().
 passo "cifra: árvore destravada, blobs com magia, sem nome proibido" node --import tsx scripts/verificar-git-crypt.ts
-if [ "$falhou" -ne 0 ]; then
-  echo "preci: cifra falhou, portões seguintes não rodam sobre ciphertext" >&2
-  exit 1
-fi
 passo "partição: trecho de texto de estudo cifrado (fonte: strings das unidades de src/conteudo, janela de 40) em arquivo em claro; caminho cifrado sem classe reprova" node --import tsx scripts/verificar-particao.ts
 passo "travessão no que chega ao leitor (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
 passo "tipos (vue-tsc)" npx vue-tsc --noEmit
@@ -50,10 +47,5 @@ passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --impo
 passo "vazamento do conteúdo da Júri (dist; sem JSON, só com a cadeira publicada)" node --import tsx scripts/verificar-conteudo-restrito-juri.ts
 passo "e-mail fora da lista (sem endereço real na árvore; EM-B1)" bash scripts/verificar-emails.sh
 passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
-
-if [ "$falhou" -ne 0 ]; then
-  echo "preci: um ou mais passos falharam (total ${SECONDS}s)" >&2
-  exit 1
-fi
 
 echo "preci: tudo verde (total ${SECONDS}s)"

@@ -54,6 +54,12 @@ const REGRA_COM_ITEM_E = 'painel-tabela-rolavel';
  */
 const REGRA_COM_GEOMETRIA_PROPRIA = 'menu-lateral';
 
+/**
+ * A região rolável da tabela só recebe foco quando rola (A11Y-TABINDEX-TABELA). Nas larguras do
+ * portão ela empilha e não rola, então zero medidos só vale quando nenhuma região do painel rolou.
+ */
+const REGRA_SO_RECEBE_FOCO_AO_ROLAR = 'painel-tabela-rolavel';
+
 type Modo = 'claro' | 'escuro' | 'ampliada';
 const MODOS: readonly Modo[] = ['claro', 'escuro', 'ampliada'];
 const LARGURAS = [360, 1280] as const;
@@ -564,6 +570,7 @@ for (const modo of MODOS) {
     passagens.push({ nome: 'inicial', largura: 360, gaveta: true });
 
     const feitas: string[] = [];
+    let algumaTabelaRolou = false;
     for (const { nome, largura, gaveta } of passagens) {
       const pagina = PAGINAS.find((p) => p.nome === nome)!;
       await abrirPagina(page, pagina, largura);
@@ -573,6 +580,14 @@ for (const modo of MODOS) {
       }
       const rotulo = gaveta ? `${nome}+gaveta` : nome;
       const passagem = await percorrerPorTab(page);
+      if (nome === 'painel') {
+        const rolou = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>('.ar-tabela-rolavel')].some(
+            (e) => e.scrollWidth > e.clientWidth
+          )
+        );
+        if (rolou) algumaTabelaRolou = true;
+      }
       expect(
         passagem.encontrados,
         `paradas de Tab em ${rotulo} (${modo}, ${largura})`
@@ -619,11 +634,16 @@ for (const modo of MODOS) {
       'inicial+gaveta 360'
     ]);
     for (const regra of Object.keys(REGRAS_DA_SUPERFICIE_ESCURA)) {
-      console.log(
-        `FOCO-REGRA | modo=${modo} | ${regra} medidos=${medidosPorRegra.get(regra) ?? 0}`
-      );
+      const medidos = medidosPorRegra.get(regra) ?? 0;
+      console.log(`FOCO-REGRA | modo=${modo} | ${regra} medidos=${medidos}`);
+      if (regra === REGRA_SO_RECEBE_FOCO_AO_ROLAR && medidos === 0 && !algumaTabelaRolou) {
+        console.log(
+          `FOCO-REGRA | modo=${modo} | ${regra} sem medidos porque nenhuma .ar-tabela-rolavel rolou nas passagens do painel`
+        );
+        continue;
+      }
       expect(
-        medidosPorRegra.get(regra) ?? 0,
+        medidos,
         `a varredura mediu ao menos um elemento da regra ${regra} (${modo})`
       ).toBeGreaterThan(0);
     }

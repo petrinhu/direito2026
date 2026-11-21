@@ -61,5 +61,13 @@ const ROTULOS = { sistema: 'Tema do sistema', claro: 'Tema claro', escuro: 'Tema
     overflow: hidden;
     clip: rect(0 0 0 0);
   }
+
+  /* Só o ícone: largura fixa no valor do piso (E2E-G1-320, tema escuro). A lua (emoji colorido)
+     é mais larga que o sol, e o botão ia de 44 para 47 px; de 349 a 351 px isso descia o botão
+     para uma 3ª linha do cabeçalho só no escuro. Com 44 px nos dois temas o sol não sai do lugar,
+     e a lua aparece inteira, sem corte. */
+  :root:not([data-modo-adaptado='on']) .alternador-tema {
+    width: 44px;
+  }
 }
 </style>

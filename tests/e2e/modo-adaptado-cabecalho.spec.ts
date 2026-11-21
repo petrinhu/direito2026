@@ -19,9 +19,11 @@ const curriculo = await curriculoDoDisco();
  * navegador real (jsdom não faz layout):
  *
  * 1. no topo da página, o primeiro título (h1 ou h2 do conteúdo) começa
- *    abaixo do cabeçalho e aparece na primeira tela; se o cabeçalho for
- *    fixo, ocupa no máximo 40% da altura da janela (senão tem de sair do
- *    fluxo fixo);
+ *    abaixo do cabeçalho, e a PRIMEIRA LINHA dele (topo mais altura de linha)
+ *    cabe na primeira tela de 640 px (aceite A2 da onda, plano 3.1; antes
+ *    deste spec só pedia o topo abaixo de 640, o que deixou passar o F5-01);
+ *    se o cabeçalho for fixo, ocupa no máximo 40% da altura da janela (senão
+ *    tem de sair do fluxo fixo);
  * 2. depois de rolar, todo texto do cabeçalho mantém contraste >= 7:1 contra
  *    o fundo REAL em que está (o do próprio elemento composto com os dos
  *    ancestrais), nunca contra "o fundo da página" em geral.
@@ -36,6 +38,7 @@ interface MedidaTitulo {
   alturaCabecalho: number;
   fundoCabecalho: number;
   topoTitulo: number;
+  linhaTitulo: number;
   titulo: string;
 }
 
@@ -64,43 +67,37 @@ function seletorDoTitulo(caminho: string): string {
   return caminho === '/' ? '#titulo-caderno' : 'main h1, main h2';
 }
 
-const LARGURAS_DO_CABECALHO = [320, 360, 412, 768, 1280];
+// 340 e 348 são as bordas da faixa de 341 a 348 px (F1-b, D15): a regra vai até 348 px.
+// 881 e 1024 px: modo adaptado acima de 880 px (E2E-ADAPTADO-FIXO-1280, F2c).
+const LARGURAS_DO_CABECALHO = [320, 340, 341, 348, 349, 360, 412, 768, 881, 1024, 1280];
 
 /**
- * Falha de produto já conhecida (catálogo do TODO.md: E2E-G1-320 e
- * E2E-G1A-ADAPTADO). Cada entrada aponta UMA combinação rota × modo × largura
- * com medida. Só essa combinação recebe `test.fail()` e o ID no título: quando
- * o conserto chegar, o caso fica vermelho e a marca sai.
- *
- * Medidas: `/p/p1/intr-direito/u1`, modo normal, 320px, cabeçalho fixo de 266px
- * contra o teto de 256px (A3, relatorio.txt, item 1c). O modo adaptado a 360px
- * (E2E-G1A-ADAPTADO) não tem rota medida nesta lista e ainda não foi marcado.
+ * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma
+ * largura e um modo, e a lista exata das rotas que o mapa vermelho do M0 mediu
+ * (relatório do M0, camada 2, base b1 = 810d537). O E2E-G1-320 (55 casos a
+ * 320 px) saiu desta lista na F1 (21ddb0c, vermelho; 5fa7133, conserto). Por
+ * projeto, não fica nenhum caso marcado (o E2E-G1A-ADAPTADO saiu no Ramo B da F2 e o E2E-ADAPTADO-FIXO-1280 na F2c). Só essas combinações recebem
+ * `test.fail()` e o ID no título: quando o conserto chegar, o caso fica
+ * vermelho e a marca sai. Qualquer vermelho fora desta lista é item novo da
+ * INBOX, com marca própria (regra D5 do plano).
  */
-interface FalhaConhecida {
+interface GrupoDeFalha {
   id: string;
-  caminho: string;
-  modoAdaptado: boolean;
   largura: number;
+  modoAdaptado: boolean;
   motivo: string;
+  rotas: readonly string[];
 }
 
-const FALHAS_CONHECIDAS: readonly FalhaConhecida[] = [
-  {
-    id: 'E2E-G1-320',
-    caminho: '/p/p1/intr-direito/u1',
-    modoAdaptado: false,
-    largura: 320,
-    motivo: 'cabeçalho fixo de 266px contra o teto de 256px (E2E-G1-320)'
-  }
-];
+const FALHAS_CONHECIDAS: readonly GrupoDeFalha[] = [];
 
 function falhaConhecida(
   caminho: string,
   modoAdaptado: boolean,
   largura: number
-): FalhaConhecida | undefined {
+): GrupoDeFalha | undefined {
   return FALHAS_CONHECIDAS.find(
-    (f) => f.caminho === caminho && f.modoAdaptado === modoAdaptado && f.largura === largura
+    (g) => g.largura === largura && g.modoAdaptado === modoAdaptado && g.rotas.includes(caminho)
   );
 }
 
@@ -117,18 +114,24 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
         await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado });
         await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
         await page.goto(caminho);
-        await page.locator(seletorDoTitulo(caminho)).first().waitFor({ state: 'visible' });
+        await esperarTituloVisivel(page, seletorDoTitulo(caminho));
         await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
         await esperarLayoutAssentar(page);
         const medida = await page.evaluate<MedidaTitulo, string>((seletor) => {
           const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
-          const titulo = document.querySelector<HTMLElement>(seletor)!;
+          // O primeiro título com caixa de layout: o h2 oculto do modal não conta.
+          const titulo = Array.from(document.querySelectorAll<HTMLElement>(seletor)).find(
+            (el) => el.getClientRects().length > 0
+          )!;
           const caixaCabecalho = cabecalho.getBoundingClientRect();
+          // Altura de linha em px; se o line-height for "normal", cai na altura do título (mesmo critério da sonda reva2).
+          const linha = parseFloat(getComputedStyle(titulo).lineHeight);
           return {
             posicao: getComputedStyle(cabecalho).position,
             alturaCabecalho: caixaCabecalho.height,
             fundoCabecalho: caixaCabecalho.bottom,
             topoTitulo: titulo.getBoundingClientRect().top,
+            linhaTitulo: Number.isFinite(linha) ? linha : titulo.getBoundingClientRect().height,
             titulo: titulo.textContent?.trim().slice(0, 50) ?? ''
           };
         }, seletorDoTitulo(caminho));
@@ -141,9 +144,9 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
         // medido, 433px de cabeçalho): ali só vale "abaixo do cabeçalho".
         if (largura >= LARGURA_MINIMA_DA_PRIMEIRA_TELA) {
           expect(
-            medida.topoTitulo,
-            `${rotulo}: o título começa dentro da primeira tela`
-          ).toBeLessThan(ALTURA_DA_JANELA);
+            medida.topoTitulo + medida.linhaTitulo,
+            `${rotulo}: a primeira linha do título termina na primeira tela (topo ${medida.topoTitulo.toFixed(1)} + linha ${medida.linhaTitulo.toFixed(1)})`
+          ).toBeLessThanOrEqual(ALTURA_DA_JANELA);
         }
         if (medida.posicao === 'fixed') {
           expect(
@@ -153,6 +156,42 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
         }
       });
     }
+  }
+}
+
+/**
+ * E2E-G1-320 no tema escuro (QA da F1, 20/11/2026): a 349 px o cabeçalho fixo do modo normal tinha
+ * 265,8 px no escuro e 210,9 px no claro, então a borda medida no claro não vale no escuro. Mede só a
+ * altura, no modo normal, nas bordas da regra e um passo fora de cada uma.
+ */
+const LARGURAS_DO_TEMA_ESCURO = [...new Set([348, 349, 351, 352])];
+
+for (const caminho of caminhosParaCabecalho(curriculo)) {
+  for (const largura of LARGURAS_DO_TEMA_ESCURO) {
+    test(`cabeçalho fixo de ${caminho} cabe em 40% da janela, tema escuro, modo normal, ${largura}px`, async ({
+      page
+    }) => {
+      await prepararEstadoInicial(page, { tema: 'escuro', modoAdaptado: false });
+      await page.setViewportSize({ width: 1280, height: ALTURA_DA_JANELA });
+      await page.goto(caminho);
+      await esperarTituloVisivel(page, seletorDoTitulo(caminho));
+      await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
+      await esperarLayoutAssentar(page);
+      const medida = await page.evaluate(() => {
+        const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
+        return {
+          tema: document.documentElement.getAttribute('data-theme'),
+          posicao: getComputedStyle(cabecalho).position,
+          altura: cabecalho.getBoundingClientRect().height
+        };
+      });
+      expect(medida.tema, 'tema escuro aplicado').toBe('dark');
+      expect(medida.posicao, 'cabeçalho do modo normal é fixo').toBe('fixed');
+      expect(
+        medida.altura,
+        `${caminho}, tema escuro, ${largura}px: cabeçalho fixo ocupa ${medida.altura.toFixed(0)}px`
+      ).toBeLessThanOrEqual(ALTURA_DA_JANELA * FRACAO_MAXIMA_DO_CABECALHO_FIXO);
+    });
   }
 }
 

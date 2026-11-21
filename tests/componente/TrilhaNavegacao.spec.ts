@@ -126,4 +126,23 @@ describe('TrilhaNavegacao', () => {
       expect(li.classes()).not.toContain('trilha-navegacao__atual');
     }
   });
+
+  it('marca no nav a trilha longa, de mais de dois níveis, para o cabeçalho do modo adaptado (F5-03)', () => {
+    const casos = [
+      { caminhoAtual: '', niveis: 1, longa: 'false' },
+      { caminhoAtual: 'p/p1', niveis: 1, longa: 'false' },
+      { caminhoAtual: 'p/p1/intr-direito', niveis: 2, longa: 'false' },
+      { caminhoAtual: 'p/p1/intr-direito/u1/mapa', niveis: 3, longa: 'true' },
+      { caminhoAtual: 'p/p1/intr-direito/u1', niveis: 4, longa: 'true' }
+    ] as const;
+    for (const caso of casos) {
+      const wrapper = mount(TrilhaNavegacao, {
+        props: { curriculo: curriculoDeTeste(), caminhoAtual: caso.caminhoAtual }
+      });
+      expect(wrapper.findAll('li'), caso.caminhoAtual).toHaveLength(caso.niveis);
+      expect(wrapper.find('nav').attributes('data-trilha-longa'), caso.caminhoAtual).toBe(
+        caso.longa
+      );
+    }
+  });
 });

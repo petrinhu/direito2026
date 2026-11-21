@@ -6,8 +6,10 @@
 #   npm run publicar -- --preparar <recurso|correcao|construcao> [--versao A.B.C.D]
 #   npm run publicar -- --concluir
 #
-# Modo normal: commit de release (só package.json), tag anotada, clone descartável em .worktrees/
-# com git-crypt destravado e preci. Depois do preci: pacote separado (dist-pacote/webroot e
+# Modo normal: clone descartável em .worktrees/ no commit base (HEAD de main), com git-crypt destravado.
+# A versão e as novidades são gravadas só nesse clone, e o preci roda nele. Só com o preci verde: commit de
+# release (só package.json e docs/versoes/novidades.json, copiados do clone) e tag anotada. Depois do preci:
+# pacote separado (dist-pacote/webroot e
 # dist-pacote/app), app em versoes/v<versão> (fora do webroot), webroot, ponteiro atual trocado
 # com ln -sfn em nome temporário e mv -T (atômico), poda (guarda 2 versões: a nova e a anterior, que
 # é o rollback). Conferência do ar: md5 de cada arquivo no disco (webroot e app, inclusive .htaccess
@@ -20,8 +22,10 @@
 # no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
 # --seco: confere e imprime o plano, sem alterar nada.
-# Se o preci falhar, desfaz SÓ o que este script fez (tag e commit de release locais). Depois do
-# primeiro escrito no destino não desfaz nada: o remoto não tem desfazer automático.
+# Antes da release (commit e tag), preci reprovado ou sinal não deixam nada para desfazer: a release só nasce
+# depois do preci verde. Entre a release e o primeiro escrito no destino, desfaz SÓ o que este script fez
+# (commit e tag locais). Depois do primeiro escrito no destino não desfaz nada: o remoto não tem desfazer
+# automático.
 # Nunca imprime segredo, nem conteúdo de CADERNO_RESTRITO, de CADERNO_RESTRITO_JURI nem da Júri.
 # Sem --no-verify, sem force, sem amend (GODS_LAWS L-24, L-25).
 #
@@ -85,6 +89,8 @@ SECO=0
 VERSAO_ATUAL=""
 VERSAO_NOVA=""
 SHA_RELEASE=""
+# HEAD de main no início da publicação: o clone sai daqui, e R só anda depois do preci verde.
+BASE=""
 ESPACO=""
 PACOTE_LOCAL=""
 REGRAS=""
@@ -189,6 +195,7 @@ conferir_branch_e_arvore() {
     echo "$sujos" >&2
     recusar "há mudanças não commitadas em arquivos rastreados (listadas acima); commite ou descarte antes"
   fi
+  BASE="$(git rev-parse HEAD)"
 }
 
 calcular_versoes() {
@@ -228,10 +235,10 @@ publicar: plano (--seco, nada foi alterado; modo: $MODO)
   versão atual (package.json): $VERSAO_ATUAL
   versão nova:                 $VERSAO_NOVA
   destino:                     ${DESTINO_HOST:-LOCAL (ensaio)}${DESTINO_HOST:+:}$DESTINO_RAIZ
-  1. grava package.json e commita chore(release): v$VERSAO_NOVA (só package.json); tag anotada v$VERSAO_NOVA
-  2. clone descartável em $PASTA_CLONES/pub-clone.* no commit da tag (git-crypt unlock com a chave: $chave)
-  3. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-AUSENTE, a publicação real recusa})
+  1. clone descartável em $PASTA_CLONES/pub-clone.* no commit base (git-crypt unlock com a chave: $chave); versão e novidades gravadas SÓ no clone
+  2. preci nesse clone (TMPDIR=$PRECI_TMPDIR; conteúdo restrito: $restrito; caixa: ${CADERNO_CAIXA:-AUSENTE, a publicação real recusa})
      o preci roda o build, que separa o pacote em dist-pacote/webroot e dist-pacote/app
+  3. só com o preci verde: commit de release chore(release): v$VERSAO_NOVA (só package.json e docs/versoes/novidades.json, copiados do clone) e tag anotada v$VERSAO_NOVA
   4. app: $DESTINO_APP/versoes/v$VERSAO_NOVA (rsync), ponteiro atual com ln -sfn e mv -T
   5. webroot: $DESTINO_WEBROOT (rsync; apaga só o que não está no pacote, teto $TETO_APAGAR_WEBROOT)
   6. poda: guarda 2 versões em $DESTINO_APP/versoes (a nova e a anterior, que é o rollback)
@@ -376,18 +383,32 @@ validar_novidades_publicacao() {
   [ "${#ITENS_NOVIDADE[@]}" -gt 0 ] || recusar "nenhum item de novidade validado"
 }
 
-# Acrescenta a entrada desta versão em docs/versoes/novidades.json, no topo (itens estruturados).
+# Acrescenta a entrada desta versão em docs/versoes/novidades.json DO CLONE, no topo (itens estruturados).
+# Só no clone: R recebe o arquivo depois do preci verde (gravar_e_commitar).
 gravar_entrada_novidades() {
   (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/novidades-cli.ts" gravar \
-    "$RAIZ/docs/versoes/novidades.json" "$VERSAO_NOVA" ${ITENS_NOVIDADE[@]+"${ITENS_NOVIDADE[@]}"}) >/dev/null ||
-    recusar "não consegui gravar a entrada de novidades em docs/versoes/novidades.json (nada foi commitado)"
+    "$CLONE/docs/versoes/novidades.json" "$VERSAO_NOVA" ${ITENS_NOVIDADE[@]+"${ITENS_NOVIDADE[@]}"}) >/dev/null ||
+    recusar "não consegui gravar a entrada de novidades no clone (nada foi commitado)"
 }
 
+# Release, depois do preci verde (L-25, regra 3 do CLAUDE.md do site). R não foi tocado até aqui: tem de
+# estar no commit base, com a árvore rastreada limpa. Os dois arquivos vêm do clone, que é o que o preci
+# testou: são copiados sem regerar e conferidos byte a byte (cmp) antes do commit.
 gravar_e_commitar() {
-  local alterados mensagem
-  PACKAGE_ALTERADO=1
-  (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/versao-cli.ts" gravar "$RAIZ/package.json" "$VERSAO_NOVA") >/dev/null
-  gravar_entrada_novidades
+  local alterados mensagem arquivo
+  [ "$(git rev-parse HEAD)" = "$BASE" ] ||
+    recusar "HEAD mudou desde o início da publicação; nada foi commitado"
+  alterados="$(git status --porcelain --untracked-files=no)"
+  [ -z "$alterados" ] || recusar "árvore rastreada suja antes da release; nada foi commitado"
+  for arquivo in package.json docs/versoes/novidades.json; do
+    if [ -L "$CLONE/$arquivo" ] || [ -L "$RAIZ/$arquivo" ]; then
+      recusar "$arquivo é link simbólico: não copio (nada foi commitado)"
+    fi
+    PACKAGE_ALTERADO=1
+    cp -- "$CLONE/$arquivo" "$RAIZ/$arquivo" || recusar "não copiei $arquivo do clone (nada foi commitado)"
+    cmp -s -- "$CLONE/$arquivo" "$RAIZ/$arquivo" ||
+      recusar "$arquivo copiado diverge do testado pelo preci (nada foi commitado)"
+  done
   alterados="$(git status --porcelain --untracked-files=no | sort)"
   [ "$alterados" = $' M docs/versoes/novidades.json\n M package.json' ] ||
     recusar "esperava só package.json e docs/versoes/novidades.json alterados, veio: $alterados"
@@ -414,21 +435,26 @@ criar_tag() {
   TAG_CRIADA=1
 }
 
-# Clone do commit de release, com a árvore destravada pela chave do git-crypt.
-# O clone é cópia própria (não é worktree): worktree não aceita o filtro do git-crypt (T5).
+# Clone descartável no commit base (BASE, lido em conferir_branch_e_arvore), com a árvore destravada pela
+# chave do git-crypt. O clone é cópia própria (não é worktree): worktree não aceita o filtro do git-crypt (T5).
+# A versão e as novidades da release são gravadas SÓ no clone, depois do unlock (o unlock exige árvore
+# limpa): é nele que o preci roda. R não é tocado até o preci ficar verde.
 preparar_clone() {
   mkdir -p "$PASTA_CLONES"
   CLONE="$(mktemp -d "$PASTA_CLONES/pub-clone.XXXXXX")" ||
     recusar "não criei a pasta do clone em $PASTA_CLONES"
   git clone -q "$RAIZ" "$CLONE" || recusar "git clone do repositório falhou (mensagem acima)"
-  git -C "$CLONE" checkout -q --detach "$SHA_RELEASE" ||
-    recusar "não consegui pôr o clone no commit de release"
+  git -C "$CLONE" checkout -q --detach "$BASE" ||
+    recusar "não consegui pôr o clone no commit base"
   (cd "$CLONE" && git-crypt unlock "$CHAVE_GIT_CRYPT") > "$ESPACO/unlock.log" 2>&1 ||
     recusar "git-crypt unlock falhou no clone (log privado em $ESPACO/unlock.log)"
   if [ -e "$CLONE/node_modules" ] && [ ! -L "$CLONE/node_modules" ]; then
     recusar "$CLONE/node_modules é diretório real: não sobrescrevo"
   fi
   ln -sfn "$RAIZ/node_modules" "$CLONE/node_modules"
+  (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/versao-cli.ts" gravar "$CLONE/package.json" "$VERSAO_NOVA") >/dev/null ||
+    recusar "não consegui gravar a versão nova no clone (nada foi commitado)"
+  gravar_entrada_novidades
 }
 
 # Apaga o clone deste script, por caminho exato. Nunca apaga nada fora de $PASTA_CLONES/pub-clone.*.
@@ -501,7 +527,7 @@ rodar_preci() {
     > "$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ]; then
     grep -E '^FALHOU' "$log" | sed 's/^/publicar: /' >&2 || true
-    recusar "preci reprovou (código $rc); desfaço o commit e a tag locais"
+    recusar "preci reprovou (código $rc); nada foi commitado nem tagueado"
   fi
   echo "publicar: preci verde"
 }
@@ -809,11 +835,11 @@ comando_quarentena() {
 }
 
 # Confere, depois do preci no clone, que o histórico do pacote começa pela versão nova (AV-F5). Se
-# não começar, recusa: o ao_sair desfaz o commit e a tag locais, como já faz para o preci.
+# não começar, recusa antes da release: nada foi commitado nem tagueado.
 conferir_historico_pacote() {
   (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/novidades-cli.ts" conferir-historico \
     "$CLONE/dist-pacote/app/versao.json" "$VERSAO_NOVA") ||
-    recusar "versao.json do pacote: historico[0] não é a versão nova; desfaço o commit e a tag locais"
+    recusar "versao.json do pacote: historico[0] não é a versão nova; nada foi commitado nem tagueado"
 }
 
 # Poda (AV-F5): mantém duas versões (a nova e a anterior, que é o rollback). A mais velha vai para a
@@ -1251,18 +1277,18 @@ principal() {
   conferir_remoto
   conferir_insumos
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
-  gravar_e_commitar
-  criar_tag
   preparar_clone
   copiar_dispositivos
   rodar_preci
   if [ "${CADERNO_PARAR_APOS_PRECI:-0}" = 1 ]; then
-    # Ensaio: sai com código 4 de propósito, para que ao_sair desfaça o commit e a tag.
+    # Ensaio: sai com código 4 de propósito. A release ainda não existe, então não há commit nem tag a desfazer.
     echo "publicar: ensaio (CADERNO_PARAR_APOS_PRECI=1): parou após o preci; nada foi subido. Log: $ESPACO/preci.log" >&2
     exit 4
   fi
   conferir_pacote_local
   conferir_historico_pacote
+  gravar_e_commitar
+  criar_tag
   guardar_pacote
   preparar_regras
   if [ "$MODO" = preparar ]; then
@@ -1287,7 +1313,7 @@ principal() {
 }
 
 # Sinal durante o preci (LU-F1.3, L-25): sai com o código do próprio sinal, para que ao_sair leia
-# código diferente de 0 e desfaça o commit e a tag locais. Bash só trata o sinal depois que o filho
+# código diferente de 0. Antes da release não há commit nem tag: nada a desfazer. Bash só trata o sinal depois que o filho
 # em primeiro plano (o preci) termina.
 trap 'exit 143' TERM
 trap 'exit 130' INT

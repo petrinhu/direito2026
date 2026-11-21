@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { carregarHistorico, paginaNovidades } from '@/app/versoes/paginas';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 /**
  * Página Novidades (HIST-F2, ordem do líder de 14/11): o que mudou em cada versão, em linguagem simples.
@@ -13,6 +14,7 @@ const entradas = carga.ok ? paginaNovidades(carga.entradas) : [];
 <template>
   <article class="pagina-versoes">
     <h1 class="pagina-versoes__titulo">Novidades</h1>
+    <AlvoQuadroProva />
     <p class="pagina-versoes__intro">O que mudou em cada versão do site, em linguagem simples.</p>
     <p v-if="!carga.ok" role="status">Não foi possível carregar as novidades agora.</p>
     <section

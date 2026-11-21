@@ -198,16 +198,17 @@ describe('--novidade: recusa antes do commit e texto final (AV-F5)', () => {
 
 describe('commit de release e histórico do pacote (AV-F5)', () => {
   it(
-    'commit de release leva package.json e docs/versoes/novidades.json, com a entrada da versão',
+    'commit de release leva package.json e docs/versoes/novidades.json, copiados do clone do preci, com a entrada da versão',
     () => {
       const repo = repositorioTemporario();
+      const clone = join(tmp, 'clone');
       const r = rodar(
         [
-          'TIPO=recurso',
-          'VERSAO_ATUAL=1.12.0.0',
-          'VERSAO_NOVA=1.13.0.0',
-          'PACKAGE_ALTERADO=0',
-          'RELEASE_FEITO=0',
+          'BASE="$(git rev-parse HEAD)"',
+          `CLONE='${clone}'`,
+          'git clone -q "$RAIZ" "$CLONE"',
+          '(cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/versao-cli.ts" gravar "$CLONE/package.json" "$VERSAO_NOVA") >/dev/null',
+          'gravar_entrada_novidades',
           'gravar_e_commitar',
           'git show --stat --format=%s HEAD'
         ].join('\n'),
@@ -215,6 +216,11 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
         {
           // RAIZ do script aponta para o repositório temporário: nunca para a árvore real.
           RAIZ: repo,
+          TIPO: 'recurso',
+          VERSAO_ATUAL: '1.12.0.0',
+          VERSAO_NOVA: '1.13.0.0',
+          PACKAGE_ALTERADO: '0',
+          RELEASE_FEITO: '0',
           ITENS_NOVIDADE: [TEXTO_USABILIDADE, 'tecnica']
         }
       );
@@ -231,6 +237,37 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
         versao: '1.13.0.0',
         novidades: [TEXTO_USABILIDADE, 'tecnica']
       });
+      // Os bytes da release são os do clone que o preci testou.
+      expect(readFileSync(join(repo, 'package.json'))).toEqual(
+        readFileSync(join(clone, 'package.json'))
+      );
+    },
+    TIMEOUT
+  );
+
+  it(
+    'HEAD diferente da base recusa antes de copiar: package.json e novidades da raiz ficam como estavam',
+    () => {
+      const repo = repositorioTemporario();
+      const antes = readFileSync(join(repo, 'package.json'), 'utf-8');
+      const r = rodar(
+        [
+          'BASE=0000000000000000000000000000000000000000',
+          `CLONE='${join(tmp, 'clone-inexistente')}'`,
+          'gravar_e_commitar'
+        ].join('\n'),
+        repo,
+        {
+          RAIZ: repo,
+          TIPO: 'recurso',
+          VERSAO_NOVA: '1.13.0.0',
+          PACKAGE_ALTERADO: '0',
+          RELEASE_FEITO: '0'
+        }
+      );
+      expect(r.status).not.toBe(0);
+      expect(r.saida).toContain('HEAD mudou');
+      expect(readFileSync(join(repo, 'package.json'), 'utf-8')).toBe(antes);
     },
     TIMEOUT
   );

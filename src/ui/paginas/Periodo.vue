@@ -3,6 +3,7 @@ import { computed, inject } from 'vue';
 import { CHAVE_CURRICULO } from '@/app/chaves';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 const props = defineProps<{ periodo: string }>();
 const curriculo = inject(CHAVE_CURRICULO)!;
@@ -13,6 +14,7 @@ const periodo = computed(() => curriculo.find((p) => p.id === props.periodo));
 <template>
   <div v-if="periodo" class="pagina-periodo">
     <h1>{{ periodo.rotulo }}</h1>
+    <AlvoQuadroProva />
     <EstadoEmBreve v-if="periodo.cadeiras.length === 0" rotulo="Nenhuma cadeira publicada ainda" />
     <ul v-else>
       <li v-for="cadeira in periodo.cadeiras" :key="cadeira.id">

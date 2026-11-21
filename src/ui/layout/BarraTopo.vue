@@ -58,8 +58,8 @@ function aoRolar(): void {
   // todo (requisito do líder, "botão visível no cabeçalho, em toda
   // página"), e um cabeçalho que soma e some é movimento que o modo existe
   // para eliminar (docs/modo-adaptado.md, seção 6). Exceção registrada em
-  // docs/modo-adaptado.md, seção 4.1: até 880px o cabeçalho do modo não é
-  // fixo, então o botão fica no topo de cada página, não em toda rolagem.
+  // docs/modo-adaptado.md, seção 4.1: em toda largura o cabeçalho do modo não
+  // é fixo, então o botão fica no topo de cada página, não em toda rolagem.
   if (!prefereMenosMovimento && !props.storeModoAdaptado.efetivo.value) {
     // Limiar de 80px antes de recolher: evita esconder o cabeçalho por
     // um tremor mínimo de rolagem logo no topo da página.
@@ -246,26 +246,36 @@ onBeforeUnmount(() => {
 }
 
 /*
-  Modo adaptado em tela estreita: o cabeçalho sai do fluxo fixo e rola junto
+  Modo adaptado, em toda largura: o cabeçalho sai do fluxo fixo e rola junto
   com a página (achado do QA, 28/09/2026: a 360px ele tinha 433px, cobria o
   título e passava de 2/3 da altura de uma janela de 640px). Com o texto
   maior do modo e a trilha sem reticências (seção 4), nenhum arranjo cabe em
   40% da tela; a pessoa alcança o botão do modo e o tema no topo de cada
-  página, e o título nunca fica escondido. Acima de 880px (mesmo ponto de
-  quebra da gaveta) continua fixo. --altura-cabecalho vira 0px por
+  página, e o título nunca fica escondido. Desde a 1.16.3.0 vale em toda largura
+  (E2E-ADAPTADO-FIXO-1280: a 881px o fixo chegava a 483px). --altura-cabecalho vira 0px por
   publicarAlturaReservada (script acima). A onda e o fio de progresso
   penduram fora da faixa: sem fio (não há o que acompanhar num cabeçalho que
-  rola), e a onda ganha margem para não cobrir o início do conteúdo.
+  rola), e a onda ganha margem até 880 px para não cobrir o início do conteúdo.
 */
-@media (max-width: 880px) {
-  :root[data-modo-adaptado='on'] .barra-topo {
-    position: relative;
-    margin-bottom: var(--esp-4, 1rem);
-  }
+:root[data-modo-adaptado='on'] .barra-topo {
+  position: relative;
+  margin-bottom: var(--esp-4, 1rem);
+}
 
-  :root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
-    display: none;
+/*
+  Acima de 880 px o cabeçalho do modo rola sem a margem de baixo (F5-01, decisão do líder de
+  20/11/2026): a margem levava a primeira linha do título a 643 px a 881 px, fora da primeira
+  tela de 640 px. A onda volta a pender sobre os primeiros 14 px abaixo do cabeçalho, como
+  quando ele era fixo nessa faixa. Até 880 px a margem fica.
+*/
+@media (min-width: 881px) {
+  :root[data-modo-adaptado='on'] .barra-topo {
+    margin-bottom: 0;
   }
+}
+
+:root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
+  display: none;
 }
 
 .barra-topo--fixa {
@@ -299,6 +309,21 @@ onBeforeUnmount(() => {
   }
 }
 
+/*
+  Celular estreito (até 348px), modo normal: o cabeçalho fixo passava de 256px
+  (E2E-G1-320, 266px de 320 a 348px; a faixa de 349px para cima tem duas linhas
+  e já cabe). Corta só o espaço vertical: o respiro de cima e de baixo da faixa
+  e o espaço entre as linhas caem de 0.5rem para 0.25rem. Fonte, alvo de toque
+  e ordem de Tab não mudam. De 349px para cima a regra não vale, então a altura
+  segue como estava (V4). O modo adaptado tem a própria faixa e não entra aqui.
+*/
+@media (max-width: 348px) {
+  :root:not([data-modo-adaptado='on']) .barra-topo__linha {
+    padding-block: var(--esp-1, 0.25rem);
+    row-gap: var(--esp-1, 0.25rem);
+  }
+}
+
 .barra-topo__trilha {
   margin-right: auto;
   min-width: 0;
@@ -322,6 +347,19 @@ onBeforeUnmount(() => {
    apontou. Abaixo de 341px a trilha segue ao lado da busca, como na linha de base. */
 @media (min-width: 341px) and (max-width: 640px) {
   :root[data-modo-adaptado='on'] .barra-topo__trilha {
+    flex-basis: 100%;
+  }
+}
+
+/* De 641px a 1023px, só a trilha longa, de mais de dois níveis (data-trilha-longa, de
+   TrilhaNavegacao.vue). E2E-A2-SERRA, decisão do líder de 20/11/2026: sem a linha inteira,
+   de 772 a 993px a trilha longa dividia a linha, quebrava nível por nível e o cabeçalho
+   chegava a 827px. F5-03: na trilha curta (um ou dois níveis) a linha inteira só somava uma
+   linha ao cabeçalho, até 98,8px acima do da linha de base (/novidades a 1023px), e ali o
+   CSS fica o da linha de base. Sem :has(): os alvos do build incluem Firefox 115. A trilha
+   é contêiner de largura, então o CSS não mede se ela cabe; o número de níveis decide. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  :root[data-modo-adaptado='on'] .barra-topo__trilha[data-trilha-longa='true'] {
     flex-basis: 100%;
   }
 }

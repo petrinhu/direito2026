@@ -239,3 +239,68 @@ describe('conferir_insumos: o preci só roda na caixa (L-50, E9)', () => {
     expect(r.saida).toContain('não é executável');
   });
 });
+
+/**
+ * CADERNO_RESTRITO é obrigatória e não tem caminho pessoal (repositório público). A linha real
+ * do script é usada no teste, para que um padrão voltando faça o teste ficar vermelho. Só
+ * conferir_remoto é extraída, com git falso, que sempre dá certo. Nada é publicado nem lido do remoto.
+ */
+describe('publicar.sh: CADERNO_RESTRITO é obrigatória, sem caminho pessoal', () => {
+  function conferirRestrito(restrito: string | undefined): {
+    status: number | null;
+    saida: string;
+  } {
+    const ambiente: Record<string, string | undefined> = { ...process.env };
+    delete ambiente.CADERNO_RESTRITO;
+    if (restrito !== undefined) ambiente.CADERNO_RESTRITO = restrito;
+    const linha = FONTE.match(/^CONTEUDO_RESTRITO=.*$/m)?.[0];
+    if (!linha) throw new Error('linha CONTEUDO_RESTRITO não encontrada em publicar.sh');
+    const r = spawnSync(
+      'bash',
+      [
+        '-c',
+        [
+          'set -euo pipefail',
+          'git() { :; }',
+          'REMOTO=github',
+          'VERSAO_NOVA=1.0.0.0',
+          'BRANCH_PUBLICA=main',
+          linha,
+          funcao('recusar'),
+          funcao('conferir_remoto'),
+          'conferir_remoto',
+          'echo passou'
+        ].join('\n')
+      ],
+      { encoding: 'utf-8', env: ambiente }
+    );
+    return { status: r.status, saida: `${r.stdout}${r.stderr}` };
+  }
+
+  it('sem CADERNO_RESTRITO recusa com rc 1, nomeia a variável e não passa', () => {
+    const r = conferirRestrito(undefined);
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).toContain('CADERNO_RESTRITO');
+    expect(r.saida).not.toContain('passou');
+  });
+
+  it('CADERNO_RESTRITO vazio recusa do mesmo jeito', () => {
+    const r = conferirRestrito('');
+    expect(r.status, r.saida).toBe(1);
+    expect(r.saida).not.toContain('passou');
+  });
+
+  it('com CADERNO_RESTRITO apontando para arquivo existente, a conferência passa (rc 0)', () => {
+    const arquivo = join(tmp, 'interdisciplinar.json');
+    writeFileSync(arquivo, '{}');
+    const r = conferirRestrito(arquivo);
+    expect(r.status, r.saida).toBe(0);
+    expect(r.saida).toContain('passou');
+  });
+
+  it('a linha padrão de CONTEUDO_RESTRITO é vazia: nenhum caminho pessoal no repositório', () => {
+    const linha = FONTE.match(/^CONTEUDO_RESTRITO=.*$/m)?.[0];
+    expect(linha).toBe('CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-}"');
+    expect(linha).not.toContain('/home/');
+  });
+});

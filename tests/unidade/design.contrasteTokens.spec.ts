@@ -425,3 +425,54 @@ describe('calendário, cores de categoria fixas entre os temas', () => {
     }
   });
 });
+
+/**
+ * Botão "Anterior" desabilitado do quiz (src/ui/componentes/MotorQuiz.vue,
+ * pendência QUIZ-ANTERIOR-CONTRASTE). Mede o texto que o botão pinta
+ * (--cor-desativado-texto) sobre o fundo que ele mantém (--cor-fundo-elevado),
+ * e não sobre --cor-desativado-bg, que no claro cai para 2,96:1. Piso de 3:1,
+ * não 4,5:1 de PARES: o WCAG 1.4.3 isenta controle desabilitado, e 3:1 é a
+ * decisão do projeto para o botão continuar legível sem parecer ativo.
+ */
+describe('botão Anterior desabilitado do quiz', () => {
+  const cssMotor = readFileSync(
+    resolve(__dirname, '../../src/ui/componentes/MotorQuiz.vue'),
+    'utf-8'
+  );
+  const regra = /\.motor-quiz__navegacao button:disabled\s*\{([^}]*)\}/.exec(cssMotor);
+
+  it('tem regra :disabled própria que pinta o texto com o token de desativado', () => {
+    expect(regra, 'regra .motor-quiz__navegacao button:disabled ausente').not.toBeNull();
+    expect(regra?.[1]).toMatch(/color:\s*var\(--cor-desativado-texto\)/);
+  });
+
+  it('não troca o fundo do botão, então o par medido é o do cartão', () => {
+    expect(regra?.[1] ?? '').not.toMatch(/background/);
+  });
+
+  const temas = carregarTemas();
+  const cssTokens = readFileSync(CAMINHO_TOKENS, 'utf-8');
+  const blocoAdaptado = recortarBlocoDeSeletorTopoDeArquivo(
+    cssTokens,
+    ':root[data-modo-adaptado="on"]'
+  );
+  const porTema: Record<'claro' | 'escuro' | 'adaptado', Record<string, string>> = {
+    claro: temas.claro,
+    escuro: temas.escuro,
+    adaptado: extrairVariaveisHex(blocoAdaptado ?? '')
+  };
+
+  it.each(['claro', 'escuro', 'adaptado'] as const)(
+    '%s: texto desativado sobre o fundo do cartão, no mínimo 3:1',
+    (tema) => {
+      const texto = porTema[tema]['--cor-desativado-texto'];
+      const fundo = porTema[tema]['--cor-fundo-elevado'];
+      expect(texto, `--cor-desativado-texto ausente em ${tema}`).toBeDefined();
+      expect(fundo, `--cor-fundo-elevado ausente em ${tema}`).toBeDefined();
+      expect(
+        calcularContraste(texto as string, fundo as string),
+        `${texto} sobre ${fundo} (${tema})`
+      ).toBeGreaterThanOrEqual(PISO_CONTRASTE_NAO_TEXTO);
+    }
+  );
+});

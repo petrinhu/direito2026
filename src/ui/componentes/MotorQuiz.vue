@@ -135,6 +135,18 @@ function anterior(): void {
   cursor: pointer;
 }
 
+/* Desabilitado (primeira pergunta). Texto de desativado sobre o fundo do
+   próprio cartão: sobre --cor-desativado-bg o texto cai para 2,96:1 no claro.
+   Sem opacidade, que também derruba o contraste. O sinal que não depende de
+   cor é o contorno tracejado, o mesmo do dia de hoje no calendário; no modo
+   adaptado o texto vira preto e o tracejado é o que distingue o botão. */
+.motor-quiz__navegacao button:disabled {
+  color: var(--cor-desativado-texto);
+  border-style: dashed;
+  border-color: var(--cor-desativado-borda);
+  cursor: not-allowed;
+}
+
 @media print {
   .motor-quiz__navegacao {
     display: none;

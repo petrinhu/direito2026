@@ -86,3 +86,32 @@ Ordem do líder de 21/11/2026, na forma em que ele escreveu: "Eu não quero publ
 - A parte entra no `main` só na hora da sua publicação: primeiro o merge dela sozinha, depois as verificações rápidas (`verificar-particao`, camadas, tipos, formatação e a suíte de unidade) e, por fim, o `publicar`. A próxima parte só entra depois que a anterior estiver no ar.
 - As partes prontas esperam numa fila. A ordem é: cadeira primeiro, depois o resto, na ordem em que ficaram prontas.
 - Se uma parte for recusada, só ela volta para conserto, e a fila segue com a próxima.
+
+## Eficácia: máquina, testes e publicação (LEI do projeto)
+
+Ordens do líder de 21/11/2026, na forma em que ele escreveu: "Quero a melhor eficácia. E quero testes mais rápidos sem OE", "Deixe nucleos 0 e 1 livres pro sistema e pro claude code", "Não faz o menor sentido um teste ser mais demorado que codar algo" e, por fim, "Crie a lei da eficácia". A forma do pré-CI seletivo foi escolhida por ele, por AskUserQuestion, com a opção "Rodar só o que a mudança toca".
+
+### A máquina
+
+- Os núcleos 0 e 1 ficam livres para o sistema e para o Claude Code. Todo trabalho pesado roda com `taskset -c 2-15`, dentro de `systemd-run --user --scope -p TasksMax=400 -p MemoryMax=6G`.
+- Trabalho pesado é vitest, vue-tsc, build, Playwright e a suíte PHP. Só um roda por vez, dentro de `flock /var/tmp/onda-paralela/pesado.trava`. Motivo, medido em 21/11: sete agentes testando ao mesmo tempo levaram a carga a 117 em 16 núcleos e esgotaram a memória (30 de 31 GB), e o sistema matou um processo de teste da publicação em curso.
+- A espera é sempre sem gasto: `flock` bloqueante, ou o aviso de fim da própria ferramenta. Laço de espera é proibido. Um `read -t 5 < /dev/zero` gira a 90% de um núcleo, porque `/dev/zero` responde na hora.
+
+### A publicação
+
+- A publicação vem antes de tudo. Ela roda na hora e não entra na fila da `pesado.trava`, que não respeita a ordem de chegada. Enquanto ela roda, nenhum agente roda trabalho pesado.
+- Preparar uma parte para a fila é trazer os commits dela e rodar só os passos leves: eslint e prettier nos arquivos tocados, `verificar-particao` e camadas. Os pesados rodam na vez da parte, porque o pré-CI da publicação já roda a suíte.
+- Rodada que cai por causa da máquina (tempo estourado, processo morto, falta de processos ou de memória) não é reprovação do código. Ela se repete uma vez, com a máquina livre, sem afrouxar teste nenhum.
+
+### O pré-CI
+
+- O pré-CI para no primeiro passo reprovado e mostra quantos segundos cada passo levou.
+- O pré-CI roda só o que a mudança toca, contra a última versão publicada:
+  - Sempre rodam a cifra, a partição, o travessão, o build com o portão de pacote publicável, as varreduras de vazamento do restrito e da Júri e a conferência depois do envio.
+  - Dependem do que mudou:
+    - os testes ligados aos arquivos mudados;
+    - a suíte PHP, só se mudou o servidor;
+    - as checagens de conteúdo, só se mudou o conteúdo;
+    - lint e formatação, só nos arquivos tocados.
+  - A suíte inteira roda quando muda algo em `scripts/`, num arquivo de configuração ou no `package.json`, quando não há versão publicada para comparar, ou com `PRECI_COMPLETO=1`.
+- Uma verificação não pode custar mais que a mudança que ela confere. Quando custar, mede-se o tempo de cada passo e corta-se o desperdício. Nenhum portão de segurança ou de privacidade sai por causa do tempo.

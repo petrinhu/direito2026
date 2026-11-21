@@ -3,6 +3,7 @@ import {
   CHAVE_PREFERENCIAS_RADIO,
   VOLUME_PADRAO,
   gravarPreferencias,
+  limparConsentimentos,
   lerPreferencias,
   sanearVolume,
   type ArmazenamentoLike
@@ -125,5 +126,33 @@ describe('lerPreferencias e gravarPreferencias (memória com falha de localStora
     expect(lerPreferencias(memoria, CHAVE_PREFERENCIAS_RADIO).consentimentos).toEqual([
       'ambient-fm'
     ]);
+  });
+});
+
+describe('limparConsentimentos (sair apaga o consentimento, mantém rádio e volume)', () => {
+  it('zera as emissoras consentidas e mantém rádio e volume escolhidos', () => {
+    const memoria = armazenamento({
+      [CHAVE_PREFERENCIAS_RADIO]: JSON.stringify({
+        radio: 'ambient-fm',
+        volume: 72,
+        consentimentos: ['ambient-fm', 'radio-swiss-classic']
+      })
+    });
+    limparConsentimentos(memoria, CHAVE_PREFERENCIAS_RADIO);
+    expect(lerPreferencias(memoria, CHAVE_PREFERENCIAS_RADIO)).toEqual({
+      radio: 'ambient-fm',
+      volume: 72,
+      consentimentos: []
+    });
+  });
+
+  it('com localStorage que lança, não lança e devolve false', () => {
+    const falho = armazenamento({}, true);
+    expect(() => limparConsentimentos(falho, CHAVE_PREFERENCIAS_RADIO)).not.toThrow();
+    expect(limparConsentimentos(falho, CHAVE_PREFERENCIAS_RADIO)).toBe(false);
+  });
+
+  it('sem armazenamento (null), devolve false e não lança', () => {
+    expect(limparConsentimentos(null, CHAVE_PREFERENCIAS_RADIO)).toBe(false);
   });
 });

@@ -32,9 +32,11 @@ const aviso = inject(CHAVE_AVISO_VERSAO, null);
 const radio = inject(CHAVE_RADIO, null);
 const audioRadio = ref<HTMLAudioElement | null>(null);
 onMounted(() => radio?.vincularAudio(audioRadio.value));
-// Sair (sessão que acaba) para a rádio: ela não continua tocando sem sessão.
+// Sair (sessão que acaba) para a rádio, e apaga o consentimento: quem entrar depois confirma o aviso de novo.
 watch(usuario, (valor) => {
-  if (valor === '') radio?.parar();
+  if (valor !== '') return;
+  radio?.parar();
+  radio?.esquecerConsentimentos();
 });
 const route = useRoute();
 const router = useRouter();

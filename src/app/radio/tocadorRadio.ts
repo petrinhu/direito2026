@@ -3,6 +3,7 @@ import { RADIOS, ehIdRadio, radioPorId, type IdRadio, type Radio } from '@/core/
 import {
   CHAVE_PREFERENCIAS_RADIO,
   gravarPreferencias,
+  limparConsentimentos,
   lerPreferencias,
   sanearVolume,
   type ArmazenamentoLike
@@ -35,6 +36,8 @@ export interface StoreRadio {
   alternar(): void;
   parar(): void;
   consentir(): void;
+  /** Sair da conta: apaga a memória do consentimento (rádio e volume ficam). */
+  esquecerConsentimentos(): void;
   cancelar(): void;
   trocarRadio(id: IdRadio): void;
   definirVolume(valor: number): void;
@@ -130,6 +133,11 @@ export function criarStoreRadio(armazenamento: ArmazenamentoLike | null): StoreR
       }
       gravar();
       disparar('consentir');
+    },
+
+    esquecerConsentimentos() {
+      consentimentos.value = [];
+      limparConsentimentos(armazenamento, CHAVE_PREFERENCIAS_RADIO);
     },
 
     cancelar() {

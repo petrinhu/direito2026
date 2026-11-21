@@ -84,3 +84,19 @@ export function gravarPreferencias(
     return false;
   }
 }
+
+/**
+ * Sair da conta apaga só o consentimento (decisão do líder, 21/11): rádio e volume ficam. Nunca lança;
+ * devolve `true` se gravou.
+ */
+export function limparConsentimentos(
+  armazenamento: ArmazenamentoLike | null | undefined,
+  chave: string
+): boolean {
+  try {
+    const atual = lerPreferencias(armazenamento, chave);
+    return gravarPreferencias(armazenamento, chave, { ...atual, consentimentos: [] });
+  } catch {
+    return false;
+  }
+}

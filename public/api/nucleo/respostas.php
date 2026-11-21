@@ -17,6 +17,12 @@ function d26_referrer_api(): string
 }
 
 /**
+ * Permissions-Policy de toda resposta PHP (decisão do líder, 21/11/2026: "Pôr, bloqueando tudo"). Um ponto só:
+ * portao.php usa esta mesma constante. Autoplay fica fora de propósito: o <audio> do rádio não depende dele.
+ */
+const D26_PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()';
+
+/**
  * Cabeçalhos de toda resposta da API (sucesso ou erro). Cache-Control "private, no-store": toda
  * resposta da API tem sessão ou é a tela de entrada (plano 1.6). "private" mantém a resposta fora
  * de cache compartilhado (CDN) mesmo se alguém tirar o no-store depois.
@@ -30,6 +36,7 @@ function d26_cabecalhos(): void
     header('Referrer-Policy: ' . d26_referrer_api());
     header('X-Frame-Options: DENY');
     header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
+    header('Permissions-Policy: ' . D26_PERMISSIONS_POLICY);
 }
 
 function d26_enviar_json_bruto(int $status, string $json): never

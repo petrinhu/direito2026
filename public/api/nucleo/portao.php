@@ -51,6 +51,7 @@ function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tam
     header('X-Frame-Options: DENY');
     header('Referrer-Policy: ' . $referrer);
     header('Strict-Transport-Security: max-age=31536000');
+    header('Permissions-Policy: ' . D26_PERMISSIONS_POLICY);
     if ($tamanho !== null) {
         header('Content-Length: ' . $tamanho);
     }

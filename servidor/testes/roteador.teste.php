@@ -72,6 +72,9 @@ teste('roteador: público presente sai direto; público ausente é 404 e não ca
     }
 });
 
+/** Permissions-Policy do líder (21/11/2026): tudo bloqueado; o <audio> do rádio não depende de nenhuma delas. */
+const PERMISSIONS_POLICY_BLOQUEIA_TUDO = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()';
+
 /** CSP das telas do portão sem sessão (seção 1.3). */
 const CSP_TELA_PORTAO = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
@@ -86,7 +89,9 @@ teste('I-3: a tela de entrada sai com os cabeçalhos de segurança e a CSP da te
         igual('strict-origin-when-cross-origin', $r->cabecalho('referrer-policy'), "$nome: Referrer-Policy");
         igual('max-age=31536000', $r->cabecalho('strict-transport-security'), "$nome: HSTS sem includeSubDomains nem preload");
         igual(CSP_TELA_PORTAO, $r->cabecalho('content-security-policy'), "$nome: CSP da tela");
+        igual(PERMISSIONS_POLICY_BLOQUEIA_TUDO, $r->cabecalho('permissions-policy'), "$nome: Permissions-Policy bloqueia tudo");
     }
+    igual(PERMISSIONS_POLICY_BLOQUEIA_TUDO, $c->get('/api/sessao.php', ['Sec-Fetch-Mode' => 'cors'])->cabecalho('permissions-policy'), 'API JSON: Permissions-Policy bloqueia tudo');
     igual(401, $c->get('/arquivo.txt')->status, 'fora da navegação, o arquivo não sai sem sessão');
 });
 

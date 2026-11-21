@@ -59,7 +59,8 @@ PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES-${XDG_STATE_HOME:-$HOME/.local/state}/ca
 PASTA_CLONES="$RAIZ/.worktrees"
 CLONE=""
 CHAVE_GIT_CRYPT="${CADERNO_CHAVE_GIT_CRYPT:-$HOME/.config/gusworld/git-crypt-key}"
-CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-/home/petrus/IDrive/Documentos/direito/site_direito2026_restrito/conteudo/interdisciplinar.json}"
+# Obrigatória, sem padrão: o caminho do JSON é pessoal de quem roda (repositório público). Vazia recusa em conferir_remoto.
+CONTEUDO_RESTRITO="${CADERNO_RESTRITO:-}"
 # JSON privado da Júri e pasta do acervo (imagens/ e acervo.json): sem padrão de propósito.
 CADERNO_RESTRITO_JURI="${CADERNO_RESTRITO_JURI:-}"
 CADERNO_ACERVO_JURI="${CADERNO_ACERVO_JURI:-}"
@@ -264,6 +265,8 @@ conferir_remoto() {
     git merge-base --is-ancestor "$main_remota" HEAD ||
       recusar "$REMOTO/$BRANCH_PUBLICA divergiu de HEAD: o push não seria fast-forward"
   fi
+  [ -n "$CONTEUDO_RESTRITO" ] ||
+    recusar "CADERNO_RESTRITO vazio: informe o JSON do conteúdo restrito, por exemplo CADERNO_RESTRITO=<caminho/interdisciplinar.json> npm run publicar -- <tipo>; nada foi commitado"
   [ -f "$CONTEUDO_RESTRITO" ] ||
     recusar "CADERNO_RESTRITO aponta para arquivo inexistente (o conteúdo não é mostrado)"
 }

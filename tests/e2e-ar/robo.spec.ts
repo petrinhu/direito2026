@@ -104,7 +104,7 @@ async function excluirPeloPainel(page: Page, usuario: string): Promise<void> {
 }
 
 function tokenDoConvite(convite: string): string {
-  const achado = /#t=([0-9a-f]{64})$/.exec(convite);
+  const achado = /[?#]t=([0-9a-f]{64})$/.exec(convite);
   return achado?.[1] ?? '';
 }
 

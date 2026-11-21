@@ -4,6 +4,7 @@ import { CHAVE_CURRICULO } from '@/app/chaves';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import CartaoUnidade from '../componentes/CartaoUnidade.vue';
 import EstadoEmBreve from '../componentes/EstadoEmBreve.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 // Só a cadeira restrita carrega esta página (e o CSS dela), em chunk à parte.
 const AreaRestrita = defineAsyncComponent(() => import('./AreaRestrita.vue'));
@@ -23,6 +24,7 @@ const cadeira = computed(() => periodo.value?.cadeiras.find((c) => c.id === prop
   <AreaRestrita v-else-if="cadeira?.restrita" />
   <div v-else-if="cadeira" class="pagina-cadeira">
     <h1>{{ rotuloSemViuva(cadeira.nome) }}</h1>
+    <AlvoQuadroProva />
     <section class="pagina-cadeira__lista">
       <CartaoUnidade
         v-for="unidade in cadeira.unidades"

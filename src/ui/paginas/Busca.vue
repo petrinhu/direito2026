@@ -3,6 +3,7 @@ import { inject, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { CHAVE_STORE_BUSCA } from '@/app/chaves';
 import PainelResultadosBusca from '../componentes/PainelResultadosBusca.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 const storeBusca = inject(CHAVE_STORE_BUSCA)!;
 const route = useRoute();
@@ -20,6 +21,7 @@ watch(() => route.query.q, buscarDaQuery);
 <template>
   <div class="pagina-busca">
     <h1>Busca</h1>
+    <AlvoQuadroProva />
     <PainelResultadosBusca
       :resultados="storeBusca.resultados.value"
       :termo="storeBusca.termo.value"

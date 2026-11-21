@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { carregarHistorico, paginaChangelog } from '@/app/versoes/paginas';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 /**
  * Página Changelog (HIST-F2, ordem do líder de 14/11): o registro técnico de cada versão.
@@ -13,6 +14,7 @@ const entradas = carga.ok ? paginaChangelog(carga.entradas) : [];
 <template>
   <article class="pagina-versoes">
     <h1 class="pagina-versoes__titulo">Changelog</h1>
+    <AlvoQuadroProva />
     <p class="pagina-versoes__intro">O registro técnico de cada versão do site.</p>
     <p v-if="!carga.ok" role="status">Não foi possível carregar o registro técnico agora.</p>
     <section

@@ -3,6 +3,7 @@ import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
 import { TITULAR } from '@/app/rodape/titular';
 import { TEXTOS_SOBRE } from '@/conteudo/sobre/textos';
 import { PAPEIS_DAS_DEPENDENCIAS } from '@/conteudo/sobre/papeis';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 /**
  * Página Sobre (SB-F8, esqueleto). Ordem da seção 4 do plano: O projeto, Autoria, Tecnologias e
@@ -34,6 +35,7 @@ const dependenciasDeConstrucao = linhasDoGrupo('construcao');
 <template>
   <article class="pagina-sobre">
     <h1 class="pagina-sobre__titulo">{{ TEXTOS_SOBRE.titulo }}</h1>
+    <AlvoQuadroProva />
 
     <section class="pagina-sobre__secao" data-secao="projeto" aria-labelledby="sobre-projeto">
       <h2 id="sobre-projeto">{{ TEXTOS_SOBRE.projeto.titulo }}</h2>

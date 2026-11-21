@@ -1,6 +1,11 @@
+<script setup lang="ts">
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
+</script>
+
 <template>
   <div class="pagina-nao-encontrada">
     <h1>Página não encontrada</h1>
+    <AlvoQuadroProva />
     <p><a href="/">Voltar para a página inicial</a></p>
   </div>
 </template>

@@ -2,7 +2,7 @@
 
 Regras deste projeto para quem trabalha nele, seja pessoa ou agente de IA.
 
-Última revisão: 2026-11-14. Dono: líder do projeto.
+Última revisão: 2026-11-21. Dono: líder do projeto.
 
 ## Para que serve este arquivo
 
@@ -10,15 +10,35 @@ Este arquivo guarda as regras próprias do site Caderno de Direito. Elas detalha
 
 Onde este arquivo não fala de um assunto, valem as leis gerais. Se uma regra daqui contradizer uma lei geral, a dúvida vai ao líder antes de qualquer ação.
 
+## Fatias: critério de pronto e teste visual
+
+Fatia é um pedaço de trabalho com escopo fechado, que termina num commit. As duas regras abaixo foram confirmadas pelo líder em 20/11/2026, com a resposta "Sim, aplique as 4".
+
+### Critério de pronto antes da fatia (L-43)
+
+O critério de pronto é escrito antes de a fatia começar. O padrão é: funciona, os portões passam e não há risco de segurança ou privacidade. Os portões são as verificações automáticas do projeto, como o portão de testes (`npm run test:e2e:portao`) e o pré-CI (`npm run preci`), que roda na máquina a sequência de verificações de um CI. Este repositório não tem CI: os portões ficam no lugar dele.
+
+A revisão aponta só o que quebra esse critério. O resto nem é listado e não vira item do `TODO.md`, nem da INBOX. A regra geral é a L-43.
+
+### Teste visual em 3 larguras
+
+O teste visual, que confere a tela pixel a pixel, roda em 3 larguras fixas: celular, tablet e desktop. Ele não varre uma faixa de larguras, isto é, não mede largura por largura dentro de um intervalo.
+
 ## Deploy irreversível (L-70): adaptação da Fase 2
 
-Uma mudança é irreversível quando não dá para desfazê-la com um clique. Neste site, ela se aplica a:
+Uma mudança é irreversível quando não dá para desfazê-la com um clique. Neste site, as 7 fases da L-70 (o rito) valem só para mudança em:
 
-- O site inteiro passa a exigir login. Qualquer mudança em `public/api/**`, `public/.htaccess` ou `public/sw.js` também conta como mudança de autorização;
-- geração de chave ou segredo no servidor;
-- mudança de autorização (quem pode ver o quê).
+- login;
+- permissão (quem pode ver o quê);
+- token (o código que dá acesso, como o do link de convite);
+- chave ou segredo no servidor;
+- apagamento de dado.
 
-Nesses casos, o deploy segue o checklist de deploy irreversível que fica no conjunto de regras pessoal do líder (`~/.claude/docs/deploy-irreversivel.md` e `~/.claude/templates/deploy-checklist.md`).
+Nesses casos, o deploy segue o checklist de deploy irreversível que fica no conjunto de regras pessoal do líder (`~/.claude/docs/deploy-irreversivel.md` e `~/.claude/templates/deploy-checklist.md`). A 1.17 (token do convite) continua no rito.
+
+Todo o resto publica normal, pelo `publicar.sh` (ver a seção "Publicação"), sem as 7 fases. Mexer em `public/api/**`, `public/.htaccess` ou `public/sw.js` só leva ao rito quando a mudança toca um dos cinco pontos da lista acima.
+
+Esta regra foi confirmada pelo líder em 20/11/2026, com a resposta "Sim, aplique as 4".
 
 ### Por que a Fase 2 foi adaptada
 
@@ -44,6 +64,10 @@ O checklist preenchido de cada deploy desse tipo fica em `docs/auditoria/deploys
 ## Publicação
 
 O passo a passo para publicar uma versão está em [`docs/publicacao.md`](docs/publicacao.md), na seção "Publicar uma versão". Não copie esse passo a passo para cá: se ele mudar, muda só lá.
+
+A release, isto é, a versão nova com número próprio, só é criada dentro do `publicar.sh` (`npm run publicar`), depois que o pré-CI (`scripts/preci.sh`) fecha verde.
+
+Esta regra foi confirmada pelo líder em 20/11/2026, com a resposta "Sim, aplique as 4".
 
 ### Prioridade quando há vários pedidos em paralelo
 

@@ -77,3 +77,12 @@ Regras do líder, dadas em 14/11/2026, na forma em que ele escreveu:
 - "projetos paralelos podem ser feitos deploy separados, ao serem concluidos, sempre com warning."
 - "priorize deplpy de cadeiras antes do QA visual. Se o QA visual consertar algo, você atualiza e faz novo deploy>tag".
 - "nao quero versao de site "mais leve". A única versão alternativa é a de alto contraste".
+
+### Uma parte por publicação, nunca em bloco (LEI do projeto)
+
+Ordem do líder de 21/11/2026, na forma em que ele escreveu: "Eu não quero publicação por blocos! Quero que publique quando estiver pronto cada parte na sua vez! Um erro em um bloco grande leva a muita perda de tempo!", e depois: "Torne lei do projeto as publicações por partes e não por blocos". Ela refunde a regra de 14/11 sobre deploys separados, logo acima.
+
+- Cada parte concluída (uma cadeira, uma aba, um quiz, um conserto) tem a sua própria versão. Não se juntam partes prontas para publicar de uma vez, nem se espera uma parte para sair com outra.
+- A parte entra no `main` só na hora da sua publicação: primeiro o merge dela sozinha, depois as verificações rápidas (`verificar-particao`, camadas, tipos, formatação e a suíte de unidade) e, por fim, o `publicar`. A próxima parte só entra depois que a anterior estiver no ar.
+- As partes prontas esperam numa fila. A ordem é: cadeira primeiro, depois o resto, na ordem em que ficaram prontas.
+- Se uma parte for recusada, só ela volta para conserto, e a fila segue com a próxima.

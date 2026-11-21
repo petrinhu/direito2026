@@ -33,25 +33,16 @@ function armazenamentoPadrao(): ArmazenamentoSimples | undefined {
 }
 
 /**
- * Modo adaptado em tela de até 340px (decisão do líder, 20/10/2026): o quadro
- * começa minimizado, a letra continua grande, e só abre se a pessoa tocar em
- * Mostrar. O modo vem do atributo data-modo-adaptado no <html> (o mesmo que o
- * MapaMentalVisor lê), e a largura, de matchMedia. Os dois reagem com a página
- * aberta. Sem escolha da pessoa, vale o padrão; com escolha, vale a escolha.
+ * Abaixo de 480px de janela o quadro começa minimizado, com ou sem modo adaptado (decisão do líder,
+ * 21/11/2026: "Abrir minimizado no celular"). A largura vem de matchMedia e reage com a página aberta.
+ * Sem escolha da pessoa, vale o padrão; com escolha gravada, vale a escolha, e o padrão não a regrava.
  */
-const CONSULTA_TELA_ESTREITA = '(max-width: 340px)';
+const CONSULTA_TELA_ESTREITA = '(max-width: 479px)';
 const consultaTelaEstreita =
   typeof matchMedia === 'function' ? matchMedia(CONSULTA_TELA_ESTREITA) : undefined;
 
-function modoAdaptadoLigadoNaRaiz(): boolean {
-  return document.documentElement.getAttribute('data-modo-adaptado') === 'on';
-}
-
-const modoAdaptadoLigado = ref(modoAdaptadoLigadoNaRaiz());
 const telaEstreita = ref(consultaTelaEstreita?.matches ?? false);
-const padraoMinimizado = computed(
-  () => (props.minimizadoPorPadrao ?? false) || (modoAdaptadoLigado.value && telaEstreita.value)
-);
+const padraoMinimizado = computed(() => (props.minimizadoPorPadrao ?? false) || telaEstreita.value);
 
 // Só o toque da pessoa (Mostrar ou Minimizar) conta como escolha na faixa atual.
 const escolhaDaPessoa = ref<boolean | undefined>(
@@ -60,26 +51,16 @@ const escolhaDaPessoa = ref<boolean | undefined>(
 const minimizado = computed(() => escolhaDaPessoa.value ?? padraoMinimizado.value);
 watch(minimizado, (valor) => emit('mudou-minimizado', valor), { immediate: true });
 
-let observadorModo: InstanceType<typeof window.MutationObserver> | undefined;
-
 function aoMudarLargura(): void {
   telaEstreita.value = consultaTelaEstreita?.matches ?? false;
 }
 
 onMounted(() => {
   consultaTelaEstreita?.addEventListener('change', aoMudarLargura);
-  observadorModo = new window.MutationObserver(() => {
-    modoAdaptadoLigado.value = modoAdaptadoLigadoNaRaiz();
-  });
-  observadorModo.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-modo-adaptado']
-  });
 });
 
 onBeforeUnmount(() => {
   consultaTelaEstreita?.removeEventListener('change', aoMudarLargura);
-  observadorModo?.disconnect();
 });
 
 // Mudou de faixa de urgência: a escolha da faixa anterior não vale mais. O reset

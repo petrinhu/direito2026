@@ -278,7 +278,13 @@ onBeforeUnmount(() => {
     <Teleport :to="alvoDoQuadro" :disabled="!cartaoNoConteudo">
       <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
     </Teleport>
-    <BotaoHome v-if="!naPaginaInicial" />
+    <nav
+      v-if="!naPaginaInicial"
+      class="layout-base__nav-home"
+      aria-label="Atalho da página inicial"
+    >
+      <BotaoHome />
+    </nav>
   </div>
 </template>
 
@@ -346,7 +352,10 @@ onBeforeUnmount(() => {
 /* Botão Home: canto inferior direito da pilha, alinhado à mesma margem direita
    do quadro de contagem. Fica sempre abaixo do quadro (em 1280 e em 390), então
    os dois nunca se sobrepõem. */
-.layout-base__inferior > .botao-home {
+/* O botão Home vai dentro de um <nav> (marco de página, CV-F1-REGION). O nav é flex para o link não
+   ganhar a folga de linha de um inline-flex, e leva a posição que antes era do próprio link. */
+.layout-base__nav-home {
+  display: flex;
   align-self: flex-end;
   margin-right: var(--esp-4, 1rem);
 }

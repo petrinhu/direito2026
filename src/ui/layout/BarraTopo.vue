@@ -282,6 +282,21 @@ onBeforeUnmount(() => {
   }
 }
 
+/*
+  EP-F11.7-TRILHA (decisão do líder): no modo adaptado, acima de 880 px, a trilha tem linha
+  própria, abaixo da linha da marca, da busca e dos botões. Dividindo a linha, a trilha de
+  8rem de base ficava com cerca de 115 px por nível e quebrava em 4 ou mais linhas (cabeçalho
+  de 440 a 698 px a 1280). O `order` leva a trilha para o fim sem cortar nenhum nível. Pelo
+  `order`, a ordem de Tab segue o markup (trilha antes da busca) e não a visual (trilha embaixo):
+  descasamento de foco pendente, sem item próprio no TODO ainda.
+*/
+@media (min-width: 881px) {
+  :root[data-modo-adaptado='on'] .barra-topo__trilha {
+    flex-basis: 100%;
+    order: 1;
+  }
+}
+
 :root[data-modo-adaptado='on'] .barra-topo__progresso-trilho {
   display: none;
 }

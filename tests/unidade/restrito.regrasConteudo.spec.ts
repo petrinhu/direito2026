@@ -31,6 +31,29 @@ describe('avisosDeRegrasDeConteudo', () => {
     );
   });
 
+  // CITA-LETRA-UNICODE: gêmeo da regra de conteudo (validarCitacaoDeAlternativa).
+  // \b ASCII deixava passar "última alternativa" e barrava "e a Bíblia".
+  it('explicação que cita posição com acento ("última alternativa") ou letra', () => {
+    expect(
+      avisos((c) => (c.quiz[0]!.explicacaoHtml = '<p>Confira a última alternativa.</p>'))
+    ).toContain('cita-letra-ou-posicao');
+    expect(
+      avisos((c) => (c.quiz[0]!.explicacaoHtml = '<p>A Primeira opção é a certa.</p>'))
+    ).toContain('cita-letra-ou-posicao');
+    expect(avisos((c) => (c.quiz[0]!.explicacaoHtml = '<p>Resposta: letra B.</p>'))).toContain(
+      'cita-letra-ou-posicao'
+    );
+  });
+
+  it('não avisa palavra que só começa como letra ("e a Bíblia", "a lei B")', () => {
+    expect(
+      avisos((c) => (c.quiz[0]!.explicacaoHtml = '<p>A lei é clara, e a Bíblia diz o mesmo.</p>'))
+    ).toEqual([]);
+    expect(
+      avisos((c) => (c.quiz[0]!.explicacaoHtml = '<p>Conforme a lei B do estatuto.</p>'))
+    ).toEqual([]);
+  });
+
   it('texto que cita aula ou slide', () => {
     expect(avisos((c) => (c.resumo[0]!.corpoHtml = '<p>Como visto na aula 3.</p>'))).toContain(
       'cita-aula-ou-slide'

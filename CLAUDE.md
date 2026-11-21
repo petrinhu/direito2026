@@ -44,12 +44,12 @@ Esta regra foi confirmada pelo líder em 20/11/2026, com a resposta "Sim, apliqu
 
 Em 28/10/2026, o líder escolheu a opção "Documentar e cumprir". O motivo é técnico: o site roda em hospedagem compartilhada (Hostinger), que não permite configurar um balanceador de carga (Nginx, HAProxy ou ALB próprios).
 
-A Fase 2 do checklist é o Shadow Deployment, que faz o espelhamento de tráfego. Espelhar tráfego é copiar as visitas reais para a versão nova, sem o leitor perceber, para comparar as duas. Sem balanceador configurável, esse espelhamento não é possível aqui. Por isso a Fase 2 é substituída pela dupla validação manual abaixo.
+A Fase 2 do checklist é o Shadow Deployment, que faz o espelhamento de tráfego. Espelhar tráfego é copiar as visitas reais para a versão nova, sem o leitor perceber, para comparar as duas. Sem balanceador configurável, esse espelhamento não é possível aqui. Por isso a Fase 2 é substituída pela dupla validação abaixo.
 
-### Dupla validação manual (no lugar da Fase 2)
+### Dupla validação (no lugar da Fase 2)
 
 - **(a) 1ª validação, antes da publicação:** QA completo numa cópia local isolada, com os dados reais da área. A cópia roda com o servidor PHP embutido e o navegador sem tela (headless), dentro de uma caixa bwrap (ambiente isolado do resto da máquina). Só se publica depois que essa validação passa.
-- **(b) 2ª validação, logo após a publicação, em produção:** conferir login, troca de senha, abas, imagens e sair. Se algo falhar, faz-se rollback (volta-se à versão anterior).
+- **(b) 2ª validação, logo após a publicação, em produção, por e2e automático:** um teste automático com uma conta temporária confere no site real o login, o convite e a criação de senha, o link antigo, a troca de senha, as abas, as imagens e a saída. Se algo falhar, faz-se rollback (volta-se à versão anterior). Ordem do líder de 21/11/2026, verbatim: "testes só automatizados! Ande com esse projeto!", confirmada por AskUserQuestion com a opção "Trocar por e2e automático no ar". Fica de fora só o que um robô não vê, como o e-mail chegando à caixa do líder.
 
 Nota: a lei geral L-70 fala em dupla validação "em staging". A forma escolhida pelo líder para este projeto é a cópia local isolada descrita acima.
 

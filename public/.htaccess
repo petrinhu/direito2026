@@ -12,7 +12,7 @@ RewriteRule ^ - [F,L]
 RewriteRule ^api/nucleo(/|$) - [F,L]
 # Únicos caminhos servidos sem portão: endpoints, o visual da tela de entrada (com as duas fontes dela) e o script do convite (V17-C10).
 RewriteRule ^api/[a-z0-9/-]+\.php$ - [L]
-RewriteRule ^(sw\.js|robots\.txt|entrada\.css|convite\.js|icones/favicon\.svg|fontes/inter-400\.woff2|fontes/cormorant-garamond-700\.woff2)$ - [L]
+RewriteRule ^(sw\.js|robots\.txt|entrada\.css|convite\.js|icones/favicon\.svg|fontes/inter-400\.woff2|fontes/cormorant-garamond-700\.woff2|fontes/OFL\.txt)$ - [L]
 RewriteRule ^api(/|$) - [R=404,L]
 # Todo o resto passa pelo portão.
 RewriteRule ^ api/portao.php [L]

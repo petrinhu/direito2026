@@ -23,7 +23,7 @@ teste('lista fechada: .htaccess e roteador de dev servem direto os mesmos públi
     $roteador = publicosDoRoteador();
     sort($htaccess);
     sort($roteador);
-    igual(['convite.js', 'entrada.css', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
+    igual(['convite.js', 'entrada.css', 'fontes/OFL.txt', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
     igual($htaccess, $roteador, 'públicos: .htaccess e roteador');
     $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
     $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
@@ -67,7 +67,7 @@ teste('roteador: público presente sai direto; público ausente é 404 e não ca
     igual(401, $c->get('/manifest.webmanifest')->status, 'manifesto não é público: vai ao portão, anônimo 401');
     igual(401, $c->get('/assets/busca-indice.json')->status, 'índice de busca vai ao portão, anônimo 401');
     $copia = Ambiente::novo(['docroot' => 'copia'])->cliente();
-    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/convite.js', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2'] as $caminho) {
+    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/convite.js', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2', '/fontes/OFL.txt'] as $caminho) {
         igual(404, $copia->get($caminho)->status, "$caminho ausente: 404 do roteador, sem portão");
     }
 });

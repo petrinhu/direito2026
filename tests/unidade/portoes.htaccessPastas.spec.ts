@@ -66,6 +66,7 @@ beforeEach(() => {
     'icones/favicon.svg',
     'fontes/inter-400.woff2',
     'fontes/cormorant-garamond-700.woff2',
+    'fontes/OFL.txt',
     'api/portao.php',
     'api/saude.php',
     'api/nucleo/.htaccess',

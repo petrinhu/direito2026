@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import MenuCurriculo from '@/ui/componentes/MenuCurriculo.vue';
@@ -10,10 +12,24 @@ import type { TextoIntegral } from '@/core/textoIntegral/tipos';
 
 const curriculo = decorarCurriculo(curriculoSemCarregador, CARREGADORES);
 
+const ABAS_NOVAS = ['mapa', 'fichamento', 'mnemonicos'] as const;
+const CADEIRAS_COM_ABAS_DE_ARQUIVO = ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica'];
+const ARQUIVO_DA_ABA = {
+  mapa: 'mapaFichamento.ts',
+  fichamento: 'mapaFichamento.ts',
+  mnemonicos: 'mnemonicos.ts'
+} as const;
+
+/** Coerência com o disco: o arquivo de conteúdo da u1 existe ou não existe. */
+function existeArquivo(cadeira: string, arquivo: string): boolean {
+  return existsSync(resolve(__dirname, '../../src/conteudo/p1', cadeira, 'u1', arquivo));
+}
+
 /**
  * Ordem do líder, 01/10/2026: as abas novas de Filosofia Jurídica aparecem
  * no menu lateral como as outras, na ordem Resumo, Mapa mental, Fichamento,
- * Mnemônicos, Quiz, e só nessa unidade.
+ * Mnemônicos, Quiz. Nas outras cadeiras, a aba existe no menu se, e só se,
+ * o arquivo de conteúdo correspondente existe.
  */
 async function abrirTudo(wrapper: ReturnType<typeof mount>): Promise<void> {
   for (let tentativa = 0; tentativa < 4; tentativa++) {
@@ -57,24 +73,24 @@ describe('MenuCurriculo: abas novas de Filosofia Jurídica', () => {
     ]);
   });
 
-  it('as outras cadeiras não ganham as abas novas no menu', async () => {
+  it('nas outras cadeiras, o link de cada aba nova aparece se, e só se, o arquivo existe', async () => {
     const wrapper = mount(MenuCurriculo, { props: { curriculo, caminhoAtual: '' } });
     await abrirTudo(wrapper);
-    // Só vale afirmar a ausência depois que o conteúdo das outras cadeiras chegou.
+    // Só vale afirmar a presença ou a ausência depois que o conteúdo das outras cadeiras chegou.
     await vi.waitFor(
       () => {
-        for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
+        for (const cadeira of CADEIRAS_COM_ABAS_DE_ARQUIVO) {
           expect(wrapper.find(`a[href="/p/p1/${cadeira}/u1/quiz"]`).exists(), cadeira).toBe(true);
         }
       },
       { timeout: 5000 }
     );
-    for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
-      for (const aba of ['mapa', 'fichamento', 'mnemonicos']) {
+    for (const cadeira of CADEIRAS_COM_ABAS_DE_ARQUIVO) {
+      for (const aba of ABAS_NOVAS) {
         expect(
           wrapper.find(`a[href="/p/p1/${cadeira}/u1/${aba}"]`).exists(),
           `${cadeira}/${aba}`
-        ).toBe(false);
+        ).toBe(existeArquivo(cadeira, ARQUIVO_DA_ABA[aba]));
       }
     }
   });

@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { curriculo } from '@/conteudo/curriculo';
 import { resolverRota } from '@/core/curriculo/resolverRota';
@@ -5,6 +7,19 @@ import { ROTULOS_ABA } from '@/core/curriculo/rotulosAba';
 import { meta } from '@/conteudo/p1/filosofia-juridica/u1/meta';
 
 const base = '/p/p1/filosofia-juridica/u1';
+
+const ABAS_NOVAS = ['mapa', 'fichamento', 'mnemonicos'] as const;
+const CADEIRAS_COM_ABAS_DE_ARQUIVO = ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica'];
+const ARQUIVO_DA_ABA = {
+  mapa: 'mapaFichamento.ts',
+  fichamento: 'mapaFichamento.ts',
+  mnemonicos: 'mnemonicos.ts'
+} as const;
+
+/** Coerência com o disco: o arquivo de conteúdo da u1 existe ou não existe. */
+function existeArquivo(cadeira: string, arquivo: string): boolean {
+  return existsSync(resolve(__dirname, '../../src/conteudo/p1', cadeira, 'u1', arquivo));
+}
 const filosofia = curriculo
   .find((p) => p.id === 'p1')!
   .cadeiras.find((c) => c.id === 'filosofia-juridica')!;
@@ -30,15 +45,15 @@ describe('abas Mapa mental, Fichamento e Mnemônicos', () => {
     }
   );
 
-  it.each(['mapa', 'fichamento', 'mnemonicos'] as const)(
-    'as outras cadeiras não ganham a aba %s',
-    (aba) => {
-      for (const cadeira of ['intr-direito', 'redacao-juridica-1', 'sociologia-juridica']) {
-        const r = resolverRota(curriculo, `/p/p1/${cadeira}/u1/${aba}`);
-        expect(r.tipo, cadeira).not.toBe('encontrado');
-      }
-    }
-  );
+  it.each(
+    CADEIRAS_COM_ABAS_DE_ARQUIVO.flatMap((cadeira) =>
+      ABAS_NOVAS.map((aba) => [cadeira, aba] as const)
+    )
+  )('%s/u1 / %s: a aba existe se, e só se, o arquivo existe', (cadeira, aba) => {
+    const r = resolverRota(curriculo, `/p/p1/${cadeira}/u1/${aba}`);
+    const abaDeclarada = r.tipo === 'encontrado' && r.aba === aba;
+    expect(abaDeclarada).toBe(existeArquivo(cadeira, ARQUIVO_DA_ABA[aba]));
+  });
 
   it('os metadados da unidade (título e descrição) acompanham as abas novas', () => {
     expect(meta.titulo).toBe(u1.titulo);

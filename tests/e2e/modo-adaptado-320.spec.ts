@@ -126,8 +126,13 @@ test('em 320px, com o modo adaptado ligado, o topo do quadro quebra na ordem do 
   });
   const rotulo = `pílula em ${m.pilulaTopo.toFixed(1)}, botão em ${m.botaoTopo.toFixed(1)}`;
   // Quebrou quando as duas caixas não se cruzam na vertical; com align-items: center, só o topo diferente não prova.
+  // A folga de 1 px, aqui e na ordem abaixo, cobre arredondamento de fração de pixel (as caixas vêm em
+  // múltiplos de 1/64 px); na quebra medida o botão começa 70,8 px abaixo do topo da pílula.
   const quebrou = m.botaoTopo >= m.pilulaFundo - 1 || m.pilulaTopo >= m.botaoFundo - 1;
   expect(quebrou, `a linha do topo quebrou (${rotulo})`).toBe(true);
+  // Premissa do DOM, não lida dele: no template de QuadroProva.vue a pílula (.quadro-prova__pilula)
+  // vem antes do botão (.quadro-prova__alternar). Se o template inverter, este teste reprova pela
+  // ordem visual, e a causa está no template, não no CSS.
   expect(
     m.botaoTopo,
     `o botão fica abaixo da pílula, na ordem do DOM (${rotulo})`

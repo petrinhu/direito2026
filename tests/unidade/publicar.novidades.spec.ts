@@ -238,7 +238,9 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
         novidades: [TEXTO_USABILIDADE, 'tecnica']
       });
       // Os bytes da release são os do clone que o preci testou.
-      expect(readFileSync(join(repo, 'package.json'))).toEqual(readFileSync(join(clone, 'package.json')));
+      expect(readFileSync(join(repo, 'package.json'))).toEqual(
+        readFileSync(join(clone, 'package.json'))
+      );
     },
     TIMEOUT
   );
@@ -255,7 +257,13 @@ describe('commit de release e histórico do pacote (AV-F5)', () => {
           'gravar_e_commitar'
         ].join('\n'),
         repo,
-        { RAIZ: repo, TIPO: 'recurso', VERSAO_NOVA: '1.13.0.0', PACKAGE_ALTERADO: '0', RELEASE_FEITO: '0' }
+        {
+          RAIZ: repo,
+          TIPO: 'recurso',
+          VERSAO_NOVA: '1.13.0.0',
+          PACKAGE_ALTERADO: '0',
+          RELEASE_FEITO: '0'
+        }
       );
       expect(r.status).not.toBe(0);
       expect(r.saida).toContain('HEAD mudou');

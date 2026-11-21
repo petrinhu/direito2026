@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
-import { CHAVE_RADIO, CHAVE_SESSAO } from '@/app/chaves';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
 import type { StoreModoAdaptado } from '@/app/stores/modoAdaptado';
@@ -10,7 +9,6 @@ import BotaoModoAdaptado from '../componentes/BotaoModoAdaptado.vue';
 import CampoBusca from '../componentes/CampoBusca.vue';
 import SeloHome from '../componentes/SeloHome.vue';
 import TrilhaNavegacao from '../componentes/TrilhaNavegacao.vue';
-import TocadorRadio from '../componentes/TocadorRadio.vue';
 
 const props = defineProps<{
   curriculo: Curriculo;
@@ -27,11 +25,6 @@ const props = defineProps<{
   gavetaAberta?: boolean;
 }>();
 const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
-
-// Tocador de rádio: só aparece com sessão (item 42). Sem a chave (teste sem o composition root), não aparece.
-const storeRadio = inject(CHAVE_RADIO, null);
-const sessao = inject(CHAVE_SESSAO, null);
-const mostrarTocador = computed(() => (sessao?.usuario.value ?? '') !== '');
 
 /**
  * Cabeçalho que recolhe ao rolar para baixo e volta ao rolar para cima
@@ -177,7 +170,6 @@ onBeforeUnmount(() => {
         class="barra-topo__trilha"
       />
       <CampoBusca :store="storeBusca" @enviar="(termo) => emit('buscar', termo)" />
-      <TocadorRadio v-if="storeRadio && mostrarTocador" :store="storeRadio" />
       <BotaoModoAdaptado v-if="!storeModoAdaptado.suspenso.value" :store="storeModoAdaptado" />
       <AlternadorTema :store="storeTema" />
     </div>

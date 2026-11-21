@@ -367,7 +367,7 @@
 
 .ar-led--sem {
   background: transparent;
-  box-shadow: inset 0 0 0 1px var(--cor-texto);
+  box-shadow: inset 0 0 0 1px var(--cor-texto-sutil, currentColor);
 }
 
 .ar-tabela {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { contadorProva } from '@/app/calendario/contadorProva';
 import {
   gravarEscolha,
@@ -19,6 +19,8 @@ import ModalCalendario from './ModalCalendario.vue';
  * Vale só sem escolha gravada: se a pessoa tocar em Mostrar, a escolha vale.
  */
 const props = defineProps<{ agora?: Date; minimizadoPorPadrao?: boolean }>();
+/** Avisa o layout quando o quadro minimiza ou expande (o calendário o leva ao topo ao expandir). */
+const emit = defineEmits<{ 'mudou-minimizado': [minimizado: boolean] }>();
 
 const contador = computed(() => contadorProva(props.agora ?? new Date()));
 
@@ -56,6 +58,7 @@ const escolhaDaPessoa = ref<boolean | undefined>(
   contador.value ? lerEscolha(armazenamentoPadrao(), contador.value.faixa) : undefined
 );
 const minimizado = computed(() => escolhaDaPessoa.value ?? padraoMinimizado.value);
+watch(minimizado, (valor) => emit('mudou-minimizado', valor), { immediate: true });
 
 let observadorModo: InstanceType<typeof window.MutationObserver> | undefined;
 
@@ -90,11 +93,16 @@ watch(
   }
 );
 
-function alternar(): void {
+function alternar(evento: MouseEvent): void {
   const faixa = contador.value?.faixa;
   if (!faixa) return;
+  // Mudar de lugar (Teleport para o topo do calendário) tira o foco do botão: ele volta a ser
+  // focado depois da troca, para quem usa teclado não perder o lugar (regressão de teclado).
+  const botao = evento.currentTarget as HTMLButtonElement;
+  const tinhaFoco = document.activeElement === botao;
   escolhaDaPessoa.value = !minimizado.value;
   gravarEscolha(armazenamentoPadrao(), faixa, escolhaDaPessoa.value);
+  if (tinhaFoco) void nextTick(() => botao.focus({ preventScroll: true }));
 }
 
 function resumoCurto(dias: number): string {

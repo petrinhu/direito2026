@@ -150,6 +150,28 @@ describe('citacao-de-alternativa', () => {
       'citacao-de-alternativa'
     ]);
   });
+
+  // CITA-LETRA-UNICODE: o \b do JavaScript é ASCII, então "Ú" não abre palavra
+  // e "e a B" dentro de "e a Bíblia" fechava palavra antes do "í". Fronteira
+  // Unicode (\p{L}\p{N}) nas duas pontas.
+  it.each([
+    'Confira a última alternativa, que é a certa.',
+    'A Última alternativa é a certa.',
+    'Veja a primeira opção, que traz o conceito.',
+    'A Primeira opção é a certa.',
+    'Resposta: letra B, conforme o texto.',
+    'Resposta: Letra B, conforme o texto.'
+  ])('reprova explicação que cita posição ou letra: %s', (explicacaoHtml) => {
+    expect(regras(unidade({ quiz: [mc({ explicacaoHtml })] }))).toEqual(['citacao-de-alternativa']);
+  });
+
+  it.each([
+    'A lei é clara, e a Bíblia diz o mesmo sobre o tema.',
+    'Conforme a lei B do estatuto, o prazo é de dez dias.',
+    'Está prevista na alínea b) do inciso II.'
+  ])('aceita palavra ou referência legal que só se parece com letra: %s', (explicacaoHtml) => {
+    expect(regras(unidade({ quiz: [mc({ explicacaoHtml })] }))).toEqual([]);
+  });
 });
 
 describe('texto-proibido', () => {

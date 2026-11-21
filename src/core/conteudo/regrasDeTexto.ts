@@ -6,8 +6,24 @@
 
 // Letras de alternativa em maiúscula, por isso sem a flag i (com ela, "de a"
 // ou "o e a" seriam lidos como letras).
-export const CITA_LETRA =
-  /\b(?:[Aa]lternativa|[Ll]etra|[Oo]p[çc][ãa]o)s?\s*\(?[A-E]\)?\b|\([A-E]\)|\b[Aa]s? [B-D]\b|\b[Ee] a [A-E]\b|\b[B-D] e [A-E]\b|\b[A-E] e [B-D]\b|\b(?:[Pp]rimeira|[Ss]egunda|[Tt]erceira|[Qq]uarta|[Qq]uinta|[Úú]ltima) (?:alternativa|op[çc][ãa]o)/;
+// CITA-LETRA-UNICODE: fronteira Unicode nas duas pontas, não \b. O \b do
+// JavaScript é ASCII: "Última" não abria palavra (o "Ú" não contava) e
+// "e a Bíblia" fechava palavra antes do "í". Mesma fronteira de
+// APONTA_PARA_MATERIAL abaixo.
+const ANTES = '(?<![\\p{L}\\p{N}_])';
+const DEPOIS = '(?![\\p{L}\\p{N}_])';
+export const CITA_LETRA = new RegExp(
+  [
+    `${ANTES}(?:[Aa]lternativa|[Ll]etra|[Oo]p[çc][ãa]o)s?\\s*\\(?[A-E]\\)?${DEPOIS}`,
+    `\\([A-E]\\)`,
+    `${ANTES}[Aa]s? [B-D]${DEPOIS}`,
+    `${ANTES}[Ee] a [A-E]${DEPOIS}`,
+    `${ANTES}[B-D] e [A-E]${DEPOIS}`,
+    `${ANTES}[A-E] e [B-D]${DEPOIS}`,
+    `${ANTES}(?:[Pp]rimeira|[Ss]egunda|[Tt]erceira|[Qq]uarta|[Qq]uinta|[Úú]ltima) (?:alternativa|op[çc][ãa]o)`
+  ].join('|'),
+  'u'
+);
 
 // "acima"/"abaixo" apontariam para a ordem sorteada das respostas. A expressão
 // "acima do homem" é da matéria e é retirada antes do teste.

@@ -8,6 +8,7 @@ import { quiz } from '../../src/conteudo/p1/redacao-juridica-1/u3-material-petic
  *
  * AV3-R2 (prazos, garantia e arrependimento): as perguntas 45 a 52 entram no fim, e o total passa a
  * 52 perguntas, 26 de múltipla escolha e 26 de verdadeiro ou falso (ids de 1 a 52, sem buraco).
+ * QUIZ-80 (21/11/2026): as perguntas 53 a 80 entram no fim, e o total passa a 80, 40 e 40.
  */
 const GABARITO_PUBLICADO: ReadonlyArray<readonly [number, number | boolean]> = [
   [1, 2],
@@ -63,12 +64,12 @@ function textoDaPergunta(p: {
   return [p.enunciadoHtml, ...(p.alternativasHtml ?? []), p.explicacaoHtml ?? ''].join(' ');
 }
 
-describe('Redação u3 AV3-R1-B e AV3-R2: quiz de 52 perguntas (26 e 26)', () => {
-  it('52 perguntas, ids de 1 a 52 sem buraco, 26 de múltipla escolha e 26 de verdadeiro ou falso', () => {
-    expect(quiz).toHaveLength(52);
-    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 52 }, (_, i) => i + 1));
-    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(26);
-    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(26);
+describe('Redação u3 AV3-R1-B, AV3-R2 e QUIZ-80: quiz de 80 perguntas (40 e 40)', () => {
+  it('80 perguntas, ids de 1 a 80 sem buraco, 40 de múltipla escolha e 40 de verdadeiro ou falso', () => {
+    expect(quiz).toHaveLength(80);
+    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
+    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(40);
+    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(40);
   });
 
   it('múltipla escolha tem cinco alternativas e correta dentro da faixa', () => {

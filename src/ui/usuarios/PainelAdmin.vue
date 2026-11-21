@@ -8,6 +8,7 @@ import {
   type UsuarioAdmin
 } from '@/app/sessao/administracao';
 import { podeReler } from '@/app/usuarios/releituraAdmin';
+import { usarRolagemLateral } from '@/ui/componentes/rolagemLateral';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */
@@ -32,6 +33,9 @@ const blocoDoLink = ref<HTMLElement>();
 const secao = ref<HTMLElement>();
 const tituloDaSecao = ref<HTMLElement>();
 const campoNovoUsuario = ref<HTMLInputElement>();
+const regiaoDaTabela = ref<HTMLElement>();
+/** A11Y-TABINDEX-TABELA: a região só entra na ordem de Tab quando a tabela de fato rola. */
+const { tabindex: tabindexDaTabela } = usarRolagemLateral(regiaoDaTabela);
 type EnvioDoEmail = NonNullable<Awaited<ReturnType<ClienteApi['acaoUsuario']>>['email']>;
 /**
  * `envio` e `destino` ficam com o link, na memória: o e-mail da pessoa vive só enquanto o bloco está na tela
@@ -398,10 +402,11 @@ onBeforeUnmount(() => {
     <p v-if="carregando" role="status">Carregando usuários…</p>
     <div
       v-else
+      ref="regiaoDaTabela"
       class="ar-tabela-rolavel"
       role="region"
       aria-label="Tabela de usuários"
-      tabindex="0"
+      :tabindex="tabindexDaTabela"
     >
       <table class="ar-tabela">
         <caption>

@@ -397,6 +397,11 @@ interface AlvoA {
   readonly larguras: readonly number[];
   /** Página em que o alvo é procurado; por padrão, a inicial. */
   readonly pagina?: Pagina;
+  /**
+   * A11Y-TABINDEX-TABELA: a região só entra na ordem de Tab quando o conteúdo rola. Onde a tabela não
+   * rola, o alvo tem de ficar fora da ordem de Tab (sem tabindex); onde rola, tem de receber foco e contorno.
+   */
+  readonly soSeRola?: boolean;
 }
 
 const ALVOS_A: readonly AlvoA[] = [
@@ -427,14 +432,14 @@ const ALVOS_A: readonly AlvoA[] = [
     larguras: [360]
   },
   { nome: 'primeira linha da lista de cadeiras', seletor: 'a.linha', larguras: LARGURAS },
-  // A11Y-FOCO-3: a região rolável da tabela do painel. Mede 744 px: a 1280 (janela de 800 px) ela
-  // cabe na vertical e o centralizar não tem como rolar além do fim da página; a 360 (janela de
-  // 740 px) ela passa 4 px da janela e cai na regra de altura (maisAltoQueAJanela).
+  // A11Y-FOCO-3 + A11Y-TABINDEX-TABELA: a região rolável da tabela do painel. Só é alcançável por Tab
+  // quando a tabela rola de fato (largura a largura, medida no navegador).
   {
     nome: 'região rolável da tabela do painel',
     seletor: 'div.ar-tabela-rolavel',
     larguras: LARGURAS,
-    pagina: PAGINAS[3]!
+    pagina: PAGINAS[3]!,
+    soSeRola: true
   }
 ];
 
@@ -448,6 +453,27 @@ for (const alvo of ALVOS_A) {
         await entrarNoApp(page, CONTA_ADMIN, '/');
         await abrirPagina(page, alvo.pagina ?? PAGINAS[0]!, largura);
         await ligarModalidadeDeTeclado(page);
+
+        if (alvo.soSeRola) {
+          const rola = await page
+            .locator(alvo.seletor)
+            .first()
+            .evaluate((el) => el.scrollWidth > el.clientWidth);
+          if (!rola) {
+            const comTabindex = await page
+              .locator(alvo.seletor)
+              .first()
+              .evaluate((el) => el.hasAttribute('tabindex'));
+            console.log(
+              `FOCO | ${alvo.nome} | ${modo} | ${largura} px | sem rolagem | fora-da-ordem-de-tab=${!comTabindex}`
+            );
+            expect(
+              comTabindex,
+              `${alvo.nome} não rola a ${largura} px: não pode ter tabindex`
+            ).toBe(false);
+            return;
+          }
+        }
 
         let chegou = false;
         for (let i = 0; i < LIMITE_DE_TABS && !chegou; i += 1) {

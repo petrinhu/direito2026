@@ -15,7 +15,7 @@ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const VERIFICADOR = join(RAIZ, 'scripts/verificar-htaccess-pastas.ts');
 const HTACCESS_REAL = join(RAIZ, 'public/.htaccess');
 const LINHA_CORINGA = 'RewriteRule ^ api/portao.php [L]';
-const LINHA_NUCLEO = 'RewriteRule ^api/nucleo(/|$) - [F,L]';
+const LINHA_NUCLEO = 'RewriteRule ^api/nucleo(/|$) - [NC,F,L]';
 
 let tmp: string;
 let dist: string;

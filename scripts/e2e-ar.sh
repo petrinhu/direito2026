@@ -165,6 +165,11 @@ limpar_marcados() {
   return 0
 }
 
+# Remoção do CLI temporário no servidor (OS 3.6, item 6). Chamada só com o marcador já limpo.
+remover_cli_ar() {
+  ssh -o BatchMode=yes hostinger "d=\$HOME/$REMOTO_CLI; if [ -d \"\$d\" ]; then ls -ld \"\$d\" && rm -rf \"\${d:?}\"; else echo 'cli temporário: já ausente'; fi" </dev/null
+}
+
 ao_sair() {
   local rc=$?
   if [[ -n $SERVIDOR_PID ]]; then kill "$SERVIDOR_PID" 2>/dev/null || true; fi
@@ -180,6 +185,15 @@ ao_sair() {
   fi
   if [[ -f $MARCADOR ]]; then
     if ! limpar_marcados; then
+      rc=4
+    fi
+  fi
+  # CLI temporário no servidor: só sai depois de a limpeza dar certo (marcador ausente).
+  if [[ $DESTINO == ar ]]; then
+    if [[ -f $MARCADOR ]]; then
+      echo "CLI temporário no servidor mantido: a limpeza não fechou (o limpar da retomada precisa dele)" >&2
+    elif ! remover_cli_ar; then
+      echo "CLI temporário no servidor: a remoção falhou" >&2
       rc=4
     fi
   fi
@@ -239,6 +253,15 @@ conferir_cabecalhos() {
   if [[ -n $n1 && $n1 != "$n2" ]]; then echo "SIM nonce diferente em dois GET"; else echo "NÃO nonce diferente em dois GET"; falhas=1; fi
   if [[ $c1 == 0 && $c2 == 0 ]]; then echo "SIM cache do casco fora de HIT"; else echo "NÃO cache do casco fora de HIT"; falhas=1; fi
   return "$falhas"
+}
+
+# Item 7 da 3.6: cabeçalhos da casca só no pos (a versão de hoje, no base e no pre, não tem casca).
+cabecalhos_do_modo() {
+  if [[ $MODO != pos ]]; then
+    echo "cabeçalhos: não se aplicam ao modo $MODO" >&2
+    return 0
+  fi
+  conferir_cabecalhos
 }
 
 # ---------- rodada do robô ----------
@@ -344,12 +367,13 @@ if [[ $MODO == pre ]]; then
     || { echo "pre: contas fora do esperado (+1 aluno pendente)" >&2; exit 4; }
   [[ $(admins_total) == "$(retrato_get ADMINS_INICIO)" ]] || { echo "pre: administradoras fora do esperado" >&2; exit 4; }
   printf '%s\n' "$ALUNO" > "$MARCADOR"
+  cabecalhos_do_modo
   CONCLUIDO=1
   echo "pre concluído: aluno pendente mantido para o publicar; administradora do robô removida" >&2
   exit 0
 fi
 
-if ! conferir_cabecalhos; then
+if ! cabecalhos_do_modo; then
   echo "cabeçalhos fora do esperado (só no ar)" >&2
   exit 4
 fi

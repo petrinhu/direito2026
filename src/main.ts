@@ -14,11 +14,13 @@ import {
   CHAVE_SESSAO,
   CHAVE_STORE_BUSCA,
   CHAVE_STORE_MODO_ADAPTADO,
-  CHAVE_STORE_TEMA
+  CHAVE_STORE_TEMA,
+  CHAVE_RADIO
 } from '@/app/chaves';
 import { criarClienteApi } from '@/app/restrito/clienteApi';
 import { criarAoNaoAutorizado, criarSessaoGlobal } from '@/app/sessao/sessaoGlobal';
 import { criarNavegadorReal } from '@/app/sessao/navegador';
+import { criarStoreRadio, obterArmazenamentoLocal } from '@/app/radio/tocadorRadio';
 import { criarConferirNaTroca } from '@/app/sessao/conferirNaTroca';
 import { criarControladorAviso } from '@/app/versaoNova/controladorAviso';
 import { criarTransporteFetch } from '@/app/versaoNova/transporteFetch';
@@ -106,6 +108,7 @@ async function bootstrap(): Promise<void> {
   const repositorio = criarRepositorioProgresso();
   const storeTema = criarStoreTema(repositorio);
   const storeModoAdaptado = criarStoreModoAdaptado(repositorio);
+  const storeRadio = criarStoreRadio(obterArmazenamentoLocal());
 
   // Um único cliente da API para o site inteiro: a 401 de qualquer chamada leva à tela de entrada.
   const navegador = criarNavegadorReal();
@@ -124,6 +127,7 @@ async function bootstrap(): Promise<void> {
   app.provide(CHAVE_STORE_TEMA, storeTema);
   app.provide(CHAVE_STORE_BUSCA, storeBusca);
   app.provide(CHAVE_STORE_MODO_ADAPTADO, storeModoAdaptado);
+  app.provide(CHAVE_RADIO, storeRadio);
   app.provide(CHAVE_CLIENTE_RESTRITO, cliente);
   app.provide(CHAVE_SESSAO, sessao);
 

@@ -153,14 +153,10 @@ function alternarTodos(): void {
   }
 }
 
-/* A árvore pode rolar dentro do próprio contêiner; a página nunca rola de lado.
-   O recuo dos ramos consulta a largura DESTE contêiner, não a da janela: a lista
-   dos níveis fundos perde coluna pelo recuo, e a janela não diz quanto sobra
-   para a lista (a lateral come parte da largura entre 880 e 1280px). */
+/* A árvore pode rolar dentro do próprio contêiner; a página nunca rola de lado. */
 .mapa-mental__area {
   max-width: 100%;
   overflow-x: auto;
-  container-type: inline-size;
 }
 
 .mapa-mental__arvore {

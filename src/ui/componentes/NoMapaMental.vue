@@ -202,7 +202,7 @@ function aoClicar(): void {
 .no-mapa__grupo {
   position: relative;
   /* Recuo mínimo na base: com seis níveis e texto de 24px, cada pixel de
-     recuo sai da coluna do texto (QA, IMPORTANTE 2). Cresce a partir de 880px de lista (ver o bloco de contêiner abaixo). */
+     recuo sai da coluna do texto (QA, IMPORTANTE 2). Cresce a partir de 640px. */
   margin: 0 0 0 var(--esp-1, 0.25rem);
   padding: 0 0 0 var(--esp-2, 0.5rem);
   border-inline-start: 2px solid var(--cor-mapa-linha, #5f7189);
@@ -218,12 +218,10 @@ function aoClicar(): void {
   border-top: 2px solid var(--cor-mapa-linha, #5f7189);
 }
 
-/* Recuo pela largura da LISTA (contêiner .mapa-mental__area), não da janela.
-   Abaixo de 880px de lista o recuo é o compacto: os dois níveis mais fundos
-   (conceitos e seus itens) cedem mais coluna ao texto. QA rodada 2 mediu 230px
-   (adaptado) e 218px (Firefox) contra o piso de 240px. Medido em 768 e 1024px,
-   o recuo de desktop comia 28% da lista contra 21% em 1280px. */
-@container (max-width: 879px) {
+/* Os dois níveis mais fundos (conceitos e seus itens) cedem mais coluna ao
+   texto em tela estreita: QA rodada 2 mediu 230px (adaptado) e 218px
+   (Firefox) contra o piso de 240px. */
+@media (max-width: 639px) {
   /* Era e fase também cedem recuo: antes cada grupo custava 12px (margem 4 +
      padding 8) na coluna do texto; o corte tira 8px por grupo, dois grupos
      somam 16px sobre os 227px medidos no nível 6 (piso de 240px, QA). */
@@ -250,7 +248,7 @@ function aoClicar(): void {
   }
 }
 
-@container (min-width: 880px) {
+@media (min-width: 640px) {
   .no-mapa__grupo {
     margin-inline-start: var(--esp-4, 1rem);
     padding-inline-start: var(--esp-4, 1rem);

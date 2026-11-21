@@ -1403,6 +1403,12 @@ test('convite: "Esqueci a senha" pela tela de entrada: o link vem por e-mail, a 
       corpo: e2Corpo(LOGIN_CONVIDADO)
     });
     expect(e2.link === e1.link, 'o E2 traz um link novo, não o do convite').toBe(false);
+    // V17-F3 (CK 4.3): o link da recuperação leva o token no fragmento #t=, nunca em ?t= na URL.
+    const urlDoE2 = new URL(e2.link);
+    expect(urlDoE2.hash.startsWith('#t='), 'o link do Esqueci leva o token no fragmento #t=').toBe(
+      true
+    );
+    expect(urlDoE2.searchParams.has('t'), 'o link do Esqueci não leva ?t= na URL').toBe(false);
 
     await abrirLink(aparelho, e2.link);
     await esperarFormularioDoConvite(aparelho);

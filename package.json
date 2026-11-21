@@ -1,7 +1,7 @@
 {
   "name": "caderno-de-direito",
   "private": true,
-  "version": "1.18.2.0",
+  "version": "1.18.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

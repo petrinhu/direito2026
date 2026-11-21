@@ -122,3 +122,64 @@ for (const largura of LARGURAS_PX) {
     expect(medida.semRotulo).toEqual([]);
   });
 }
+
+/**
+ * CAL-SEMANA-360. No modo adaptado, a 360px, os cabeçalhos dos dias ("dom.", "seg."...) se sobrepõem:
+ * a grade tem uma coluna de ~44px e o texto está em 24px. Mede a caixa visível de cada cabeçalho (o
+ * texto de fato, não a célula) e exige que nenhuma intersecte a vizinha. Confere também que são os sete
+ * cabeçalhos, que cada um mostra algo e que tem nome acessível completo (aria-label), para o teste não
+ * passar vazio se a grade sumir.
+ */
+test('modo adaptado em 360px: cabeçalhos dos dias da semana não se sobrepõem', async ({ page }) => {
+  await page.clock.setFixedTime(new Date(DATA_REFERENCIA));
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/calendario');
+  await page.waitForSelector('.grade-calendario .fc-col-header-cell-cushion');
+  await page.evaluate(() => document.fonts.ready);
+  await esperarLayoutAssentar(page);
+
+  const medida = await page.evaluate((tolerancia) => {
+    const cabecalhos = [
+      ...document.querySelectorAll<HTMLElement>('.grade-calendario .fc-col-header-cell-cushion')
+    ];
+    const caixas = cabecalhos.map((el) => {
+      const intervalo = document.createRange();
+      intervalo.selectNodeContents(el);
+      const b = intervalo.getBoundingClientRect();
+      return {
+        texto: el.textContent?.trim() ?? '',
+        rotulo: el.getAttribute('aria-label')?.trim() ?? '',
+        esq: b.left,
+        dir: b.right,
+        topo: b.top,
+        base: b.bottom,
+        largura: b.width,
+        altura: b.height
+      };
+    });
+    const pares: string[] = [];
+    for (let i = 0; i < caixas.length; i++) {
+      for (let j = i + 1; j < caixas.length; j++) {
+        const a = caixas[i]!;
+        const b = caixas[j]!;
+        const largura = Math.min(a.dir, b.dir) - Math.max(a.esq, b.esq);
+        const altura = Math.min(a.base, b.base) - Math.max(a.topo, b.topo);
+        if (largura > tolerancia && altura > tolerancia) {
+          pares.push(`"${a.texto}" sobrepõe "${b.texto}" (${largura.toFixed(1)}px)`);
+        }
+      }
+    }
+    return {
+      quantos: caixas.length,
+      semRotulo: caixas.filter((c) => c.rotulo === '').map((c) => c.texto),
+      invisiveis: caixas.filter((c) => c.largura < 1 || c.altura < 1).map((c) => c.texto),
+      pares
+    };
+  }, TOLERANCIA_PX);
+
+  expect(medida.quantos, 'são os sete dias da semana').toBe(7);
+  expect(medida.semRotulo, 'cada cabeçalho tem nome acessível').toEqual([]);
+  expect(medida.invisiveis, 'cada cabeçalho aparece').toEqual([]);
+  expect(medida.pares, 'nenhum cabeçalho sobrepõe o vizinho').toEqual([]);
+});

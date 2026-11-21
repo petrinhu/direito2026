@@ -534,3 +534,21 @@
     background: #000000;
   }
 }
+
+/* CAL-SEMANA-360. Cabeçalhos dos dias em grade estreita (menos de 560px, celular): cada um mostra só a
+   primeira letra, em maiúscula e no tamanho da leitura ampliada. "dom." tem 71px a 24px e a coluna de 360px
+   tem 44px, então abreviação de três letras não cabe; reduzir a fonte até caber (~15px) deixaria o
+   cabeçalho menor que o do modo normal (17px). O texto inteiro sai da vista (font-size 0) mas continua no
+   DOM, e o nome completo é o aria-label do cabeçalho (lido por leitor de tela). ::first-letter só pega em
+   bloco, por isso display inline-block. */
+@container (max-width: 559px) {
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-col-header-cell-cushion {
+    display: inline-block;
+    font-size: 0;
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-col-header-cell-cushion::first-letter {
+    font-size: var(--escala-base, 1.5rem);
+    text-transform: uppercase;
+  }
+}

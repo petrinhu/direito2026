@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import type { DocumentoBusca } from '@/core/busca/tipos';
 
-defineProps<{ resultados: readonly DocumentoBusca[]; termo: string }>();
+const props = withDefaults(
+  defineProps<{ resultados: readonly DocumentoBusca[]; termo: string; rotulo?: string }>(),
+  { rotulo: 'Resultados da busca' }
+);
 
 /** Cadeira restrita não tem unidade: sem separador solto. */
 function trilha(resultado: DocumentoBusca): string {
@@ -12,12 +15,7 @@ function trilha(resultado: DocumentoBusca): string {
 </script>
 
 <template>
-  <div
-    class="painel-resultados-busca"
-    role="region"
-    aria-live="polite"
-    aria-label="Resultados da busca"
-  >
+  <div class="painel-resultados-busca" role="region" aria-live="polite" :aria-label="props.rotulo">
     <p v-if="termo && resultados.length === 0">Nenhum resultado para "{{ termo }}".</p>
     <ul v-else>
       <li v-for="resultado in resultados" :key="resultado.id" class="painel-resultados-busca__item">

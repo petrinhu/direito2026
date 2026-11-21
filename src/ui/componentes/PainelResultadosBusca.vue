@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
 import type { DocumentoBusca } from '@/core/busca/tipos';
 
 const props = withDefaults(
@@ -19,13 +20,13 @@ function trilha(resultado: DocumentoBusca): string {
     <p v-if="termo && resultados.length === 0">Nenhum resultado para "{{ termo }}".</p>
     <ul v-else>
       <li v-for="resultado in resultados" :key="resultado.id" class="painel-resultados-busca__item">
-        <a :href="resultado.url">
+        <RouterLink :to="resultado.url">
           <strong>{{ resultado.titulo }}</strong>
           <span class="painel-resultados-busca__trilha">
             {{ trilha(resultado) }}
           </span>
           <span class="painel-resultados-busca__trecho">{{ resultado.trecho }}</span>
-        </a>
+        </RouterLink>
       </li>
     </ul>
   </div>

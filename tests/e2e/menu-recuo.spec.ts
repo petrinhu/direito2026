@@ -19,12 +19,24 @@ import {
  * 3. O Quiz (sem triângulo) alinha com o Resumo, e todo triângulo fica à
  *    esquerda do texto da própria linha.
  *
- * Mínimo: 12 px nos modos normais, 6 px no modo adaptado (decisão do líder,
- * 13/11/2026: recuo menor no adaptado, mas sempre para dentro, nunca invertido).
+ * Mínimo: 12 px nos modos normais. No modo adaptado a regra escrita é só
+ * "recuo positivo" (cada nível para dentro do pai, nunca invertido, sem piso em px):
+ * R-CPO-MENU-2, ratificar-13-11.md linha 47 e decisao-cpo-distratores.md linhas
+ * 774-780, do CPO, ainda a ratificar pelo líder. O líder deu "Recuo menor e
+ * hifenização (Recomendado)", sem número, em 13/11/2026 (TODO.md, AV3-F0c).
+ * Um piso em px no adaptado (havia 6 px, sem fonte escrita) fica para a decisão do líder.
  */
 const ROTA = '/p/p1/intr-direito/u1';
 const LARGURAS = [1920, 1280, 360] as const;
-const ESTADOS: ReadonlyArray<{ rotulo: string; estado: EstadoInicial; minimo: number }> = [
+interface CriterioDeRecuo {
+  rotulo: string;
+  estado: EstadoInicial;
+  /** Piso em px. Ignorado quando `positivo` é true. */
+  minimo: number;
+  /** Só exige recuo maior que zero (regra escrita do modo adaptado). */
+  positivo?: boolean;
+}
+const ESTADOS: ReadonlyArray<CriterioDeRecuo> = [
   {
     rotulo: 'modo normal, tema escuro',
     estado: { tema: 'escuro', modoAdaptado: false },
@@ -35,8 +47,20 @@ const ESTADOS: ReadonlyArray<{ rotulo: string; estado: EstadoInicial; minimo: nu
     estado: { tema: 'claro', modoAdaptado: false },
     minimo: 12
   },
-  { rotulo: 'modo adaptado, tema claro', estado: { tema: 'claro', modoAdaptado: true }, minimo: 6 }
+  {
+    rotulo: 'modo adaptado, tema claro',
+    estado: { tema: 'claro', modoAdaptado: true },
+    minimo: 0,
+    positivo: true
+  }
 ];
+/** Verdadeiro se o degrau (px) atende ao critério do modo. */
+function atendeRecuo(degrau: number, criterio: CriterioDeRecuo): boolean {
+  return criterio.positivo ? degrau > 0 : degrau >= criterio.minimo;
+}
+function descreverRecuo(criterio: CriterioDeRecuo): string {
+  return criterio.positivo ? 'positivo (mais de 0 px)' : `de pelo menos ${criterio.minimo}px`;
+}
 
 interface Medidas {
   periodo: { texto: number; seta: number };
@@ -208,8 +232,9 @@ function resumirPorNivel(pares: ParRecuo[]): string {
 }
 
 for (const largura of LARGURAS) {
-  for (const { rotulo, estado, minimo } of ESTADOS) {
-    test(`menu lateral: recuo de pelo menos ${minimo}px entre pai e filho em todos os níveis, ${largura}px, ${rotulo}`, async ({
+  for (const criterio of ESTADOS) {
+    const { rotulo, estado, minimo } = criterio;
+    test(`menu lateral: recuo ${descreverRecuo(criterio)} entre pai e filho em todos os níveis, ${largura}px, ${rotulo}`, async ({
       page
     }) => {
       await page.setViewportSize({ width: largura, height: 900 });
@@ -237,12 +262,12 @@ for (const largura of LARGURAS) {
       for (let i = 1; i < cadeia.length; i++) {
         const [nomePai, xPai] = cadeia[i - 1]!;
         const [nome, x] = cadeia[i]!;
-        expect
-          .soft(
-            x - xPai,
-            `${nome} (texto em x=${x.toFixed(1)}) deve começar pelo menos ${minimo}px à direita de ${nomePai} (x=${xPai.toFixed(1)})`
-          )
-          .toBeGreaterThanOrEqual(minimo);
+        const degrau = expect.soft(
+          x - xPai,
+          `${nome} (texto em x=${x.toFixed(1)}) deve começar com recuo ${descreverRecuo(criterio)} à direita de ${nomePai} (x=${xPai.toFixed(1)})`
+        );
+        if (criterio.positivo) degrau.toBeGreaterThan(0);
+        else degrau.toBeGreaterThanOrEqual(minimo);
       }
 
       expect
@@ -275,9 +300,9 @@ for (const largura of LARGURAS) {
       console.log(`[recuo] ${rotulo}, ${largura}px: ${resumirPorNivel(pares)}`);
       expect(pares.length, 'o laço de pares precisa ter visto itens').toBeGreaterThan(0);
       const violacoes = pares
-        .filter((p) => p.degrau < minimo)
+        .filter((p) => !atendeRecuo(p.degrau, criterio))
         .map((p) => `[nível ${p.nivel}] "${p.pai}" -> "${p.filho}": ${p.degrau} px`);
-      expect(violacoes, `pares pai-filho com recuo menor que ${minimo} px`).toEqual([]);
+      expect(violacoes, `pares pai-filho sem recuo ${descreverRecuo(criterio)}`).toEqual([]);
     });
   }
 }

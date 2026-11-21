@@ -7,13 +7,13 @@ if (!defined('D26_API')) {
 }
 
 /**
- * Política de Referrer das respostas JSON da API. Padrão strict-origin-when-cross-origin (V17-R1, REF-POL-PHP). Um endpoint cujo caminho leva segredo
+ * Política de Referrer das respostas JSON da API. Padrão same-origin (RAD-REFERER, 21/11/2026: não mandar origem no site todo). Um endpoint cujo caminho leva segredo
  * na URL (o convite, CV-B2) define D26_REFERRER_API antes do bootstrap; a constante vale só nessa requisição
  * e cobre também os erros do handler global (503/500), que saem por d26_erro.
  */
 function d26_referrer_api(): string
 {
-    return defined('D26_REFERRER_API') ? D26_REFERRER_API : 'strict-origin-when-cross-origin';
+    return defined('D26_REFERRER_API') ? D26_REFERRER_API : 'same-origin';
 }
 
 /**

@@ -11,7 +11,11 @@ export interface MetaUnidade {
   readonly estado: EstadoPublicacao;
   readonly titulo: string;
   readonly subtitulo: string;
-  /** Usado em <meta name="description"> e no cartão de resultado da busca. */
+  /**
+   * Exigido não vazio por validarMeta, mas nenhuma tela pública a exibe: a
+   * <meta name="description"> é fixa em index.html, e o cartão de resultado da
+   * busca mostra o `trecho` (DocumentoBusca), não esta descrição.
+   */
   readonly descricao: string;
 }
 

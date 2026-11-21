@@ -351,6 +351,19 @@ onBeforeUnmount(() => {
   }
 }
 
+/* De 641px a 1023px, só a trilha longa, de mais de dois níveis (data-trilha-longa, de
+   TrilhaNavegacao.vue). E2E-A2-SERRA, decisão do líder de 20/11/2026: sem a linha inteira,
+   de 772 a 993px a trilha longa dividia a linha, quebrava nível por nível e o cabeçalho
+   chegava a 827px. F5-03: na trilha curta (um ou dois níveis) a linha inteira só somava uma
+   linha ao cabeçalho, até 98,8px acima do da linha de base (/novidades a 1023px), e ali o
+   CSS fica o da linha de base. Sem :has(): os alvos do build incluem Firefox 115. A trilha
+   é contêiner de largura, então o CSS não mede se ela cabe; o número de níveis decide. */
+@media (min-width: 641px) and (max-width: 1023px) {
+  :root[data-modo-adaptado='on'] .barra-topo__trilha[data-trilha-longa='true'] {
+    flex-basis: 100%;
+  }
+}
+
 .barra-topo__botao-gaveta {
   display: none;
   min-height: 44px;

@@ -87,10 +87,20 @@ const itens = computed<ItemTrilha[]>(() => {
 
   return [{ rotulo: 'Caderno de Direito', href: '/' }];
 });
+
+/**
+ * Trilha de mais de dois níveis, o mesmo corte de data-truncavel. O cabeçalho do modo adaptado lê
+ * isto no nav (BarraTopo.vue, F5-03): de 641 a 1023 px só a trilha longa ganha linha própria.
+ */
+const trilhaLonga = computed(() => itens.value.length > 2);
 </script>
 
 <template>
-  <nav aria-label="Trilha de navegação" class="trilha-navegacao">
+  <nav
+    aria-label="Trilha de navegação"
+    class="trilha-navegacao"
+    :data-trilha-longa="trilhaLonga ? 'true' : 'false'"
+  >
     <ol :data-truncavel="itens.length > 2 ? 'true' : 'false'">
       <li
         v-for="(item, indice) in itens"

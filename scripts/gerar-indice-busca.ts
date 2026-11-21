@@ -38,7 +38,7 @@ import {
   type DocumentoBusca
 } from '../src/core/busca/tipos';
 import { normalizarTermo } from '../src/core/busca/normalizar';
-import { validarIndiceGerado } from '../src/core/busca/validarIndice';
+import { compararContagensIndice, validarIndiceGerado } from '../src/core/busca/validarIndice';
 import { carregadoresDoDisco, curriculoDoDisco } from './apoio/conteudoDoDisco';
 import { medirTamanhoComprimido } from './apoio/medirIndiceComprimido';
 
@@ -48,14 +48,15 @@ const AQUI = dirname(fileURLToPath(import.meta.url));
 const SAIDA = resolve(AQUI, '../public/assets/busca-indice.json');
 const SAIDA_TEXTO = resolve(AQUI, '../public/assets/' + ARQUIVO_INDICE_TEXTO_INTEGRAL);
 
-function serializar(documentos: readonly DocumentoBusca[]): string {
+function serializar(documentos: readonly DocumentoBusca[]): { json: string; indexados: number } {
   const mini = new MiniSearch<DocumentoBusca>({
     fields: ['titulo', 'corpo'],
     storeFields: ['url', 'periodo', 'cadeira', 'unidade', 'aba', 'titulo', 'trecho'],
     processTerm: (termo: string) => normalizarTermo(termo)
   });
   mini.addAll(documentos as DocumentoBusca[]);
-  return JSON.stringify(mini.toJSON());
+  // M é o que o MiniSearch de fato guardou, não o tamanho da lista de entrada.
+  return { json: JSON.stringify(mini.toJSON()), indexados: mini.documentCount };
 }
 
 async function principal(): Promise<void> {
@@ -105,14 +106,22 @@ async function principal(): Promise<void> {
 
   documentos.push(...montarDocumentosCadeirasRestritas(curriculo));
 
-  const json = serializar(documentos);
+  const { json, indexados } = serializar(documentos);
   mkdirSync(dirname(SAIDA), { recursive: true });
   writeFileSync(SAIDA, json, 'utf-8');
+
+  const comparacao = compararContagensIndice(documentos.length, indexados);
+  if (!comparacao.ok) {
+    for (const mensagem of comparacao.mensagens) {
+      console.error(`gerar-indice-busca: ${mensagem}`);
+    }
+    process.exitCode = 1;
+  }
 
   const tamanhoBrutoBytes = Buffer.byteLength(json, 'utf-8');
   // O teto da RI6 é sobre o tamanho comprimido (gzip -9), não o bruto.
   const tamanhoComprimidoBytes = medirTamanhoComprimido(json);
-  console.log(`documentos encontrados: ${documentos.length} / indexados: ${documentos.length}`);
+  console.log(`documentos encontrados: ${documentos.length} / indexados: ${indexados}`);
   console.log(`unidades publicadas varridas: ${unidadesEncontradas}`);
   console.log(`tamanho bruto do índice: ${tamanhoBrutoBytes} bytes`);
   console.log(
@@ -132,7 +141,14 @@ async function principal(): Promise<void> {
 
   // Índice do texto integral (EP-F11-BUSCA-TETO): mesmo teto e mesmo piso,
   // porque é baixado por aluno e tem de caber no mesmo orçamento de rede.
-  const jsonTexto = serializar(documentosTexto);
+  const { json: jsonTexto, indexados: indexadosTexto } = serializar(documentosTexto);
+  const comparacaoTexto = compararContagensIndice(documentosTexto.length, indexadosTexto);
+  if (!comparacaoTexto.ok) {
+    for (const mensagem of comparacaoTexto.mensagens) {
+      console.error(`gerar-indice-busca (texto integral): ${mensagem}`);
+    }
+    process.exitCode = 1;
+  }
   writeFileSync(SAIDA_TEXTO, jsonTexto, 'utf-8');
   const tamanhoTextoBruto = Buffer.byteLength(jsonTexto, 'utf-8');
   const tamanhoTextoComprimido = medirTamanhoComprimido(jsonTexto);

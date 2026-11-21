@@ -58,6 +58,24 @@ teste('roteador: rota sem sessão cai na tela de entrada do portão, público se
     igual(['ok' => true], $c->get('/api/saude.php')->json(), 'endpoint existente executa');
 });
 
+teste('LU-F2.4-N3: /api/nucleo é 403 também com maiúsculas e mistura (o Apache trata caminho sensível, o roteador não pode dar 401)', function (): void {
+    $c = Ambiente::novo()->cliente();
+    foreach (['/api/nucleo/config.php', '/API/NUCLEO/config.php', '/Api/Nucleo/config.php', '/API/nucleo/config.php', '/API/NUCLEO', '/API/NUCLEO/'] as $caminho) {
+        $r = $c->get($caminho);
+        igual(403, $r->status, "$caminho: negado com 403, não 401 do portão");
+        naoContem('<title>spa</title>', $r->corpo, "$caminho não cai na SPA");
+    }
+});
+
+teste('LU-F2.4-N3 (gêmeo, L-17): o prefixo /api/ é casado sem diferenciar maiúsculas; /API/... inexistente é 404, não portão', function (): void {
+    $c = Ambiente::novo()->cliente();
+    foreach (['/API/nao-existe.php', '/Api/', '/API'] as $caminho) {
+        $r = $c->get($caminho);
+        igual(404, $r->status, "$caminho: 404 do roteador, como /api/...");
+        naoContem('<title>spa</title>', $r->corpo, "$caminho não cai na SPA");
+    }
+});
+
 teste('roteador: público presente sai direto; público ausente é 404 e não cai no portão; o resto passa pelo portão', function (): void {
     $c = Ambiente::novo()->cliente();
     $robots = $c->get('/robots.txt');

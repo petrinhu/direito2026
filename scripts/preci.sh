@@ -25,21 +25,22 @@ passo() {
 passo "cifra: árvore destravada, blobs com magia, sem nome proibido" node --import tsx scripts/verificar-git-crypt.ts
 passo "partição: trecho de texto de estudo cifrado (fonte: strings das unidades de src/conteudo, janela de 40) em arquivo em claro; caminho cifrado sem classe reprova" node --import tsx scripts/verificar-particao.ts
 passo "travessão no que chega ao leitor (U+2014, U+2013; isenção só em blocos do texto integral)" bash scripts/verificar-travessao-arvore.sh
-passo "tipos (vue-tsc)" npx vue-tsc --noEmit
 passo "lint" npx eslint . --max-warnings 0
 passo "formatação" npx prettier --check .
 passo "camadas (dependency-cruiser)" npx depcruise src --config .dependency-cruiser.cjs
 passo "v-html só de src/conteudo" bash scripts/verificar-v-html.sh
 passo "gerar subconjunto de dispositivos por unidade" node --import tsx scripts/gerar-dispositivos-por-unidade.ts
 passo "gerar índice de busca" node --import tsx scripts/gerar-indice-busca.ts
+passo "tipos (vue-tsc, depois da geração: vê o que o build vê)" npx vue-tsc --noEmit
 passo "citações resolvem no catálogo" node --import tsx scripts/verificar-dispositivos.ts
 passo "validação do conteúdo, toda unidade descoberta" node --import tsx scripts/validar-conteudo.ts
 passo "termos proibidos (R3), fonte" bash scripts/verificar-proibicoes.sh src
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
 passo "testes unitários, de componente e de caracterização" npx vitest run tests/unidade tests/componente tests/caracterizacao
-# npm run build já encadeia geração de índice/dispositivos, typecheck,
-# vite build, o pacote separado (dist-pacote) e o portão de pacote publicável (package.json).
-passo "construção completa (inclui o portão de pacote publicável)" npm run build
+# A parte de verificação do build (geração, vue-tsc, validação) já rodou nos passos acima; uma vez só.
+# Por isso o preci chama build:construir (vite build, pacote separado dist-pacote, portão de pacote
+# publicável), e não npm run build, que repetiria aquela parte. O build completo continua igual.
+passo "construção (vite, pacote separado, portão de pacote publicável)" npm run build:construir
 passo "webroot separado: só a lista fechada, sem termo e sem trecho de src/conteudo" node --import tsx scripts/verificar-webroot-sem-conteudo.ts
 passo "nome do titular só na fonte permitida (árvore e pacote)" node --import tsx scripts/verificar-nome-autor.ts --arvore . --pacote dist-pacote
 passo "termos proibidos (R3), dist" bash scripts/verificar-proibicoes.sh dist

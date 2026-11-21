@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatarDataHora, normalizarHora24 } from '@/core/calendario/dataHora';
+import { formatarDataHora, formatarHora, normalizarHora24 } from '@/core/calendario/dataHora';
 
 /**
  * ADM-F1 (último login no painel): data e hora em dd/mm/aaaa HH:MM:SS, no fuso do calendário
@@ -28,6 +28,20 @@ describe('formatarDataHora', () => {
 
   it('texto que não é data volta igual, como hoje no painel', () => {
     expect(formatarDataHora('não é uma data')).toBe('não é uma data');
+  });
+});
+
+/**
+ * C-8: a coluna "Atualizado às" usa só a hora (HH:MM:SS), no fuso de Recife. Função própria, para
+ * o painel não depender de cortar o fim de uma data completa.
+ */
+describe('formatarHora', () => {
+  it('dá HH:MM:SS no fuso de Recife, com o instante perto da meia-noite UTC (02:30Z é 23:30)', () => {
+    expect(formatarHora(new Date('2026-11-15T02:30:00Z'))).toBe('23:30:00');
+  });
+
+  it('meia-noite de Recife sai como 00:00:00, nunca 24', () => {
+    expect(formatarHora(new Date('2026-11-15T03:00:00Z'))).toBe('00:00:00');
   });
 });
 

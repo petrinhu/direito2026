@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
-import { formatarDataHora } from '@/app/calendario/dataHoraDoSite';
+import { formatarDataHora, formatarHora } from '@/app/calendario/dataHoraDoSite';
 import {
   loginValido,
   type Administrar,
@@ -119,7 +119,7 @@ async function carregar(): Promise<void> {
   carregando.value = false;
   if (r.ok) {
     ultimaLeitura = Date.now();
-    atualizadoEm.value = formatarDataHora(new Date(ultimaLeitura).toISOString()).slice(-8);
+    atualizadoEm.value = formatarHora(new Date(ultimaLeitura));
     usuarios.value = r.valor;
     erro.value = '';
   } else {

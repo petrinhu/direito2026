@@ -105,9 +105,9 @@ describe('Rodape', () => {
     expect(CONTATO_EMAIL).toBe('contato@drpetrus.top');
   });
 
-  it('o alt do logo sai da mesma fonte, como "Dr. " mais o titular', () => {
+  it('o alt do logo é "Caderno de Direito" (decisão do líder, 21/11/2026)', () => {
     const wrapper = mount(Rodape, { props: montarProps() });
-    expect(wrapper.find('img.rodape__logo').attributes('alt')).toBe(`Dr. ${TITULAR}`);
+    expect(wrapper.find('img.rodape__logo').attributes('alt')).toBe('Caderno de Direito');
   });
 
   it('o link do nome tem contorno de foco visível no próprio estilo do componente', () => {

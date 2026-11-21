@@ -5,6 +5,9 @@ import {
   type MotorBusca
 } from '@/core/busca/tipos';
 
+/** A UI decide o gatilho do texto integral por aqui, não importando o core direto (ui-nao-pula-app). */
+export { deveBuscarNoTextoIntegral } from '@/core/busca/gatilhoTextoIntegral';
+
 /** `parado`: nada pedido para o termo atual. Só o `buscarNoTextoIntegral` sai dele. */
 export type EstadoBuscaTexto = 'parado' | 'carregando' | 'pronto' | 'erro';
 

@@ -2,7 +2,7 @@
 import { computed, inject, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { CHAVE_STORE_BUSCA } from '@/app/chaves';
-import { deveBuscarNoTextoIntegral } from '@/core/busca/gatilhoTextoIntegral';
+import { deveBuscarNoTextoIntegral } from '@/app/stores/busca';
 import PainelResultadosBusca from '../componentes/PainelResultadosBusca.vue';
 import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 

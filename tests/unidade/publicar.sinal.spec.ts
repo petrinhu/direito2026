@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import {
   copyFileSync,
   existsSync,
@@ -89,10 +89,31 @@ interface Fixture {
   chave: string;
   restrito: string;
   home: string;
+  /** Pasta privada do ensaio: onde a caixa falsa grava o que viu durante o preci. */
+  estado: string;
 }
 
+/** Corpo da caixa falsa (o que roda no lugar do preci). `estado` é a pasta privada do ensaio. */
+type CorpoCaixa = (p: { raiz: string; marcador: string; estado: string }) => string;
+
+/** Padrão: marca a chamada e dorme 3 s, para o sinal chegar durante o preci. */
+const CAIXA_DORMINDO: CorpoCaixa = ({ marcador }) => `touch -- "${marcador}"\nexec sleep 3\n`;
+
+/** Caixa que grava, durante o preci, a tag v* e o HEAD da fixture (a release não pode existir ainda). */
+const CAIXA_REGISTRANDO: CorpoCaixa = ({ raiz, marcador, estado }) =>
+  [
+    `touch -- "${marcador}"`,
+    `git -C "${raiz}" tag --list 'v*' > "${estado}/tags-em-preci.txt"`,
+    `git -C "${raiz}" rev-parse HEAD > "${estado}/head-em-preci.txt"`,
+    'exit 0',
+    ''
+  ].join('\n');
+
+/** Caixa que reprova o preci (código 1), sem marcar nada além da chamada. */
+const CAIXA_REPROVANDO: CorpoCaixa = ({ marcador }) => `touch -- "${marcador}"\nexit 1\n`;
+
 /** Repositório descartável com o publicar do próprio repositório, preci falso e remoto bare local. */
-function montarFixture(): Fixture {
+function montarFixture(corpo: CorpoCaixa = CAIXA_DORMINDO): Fixture {
   const raiz = pastaTemporaria('publicar-sinal-');
   const bare = pastaTemporaria('publicar-sinal-bare-');
   const home = pastaTemporaria('publicar-sinal-home-');
@@ -142,7 +163,7 @@ function montarFixture(): Fixture {
   escrever(restrito, '{"sintetico": true}\n');
 
   // Caixa falsa: só executa o comando, depois de gravar o marcador. O preci falso dorme 3 s.
-  escrever(caixa, `#!/usr/bin/env bash\ntouch -- "${marcador}"\nexec sleep 3\n`);
+  escrever(caixa, `#!/usr/bin/env bash\n${corpo({ raiz, marcador, estado: chaveDir })}`);
   chmodSync(caixa, 0o755);
 
   git(raiz, ['add', '.gitattributes', '.gitignore', 'package.json', 'segredo/nota.txt']);
@@ -152,7 +173,7 @@ function montarFixture(): Fixture {
   git(raiz, ['push', '-q', 'github', 'main']);
   // Destino local (ensaio): a raiz da hospedagem falsa existe, para a checagem de destino seguro (F5.2).
   mkdirSync(join(home, 'domains', 'drpetrus.top'), { recursive: true });
-  return { raiz, marcador, caixa, chave, restrito, home };
+  return { raiz, marcador, caixa, chave, restrito, home, estado: chaveDir };
 }
 
 function ambientePublicar(f: Fixture): Record<string, string | undefined> {
@@ -251,10 +272,52 @@ describe('publicar.sh: sinal durante o preci desfaz commit e tag (LU-F1.3)', () 
         expect(git(f.raiz, ['tag', '--list', 'v*']).trim()).toBe('');
         expect(git(f.raiz, ['status', '--porcelain', '--untracked-files=no']).trim()).toBe('');
         expect(readFileSync(join(f.raiz, 'package.json'), 'utf-8')).toBe(pacoteAntes);
-        expect(texto).toContain('desfeito');
+        // A release só nasce depois do preci verde: sinal no preci não tem commit nem tag para desfazer.
+        expect(texto).not.toContain('desfeito');
+        expect(texto).toContain('nada foi publicado');
         expect(codigo).toBe(esperado);
       },
       TEMPO_MAXIMO_MS
     );
   }
+});
+
+/** Roda o publicar até o fim, sem sinal. Usado quando o preci falso decide o resultado. */
+function publicarAteOFim(f: Fixture): { codigo: number | null; texto: string } {
+  const r = spawnSync('bash', ['scripts/publicar.sh', 'recurso', '--novidade', 'tecnica'], {
+    cwd: f.raiz,
+    env: ambientePublicar(f),
+    encoding: 'utf-8'
+  });
+  const texto = `${r.stdout}${r.stderr}`;
+  registrarDiagnostico(texto);
+  return { codigo: r.status, texto };
+}
+
+describe('publicar.sh: a release nasce depois do preci verde (regra 3 do CLAUDE.md do site)', () => {
+  it('durante o preci, HEAD é a base e nenhuma tag v* existe (nada commitado nem tagueado antes do preci)', () => {
+    const f = montarFixture(CAIXA_REGISTRANDO);
+    const headAntes = git(f.raiz, ['rev-parse', 'HEAD']).trim();
+
+    publicarAteOFim(f);
+
+    expect(existsSync(f.marcador), 'o preci falso não rodou').toBe(true);
+    expect(readFileSync(join(f.estado, 'tags-em-preci.txt'), 'utf-8').trim()).toBe('');
+    expect(readFileSync(join(f.estado, 'head-em-preci.txt'), 'utf-8').trim()).toBe(headAntes);
+  });
+
+  it('preci reprova: HEAD é a base, nenhuma tag v*, status rastreado limpo e package.json igual', () => {
+    const f = montarFixture(CAIXA_REPROVANDO);
+    const headAntes = git(f.raiz, ['rev-parse', 'HEAD']).trim();
+    const pacoteAntes = readFileSync(join(f.raiz, 'package.json'), 'utf-8');
+
+    const { codigo, texto } = publicarAteOFim(f);
+
+    expect(codigo).not.toBe(0);
+    expect(texto).toContain('preci reprovou');
+    expect(git(f.raiz, ['rev-parse', 'HEAD']).trim()).toBe(headAntes);
+    expect(git(f.raiz, ['tag', '--list', 'v*']).trim()).toBe('');
+    expect(git(f.raiz, ['status', '--porcelain', '--untracked-files=no']).trim()).toBe('');
+    expect(readFileSync(join(f.raiz, 'package.json'), 'utf-8')).toBe(pacoteAntes);
+  });
 });

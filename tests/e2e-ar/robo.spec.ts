@@ -128,14 +128,26 @@ async function conferirTelaDoAluno(page: Page, senhaAtual: string): Promise<void
     page.getByRole('tablist', { name: 'Abas da unidade' }),
     'a unidade mostra as abas'
   ).toBeVisible();
-  const imagens = await page
-    .locator('img')
-    .evaluateAll((els) =>
-      els.map((e) => Number((e as { naturalWidth?: number }).naturalWidth ?? 0) > 0)
-    );
-  expect(imagens.length > 0 && imagens.every(Boolean), 'as imagens da unidade carregaram').toBe(
-    true
-  );
+  const imagens = page.locator('img');
+  const total = await imagens.count();
+  expect(total, 'a unidade tem pelo menos uma imagem').toBeGreaterThan(0);
+  for (let i = 0; i < total; i++) {
+    const imagem = imagens.nth(i);
+    // Imagem fora da primeira dobra ou com loading="lazy" só baixa ao entrar na tela.
+    await imagem.scrollIntoViewIfNeeded();
+    const src = (await imagem.getAttribute('src')) ?? '';
+    const caminho = src.split(/[?#]/)[0] || '(sem src)';
+    await expect
+      .poll(
+        () =>
+          imagem.evaluate((e) => {
+            const img = e as { complete?: boolean; naturalWidth?: number };
+            return img.complete === true && Number(img.naturalWidth ?? 0) > 0;
+          }),
+        { message: `a imagem da unidade carregou: ${caminho}`, timeout: 15_000 }
+      )
+      .toBe(true);
+  }
 }
 
 /** Item 7 da 3.6 no painel: o LED do aluno está verde (sessão aberta) e o último acesso tem data e hora. */

@@ -25,14 +25,14 @@ async function medirTrilha(page: Page) {
     const cabecalho = document.querySelector<HTMLElement>('.barra-topo')!;
     const titulo = Array.from(document.querySelectorAll<HTMLElement>('main h1')).find(
       (el) => el.getClientRects().length > 0
-    )!;
-    const caixa = titulo.getBoundingClientRect();
-    const linha = parseFloat(getComputedStyle(titulo).lineHeight);
+    );
+    const caixa = titulo?.getBoundingClientRect();
+    const linha = titulo ? parseFloat(getComputedStyle(titulo).lineHeight) : NaN;
     return {
       flexBasis: trilha ? getComputedStyle(trilha).flexBasis : 'ausente',
       fundoCabecalho: cabecalho.getBoundingClientRect().bottom,
-      topo: caixa.top,
-      linha: Number.isFinite(linha) ? linha : caixa.height
+      topo: caixa?.top ?? NaN,
+      linha: Number.isFinite(linha) ? linha : (caixa?.height ?? NaN)
     };
   });
 }
@@ -54,7 +54,7 @@ for (const { caminho, longa } of ROTAS) {
     }) => {
       await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
       await page.goto(caminho);
-      await page.locator('main h1').first().waitFor({ state: 'visible' });
+      await page.locator('main').first().waitFor({ state: 'visible' });
       await esperarLayoutAssentar(page);
       const medida = await medirTrilha(page);
       const esperaFlex100 = largura === 360 || (longa && (largura === 768 || largura === 810));

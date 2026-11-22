@@ -7,6 +7,7 @@ import type { StoreModoAdaptado } from './stores/modoAdaptado';
 import type { ClienteApi } from './restrito/clienteApi';
 import type { SessaoGlobal } from './sessao/sessaoGlobal';
 import type { ControladorAviso } from './versaoNova/controladorAviso';
+import type { StoreRadio } from './radio/tocadorRadio';
 
 /** Chaves de injeção do composition root (main.ts). Ver App.vue. */
 export const CHAVE_CURRICULO: InjectionKey<Curriculo> = Symbol('curriculo');
@@ -22,5 +23,7 @@ export const CHAVE_CLIENTE_RESTRITO: InjectionKey<ClienteApi> = Symbol('clienteR
 
 /** Sessão do site inteiro (usuário, admin, sair). Criada em main.ts. */
 export const CHAVE_SESSAO: InjectionKey<SessaoGlobal> = Symbol('sessao');
+/** Tocador de rádio (barra do topo e o único <audio> do app). Criado em main.ts. */
+export const CHAVE_RADIO: InjectionKey<StoreRadio> = Symbol('radio');
 /** Banner de versão nova (AV-F11). Criado em main.ts; App.vue monta a faixa. */
 export const CHAVE_AVISO_VERSAO: InjectionKey<ControladorAviso> = Symbol('avisoVersao');

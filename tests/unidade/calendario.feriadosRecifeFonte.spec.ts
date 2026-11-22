@@ -14,6 +14,12 @@ const feriadosDoSemestre = FERIADOS.filter((f) => f.semestre === '2026.2');
 const FONTE_OFICIAL =
   'Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)';
 
+/**
+ * Fonte oficial do TJPE para a comarca do Recife, conferida em 22/11/2026.
+ */
+const FONTE_TJPE =
+  'TJPE, https://portal.tjpe.jus.br/servicos/consulta/feriados/feriados-oficiais-nas-comarca-de-pernambuco, conferido em 22/11/2026';
+
 const CAMINHO_FONTE = resolve(__dirname, '../../src/conteudo/calendario/feriados.ts');
 const fonte = readFileSync(CAMINHO_FONTE, 'utf-8');
 
@@ -41,19 +47,22 @@ describe('feriados municipais do Recife: fonte oficial', () => {
     );
   });
 
-  it('todo feriado municipal do semestre traz a fonte oficial no comentário logo acima dele', () => {
+  it('todo feriado municipal do semestre traz a Lei e o TJPE no comentário logo acima dele', () => {
     expect(municipais().length).toBeGreaterThan(0);
     for (const f of municipais()) {
       expect(comentarioAcima(f.titulo), f.titulo).toContain(FONTE_OFICIAL);
+      expect(comentarioAcima(f.titulo), f.titulo).toContain(FONTE_TJPE);
     }
   });
 
-  it('o comentário do feriado de 16/07 traz a fonte oficial', () => {
+  it('o comentário do feriado de 16/07 traz a fonte oficial e o TJPE', () => {
     expect(comentarioAcima('Nossa Senhora do Carmo')).toContain(FONTE_OFICIAL);
+    expect(comentarioAcima('Nossa Senhora do Carmo')).toContain(FONTE_TJPE);
   });
 
-  it('o comentário do feriado de 08/12 traz a fonte oficial', () => {
+  it('o comentário do feriado de 08/12 traz a fonte oficial e o TJPE', () => {
     expect(comentarioAcima('Nossa Senhora da Conceição')).toContain(FONTE_OFICIAL);
+    expect(comentarioAcima('Nossa Senhora da Conceição')).toContain(FONTE_TJPE);
   });
 
   it('não há mais marca de fonte secundária nem pendência de conferência', () => {

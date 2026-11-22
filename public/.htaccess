@@ -9,11 +9,11 @@ RewriteBase /
 # Porta única: o caminho pelo domínio-pai é recusado (medido aberto em 06/11/2026).
 RewriteCond %{HTTP_HOST} !^direito2026\.drpetrus\.top$ [NC]
 RewriteRule ^ - [F,L]
-RewriteRule ^api/nucleo(/|$) - [NC,F,L]
+RewriteRule ^api/nucleo(/|$) - [NC,F,L,E=API_ERRO:1]
 # Únicos caminhos servidos sem portão: endpoints, o visual da tela de entrada (com as duas fontes dela) e o script do convite (V17-C10).
 RewriteRule ^api/[a-z0-9/-]+\.php$ - [L]
 RewriteRule ^(sw\.js|robots\.txt|entrada\.css|convite\.js|icones/favicon\.svg|fontes/inter-400\.woff2|fontes/cormorant-garamond-700\.woff2|fontes/OFL\.txt)$ - [L]
-RewriteRule ^api(/|$) - [NC,R=404,L]
+RewriteRule ^api(/|$) - [NC,R=404,L,E=API_ERRO:1]
 # Todo o resto passa pelo portão.
 RewriteRule ^ api/portao.php [L]
 
@@ -24,6 +24,10 @@ RewriteRule ^ api/portao.php [L]
   Header always set Referrer-Policy "same-origin"
   Header always set Strict-Transport-Security "max-age=31536000"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
+  # Erros de api/ que as duas regras acima devolvem (403 de api/nucleo e 404 do resto de api/) saem sem
+  # cache, como o roteador de dev (LU-F2.6-N1). A condição env=API_ERRO limita o cabeçalho a elas:
+  # os endpoints .php e os demais arquivos não recebem nada disto.
+  Header always set Cache-Control "private, no-store" env=API_ERRO
   <FilesMatch "^sw\.js$">
     Header set Cache-Control "no-store"
   </FilesMatch>

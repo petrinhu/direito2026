@@ -9,10 +9,10 @@ const HTACCESS_NOVO = [
   'RewriteBase /',
   'RewriteCond %{HTTP_HOST} !^direito2026\\.drpetrus\\.top$ [NC]',
   'RewriteRule ^ - [F,L]',
-  'RewriteRule ^api/nucleo(/|$) - [NC,F,L]',
+  'RewriteRule ^api/nucleo(/|$) - [NC,F,L,E=API_ERRO:1]',
   'RewriteRule ^api/[a-z0-9/-]+\\.php$ - [L]',
   'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2|fontes/OFL\\.txt)$ - [L]',
-  'RewriteRule ^api(/|$) - [NC,R=404,L]',
+  'RewriteRule ^api(/|$) - [NC,R=404,L,E=API_ERRO:1]',
   'RewriteRule ^ api/portao.php [L]'
 ].join('\n');
 

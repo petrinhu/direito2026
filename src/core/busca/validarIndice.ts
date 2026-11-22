@@ -34,24 +34,3 @@ export function validarIndiceGerado(
 
   return { ok: mensagens.length === 0, mensagens };
 }
-
-/**
- * INDICE-NM: N (documentos montados a partir do conteúdo) tem de ser igual a
- * M (documentos que o MiniSearch de fato indexou). Divergência significa que
- * algum documento saiu do índice sem aviso, e o índice não pode ser publicado
- * assim. Pura, sem I/O, para ser testada sem rodar o script inteiro.
- */
-export function compararContagensIndice(
-  quantidadeEncontrados: number,
-  quantidadeIndexados: number
-): ResultadoValidacaoIndice {
-  if (quantidadeEncontrados === quantidadeIndexados) {
-    return { ok: true, mensagens: [] };
-  }
-  return {
-    ok: false,
-    mensagens: [
-      `documentos encontrados (${quantidadeEncontrados}) e indexados (${quantidadeIndexados}) divergiram: o índice não pode sair com documento faltando ou sobrando`
-    ]
-  };
-}

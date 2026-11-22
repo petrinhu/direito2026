@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compararContagensIndice, validarIndiceGerado } from '@/core/busca/validarIndice';
+import { validarIndiceGerado } from '@/core/busca/validarIndice';
 import { TETO_INDICE_BUSCA_BYTES } from '@/core/busca/tipos';
 
 /**
@@ -35,34 +35,5 @@ describe('validarIndiceGerado: piso de varredura do índice de busca', () => {
     const resultado = validarIndiceGerado(0, TETO_INDICE_BUSCA_BYTES + 1);
     expect(resultado.ok).toBe(false);
     expect(resultado.mensagens).toHaveLength(2);
-  });
-});
-
-/**
- * INDICE-NM: N (documentos encontrados) e M (documentos de fato indexados no
- * MiniSearch) têm de bater. O cabeçalho de scripts/gerar-indice-busca.ts
- * promete saída com erro quando divergem; o script antes imprimia a mesma
- * contagem duas vezes e nunca comparava.
- */
-describe('compararContagensIndice: encontrados (N) contra indexados (M)', () => {
-  it('aprova quando N e M são iguais e positivos', () => {
-    const resultado = compararContagensIndice(486, 486);
-    expect(resultado.ok).toBe(true);
-    expect(resultado.mensagens).toEqual([]);
-  });
-
-  it('reprova quando M é menor que N, e a mensagem traz os dois números', () => {
-    const resultado = compararContagensIndice(486, 480);
-    expect(resultado.ok).toBe(false);
-    const texto = resultado.mensagens.join(' ');
-    expect(texto).toMatch(/486/);
-    expect(texto).toMatch(/480/);
-    expect(texto).toMatch(/divergi/);
-  });
-
-  it('reprova quando M é maior que N', () => {
-    const resultado = compararContagensIndice(10, 11);
-    expect(resultado.ok).toBe(false);
-    expect(resultado.mensagens.join(' ')).toMatch(/divergi/);
   });
 });

@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
 import type { DocumentoBusca } from '@/core/busca/tipos';
 
-const props = withDefaults(
-  defineProps<{ resultados: readonly DocumentoBusca[]; termo: string; rotulo?: string }>(),
-  { rotulo: 'Resultados da busca' }
-);
+defineProps<{ resultados: readonly DocumentoBusca[]; termo: string }>();
 
 /** Cadeira restrita não tem unidade: sem separador solto. */
 function trilha(resultado: DocumentoBusca): string {
@@ -16,17 +12,22 @@ function trilha(resultado: DocumentoBusca): string {
 </script>
 
 <template>
-  <div class="painel-resultados-busca" role="region" aria-live="polite" :aria-label="props.rotulo">
+  <div
+    class="painel-resultados-busca"
+    role="region"
+    aria-live="polite"
+    aria-label="Resultados da busca"
+  >
     <p v-if="termo && resultados.length === 0">Nenhum resultado para "{{ termo }}".</p>
     <ul v-else>
       <li v-for="resultado in resultados" :key="resultado.id" class="painel-resultados-busca__item">
-        <RouterLink :to="resultado.url">
+        <a :href="resultado.url">
           <strong>{{ resultado.titulo }}</strong>
           <span class="painel-resultados-busca__trilha">
             {{ trilha(resultado) }}
           </span>
           <span class="painel-resultados-busca__trecho">{{ resultado.trecho }}</span>
-        </RouterLink>
+        </a>
       </li>
     </ul>
   </div>

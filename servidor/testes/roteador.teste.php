@@ -23,7 +23,7 @@ teste('lista fechada: .htaccess e roteador de dev servem direto os mesmos públi
     $roteador = publicosDoRoteador();
     sort($htaccess);
     sort($roteador);
-    igual(['convite.js', 'entrada.css', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
+    igual(['convite.js', 'entrada.css', 'fontes/OFL.txt', 'fontes/cormorant-garamond-700.woff2', 'fontes/inter-400.woff2', 'icones/favicon.svg', 'robots.txt', 'sw.js'], $htaccess, 'públicos do .htaccess');
     igual($htaccess, $roteador, 'públicos: .htaccess e roteador');
     $t = (string) file_get_contents(RAIZ_REPO . '/public/.htaccess');
     $src = (string) file_get_contents(RAIZ_REPO . '/servidor/dev/roteador.php');
@@ -58,6 +58,24 @@ teste('roteador: rota sem sessão cai na tela de entrada do portão, público se
     igual(['ok' => true], $c->get('/api/saude.php')->json(), 'endpoint existente executa');
 });
 
+teste('LU-F2.4-N3: /api/nucleo é 403 também com maiúsculas e mistura (o Apache trata caminho sensível, o roteador não pode dar 401)', function (): void {
+    $c = Ambiente::novo()->cliente();
+    foreach (['/api/nucleo/config.php', '/API/NUCLEO/config.php', '/Api/Nucleo/config.php', '/API/nucleo/config.php', '/API/NUCLEO', '/API/NUCLEO/'] as $caminho) {
+        $r = $c->get($caminho);
+        igual(403, $r->status, "$caminho: negado com 403, não 401 do portão");
+        naoContem('<title>spa</title>', $r->corpo, "$caminho não cai na SPA");
+    }
+});
+
+teste('LU-F2.4-N3 (gêmeo, L-17): o prefixo /api/ é casado sem diferenciar maiúsculas; /API/... inexistente é 404, não portão', function (): void {
+    $c = Ambiente::novo()->cliente();
+    foreach (['/API/nao-existe.php', '/Api/', '/API'] as $caminho) {
+        $r = $c->get($caminho);
+        igual(404, $r->status, "$caminho: 404 do roteador, como /api/...");
+        naoContem('<title>spa</title>', $r->corpo, "$caminho não cai na SPA");
+    }
+});
+
 teste('roteador: público presente sai direto; público ausente é 404 e não cai no portão; o resto passa pelo portão', function (): void {
     $c = Ambiente::novo()->cliente();
     $robots = $c->get('/robots.txt');
@@ -67,10 +85,13 @@ teste('roteador: público presente sai direto; público ausente é 404 e não ca
     igual(401, $c->get('/manifest.webmanifest')->status, 'manifesto não é público: vai ao portão, anônimo 401');
     igual(401, $c->get('/assets/busca-indice.json')->status, 'índice de busca vai ao portão, anônimo 401');
     $copia = Ambiente::novo(['docroot' => 'copia'])->cliente();
-    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/convite.js', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2'] as $caminho) {
+    foreach (['/robots.txt', '/sw.js', '/entrada.css', '/convite.js', '/icones/favicon.svg', '/fontes/inter-400.woff2', '/fontes/cormorant-garamond-700.woff2', '/fontes/OFL.txt'] as $caminho) {
         igual(404, $copia->get($caminho)->status, "$caminho ausente: 404 do roteador, sem portão");
     }
 });
+
+/** Permissions-Policy do líder (21/11/2026): tudo bloqueado; o <audio> do rádio não depende de nenhuma delas. */
+const PERMISSIONS_POLICY_BLOQUEIA_TUDO = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()';
 
 /** CSP das telas do portão sem sessão (seção 1.3). */
 const CSP_TELA_PORTAO = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
@@ -83,10 +104,12 @@ teste('I-3: a tela de entrada sai com os cabeçalhos de segurança e a CSP da te
         igual(200, $r->status, $nome);
         igual('nosniff', $r->cabecalho('x-content-type-options'), "$nome: nosniff");
         igual('DENY', $r->cabecalho('x-frame-options'), "$nome: X-Frame-Options");
-        igual('strict-origin-when-cross-origin', $r->cabecalho('referrer-policy'), "$nome: Referrer-Policy");
+        igual('same-origin', $r->cabecalho('referrer-policy'), "$nome: Referrer-Policy");
         igual('max-age=31536000', $r->cabecalho('strict-transport-security'), "$nome: HSTS sem includeSubDomains nem preload");
         igual(CSP_TELA_PORTAO, $r->cabecalho('content-security-policy'), "$nome: CSP da tela");
+        igual(PERMISSIONS_POLICY_BLOQUEIA_TUDO, $r->cabecalho('permissions-policy'), "$nome: Permissions-Policy bloqueia tudo");
     }
+    igual(PERMISSIONS_POLICY_BLOQUEIA_TUDO, $c->get('/api/sessao.php', ['Sec-Fetch-Mode' => 'cors'])->cabecalho('permissions-policy'), 'API JSON: Permissions-Policy bloqueia tudo');
     igual(401, $c->get('/arquivo.txt')->status, 'fora da navegação, o arquivo não sai sem sessão');
 });
 

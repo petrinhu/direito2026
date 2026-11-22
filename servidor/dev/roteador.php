@@ -43,10 +43,11 @@ if (str_contains($caminho, "\0") || str_contains($caminho, '..')) {
 
 // Mesma forma que o Apache vê: caminho sem a barra inicial. As strings são as do .htaccess.
 $relativo = ltrim($caminho, '/');
-$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'convite.js', 'icones/favicon.svg', 'fontes/inter-400.woff2', 'fontes/cormorant-garamond-700.woff2'];
+$publicos = ['sw.js', 'robots.txt', 'entrada.css', 'convite.js', 'icones/favicon.svg', 'fontes/inter-400.woff2', 'fontes/cormorant-garamond-700.woff2', 'fontes/OFL.txt'];
 $padraoApi = '^api/[a-z0-9/-]+\.php$';
 
-if (preg_match('#^api/nucleo(/|$)#D', $relativo) === 1) {
+// Caminho sensível casa sem diferenciar maiúsculas (LU-F2.4-N3): /API/NUCLEO/config.php é 403, como /api/nucleo/config.php.
+if (preg_match('#^api/nucleo(/|$)#iD', $relativo) === 1) {
     return roteadorRecusar(403);
 }
 
@@ -64,7 +65,8 @@ if (in_array($relativo, $publicos, true)) {
     return roteadorRecusar(404);
 }
 
-if ($relativo === 'api' || str_starts_with($relativo, 'api/')) {
+// Gêmeo do bloco de cima (L-17): o prefixo da API também sem diferenciar maiúsculas.
+if (preg_match('#^api(/|$)#iD', $relativo) === 1) {
     return roteadorRecusar(404);
 }
 

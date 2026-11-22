@@ -81,8 +81,9 @@ teste('I-3: public/.htaccess põe os cabeçalhos de segurança em <IfModule mod_
         'Header always set X-Robots-Tag "noindex, nofollow"',
         'Header always set X-Content-Type-Options "nosniff"',
         'Header always set X-Frame-Options "DENY"',
-        'Header always set Referrer-Policy "strict-origin-when-cross-origin"',
+        'Header always set Referrer-Policy "same-origin"',
         'Header always set Strict-Transport-Security "max-age=31536000"',
+        'Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"',
     ] as $linha) {
         contem($linha, $dentro, 'cabeçalho global');
     }

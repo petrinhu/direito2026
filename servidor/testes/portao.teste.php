@@ -7,7 +7,7 @@ declare(strict_types=1);
  * com manifesto em atual/manifesto.json. Nenhum conteúdo real entra aqui (L-28).
  */
 
-const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src https://stream.srg-ssr.ch https://livestreaming-node-1.srg-ssr.ch https://livestreaming-node-2.srg-ssr.ch https://de2.streamingpulse.com https://radio.stereoscenic.com https://phoebe.streamerr.co:4140 https://0n-chillout.radionetz.de; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 const PORTAO_CSP_TELA = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 const PORTAO_NAVEGACAO = ['Sec-Fetch-Mode' => 'navigate'];
 

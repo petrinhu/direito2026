@@ -430,16 +430,18 @@ onBeforeUnmount(() => {
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
             <td data-rotulo="E-mail">{{ u.email ?? '' }}</td>
             <td data-rotulo="Estado">
-              {{ u.ativo ? 'Ativo' : 'Desativado' }}
-              <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
-              <span v-if="u.email === null"> · Sem e-mail</span>
-              <span v-if="formatarFalhaDeEnvio(u.envioFalhouEm)">
-                · E-mail não saiu em {{ formatarFalhaDeEnvio(u.envioFalhouEm) }}</span
-              >
-              <span v-if="u.convite === 'pendente'">
-                · Convite pendente até {{ formatarPrazo(u.conviteExpiraEm) }}</span
-              >
-              <span v-else-if="u.convite === 'vencido'"> · Convite vencido</span>
+              <template v-if="u.convite === 'pendente'">
+                Convite pendente até {{ formatarPrazo(u.conviteExpiraEm) }}
+              </template>
+              <template v-else>
+                {{ u.ativo ? 'Ativo' : 'Desativado' }}
+                <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
+                <span v-if="u.email === null"> · Sem e-mail</span>
+                <span v-if="formatarFalhaDeEnvio(u.envioFalhouEm)">
+                  · E-mail não saiu em {{ formatarFalhaDeEnvio(u.envioFalhouEm) }}</span
+                >
+                <span v-if="u.convite === 'vencido'"> · Convite vencido</span>
+              </template>
             </td>
             <td data-rotulo="Último acesso">{{ formatarDataHora(u.ultimoLogin) }}</td>
             <td data-rotulo="Ações">

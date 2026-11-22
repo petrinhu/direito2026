@@ -3,11 +3,12 @@ import { AVISO_LEGAL } from '@/app/rodape/avisoLegal';
 </script>
 
 <template>
-  <section class="aviso-legal" role="note" aria-label="Aviso legal">
+  <!-- aside (complementary) com nome: é o marco de página do aviso. O rodapé já é o contentinfo. -->
+  <aside class="aviso-legal" aria-label="Aviso legal">
     <p class="aviso-legal__texto" lang="pt-BR">
       <strong>{{ AVISO_LEGAL.rotulo }}</strong> {{ AVISO_LEGAL.corpo }}
     </p>
-  </section>
+  </aside>
 </template>
 
 <style scoped>

@@ -10,6 +10,14 @@ import { curriculoDoDisco } from '../../scripts/apoio/conteudoDoDisco';
 // Lido do disco: o glob do Vite não existe no Node que roda o Playwright.
 const curriculo = await curriculoDoDisco();
 
+// E2E-CABECALHO-DATA: relógio fixo, para o texto da data não mudar a largura do cabeçalho
+// de uma rodada para a outra.
+const DATA_FIXA = '2026-11-14T12:00:00-03:00';
+
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date(DATA_FIXA));
+});
+
 /**
  * IMPORTANTE 1 do QA (docs/qa-sociologia-u1.md): em modo adaptado, a 360px,
  * o cabeçalho fixo tinha 433px (476 em Redação) contra os 220px que

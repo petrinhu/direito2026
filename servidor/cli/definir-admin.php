@@ -21,6 +21,14 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
+// Sem apoio/ ao lado, o require abaixo sairia em erro fatal do PHP. Recusa com mensagem clara.
+foreach (['apoio/cli.php', 'apoio/admin.php'] as $necessario) {
+    if (!is_file(__DIR__ . '/' . $necessario)) {
+        fwrite(STDERR, "definir-admin: falta $necessario ao lado deste arquivo. Copie a pasta servidor/cli/ inteira, com apoio/ (docs/publicacao.md, \"Ferramentas que dependem de apoio/\").\n");
+        exit(1);
+    }
+}
+
 require __DIR__ . '/apoio/cli.php';
 require __DIR__ . '/apoio/admin.php';
 

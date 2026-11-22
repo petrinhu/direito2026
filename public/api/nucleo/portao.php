@@ -26,7 +26,7 @@ function d26_dir_app(): string
 }
 
 /** Cabeçalhos de toda resposta do portão. Limpa os de inicio.php (JSON, CSP none) antes. */
-function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tamanho = null, string $referrer = 'strict-origin-when-cross-origin'): void
+function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tamanho = null, string $referrer = 'same-origin'): void
 {
     while (ob_get_level() > 0) {
         ob_end_clean();
@@ -51,13 +51,14 @@ function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tam
     header('X-Frame-Options: DENY');
     header('Referrer-Policy: ' . $referrer);
     header('Strict-Transport-Security: max-age=31536000');
+    header('Permissions-Policy: ' . D26_PERMISSIONS_POLICY);
     if ($tamanho !== null) {
         header('Content-Length: ' . $tamanho);
     }
 }
 
 /** Resposta sem corpo (401, 403, 404, 405, 400). */
-function d26_portao_vazio(int $status, array $cabecalhos = [], string $referrer = 'strict-origin-when-cross-origin'): never
+function d26_portao_vazio(int $status, array $cabecalhos = [], string $referrer = 'same-origin'): never
 {
     d26_portao_cabecalhos($status, 'text/plain; charset=utf-8', d26_tela_csp(), 0, $referrer);
     foreach ($cabecalhos as $nome => $valor) {
@@ -67,7 +68,7 @@ function d26_portao_vazio(int $status, array $cabecalhos = [], string $referrer 
 }
 
 /** Tela HTML do portão (entrada, troca ou indisponível), sem JavaScript. */
-function d26_portao_tela(int $status, string $html, string $csp, string $referrer = 'strict-origin-when-cross-origin'): never
+function d26_portao_tela(int $status, string $html, string $csp, string $referrer = 'same-origin'): never
 {
     d26_portao_cabecalhos($status, 'text/html; charset=utf-8', $csp, strlen($html), $referrer);
     echo $html;

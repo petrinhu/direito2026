@@ -7,14 +7,20 @@ if (!defined('D26_API')) {
 }
 
 /**
- * Política de Referrer das respostas JSON da API. Padrão strict-origin-when-cross-origin (V17-R1, REF-POL-PHP). Um endpoint cujo caminho leva segredo
+ * Política de Referrer das respostas JSON da API. Padrão same-origin (RAD-REFERER, 21/11/2026: não mandar origem no site todo). Um endpoint cujo caminho leva segredo
  * na URL (o convite, CV-B2) define D26_REFERRER_API antes do bootstrap; a constante vale só nessa requisição
  * e cobre também os erros do handler global (503/500), que saem por d26_erro.
  */
 function d26_referrer_api(): string
 {
-    return defined('D26_REFERRER_API') ? D26_REFERRER_API : 'strict-origin-when-cross-origin';
+    return defined('D26_REFERRER_API') ? D26_REFERRER_API : 'same-origin';
 }
+
+/**
+ * Permissions-Policy de toda resposta PHP (decisão do líder, 21/11/2026: "Pôr, bloqueando tudo"). Um ponto só:
+ * portao.php usa esta mesma constante. Autoplay fica fora de propósito: o <audio> do rádio não depende dele.
+ */
+const D26_PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()';
 
 /**
  * Cabeçalhos de toda resposta da API (sucesso ou erro). Cache-Control "private, no-store": toda
@@ -30,6 +36,7 @@ function d26_cabecalhos(): void
     header('Referrer-Policy: ' . d26_referrer_api());
     header('X-Frame-Options: DENY');
     header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
+    header('Permissions-Policy: ' . D26_PERMISSIONS_POLICY);
 }
 
 function d26_enviar_json_bruto(int $status, string $json): never

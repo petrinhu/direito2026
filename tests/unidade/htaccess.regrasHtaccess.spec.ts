@@ -9,10 +9,10 @@ const HTACCESS_NOVO = [
   'RewriteBase /',
   'RewriteCond %{HTTP_HOST} !^direito2026\\.drpetrus\\.top$ [NC]',
   'RewriteRule ^ - [F,L]',
-  'RewriteRule ^api/nucleo(/|$) - [F,L]',
+  'RewriteRule ^api/nucleo(/|$) - [NC,F,L]',
   'RewriteRule ^api/[a-z0-9/-]+\\.php$ - [L]',
-  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2)$ - [L]',
-  'RewriteRule ^api(/|$) - [R=404,L]',
+  'RewriteRule ^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2|fontes/OFL\\.txt)$ - [L]',
+  'RewriteRule ^api(/|$) - [NC,R=404,L]',
   'RewriteRule ^ api/portao.php [L]'
 ].join('\n');
 
@@ -60,12 +60,14 @@ describe('extrairRegras: regras de reescrita do .htaccess, em ordem', () => {
     const regras = extrairRegras(HTACCESS_NOVO);
     expect(veredito('fontes/inter-400.woff2', regras)).toBe('passa');
     expect(veredito('fontes/cormorant-garamond-700.woff2', regras)).toBe('passa');
+    expect(veredito('fontes/OFL.txt', regras)).toBe('passa');
     const real = readFileSync(
       fileURLToPath(new URL('../../public/.htaccess', import.meta.url)),
       'utf8'
     );
     expect(real).toContain('fontes/inter-400\\.woff2');
     expect(real).toContain('fontes/cormorant-garamond-700\\.woff2');
+    expect(real).toContain('fontes/OFL\\.txt');
   });
 
   it('assets e o resto vão ao portão, nunca direto', () => {

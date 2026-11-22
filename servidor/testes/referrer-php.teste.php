@@ -6,15 +6,15 @@ require_once __DIR__ . '/cli-apoio.php';
 
 /**
  * Padrão de Referrer-Policy do PHP (V17-R1, REF-POL-PHP): as respostas do portão, das telas de entrada e troca, do
- * esqueci e da API JSON saem com strict-origin-when-cross-origin, o mesmo que o .htaccess serve no ar. O convite
+ * esqueci e da API JSON saem com same-origin (RAD-REFERER, decisão do líder de 21/11/2026: não mandar origem no site todo), o mesmo que o .htaccess serve no ar. O convite
  * continua com strict-origin (D1: o token ia na URL até a C1, e o fragmento ainda pede a política restrita).
  * Na caixa o php -S não passa pelo .htaccess, então o cabeçalho que o teste lê é o do próprio PHP.
  * Nome de teste começa com "referrer-php:" (filtro do rodar.php).
  */
 
-const REFERRER_PHP_PADRAO = 'strict-origin-when-cross-origin';
+const REFERRER_PHP_PADRAO = 'same-origin';
 
-teste('referrer-php: R1 entrada, troca, esqueci e API JSON saem com strict-origin-when-cross-origin, uma vez só', function (): void {
+teste('referrer-php: R1 entrada, troca, esqueci e API JSON saem com same-origin, uma vez só', function (): void {
     $a = Ambiente::novo();
     $c = $a->cliente();
     $pontos = [

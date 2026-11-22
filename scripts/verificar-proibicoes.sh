@@ -12,6 +12,11 @@
 #   scripts/verificar-proibicoes.sh            varre src/, public/ e nomes de arquivo/diretório do repo
 #   scripts/verificar-proibicoes.sh dist/      varre a pasta dist/ construída
 #   scripts/verificar-proibicoes.sh -          lê da entrada padrão (resposta HTTP do servidor)
+#   scripts/verificar-proibicoes.sh --amplo [raiz]
+#       varredura ampliada (LU-F1.3-N3): README.md e CLAUDE.md da raiz, e os docs/**/*.md
+#       que estão em claro (sem a assinatura do git-crypt), mais o NOME de todo arquivo
+#       rastreado (git ls-files), cifrado inclusive. Conteúdo cifrado não é lido. O conjunto
+#       vem do git, então .worktrees e node_modules ficam de fora. Imprime só caminho e contagem.
 set -uo pipefail
 
 ARQUIVO_TERMOS="${VERIFICAR_PROIBICOES_TERMOS:-$HOME/.config/secrets/caderno-direito-termos-proibidos.txt}"
@@ -40,6 +45,80 @@ mapfile -t TERMOS < <(grep -v '^\s*$' "$ARQUIVO_TERMOS" | normalizar)
 if [ "${#TERMOS[@]}" -eq 0 ]; then
   echo "verificar-proibicoes: arquivo de termos vazio" >&2
   exit 1
+fi
+
+if [ "${1:-}" = "--amplo" ]; then
+  # Modo próprio: não reusa varrer_nome nem varrer_conteudo, porque elas imprimem o termo achado.
+  # Aqui a saída é só caminho e contagem. Uma única chamada de python lê os termos e os arquivos.
+  python3 -I - "${2:-.}" "$ARQUIVO_TERMOS" <<'PY'
+import os
+import subprocess
+import sys
+import unicodedata
+
+raiz, arq_termos = sys.argv[1], sys.argv[2]
+MAGICA_GIT_CRYPT = b'\x00GITCRYPT\x00'
+CONTEUDO_FIXO = ['README.md', 'CLAUDE.md']
+
+
+def norm(texto):
+    sem_acento = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    return sem_acento.lower()
+
+
+def falha(mensagem):
+    print(f'verificar-proibicoes --amplo: {mensagem}', file=sys.stderr)
+    sys.exit(1)
+
+
+with open(arq_termos, encoding='utf-8') as f:
+    termos = [norm(linha.strip()) for linha in f if linha.strip()]
+if not termos:
+    falha('arquivo de termos vazio')
+
+try:
+    bruto = subprocess.run(['git', '-C', raiz, 'ls-files', '-z'], capture_output=True, check=True).stdout
+except (subprocess.CalledProcessError, FileNotFoundError):
+    falha(f'git ls-files falhou em {raiz}')
+rastreados = [p.decode('utf-8', 'replace') for p in bruto.split(b'\0') if p]
+if not rastreados:
+    falha('zero arquivo rastreado é portão quebrado, não código limpo')
+conjunto = set(rastreados)
+for obrigatorio in CONTEUDO_FIXO:
+    if obrigatorio not in conjunto:
+        falha(f'{obrigatorio} não está entre os arquivos rastreados')
+
+achados = 0
+for nome in rastreados:
+    if any(t in norm(nome) for t in termos):
+        print(f'PROIBIÇÃO NO NOME DO ARQUIVO: {nome}', file=sys.stderr)
+        achados += 1
+
+candidatos = CONTEUDO_FIXO + sorted(p for p in rastreados if p.startswith('docs/') and p.endswith('.md'))
+lidos = cifrados = 0
+for caminho in candidatos:
+    try:
+        with open(os.path.join(raiz, caminho), 'rb') as f:
+            conteudo = f.read()
+    except OSError:
+        print(f'ARQUIVO RASTREADO AUSENTE DA ÁRVORE: {caminho}', file=sys.stderr)
+        achados += 1
+        continue
+    if conteudo.startswith(MAGICA_GIT_CRYPT):
+        cifrados += 1
+        continue
+    lidos += 1
+    texto = norm(conteudo.decode('utf-8', 'replace'))
+    if any(t in texto for t in termos):
+        print(f'PROIBIÇÃO NO CONTEÚDO: {caminho}', file=sys.stderr)
+        achados += 1
+
+print(f'amplo: nomes rastreados varridos: {len(rastreados)}')
+print(f'amplo: conteúdo em claro varrido: {lidos}; cifrado pulado: {cifrados}')
+print(f'amplo: achados: {achados}')
+sys.exit(1 if achados else 0)
+PY
+  exit $?
 fi
 
 ALVO="${1:-}"

@@ -112,6 +112,8 @@ else
 fi
 
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
+# Incondicional (LU-F1.3-N3): README, CLAUDE, docs em claro e nomes de todos os rastreados, cifrados inclusive.
+passo "termos proibidos (R3), amplo: README, CLAUDE, docs em claro e nomes rastreados" bash scripts/verificar-proibicoes.sh --amplo .
 
 if [ "$PRECI_VITEST_RODA" = 1 ]; then
   if [ "$PRECI_VITEST_ALVO" = TODOS ]; then

@@ -455,6 +455,19 @@ describe('PainelAdmin, coluna Estado com o convite (CV-F1)', () => {
     expect(estado).toBe('Convite pendente até 13/11 09:05');
   });
 
+  it('convite pendente com e-mail que não saiu: mostra o aviso ao lado do prazo', async () => {
+    const falhou = new Date(2026, 10, 12, 8, 30).toISOString();
+    const estado = await estadoDaLinha([
+      { ...comConvite('pendente', PRAZO_EPOCH), envioFalhouEm: falhou }
+    ]);
+    expect(estado).toBe('E-mail não saiu em 12/11 08:30 · Convite pendente até 13/11 09:05');
+  });
+
+  it('convite pendente com conta desativada: mostra Desativado ao lado do prazo', async () => {
+    const estado = await estadoDaLinha([{ ...comConvite('pendente', PRAZO_EPOCH), ativo: false }]);
+    expect(estado).toBe('Desativado · Convite pendente até 13/11 09:05');
+  });
+
   it('sem convite pendente, a linha de estado continua como hoje (ativo e troca de senha)', async () => {
     const estado = await estadoDaLinha([comConvite(null, null)]);
     expect(estado).toContain('Ativo');

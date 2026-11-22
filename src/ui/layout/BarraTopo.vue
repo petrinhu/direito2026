@@ -42,7 +42,7 @@ const mostrarTocador = computed(() => (sessao?.usuario.value ?? '') !== '');
 const mediaLinhaPropria =
   typeof matchMedia === 'function' ? matchMedia('(min-width: 881px)') : null;
 const larguraLinhaPropria = ref(mediaLinhaPropria?.matches ?? false);
-function aoMudarLarguraLinhaPropria(evento: MediaQueryListEvent): void {
+function aoMudarLarguraLinhaPropria(evento: { matches: boolean }): void {
   larguraLinhaPropria.value = evento.matches;
 }
 const trilhaNoFim = computed(

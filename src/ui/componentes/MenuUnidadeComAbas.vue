@@ -3,7 +3,7 @@ import { computed, inject } from 'vue';
 import { RouterLink } from 'vue-router';
 import type { ChaveAba, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import { ROTULOS_ABA } from '@/app/curriculo/rotulosAba';
-import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
+import { rotuloDoMenu } from './rotuloDoMenu';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 import { ESTADO_MENU, chaveUnidade, hrefUnidade } from './menuEstado';
 
@@ -107,7 +107,7 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
     <div v-if="unidade.estado === 'em-breve'" class="menu-curriculo__linha">
       <!-- Em breve: mesma coluna de recuo do nome; sem seta, porque não expande. -->
       <span class="menu-curriculo__recuo" aria-hidden="true" />
-      <EstadoEmBreve :rotulo="rotuloSemViuva(rotulo)" />
+      <EstadoEmBreve :rotulo="rotuloDoMenu(rotulo)" />
     </div>
     <template v-else>
       <div class="menu-curriculo__linha">
@@ -128,7 +128,7 @@ function subitensDaAba(aba: ChaveAba): Subitem[] {
           class="menu-curriculo__link-unidade"
           :aria-current="ariaAtual"
         >
-          {{ rotuloSemViuva(rotulo) }}
+          {{ rotuloDoMenu(rotulo) }}
         </RouterLink>
       </div>
       <ul

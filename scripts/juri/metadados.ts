@@ -1,8 +1,9 @@
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TipoImagem } from '../../src/core/juri/tipoImagem';
 import { ErroFerramenta } from './erro';
 import { rodarExiftool } from './exiftool';
+import { criarPastaCopias, varrerSobras } from './sobras';
 
 /*
  * Remoção de metadados e conferência "zero etiquetas". Fail-closed: toda etiqueta do
@@ -141,14 +142,23 @@ async function verificarCopias(
   });
 }
 
-/** Copias os bytes para uma pasta temporária 700 em TMPDIR (/var/tmp), roda a ação e apaga só essa pasta. */
+/** Copia os bytes para uma pasta temporária 700 em TMPDIR (/var/tmp), roda a ação e apaga só essa pasta. */
 async function comCopias<T>(
   entradas: readonly EntradaImagem[],
   acao: (caminhos: string[]) => Promise<T>
 ): Promise<T> {
   const base = process.env.TMPDIR ?? '/var/tmp';
-  const dir = mkdtempSync(join(base, 'juri-acervo-'));
-  chmodSync(dir, 0o700);
+  // Sobra de execução morta (kill -9 pula o finally) sai ANTES da pasta nova; ver sobras.ts.
+  const sobras = varrerSobras(base);
+  if (sobras.apagadas > 0) {
+    process.stderr.write(
+      `juri-acervo: ${sobras.apagadas} sobra(s) de execução anterior apagada(s)\n`
+    );
+  }
+  if (sobras.falhas > 0) {
+    process.stderr.write(`juri-acervo: ${sobras.falhas} sobra(s) não pôde(ram) ser apagada(s)\n`);
+  }
+  const dir = criarPastaCopias(base);
   try {
     const caminhos = entradas.map((entrada, i) => {
       const caminho = join(dir, `${i}.${EXTENSAO[entrada.tipo]}`);

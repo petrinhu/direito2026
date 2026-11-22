@@ -136,7 +136,7 @@ describe('verificar-particao: caminho verde', () => {
       })
     );
     expect(rc, saida).toBe(0);
-    expect(saida).toMatch(/encontrados=0 analisados=\d+ falharam=0 fontes=1 permitidas=2/);
+    expect(saida).toMatch(/encontrados=0 analisados=\d+ falharam=0 fontes=1 permitidas=3/);
   });
 
   it('import idêntico nos dois lados não é trecho de estudo: sai 0 (caso a)', () => {
@@ -332,7 +332,7 @@ describe('verificar-particao: classificação fechada (L-17)', () => {
     );
     expect(rc, saida).toBe(0);
     // resumo.ts é fonte; meta.ts (do PADRAO) e docs/nota.md são fora da fonte.
-    expect(saida).toMatch(/fontes=1 permitidas=2 fora_da_fonte=2 sem_classe=0/);
+    expect(saida).toMatch(/fontes=1 permitidas=3 fora_da_fonte=2 sem_classe=0/);
   });
 });
 

@@ -21,13 +21,6 @@ export type IndiceBusca = readonly DocumentoBusca[];
 export const TETO_INDICE_BUSCA_BYTES = 300 * 1024;
 
 /**
- * Índice do texto integral, à parte do índice principal (EP-F11-BUSCA-TETO):
- * só desce quando a busca principal não acha nada ou quando o aluno pede a
- * busca no texto da lei. Fica em assets/ pelo mesmo motivo do principal.
- */
-export const ARQUIVO_INDICE_TEXTO_INTEGRAL = 'busca-texto-integral.json';
-
-/**
  * Porta de saída para o motor de busca (Dependency Inversion, seção 7: "o
  * resto do site conversa com uma interface MotorBusca, não com a
  * biblioteca"). app/busca traz o adaptador concreto sobre MiniSearch; a

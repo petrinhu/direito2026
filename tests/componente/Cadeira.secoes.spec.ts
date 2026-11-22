@@ -127,7 +127,7 @@ describe('Cadeira, seções por AV com os mesmos rótulos do menu', () => {
     ).map((h) => Number(h.tagName.slice(1)));
     expect(niveis[0]).toBe(1);
     for (let i = 1; i < niveis.length; i++) {
-      expect(niveis[i]).toBeLessThanOrEqual(niveis[i - 1] + 1);
+      expect(niveis[i]).toBeLessThanOrEqual((niveis[i - 1] ?? 0) + 1);
     }
   });
 });

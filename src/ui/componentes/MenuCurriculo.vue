@@ -121,6 +121,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
  * blocos existirem na árvore.
  */
 function abrirCadeiaDaPaginaAtual(caminho: string): void {
+  if (caminho === 'kelsen-jump') abertos.add('game');
   const cadeia = cadeiaDoCaminho(props.curriculo, caminho);
   for (const id of cadeia.ids) abertos.add(id);
   if (cadeia.unidade && cadeia.chave) {
@@ -348,6 +349,44 @@ provide(ESTADO_MENU, {
                 </template>
               </ul>
             </template>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <hr class="menu-curriculo__separador" />
+    <!--
+      Grupo Game (ordem do líder, 21/11/2026): mesmo disclosure dos grupos de cadeira. O segundo
+      item é só um placeholder "aguarde": não é link e fica com aria-disabled.
+    -->
+    <ul class="menu-curriculo__nivel-1">
+      <li>
+        <button
+          type="button"
+          :aria-expanded="estaAberto('game') ? 'true' : 'false'"
+          aria-controls="lista-game"
+          class="menu-curriculo__botao"
+          @click="alternar('game')"
+          @keydown.esc="fechar('game', $event)"
+        >
+          <span class="menu-curriculo__seta" aria-hidden="true" />
+          Game
+        </button>
+        <ul
+          v-show="estaAberto('game')"
+          id="lista-game"
+          class="menu-curriculo__nivel-2 menu-curriculo__lista--guia"
+        >
+          <li>
+            <RouterLink
+              to="/kelsen-jump"
+              class="menu-curriculo__link-unidade"
+              :aria-current="ehAtual('kelsen-jump', caminhoAtual) ? 'page' : undefined"
+            >
+              Kelsen Jump
+            </RouterLink>
+          </li>
+          <li>
+            <span class="menu-curriculo__link-unidade" aria-disabled="true">aguarde</span>
           </li>
         </ul>
       </li>

@@ -1,4 +1,4 @@
-import { ESPACO, FISICA, FOLGA_NUVEM_S, KELSEN, NUVEM, PIRAMIDE, VELOCIDADE } from './constantes';
+import { ESPACO, FISICA, GRUPO_NUVENS, KELSEN, NUVEM, PIRAMIDE, VELOCIDADE } from './constantes';
 import { sortear } from './rng';
 
 /**
@@ -22,6 +22,8 @@ export interface Piramide extends Base {
 export interface Nuvem extends Base {
   readonly tipo: 'nuvem';
   readonly baseY: number;
+  /** Quantas nuvens ainda vêm depois desta no mesmo grupo (0 a 2). */
+  readonly restantes: number;
 }
 
 export type Obstaculo = Piramide | Nuvem;
@@ -95,30 +97,11 @@ export function ehPassavelAbaixado(o: Nuvem): boolean {
 }
 
 /**
- * Distância de rolagem em que os pés do corpo ficam acima de `topo` durante um salto na velocidade
- * `v`. Pela parábola: y(t) = vy·t − g·t²/2 ≥ topo entre as duas raízes, de duração 2·√(vy² − 2g·topo)/g.
- * Se o topo passa do ápice, não há intervalo: 0.
+ * Obstáculo possível: pirâmide saltável, ou nuvem que se passa abaixado. Abaixar passa qualquer nuvem,
+ * em qualquer grupo; pular por cima pode passar ou não, como no dinossauro.
  */
-export function distanciaAcimaDe(topo: number, v: number): number {
-  const restante = FISICA.velocidadeSalto ** 2 - 2 * FISICA.gravidade * topo;
-  if (restante <= 0) return 0;
-  return (v * 2 * Math.sqrt(restante)) / FISICA.gravidade;
-}
-
-/**
- * Nuvem que não se vence pulando. Para passar por cima, o corpo precisa estar com os pés acima do topo
- * durante toda a janela de sobreposição, que é a largura da nuvem mais a do corpo (em px de rolagem).
- * O intervalo acima do topo cresce com a velocidade, então o pior caso é a velocidade máxima. Se a
- * janela passa desse intervalo mais a folga, nenhum pulo atravessa: quem pula volta a cair nela.
- */
-export function nuvemNaoSaltavel(o: Nuvem): boolean {
-  const acima = distanciaAcimaDe(o.baseY + o.altura, VELOCIDADE.maxima);
-  return o.largura + KELSEN.largura > acima + VELOCIDADE.maxima * FOLGA_NUVEM_S;
-}
-
-/** Obstáculo possível: pirâmide saltável ou nuvem só atravessável abaixado. */
 export function ehPossivel(o: Obstaculo): boolean {
-  return o.tipo === 'piramide' ? ehSaltavel(o) : ehPassavelAbaixado(o) && nuvemNaoSaltavel(o);
+  return o.tipo === 'piramide' ? ehSaltavel(o) : ehPassavelAbaixado(o);
 }
 
 /** Quanto a rolagem avança depois do centro até o próximo obstáculo poder começar. */
@@ -150,20 +133,29 @@ export function proximoObstaculo(
   semente: number,
   id: number
 ): { obstaculo: Obstaculo; semente: number } {
-  const tipoSorteio = sortear(semente);
-  const ehNuvem = tipoSorteio.valor < PROBABILIDADE_NUVEM;
+  const continuaGrupo = anterior?.tipo === 'nuvem' && anterior.restantes > 0;
+  const tipoSorteio = continuaGrupo ? { valor: 0, semente } : sortear(semente);
+  const ehNuvem = continuaGrupo || tipoSorteio.valor < PROBABILIDADE_NUVEM;
   let s = tipoSorteio.semente;
 
   const base = { id, contado: false } as const;
   let candidato: Obstaculo;
   if (ehNuvem) {
+    // Grupo de 1 a 3 nuvens, como os pássaros do dinossauro: o sorteio do tamanho só vale no 1º da fila.
+    let restantes = continuaGrupo ? anterior.restantes - 1 : 0;
+    if (!continuaGrupo) {
+      const sorteioGrupo = sortear(s);
+      s = sorteioGrupo.semente;
+      restantes = Math.min(2, Math.floor(sorteioGrupo.valor * 3));
+    }
     candidato = {
       ...base,
       tipo: 'nuvem',
       x: 0,
       largura: NUVEM.largura,
       altura: NUVEM.altura,
-      baseY: NUVEM.baseY
+      baseY: NUVEM.baseY,
+      restantes
     };
   } else {
     const fatorSorteio = sortear(s);
@@ -189,7 +181,11 @@ export function proximoObstaculo(
   const centro =
     centroAnterior === undefined || anterior === undefined
       ? ESPACO.inicial
-      : centroAnterior + folgaEntre(anterior, candidato) + extraSorteio.valor * ESPACO.extraMaximo;
+      : continuaGrupo
+        ? centroAnterior + NUVEM.largura + GRUPO_NUVENS.espaco
+        : centroAnterior +
+          folgaEntre(anterior, candidato) +
+          extraSorteio.valor * ESPACO.extraMaximo;
 
   const x = centro - candidato.largura / 2 + KELSEN.x + KELSEN.largura / 2;
   return { obstaculo: { ...candidato, x } as Obstaculo, semente: s };

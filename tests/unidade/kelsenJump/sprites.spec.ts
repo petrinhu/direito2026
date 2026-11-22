@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KELSEN, NUVEM } from '@/core/kelsenJump/constantes';
-import { apexDoSalto, ehPassavelAbaixado, nuvemNaoSaltavel } from '@/core/kelsenJump/obstaculos';
+
 import medidas from '@/ui/kelsenJump/sprites/medidas.json';
 
 /**
@@ -35,29 +35,15 @@ describe('caixa de colisão do Kelsen bate com os quadros', () => {
   });
 });
 
-describe('a base da nuvem separa agachado de em pé', () => {
-  it('agachado passa por baixo da base e em pé bate nela', () => {
-    expect(KELSEN.alturaAgachado).toBeLessThan(NUVEM.baseY);
-    expect(KELSEN.alturaEmPe).toBeGreaterThan(NUVEM.baseY);
-  });
-
-  it('a nuvem tem o tamanho do PNG na escala usada (medidas.json)', () => {
+describe('nuvem: largura da cabeça e base entre agachado e em pé', () => {
+  it('a nuvem tem a largura da cabeça do Kelsen parado e o tamanho do PNG reduzido', () => {
+    expect(NUVEM.largura).toBe(medidas.cabeca.largura);
     expect(NUVEM.largura).toBe(medidas.nuvem.largura);
     expect(NUVEM.altura).toBe(medidas.nuvem.altura);
   });
 
-  it('a nuvem continua não saltável e passável abaixado', () => {
-    const nuvem = {
-      tipo: 'nuvem' as const,
-      id: 0,
-      x: 0,
-      largura: NUVEM.largura,
-      altura: NUVEM.altura,
-      baseY: NUVEM.baseY,
-      contado: false
-    };
-    expect(nuvemNaoSaltavel(nuvem)).toBe(true);
-    expect(ehPassavelAbaixado(nuvem)).toBe(true);
-    expect(apexDoSalto()).toBeGreaterThan(nuvem.baseY + nuvem.altura);
+  it('agachado passa por baixo da base e em pé bate nela', () => {
+    expect(KELSEN.alturaAgachado).toBeLessThan(NUVEM.baseY);
+    expect(KELSEN.alturaEmPe).toBeGreaterThan(NUVEM.baseY);
   });
 });

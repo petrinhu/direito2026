@@ -10,6 +10,7 @@ test('Kelsen Jump: a rota abre, o espaço inicia o jogo e a pontuação aparece'
 
   const tela = page.getByRole('img', { name: /Kelsen Jump/ });
   await expect(tela).toBeVisible();
+  await expect(page.getByText('NHF - Norma Hipotética Fundamental', { exact: true })).toBeVisible();
   await tela.focus();
   await expect(tela).toBeFocused();
 

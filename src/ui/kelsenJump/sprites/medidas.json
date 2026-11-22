@@ -31,8 +31,13 @@
     }
   },
   "nuvem": {
-    "largura": 168,
-    "altura": 75,
-    "origem": "nuvem-0.png 112x50 ampliado 1,5x por vizinho mais próximo"
+    "largura": 29,
+    "altura": 13,
+    "origem": "nuvem-0.png 112x50 reduzido sem suavização até a largura da cabeça do parado (29 px); proporção mantida"
+  },
+  "cabeca": {
+    "largura": 29,
+    "linhas": "14 a 16 do quadro parado-0",
+    "origem": "maior largura opaca do quadro parado-0"
   }
 }

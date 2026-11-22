@@ -168,6 +168,8 @@ onBeforeUnmount(() => {
       <template v-else>Espaço pula. Seta para baixo abaixa. Não há pausa.</template>
     </p>
 
+    <p class="kj__instrucao kj__legenda">NHF - Norma Hipotética Fundamental</p>
+
     <div class="kj__barra">
       <p class="kj__placar">
         Pontuação: <span data-pontuacao>{{ pontuacao }}</span>

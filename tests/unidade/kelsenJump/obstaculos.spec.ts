@@ -1,20 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
   ESPACO,
-  FOLGA_NUVEM_S,
+  GRUPO_NUVENS,
   KELSEN,
   NUVEM,
-  PASSO_FIXO_S,
   PIRAMIDE,
+  TEMPO_RESPOSTA_S,
   VELOCIDADE
 } from '@/core/kelsenJump/constantes';
-import { colidem, type Caixa } from '@/core/kelsenJump/colisao';
-import { passoDoJogador, saltar, type Jogador } from '@/core/kelsenJump/fisica';
+import { colidem } from '@/core/kelsenJump/colisao';
 import {
   alturaPiramide,
   apexDoSalto,
   centroDoObstaculo,
-  distanciaAcimaDe,
   distanciaDeSalto,
   ehPassavelAbaixado,
   ehPossivel,
@@ -23,8 +21,6 @@ import {
   geraSequencia,
   larguraPiramide,
   margemDeAlturaPiramide,
-  nuvemNaoSaltavel,
-  tempoDeSalto,
   type Nuvem
 } from '@/core/kelsenJump/obstaculos';
 
@@ -35,7 +31,8 @@ const nuvem: Nuvem = {
   altura: NUVEM.altura,
   baseY: NUVEM.baseY,
   contado: false,
-  id: 0
+  id: 0,
+  restantes: 0
 };
 
 describe('pirâmide: altura dentro do alcance do pulo', () => {
@@ -56,54 +53,38 @@ describe('pirâmide: altura dentro do alcance do pulo', () => {
   });
 });
 
-describe('nuvem NHF: passa-se abaixado, nunca em pé e nunca pulada', () => {
-  it('a altura agachada cabe sob a base da nuvem, e a altura em pé bate nela', () => {
+describe('nuvem NHF: sempre se passa abaixado; em grupos de 1 a 3, como o dinossauro', () => {
+  it('a altura agachada passa sob a base da nuvem, e a altura em pé bate nela', () => {
     expect(ehPassavelAbaixado(nuvem)).toBe(true);
   });
 
-  it('a nuvem fica abaixo do ápice: quem a vence é a largura, não a altura', () => {
+  it('a nuvem fica na altura da cabeça: topo abaixo do ápice do pulo', () => {
     expect(NUVEM.baseY + NUVEM.altura).toBeLessThan(apexDoSalto());
   });
 
-  it('a largura passa do intervalo que o corpo fica acima do topo, mais a folga, na velocidade máxima', () => {
-    const topo = nuvem.baseY + nuvem.altura;
-    const acima = distanciaAcimaDe(topo, VELOCIDADE.maxima);
-    expect(nuvem.largura + KELSEN.largura).toBeGreaterThan(
-      acima + VELOCIDADE.maxima * FOLGA_NUVEM_S
-    );
-    expect(nuvemNaoSaltavel(nuvem)).toBe(true);
-  });
-
-  it('o pulo colide com a nuvem em toda decolagem que a sobrepõe, em todas as velocidades', () => {
-    const caixa: Caixa = {
-      x0: nuvem.x,
-      x1: nuvem.x + nuvem.largura,
-      y0: nuvem.baseY,
-      y1: nuvem.baseY + nuvem.altura
-    };
-    const meia = (nuvem.largura + KELSEN.largura) / 2;
-    for (const v of [VELOCIDADE.minima, VELOCIDADE.maxima]) {
-      const alcance = meia + distanciaDeSalto(v) / 2;
-      for (let k = 0; k <= 80; k++) {
-        const deslocamento = (k / 80 - 0.5) * 2 * alcance * 0.95;
-        // O ápice cai em centro + deslocamento: a decolagem fica meio salto antes.
-        const decolagem = centroDoObstaculo(nuvem) + deslocamento - distanciaDeSalto(v) / 2;
-        let jogador: Jogador = saltar({ pe: 0, vy: 0, agachado: false });
-        let s = decolagem;
-        let colidiu = false;
-        const passos = Math.ceil((tempoDeSalto() + 0.2) / PASSO_FIXO_S);
-        for (let i = 0; i < passos && !colidiu; i++) {
-          jogador = passoDoJogador(jogador, PASSO_FIXO_S, false);
-          s += v * PASSO_FIXO_S;
-          const x0 = s + KELSEN.x;
-          colidiu = colidem(
-            { x0, x1: x0 + KELSEN.largura, y0: jogador.pe, y1: jogador.pe + KELSEN.alturaEmPe },
-            caixa
+  it('grupos de 1 a 3 nuvens; dentro do grupo, a distância entre centros é a largura mais o espaço do grupo', () => {
+    for (const semente of [1, 7, 42, 2026]) {
+      const seq = geraSequencia(semente, 300);
+      for (let i = 0; i < seq.length; i++) {
+        const o = seq[i]!;
+        if (o.tipo !== 'nuvem') continue;
+        expect(o.restantes).toBeGreaterThanOrEqual(0);
+        expect(o.restantes).toBeLessThanOrEqual(2);
+        const seguinte = seq[i + 1];
+        if (o.restantes > 0) {
+          expect(seguinte?.tipo).toBe('nuvem');
+          expect(centroDoObstaculo(seguinte!) - centroDoObstaculo(o)).toBeCloseTo(
+            NUVEM.largura + GRUPO_NUVENS.espaco,
+            6
           );
         }
-        expect(colidiu, `velocidade ${v}, deslocamento ${deslocamento.toFixed(1)}`).toBe(true);
       }
     }
+  });
+
+  it('o gerador produz grupos de mais de uma nuvem', () => {
+    const seq = geraSequencia(42, 400);
+    expect(seq.some((o) => o.tipo === 'nuvem' && o.restantes > 0)).toBe(true);
   });
 });
 
@@ -143,9 +124,11 @@ describe('gerador: toda sequência gerada é possível', () => {
       for (let i = 1; i < seq.length; i++) {
         const a = seq[i - 1]!;
         const b = seq[i]!;
-        expect(centroDoObstaculo(b) - centroDoObstaculo(a)).toBeGreaterThanOrEqual(
-          folgaEntre(a, b, VELOCIDADE.maxima) - 1e-9
-        );
+        const dentroDoGrupo = a.tipo === 'nuvem' && a.restantes > 0;
+        const minimo = dentroDoGrupo
+          ? NUVEM.largura + GRUPO_NUVENS.espaco
+          : folgaEntre(a, b, VELOCIDADE.maxima);
+        expect(centroDoObstaculo(b) - centroDoObstaculo(a)).toBeGreaterThanOrEqual(minimo - 1e-9);
       }
     });
   }
@@ -162,4 +145,81 @@ describe('gerador: toda sequência gerada é possível', () => {
     const p = geraSequencia(42, 50).find((o) => o.tipo === 'piramide');
     expect(p && p.tipo === 'piramide' && ehSaltavel(p)).toBe(true);
   });
+});
+
+/** Grupos consecutivos de nuvens da sequência, do primeiro ao último (`restantes` chega a zero). */
+function gruposDe(seq: ReturnType<typeof geraSequencia>): Nuvem[][] {
+  const grupos: Nuvem[][] = [];
+  let atual: Nuvem[] | undefined;
+  for (const o of seq) {
+    if (o.tipo !== 'nuvem') {
+      atual = undefined;
+      continue;
+    }
+    if (!atual) {
+      atual = [];
+      grupos.push(atual);
+    }
+    atual.push(o);
+    if (o.restantes === 0) atual = undefined;
+  }
+  return grupos;
+}
+
+describe('grupo de nuvens: abaixar passa e em pé bate, em toda posição do corpo', () => {
+  it('o vão entre nuvens é menor que a caixa do corpo: em pé, não há passagem', () => {
+    expect(GRUPO_NUVENS.espaco).toBeLessThan(KELSEN.largura);
+  });
+
+  for (const semente of [1, 7, 42, 2026, 99991]) {
+    it(`semente ${semente}: sobre todo grupo, agachado nunca colide e em pé colide sempre na faixa do grupo`, () => {
+      const grupos = gruposDe(geraSequencia(semente, 300));
+      expect(grupos.length).toBeGreaterThan(0);
+      for (const grupo of grupos) {
+        const esquerda = grupo[0]!.x;
+        const direita = grupo[grupo.length - 1]!.x + NUVEM.largura;
+        const caixas = grupo.map((c) => ({
+          x0: c.x,
+          x1: c.x + c.largura,
+          y0: c.baseY,
+          y1: c.baseY + c.altura
+        }));
+        for (let d = esquerda - KELSEN.largura - 2; d <= direita + 2; d += 0.25) {
+          const x0 = d;
+          const x1 = d + KELSEN.largura;
+          const emPe = { x0, x1, y0: 0, y1: KELSEN.alturaEmPe };
+          const agachado = { x0, x1, y0: 0, y1: KELSEN.alturaAgachado };
+          const bateEmPe = caixas.some((c) => colidem(emPe, c));
+          const bateAgachado = caixas.some((c) => colidem(agachado, c));
+          expect(bateAgachado, `agachado colidiu em d=${d}`).toBe(false);
+          const naFaixa = x1 > esquerda && x0 < direita;
+          expect(bateEmPe, `em pé em d=${d}`).toBe(naFaixa);
+        }
+      }
+    });
+  }
+});
+
+describe('derivação da folga: nuvem em grupo seguida de pirâmide', () => {
+  it('a folga é o tempo de resposta na velocidade máxima', () => {
+    expect(ESPACO.folga).toBeCloseTo(TEMPO_RESPOSTA_S * VELOCIDADE.maxima, 9);
+  });
+
+  for (const semente of [1, 7, 42, 2026, 99991]) {
+    it(`semente ${semente}: do fim do grupo ao início do salto da pirâmide sobram pelo menos ${TEMPO_RESPOSTA_S} s em velocidade máxima`, () => {
+      const seq = geraSequencia(semente, 300);
+      let casos = 0;
+      for (let i = 1; i < seq.length; i++) {
+        const a = seq[i - 1]!;
+        const b = seq[i]!;
+        if (a.tipo !== 'nuvem' || a.restantes !== 0 || b.tipo !== 'piramide') continue;
+        casos++;
+        const meiaJanela = (a.largura + KELSEN.largura) / 2;
+        const decolagem = centroDoObstaculo(b) - distanciaDeSalto(VELOCIDADE.maxima) / 2;
+        const livre = decolagem - (centroDoObstaculo(a) + meiaJanela);
+        expect(livre).toBeGreaterThanOrEqual(TEMPO_RESPOSTA_S * VELOCIDADE.maxima - 1e-9);
+      }
+      expect(casos).toBeGreaterThan(0);
+    });
+  }
 });

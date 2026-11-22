@@ -1,5 +1,5 @@
 import type { Cena, FormaCena } from '@/app/kelsenJump';
-import { KELSEN, MUNDO } from '@/app/kelsenJump';
+import { KELSEN, MUNDO, NUVEM } from '@/app/kelsenJump';
 import { imagemDoQuadro, TAMANHO_QUADRO } from './sprites';
 
 /** Linha do chão na tela lógica (y cresce para baixo). Pés do Kelsen em y = CHAO - pe. */
@@ -104,10 +104,30 @@ function desenharNuvem(
     desenharNuvemDeTraco(ctx, n, topo, papel, tinta);
   }
   ctx.fillStyle = tinta;
-  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.font = fonteDoNhf(ctx);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(n.texto, n.x + n.largura / 2, topo + n.altura / 2);
+}
+
+let tamanhoNhf: number | undefined;
+
+/**
+ * Maior fonte em negrito (passos de 0,5 px) cujo "NHF" cabe na largura da nuvem. Medida uma vez com o
+ * próprio canvas, então vale para a fonte que o navegador tem; a altura da nuvem não muda o resultado.
+ */
+function fonteDoNhf(ctx: CanvasRenderingContext2D): string {
+  if (tamanhoNhf === undefined) {
+    tamanhoNhf = 1;
+    for (let t = 24; t >= 1; t -= 0.5) {
+      ctx.font = `bold ${t}px system-ui, sans-serif`;
+      if (ctx.measureText(NUVEM.texto).width <= NUVEM.largura) {
+        tamanhoNhf = t;
+        break;
+      }
+    }
+  }
+  return `bold ${tamanhoNhf}px system-ui, sans-serif`;
 }
 
 function desenharNuvemDeTraco(

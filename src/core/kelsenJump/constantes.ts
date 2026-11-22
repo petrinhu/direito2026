@@ -48,23 +48,29 @@ export const PIRAMIDE = {
 } as const;
 
 /**
- * Nuvem baixa e larga com "NHF" dentro (PNG do PixelLab, 112 x 50, ampliado 1,5x: 168 x 75, o mesmo
- * tamanho que o script de geração grava em medidas.json). `baseY` é a altura da base acima do chão:
- * entre a altura agachada (53) e a em pé (61), então agachado passa por baixo e em pé bate.
- *
- * Ela não se vence por cima: o topo fica abaixo do ápice do pulo, então a barreira é a largura. A
- * conta está em `nuvemNaoSaltavel` (obstaculos.ts): a largura passa da distância que o corpo fica
- * acima do topo na velocidade máxima, mais a folga `FOLGA_NUVEM_S`.
+ * Nuvem baixa com "NHF" dentro, do PNG do PixelLab reduzido sem suavização até a largura da cabeça do
+ * Kelsen parado (29 px, src/ui/kelsenJump/sprites/medidas.json): 29 por 13 px, na mesma proporção do PNG.
+ * Vem em grupo de 1 a 3, na altura da cabeça. `baseY` fica entre a altura agachada (53) e a em pé (61):
+ * agachado passa sob qualquer grupo, em pé bate. Pular por cima pode passar ou não, como no dinossauro.
  */
 export const NUVEM = {
-  largura: 168,
+  largura: 29,
+  altura: 13,
   baseY: 57,
-  altura: 75,
   texto: 'NHF'
 } as const;
 
-/** Folga, em segundos de corrida na velocidade máxima, somada à conta de não saltabilidade da nuvem. */
-export const FOLGA_NUVEM_S = 0.1;
+/**
+ * Espaço livre entre duas nuvens do mesmo grupo, em px. Menor que a largura da cabeça (26 px da caixa
+ * do corpo): o Kelsen em pé nunca cabe no vão e sempre bate em alguma nuvem do grupo.
+ */
+export const GRUPO_NUVENS = { espaco: 14 } as const;
+
+/**
+ * Tempo, em s, para levantar depois do grupo e pular a próxima pirâmide. A folga é esse tempo na
+ * velocidade máxima: 0,3 s × 640 px/s = 192 px. O robô de referência reage com ±0,04 s; humano reage mais devagar.
+ */
+export const TEMPO_RESPOSTA_S = 0.3;
 
 /**
  * Espaçamento do gerador. `inicial` é a distância do começo até o primeiro obstáculo. `folga`
@@ -72,7 +78,7 @@ export const FOLGA_NUVEM_S = 0.1;
  */
 export const ESPACO = {
   inicial: 640,
-  folga: 80,
+  folga: VELOCIDADE.maxima * TEMPO_RESPOSTA_S,
   extraMaximo: 140
 } as const;
 

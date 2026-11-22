@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { KELSEN, PASSO_FIXO_S, VELOCIDADE } from '@/core/kelsenJump/constantes';
 import { avancar, estadoInicial, type Entrada, type Estado } from '@/core/kelsenJump/partida';
-import { centroDoObstaculo, distanciaDeSalto } from '@/core/kelsenJump/obstaculos';
+import { centroDoObstaculo, distanciaDeSalto, geraSequencia } from '@/core/kelsenJump/obstaculos';
 import { velocidadeEm } from '@/core/kelsenJump/velocidade';
 
 /**
@@ -59,4 +59,25 @@ describe('robô de referência atravessa a partida (é possível)', () => {
     const { estado } = correr(42, 0, 150);
     expect(velocidadeEm(estado.tempo)).toBe(VELOCIDADE.maxima);
   });
+});
+
+describe('robô atravessa grupo de 3 nuvens seguido de pirâmide (abaixa, levanta, pula)', () => {
+  for (const semente of [1, 7, 42, 2026, 99991]) {
+    it(`semente ${semente}: a sequência tem o caso e o robô passa 150 s sem colisão`, () => {
+      const seq = geraSequencia(semente, 300);
+      const temCaso = seq.some(
+        (o, i) =>
+          o.tipo === 'nuvem' &&
+          o.restantes === 2 &&
+          seq
+            .slice(i, i + 4)
+            .some((p, j) => j > 0 && p.tipo === 'piramide' && seq[i + j - 1]?.tipo === 'nuvem')
+      );
+      expect(temCaso).toBe(true);
+      const { eventos, estado } = correr(semente, 0, 150);
+      expect(eventos).not.toContain('colisao');
+      expect(estado.nuvens).toBeGreaterThan(0);
+      expect(estado.piramides).toBeGreaterThan(0);
+    });
+  }
 });

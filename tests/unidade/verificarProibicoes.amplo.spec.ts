@@ -116,11 +116,10 @@ describe('verificar-proibicoes --amplo (LU-F1.3-N3)', () => {
     expect(r.status).not.toBe(0);
   });
 
+  // Herda o ambiente como o passo do preci: a caixa do publicar exporta VERIFICAR_PROIBICOES_TERMOS
+  // com o caminho real. Não zerar a variável: zerá-la faz o verificador cair no $HOME, que não tem o arquivo.
   it('o repositório atual passa com o arquivo de termos real', () => {
-    const r = spawnSync('bash', [SCRIPT, '--amplo', RAIZ], {
-      encoding: 'utf-8',
-      env: { ...process.env, VERIFICAR_PROIBICOES_TERMOS: '' }
-    });
+    const r = spawnSync('bash', [SCRIPT, '--amplo', RAIZ], { encoding: 'utf-8', env: process.env });
     expect(r.stderr).not.toContain('arquivo de termos ausente');
     expect(r.status, `saída:\n${r.stdout}\n${r.stderr}`).toBe(0);
     expect(r.stdout).toContain('achados: 0');

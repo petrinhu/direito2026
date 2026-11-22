@@ -272,7 +272,8 @@ function d26_limite_desbloquear_conta(string $priv, string $login): int
  * Categoria e (EM-B4, plano 8.1.7): pedidos "Esqueci a senha" em tentativas.json. Três chaves, cada uma com a lista
  * de marcas de tempo (f) das últimas 24 h. Nunca são zeradas pelo sucesso de login, e não contam nos envios do painel.
  *  - IP agrupado: 10 pedidos em 15 min; acima, 429 (o pedido não envia nada).
- *  - Conta: 1 e-mail em 15 min e 4 em 24 h; acima, silêncio (a mesma frase).
+ *  - Conta: 1 e-mail por conta em 24 h (decisão do líder, 21/11/2026: "apenas um e-mail é mandado por dia, por
+ *    senha esquecida, por usuário"); acima, silêncio (a mesma frase).
  *  - Sub-limite do "Esqueci a senha": 60 pedidos em 24 h; acima, silêncio e uma linha envio-teto no erros.log.
  * Teto total do site (EM-SMTP-TETO-TOTAL, decisão do líder de 21/11/2026): 100 envios em 24 h, somando todos os
  * caminhos (convite, redefinição, senha criada, Esqueci, primeiro aviso e bloqueio). Chave própria ('total'), e
@@ -282,8 +283,7 @@ function d26_limite_desbloquear_conta(string $priv, string $login): int
 const D26_ENVIO_JANELA_CURTA = 900;
 const D26_ENVIO_JANELA_LONGA = 86400;
 const D26_ENVIO_MAX_IP = 10;
-const D26_ENVIO_MAX_CONTA_15MIN = 1;
-const D26_ENVIO_MAX_CONTA_DIA = 4;
+const D26_ENVIO_MAX_CONTA_DIA = 1;
 const D26_ENVIO_TETO_DIA = 60;
 const D26_ENVIO_TOTAL_DIA = 100;
 
@@ -306,12 +306,11 @@ function d26_limite_envio_ip(string $priv, string $ip, int $agora): bool
         static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_CURTA) < D26_ENVIO_MAX_IP);
 }
 
-/** Reserva um e-mail para a conta: 1 a cada 15 min e 4 em 24 h. */
+/** Reserva um e-mail para a conta: 1 em 24 h. */
 function d26_limite_envio_conta(string $priv, string $login, int $agora): bool
 {
     return d26_limite_envio_reservar($priv, d26_limite_chave_envio('conta', $login), $agora,
-        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_CURTA) < D26_ENVIO_MAX_CONTA_15MIN
-            && d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_MAX_CONTA_DIA);
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_MAX_CONTA_DIA);
 }
 
 /** Reserva um pedido do "Esqueci a senha" no sub-limite de 60 em 24 h (não é o total). */

@@ -14,7 +14,19 @@ export interface Cores {
 }
 
 /** Desenha um frame do jogo em preto e branco, com as cores do tema lidas do CSS. */
-export function desenharCena(ctx: CanvasRenderingContext2D, cena: Cena, cores: Cores): void {
+/**
+ * Placar do canto superior direito: o recorde na primeira linha e a pontuação atual logo abaixo, em
+ * negrito e na cor da tinta. Ocupa só `ALTURA_PLACAR` px do topo, acima de qualquer corpo ou obstáculo.
+ */
+export const PLACAR = { fonte: 16, margem: 12, linha: 20 } as const;
+export const ALTURA_PLACAR = PLACAR.margem + PLACAR.linha + PLACAR.fonte;
+
+export function desenharCena(
+  ctx: CanvasRenderingContext2D,
+  cena: Cena,
+  cores: Cores,
+  recorde: number
+): void {
   const { tinta, papel, escuro } = cores;
   ctx.fillStyle = papel;
   ctx.fillRect(0, 0, MUNDO.largura, MUNDO.altura);
@@ -29,6 +41,7 @@ export function desenharCena(ctx: CanvasRenderingContext2D, cena: Cena, cores: C
   }
   for (const rotulo of cena.rotulos) desenharRotulo(ctx, rotulo, tinta);
   desenharKelsen(ctx, cena, tinta, escuro);
+  desenharPlacar(ctx, recorde, cena.pontuacao, tinta);
 }
 
 /** Quadro do PixelLab para a pose: pulo congela o quadro de corrida; batida usa o parado. */
@@ -202,4 +215,20 @@ function desenharKelsenDeTraco(
   ctx.moveTo(cx, quadril);
   ctx.lineTo(cx + 7, pesY);
   ctx.stroke();
+}
+
+/** Placar por cima de tudo: alinhado à direita, com margem; só desenho, fora da colisão. */
+function desenharPlacar(
+  ctx: CanvasRenderingContext2D,
+  recorde: number,
+  pontuacao: number,
+  tinta: string
+): void {
+  ctx.fillStyle = tinta;
+  ctx.font = `bold ${PLACAR.fonte}px system-ui, sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  const x = MUNDO.largura - PLACAR.margem;
+  ctx.fillText(`Recorde: ${recorde}`, x, PLACAR.margem);
+  ctx.fillText(`Pontuação: ${pontuacao}`, x, PLACAR.margem + PLACAR.linha);
 }

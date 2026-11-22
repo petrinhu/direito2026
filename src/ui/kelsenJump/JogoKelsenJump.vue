@@ -3,9 +3,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { RouterLink } from 'vue-router';
 import {
+  compararRecorde,
   criarJogo,
   gravarMudo,
+  gravarRecorde,
   lerMudo,
+  lerRecorde,
   LICOES,
   MUNDO,
   type Cena,
@@ -15,16 +18,17 @@ import type { Evento } from '@/core/kelsenJump';
 import { criarSons, type Sons } from './sons';
 import { desenharCena, type Cores } from './desenhar';
 
-/** Marco de pontos em que o leitor de tela é avisado, para não narrar a cada quadro. */
-const MARCO_ANUNCIO = 100;
-
 const canvas = ref<HTMLCanvasElement | null>(null);
-const pontuacao = ref(0);
+/** Recorde pessoal, lido do navegador ao montar. O placar do canvas mostra este valor. */
+const recorde = ref(lerRecorde());
+/** Verdadeiro só no fim da partida em que o recorde foi batido; some ao começar a próxima. */
+const novoRecorde = ref(false);
 const fase = ref<Cena['fase']>('aguardando');
 const ultimaPontuacao = ref<number | undefined>(undefined);
 const licao = ref<number | undefined>(undefined);
 const mudo = ref(lerMudo());
-const anuncio = ref('');
+/** Texto só para o leitor de tela: muda uma vez por partida, no fim (nunca a cada ponto). */
+const anuncio = ref(`Recorde: ${recorde.value}.`);
 
 const jogo = shallowRef<Jogo | null>(null);
 const sons = shallowRef<Sons | null>(null);
@@ -37,7 +41,6 @@ const pedidoInicial = computed(
 let coresCache: Cores = { tinta: '#1c1c1c', papel: '#faf9f5', escuro: false };
 let quadrosDesdeCores = 0;
 let contexto: CanvasRenderingContext2D | null = null;
-let ultimoMarco = 0;
 
 function lerCores(): Cores {
   const cs = getComputedStyle(document.documentElement);
@@ -60,27 +63,33 @@ function aoAtualizar(cena: Cena): void {
   if (contexto && canvas.value) {
     if (quadrosDesdeCores % 30 === 0) coresCache = lerCores();
     quadrosDesdeCores++;
-    desenharCena(contexto, cena, coresCache);
+    desenharCena(contexto, cena, coresCache, recorde.value);
   }
-  if (cena.pontuacao !== pontuacao.value) pontuacao.value = cena.pontuacao;
   if (cena.fase !== fase.value) fase.value = cena.fase;
+  if (cena.fase === 'correndo') novoRecorde.value = false;
+  if (cena.ultimaPontuacao !== undefined && cena.ultimaPontuacao !== ultimaPontuacao.value) {
+    aoTerminar(cena.ultimaPontuacao);
+  }
   if (cena.ultimaPontuacao !== ultimaPontuacao.value) ultimaPontuacao.value = cena.ultimaPontuacao;
   if (cena.licao !== licao.value) licao.value = cena.licao;
-  const marco = Math.floor(cena.pontuacao / MARCO_ANUNCIO) * MARCO_ANUNCIO;
-  if (marco > ultimoMarco) {
-    ultimoMarco = marco;
-    anuncio.value = `Pontuação ${cena.pontuacao}.`;
+}
+
+/** Fim de partida: compara com o recorde, grava se bateu e anuncia uma vez para o leitor de tela. */
+function aoTerminar(final: number): void {
+  const resultado = compararRecorde(recorde.value, final);
+  if (resultado.bateu) {
+    gravarRecorde(resultado.recorde);
+    recorde.value = resultado.recorde;
+    novoRecorde.value = true;
   }
+  const frase = resultado.bateu ? ' Novo recorde!' : '';
+  anuncio.value = `Fim de partida. Pontuação final ${final}. Recorde: ${recorde.value}.${frase} A lição está logo abaixo do jogo.`;
 }
 
 function aoEvento(evento: Evento): void {
   sons.value?.tocar(
     evento.tipo === 'pulo' ? 'pulo' : evento.tipo === 'ponto' ? 'ponto' : 'colisao'
   );
-  if (evento.tipo === 'colisao') {
-    ultimoMarco = 0;
-    anuncio.value = `Fim de partida. A pontuação foi ${pontuacao.value}. A lição está logo abaixo do jogo.`;
-  }
 }
 
 function semente(): number {
@@ -171,9 +180,6 @@ onBeforeUnmount(() => {
     <p class="kj__instrucao kj__legenda">NHF - Norma Hipotética Fundamental</p>
 
     <div class="kj__barra">
-      <p class="kj__placar">
-        Pontuação: <span data-pontuacao>{{ pontuacao }}</span>
-      </p>
       <button
         type="button"
         class="kj__mudo"
@@ -205,7 +211,9 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <p class="kj__so-leitor" aria-live="polite">{{ anuncio }}</p>
+    <p class="kj__so-leitor" aria-live="polite" data-recorde-leitor>{{ anuncio }}</p>
+
+    <p v-if="novoRecorde && fase === 'aguardando'" class="kj__novo-recorde">Novo recorde!</p>
 
     <section
       v-if="textoLicao && fase === 'aguardando'"
@@ -253,13 +261,13 @@ onBeforeUnmount(() => {
 .kj__barra {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--esp-3, 0.75rem);
   flex-wrap: wrap;
 }
-.kj__placar {
+.kj__novo-recorde {
   margin: 0;
-  font-variant-numeric: tabular-nums;
+  font-weight: bold;
 }
 .kj__mudo {
   display: inline-flex;

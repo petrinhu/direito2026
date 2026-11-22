@@ -6,13 +6,12 @@ import { FERIADOS } from '@/conteudo/calendario/feriados';
 const feriadosDoSemestre = FERIADOS.filter((f) => f.semestre === '2026.2');
 
 /**
- * Fonte oficial dos feriados municipais do Recife (confirmada pelo líder,
- * 20/10/2026). A fonte fica em comentário, então o teste lê o arquivo: trava
- * a fonte nos dois feriados municipais e impede a volta das fontes secundárias
- * e da pendência antiga.
+ * Os feriados municipais do Recife não têm fonte oficial conferida (leitura de
+ * 22/11/2026: o portal da Prefeitura não resolveu e a lei citada só apareceu em
+ * fonte não oficial). O comentário de cada um traz essa nota, e o teste lê o
+ * arquivo para travá-la e impedir a volta de fonte secundária.
  */
-const FONTE_OFICIAL =
-  'Prefeitura do Recife, https://www2.recife.pe.gov.br/pagina/feriados (Lei Municipal nº 9.777, de junho de 1967)';
+const NOTA_SEM_FONTE = 'sem fonte oficial conferida em 22/11/2026';
 
 const CAMINHO_FONTE = resolve(__dirname, '../../src/conteudo/calendario/feriados.ts');
 const fonte = readFileSync(CAMINHO_FONTE, 'utf-8');
@@ -34,26 +33,26 @@ function comentarioAcima(titulo: string): string {
 const municipais = () =>
   feriadosDoSemestre.filter((f) => f.descricao === 'Feriado municipal do Recife.');
 
-describe('feriados municipais do Recife: fonte oficial', () => {
+describe('feriados municipais do Recife: nota de fonte', () => {
   it('16/07 e 08/12 estão presentes na janela (outro município novo não quebra)', () => {
     expect(municipais().map((f) => f.inicio)).toEqual(
       expect.arrayContaining(['2026-07-16', '2026-12-08'])
     );
   });
 
-  it('todo feriado municipal do semestre traz a fonte oficial no comentário logo acima dele', () => {
+  it('todo feriado municipal do semestre traz a nota de fonte no comentário logo acima dele', () => {
     expect(municipais().length).toBeGreaterThan(0);
     for (const f of municipais()) {
-      expect(comentarioAcima(f.titulo), f.titulo).toContain(FONTE_OFICIAL);
+      expect(comentarioAcima(f.titulo), f.titulo).toContain(NOTA_SEM_FONTE);
     }
   });
 
-  it('o comentário do feriado de 16/07 traz a fonte oficial', () => {
-    expect(comentarioAcima('Nossa Senhora do Carmo')).toContain(FONTE_OFICIAL);
+  it('o comentário do feriado de 16/07 traz a nota de fonte', () => {
+    expect(comentarioAcima('Nossa Senhora do Carmo')).toContain(NOTA_SEM_FONTE);
   });
 
-  it('o comentário do feriado de 08/12 traz a fonte oficial', () => {
-    expect(comentarioAcima('Nossa Senhora da Conceição')).toContain(FONTE_OFICIAL);
+  it('o comentário do feriado de 08/12 traz a nota de fonte', () => {
+    expect(comentarioAcima('Nossa Senhora da Conceição')).toContain(NOTA_SEM_FONTE);
   });
 
   it('não há mais marca de fonte secundária nem pendência de conferência', () => {

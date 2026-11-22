@@ -14,7 +14,9 @@ require_once __DIR__ . '/nucleo/correio.php'; // fora do preâmbulo: o aviso E4 
  * Página pública do convite (CV-B2, decisão do líder de 08/11/2026): a pessoa abre o link de 48 h, cria a
  * própria senha e já entra. GET mostra a tela e não grava nada (a pré-visualização de mensageiro não consome
  * o link). POST consome o link num compare-and-swap e entra. Todo pedido passa pelo limite por IP, e só a falha
- * de token conta (plano 7.1.6): um link válido devolve a reserva. Todas as respostas saem com "strict-origin".
+ * de token conta (plano 7.1.6). A reserva de um link válido fica presa até o fim da verificação: devolve-se no CAS
+ * ganho e na senha recusada (CISO-62-RESERVA), igual ao login, para a rajada simultânea respeitar o mesmo teto de 30
+ * por IP. Perdedor do CAS e falha de qualquer tipo ficam contadas. Todas as respostas saem com "strict-origin".
  * O sucesso do POST (senha criada) expira o cookie de aviso de outro aparelho que veio no pedido (plano 1.2) quando
  * a pessoa entra; sem entrada, o 303 vai para / com o aviso senha-criada (ou bloqueada) na entrada (SE-F2). Decisão do orquestrador (plano 1.2, revisão rev-cv-b2.md).
  */
@@ -49,7 +51,8 @@ if (!$postagem) {
     d26_portao_tela(200, d26_tela_convite_casca(d26_csrf_pre_atual($priv), $nonce), d26_tela_csp_convite($nonce), D26_REFERRER_API);
 }
 
-// Reserva do IP antes de olhar o token: sem formato de login, só a chave de IP é tocada (plano 7.1.6).
+// Reserva do IP antes de olhar o token: sem formato de login, só a chave de IP é tocada (plano 7.1.6). Falha de token
+// fica contada; link válido segura a reserva até o CAS ou a senha recusada (CISO-62-RESERVA).
 $reserva = time();
 $limite = d26_limite_reservar_detalhado($priv, '', $ip, $reserva);
 if ($limite['espera'] > 0) {
@@ -63,8 +66,7 @@ $consulta = $token === null
 if ($consulta['estado'] !== 'valido' || $token === null || !is_array($consulta['conta'])) {
     d26_convite_recusar($consulta['estado']);
 }
-// Token válido não é falha: devolve a reserva do IP (só falha de token conta).
-d26_limite_sucesso($priv, '', $ip, $reserva, false);
+// Token válido segue com a reserva presa: ela só volta no CAS ganho ou na senha recusada (CISO-62-RESERVA).
 $conta = $consulta['conta'];
 $login = (string) $conta['usuario'];
 
@@ -74,6 +76,8 @@ $repetida = is_string($_POST['senhaRepetida'] ?? null) ? $_POST['senhaRepetida']
 // A validação vem antes do Argon2id: erro de senha não gasta custo caro e não consome o link.
 $motivo = d26_validar_senha_nova($nova, $login, '') ?? ($nova === $repetida ? null : D26_CONVITE_REPETICAO);
 if ($motivo !== null) {
+    // Senha recusada: o link é válido, então a reserva volta (não é falha de token). Sem consumo do link.
+    d26_limite_sucesso($priv, '', $ip, $reserva, false);
     d26_portao_tela(400, d26_tela_convite($login, $token, $csrf, $motivo), PORTAO_CSP_TELA, D26_REFERRER_API);
 }
 
@@ -93,6 +97,14 @@ $gravou = d26_contas_consumir_convite(
 if ($gravou !== 'ok') {
     // Outro POST ganhou a corrida, ou o link venceu entre a leitura e a gravação: a mensagem sai do estado atual.
     d26_convite_recusar(d26_convite_classificar(d26_contas_listar($priv), $token, time())['estado']);
+}
+
+// Senha criada (CAS ok): a reserva do IP volta agora (CISO-62-RESERVA), com o mesmo $reserva da entrada. Falha aqui
+// não desfaz a senha criada: a reserva fica contada (fail-secure) e o registro vai ao erros.log.
+try {
+    d26_limite_sucesso($priv, '', $ip, $reserva, false);
+} catch (Throwable $e) {
+    d26_log_erro_em($priv, 'convite', 'reserva do IP não devolvida (' . get_class($e) . ')');
 }
 
 // Senha criada (CAS ok). O limite da conta e o do usuário+IP ligados a ela zeram agora: depois do CAS e fora do

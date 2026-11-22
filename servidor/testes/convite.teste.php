@@ -762,6 +762,102 @@ teste('convite: C18b 31 links válidos seguidos do mesmo IP entram: o sucesso de
     igual(array_fill(0, 31, 303), $status, '31 POST válidos do mesmo IP: todos 303, nenhum 429');
 });
 
+// ---- C18c (CISO-62-RESERVA): a reserva do IP fica presa até o CAS; a rajada respeita o teto de 30 -
+
+/** Quantos pedidos chegaram ao ponto de pausa convite-antes-gravar (sem cache de stat). */
+function cvb2Pausados(Ambiente $a): int
+{
+    clearstatcache(true);
+    $arq = $a->priv . '/pausado-convite-antes-gravar';
+    return is_file($arq) ? count(file($arq, FILE_IGNORE_NEW_LINES) ?: []) : 0;
+}
+
+/**
+ * Espera até $n pedidos estarem na pausa, rodando os POSTs pendentes. Teto de 15 s.
+ * @param list<array{resource, \CurlHandle}> $reqs
+ */
+function cvb2EsperarPausa(Ambiente $a, array $reqs, int $n): void
+{
+    $limite = microtime(true) + 15;
+    while (cvb2Pausados($a) < $n && microtime(true) < $limite) {
+        foreach ($reqs as [$m]) {
+            curl_multi_exec($m, $ativos);
+        }
+        usleep(20000);
+    }
+}
+
+/** Código HTTP do POST disparado por cvb2PostSemEsperar, ou 0 se não respondeu em $segundos. @param array{resource, \CurlHandle} $req */
+function cvb2StatusEmAte(array $req, float $segundos): int
+{
+    [$m, $h] = $req;
+    $limite = microtime(true) + $segundos;
+    while (microtime(true) < $limite) {
+        curl_multi_exec($m, $ativos);
+        if ((int) curl_getinfo($h, CURLINFO_RESPONSE_CODE) !== 0) {
+            break;
+        }
+        usleep(20000);
+    }
+    return (int) curl_getinfo($h, CURLINFO_RESPONSE_CODE);
+}
+
+teste('convite: C18c com o IP em 29 falhas: o link em voo segura a reserva até o CAS, e os 5 seguintes recebem 429 sem chegar à pausa', function (): void {
+    $a = Ambiente::novo(['workers' => 8]);
+    $tokens = [];
+    foreach (['ana1', 'ana2', 'ana3', 'ana4', 'ana5', 'ana6'] as $login) {
+        $tokens[] = cvb2Convidar($a, $login);
+    }
+    $falhas = $a->cliente();
+    $csrfF = cvb2Campo(cvb2Casca($falhas)->corpo, 'csrf');
+    for ($i = 0; $i < 29; $i++) {
+        igual(404, cvb2Enviar($falhas, cvb2Campos(str_repeat('0', 64), $csrfF, CVB2_SENHA))->status, "falha de token $i");
+    }
+
+    // Clientes e CSRF ficam prontos ANTES de ligar a pausa: nenhum GET corre com um pedido parado.
+    $clientes = [];
+    foreach ($tokens as $token) {
+        $c = $a->cliente();
+        $clientes[] = [$c, cvb2Campo(cvb2Casca($c)->corpo, 'csrf'), $token];
+    }
+
+    // O link em voo fica parado na pausa ANTES do CAS: 29 falhas + 1 reserva = 30, o teto do IP.
+    [$c0, $csrf0, $token0] = array_shift($clientes);
+    pausaLigar($a, 'convite-antes-gravar', '*');
+    $segurado = cvb2PostSemEsperar($c0, cvb2Campos($token0, $csrf0, CVB2_SENHA));
+    cvb2EsperarPausa($a, [$segurado], 1);
+    igual(1, cvb2Pausados($a), 'o link em voo chega ao Argon2id');
+
+    // Com a reserva ainda presa, os 5 links seguintes do mesmo IP estouram o teto: 429 sem chegar à pausa.
+    $status = [];
+    foreach ($clientes as [$c, $csrf, $token]) {
+        $status[] = cvb2StatusEmAte(cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, CVB2_SENHA)), 5.0);
+    }
+    igual([429, 429, 429, 429, 429], $status, 'os 5 links seguintes recebem 429 enquanto o link em voo segura a reserva');
+    igual(1, cvb2Pausados($a), 'nenhum dos 5 chegou à pausa');
+
+    pausaSoltar($a, 'convite-antes-gravar');
+    igual(303, cvb2ConcluirPost($segurado)->status, 'o link segurado entra depois do CAS');
+
+    $t = json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true, 512, JSON_THROW_ON_ERROR);
+    igual(29, count($t['ip'][d26_limite_chave_ip('127.0.0.1')]['f'] ?? []), 'depois do CAS a reserva voltou: sobram só as 29 falhas');
+});
+
+// ---- C18d (CISO-62-RESERVA): erro de senha devolve a reserva, como o sucesso --------------------
+
+teste('convite: C18d 31 links válidos com senha recusada do mesmo IP: nenhum 429, e o link ainda entra', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
+    $status = [];
+    for ($i = 1; $i <= 31; $i++) {
+        $status[] = cvb2Enviar($c, cvb2Campos($token, $csrf, 'curta'))->status;
+    }
+    igual(array_fill(0, 31, 400), $status, '31 senhas recusadas: todas 400, nenhuma 429');
+    igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA))->status, 'o mesmo link entra depois dos erros');
+});
+
 // ---- C19: t ausente, lista, 63 ou 65 hex, maiúsculas: M3 com 404 e nada no erros.log ---------
 
 teste('convite: C19 t ausente, lista, 63 ou 65 hex, maiúsculas: M3 com 404, e nenhuma linha nova no erros.log com o valor enviado', function (): void {
@@ -841,6 +937,9 @@ function cvb2Falhas(Ambiente $a, int $conta, int $usuarioIp, int $ip): array
     $ku = hash('sha256', 'ana' . "\0" . '127.0.0.1');
     $ki = hash('sha256', 'ip' . "\0" . '127.0.0.1');
     $d = ['u' => [], 'ip' => [], 'c' => []];
+    // As falhas de IP somam às marcas que já estão no arquivo: uma reserva em voo (CISO-62-RESERVA) conta no teto.
+    $antes = is_file($a->priv . '/tentativas.json') ? (array) json_decode((string) file_get_contents($a->priv . '/tentativas.json'), true) : [];
+    $marcasIp = array_map('intval', (array) ($antes['ip'][$ki]['f'] ?? []));
     if ($conta > 0) {
         $d['c'][$kc] = ['f' => array_fill(0, $conta, $agora)];
     }
@@ -848,7 +947,7 @@ function cvb2Falhas(Ambiente $a, int $conta, int $usuarioIp, int $ip): array
         $d['u'][$ku] = ['n' => $usuarioIp, 'ult' => $agora, 'l' => $kc];
     }
     if ($ip > 0) {
-        $d['ip'][$ki] = ['f' => array_fill(0, $ip, $agora)];
+        $d['ip'][$ki] = ['f' => array_merge($marcasIp, array_fill(0, $ip, $agora))];
     }
     file_put_contents($a->priv . '/tentativas.json', json_encode($d, JSON_THROW_ON_ERROR));
     return ['kc' => $kc, 'ku' => $ku, 'ki' => $ki];

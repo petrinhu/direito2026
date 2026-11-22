@@ -29,10 +29,11 @@ test('Kelsen Jump: o botão de som tem nome acessível e alterna entre ligado e 
   await page.goto('/kelsen-jump');
   const somLigado = page.getByRole('button', { name: 'Desligar o som' });
   await expect(somLigado).toBeVisible();
-  await expect(somLigado).toHaveAttribute('aria-pressed', 'false');
+  await expect(somLigado).not.toHaveAttribute('aria-pressed');
 
   await somLigado.click();
   const somMudo = page.getByRole('button', { name: 'Ligar o som' });
-  await expect(somMudo).toHaveAttribute('aria-pressed', 'true');
+  await expect(somMudo).not.toHaveAttribute('aria-pressed');
+  await expect(somMudo).toHaveClass(/kj__mudo--mudo/);
   await expect(page.getByRole('button', { name: 'Desligar o som' })).toHaveCount(0);
 });

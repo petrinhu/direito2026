@@ -177,7 +177,7 @@ onBeforeUnmount(() => {
       <button
         type="button"
         class="kj__mudo"
-        :aria-pressed="mudo ? 'true' : 'false'"
+        :class="{ 'kj__mudo--mudo': mudo }"
         :aria-label="mudo ? 'Ligar o som' : 'Desligar o som'"
         @click="alternarMudo"
       >
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
   height: 1.75rem;
   overflow: visible;
 }
-.kj__mudo[aria-pressed='true'] {
+.kj__mudo--mudo {
   background: var(--cor-texto);
   color: var(--cor-fundo);
 }

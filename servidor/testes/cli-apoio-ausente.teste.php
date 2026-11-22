@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 /**
- * LU-F2.7-N3: auditar-contas, remover-conta e definir-admin carregam a pasta
- * apoio/ ao lado deles. Copiados sozinhos (sem apoio/), precisam recusar com uma
+ * LU-F2.7-N3: auditar-contas, remover-conta, definir-admin, conferir-smtp e
+ * conferir-portao carregam a pasta apoio/ ao lado deles. Copiados sozinhos (sem apoio/), precisam recusar com uma
  * mensagem clara, e não com o erro fatal do PHP, que mostra caminhos internos.
  */
 
@@ -28,6 +28,8 @@ function ferramentasComApoio(): array
         ['auditar-contas.php', 'auditar-contas', []],
         ['remover-conta.php', 'remover-conta', ['SENTINELA-LOGIN']],
         ['definir-admin.php', 'definir-admin', ['--unico=SENTINELA-LOGIN']],
+        ['conferir-smtp.php', 'conferir-smtp', []],
+        ['conferir-portao.php', 'conferir-portao', []],
     ];
 }
 

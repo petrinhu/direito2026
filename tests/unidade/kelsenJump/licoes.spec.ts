@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { LICOES } from '@/conteudo/kelsen-jump/licoes';
+import { LICOES } from '@/conteudo/kelsen-jump';
 import esperado from '../../caracterizacao/rotas.esperado.json';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));

@@ -75,7 +75,7 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
   // Ordem do líder (15/11, item 104): Calendário, separador, os períodos, separador, Novidades e
   // Changelog, separador, e por último a conta. O link "Sobre" (item 107) fica logo abaixo de
   // Changelog, no mesmo bloco (SB-F9).
-  it('ordem: Calendário, os períodos, Novidades, Changelog, Sobre, e por último a conta (admin)', () => {
+  it('ordem: Calendário, os períodos, Game, Novidades, Changelog, Sobre, e por último a conta (admin)', () => {
     const w = montar({ usuario: 'admin-teste', admin: true });
     const topo = w
       .findAll('nav > ul > li > a, nav > ul > li > button')
@@ -83,6 +83,7 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
     expect(topo).toEqual([
       'Calendário',
       '1º período',
+      'Game',
       'Novidades',
       'Changelog',
       'Sobre',
@@ -100,6 +101,7 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
     expect(topo).toEqual([
       'Calendário',
       '1º período',
+      'Game',
       'Novidades',
       'Changelog',
       'Sobre',
@@ -108,11 +110,11 @@ describe('MenuCurriculo, bloco da conta: Gerenciar usuários', () => {
     ]);
   });
 
-  it('separadores: um <hr> entre Calendário e os períodos, outro entre os períodos e Novidades, e um antes da conta', () => {
+  it('separadores: um entre Calendário e os períodos, um antes e um depois do grupo Game, e um antes da conta', () => {
     const logado = montar({ usuario: 'ana', admin: false });
-    expect(logado.findAll('nav > hr.menu-curriculo__separador')).toHaveLength(3);
+    expect(logado.findAll('nav > hr.menu-curriculo__separador')).toHaveLength(4);
     const visitante = montar({ usuario: '', admin: false });
-    expect(visitante.findAll('nav > hr.menu-curriculo__separador')).toHaveLength(2);
+    expect(visitante.findAll('nav > hr.menu-curriculo__separador')).toHaveLength(3);
   });
 
   it('na rota /usuarios, o link de Gerenciar usuários recebe aria-current="page"', () => {

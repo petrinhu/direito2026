@@ -344,12 +344,6 @@ function emailB3SemearConvite(Ambiente $a, string $login, ?string $email): strin
 }
 
 /**
- * Mensagem que o falso gravou no DATA: cabeçalhos (De, Assunto em encoded-word, Para) e corpo decodificados
- * (quoted-printable, TE5). Sem o CRLF final que o MIME acrescenta. Falha se não houver mensagem.
- *
- * @return array{de: string, assunto: string, corpo: string}
- */
-/**
  * Valor do Subject com SÓ encoded-words UTF-8 B, separadas por CRLF e espaço (dobra RFC 5322). Texto solto entre elas,
  * ou fora delas, reprova (BL-B2, A5): o decodificador não pode ignorar o que não é encoded-word.
  */
@@ -358,6 +352,12 @@ function emailB3SubjectEstrito(string $valor): bool
     return preg_match('/^=\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=(?:\r\n =\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=)*$/', $valor) === 1;
 }
 
+/**
+ * Mensagem que o falso gravou no DATA: cabeçalhos (De, Assunto em encoded-word, Para) e corpo decodificados
+ * (quoted-printable, TE5). Sem o CRLF final que o MIME acrescenta. Falha se não houver mensagem.
+ *
+ * @return array{de: string, assunto: string, corpo: string}
+ */
 function emailB3Mensagem(?string $conversa): array
 {
     verdadeiro($conversa !== null, 'o SMTP falso recebeu a conexão e gravou a conversa');

@@ -13,7 +13,7 @@ if (!defined('D26_API')) {
  */
 
 /** CSP do shell do app (seção 1.3). Só o portão a emite, depois de confirmar a sessão. */
-const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src https://stream.srg-ssr.ch https://livestreaming-node-1.srg-ssr.ch https://livestreaming-node-2.srg-ssr.ch https://de2.streamingpulse.com https://radio.stereoscenic.com https://phoebe.streamerr.co:4140 https://0n-chillout.radionetz.de; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+const PORTAO_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
 /** CSP das telas de entrada, troca e indisponível (seção 1.3). A fonte vem do próprio site (OS-F1, R4=A). */
 const PORTAO_CSP_TELA = "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";

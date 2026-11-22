@@ -3,7 +3,6 @@ import type { ConteudoUnidade } from '../unidade/tipos';
 import { removerTags } from './removerTags';
 import { rotuloDaFase } from '../fichamento/filtrarFichas';
 import type { DocumentoBusca } from './tipos';
-import type { TextoIntegral } from '../textoIntegral/tipos';
 
 export interface ParametrosUnidade {
   readonly periodo: string;
@@ -180,60 +179,4 @@ function documentosDosMnemonicos(base: string, conteudo: ConteudoUnidade): Docum
       trecho: trechoDe(corpo)
     };
   });
-}
-
-export interface ParametrosTextoIntegral {
-  readonly periodo: string;
-  readonly cadeira: string;
-  readonly unidade: string;
-  readonly cadeiraRestrita: boolean;
-  readonly unidadePublicada: boolean;
-  readonly texto: TextoIntegral | undefined;
-}
-
-/**
- * Índice do texto integral (EP-F11-BUSCA-TETO), separado do principal: um
- * documento por seção (subtítulo), para o cartão mostrar um trecho curto. O
- * texto antes do primeiro subtítulo fica sob o título do capítulo. Só entra
- * conteúdo público: cadeira restrita e unidade fora de `publicado` ficam de
- * fora, mesma regra do índice principal. Marcador de página nunca entra.
- */
-export function montarDocumentosTextoIntegral(params: ParametrosTextoIntegral): DocumentoBusca[] {
-  const { periodo, cadeira, unidade, cadeiraRestrita, unidadePublicada, texto } = params;
-  if (cadeiraRestrita || !unidadePublicada || !texto) return [];
-
-  const base = `${periodo}/${cadeira}/${unidade}`;
-  const secoes: { titulo: string; partes: string[]; subtitulo: boolean }[] = [
-    { titulo: texto.titulo, partes: [], subtitulo: false }
-  ];
-  for (const bloco of texto.blocos) {
-    if (bloco.tipo === 'subtitulo') {
-      secoes.push({ titulo: bloco.texto, partes: [], subtitulo: true });
-    } else {
-      const paragrafo = bloco.trechos
-        .filter((trecho) => trecho.tipo !== 'pagina')
-        .map((trecho) => trecho.texto)
-        .join('');
-      secoes[secoes.length - 1]?.partes.push(paragrafo);
-    }
-  }
-
-  const documentos: DocumentoBusca[] = [];
-  secoes.forEach((secao, indice) => {
-    // O trecho antes do primeiro subtítulo só vira documento se tiver texto.
-    if (!secao.subtitulo && secao.partes.length === 0) return;
-    const corpo = secao.partes.join(' ').replace(/\s+/g, ' ').trim();
-    documentos.push({
-      id: `${base}/texto#secao-${indice}`,
-      url: `/p/${base}/texto`,
-      periodo,
-      cadeira,
-      unidade,
-      aba: 'texto',
-      titulo: secao.titulo,
-      corpo,
-      trecho: trechoDe(corpo)
-    });
-  });
-  return documentos;
 }

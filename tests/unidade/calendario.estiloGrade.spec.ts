@@ -42,7 +42,7 @@ describe('modo adaptado: texto do evento da grade visível (D2)', () => {
     }
   });
 
-  it('no modo adaptado o rótulo curto da categoria fica visível na grade larga (abaixo, marcador: CAL-ADAPTADO-ROTULOS)', () => {
+  it('no modo adaptado o rótulo curto da categoria fica visível em qualquer largura', () => {
     const corpos = corposDeRegras(`${ADAPTADO} .cal-evento__rotulo`);
     expect(corpos.some((c) => /clip-path:\s*none/.test(c))).toBe(true);
     expect(corpos.some((c) => /position:\s*static/.test(c))).toBe(true);

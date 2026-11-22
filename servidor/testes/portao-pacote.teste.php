@@ -12,7 +12,7 @@ declare(strict_types=1);
  * em dist-pacote/. Ausente: falha, com a instrução de rodar o build (L-36: nada de verde vazio).
  */
 
-const PACOTE_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src https://stream.srg-ssr.ch https://livestreaming-node-1.srg-ssr.ch https://livestreaming-node-2.srg-ssr.ch https://de2.streamingpulse.com https://radio.stereoscenic.com https://phoebe.streamerr.co:4140 https://0n-chillout.radionetz.de; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+const PACOTE_CSP_SHELL = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
 /** Pasta do app do pacote, com manifesto. Ausente é falha com a instrução do build. */
 function pacoteApp(): string

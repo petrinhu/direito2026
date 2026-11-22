@@ -439,7 +439,7 @@ teste('uso simultâneo: U11 esqueci a senha de conta bloqueada: nada enviado, a 
         verdadeiro($conversa === null, 'nenhuma conexão SMTP: a conta bloqueada não recebe o link');
         igual(false, array_key_exists('convite', contaDe($a, 'ana') ?? []), 'nenhum convite gravado');
     });
-}, false);
+}, false, true);
 
 // ---- Predicado (a)+(b)+(c) e reserva, como função pura com $agora -------------------------------
 
@@ -483,7 +483,7 @@ teste('uso simultâneo: o login grava vigenteDesde e vigenteAparelho, com o apar
     $mesmo->get('/api/sessao.php');
     $mesmo->post('/api/entrar.php', ['usuario' => 'ana', 'senha' => US_SENHA_ANA]);
     igual(hash('sha256', (string) $aparelhoA->cookies[D26_DISP_NOME]), contaDe($a, 'ana')['vigenteAparelho'] ?? null, 'aparelho já confiável: sha256 do cookie que chegou');
-}, false);
+}, false, true);
 
 teste('uso simultâneo: cem pedidos de sessão válida não gravam usuarios.json', function (): void {
     $a = usAmbienteComAna();

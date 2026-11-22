@@ -11,7 +11,7 @@ const RAIZ_REPO = __DIR__ . '/../../..';
 
 final class Registro
 {
-    /** @var list<array{nome:string, corpo:callable, servidor:bool}> */
+    /** @var list<array{nome:string, corpo:callable, servidor:bool, laco:bool}> */
     public static array $testes = [];
 
     /** @var list<string> pastas que dirTemporario() criou; apagadas ao fim do teste (Ambiente::limparTudo) */
@@ -27,9 +27,15 @@ final class Registro
     }
 }
 
-function teste(string $nome, callable $corpo, bool $servidor = true): void
+/**
+ * Registra um teste. Duas marcas, cada uma com a sua opção no runner (rodar.php):
+ * - $servidor: precisa do servidor local (php -S). Sai com --sem-servidor.
+ * - $laco: precisa de laço local (escuta em 127.0.0.1) ou de exec. Sai com --sem-laco,
+ *   e sai sozinho quando o ambiente não tem exec nem escuta (pulado por ambiente).
+ */
+function teste(string $nome, callable $corpo, bool $servidor = true, bool $laco = false): void
 {
-    Registro::$testes[] = ['nome' => $nome, 'corpo' => $corpo, 'servidor' => $servidor];
+    Registro::$testes[] = ['nome' => $nome, 'corpo' => $corpo, 'servidor' => $servidor, 'laco' => $laco];
 }
 
 function falhar(string $mensagem): never

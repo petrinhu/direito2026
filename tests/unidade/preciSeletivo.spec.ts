@@ -29,9 +29,7 @@ describe('planejar (classificação do preci seletivo)', () => {
     expect(p.passos.vueTsc.roda).toBe(true);
     expect(p.passos.conteudo.roda).toBe(false);
     expect(p.passos.php.roda).toBe(false);
-    expect(p.passos.php.motivo).toBe(
-      'pulado: nada em servidor/, public/api/ ou public/.htaccess mudou'
-    );
+    expect(p.passos.php.motivo).toBe('pulado: nada em servidor/, public/api/ ou public/.htaccess mudou');
   });
 
   it('só conteúdo: roda validação, citações e R3 da fonte; vitest inclui tests/caracterizacao inteira', () => {

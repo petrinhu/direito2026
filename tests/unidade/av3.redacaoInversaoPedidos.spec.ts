@@ -9,6 +9,8 @@ import { quiz } from '../../src/conteudo/p1/redacao-juridica-1/u3-material-petic
  * AV3-R2 (prazos, garantia e arrependimento): as perguntas 45 a 52 entram no fim, e o total passa a
  * 52 perguntas, 26 de múltipla escolha e 26 de verdadeiro ou falso (ids de 1 a 52, sem buraco).
  * QUIZ-80 (21/11/2026): as perguntas 53 a 80 entram no fim, e o total passa a 80, 40 e 40.
+ * AV3-R1-B (22/11/2026): as perguntas 81 a 88 (audiência de conciliação, Dos Fatos e os três prazos
+ * como a disciplina apresenta) entram no fim, e o total passa a 88, 44 e 44.
  */
 const GABARITO_PUBLICADO: ReadonlyArray<readonly [number, number | boolean]> = [
   [1, 2],
@@ -64,12 +66,12 @@ function textoDaPergunta(p: {
   return [p.enunciadoHtml, ...(p.alternativasHtml ?? []), p.explicacaoHtml ?? ''].join(' ');
 }
 
-describe('Redação u3 AV3-R1-B, AV3-R2 e QUIZ-80: quiz de 80 perguntas (40 e 40)', () => {
-  it('80 perguntas, ids de 1 a 80 sem buraco, 40 de múltipla escolha e 40 de verdadeiro ou falso', () => {
-    expect(quiz).toHaveLength(80);
-    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
-    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(40);
-    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(40);
+describe('Redação u3 AV3-R1-B, AV3-R2 e QUIZ-80: quiz de 88 perguntas (44 e 44)', () => {
+  it('88 perguntas, ids de 1 a 88 sem buraco, 44 de múltipla escolha e 44 de verdadeiro ou falso', () => {
+    expect(quiz).toHaveLength(88);
+    expect(quiz.map((p) => p.id)).toEqual(Array.from({ length: 88 }, (_, i) => i + 1));
+    expect(quiz.filter((p) => p.tipo === 'verdadeiro-ou-falso')).toHaveLength(44);
+    expect(quiz.filter((p) => p.tipo !== 'verdadeiro-ou-falso')).toHaveLength(44);
   });
 
   it('múltipla escolha tem cinco alternativas e correta dentro da faixa', () => {
@@ -143,6 +145,45 @@ describe('Redação u3 AV3-R2: perguntas 45 a 52 (prazos, garantia e arrependime
         expect(multipla?.alternativasHtml, 'alternativas da pergunta ' + id).toHaveLength(5);
         expect(p?.correta, 'correta da pergunta ' + id).toBeGreaterThanOrEqual(0);
         expect(p?.correta, 'correta da pergunta ' + id).toBeLessThan(5);
+      }
+    }
+  );
+});
+
+type LinhaDaTabela = readonly [number, 'me' | 'vf', number | boolean, string, boolean];
+
+/**
+ * AV3-R1-B (22/11/2026, decisões do líder): tabela do aceite das perguntas 81 a 88, fixada antes de
+ * rodar os testes (L-43). Cada linha: id, forma ('me' ou 'vf'), gabarito (índice da correta na
+ * múltipla escolha, booleano no verdadeiro ou falso), categoria e fonteExtra (true só nas que usam a
+ * Lei 9.099/1995, que não tem id nos dispositivos).
+ */
+const TABELA_81_A_88: ReadonlyArray<LinhaDaTabela> = [
+  [81, 'me', 3, 'peticao', true],
+  [82, 'vf', true, 'peticao', true],
+  [83, 'me', 2, 'peticao', false],
+  [84, 'vf', false, 'peticao', false],
+  [85, 'me', 3, 'consumo-prazos-garantias', false],
+  [86, 'vf', true, 'consumo-prazos-garantias', false],
+  [87, 'me', 4, 'consumo-prazos-garantias', false],
+  [88, 'vf', false, 'consumo-prazos-garantias', false]
+];
+
+describe('Redação u3 AV3-R1-B: perguntas 81 a 88 (audiência, Dos Fatos e os três prazos)', () => {
+  it.each(TABELA_81_A_88)(
+    'pergunta %i: forma, gabarito, categoria e fonteExtra conforme a tabela',
+    (id, forma, gabarito, categoria, fonteExtra) => {
+      const p = quiz.find((q) => q.id === id);
+      expect(p, 'pergunta ' + id).toBeDefined();
+      expect(p?.categoria, 'categoria da pergunta ' + id).toBe(categoria);
+      expect(p?.fonteExtra, 'fonteExtra da pergunta ' + id).toBe(fonteExtra);
+      expect(p?.correta, 'gabarito da pergunta ' + id).toBe(gabarito);
+      if (forma === 'vf') {
+        expect(p?.tipo, 'tipo da pergunta ' + id).toBe('verdadeiro-ou-falso');
+      } else {
+        expect(p?.tipo, 'tipo da pergunta ' + id).not.toBe('verdadeiro-ou-falso');
+        const multipla = p?.tipo !== 'verdadeiro-ou-falso' ? p : undefined;
+        expect(multipla?.alternativasHtml, 'alternativas da pergunta ' + id).toHaveLength(5);
       }
     }
   );

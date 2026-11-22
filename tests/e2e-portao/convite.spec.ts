@@ -424,9 +424,18 @@ async function prazoEsperadoPelaApi(page: Page): Promise<string> {
     if (!conta || conta.convite !== 'pendente' || typeof conta.conviteExpiraEm !== 'number') {
       throw new Error('a API não lista o convite pendente da conta de teste');
     }
-    const d = new Date(conta.conviteExpiraEm * 1000);
-    const dois = (n: number): string => String(n).padStart(2, '0');
-    return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+    // O painel mostra o prazo no fuso de Recife (ADM-FUSO-PRAZO), não no do navegador onde o teste roda.
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Recife',
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date(conta.conviteExpiraEm * 1000));
+    const campo = (tipo: string): string => partes.find((p) => p.type === tipo)?.value ?? '';
+    const hora = campo('hour') === '24' ? '00' : campo('hour');
+    return `${campo('day')}/${campo('month')} ${hora}:${campo('minute')}`;
   }, LOGIN_CONVIDADO);
 }
 

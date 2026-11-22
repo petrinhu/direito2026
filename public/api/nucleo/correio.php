@@ -594,7 +594,7 @@ function d26_correio_msg_convite(string $destino, string $login, string $link): 
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
-        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.");
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -611,7 +611,7 @@ function d26_correio_msg_redefinicao(string $destino, string $login, string $lin
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Esta caixa não recebe respostas.");
+        . "Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -624,7 +624,7 @@ function d26_correio_msg_senha_criada(string $destino, string $login): array
     return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_SENHA_CRIADA,
         "Olá.\n\n"
         . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
-        . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.");
+        . "Se não foi você, avise quem administra o site. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -641,7 +641,7 @@ function d26_correio_msg_esqueci(string $destino, string $login, string $link): 
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.");
+        . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**

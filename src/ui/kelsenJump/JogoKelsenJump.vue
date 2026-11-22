@@ -178,9 +178,30 @@ onBeforeUnmount(() => {
         type="button"
         class="kj__mudo"
         :aria-pressed="mudo ? 'true' : 'false'"
+        :aria-label="mudo ? 'Ligar o som' : 'Desligar o som'"
         @click="alternarMudo"
       >
-        Mudo
+        <svg
+          class="kj__mudo-icone"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" />
+          <template v-if="!mudo">
+            <path d="M16 9a4 4 0 0 1 0 6" />
+            <path d="M18.5 6.5a8 8 0 0 1 0 11" />
+          </template>
+          <template v-else>
+            <circle cx="18" cy="18" r="4.5" />
+            <line x1="14.8" y1="14.8" x2="21.2" y2="21.2" />
+          </template>
+        </svg>
       </button>
     </div>
 
@@ -241,12 +262,21 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .kj__mudo {
-  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.25rem;
   color: var(--cor-texto);
   background: var(--cor-fundo);
   border: 2px solid var(--cor-texto);
-  padding: 0.25rem 0.75rem;
   cursor: pointer;
+}
+.kj__mudo-icone {
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: visible;
 }
 .kj__mudo[aria-pressed='true'] {
   background: var(--cor-texto);

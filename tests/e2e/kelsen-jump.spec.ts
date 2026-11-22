@@ -22,3 +22,17 @@ test('Kelsen Jump: a rota abre, o espaço inicia o jogo e a pontuação aparece'
     .poll(async () => Number(await placar.textContent()), { timeout: 1500 })
     .toBeGreaterThan(0);
 });
+
+test('Kelsen Jump: o botão de som tem nome acessível e alterna entre ligado e mudo', async ({
+  page
+}) => {
+  await page.goto('/kelsen-jump');
+  const somLigado = page.getByRole('button', { name: 'Desligar o som' });
+  await expect(somLigado).toBeVisible();
+  await expect(somLigado).toHaveAttribute('aria-pressed', 'false');
+
+  await somLigado.click();
+  const somMudo = page.getByRole('button', { name: 'Ligar o som' });
+  await expect(somMudo).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Desligar o som' })).toHaveCount(0);
+});

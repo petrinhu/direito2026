@@ -35,14 +35,16 @@ export interface UsuarioAdmin {
 
 /**
  * O que o servidor fez com o e-mail do convite: `enviado`, `falhou` (a conta e o link existem mesmo assim) ou
- * `sem-email` (conta sem endereço: só o link vai para copiar).
+ * `sem-email` (conta sem endereço: só o link vai para copiar) ou `teto` (limite diário de envios do site atingido: o
+ * link vai para copiar, e o e-mail não saiu).
  */
-export type EnvioDoEmail = 'enviado' | 'falhou' | 'sem-email';
+export type EnvioDoEmail = 'enviado' | 'falhou' | 'sem-email' | 'teto';
 
 const ENVIOS_DO_EMAIL: ReadonlySet<string> = new Set<EnvioDoEmail>([
   'enviado',
   'falhou',
-  'sem-email'
+  'sem-email',
+  'teto'
 ]);
 
 export type AcaoUsuario =

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Curriculo } from '@/core/curriculo/tipos';
+import { CHAVE_RADIO, CHAVE_SESSAO } from '@/app/chaves';
 import type { StoreTema } from '@/app/stores/tema';
 import type { StoreBusca } from '@/app/stores/busca';
 import type { StoreModoAdaptado } from '@/app/stores/modoAdaptado';
@@ -9,6 +10,7 @@ import BotaoModoAdaptado from '../componentes/BotaoModoAdaptado.vue';
 import CampoBusca from '../componentes/CampoBusca.vue';
 import SeloHome from '../componentes/SeloHome.vue';
 import TrilhaNavegacao from '../componentes/TrilhaNavegacao.vue';
+import TocadorRadio from '../componentes/TocadorRadio.vue';
 
 const props = defineProps<{
   curriculo: Curriculo;
@@ -25,6 +27,11 @@ const props = defineProps<{
   gavetaAberta?: boolean;
 }>();
 const emit = defineEmits<{ 'abrir-gaveta': []; buscar: [string] }>();
+
+// Tocador de rádio: só aparece com sessão (item 42). Sem a chave (teste sem o composition root), não aparece.
+const storeRadio = inject(CHAVE_RADIO, null);
+const sessao = inject(CHAVE_SESSAO, null);
+const mostrarTocador = computed(() => (sessao?.usuario.value ?? '') !== '');
 
 /**
  * Cabeçalho que recolhe ao rolar para baixo e volta ao rolar para cima
@@ -170,6 +177,7 @@ onBeforeUnmount(() => {
         class="barra-topo__trilha"
       />
       <CampoBusca :store="storeBusca" @enviar="(termo) => emit('buscar', termo)" />
+      <TocadorRadio v-if="storeRadio && mostrarTocador" :store="storeRadio" />
       <BotaoModoAdaptado v-if="!storeModoAdaptado.suspenso.value" :store="storeModoAdaptado" />
       <AlternadorTema :store="storeTema" />
     </div>
@@ -271,6 +279,21 @@ onBeforeUnmount(() => {
 @media (min-width: 881px) {
   :root[data-modo-adaptado='on'] .barra-topo {
     margin-bottom: 0;
+  }
+}
+
+/*
+  EP-F11.7-TRILHA (decisão do líder): no modo adaptado, acima de 880 px, a trilha tem linha
+  própria, abaixo da linha da marca, da busca e dos botões. Dividindo a linha, a trilha de
+  8rem de base ficava com cerca de 115 px por nível e quebrava em 4 ou mais linhas (cabeçalho
+  de 440 a 698 px a 1280). O `order` leva a trilha para o fim sem cortar nenhum nível. Pelo
+  `order`, a ordem de Tab segue o markup (trilha antes da busca) e não a visual (trilha embaixo):
+  descasamento de foco pendente, sem item próprio no TODO ainda.
+*/
+@media (min-width: 881px) {
+  :root[data-modo-adaptado='on'] .barra-topo__trilha {
+    flex-basis: 100%;
+    order: 1;
   }
 }
 

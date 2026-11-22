@@ -1,15 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Cadeira, Periodo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 
-defineProps<{
-  periodo: Periodo;
-  cadeira: Cadeira;
-  unidade: ReferenciaUnidade;
-  href: string;
-  progresso?: { lidos: number; total: number };
-}>();
+const props = withDefaults(
+  defineProps<{
+    periodo: Periodo;
+    cadeira: Cadeira;
+    unidade: ReferenciaUnidade;
+    href: string;
+    progresso?: { lidos: number; total: number };
+    /**
+     * Nível do cabeçalho do cartão. Quem monta a página decide: o cartão
+     * não pode pular nível (EP-F11-CADEIRA-SECOES). Padrão 3, como na home.
+     */
+    nivelCabecalho?: 2 | 3 | 4 | 5 | 6;
+  }>(),
+  { nivelCabecalho: 3 }
+);
+
+const tagCabecalho = computed(() => `h${props.nivelCabecalho}`);
 </script>
 
 <template>
@@ -26,7 +37,9 @@ defineProps<{
   -->
   <a v-else :href="href" class="cartao-unidade">
     <span class="cartao-unidade__rotulo">{{ periodo.rotulo }} · {{ unidade.rotulo }}</span>
-    <h3 class="cartao-unidade__cadeira">{{ rotuloSemViuva(cadeira.nome) }}</h3>
+    <component :is="tagCabecalho" class="cartao-unidade__cadeira">{{
+      rotuloSemViuva(cadeira.nome)
+    }}</component>
     <p class="cartao-unidade__titulo">{{ unidade.titulo }}</p>
     <span v-if="progresso" class="cartao-unidade__progresso">
       {{ progresso.lidos }} de {{ progresso.total }} blocos lidos

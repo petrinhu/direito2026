@@ -1,14 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { rotas } from './rotas';
+import { rolagemDaTroca } from './rolagem';
 
 export function criarRouter() {
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: rotas,
-    scrollBehavior(to) {
-      if (to.hash) return { el: to.hash, behavior: 'smooth' };
-      return { top: 0 };
-    }
+    scrollBehavior: rolagemDaTroca
   });
 
   // Seção 11 da arquitetura: na troca de rota, o foco vai para o <h1> (aqui,

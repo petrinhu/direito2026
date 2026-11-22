@@ -6,6 +6,7 @@ Este README é o hub: aponta para a documentação, não a repete.
 
 ## Documentação
 
+- [`docs/guia-iniciante.md`](docs/guia-iniciante.md): comece por aqui se você é iniciante em computação. Explica o projeto e o jargão, com links para os documentos abaixo.
 - [`docs/arquitetura.md`](docs/arquitetura.md): a especificação. Estrutura de pastas, modelo de dados, roteamento, componentes, busca, progresso, impressão, acesso com login, acessibilidade, citação legal, testes, publicação e o fatiamento em ondas.
 - [`docs/como-adicionar-conteudo.md`](docs/como-adicionar-conteudo.md): roteiro para acrescentar unidade, cadeira, período, pergunta de quiz, calendário e aviso legal, caso por caso.
 - [`docs/compatibilidade-navegadores.md`](docs/compatibilidade-navegadores.md): fonte única das regras de navegador (Chrome, Firefox, Safari, Edge).

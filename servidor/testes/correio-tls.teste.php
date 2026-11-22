@@ -31,7 +31,7 @@ teste('e-mail: E20t handshake com nome certo e CA de teste: passa, e o AUTH só 
         $desfazer();
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E21t nome errado no certificado falha em tls e nenhuma linha SMTP chega ao servidor', function (): void {
     correioCarregar();
@@ -50,7 +50,7 @@ teste('e-mail: E21t nome errado no certificado falha em tls e nenhuma linha SMTP
         $desfazer();
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E22t certificado autoassinado falha em tls mesmo com nome certo e nenhuma linha SMTP chega ao servidor', function (): void {
     correioCarregar();
@@ -67,7 +67,7 @@ teste('e-mail: E22t certificado autoassinado falha em tls mesmo com nome certo e
         $desfazer();
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E23t servidor de texto puro falha em tls sem receber EHLO nem AUTH', function (): void {
     correioCarregar();
@@ -87,7 +87,7 @@ teste('e-mail: E23t servidor de texto puro falha em tls sem receber EHLO nem AUT
         $desfazer();
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E25t prazo do handshake vale: servidor mudo durante o TLS falha em tls no prazo total, não no prazo de leitura', function (): void {
     correioCarregar();
@@ -104,7 +104,7 @@ teste('e-mail: E25t prazo do handshake vale: servidor mudo durante o TLS falha e
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E24t alvo de produção (litespeed e fpm) é TLS: tls === true, e o teste de loopback não o desliga', function (): void {
     correioCarregar();

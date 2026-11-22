@@ -63,7 +63,7 @@ describe('LayoutBase, botão Home fora da página inicial', () => {
     montado = montarLayout('p/p1/intr-direito');
     const pilha = document.querySelector('.layout-base__inferior');
     const botao = pilha?.querySelector('.botao-home');
-    expect(botao?.parentElement).toBe(pilha);
+    expect(botao?.closest('nav')?.parentElement).toBe(pilha);
     expect(botao?.closest('.quadro-prova')).toBeNull();
     expect(pilha?.querySelector('.quadro-prova')).not.toBeNull();
   });

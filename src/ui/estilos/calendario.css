@@ -366,7 +366,7 @@
   }
 }
 
-/* Modo adaptado (baixa visão): preto sobre branco, rótulo sempre visível. */
+/* Modo adaptado (baixa visão): preto sobre branco, rótulo visível na grade larga (ver CAL-ADAPTADO-ROTULOS, no fim do arquivo). */
 :root[data-modo-adaptado='on'] .cal-chip,
 :root[data-modo-adaptado='on'] .grade-calendario .fc-event {
   background: #ffffff;
@@ -473,4 +473,82 @@
    de conteúdo, quebrava no meio da palavra). Mesmo critério do h1 de Unidade.vue. */
 :root[data-modo-adaptado='on'] .calendario__titulo {
   font-size: min(var(--escala-xl), 12vw);
+}
+
+/* CAL-ADAPTADO-ROTULOS. Leitura ampliada: a fonte da grade tem 24px, e um rótulo como "Feriado"
+   não cabe numa célula de 98px (768 e 1024) nem de 44px (360). A forma do evento depende da
+   largura da GRADE, não do viewport (a lateral muda a conta), por isso o container query:
+   - grade de 900px ou mais (célula de ~128px): título e rótulo quebram nas palavras e a célula cresce;
+   - grade menor: o evento mostra só um marcador preto (forma, não cor). O nome completo continua no
+     título, lido por leitor de tela e no tooltip, e na lista de datas do mês.
+   Só o modo adaptado: o normal segue com as regras de cima. */
+:root[data-modo-adaptado='on'] .grade-calendario {
+  container-type: inline-size;
+}
+
+:root[data-modo-adaptado='on'] .grade-calendario .cal-evento__titulo,
+:root[data-modo-adaptado='on'] .grade-calendario .cal-evento__rotulo {
+  display: block;
+  -webkit-line-clamp: none;
+  max-height: none;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-overflow: clip;
+}
+
+/* Barra de vários dias: o trecho que continua da semana anterior (ou segue para a próxima) mostra só
+   o rótulo. O título longo repetido em cada trecho ficaria alto demais na célula. */
+:root[data-modo-adaptado='on']
+  .grade-calendario
+  .fc-event:not(.fc-event-start)
+  .cal-evento__titulo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  clip-path: inset(50%);
+}
+
+@container (max-width: 899px) {
+  :root[data-modo-adaptado='on'] .grade-calendario .cal-evento__titulo,
+  :root[data-modo-adaptado='on'] .grade-calendario .cal-evento__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    clip-path: inset(50%);
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-event {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.5rem;
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-event::before {
+    content: '';
+    flex: none;
+    width: 0.5em;
+    height: 0.5em;
+    background: #000000;
+  }
+}
+
+/* CAL-SEMANA-360. Cabeçalhos dos dias em grade estreita (menos de 560px, celular): cada um mostra só a
+   primeira letra, em maiúscula e no tamanho da leitura ampliada. "dom." tem 71px a 24px e a coluna de 360px
+   tem 44px, então abreviação de três letras não cabe; reduzir a fonte até caber (~15px) deixaria o
+   cabeçalho menor que o do modo normal (17px). O texto inteiro sai da vista (font-size 0) mas continua no
+   DOM, e o nome completo é o aria-label do cabeçalho (lido por leitor de tela). ::first-letter só pega em
+   bloco, por isso display inline-block. */
+@container (max-width: 559px) {
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-col-header-cell-cushion {
+    display: inline-block;
+    font-size: 0;
+  }
+
+  :root[data-modo-adaptado='on'] .grade-calendario .fc-col-header-cell-cushion::first-letter {
+    font-size: var(--escala-base, 1.5rem);
+    text-transform: uppercase;
+  }
 }

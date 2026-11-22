@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { contadorProva } from '@/app/calendario/contadorProva';
 import {
   gravarEscolha,
@@ -19,6 +19,8 @@ import ModalCalendario from './ModalCalendario.vue';
  * Vale só sem escolha gravada: se a pessoa tocar em Mostrar, a escolha vale.
  */
 const props = defineProps<{ agora?: Date; minimizadoPorPadrao?: boolean }>();
+/** Avisa o layout quando o quadro minimiza ou expande (o calendário o leva ao topo ao expandir). */
+const emit = defineEmits<{ 'mudou-minimizado': [minimizado: boolean] }>();
 
 const contador = computed(() => contadorProva(props.agora ?? new Date()));
 
@@ -31,33 +33,23 @@ function armazenamentoPadrao(): ArmazenamentoSimples | undefined {
 }
 
 /**
- * Modo adaptado em tela de até 340px (decisão do líder, 20/10/2026): o quadro
- * começa minimizado, a letra continua grande, e só abre se a pessoa tocar em
- * Mostrar. O modo vem do atributo data-modo-adaptado no <html> (o mesmo que o
- * MapaMentalVisor lê), e a largura, de matchMedia. Os dois reagem com a página
- * aberta. Sem escolha da pessoa, vale o padrão; com escolha, vale a escolha.
+ * Abaixo de 480px de janela o quadro começa minimizado, com ou sem modo adaptado (decisão do líder,
+ * 21/11/2026: "Abrir minimizado no celular"). A largura vem de matchMedia e reage com a página aberta.
+ * Sem escolha da pessoa, vale o padrão; com escolha gravada, vale a escolha, e o padrão não a regrava.
  */
-const CONSULTA_TELA_ESTREITA = '(max-width: 340px)';
+const CONSULTA_TELA_ESTREITA = '(max-width: 479px)';
 const consultaTelaEstreita =
   typeof matchMedia === 'function' ? matchMedia(CONSULTA_TELA_ESTREITA) : undefined;
 
-function modoAdaptadoLigadoNaRaiz(): boolean {
-  return document.documentElement.getAttribute('data-modo-adaptado') === 'on';
-}
-
-const modoAdaptadoLigado = ref(modoAdaptadoLigadoNaRaiz());
 const telaEstreita = ref(consultaTelaEstreita?.matches ?? false);
-const padraoMinimizado = computed(
-  () => (props.minimizadoPorPadrao ?? false) || (modoAdaptadoLigado.value && telaEstreita.value)
-);
+const padraoMinimizado = computed(() => (props.minimizadoPorPadrao ?? false) || telaEstreita.value);
 
 // Só o toque da pessoa (Mostrar ou Minimizar) conta como escolha na faixa atual.
 const escolhaDaPessoa = ref<boolean | undefined>(
   contador.value ? lerEscolha(armazenamentoPadrao(), contador.value.faixa) : undefined
 );
 const minimizado = computed(() => escolhaDaPessoa.value ?? padraoMinimizado.value);
-
-let observadorModo: InstanceType<typeof window.MutationObserver> | undefined;
+watch(minimizado, (valor) => emit('mudou-minimizado', valor), { immediate: true });
 
 function aoMudarLargura(): void {
   telaEstreita.value = consultaTelaEstreita?.matches ?? false;
@@ -65,18 +57,10 @@ function aoMudarLargura(): void {
 
 onMounted(() => {
   consultaTelaEstreita?.addEventListener('change', aoMudarLargura);
-  observadorModo = new window.MutationObserver(() => {
-    modoAdaptadoLigado.value = modoAdaptadoLigadoNaRaiz();
-  });
-  observadorModo.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-modo-adaptado']
-  });
 });
 
 onBeforeUnmount(() => {
   consultaTelaEstreita?.removeEventListener('change', aoMudarLargura);
-  observadorModo?.disconnect();
 });
 
 // Mudou de faixa de urgência: a escolha da faixa anterior não vale mais. O reset
@@ -90,11 +74,16 @@ watch(
   }
 );
 
-function alternar(): void {
+function alternar(evento: MouseEvent): void {
   const faixa = contador.value?.faixa;
   if (!faixa) return;
+  // Mudar de lugar (Teleport para o topo do calendário) tira o foco do botão: ele volta a ser
+  // focado depois da troca, para quem usa teclado não perder o lugar (regressão de teclado).
+  const botao = evento.currentTarget as HTMLButtonElement;
+  const tinhaFoco = document.activeElement === botao;
   escolhaDaPessoa.value = !minimizado.value;
   gravarEscolha(armazenamentoPadrao(), faixa, escolhaDaPessoa.value);
+  if (tinhaFoco) void nextTick(() => botao.focus({ preventScroll: true }));
 }
 
 function resumoCurto(dias: number): string {

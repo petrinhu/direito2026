@@ -122,6 +122,49 @@ describe('criarSessaoGlobal', () => {
     expect(ordem).toEqual(['limpar', 'substituir:/']);
   });
 
+  it('conferirAoVoltar durante o Sair não recarrega: a troca para / é o destino', async () => {
+    const { navegador, ordem } = criarNavegadorFalso();
+    const cliente = criarClienteFalso({ autenticado: false });
+    let terminarSair: () => void = () => undefined;
+    cliente.sair.mockImplementationOnce(
+      () =>
+        new Promise<undefined>((resolver) => {
+          terminarSair = () => resolver(undefined);
+        })
+    );
+    const sessao = criarSessaoGlobal({ cliente, navegador });
+
+    const saindo = sessao.sair();
+    await sessao.conferirAoVoltar();
+    terminarSair();
+    await saindo;
+
+    expect(navegador.recarregar).not.toHaveBeenCalled();
+    expect(ordem).toEqual(['limpar', 'substituir:/']);
+  });
+
+  it('conferirAoVoltar já em voo quando o Sair começa não recarrega depois de a resposta chegar', async () => {
+    const { navegador, ordem } = criarNavegadorFalso();
+    const cliente = criarClienteFalso({ autenticado: false });
+    let responderSessao: (valor: { autenticado: boolean }) => void = () => undefined;
+    cliente.sessao.mockImplementationOnce(
+      () =>
+        new Promise<{ autenticado: boolean }>((resolver) => {
+          responderSessao = resolver;
+        })
+    );
+    const sessao = criarSessaoGlobal({ cliente, navegador });
+
+    const conferindo = sessao.conferirAoVoltar();
+    const saindo = sessao.sair();
+    responderSessao({ autenticado: false });
+    await conferindo;
+    await saindo;
+
+    expect(navegador.recarregar).not.toHaveBeenCalled();
+    expect(ordem).toEqual(['limpar', 'substituir:/']);
+  });
+
   it('sair numa sessão derrubada (403 csrf pelo transporte de verdade) só navega para /, uma vez', async () => {
     const { navegador, ordem } = criarNavegadorFalso('/p/p1/interdisciplinar?x=1');
     const aoNaoAutorizado = criarAoNaoAutorizado(navegador);

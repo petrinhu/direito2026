@@ -99,8 +99,8 @@ Ordens do líder de 21/11/2026, na forma em que ele escreveu: "Quero a melhor ef
 
 ### A publicação
 
-- A publicação vem antes de tudo. Ela roda na hora e não entra na fila da `pesado.trava`, que não respeita a ordem de chegada. Enquanto ela roda, nenhum agente roda trabalho pesado.
-- Preparar uma parte para a fila é trazer os commits dela e rodar só os passos leves: eslint e prettier nos arquivos tocados, `verificar-particao` e camadas. Os pesados rodam na vez da parte, porque o pré-CI da publicação já roda a suíte.
+- A publicação vem antes de tudo. Ela roda na hora e não entra na fila da `pesado.trava`, que não respeita a ordem de chegada. Enquanto ela roda, os agentes podem rodar só um trabalho pesado por vez, dentro da `pesado.trava`, com `nice -n 19` e memória limitada a 6 GB; a publicação fica com a prioridade da máquina. Ajuste do líder de 21/11/2026, por AskUserQuestion: "Ajustar: um pesado por vez, nice 19".
+- Preparar uma parte para a fila é trazer os commits dela e rodar só os passos leves: eslint e prettier nos arquivos tocados, `verificar-particao` e camadas. Os testes de navegador e do servidor da parte rodam na fila da `pesado.trava`, um por vez; a suíte de unidade fica para o pré-CI da publicação.
 - Rodada que cai por causa da máquina (tempo estourado, processo morto, falta de processos ou de memória) não é reprovação do código. Ela se repete uma vez, com a máquina livre, sem afrouxar teste nenhum.
 
 ### O pré-CI

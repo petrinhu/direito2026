@@ -70,7 +70,7 @@ function pausaEsperarChegada(array $req, Ambiente $a, string $ponto, int $n = 1,
     foreach ([$req, ...$outros] as $r) {
         $diag[] = curl_getinfo($r[1], CURLINFO_RESPONSE_CODE) . ':' . substr((string) curl_multi_getcontent($r[1]), 0, 120);
     }
-    falhar("ninguém chegou ao ponto de pausa '$ponto' (o gancho não existe no código?) [" . implode(' | ', $diag) . ']');
+    falhar("ninguém chegou ao ponto de pausa '$ponto' em 15 s: cada pedido respondeu assim (código:início do corpo) [" . implode(' | ', $diag) . ']');
 }
 
 /** Espera o sinal PRIV/sinal-<nome> do servidor (cache de stat limpo a cada volta). Teto de 15 s. */

@@ -19,8 +19,10 @@ import {
  * 3. O Quiz (sem triângulo) alinha com o Resumo, e todo triângulo fica à
  *    esquerda do texto da própria linha.
  *
- * Mínimo: 12 px nos modos normais, 6 px no modo adaptado (decisão do líder,
- * 13/11/2026: recuo menor no adaptado, mas sempre para dentro, nunca invertido).
+ * Mínimo: 12 px nos modos normais, 6 px no modo adaptado. O 6 px é decisão do
+ * líder de 21/11/2026 ("Manter 6 px"): recuo menor no adaptado, sempre para
+ * dentro, nunca invertido. A origem escrita do recuo menor é a decisão do líder de
+ * 13/11/2026 ("Recuo menor e hifenização", TODO.md, AV3-F0c).
  */
 const ROTA = '/p/p1/intr-direito/u1';
 const LARGURAS = [1920, 1280, 360] as const;

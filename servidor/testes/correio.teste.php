@@ -216,7 +216,7 @@ teste('e-mail: E10t envio bem-sucedido: EHLO, AUTH PLAIN, MAIL FROM, um RCPT, ca
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E11t linha do corpo que começa com ponto chega duplicada no fio e volta simples ao decodificar', function (): void {
     correioCarregar();
@@ -236,7 +236,7 @@ teste('e-mail: E11t linha do corpo que começa com ponto chega duplicada no fio 
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E12t resposta de várias linhas é lida inteira; só AUTH LOGIN anunciado faz LOGIN', function (): void {
     correioCarregar();
@@ -258,7 +258,7 @@ teste('e-mail: E12t resposta de várias linhas é lida inteira; só AUTH LOGIN a
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E13t falhas de 535, 550, conexão fechada no DATA e servidor mudo dão a etapa e o código; erros.log sem endereço nem texto do servidor', function (): void {
     correioCarregar();
@@ -315,7 +315,7 @@ teste('e-mail: E13t falhas de 535, 550, conexão fechada no DATA e servidor mudo
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E14t destinatário, assunto ou cabeçalho com CR, LF ou NUL recusa antes de conectar', function (): void {
     correioCarregar();
@@ -337,7 +337,7 @@ teste('e-mail: E14t destinatário, assunto ou cabeçalho com CR, LF ou NUL recus
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E15t smtp.senha ausente, vazio, com 257 bytes ou com modo 644 recusa, classe smtp-senha, sem conteúdo no log', function (): void {
     correioCarregar();
@@ -361,7 +361,7 @@ teste('e-mail: E15t smtp.senha ausente, vazio, com 257 bytes ou com modo 644 rec
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E16t contexto TLS de produção: verify_peer, verify_peer_name, peer_name e allow_self_signed como no plano', function (): void {
     correioCarregar();
@@ -410,7 +410,7 @@ teste('e-mail: E17t D26_SMTP_TESTE fora do cli-server é ignorado; sob cli-serve
         $a?->parar();
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 /** Ambiente php -S com a sonda de envio no webroot copiado (só do teste). */
 function correioAmbienteSonda(): Ambiente
@@ -487,7 +487,7 @@ teste('e-mail: E19t conferir-smtp contra o SMTP falso: auth sim sem MAIL FROM; 5
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E29t escrita do DATA tem prazo: servidor que para de ler depois do 354 falha em dados no prazo, sem pendurar', function (): void {
     correioCarregar();
@@ -508,4 +508,4 @@ teste('e-mail: E29t escrita do DATA tem prazo: servidor que para de ler depois d
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);

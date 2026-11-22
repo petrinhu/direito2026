@@ -90,7 +90,7 @@ const e1Corpo = (login: string): string =>
     '',
     'Se você não esperava esta mensagem, pode ignorá-la.',
     '',
-    'Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail.'
+    'Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.'
   ].join('\n');
 const E2_ASSUNTO = 'Link para criar uma senha nova';
 const e2Corpo = (login: string): string =>
@@ -104,7 +104,7 @@ const e2Corpo = (login: string): string =>
     FRASE_COPIA_DO_EMAIL,
     '<link>',
     '',
-    'Se não foi você, ignore esta mensagem: nada muda na sua conta. Não responda a este e-mail.'
+    'Se não foi você, ignore esta mensagem: nada muda na sua conta. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.'
   ].join('\n');
 const E3_ASSUNTO = 'Sua senha foi redefinida';
 const e3Corpo = (login: string): string =>
@@ -118,7 +118,7 @@ const e3Corpo = (login: string): string =>
     FRASE_COPIA_DO_EMAIL,
     '<link>',
     '',
-    'Não responda a este e-mail.'
+    'Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.'
   ].join('\n');
 const E4_ASSUNTO = 'Sua senha foi criada';
 const e4Corpo = (login: string): string =>
@@ -127,7 +127,7 @@ const e4Corpo = (login: string): string =>
     '',
     `A senha do usuário ${login} acabou de ser criada pelo link enviado a este e-mail.`,
     '',
-    'Se não foi você, avise quem administra o site. Não responda a este e-mail.'
+    'Se não foi você, avise quem administra o site. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.'
   ].join('\n');
 const FRASE_UNICA_DO_ESQUECI =
   'Se houver uma conta com esse usuário ou e-mail, o link para criar a senha nova chega ao e-mail dela em alguns minutos. Confira também a pasta de spam.';

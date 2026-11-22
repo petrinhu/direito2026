@@ -423,7 +423,7 @@ function emailB3CorpoConvite(string $login, string $link): string
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
-        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail.";
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Texto ratificado do E3 (redefinir), byte a byte. */
@@ -435,7 +435,7 @@ function emailB3CorpoRedefinicao(string $login, string $link): string
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Não responda a este e-mail.";
+        . "Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Texto ratificado do E4 (senha criada), byte a byte. */
@@ -443,7 +443,7 @@ function emailB3CorpoSenhaCriada(string $login): string
 {
     return "Olá.\n\n"
         . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
-        . "Se não foi você, avise quem administra o site. Não responda a este e-mail.";
+        . "Se não foi você, avise quem administra o site. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Criar pela API de admin. @param array<string, mixed> $corpo */

@@ -56,3 +56,50 @@ test('Kelsen Jump: o botão de som tem nome acessível e alterna entre ligado e 
   await expect(somMudo).toHaveClass(/kj__mudo--mudo/);
   await expect(page.getByRole('button', { name: 'Desligar o som' })).toHaveCount(0);
 });
+
+/**
+ * Teclado sem clique no jogo (defeito 1.18.35.0): o foco fica no corpo da página, não no canvas. O
+ * Espaço e a seta precisam agir no Kelsen e não rolar a página; no botão de som, o Espaço é do botão.
+ */
+test.describe('teclado sem clicar no jogo', () => {
+  test.use({ viewport: { width: 800, height: 500 } });
+
+  test('Espaço pula sem clicar no canvas, e a página não rola', async ({ page }) => {
+    await page.goto('/kelsen-jump');
+    const tela = page.getByRole('img', { name: /Kelsen Jump/ });
+    await expect(tela).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight)
+    ).toBe(true);
+
+    await page.keyboard.press('Space');
+    await expect(tela).toHaveAttribute('data-pose', 'pulando');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  });
+
+  test('Seta para baixo abaixa sem clicar no canvas, e a página não rola', async ({ page }) => {
+    await page.goto('/kelsen-jump');
+    const tela = page.getByRole('img', { name: /Kelsen Jump/ });
+    await expect(tela).toBeVisible();
+    await page.keyboard.press('Space');
+    await expect(tela).toHaveAttribute('data-pose', 'correndo');
+
+    await page.keyboard.down('ArrowDown');
+    await expect(tela).toHaveAttribute('data-pose', 'abaixado');
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await page.keyboard.up('ArrowDown');
+    await expect(tela).toHaveAttribute('data-pose', 'correndo');
+  });
+
+  test('Espaço com o foco no botão de som alterna o som e não faz o Kelsen pular', async ({
+    page
+  }) => {
+    await page.goto('/kelsen-jump');
+    const tela = page.getByRole('img', { name: /Kelsen Jump/ });
+    const somLigado = page.getByRole('button', { name: 'Desligar o som' });
+    await somLigado.focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('button', { name: 'Ligar o som' })).toBeVisible();
+    await expect(tela).toHaveAttribute('data-pose', 'parado');
+  });
+});

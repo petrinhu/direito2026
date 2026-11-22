@@ -273,7 +273,10 @@ function d26_limite_desbloquear_conta(string $priv, string $login): int
  * de marcas de tempo (f) das últimas 24 h. Nunca são zeradas pelo sucesso de login, e não contam nos envios do painel.
  *  - IP agrupado: 10 pedidos em 15 min; acima, 429 (o pedido não envia nada).
  *  - Conta: 1 e-mail em 15 min e 4 em 24 h; acima, silêncio (a mesma frase).
- *  - Teto diário do site: 60 e-mails em 24 h; acima, silêncio e uma linha envio-teto no erros.log.
+ *  - Sub-limite do "Esqueci a senha": 60 pedidos em 24 h; acima, silêncio e uma linha envio-teto no erros.log.
+ * Teto total do site (EM-SMTP-TETO-TOTAL, decisão do líder de 21/11/2026): 100 envios em 24 h, somando todos os
+ * caminhos (convite, redefinição, senha criada, Esqueci, primeiro aviso e bloqueio). Chave própria ('total'), e
+ * os sub-limites continuam valendo dentro dele. Ao bater, o envio é recusado (linha envio-teto-total).
  * Ordem de locks intacta: só tentativas.json é tocado aqui.
  */
 const D26_ENVIO_JANELA_CURTA = 900;
@@ -282,6 +285,7 @@ const D26_ENVIO_MAX_IP = 10;
 const D26_ENVIO_MAX_CONTA_15MIN = 1;
 const D26_ENVIO_MAX_CONTA_DIA = 4;
 const D26_ENVIO_TETO_DIA = 60;
+const D26_ENVIO_TOTAL_DIA = 100;
 
 /** Chave da categoria e: sha256 de "e<tipo>" + NUL + alvo (mesmo padrão das chaves de hoje). */
 function d26_limite_chave_envio(string $tipo, string $alvo = ''): string
@@ -310,11 +314,18 @@ function d26_limite_envio_conta(string $priv, string $login, int $agora): bool
             && d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_MAX_CONTA_DIA);
 }
 
-/** Reserva um e-mail do teto diário do site (60 em 24 h). Os envios do painel não passam por aqui. */
+/** Reserva um pedido do "Esqueci a senha" no sub-limite de 60 em 24 h (não é o total). */
 function d26_limite_envio_teto(string $priv, int $agora): bool
 {
     return d26_limite_envio_reservar($priv, d26_limite_chave_envio('teto'), $agora,
         static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_TETO_DIA);
+}
+
+/** Reserva um envio no teto total do site (100 em 24 h, todos os caminhos). Chamado por quem envia, antes do SMTP. */
+function d26_limite_envio_total(string $priv, int $agora): bool
+{
+    return d26_limite_envio_reservar($priv, d26_limite_chave_envio('total'), $agora,
+        static fn (array $marcas, int $t): bool => d26_limite_envio_recentes($marcas, $t, D26_ENVIO_JANELA_LONGA) < D26_ENVIO_TOTAL_DIA);
 }
 
 /**

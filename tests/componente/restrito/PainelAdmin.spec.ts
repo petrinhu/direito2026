@@ -659,6 +659,16 @@ describe('PainelAdmin, e-mail da conta (EM-F1)', () => {
       expect(w.find('.ar-admin__link').exists()).toBe(true);
     });
 
+    it('criar com o teto diário do site cheio: a frase de limite e o link, sem a frase de enviado', async () => {
+      const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'teto' });
+      await flushPromises();
+      await criar(w);
+      const bloco = w.get('.ar-admin__convite');
+      expect(bloco.text()).toContain('O limite diário de e-mails do site foi atingido');
+      expect(bloco.text()).not.toContain('O link também foi para');
+      expect(bloco.get('.ar-admin__link').text()).toBe(`${ORIGEM_DE_TESTE}${CAMINHO_CONVITE}`);
+    });
+
     it('redefinir uma conta sem e-mail: só o link, nenhuma das duas frases', async () => {
       const { w } = montarComResposta({ convite: CAMINHO_CONVITE, email: 'sem-email' });
       await flushPromises();

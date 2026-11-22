@@ -70,6 +70,8 @@ const fraseDoEnvio = computed(() => {
   if (atual?.envio === 'enviado' && atual.destino)
     return `O link também foi para ${atual.destino}.`;
   if (atual?.envio === 'falhou') return 'O e-mail não saiu. Copie o link e envie por outro canal.';
+  if (atual?.envio === 'teto')
+    return 'O limite diário de e-mails do site foi atingido, e o e-mail não saiu. Copie o link e envie por outro canal.';
   return '';
 });
 

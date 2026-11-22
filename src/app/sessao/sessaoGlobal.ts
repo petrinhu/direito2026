@@ -63,6 +63,8 @@ export function criarSessaoGlobal({ cliente, navegador, suspenderAviso }: Opcoes
   const pronta = ref(false);
   /** Verdadeiro quando a última leitura da sessão falhou (rede): a página mostra "Tentar de novo". */
   const falhou = ref(false);
+  /** Verdadeiro desde o início do Sair até a página sair do ar: suspende a conferência de volta. */
+  let saindo = false;
 
   function guardarSessao(s: { usuario?: string; admin?: boolean }): void {
     usuario.value = s.usuario ?? '';
@@ -103,10 +105,16 @@ export function criarSessaoGlobal({ cliente, navegador, suspenderAviso }: Opcoes
     }
   }
 
-  /** Aba que volta ao primeiro plano: sem sessão, recarrega (o portão mostra a entrada). Falha de rede não é sessão vencida. */
+  /**
+   * Aba que volta ao primeiro plano: sem sessão, recarrega (o portão mostra a entrada). Falha de rede não é
+   * sessão vencida. Com o Sair em curso não confere nada: a troca para `/` é o destino, e um recarregar aqui
+   * disputaria com ela (SU-F2b-GEMEOS, adendo 13.4 do CTO).
+   */
   async function conferirAoVoltar(): Promise<void> {
+    if (saindo) return;
     try {
       const s = await cliente.sessao();
+      if (saindo) return;
       if (!s.autenticado) {
         navegador.recarregar();
         return;
@@ -123,6 +131,7 @@ export function criarSessaoGlobal({ cliente, navegador, suspenderAviso }: Opcoes
    * trocaria a página pelo caminho atual numa corrida com a troca para `/`. No Sair, `/` é o destino pedido.
    */
   async function sair(): Promise<void> {
+    saindo = true;
     suspenderAviso?.();
     try {
       await cliente.sair();

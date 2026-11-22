@@ -1,5 +1,6 @@
 import type { Cena, FormaCena } from '@/app/kelsenJump';
-import { KELSEN, MUNDO, NUVEM } from '@/app/kelsenJump';
+import type { RotuloCena } from '@/app/kelsenJump';
+import { KELSEN, MUNDO, ROTULO_NHF } from '@/app/kelsenJump';
 import { imagemDoQuadro, TAMANHO_QUADRO } from './sprites';
 
 /** Linha do chão na tela lógica (y cresce para baixo). Pés do Kelsen em y = CHAO - pe. */
@@ -26,6 +27,7 @@ export function desenharCena(ctx: CanvasRenderingContext2D, cena: Cena, cores: C
     if (forma.tipo === 'piramide') desenharPiramide(ctx, forma, papel, tinta);
     else desenharNuvem(ctx, forma, papel, tinta, escuro);
   }
+  for (const rotulo of cena.rotulos) desenharRotulo(ctx, rotulo, tinta);
   desenharKelsen(ctx, cena, tinta, escuro);
 }
 
@@ -85,8 +87,9 @@ function desenharPiramide(
 }
 
 /**
- * Nuvem com "NHF": o PNG do PixelLab, sem suavização, com o texto centrado por cima na cor da tinta.
- * A caixa do PNG é a caixa de colisão (mesma escala). Sem a imagem, a nuvem de traço de reserva.
+ * Nuvem: só o desenho do PNG do PixelLab, sem suavização. A caixa do PNG é a caixa de colisão (mesma
+ * escala). O "NHF" não fica dentro da nuvem: é escrito uma vez por grupo, por `desenharRotulo`.
+ * Sem a imagem, a nuvem de traço de reserva.
  */
 function desenharNuvem(
   ctx: CanvasRenderingContext2D,
@@ -103,31 +106,18 @@ function desenharNuvem(
   } else {
     desenharNuvemDeTraco(ctx, n, topo, papel, tinta);
   }
-  ctx.fillStyle = tinta;
-  ctx.font = fonteDoNhf(ctx);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(n.texto, n.x + n.largura / 2, topo + n.altura / 2);
 }
 
-let tamanhoNhf: number | undefined;
-
 /**
- * Maior fonte em negrito (passos de 0,5 px) cujo "NHF" cabe na largura da nuvem. Medida uma vez com o
- * próprio canvas, então vale para a fonte que o navegador tem; a altura da nuvem não muda o resultado.
+ * "NHF" centrado logo acima do grupo, em negrito, na cor da tinta (no escuro, a tinta é clara, então o
+ * rótulo sai invertido junto com o resto). Só desenho: não entra na colisão.
  */
-function fonteDoNhf(ctx: CanvasRenderingContext2D): string {
-  if (tamanhoNhf === undefined) {
-    tamanhoNhf = 1;
-    for (let t = 24; t >= 1; t -= 0.5) {
-      ctx.font = `bold ${t}px system-ui, sans-serif`;
-      if (ctx.measureText(NUVEM.texto).width <= NUVEM.largura) {
-        tamanhoNhf = t;
-        break;
-      }
-    }
-  }
-  return `bold ${tamanhoNhf}px system-ui, sans-serif`;
+function desenharRotulo(ctx: CanvasRenderingContext2D, rotulo: RotuloCena, tinta: string): void {
+  ctx.fillStyle = tinta;
+  ctx.font = `bold ${ROTULO_NHF.fonte}px system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(rotulo.texto, rotulo.x, CHAO_TELA - rotulo.alturaChao);
 }
 
 function desenharNuvemDeTraco(

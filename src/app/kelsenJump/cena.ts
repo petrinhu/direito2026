@@ -5,6 +5,7 @@ import {
   MUNDO,
   NUVEM,
   pontuacaoDe,
+  ROTULO_NHF,
   REINICIO_TRAVA_S,
   type Estado,
   type Fase,
@@ -35,7 +36,14 @@ export function tremorDe(trava: number): number {
 /** Forma pronta para desenhar, em px lógicos do mundo: x é a coluna na tela, y é 0 no chão e cresce para cima. */
 export type FormaCena =
   | { tipo: 'piramide'; x: number; largura: number; altura: number; degraus: [number, number][][] }
-  | { tipo: 'nuvem'; x: number; largura: number; altura: number; baseY: number; texto: string };
+  | { tipo: 'nuvem'; x: number; largura: number; altura: number; baseY: number };
+
+/** Rótulo "NHF" de um grupo: centro horizontal na tela e altura do centro acima do chão, em px lógicos. */
+export interface RotuloCena {
+  readonly x: number;
+  readonly alturaChao: number;
+  readonly texto: string;
+}
 
 export interface Cena {
   readonly fase: Fase;
@@ -53,6 +61,8 @@ export interface Cena {
     readonly tremor: number;
   };
   readonly obstaculos: readonly FormaCena[];
+  /** Um rótulo por grupo de nuvens visível, centrado acima do grupo. Não é colisão. */
+  readonly rotulos: readonly RotuloCena[];
   /** Distância percorrida, em px de rolagem: o cenário anda com ela. */
   readonly distancia: number;
   readonly pontuacao: number;
@@ -77,8 +87,7 @@ function formaDe(o: Obstaculo, distancia: number): FormaCena {
     x,
     largura: o.largura,
     altura: o.altura,
-    baseY: o.baseY,
-    texto: NUVEM.texto
+    baseY: o.baseY
   };
 }
 
@@ -97,13 +106,24 @@ function poseDe(e: Estado): { pose: PoseKelsen; quadro: 0 | 1; tremor: number } 
   return { pose: e.jogador.agachado ? 'abaixado' : 'correndo', quadro, tremor: 0 };
 }
 
+/** Altura, acima do chão, do centro do rótulo: topo da nuvem, folga e meia fonte. */
+const ALTURA_ROTULO = NUVEM.baseY + NUVEM.altura + ROTULO_NHF.folga + ROTULO_NHF.fonte / 2;
+
 /** Converte o estado do core na cena de desenho. Só lê o estado; quem desenha não importa a lógica. */
 export function cenaDe(e: Estado): Cena {
-  const visiveis = e.obstaculos
+  const noQuadro = (o: Obstaculo) =>
+    o.x - e.distancia < MUNDO.largura && o.x + o.largura - e.distancia > -KELSEN.largura;
+  const visiveis = e.obstaculos.filter((o) => noQuadro(o)).map((o) => formaDe(o, e.distancia));
+  const rotulos: RotuloCena[] = e.obstaculos
     .filter(
-      (o) => o.x - e.distancia < MUNDO.largura && o.x + o.largura - e.distancia > -KELSEN.largura
+      (o): o is Extract<Obstaculo, { tipo: 'nuvem' }> =>
+        o.tipo === 'nuvem' && o.primeira && noQuadro(o)
     )
-    .map((o) => formaDe(o, e.distancia));
+    .map((o) => ({
+      x: o.x + o.larguraGrupo / 2 - e.distancia,
+      alturaChao: ALTURA_ROTULO,
+      texto: NUVEM.texto
+    }));
   return {
     fase: e.fase,
     largura: MUNDO.largura,
@@ -116,6 +136,7 @@ export function cenaDe(e: Estado): Cena {
       ...poseDe(e)
     },
     obstaculos: visiveis,
+    rotulos,
     distancia: e.distancia,
     pontuacao: pontuacaoDe(e),
     ...(e.ultimaPontuacao === undefined ? {} : { ultimaPontuacao: e.ultimaPontuacao })

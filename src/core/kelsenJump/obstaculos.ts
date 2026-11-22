@@ -24,6 +24,10 @@ export interface Nuvem extends Base {
   readonly baseY: number;
   /** Quantas nuvens ainda vêm depois desta no mesmo grupo (0 a 2). */
   readonly restantes: number;
+  /** Verdadeiro só na nuvem que abre o grupo: é dela que o rótulo "NHF" é escrito. */
+  readonly primeira: boolean;
+  /** Largura total do grupo, do canto esquerdo da 1ª nuvem ao direito da última, em px. */
+  readonly larguraGrupo: number;
 }
 
 export type Obstaculo = Piramide | Nuvem;
@@ -148,6 +152,9 @@ export function proximoObstaculo(
       s = sorteioGrupo.semente;
       restantes = Math.min(2, Math.floor(sorteioGrupo.valor * 3));
     }
+    const larguraGrupo = continuaGrupo
+      ? anterior.larguraGrupo
+      : (restantes + 1) * NUVEM.largura + restantes * GRUPO_NUVENS.espaco;
     candidato = {
       ...base,
       tipo: 'nuvem',
@@ -155,7 +162,9 @@ export function proximoObstaculo(
       largura: NUVEM.largura,
       altura: NUVEM.altura,
       baseY: NUVEM.baseY,
-      restantes
+      restantes,
+      primeira: !continuaGrupo,
+      larguraGrupo
     };
   } else {
     const fatorSorteio = sortear(s);

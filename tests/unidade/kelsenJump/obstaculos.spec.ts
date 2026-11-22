@@ -32,7 +32,9 @@ const nuvem: Nuvem = {
   baseY: NUVEM.baseY,
   contado: false,
   id: 0,
-  restantes: 0
+  restantes: 0,
+  primeira: true,
+  larguraGrupo: NUVEM.largura
 };
 
 describe('pirâmide: altura dentro do alcance do pulo', () => {
@@ -220,6 +222,24 @@ describe('derivação da folga: nuvem em grupo seguida de pirâmide', () => {
         expect(livre).toBeGreaterThanOrEqual(TEMPO_RESPOSTA_S * VELOCIDADE.maxima - 1e-9);
       }
       expect(casos).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('grupo: uma nuvem abre cada grupo e a largura do grupo bate com as nuvens', () => {
+  for (const semente of [1, 7, 42, 2026, 99991]) {
+    it(`semente ${semente}: cada grupo tem uma primeira nuvem e a largura é do canto ao canto`, () => {
+      const seq = geraSequencia(semente, 300);
+      const grupos = gruposDe(seq);
+      expect(grupos.length).toBeGreaterThan(0);
+      for (const grupo of grupos) {
+        const primeiras = grupo.filter((c) => c.primeira);
+        expect(primeiras).toHaveLength(1);
+        expect(grupo[0]!.primeira).toBe(true);
+        const canto = grupo[grupo.length - 1]!.x + NUVEM.largura - grupo[0]!.x;
+        expect(grupo[0]!.larguraGrupo).toBeCloseTo(canto, 6);
+        for (const c of grupo) expect(c.larguraGrupo).toBe(grupo[0]!.larguraGrupo);
+      }
     });
   }
 });

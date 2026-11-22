@@ -67,6 +67,12 @@ export const NUVEM = {
 export const GRUPO_NUVENS = { espaco: 14 } as const;
 
 /**
+ * "NHF" escrito uma vez por grupo, logo acima do grupo, em negrito. É só desenho: não entra na caixa
+ * de colisão. `folga` é o espaço entre o topo da nuvem e a base do texto, em px lógicos.
+ */
+export const ROTULO_NHF = { fonte: 14, folga: 4 } as const;
+
+/**
  * Tempo, em s, para levantar depois do grupo e pular a próxima pirâmide. A folga é esse tempo na
  * velocidade máxima: 0,3 s × 640 px/s = 192 px. O robô de referência reage com ±0,04 s; humano reage mais devagar.
  */

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { planejar } from '../../scripts/apoio/preciSeletivo';
 
 /**
@@ -29,7 +30,9 @@ describe('planejar (classificação do preci seletivo)', () => {
     expect(p.passos.vueTsc.roda).toBe(true);
     expect(p.passos.conteudo.roda).toBe(false);
     expect(p.passos.php.roda).toBe(false);
-    expect(p.passos.php.motivo).toBe('pulado: nada em servidor/, public/api/ ou public/.htaccess mudou');
+    expect(p.passos.php.motivo).toBe(
+      'pulado: nada em servidor/, public/api/ ou public/.htaccess mudou'
+    );
   });
 
   it('só conteúdo: roda validação, citações e R3 da fonte; vitest inclui tests/caracterizacao inteira', () => {
@@ -130,5 +133,18 @@ describe('planejar (classificação do preci seletivo)', () => {
     expect(p.passos.conteudo.roda).toBe(true);
     expect(p.passos.lint.roda).toBe(false);
     expect(p.passos.vitest.alvo).toEqual(CARACTERIZACAO);
+  });
+});
+
+describe('build e build:construir (o preci chama a metade)', () => {
+  it('build:construir é o final de build: a metade que o preci roda não diverge do build completo', () => {
+    const scripts = (
+      JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf-8')) as {
+        scripts: Record<string, string>;
+      }
+    ).scripts;
+    expect(scripts['build']).toBeDefined();
+    expect(scripts['build:construir']).toBeDefined();
+    expect(scripts['build'].endsWith(scripts['build:construir'])).toBe(true);
   });
 });

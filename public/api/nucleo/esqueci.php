@@ -63,6 +63,9 @@ function d26_esqueci_tratar(string $priv, string $pedido, int $agora): void
         d26_log_erro_em($priv, 'envio', 'envio-teto');
         return;
     }
+    if (!d26_correio_reservar_total($priv, $agora)) {
+        return;
+    }
     d26_teste_pausar('esqueci-antes-pedir', $login); // janela entre a leitura e a gravação (no-op em produção)
     $token = d26_convite_token();
     $emailNoLock = null; // o destino do E2 é o e-mail que a conta tem DENTRO do lock (corrida com a troca de e-mail)

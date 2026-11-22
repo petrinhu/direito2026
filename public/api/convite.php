@@ -155,6 +155,9 @@ function d26_convite_avisar_criada(string $priv, string $login, ?string $email):
         return;
     }
     d26_teste_pausar('senha-criada-antes-aviso', $login); // no-op em produção; prova a ordem nos testes de EM-B3
+    if (!d26_correio_reservar_total($priv, time())) {
+        return;
+    }
     d26_correio_avisar($priv, d26_correio_msg_senha_criada($email, $login));
 }
 

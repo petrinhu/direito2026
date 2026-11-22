@@ -72,28 +72,49 @@ const ehConteudoFonte = (p: string): boolean =>
 
 const LEITURA_DE_ARQUIVO = /\b(readFileSync|readdirSync|readFile|statSync|existsSync|globSync)\b/;
 const CAMINHO_LITERAL = /(['"`])([^'"`\n\r]{1,400}?)\1/g;
+const CHAMADA_DE_CAMINHO = /\b(?:join|resolve)\(([^()]*)\)/g;
+const ARG_LITERAL = /^(['"`])([^'"`]*)\1$/;
+const IMPORT_RELATIVO = /['"](\.{1,2}\/[^'"\n\r]+)['"]/g;
 
 /**
- * Caminhos do repo que o texto de um spec cita, relativos à raiz. Cada literal com '/' ou com
- * extensão (menos .md) é tentado a partir da pasta do spec e da raiz; o que não existe no repo
- * também fica (um arquivo apagado na mudança tem de casar com o spec que o citava).
+ * Caminhos do repo que o texto de um arquivo de teste cita, relativos à raiz. Três formas:
+ * literal com barra ou extensão; literais em sequência de join/resolve (resolve(RAIZ, 'src',
+ * 'ui', 'x.vue') vira src/ui/x.vue, só se for arquivo); e template com ${} (o que vem depois
+ * do ${} conta). Cada uma é tentada a partir da pasta do arquivo e da raiz. Caminho que não
+ * existe no repo também fica (arquivo apagado na mudança tem de casar com o spec que o citava).
+ * .md não entra.
  */
-export function referenciasDoSpec(caminhoSpec: string, conteudo: string): string[] {
-  const pasta = posix.dirname(caminhoSpec);
+function candidatos(caminhoArquivo: string, conteudo: string): string[] {
+  const pasta = posix.dirname(caminhoArquivo);
   const achados = new Set<string>();
-  for (const m of conteudo.matchAll(CAMINHO_LITERAL)) {
-    const lit = m[2] ?? '';
-    if (!lit || lit.startsWith('/') || lit.includes('${')) continue;
-    if (!lit.includes('/') && !/\.[A-Za-z0-9]{1,8}$/.test(lit)) continue;
-    // .md não é insumo de spec (nenhum lê .md do repo). Citar um .md é comentário ou fixture
-    // de repo temporário (README.md dentro de um repo de teste), e não dependência.
-    if (/\.md$/i.test(lit)) continue;
+  const cita = (bruto: string): void => {
+    const lit = bruto.replace(/\$\{[^}]*\}/g, '/').replace(/^\/+/, '');
+    if (!lit || lit.includes('${') || /\.md$/i.test(lit)) return;
     for (const base of [pasta, '.']) {
       const c = posix.normalize(posix.join(base, lit)).replace(/\/+$/, '');
       if (c && c !== '.' && !c.startsWith('..')) achados.add(c);
     }
+  };
+  for (const m of conteudo.matchAll(CAMINHO_LITERAL)) {
+    const lit = m[2] ?? '';
+    if (lit.includes('/') || /\.[A-Za-z0-9]{1,8}$/.test(lit) || lit.includes('${')) cita(lit);
+  }
+  for (const m of conteudo.matchAll(CHAMADA_DE_CAMINHO)) {
+    const partes = (m[1] ?? '')
+      .split(',')
+      .map((a) => ARG_LITERAL.exec(a.trim())?.[2])
+      .filter((x): x is string => x !== undefined);
+    // Só arquivo (termina em extensão). Pasta montada por segmentos (join(raiz, 'docs'))
+    // casaria com qualquer arquivo dela; quem só lê pasta cai em sempreRodar, que é conservador.
+    const caminho = partes.join('/');
+    if (partes.length && /\.[A-Za-z0-9]{1,8}$/.test(caminho)) cita(caminho);
   }
   return [...achados];
+}
+
+/** Só o que o spec cita no próprio texto (sem seguir helpers). Usado nos testes do seletor. */
+export function referenciasDoSpec(caminhoSpec: string, conteudo: string): string[] {
+  return candidatos(caminhoSpec, conteudo);
 }
 
 /** Specs de vitest do repo (as pastas do include de vitest.config.ts), relativos à raiz. */
@@ -109,7 +130,27 @@ function listarSpecs(raiz: string): string[] {
   return achados.sort();
 }
 
-/** Lê os specs do repo e devolve a aresta por texto e a lista de specs que rodam sempre. */
+/** Imports relativos que levam a arquivo dentro de tests/ (helpers), para seguir a leitura. */
+function importsDeTeste(raiz: string, caminho: string, conteudo: string): string[] {
+  const pasta = posix.dirname(caminho);
+  const achados: string[] = [];
+  for (const m of conteudo.matchAll(IMPORT_RELATIVO)) {
+    const base = posix.normalize(posix.join(pasta, m[1] ?? ''));
+    if (!base.startsWith('tests/')) continue;
+    for (const alvo of [base, `${base}.ts`, `${base}/index.ts`]) {
+      if (alvo.endsWith('.ts') && existsSync(join(raiz, alvo))) {
+        achados.push(alvo);
+        break;
+      }
+    }
+  }
+  return achados;
+}
+
+/**
+ * Lê os specs do repo, com os helpers de tests/ que importam, e devolve a aresta por texto e a
+ * lista de specs que rodam sempre (leem arquivo e nenhum caminho citado existe no repo).
+ */
 export function coletarReferencias(raiz: string): {
   referencias: Map<string, string[]>;
   sempreRodar: string[];
@@ -117,12 +158,21 @@ export function coletarReferencias(raiz: string): {
   const referencias = new Map<string, string[]>();
   const sempreRodar: string[] = [];
   for (const spec of listarSpecs(raiz)) {
-    const conteudo = readFileSync(join(raiz, spec), 'utf8');
-    const refs = referenciasDoSpec(spec, conteudo);
-    referencias.set(spec, refs);
-    if (LEITURA_DE_ARQUIVO.test(conteudo) && !refs.some((c) => existsSync(join(raiz, c)))) {
-      sempreRodar.push(spec);
+    const uniao = new Set<string>();
+    const lidos = new Set<string>();
+    const fila = [spec];
+    let leAlgo = false;
+    while (fila.length) {
+      const atual = fila.pop() as string;
+      if (lidos.has(atual)) continue;
+      lidos.add(atual);
+      const conteudo = readFileSync(join(raiz, atual), 'utf8');
+      if (LEITURA_DE_ARQUIVO.test(conteudo)) leAlgo = true;
+      for (const c of candidatos(atual, conteudo)) uniao.add(c);
+      fila.push(...importsDeTeste(raiz, atual, conteudo));
     }
+    referencias.set(spec, [...uniao]);
+    if (leAlgo && ![...uniao].some((c) => existsSync(join(raiz, c)))) sempreRodar.push(spec);
   }
   return { referencias, sempreRodar };
 }
@@ -203,7 +253,7 @@ export function planejar(arquivos: readonly string[], opcoes: OpcoesPlano): Plan
         : pulado('pulado: nenhum arquivo de código de teste ou de src mudou'),
       conteudo: temConteudo
         ? { roda: true, alvo: 'todos', motivo: '' }
-        : pulado('pulado: nada em src/conteudo, src/dados ou docs/ mudou'),
+        : pulado('pulado: nada em src/conteudo ou src/dados mudou'),
       php: temServidor
         ? { roda: true, alvo: 'todos', motivo: '' }
         : pulado('pulado: nada em servidor/, public/api/ ou public/.htaccess mudou')

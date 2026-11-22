@@ -292,3 +292,25 @@ describe('planejar com a aresta por texto (o furo e a regra de docs)', () => {
     expect(p.passos.prettier.roda).toBe(false);
   });
 });
+
+describe('formas de citar caminho (join, template, pasta montada)', () => {
+  it('resolve(RAIZ, segmentos) de um arquivo vira o caminho inteiro do arquivo', () => {
+    expect(
+      referenciasDoSpec(
+        'tests/componente/x.spec.ts',
+        "readFileSync(resolve(RAIZ, 'src', 'ui', 'Barra.vue'))"
+      )
+    ).toContain('src/ui/Barra.vue');
+  });
+
+  it("pasta montada por segmentos não vira prefixo (join(raiz, 'docs') não casa com docs/x.md)", () => {
+    const refs = referenciasDoSpec('tests/unidade/x.spec.ts', "join(raiz, 'docs')");
+    expect(refs).not.toContain('docs');
+  });
+
+  it('template com ${} conta o que vem depois do ${}', () => {
+    expect(
+      referenciasDoSpec('tests/unidade/x.spec.ts', 'readFileSync(`${RAIZ}/src/estilos/x.css`)')
+    ).toContain('src/estilos/x.css');
+  });
+});

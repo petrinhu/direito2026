@@ -57,6 +57,9 @@ const naPaginaInicial = computed(() => props.caminhoAtual === '');
 // Na página do calendário o quadro de contagem começa minimizado, sem escolha
 // gravada (ordem do orquestrador, para ratificação do líder, 20/10/2026).
 const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario');
+// KELSEN-JUMP: na página do jogo o quadro de prova também começa minimizado, para o jogo e a lição
+// de fim de partida ficarem inteiros na tela a 360 px. Só essa rota muda; as outras seguem como antes.
+const naPaginaDoJogo = computed(() => props.caminhoAtual === 'kelsen-jump');
 // No modo adaptado o quadro de prova não flutua: vai para o topo da coluna de conteúdo, em espaço
 // próprio do fluxo (AV3-F0f, decisão do CPO a ratificar pelo líder). É a mesma instância, só muda o
 // lugar, por Teleport. Fora do modo, o quadro segue na pilha inferior, como sempre.
@@ -298,7 +301,7 @@ onBeforeUnmount(() => {
     <Teleport :to="alvoDoQuadro" :disabled="!quadroNoConteudo">
       <QuadroProva
         v-if="!emAreaRestrita"
-        :minimizado-por-padrao="naPaginaDoCalendario"
+        :minimizado-por-padrao="naPaginaDoCalendario || naPaginaDoJogo"
         @mudou-minimizado="aoMudarMinimizadoDoQuadro"
       />
     </Teleport>

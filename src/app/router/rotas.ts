@@ -114,6 +114,12 @@ export const rotas: RouteRecordRaw[] = [
     name: 'sobre',
     component: () => import('@/ui/paginas/Sobre.vue')
   },
+  // Kelsen Jump (ordem do líder, 21/11/2026): jogo de intervalo, acessado pelo grupo Game do menu.
+  {
+    path: '/kelsen-jump',
+    name: 'kelsen-jump',
+    component: () => import('@/ui/paginas/KelsenJump.vue')
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'nao-encontrado',

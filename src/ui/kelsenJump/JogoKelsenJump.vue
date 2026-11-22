@@ -17,6 +17,13 @@ import {
 import type { Evento } from '@/core/kelsenJump';
 import { criarSons, type Sons } from './sons';
 import { desenharCena, type Cores } from './desenhar';
+import {
+  alvoDoTeclado,
+  ehTeclaDeAbaixar,
+  ehTeclaDoJogo,
+  jogoFicaComATecla,
+  temModalAberto
+} from './teclado';
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 /** Recorde pessoal, lido do navegador ao montar. O placar do canvas mostra este valor. */
@@ -24,6 +31,8 @@ const recorde = ref(lerRecorde());
 /** Verdadeiro só no fim da partida em que o recorde foi batido; some ao começar a próxima. */
 const novoRecorde = ref(false);
 const fase = ref<Cena['fase']>('aguardando');
+/** Pose do Kelsen, espelhada no canvas (data-pose) para quem confere a tela sem enxergá-la. */
+const pose = ref<Cena['corpo']['pose']>('parado');
 const ultimaPontuacao = ref<number | undefined>(undefined);
 const licao = ref<number | undefined>(undefined);
 const mudo = ref(lerMudo());
@@ -66,6 +75,7 @@ function aoAtualizar(cena: Cena): void {
     desenharCena(contexto, cena, coresCache, recorde.value);
   }
   if (cena.fase !== fase.value) fase.value = cena.fase;
+  if (cena.corpo.pose !== pose.value) pose.value = cena.corpo.pose;
   if (cena.fase === 'correndo') novoRecorde.value = false;
   if (cena.ultimaPontuacao !== undefined && cena.ultimaPontuacao !== ultimaPontuacao.value) {
     aoTerminar(cena.ultimaPontuacao);
@@ -98,22 +108,32 @@ function semente(): number {
   return vetor[0] ?? 1;
 }
 
-/** Espaço e toque pulam. Só o canvas recebe a tecla, então botões da página continuam com Espaço. */
-function aoTecla(e: KeyboardEvent): void {
-  if (e.key === ' ' || e.key === 'Spacebar') {
-    e.preventDefault();
-    if (!e.repeat) {
-      sons.value?.ativar();
-      jogo.value?.pular();
-    }
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault();
+/**
+ * Teclado no documento: vale enquanto a página do jogo estiver aberta, sem foco no canvas. O jogo
+ * fica com a tecla só se o foco não estiver num campo, num botão ou num link, e não houver modal.
+ */
+function aoTeclaDocumento(e: KeyboardEvent): void {
+  if (!ehTeclaDoJogo(e.key)) return;
+  const alvo = alvoDoTeclado(document.activeElement, canvas.value);
+  if (!jogoFicaComATecla(alvo, temModalAberto(document))) return;
+  e.preventDefault();
+  if (ehTeclaDeAbaixar(e.key)) {
     jogo.value?.agachar(true);
+    return;
   }
+  if (e.repeat) return;
+  sons.value?.ativar();
+  jogo.value?.pular();
 }
 
-function aoSoltarTecla(e: KeyboardEvent): void {
-  if (e.key === 'ArrowDown') jogo.value?.agachar(false);
+/** Abaixar vale enquanto a seta estiver pressionada: a soltura sempre conta, mesmo com foco em outro lugar. */
+function aoSoltarTeclaDocumento(e: KeyboardEvent): void {
+  if (ehTeclaDeAbaixar(e.key)) jogo.value?.agachar(false);
+}
+
+/** Sem a janela em foco, o keyup pode não chegar: não deixa o Kelsen agachado. */
+function aoPerderFoco(): void {
+  jogo.value?.agachar(false);
 }
 
 function aoToque(e: PointerEvent): void {
@@ -142,15 +162,17 @@ onMounted(() => {
     aoEvento
   });
   jogo.value.iniciar();
-  el.addEventListener('keydown', aoTecla);
-  el.addEventListener('keyup', aoSoltarTecla);
+  document.addEventListener('keydown', aoTeclaDocumento);
+  document.addEventListener('keyup', aoSoltarTeclaDocumento);
+  window.addEventListener('blur', aoPerderFoco);
   el.addEventListener('pointerdown', aoToque);
 });
 
 onBeforeUnmount(() => {
   const el = canvas.value;
-  el?.removeEventListener('keydown', aoTecla);
-  el?.removeEventListener('keyup', aoSoltarTecla);
+  document.removeEventListener('keydown', aoTeclaDocumento);
+  document.removeEventListener('keyup', aoSoltarTeclaDocumento);
+  window.removeEventListener('blur', aoPerderFoco);
   el?.removeEventListener('pointerdown', aoToque);
   jogo.value?.parar();
   sons.value?.fechar();
@@ -167,6 +189,7 @@ onBeforeUnmount(() => {
       class="kj__tela"
       role="img"
       tabindex="0"
+      :data-pose="pose"
       aria-label="Kelsen Jump. Kelsen corre e precisa pular pirâmides e passar abaixado por nuvens com a sigla NHF. Espaço pula, seta para baixo abaixa."
     ></canvas>
 

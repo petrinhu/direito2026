@@ -4,8 +4,12 @@
  * build com o portão de pacote publicável, varreduras do dist) não passam por aqui: rodam sempre.
  *
  * Regra de falha: qualquer dúvida vira completo. Sem tag base, com PRECI_COMPLETO=1, ou com
- * mudança em arquivo que afeta o preci inteiro (scripts/, configs, package*.json, tests/apoio),
- * nenhum passo é pulado.
+ * mudança em arquivo que afeta o preci inteiro (scripts/, configs da raiz, package*.json,
+ * tests/apoio), nenhum passo é pulado.
+ *
+ * O portão de pacote real (portao-pacote.teste.php) não depende da mudança: é o campo pacoteReal
+ * do plano, sempre verdadeiro. Sem ele, uma publicação só de conteúdo chegaria ao ar sem checar o
+ * tipo e a CSP do pacote que acabou de ser gerado.
  *
  * Uso (o preci.sh chama assim; saída é atribuição de shell, com valores entre aspas simples):
  *   node --import tsx scripts/apoio/preciSeletivo.ts --base <tag|""> --arquivos <lista> [--completo 0|1]
@@ -27,7 +31,39 @@ export interface Plano {
   completo: boolean;
   motivo: string;
   passos: Record<PassoSeletivo, Decisao>;
+  /**
+   * Portão de pacote real (servidor/testes/portao-pacote.teste.php, filtro PACOTE_REAL_FILTRO).
+   * Fora de passos: roda SEMPRE, em toda publicação, porque o pacote muda a cada build. Quando a
+   * suíte PHP inteira já roda (php.roda), ela inclui este grupo e o preci não o repete.
+   */
+  pacoteReal: Decisao;
 }
+
+/** Filtro do rodar.php (nome contém este texto). Todo teste(...) de portao-pacote tem o texto. */
+export const PACOTE_REAL_FILTRO = 'pacote real';
+
+/**
+ * Configs da raiz cuja mudança muda como o preci confere o projeto. Lista explícita (cada entrada
+ * é testada, existe na raiz, no spec); o padrão de ehConfigRaiz pega o resto.
+ */
+export const CONFIGS_DA_RAIZ: readonly string[] = [
+  '.browserslistrc',
+  '.dependency-cruiser.cjs',
+  '.gitattributes',
+  '.gitignore',
+  '.prettierignore',
+  '.prettierrc.json',
+  'eslint.config.js',
+  'index.html',
+  'package.json',
+  'package-lock.json',
+  'playwright.ar.config.ts',
+  'playwright.config.ts',
+  'playwright.portao.config.ts',
+  'tsconfig.json',
+  'vite.config.ts',
+  'vitest.config.ts'
+];
 
 export interface OpcoesPlano {
   /** Última tag publicada (v*). Vazio ou null = não há base: completo. */
@@ -55,6 +91,19 @@ const EXT_LINT = /\.(ts|tsx|vue|js|mjs|cjs)$/;
 const EXT_PRETTIER = /\.(ts|tsx|vue|js|mjs|cjs|json|css|html|ya?ml)$/;
 const EXT_VITEST = /\.(ts|tsx|vue|js|mjs)$/;
 
+/**
+ * Arquivo da raiz que é configuração: qualquer dotfile (.prettierrc, .eslintrc, .env...), qualquer
+ * .json, .cjs ou .mjs, qualquer *.config.*, e a lista explícita. Dúvida vira completo: a raiz do
+ * repo tem poucos arquivos de conteúdo (README.md, TODO.md, CLAUDE.md ficam de fora de propósito).
+ */
+const ehConfigRaiz = (p: string): boolean =>
+  !p.includes('/') &&
+  (CONFIGS_DA_RAIZ.includes(p) ||
+    p.startsWith('.') ||
+    /\.(json|cjs|mjs)$/.test(p) ||
+    /\.config\.[cm]?[jt]s$/.test(p) ||
+    /^tsconfig[\w.-]*\.json$/.test(p));
+
 const ehGatilhoCompleto = (p: string): boolean =>
   p.startsWith('scripts/') ||
   p === 'package.json' ||
@@ -62,7 +111,15 @@ const ehGatilhoCompleto = (p: string): boolean =>
   /^(vite|vitest|playwright)(\.[\w-]+)?\.config\.[cm]?[jt]s$/.test(p) ||
   /^tsconfig[\w.-]*\.json$/.test(p) ||
   p.startsWith('.dependency-cruiser') ||
-  p.startsWith('tests/apoio/');
+  p.startsWith('tests/apoio/') ||
+  ehConfigRaiz(p);
+
+/** Decisão do portão de pacote real: sempre roda, qualquer que seja a mudança. */
+const PACOTE_REAL_SEMPRE: Decisao = {
+  roda: true,
+  alvo: null,
+  motivo: 'sempre: o pacote muda a cada build'
+};
 
 // docs/ não entra: nenhum validador do conteúdo (validar-conteudo, citações, R3 da fonte) lê
 // docs/. Quem lê docs/versoes/novidades.json é um spec (versoes.paridade) e o separar-pacote,
@@ -199,7 +256,8 @@ const completo = (motivo: string): Plano => {
       vitest: todos,
       conteudo: todos,
       php: todos
-    }
+    },
+    pacoteReal: PACOTE_REAL_SEMPRE
   };
 };
 
@@ -257,7 +315,8 @@ export function planejar(arquivos: readonly string[], opcoes: OpcoesPlano): Plan
       php: temServidor
         ? { roda: true, alvo: 'todos', motivo: '' }
         : pulado('pulado: nada em servidor/, public/api/ ou public/.htaccess mudou')
-    }
+    },
+    pacoteReal: PACOTE_REAL_SEMPRE
   };
 }
 
@@ -329,6 +388,8 @@ function cli(argv: string[]): number {
     linhas.push(`PRECI_${n}_ALVO=${cit(alvo)}`);
     linhas.push(`PRECI_${n}_MOTIVO=${cit(decisao.motivo)}`);
   }
+  linhas.push(`PRECI_PACOTE_REAL_RODA=${plano.pacoteReal.roda ? 1 : 0}`);
+  linhas.push(`PRECI_PACOTE_REAL_FILTRO=${cit(PACOTE_REAL_FILTRO)}`);
   console.log(linhas.join('\n'));
   return 0;
 }

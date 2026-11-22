@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
-import { coletarReferencias, planejar, referenciasDoSpec } from '../../scripts/apoio/preciSeletivo';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import {
+  CONFIGS_DA_RAIZ,
+  PACOTE_REAL_FILTRO,
+  coletarReferencias,
+  planejar,
+  referenciasDoSpec
+} from '../../scripts/apoio/preciSeletivo';
 import { join, resolve } from 'node:path';
 
 /**
@@ -156,10 +164,13 @@ describe('build e build:construir (o preci chama a metade)', () => {
 
 const RAIZ = resolve(__dirname, '../..');
 
-/** Arquivos do diff v1.18.21.0..v1.18.22.0 (o furo), sem o package.json (o bump de versão). */
+/**
+ * Arquivos do diff v1.18.21.0..v1.18.22.0 (o furo), sem o package.json (o bump de versão) e sem
+ * eslint.config.js: PRECI-CONFIG-PACOTE (1.18.28.0) fez essa config ligar o modo completo, então
+ * o diff dela não cabe mais no caso "seletivo"; o caso do selo compacto continua coberto aqui.
+ */
 const FURO_1_18_22 = [
   'docs/versoes/novidades.json',
-  'eslint.config.js',
   'public/api/nucleo/telas.php',
   'servidor/testes/portao-pacote.teste.php',
   'servidor/testes/portao.teste.php',
@@ -312,5 +323,123 @@ describe('formas de citar caminho (join, template, pasta montada)', () => {
     expect(
       referenciasDoSpec('tests/unidade/x.spec.ts', 'readFileSync(`${RAIZ}/src/estilos/x.css`)')
     ).toContain('src/estilos/x.css');
+  });
+});
+
+// ---- PRECI-CONFIG-PACOTE: configs da raiz ligam o modo completo; o portão de pacote real é sempre ----
+
+describe('configs da raiz (PRECI-CONFIG-PACOTE)', () => {
+  const base = { base: 'v1.18.28.0', existe: existeTudo, caracterizacao: CARACTERIZACAO };
+
+  it('mudar só .prettierrc.json liga o modo completo, nomeando o arquivo', () => {
+    const p = planejar(['.prettierrc.json'], base);
+    expect(p.completo).toBe(true);
+    expect(p.motivo).toContain('.prettierrc.json');
+    for (const passo of Object.values(p.passos)) {
+      expect(passo.roda).toBe(true);
+      expect(passo.alvo).toBe('todos');
+    }
+  });
+
+  it('mudar só eslint.config.js liga o modo completo (o furo de 1.18.28.0)', () => {
+    const p = planejar(['eslint.config.js'], base);
+    expect(p.completo).toBe(true);
+    expect(p.motivo).toContain('eslint.config.js');
+  });
+
+  it('cada entrada da lista explícita liga o modo completo, e cada uma existe na raiz', () => {
+    expect(CONFIGS_DA_RAIZ.length).toBeGreaterThan(0);
+    for (const arquivo of CONFIGS_DA_RAIZ) {
+      expect(existsSync(join(RAIZ, arquivo)), `existe na raiz: ${arquivo}`).toBe(true);
+      expect(planejar([arquivo], base).completo, arquivo).toBe(true);
+    }
+  });
+
+  it('todo arquivo de configuração que existe na raiz liga o completo (dotfile, .json, .cjs, *.config.*)', () => {
+    const configs = readdirSync(RAIZ).filter(
+      (n) =>
+        existsSync(join(RAIZ, n)) &&
+        /^\.|\.(json|cjs|mjs)$|\.config\.[cm]?[jt]s$/.test(n) &&
+        !n.startsWith('.worktrees')
+    );
+    expect(configs.length).toBeGreaterThan(0);
+    for (const n of configs) {
+      expect(planejar([n], base).completo, n).toBe(true);
+    }
+  });
+
+  it('documento da raiz (README, TODO, CLAUDE) não liga o completo', () => {
+    for (const n of ['README.md', 'TODO.md', 'CLAUDE.md']) {
+      expect(planejar([n], base).completo, n).toBe(false);
+    }
+  });
+
+  it('nunca há arquivo de configuração em subpasta que vire completo por nome de raiz', () => {
+    expect(planejar(['src/.prettierrc.json'], base).completo).toBe(false);
+  });
+});
+
+describe('portão de pacote real (sempre roda, mesmo sem a suíte PHP)', () => {
+  it('diff só de conteúdo: pacoteReal roda, a suíte PHP é pulada', () => {
+    const p = planejar(['src/conteudo/p1/intr-direito/u1/resumo.ts'], {
+      base: 'v1.18.28.0',
+      caracterizacao: CARACTERIZACAO,
+      existe: existeTudo
+    });
+    expect(p.passos.php.roda).toBe(false);
+    expect(p.pacoteReal.roda).toBe(true);
+  });
+
+  it('vale para toda forma de plano: vazio, só CSS, servidor, completo', () => {
+    const casos = [
+      planejar([], { base: 'v1.18.28.0', existe: existeTudo }),
+      planejar(['src/ui/tema/tokens.css'], { base: 'v1.18.28.0', existe: existeTudo }),
+      planejar(['servidor/api/portao.php'], { base: 'v1.18.28.0', existe: existeTudo }),
+      planejar(['scripts/preci.sh'], { base: 'v1.18.28.0', existe: existeTudo }),
+      planejar(['src/ui/x.css'], { base: null, existe: existeTudo })
+    ];
+    for (const p of casos) {
+      expect(p.pacoteReal.roda).toBe(true);
+    }
+  });
+
+  it('todo teste(...) de portao-pacote.teste.php tem o filtro, senão o rodar.php o deixa de fora', () => {
+    const fonte = readFileSync(join(RAIZ, 'servidor/testes/portao-pacote.teste.php'), 'utf8');
+    const nomes = [...fonte.matchAll(/^teste\('([^']*)'/gm)].map((m) => m[1] ?? '');
+    expect(nomes.length).toBeGreaterThan(0);
+    for (const nome of nomes) {
+      expect(nome, nome).toContain(PACOTE_REAL_FILTRO);
+    }
+  });
+
+  it('a saída do CLI (o que o preci.sh faz eval) carrega o portão para um diff só de conteúdo', () => {
+    const pasta = mkdtempSync(join(tmpdir(), 'preci-config-'));
+    const lista = join(pasta, 'arquivos.txt');
+    writeFileSync(lista, 'src/conteudo/p1/intr-direito/u1/resumo.ts\n');
+    const saida = execFileSync(
+      'node',
+      [
+        '--import',
+        'tsx',
+        'scripts/apoio/preciSeletivo.ts',
+        '--base',
+        'v1.18.28.0',
+        '--arquivos',
+        lista
+      ],
+      { cwd: RAIZ, encoding: 'utf8' }
+    );
+    expect(saida).toContain('PRECI_PHP_RODA=0');
+    expect(saida).toContain('PRECI_PACOTE_REAL_RODA=1');
+    expect(saida).toContain(`PRECI_PACOTE_REAL_FILTRO='${PACOTE_REAL_FILTRO}'`);
+    // tsx sobe em processo novo: sob carga passa do teto padrão de 5 s do vitest.
+  }, 30_000);
+
+  it('o preci.sh roda o grupo pacote real, com o filtro vindo do plano, fora do if da suíte', () => {
+    const preci = readFileSync(join(RAIZ, 'scripts/preci.sh'), 'utf8');
+    expect(preci).toContain('"$PRECI_PACOTE_REAL_FILTRO"');
+    expect(preci).toMatch(
+      /pular "suíte PHP[^\n]*\n\s*if \[ "\$PRECI_PACOTE_REAL_RODA" = 1 \]; then\n\s*passo "portão de pacote real/
+    );
   });
 });

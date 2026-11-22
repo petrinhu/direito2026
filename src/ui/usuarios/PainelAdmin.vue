@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId } from 'vue';
-import { formatarDataHora } from '@/app/calendario/dataHoraDoSite';
+import {
+  formatarDataHora,
+  formatarFalhaDeEnvio,
+  formatarPrazo
+} from '@/app/calendario/dataHoraDoSite';
 import {
   loginValido,
   type Administrar,
   type ClienteApi,
   type UsuarioAdmin
 } from '@/app/sessao/administracao';
-import { podeReler } from '@/app/usuarios/releituraAdmin';
+import { usarRolagemLateral } from '@/ui/componentes/rolagemLateral';
+import { classeDoLed, textoDaSessao } from '@/ui/usuarios/luzDeSessao';
+import { usarReleituraDaLista } from '@/ui/usuarios/releituraDaLista';
 
 const props = defineProps<{
   /** Login de quem está administrando: a própria conta não tem botões de ação. */
@@ -32,6 +38,9 @@ const blocoDoLink = ref<HTMLElement>();
 const secao = ref<HTMLElement>();
 const tituloDaSecao = ref<HTMLElement>();
 const campoNovoUsuario = ref<HTMLInputElement>();
+const regiaoDaTabela = ref<HTMLElement>();
+/** A11Y-TABINDEX-TABELA: a região só entra na ordem de Tab quando a tabela de fato rola. */
+const { tabindex: tabindexDaTabela } = usarRolagemLateral(regiaoDaTabela);
 type EnvioDoEmail = NonNullable<Awaited<ReturnType<ClienteApi['acaoUsuario']>>['email']>;
 /**
  * `envio` e `destino` ficam com o link, na memória: o e-mail da pessoa vive só enquanto o bloco está na tela
@@ -75,25 +84,8 @@ const fraseDoEnvio = computed(() => {
   return '';
 });
 
-function dois(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-/** Prazo do convite: o servidor manda epoch em segundos; o painel mostra dd/mm hh:mm no fuso de quem olha. */
-function formatarPrazo(epochSegundos: number | null | undefined): string {
-  if (typeof epochSegundos !== 'number') return '';
-  const d = new Date(epochSegundos * 1000);
-  return `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
-}
-
-/** Instante ISO da última falha de envio, em dd/mm hh:mm no fuso de quem olha. Valor que não é data: nada a mostrar. */
-function formatarFalhaDeEnvio(instante: string | null | undefined): string {
-  if (typeof instante !== 'string') return '';
-  const d = new Date(instante);
-  return Number.isNaN(d.getTime())
-    ? ''
-    : `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
-}
+/** Hora da última leitura (HH:MM:SS, fuso de Recife) e a releitura na volta da aba. */
+const { atualizadoEm, marcarLeitura } = usarReleituraDaLista(() => void carregar());
 
 /**
  * Coluna Estado. Com convite pendente, "Ativo" e "Troca de senha pendente" saem: a conta ainda não tem senha, então
@@ -113,29 +105,11 @@ function textoDoEstado(u: UsuarioAdmin): string {
   return partes.join(' · ');
 }
 
-/** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
-function classeDoLed(conectado: boolean | undefined): string {
-  if (conectado === true) return 'ar-led--verde';
-  if (conectado === false) return 'ar-led--vermelho';
-  return 'ar-led--sem';
-}
-
-function textoDaSessao(conectado: boolean | undefined): string {
-  if (conectado === true) return 'Sessão aberta';
-  if (conectado === false) return 'Sem sessão aberta';
-  return 'sem informação';
-}
-
-let ultimaLeitura = 0;
-/** Hora da última leitura, em HH:MM:SS (fuso de Recife), para o texto "Atualizado às". */
-const atualizadoEm = ref('');
-
 async function carregar(): Promise<void> {
   const r = await props.administrar((c) => c.listarUsuarios());
   carregando.value = false;
   if (r.ok) {
-    ultimaLeitura = Date.now();
-    atualizadoEm.value = formatarDataHora(new Date(ultimaLeitura).toISOString()).slice(-8);
+    marcarLeitura();
     usuarios.value = r.valor;
     erro.value = '';
   } else {
@@ -326,18 +300,10 @@ function atualizar(): void {
   void carregar();
 }
 
-/** Volta da aba: relê a lista, sem passar do limite de 30 s (podeReler). */
-function aoVoltarAba(): void {
-  if (document.visibilityState === 'visible' && podeReler(Date.now(), ultimaLeitura))
-    void carregar();
-}
-
 onMounted(() => {
   void carregar();
-  document.addEventListener('visibilitychange', aoVoltarAba);
 });
 onBeforeUnmount(() => {
-  document.removeEventListener('visibilitychange', aoVoltarAba);
   dispensarLink();
   fecharTrocaDeEmail();
 });
@@ -418,10 +384,11 @@ onBeforeUnmount(() => {
     <p v-if="carregando" role="status">Carregando usuários…</p>
     <div
       v-else
+      ref="regiaoDaTabela"
       class="ar-tabela-rolavel"
       role="region"
       aria-label="Tabela de usuários"
-      tabindex="0"
+      :tabindex="tabindexDaTabela"
     >
       <table class="ar-tabela">
         <caption>

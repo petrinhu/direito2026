@@ -1,1 +1,6 @@
-export { formatarDataHora } from '@/core/calendario/dataHora';
+export {
+  formatarDataHora,
+  formatarFalhaDeEnvio,
+  formatarHora,
+  formatarPrazo
+} from '@/core/calendario/dataHora';

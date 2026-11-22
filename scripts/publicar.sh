@@ -17,7 +17,8 @@
 # nos dois hosts. Só com tudo verde envia branch e tag ao git, e prova com git ls-remote.
 #
 # --preparar: a mesma sequência até o preci e P1 a P3 (app em versoes/, dados da Júri no privado
-# aditivo, webroot em direito2026_webroot_novo). Não troca o que o público vê e não envia nada ao git.
+# aditivo, webroot em direito2026_webroot_novo). Troca o ponteiro atual para a versão nova (o webroot
+# público lê o app por esse ponteiro, em portao.php), mas não troca o webroot público, e não envia nada ao git.
 # --concluir: depois da virada manual (V2 a V8 do plano), confere o ar, envia branch e tag e prova
 # no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
@@ -1025,7 +1026,8 @@ conferir_ar() {
   fi
 }
 
-# Preparo (--preparar): P1 a P3. Nada que o público vê muda: o webroot novo fica em direito2026_webroot_novo.
+# Preparo (--preparar): P1 a P3. Troca o ponteiro atual (trocar_ponteiro) para a versão nova, que o webroot
+# público serve por portao.php; o webroot público não é trocado, e o novo fica em direito2026_webroot_novo.
 preparar_destinos() {
   DEPLOY_INICIADO=1
   DIVERGENCIAS=0

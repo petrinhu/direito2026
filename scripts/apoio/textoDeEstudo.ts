@@ -34,7 +34,8 @@ import { normalizarParaBusca } from '../../src/core/restrito/termosVazamento';
 
 export const TAMANHO_JANELA = 40;
 export const FILTRO = 'git-crypt';
-export const ESCOPO_FONTE = /^src\/conteudo\/p\d+\/[^/]+\/[^/]+\/.*\.ts$/;
+export const ESCOPO_FONTE =
+  /^src\/conteudo\/p\d+\/[^/]+\/[^/]+\/.*\.ts$|^src\/conteudo\/kelsen-jump\/licoes\.ts$/;
 export const FORA_DA_FONTE = /(^|\/)(meta|index|dispositivos)\.ts$/;
 /** Tag real: letra logo depois de `<` ou `</`. `a < b` e `x > y` são texto. */
 const TAG_REAL = /<\/?[a-z][^<>]*>/gi;

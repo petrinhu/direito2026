@@ -258,8 +258,11 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
   gap: 0.4rem;
 }
 
+/* O input não herda a cor do pai. Sem esta linha ele usa a cor padrão do navegador (medida:
+   #9d968e sobre o branco do cabeçalho no modo adaptado escuro, 2,9:1). */
 .tocador__volume input {
   width: 6rem;
+  color: var(--cor-sidebar-texto, #faf9f5);
 }
 
 .tocador__rotulo {

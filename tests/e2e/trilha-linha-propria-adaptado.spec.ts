@@ -70,19 +70,11 @@ for (const caminho of ROTAS) {
       );
     });
 
-    // Falha conhecida a 1024 px (EP-F11.7-TRILHA, medido 21/11/2026 em 278 px com linha
-    // própria): a trilha em linha própria põe o cabeçalho acima do teto de 256 px nessa
-    // largura. Marcada com test.fail(); quando o conserto chegar, este teste passa e o
-    // test.fail() precisa sair.
-    const teste = largura === 1024 ? test.fail : test;
-    teste(
-      `cabeçalho até 256 px, ${caminho}, ${largura}px, modo adaptado${largura === 1024 ? ' [EP-F11.7-TRILHA, falha conhecida]' : ''}`,
-      async ({ page }) => {
-        const medida = await abrir(page, caminho, largura);
-        expect(medida.altura, `${caminho} a ${largura}px: altura do cabeçalho`).toBeLessThanOrEqual(
-          TETO_CABECALHO_PX
-        );
-      }
-    );
+    test(`cabeçalho até 256 px, ${caminho}, ${largura}px, modo adaptado`, async ({ page }) => {
+      const medida = await abrir(page, caminho, largura);
+      expect(medida.altura, `${caminho} a ${largura}px: altura do cabeçalho`).toBeLessThanOrEqual(
+        TETO_CABECALHO_PX
+      );
+    });
   }
 }

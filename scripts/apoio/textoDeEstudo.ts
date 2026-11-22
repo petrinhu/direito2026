@@ -71,6 +71,7 @@ export const FORA: ReadonlyArray<readonly [RegExp, string]> = [
 export const TETO_FRASES = 5;
 export const FRASES_PERMITIDAS = [
   'A justiça é a vontade constante e perpétua de dar a cada um o seu direito.',
+  'Iustitia est constans et perpetua voluntas ius suum cuique tribuendi.',
   'Procure a legislação aplicável a cada fato.'
 ];
 export const FRASES_NORMALIZADAS = FRASES_PERMITIDAS.map((frase) => normalizarParaBusca(frase));

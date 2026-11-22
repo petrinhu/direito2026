@@ -221,3 +221,14 @@ teste('C-5: toda gravação de tentativas.json faz a faxina das entradas expirad
     igual([], $d['ip'], 'IP expirado some');
     limparPrivadoDeLimite($priv);
 }, false);
+
+teste('CISO-34: o teto diário do "Esqueci a senha" olha exatamente 24 h (86400 s) para trás', function (): void {
+    $priv = privadoDeLimite();
+    $t0 = 13_000_000;
+    for ($i = 0; $i < D26_ENVIO_TETO_DIA; $i++) {
+        verdadeiro(d26_limite_envio_teto($priv, $t0), "envio $i ainda cabe no teto");
+    }
+    verdadeiro(!d26_limite_envio_teto($priv, $t0 + 86399), 'com 86399 s, a marca de t0 ainda conta: teto cheio, recusa');
+    verdadeiro(d26_limite_envio_teto($priv, $t0 + 86400), 'com 86400 s, a marca de t0 já saiu da janela: cabe de novo');
+    limparPrivadoDeLimite($priv);
+}, false);

@@ -13,7 +13,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-export type PassoSeletivo = 'lint' | 'prettier' | 'vueTsc' | 'depcruise' | 'vitest' | 'conteudo' | 'php';
+export type PassoSeletivo =
+  'lint' | 'prettier' | 'vueTsc' | 'depcruise' | 'vitest' | 'conteudo' | 'php';
 
 export interface Decisao {
   roda: boolean;
@@ -160,7 +161,9 @@ function cli(argv: string[]): number {
     .map((l) => l.trim())
     .filter(Boolean);
   if (arquivos.some((p) => /\s/.test(p))) {
-    console.error('preciSeletivo: caminho com espaço ou controle na lista (falha fechada: o preci para)');
+    console.error(
+      'preciSeletivo: caminho com espaço ou controle na lista (falha fechada: o preci para)'
+    );
     return 2;
   }
 

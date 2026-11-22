@@ -193,14 +193,20 @@ function publicarComKillNoGrupo(
         PUBLICAR_DESTINO_HOST: '',
         PUBLICAR_DESTINO_RAIZ: join(f.home, 'domains', 'drpetrus.top')
       },
-      stdio: 'ignore'
+      stdio: ['ignore', 'pipe', 'pipe']
     });
+    let texto = '';
+    filho.stdout?.on('data', (pedaco: Buffer) => (texto += pedaco.toString()));
+    filho.stderr?.on('data', (pedaco: Buffer) => (texto += pedaco.toString()));
     const prazo = setTimeout(() => {
       filho.kill('SIGKILL');
       rejeitar(new Error('o publicar não terminou no prazo'));
     }, TEMPO_MAXIMO_MS - 5_000);
     filho.on('exit', (codigo, sinal) => {
       clearTimeout(prazo);
+      // O publicar mantém a pasta de diagnóstico /var/tmp/publicar.* quando sai com erro: ela é deste teste.
+      const diagnostico = texto.match(/mantidos em (\/var\/tmp\/publicar\.[A-Za-z0-9]+)/);
+      if (diagnostico?.[1]) temporarios.push(diagnostico[1]);
       resolver({ codigo, sinal });
     });
   });

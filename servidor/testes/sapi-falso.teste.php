@@ -13,7 +13,7 @@ function sapiFalsoConvite(string $stub): void
         $req = cvb2PostSemEsperar($c, cvb2Campos($token, $csrf, EMB3_SENHA_NOVA));
         pausaEsperarChegada($req, $a, 'senha-criada-antes-aviso');
         clearstatcache(true, $a->priv . '/sinal-sapi-finish');
-        verdadeiro(is_file($a->priv . '/sinal-sapi-finish'), 'com o E4 parado, a função do SAPI não foi chamada');
+        verdadeiro(is_file($a->priv . '/sinal-sapi-finish'), 'com o E4 parado, sinal-sapi-finish não existe: o término (d26_terminar_resposta) não chegou ao SAPI falso antes do aviso, ou o stub não carregou (prepend ou D26_PRIVADO)');
         igual(0, ordemLinhasSincronas($a), 'com o SAPI presente, nenhuma linha envio-sincrono');
         pausaSoltar($a, 'senha-criada-antes-aviso');
         igual(303, cvb2ConcluirPost($req)->status, 'o 303 termina');
@@ -30,7 +30,7 @@ function sapiFalsoEsqueci(string $stub): void
         $req = emb4PostAsync($c, $csrf, 'ana');
         pausaEsperarChegada($req, $a, 'esqueci-antes-pedir');
         clearstatcache(true, $a->priv . '/sinal-sapi-finish');
-        verdadeiro(is_file($a->priv . '/sinal-sapi-finish'), 'com a busca parada, a função do SAPI não foi chamada');
+        verdadeiro(is_file($a->priv . '/sinal-sapi-finish'), 'com a busca parada, sinal-sapi-finish não existe: o término (d26_terminar_resposta) não chegou ao SAPI falso antes da busca, ou o stub não carregou (prepend ou D26_PRIVADO)');
         igual(0, ordemLinhasSincronas($a), 'com o SAPI presente, nenhuma linha envio-sincrono');
         pausaSoltar($a, 'esqueci-antes-pedir');
         [$status] = emb4Concluir($req);

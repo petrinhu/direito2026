@@ -25,7 +25,6 @@ import logoOferecimento from './oferecimento-logo.png';
 const ANO_INICIAL = 2026;
 const anoAtual = new Date().getFullYear();
 const partesDireitos = partesDaLinhaDeDireitos(__VERSAO_SITE__, ANO_INICIAL, anoAtual, TITULAR);
-const textoAltLogo = `Dr. ${TITULAR}`;
 const linkContato = `mailto:${CONTATO_EMAIL}`;
 
 const props = defineProps<{ repositorio: RepositorioProgresso }>();
@@ -75,7 +74,7 @@ function apagar(): void {
           :src="logoOferecimento"
           width="95"
           height="53"
-          :alt="textoAltLogo"
+          alt="Caderno de Direito"
           class="rodape__logo"
         />
         <span>Caderno de Direito é um oferecimento de drpetrus.top</span>

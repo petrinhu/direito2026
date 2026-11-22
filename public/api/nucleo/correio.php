@@ -594,7 +594,7 @@ function d26_correio_msg_convite(string $destino, string $login, string $link): 
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
-        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.");
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -611,7 +611,7 @@ function d26_correio_msg_redefinicao(string $destino, string $login, string $lin
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Esta caixa não recebe respostas.");
+        . "Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -624,7 +624,7 @@ function d26_correio_msg_senha_criada(string $destino, string $login): array
     return d26_correio_mensagem($destino, D26_CORREIO_ASSUNTO_SENHA_CRIADA,
         "Olá.\n\n"
         . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
-        . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.");
+        . "Se não foi você, avise quem administra o site. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -641,7 +641,7 @@ function d26_correio_msg_esqueci(string $destino, string $login, string $link): 
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Esta caixa não recebe respostas.");
+        . "Se não foi você, ignore esta mensagem: nada muda na sua conta. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.");
 }
 
 /**
@@ -747,7 +747,25 @@ function d26_aviso_destino(string $priv): ?string
     return $lido === '' ? null : $lido;
 }
 
-/** Teto dos avisos de primeira ocorrência (A1): D26_AVISO_TETO_DIA em D26_AVISO_JANELA, chave própria (separada do teto do "Esqueci a senha"). O A2 de bloqueio não passa por aqui. */
+/**
+ * Reserva um envio no teto total do site (EM-SMTP-TETO-TOTAL). Quem envia chama antes de abrir o SMTP. Falha fechada:
+ * se o contador não lê, não envia, e só a classe da exceção vai ao erros.log.
+ */
+function d26_correio_reservar_total(string $priv, int $agora): bool
+{
+    try {
+        if (d26_limite_envio_total($priv, $agora)) {
+            return true;
+        }
+        d26_log_erro_em($priv, 'envio', 'envio-teto-total');
+        return false;
+    } catch (Throwable $e) {
+        d26_log_erro_em($priv, 'envio', 'envio-total-' . get_class($e));
+        return false;
+    }
+}
+
+/** Teto dos avisos de primeira ocorrência (A1): D26_AVISO_TETO_DIA em D26_AVISO_JANELA, chave própria (separada do teto do "Esqueci a senha" e do total). */
 function d26_aviso_reservar(string $priv, int $agora): bool
 {
     return d26_limite_envio_reservar($priv, d26_limite_chave_envio('aviso'), $agora,
@@ -840,9 +858,9 @@ function d26_aviso_agendar(string $priv, array $mensagem): void
 /**
  * Decide o aviso da ocorrência que a contagem acabou de fazer (BL-B2): 'contou' manda o A1, 'bloqueou' manda o A2.
  * Ordem: destino (ausente grava aviso-sem-destino); só o A1 passa pelo teto (aviso-teto), porque o A2 de bloqueio sai
- * sempre e não conta no teto (decisão do líder, 10/11/2026: o aviso que pede ação não pode ser calado por volume de
- * A1); depois, a fila. $n é o número lido dentro do lock (contas.php). Qualquer falha vira uma linha do erros.log pela
- * classe e não muda a resposta.
+ * sempre e não conta no teto de 20 (decisão do líder, 10/11/2026); os dois, A1 e A2, passam pelo teto total de 100
+ * (EM-SMTP-TETO-TOTAL, 21/11/2026), e o total cheio recusa também o A2. Depois, a fila. $n é o número lido dentro do
+ * lock (contas.php). Qualquer falha vira uma linha do erros.log pela classe e não muda a resposta.
  *
  * @param array<string, mixed> $lida
  */
@@ -860,6 +878,9 @@ function d26_aviso_ocorrencia(string $priv, array $lida, int $n, bool $bloqueou,
             : d26_correio_msg_uso($destino, $login, $n, $lida['admin'] === true, (int) ($lida['vigenteDesde'] ?? $agora));
         if (!$bloqueou && !d26_aviso_reservar($priv, $agora)) {
             d26_log_erro_em($priv, 'aviso', 'aviso-teto');
+            return;
+        }
+        if (!d26_correio_reservar_total($priv, $agora)) {
             return;
         }
         d26_aviso_agendar($priv, $mensagem);

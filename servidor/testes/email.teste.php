@@ -254,7 +254,7 @@ teste('e-mail: portão scripts/verificar-emails.sh reprova endereço fora da lis
     contem('encontrados=1', $out2);
     contem('analisados=1', $out2);
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 teste('e-mail: portão de e-mail com zero arquivos rastreados reprova (piso de varredura, L-36)', function (): void {
     $raiz = dirTemporario();
@@ -263,7 +263,7 @@ teste('e-mail: portão de e-mail com zero arquivos rastreados reprova (piso de v
     igual(1, $rc, 'zero arquivos é varredura quebrada');
     contem('encontrados=0', $out, 'imprime o zero');
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 teste('e-mail: portão aceita o domínio em maiúsculas (domínio de e-mail não diferencia caixa)', function (): void {
     $raiz = dirTemporario();
@@ -276,7 +276,7 @@ teste('e-mail: portão aceita o domínio em maiúsculas (domínio de e-mail não
     igual(0, $rc, 'Example.com é example.com');
     contem('falharam=0', $out, 'nenhum falhou');
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 /*
  * Envio do painel e aviso de senha criada (EM-B3, plano-sessao-unica.md 8.1.4 e 8.1.9). Os textos esperados
@@ -344,12 +344,6 @@ function emailB3SemearConvite(Ambiente $a, string $login, ?string $email): strin
 }
 
 /**
- * Mensagem que o falso gravou no DATA: cabeçalhos (De, Assunto em encoded-word, Para) e corpo decodificados
- * (quoted-printable, TE5). Sem o CRLF final que o MIME acrescenta. Falha se não houver mensagem.
- *
- * @return array{de: string, assunto: string, corpo: string}
- */
-/**
  * Valor do Subject com SÓ encoded-words UTF-8 B, separadas por CRLF e espaço (dobra RFC 5322). Texto solto entre elas,
  * ou fora delas, reprova (BL-B2, A5): o decodificador não pode ignorar o que não é encoded-word.
  */
@@ -358,6 +352,12 @@ function emailB3SubjectEstrito(string $valor): bool
     return preg_match('/^=\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=(?:\r\n =\?UTF-8\?B\?[A-Za-z0-9+\/=]+\?=)*$/', $valor) === 1;
 }
 
+/**
+ * Mensagem que o falso gravou no DATA: cabeçalhos (De, Assunto em encoded-word, Para) e corpo decodificados
+ * (quoted-printable, TE5). Sem o CRLF final que o MIME acrescenta. Falha se não houver mensagem.
+ *
+ * @return array{de: string, assunto: string, corpo: string}
+ */
 function emailB3Mensagem(?string $conversa): array
 {
     verdadeiro($conversa !== null, 'o SMTP falso recebeu a conexão e gravou a conversa');
@@ -423,7 +423,7 @@ function emailB3CorpoConvite(string $login, string $link): string
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
         . "Se você não esperava esta mensagem, pode ignorá-la.\n\n"
-        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Esta caixa não recebe respostas.";
+        . "Seu e-mail fica guardado só para enviar links de acesso como este e é apagado quando a conta é excluída. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Texto ratificado do E3 (redefinir), byte a byte. */
@@ -435,7 +435,7 @@ function emailB3CorpoRedefinicao(string $login, string $link): string
         . "{$link}\n"
         . "Se o link não funcionar, copie este código no campo de URL do seu navegador:\n"
         . "{$link}\n\n"
-        . "Esta caixa não recebe respostas.";
+        . "Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Texto ratificado do E4 (senha criada), byte a byte. */
@@ -443,7 +443,7 @@ function emailB3CorpoSenhaCriada(string $login): string
 {
     return "Olá.\n\n"
         . "A senha do usuário {$login} acabou de ser criada pelo link enviado a este e-mail.\n\n"
-        . "Se não foi você, avise quem administra o site. Esta caixa não recebe respostas.";
+        . "Se não foi você, avise quem administra o site. Não responda a este e-mail. Se você responder, a mensagem chega a quem administra o site e é tratada só para atender ao seu pedido.";
 }
 
 /** Criar pela API de admin. @param array<string, mixed> $corpo */

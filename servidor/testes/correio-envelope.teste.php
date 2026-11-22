@@ -66,7 +66,7 @@ teste('e-mail: E19u conferir-smtp --envelope contra o SMTP falso: AUTH, MAIL FRO
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E19v conferir-smtp --envelope com 553 no MAIL FROM e, em outro caso, no RCPT TO: rótulo não, código 553, rc 1; nem a saída nem o log levam o login ou o texto da recusa', function (): void {
     correioCarregar();
@@ -100,7 +100,7 @@ teste('e-mail: E19v conferir-smtp --envelope com 553 no MAIL FROM e, em outro ca
             correioFecharSmtpFalso($falso);
         }
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E19w conferir-smtp --envelope com 535 no AUTH: auth não, código 535, envelope não tentado e nunca impresso como sim; sem o login na saída', function (): void {
     correioCarregar();
@@ -122,7 +122,7 @@ teste('e-mail: E19w conferir-smtp --envelope com 535 no AUTH: auth não, código
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E19x toda linha que o CLI imprime, com e sem --envelope, começa por um rótulo permitido; sem --envelope nada do envelope aparece', function (): void {
     correioCarregar();
@@ -170,4 +170,4 @@ teste('e-mail: E19x toda linha que o CLI imprime, com e sem --envelope, começa 
             correioFecharSmtpFalso($falso);
         }
     }
-}, false);
+}, false, true);

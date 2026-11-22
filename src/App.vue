@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, inject, watch } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   CHAVE_AVISO_VERSAO,
   CHAVE_CURRICULO,
+  CHAVE_RADIO,
   CHAVE_REPOSITORIO,
   CHAVE_SESSAO,
   CHAVE_STORE_BUSCA,
@@ -27,6 +28,16 @@ const usuario = computed(() => sessao?.usuario.value ?? '');
 const admin = computed(() => sessao?.admin.value ?? false);
 // Banner de versão nova (AV-F11). Sem a chave (teste sem o composition root), não aparece.
 const aviso = inject(CHAVE_AVISO_VERSAO, null);
+// Tocador de rádio: o único <audio> do app. Fica aqui, fora do <router-view>, então a rádio segue ao trocar de página.
+const radio = inject(CHAVE_RADIO, null);
+const audioRadio = ref<HTMLAudioElement | null>(null);
+onMounted(() => radio?.vincularAudio(audioRadio.value));
+// Sair (sessão que acaba) para a rádio, e apaga o consentimento: quem entrar depois confirma o aviso de novo.
+watch(usuario, (valor) => {
+  if (valor !== '') return;
+  radio?.parar();
+  radio?.esquecerConsentimentos();
+});
 const route = useRoute();
 const router = useRouter();
 
@@ -57,6 +68,7 @@ function aoBuscar(termo: string): void {
   >
     <router-view />
   </LayoutBase>
+  <audio ref="audioRadio" preload="none" hidden />
   <!-- Faixa fixa logo abaixo do cabeçalho (ratificado pelo líder, 46g). Só aparece algo depois do login:
        o controlador só consulta com usuário, e sem versão nova ou variante de sessão a faixa fica vazia. -->
   <!-- Sem usuário a faixa segue montada: a variante "Sua sessão terminou" (D-F12-2) depende dela. -->

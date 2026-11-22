@@ -57,7 +57,10 @@ for (const { caminho, longa } of ROTAS) {
       await page.locator('main').first().waitFor({ state: 'visible' });
       await esperarLayoutAssentar(page);
       const medida = await medirTrilha(page);
-      const esperaFlex100 = largura === 360 || (longa && (largura === 768 || largura === 810));
+      // EP-F11.7-TRILHA (decisão do líder): acima de 880 px, no modo adaptado, a trilha tem
+      // linha própria, de qualquer tamanho. Entre 641 e 1023 px só a trilha longa ganha linha.
+      const esperaFlex100 =
+        largura === 360 || largura === 1280 || (longa && (largura === 768 || largura === 810));
       expect(
         medida.flexBasis === '100%',
         `${caminho} a ${largura}px: flex-basis ${medida.flexBasis}`

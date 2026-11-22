@@ -71,6 +71,18 @@ provide(CHAVE_ALVO_QUADRO_APOS_TITULO, (elemento) => {
 const alvoDoQuadro = computed<string | HTMLElement>(
   () => alvoAposTitulo.value ?? '#quadro-prova-do-conteudo'
 );
+// Só no calendário, com o quadro expandido, ele vai ao topo da coluna de conteúdo (CAL-QUADRO-1280,
+// decisão do líder, 21/11/2026: "Quadro no topo, só no calendário"). Assim não cobre o rótulo da grade
+// nem fica sobre a rolagem. Minimizado, segue na pilha inferior, como em todas as páginas.
+const quadroMinimizado = ref(true);
+const quadroNoTopoDoCalendario = computed(
+  () => naPaginaDoCalendario.value && !quadroMinimizado.value
+);
+const quadroNoConteudo = computed(() => cartaoNoConteudo.value || quadroNoTopoDoCalendario.value);
+
+function aoMudarMinimizadoDoQuadro(minimizado: boolean): void {
+  quadroMinimizado.value = minimizado;
+}
 
 const emit = defineEmits<{ buscar: [string]; sair: [] }>();
 
@@ -255,7 +267,7 @@ onBeforeUnmount(() => {
       />
     </aside>
     <main id="conteudo-principal" tabindex="-1" class="layout-base__conteudo">
-      <!-- Alvo do quadro de prova no modo adaptado. Fica vazio, sem altura, fora dele. -->
+      <!-- Alvo do quadro de prova no topo do conteúdo (modo adaptado e calendário expandido). Vazio, sem altura. -->
       <div id="quadro-prova-do-conteudo" class="layout-base__quadro-do-conteudo" />
       <slot />
     </main>
@@ -275,8 +287,12 @@ onBeforeUnmount(() => {
   -->
   <div ref="pilhaRef" class="layout-base__inferior">
     <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
-    <Teleport :to="alvoDoQuadro" :disabled="!cartaoNoConteudo">
-      <QuadroProva v-if="!emAreaRestrita" :minimizado-por-padrao="naPaginaDoCalendario" />
+    <Teleport :to="alvoDoQuadro" :disabled="!quadroNoConteudo">
+      <QuadroProva
+        v-if="!emAreaRestrita"
+        :minimizado-por-padrao="naPaginaDoCalendario"
+        @mudou-minimizado="aoMudarMinimizadoDoQuadro"
+      />
     </Teleport>
     <nav
       v-if="!naPaginaInicial"
@@ -364,9 +380,9 @@ onBeforeUnmount(() => {
   display: none;
 }
 
-/* Alvo do quadro de prova: só ganha altura no modo adaptado, quando o quadro chega dentro dele. O
-   respiro até o conteúdo abaixo é o mesmo espaço entre blocos (AV3-F0f). */
-:root[data-modo-adaptado='on'] .layout-base__quadro-do-conteudo:not(:empty) {
+/* Alvo do quadro de prova: só ganha altura quando o quadro chega dentro dele (modo adaptado ou calendário
+   expandido). O respiro até o conteúdo abaixo é o mesmo espaço entre blocos (AV3-F0f). */
+.layout-base__quadro-do-conteudo:not(:empty) {
   padding-bottom: var(--esp-4, 1rem);
 }
 

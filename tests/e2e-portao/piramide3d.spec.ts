@@ -36,6 +36,17 @@ test.beforeEach(({}, testInfo) => {
 
 test.beforeEach(() => resetarPrivado());
 
+/**
+ * O cartão "Faltam N dias" (QuadroProva) é uma pílula fixa que fica em todas as faixas de urgência
+ * e cobre o pé da figura quando há contador. Sem nenhuma prova ou prazo futuro (depois de 17/12/2026,
+ * a última prova de PROVAS, e 15/11 do PRAZOS), contadorProva devolve undefined e o cartão não sai.
+ * O relógio fica em 20/12/2026: a figura fica sem cobertura e o teste não depende do dia em que roda.
+ */
+const DATA_SEM_CARTAO = new Date('2026-12-20T15:00:00Z');
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(DATA_SEM_CARTAO);
+});
+
 interface Escuta {
   readonly errosDeConsole: string[];
   readonly errosDePagina: string[];

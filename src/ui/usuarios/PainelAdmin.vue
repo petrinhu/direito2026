@@ -70,6 +70,8 @@ const fraseDoEnvio = computed(() => {
   if (atual?.envio === 'enviado' && atual.destino)
     return `O link também foi para ${atual.destino}.`;
   if (atual?.envio === 'falhou') return 'O e-mail não saiu. Copie o link e envie por outro canal.';
+  if (atual?.envio === 'teto')
+    return 'O limite diário de e-mails do site foi atingido, e o e-mail não saiu. Copie o link e envie por outro canal.';
   return '';
 });
 
@@ -91,6 +93,24 @@ function formatarFalhaDeEnvio(instante: string | null | undefined): string {
   return Number.isNaN(d.getTime())
     ? ''
     : `${dois(d.getDate())}/${dois(d.getMonth() + 1)} ${dois(d.getHours())}:${dois(d.getMinutes())}`;
+}
+
+/**
+ * Coluna Estado. Com convite pendente, "Ativo" e "Troca de senha pendente" saem: a conta ainda não tem senha, então
+ * a troca não é o assunto. Desativado, sem e-mail e falha de envio continuam, porque é aí que o admin vê o que reenviar.
+ */
+function textoDoEstado(u: UsuarioAdmin): string {
+  const pendente = u.convite === 'pendente';
+  const partes: string[] = [];
+  if (!u.ativo) partes.push('Desativado');
+  else if (!pendente) partes.push('Ativo');
+  if (!pendente && u.deveTrocarSenha) partes.push('Troca de senha pendente');
+  if (u.email === null) partes.push('Sem e-mail');
+  const falha = formatarFalhaDeEnvio(u.envioFalhouEm);
+  if (falha) partes.push(`E-mail não saiu em ${falha}`);
+  if (pendente) partes.push(`Convite pendente até ${formatarPrazo(u.conviteExpiraEm)}`);
+  else if (u.convite === 'vencido') partes.push('Convite vencido');
+  return partes.join(' · ');
 }
 
 /** Luz de sessão: verde com sessão aberta, vermelha vazada sem ela, neutra sem o campo (servidor antigo). */
@@ -430,16 +450,7 @@ onBeforeUnmount(() => {
             <td data-rotulo="Papel">{{ u.admin ? 'Administrador' : 'Participante' }}</td>
             <td data-rotulo="E-mail">{{ u.email ?? '' }}</td>
             <td data-rotulo="Estado">
-              {{ u.ativo ? 'Ativo' : 'Desativado' }}
-              <span v-if="u.deveTrocarSenha"> · Troca de senha pendente</span>
-              <span v-if="u.email === null"> · Sem e-mail</span>
-              <span v-if="formatarFalhaDeEnvio(u.envioFalhouEm)">
-                · E-mail não saiu em {{ formatarFalhaDeEnvio(u.envioFalhouEm) }}</span
-              >
-              <span v-if="u.convite === 'pendente'">
-                · Convite pendente até {{ formatarPrazo(u.conviteExpiraEm) }}</span
-              >
-              <span v-else-if="u.convite === 'vencido'"> · Convite vencido</span>
+              {{ textoDoEstado(u) }}
             </td>
             <td data-rotulo="Último acesso">{{ formatarDataHora(u.ultimoLogin) }}</td>
             <td data-rotulo="Ações">

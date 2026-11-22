@@ -186,6 +186,11 @@ d26_responder(200, ['ok' => true]);
  */
 function d26_painel_enviar(string $priv, string $login, array $mensagem): string
 {
+    // EM-SMTP-TETO-TOTAL: com o total do dia cheio, o e-mail não sai. A conta e o link existem; a marca fica.
+    if (!d26_correio_reservar_total($priv, time())) {
+        d26_contas_marcar_envio($priv, $login, gmdate('c'));
+        return 'teto';
+    }
     $saiu = d26_correio_avisar($priv, $mensagem);
     d26_contas_marcar_envio($priv, $login, $saiu ? null : gmdate('c'));
     return $saiu ? 'enviado' : 'falhou';

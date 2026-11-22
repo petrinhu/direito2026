@@ -34,7 +34,7 @@ const pedidoInicial = computed(
   () => fase.value === 'aguardando' && ultimaPontuacao.value === undefined
 );
 
-let coresCache: Cores = { tinta: '#1c1c1c', papel: '#faf9f5' };
+let coresCache: Cores = { tinta: '#1c1c1c', papel: '#faf9f5', escuro: false };
 let quadrosDesdeCores = 0;
 let contexto: CanvasRenderingContext2D | null = null;
 let ultimoMarco = 0;
@@ -43,7 +43,9 @@ function lerCores(): Cores {
   const cs = getComputedStyle(document.documentElement);
   return {
     tinta: cs.getPropertyValue('--cor-texto').trim() || '#1c1c1c',
-    papel: cs.getPropertyValue('--cor-fundo').trim() || '#faf9f5'
+    papel: cs.getPropertyValue('--cor-fundo').trim() || '#faf9f5',
+    // KELSEN-JUMP: o tema vem do atributo que o store de tema grava na raiz (data-theme="dark").
+    escuro: document.documentElement.getAttribute('data-theme') === 'dark'
   };
 }
 

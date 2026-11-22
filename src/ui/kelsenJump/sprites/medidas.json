@@ -1,0 +1,38 @@
+{
+  "canvas": {
+    "largura": 48,
+    "altura": 61
+  },
+  "quadros": {
+    "correndo-0": {
+      "largura": 37,
+      "altura": 59,
+      "linhaDoChao": 60
+    },
+    "correndo-1": {
+      "largura": 40,
+      "altura": 59,
+      "linhaDoChao": 60
+    },
+    "abaixado-0": {
+      "largura": 46,
+      "altura": 53,
+      "linhaDoChao": 60
+    },
+    "abaixado-1": {
+      "largura": 48,
+      "altura": 51,
+      "linhaDoChao": 60
+    },
+    "parado-0": {
+      "largura": 29,
+      "altura": 61,
+      "linhaDoChao": 60
+    }
+  },
+  "nuvem": {
+    "largura": 168,
+    "altura": 75,
+    "origem": "nuvem-0.png 112x50 ampliado 1,5x por vizinho mais próximo"
+  }
+}

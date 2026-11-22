@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ESPACO,
+  FOLGA_NUVEM_S,
   KELSEN,
   NUVEM,
   PASSO_FIXO_S,
@@ -13,6 +14,7 @@ import {
   alturaPiramide,
   apexDoSalto,
   centroDoObstaculo,
+  distanciaAcimaDe,
   distanciaDeSalto,
   ehPassavelAbaixado,
   ehPossivel,
@@ -59,7 +61,16 @@ describe('nuvem NHF: passa-se abaixado, nunca em pé e nunca pulada', () => {
     expect(ehPassavelAbaixado(nuvem)).toBe(true);
   });
 
-  it('o topo fica acima do ápice do pulo: nenhum pulo passa por cima', () => {
+  it('a nuvem fica abaixo do ápice: quem a vence é a largura, não a altura', () => {
+    expect(NUVEM.baseY + NUVEM.altura).toBeLessThan(apexDoSalto());
+  });
+
+  it('a largura passa do intervalo que o corpo fica acima do topo, mais a folga, na velocidade máxima', () => {
+    const topo = nuvem.baseY + nuvem.altura;
+    const acima = distanciaAcimaDe(topo, VELOCIDADE.maxima);
+    expect(nuvem.largura + KELSEN.largura).toBeGreaterThan(
+      acima + VELOCIDADE.maxima * FOLGA_NUVEM_S
+    );
     expect(nuvemNaoSaltavel(nuvem)).toBe(true);
   });
 

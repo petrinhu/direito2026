@@ -1,4 +1,4 @@
-import { ESPACO, FISICA, KELSEN, NUVEM, PIRAMIDE, VELOCIDADE } from './constantes';
+import { ESPACO, FISICA, FOLGA_NUVEM_S, KELSEN, NUVEM, PIRAMIDE, VELOCIDADE } from './constantes';
 import { sortear } from './rng';
 
 /**
@@ -95,11 +95,25 @@ export function ehPassavelAbaixado(o: Nuvem): boolean {
 }
 
 /**
- * Nuvem que não se pula: o topo fica acima do ápice do salto, então o corpo no pico do pulo ainda
- * encosta nela. Por isso só a abaixada atravessa (pedido do líder).
+ * Distância de rolagem em que os pés do corpo ficam acima de `topo` durante um salto na velocidade
+ * `v`. Pela parábola: y(t) = vy·t − g·t²/2 ≥ topo entre as duas raízes, de duração 2·√(vy² − 2g·topo)/g.
+ * Se o topo passa do ápice, não há intervalo: 0.
+ */
+export function distanciaAcimaDe(topo: number, v: number): number {
+  const restante = FISICA.velocidadeSalto ** 2 - 2 * FISICA.gravidade * topo;
+  if (restante <= 0) return 0;
+  return (v * 2 * Math.sqrt(restante)) / FISICA.gravidade;
+}
+
+/**
+ * Nuvem que não se vence pulando. Para passar por cima, o corpo precisa estar com os pés acima do topo
+ * durante toda a janela de sobreposição, que é a largura da nuvem mais a do corpo (em px de rolagem).
+ * O intervalo acima do topo cresce com a velocidade, então o pior caso é a velocidade máxima. Se a
+ * janela passa desse intervalo mais a folga, nenhum pulo atravessa: quem pula volta a cair nela.
  */
 export function nuvemNaoSaltavel(o: Nuvem): boolean {
-  return o.baseY + o.altura > apexDoSalto();
+  const acima = distanciaAcimaDe(o.baseY + o.altura, VELOCIDADE.maxima);
+  return o.largura + KELSEN.largura > acima + VELOCIDADE.maxima * FOLGA_NUVEM_S;
 }
 
 /** Obstáculo possível: pirâmide saltável ou nuvem só atravessável abaixado. */

@@ -8,12 +8,18 @@ export const MUNDO = { largura: 960, altura: 320 } as const;
 /** Passo fixo da simulação: a lógica avança sempre no mesmo tamanho de passo, qualquer que seja o quadro. */
 export const PASSO_FIXO_S = 1 / 120;
 
-/** Kelsen: parado à esquerda da tela. `x` é a coluna do corpo no mundo; a largura é a caixa de colisão. */
+/**
+ * Kelsen: parado à esquerda da tela. `x` é a coluna do corpo no mundo; a largura é a caixa de colisão.
+ * As alturas são as dos quadros normalizados pelo pé (src/ui/kelsenJump/sprites/medidas.json): em pé
+ * 61 px, agachado 53 px (87% da altura em pé). A largura, 26 px, é a do corpo parado (29 px) com folga
+ * de 3 px: caixas de 30 px ou mais fazem o robô de referência bater em pirâmides altas com 40 ms de
+ * erro (medido em 22/11/2026). Os quadros de corrida são mais largos; a diferença é o braço, fora da caixa.
+ */
 export const KELSEN = {
   x: 150,
-  largura: 22,
-  alturaEmPe: 62,
-  alturaAgachado: 30
+  largura: 26,
+  alturaEmPe: 61,
+  alturaAgachado: 53
 } as const;
 
 /** Gravidade e velocidade inicial do pulo. O ápice é v²/2g; o tempo no ar é 2v/g. */
@@ -41,14 +47,24 @@ export const PIRAMIDE = {
   larguraUnidades: 104
 } as const;
 
-/** Nuvem baixa com "NHF" dentro. `baseY` é a altura da base acima do chão. */
+/**
+ * Nuvem baixa e larga com "NHF" dentro (PNG do PixelLab, 112 x 50, ampliado 1,5x: 168 x 75, o mesmo
+ * tamanho que o script de geração grava em medidas.json). `baseY` é a altura da base acima do chão:
+ * entre a altura agachada (53) e a em pé (61), então agachado passa por baixo e em pé bate.
+ *
+ * Ela não se vence por cima: o topo fica abaixo do ápice do pulo, então a barreira é a largura. A
+ * conta está em `nuvemNaoSaltavel` (obstaculos.ts): a largura passa da distância que o corpo fica
+ * acima do topo na velocidade máxima, mais a folga `FOLGA_NUVEM_S`.
+ */
 export const NUVEM = {
-  largura: 84,
-  baseY: 40,
-  /* Topo acima do ápice do pulo (142 px): nenhum pulo passa por cima, só a abaixada (pedido do líder). */
-  altura: 130,
+  largura: 168,
+  baseY: 57,
+  altura: 75,
   texto: 'NHF'
 } as const;
+
+/** Folga, em segundos de corrida na velocidade máxima, somada à conta de não saltabilidade da nuvem. */
+export const FOLGA_NUVEM_S = 0.1;
 
 /**
  * Espaçamento do gerador. `inicial` é a distância do começo até o primeiro obstáculo. `folga`

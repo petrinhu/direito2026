@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   KELSEN,
+  NUVEM,
   PASSO_FIXO_S,
   PONTOS,
   REINICIO_TRAVA_S,
@@ -84,7 +85,7 @@ describe('colisão e reinício', () => {
   it('colisão AABB: corpo em pé no chão sobre a nuvem dispara; corpo agachado não', () => {
     const corpoEmPe = { x0: 0, x1: KELSEN.largura, y0: 0, y1: KELSEN.alturaEmPe };
     const corpoAgachado = { x0: 0, x1: KELSEN.largura, y0: 0, y1: KELSEN.alturaAgachado };
-    const nuvem = { x0: 5, x1: 60, y0: NUVEM_BASE, y1: NUVEM_BASE + 36 };
+    const nuvem = { x0: 5, x1: 60, y0: NUVEM.baseY, y1: NUVEM.baseY + 36 };
     expect(colidem(corpoEmPe, nuvem)).toBe(true);
     expect(colidem(corpoAgachado, nuvem)).toBe(false);
   });
@@ -104,5 +105,3 @@ describe('pontuação', () => {
     expect(PONTOS.piramide).toBeGreaterThan(0);
   });
 });
-
-const NUVEM_BASE = 40;

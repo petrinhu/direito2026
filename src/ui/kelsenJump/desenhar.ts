@@ -1,5 +1,6 @@
 import type { Cena, FormaCena } from '@/app/kelsenJump';
 import { KELSEN, MUNDO } from '@/app/kelsenJump';
+import { imagemDoQuadro, TAMANHO_QUADRO } from './sprites';
 
 /** Linha do chão na tela lógica (y cresce para baixo). Pés do Kelsen em y = CHAO - pe. */
 export const CHAO_TELA = 290;
@@ -7,11 +8,13 @@ export const CHAO_TELA = 290;
 export interface Cores {
   readonly tinta: string;
   readonly papel: string;
+  /** Tema escuro: os quadros do Kelsen usam a versão invertida (branco sobre preto). */
+  readonly escuro: boolean;
 }
 
 /** Desenha um frame do jogo em preto e branco, com as cores do tema lidas do CSS. */
 export function desenharCena(ctx: CanvasRenderingContext2D, cena: Cena, cores: Cores): void {
-  const { tinta, papel } = cores;
+  const { tinta, papel, escuro } = cores;
   ctx.fillStyle = papel;
   ctx.fillRect(0, 0, MUNDO.largura, MUNDO.altura);
   ctx.strokeStyle = tinta;
@@ -21,9 +24,24 @@ export function desenharCena(ctx: CanvasRenderingContext2D, cena: Cena, cores: C
   desenharChao(ctx, cena.distancia, tinta);
   for (const forma of cena.obstaculos) {
     if (forma.tipo === 'piramide') desenharPiramide(ctx, forma, papel, tinta);
-    else desenharNuvem(ctx, forma, papel, tinta);
+    else desenharNuvem(ctx, forma, papel, tinta, escuro);
   }
-  desenharKelsen(ctx, cena, tinta);
+  desenharKelsen(ctx, cena, tinta, escuro);
+}
+
+/** Quadro do PixelLab para a pose: pulo congela o quadro de corrida; batida usa o parado. */
+function nomeDoQuadro(pose: Cena['corpo']['pose'], quadro: 0 | 1): string {
+  switch (pose) {
+    case 'parado':
+    case 'batida':
+      return 'parado-0';
+    case 'pulando':
+      return 'correndo-1';
+    case 'abaixado':
+      return `abaixado-${quadro}`;
+    case 'correndo':
+      return `correndo-${quadro}`;
+  }
 }
 
 /** O cenário anda: marcas no chão rolam com a distância percorrida. */
@@ -66,13 +84,39 @@ function desenharPiramide(
   }
 }
 
+/**
+ * Nuvem com "NHF": o PNG do PixelLab, sem suavização, com o texto centrado por cima na cor da tinta.
+ * A caixa do PNG é a caixa de colisão (mesma escala). Sem a imagem, a nuvem de traço de reserva.
+ */
 function desenharNuvem(
   ctx: CanvasRenderingContext2D,
   n: Extract<FormaCena, { tipo: 'nuvem' }>,
   papel: string,
-  tinta: string
+  tinta: string,
+  escuro: boolean
 ): void {
   const topo = CHAO_TELA - (n.baseY + n.altura);
+  const imagem = imagemDoQuadro('nuvem', escuro);
+  if (imagem) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(imagem, Math.round(n.x), Math.round(topo), n.largura, n.altura);
+  } else {
+    desenharNuvemDeTraco(ctx, n, topo, papel, tinta);
+  }
+  ctx.fillStyle = tinta;
+  ctx.font = 'bold 15px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(n.texto, n.x + n.largura / 2, topo + n.altura / 2);
+}
+
+function desenharNuvemDeTraco(
+  ctx: CanvasRenderingContext2D,
+  n: Extract<FormaCena, { tipo: 'nuvem' }>,
+  topo: number,
+  papel: string,
+  tinta: string
+): void {
   const base = CHAO_TELA - n.baseY;
   const raio = n.altura / 2;
   ctx.fillStyle = papel;
@@ -86,19 +130,46 @@ function desenharNuvem(
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = tinta;
-  ctx.font = 'bold 15px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(n.texto, n.x + n.largura / 2, topo + n.altura / 2);
 }
 
-/** Kelsen: traço simples. Em pé tem a altura do corpo; agachado, o tronco desce e a cabeça abaixa. */
-function desenharKelsen(ctx: CanvasRenderingContext2D, cena: Cena, tinta: string): void {
-  const { x, pe, altura } = cena.corpo;
+/**
+ * Kelsen. Com os quadros carregados, desenha o sprite com os pés na linha do chão, sem suavização
+ * (pixel art), centrado na caixa de colisão. Sem imagem, usa o traço de reserva: em pé tem a altura
+ * do corpo; agachado, o tronco desce e a cabeça abaixa.
+ */
+function desenharKelsen(
+  ctx: CanvasRenderingContext2D,
+  cena: Cena,
+  tinta: string,
+  escuro: boolean
+): void {
+  const { x, pe, altura, pose, quadro, tremor } = cena.corpo;
   const pesY = CHAO_TELA - pe;
+  const cx = x + KELSEN.largura / 2 + tremor;
+  const imagem = imagemDoQuadro(nomeDoQuadro(pose, quadro), escuro);
+  if (imagem) {
+    const { largura, altura: alturaCanvas } = TAMANHO_QUADRO;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(
+      imagem,
+      Math.round(cx - largura / 2),
+      Math.round(pesY - alturaCanvas),
+      largura,
+      alturaCanvas
+    );
+    return;
+  }
+  desenharKelsenDeTraco(ctx, cx, pesY, altura, tinta);
+}
+
+function desenharKelsenDeTraco(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  pesY: number,
+  altura: number,
+  tinta: string
+): void {
   const topo = pesY - altura;
-  const cx = x + KELSEN.largura / 2;
   ctx.strokeStyle = tinta;
   ctx.fillStyle = tinta;
   ctx.lineWidth = 3;

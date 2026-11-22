@@ -143,8 +143,10 @@ describe('build e build:construir (o preci chama a metade)', () => {
         scripts: Record<string, string>;
       }
     ).scripts;
-    expect(scripts['build']).toBeDefined();
-    expect(scripts['build:construir']).toBeDefined();
-    expect(scripts['build'].endsWith(scripts['build:construir'])).toBe(true);
+    const build = scripts['build'] ?? '';
+    const construir = scripts['build:construir'] ?? '';
+    expect(build).not.toBe('');
+    expect(construir).not.toBe('');
+    expect(build.endsWith(construir)).toBe(true);
   });
 });

@@ -254,7 +254,7 @@ teste('e-mail: portão scripts/verificar-emails.sh reprova endereço fora da lis
     contem('encontrados=1', $out2);
     contem('analisados=1', $out2);
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 teste('e-mail: portão de e-mail com zero arquivos rastreados reprova (piso de varredura, L-36)', function (): void {
     $raiz = dirTemporario();
@@ -263,7 +263,7 @@ teste('e-mail: portão de e-mail com zero arquivos rastreados reprova (piso de v
     igual(1, $rc, 'zero arquivos é varredura quebrada');
     contem('encontrados=0', $out, 'imprime o zero');
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 teste('e-mail: portão aceita o domínio em maiúsculas (domínio de e-mail não diferencia caixa)', function (): void {
     $raiz = dirTemporario();
@@ -276,7 +276,7 @@ teste('e-mail: portão aceita o domínio em maiúsculas (domínio de e-mail não
     igual(0, $rc, 'Example.com é example.com');
     contem('falharam=0', $out, 'nenhum falhou');
     apagarArvore($raiz);
-}, false);
+}, false, true);
 
 /*
  * Envio do painel e aviso de senha criada (EM-B3, plano-sessao-unica.md 8.1.4 e 8.1.9). Os textos esperados

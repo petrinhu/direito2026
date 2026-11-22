@@ -208,7 +208,7 @@ teste('e-mail: E10u smtp.usuario igual ao remetente envia (plano B sem código n
             correioFecharSmtpFalso($falso);
         }
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E27u login e senha nunca em arquivo do privado (fora dos dois de origem) nem no log de erro do PHP, em claro ou em base64, depois de um envio que dá certo e de um que falha', function (): void {
     correioCarregar();
@@ -268,7 +268,7 @@ teste('e-mail: E27u login e senha nunca em arquivo do privado (fora dos dois de 
         ini_set('error_log', $anteriorLog);
         ini_set('log_errors', $anteriorLogar);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E27v falha de escrita no AUTH (PLAIN e LOGIN): o login não está na mensagem, na exceção anterior, nos argumentos do rastro nem no erros.log', function (): void {
     correioCarregar();
@@ -328,7 +328,7 @@ teste('e-mail: E27v falha de escrita no AUTH (PLAIN e LOGIN): o login não está
         ini_set('zend.exception_ignore_args', $ignorarArgs);
         ini_set('zend.exception_string_param_max_len', $tamanhoArgs);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E19y as recusas do smtp.usuario valem também na conferência (CLI): auth não, etapa smtp-usuario, rc 1 e o SMTP falso sem conexão', function (): void {
     correioCarregar();
@@ -364,4 +364,4 @@ teste('e-mail: E19y as recusas do smtp.usuario valem também na conferência (CL
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);

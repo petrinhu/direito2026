@@ -107,7 +107,7 @@ teste('e-mail: E27t rastro da exceção do envio não leva a senha, nem em texto
         ini_set('zend.exception_ignore_args', $ignorarArgs);
         ini_set('zend.exception_string_param_max_len', $tamanhoArgs);
     }
-}, false);
+}, false, true);
 
 teste('e-mail: E28t falha que não é D26EnvioFalhou vira falha genérica interna: sem exceção anterior, sem senha no rastro nem no log', function (): void {
     correioCarregar();
@@ -157,4 +157,4 @@ teste('e-mail: E31t a guarda de transporte está no caminho real: enviar e confe
     } finally {
         correioFecharSmtpFalso($falso);
     }
-}, false);
+}, false, true);

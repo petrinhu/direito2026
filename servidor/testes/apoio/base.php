@@ -31,7 +31,7 @@ final class Registro
  * Registra um teste. Duas marcas, cada uma com a sua opção no runner (rodar.php):
  * - $servidor: precisa do servidor local (php -S). Sai com --sem-servidor.
  * - $laco: precisa de laço local (escuta em 127.0.0.1) ou de exec. Sai com --sem-laco,
- *   e sai sozinho quando o ambiente não tem exec nem escuta (pulado por ambiente).
+ *   e sai sozinho quando falta ao ambiente o exec ou a escuta (pulado por ambiente).
  */
 function teste(string $nome, callable $corpo, bool $servidor = true, bool $laco = false): void
 {

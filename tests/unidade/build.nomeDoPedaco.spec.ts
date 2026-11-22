@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { nomeDoPedaco } from '../../vite.config';
 
 /**
- * Nome dos pedaços do build (L-35, TDD: estes testes nasceram vermelhos, antes
- * da função existir). Pedaço que sai só de src/conteudo ganha o prefixo
- * "conteudo-", que é o padrão da regra de cache "conteudo-unidades" do service
- * worker. Pedaço do app ou misto (conteúdo + código do app) fica como antes.
+ * Nome dos pedaços do build (vite.config.ts, nomeDoPedaco). Pedaço que sai só de
+ * src/conteudo ganha o prefixo "conteudo-" (PREFIXO_PEDACO_CONTEUDO); pedaço do
+ * app ou misto (conteúdo + código do app) fica sem ele. Estes casos fixam a saída
+ * atual do build. Nenhuma regra de cache lê o prefixo desde que o service worker
+ * saiu (LU-F3.1); se o líder tirar o prefixo, estes casos mudam junto.
  */
 const DE_CONTEUDO = '/proj/src/conteudo/p1/intr-direito/u1/resumo.ts';
 

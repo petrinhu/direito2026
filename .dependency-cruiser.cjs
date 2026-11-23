@@ -34,16 +34,16 @@ module.exports = {
       to: { path: '^src/core', dependencyTypesNot: ['type-only'] }
     },
     {
-      name: 'conteudo-so-tipos',
+      name: 'conteudo-sem-app-ui',
       comment:
-        'src/conteudo é dado, não camada. Pode importar de src/core os tipos e as funções puras de montagem (ex.: montarCurriculo); nunca de src/app nem de src/ui.',
+        'src/conteudo é dado, não camada. Nunca importa de src/app nem de src/ui. De src/core, por convenção, importa só tipos e a função pura montarCurriculo; essa parte não é conferida aqui (decisão DEPCRUISER-SO-TIPOS, 22/11/2026).',
       severity: 'error',
       from: { path: '^src/conteudo' },
       to: { path: '^src/(app|ui)' }
     },
     {
-      name: 'dados-so-tipos',
-      comment: 'src/dados é dado compartilhado entre cadeiras; mesma regra de conteudo-so-tipos.',
+      name: 'dados-sem-app-ui',
+      comment: 'src/dados é dado compartilhado entre cadeiras; mesma regra de conteudo-sem-app-ui.',
       severity: 'error',
       from: { path: '^src/dados' },
       to: { path: '^src/(app|ui)' }

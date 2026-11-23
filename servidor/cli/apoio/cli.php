@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 /**
  * Apoio dos CLIs de conta (definir-admin, remover-conta, auditar-contas).
- * Estes CLIs vão ao servidor junto com a pasta apoio/. criar-admin.php é
- * autocontido de propósito: o runbook de V6 copia só ele.
+ * Estes CLIs vão ao servidor junto com a pasta apoio/. criar-admin.php e
+ * redefinir-senha.php são autocontidos de propósito: o runbook copia um deles sozinho.
  */
 
 /** Recusa curta em pt-br. Nunca ecoa argumento: a mensagem não pode carregar senha. */

@@ -47,6 +47,37 @@ const pedidoInicial = computed(
   () => fase.value === 'aguardando' && ultimaPontuacao.value === undefined
 );
 
+/** Mesma média do CSS que mostra os botões: com ela, o aparelho é de toque. */
+const MIDIA_TOQUE = '(pointer: coarse), (hover: none)';
+const midiaToque = typeof window.matchMedia === 'function' ? window.matchMedia(MIDIA_TOQUE) : null;
+/** Aparelho de toque: mostra os botões Pular e Abaixar e troca o texto que os cita. */
+const temToque = ref(midiaToque?.matches ?? false);
+/** Abaixado agora, por qualquer via (botão, seta ou perda de foco). Alimenta aria-pressed. */
+const abaixado = ref(false);
+/**
+ * Um toque em Pular ou Abaixar já foi tratado no pointerdown. O click que o navegador manda em
+ * seguida não pode repetir a ação; o click do teclado (sem toque antes) age normalmente.
+ */
+let pularPeloPonteiro = false;
+let abaixarPeloPonteiro = false;
+
+const textoInstrucao = computed(() => {
+  if (temToque.value) {
+    return pedidoInicial.value
+      ? 'Toque em Pular para começar. Use os botões Pular e Abaixar. Não há pausa.'
+      : 'Use os botões Pular e Abaixar. Não há pausa.';
+  }
+  return pedidoInicial.value
+    ? 'Pressione espaço para começar. Espaço pula. Seta para baixo abaixa. Não há pausa.'
+    : 'Espaço pula. Seta para baixo abaixa. Não há pausa.';
+});
+
+const ariaDoPalco = computed(() =>
+  temToque.value
+    ? 'Kelsen Jump. Kelsen corre e precisa pular pirâmides e passar abaixado por nuvens com a sigla NHF. Use os botões Pular e Abaixar.'
+    : 'Kelsen Jump. Kelsen corre e precisa pular pirâmides e passar abaixado por nuvens com a sigla NHF. Espaço pula, seta para baixo abaixa.'
+);
+
 let coresCache: Cores = { tinta: '#1c1c1c', papel: '#faf9f5', escuro: false };
 let quadrosDesdeCores = 0;
 let contexto: CanvasRenderingContext2D | null = null;
@@ -118,28 +149,84 @@ function aoTeclaDocumento(e: KeyboardEvent): void {
   if (!jogoFicaComATecla(alvo, temModalAberto(document))) return;
   e.preventDefault();
   if (ehTeclaDeAbaixar(e.key)) {
-    jogo.value?.agachar(true);
+    definirAbaixado(true);
     return;
   }
   if (e.repeat) return;
-  sons.value?.ativar();
-  jogo.value?.pular();
+  pularAgora();
 }
 
 /** Abaixar vale enquanto a seta estiver pressionada: a soltura sempre conta, mesmo com foco em outro lugar. */
 function aoSoltarTeclaDocumento(e: KeyboardEvent): void {
-  if (ehTeclaDeAbaixar(e.key)) jogo.value?.agachar(false);
+  if (ehTeclaDeAbaixar(e.key)) definirAbaixado(false);
 }
 
 /** Sem a janela em foco, o keyup pode não chegar: não deixa o Kelsen agachado. */
 function aoPerderFoco(): void {
-  jogo.value?.agachar(false);
+  definirAbaixado(false);
 }
 
-function aoToque(e: PointerEvent): void {
-  e.preventDefault();
+function definirAbaixado(ativo: boolean): void {
+  abaixado.value = ativo;
+  jogo.value?.agachar(ativo);
+}
+
+/** Pulo de qualquer origem (tecla ou botão): ativa o som e, na tela de espera, o pulo inicia a partida. */
+function pularAgora(): void {
   sons.value?.ativar();
   jogo.value?.pular();
+}
+
+/** O pulo sai no pointerdown, sem esperar o click, para não ter atraso no toque. */
+function aoPressionarPular(e: PointerEvent): void {
+  e.preventDefault();
+  pularPeloPonteiro = true;
+  pularAgora();
+}
+
+function aoClicarPular(): void {
+  if (pularPeloPonteiro) {
+    pularPeloPonteiro = false;
+    return;
+  }
+  pularAgora();
+}
+
+function aoCancelarPular(): void {
+  pularPeloPonteiro = false;
+}
+
+/** Abaixar segura: agacha enquanto o dedo estiver pressionado. Captura o ponteiro para a soltura chegar aqui. */
+function aoPressionarAbaixar(e: PointerEvent): void {
+  e.preventDefault();
+  abaixarPeloPonteiro = true;
+  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  sons.value?.ativar();
+  // Na tela de espera, só um pulo inicia a partida (o núcleo não tem outro começo): como o espaço.
+  if (fase.value === 'aguardando') jogo.value?.pular();
+  definirAbaixado(true);
+}
+
+function aoSoltarAbaixar(): void {
+  definirAbaixado(false);
+}
+
+function aoCancelarAbaixar(): void {
+  abaixarPeloPonteiro = false;
+  definirAbaixado(false);
+}
+
+/** Click sem toque antes (teclado ou leitor de tela) alterna, como um botão de estado. */
+function aoClicarAbaixar(): void {
+  if (abaixarPeloPonteiro) {
+    abaixarPeloPonteiro = false;
+    return;
+  }
+  definirAbaixado(!abaixado.value);
+}
+
+function aoMudarToque(e: { readonly matches: boolean }): void {
+  temToque.value = e.matches;
 }
 
 function alternarMudo(): void {
@@ -165,15 +252,14 @@ onMounted(() => {
   document.addEventListener('keydown', aoTeclaDocumento);
   document.addEventListener('keyup', aoSoltarTeclaDocumento);
   window.addEventListener('blur', aoPerderFoco);
-  el.addEventListener('pointerdown', aoToque);
+  midiaToque?.addEventListener('change', aoMudarToque);
 });
 
 onBeforeUnmount(() => {
-  const el = canvas.value;
   document.removeEventListener('keydown', aoTeclaDocumento);
   document.removeEventListener('keyup', aoSoltarTeclaDocumento);
   window.removeEventListener('blur', aoPerderFoco);
-  el?.removeEventListener('pointerdown', aoToque);
+  midiaToque?.removeEventListener('change', aoMudarToque);
   jogo.value?.parar();
   sons.value?.fechar();
   jogo.value = null;
@@ -190,15 +276,37 @@ onBeforeUnmount(() => {
       role="img"
       tabindex="0"
       :data-pose="pose"
-      aria-label="Kelsen Jump. Kelsen corre e precisa pular pirâmides e passar abaixado por nuvens com a sigla NHF. Espaço pula, seta para baixo abaixa."
+      :aria-label="ariaDoPalco"
     ></canvas>
 
-    <p class="kj__instrucao">
-      <template v-if="pedidoInicial">
-        Pressione espaço para começar. Espaço pula. Seta para baixo abaixa. Não há pausa.
-      </template>
-      <template v-else>Espaço pula. Seta para baixo abaixa. Não há pausa.</template>
-    </p>
+    <div class="kj__controles" role="group" aria-label="Controles do jogo">
+      <button
+        type="button"
+        class="kj__botao kj__botao--pular"
+        @pointerdown="aoPressionarPular"
+        @pointercancel="aoCancelarPular"
+        @click="aoClicarPular"
+        @contextmenu.prevent
+      >
+        Pular
+      </button>
+      <button
+        type="button"
+        class="kj__botao kj__botao--abaixar"
+        :aria-pressed="abaixado ? 'true' : 'false'"
+        @pointerdown="aoPressionarAbaixar"
+        @pointerup="aoSoltarAbaixar"
+        @pointerleave="aoSoltarAbaixar"
+        @pointercancel="aoCancelarAbaixar"
+        @lostpointercapture="aoSoltarAbaixar"
+        @click="aoClicarAbaixar"
+        @contextmenu.prevent
+      >
+        Abaixar
+      </button>
+    </div>
+
+    <p class="kj__instrucao">{{ textoInstrucao }}</p>
 
     <p class="kj__instrucao kj__legenda">NHF - Norma Hipotética Fundamental</p>
 
@@ -280,6 +388,40 @@ onBeforeUnmount(() => {
 }
 .kj__instrucao {
   margin: 0;
+}
+/* Os botões são só para toque; no desktop com mouse, o teclado continua sendo o controle. */
+.kj__controles {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--esp-3, 0.75rem);
+}
+@media (pointer: coarse), (hover: none) {
+  .kj__controles {
+    display: grid;
+  }
+}
+.kj__botao {
+  min-height: 3.5rem;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+  border: 2px solid var(--cor-texto);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.kj__botao[aria-pressed='true'] {
+  background: var(--cor-texto);
+  color: var(--cor-fundo);
+}
+.kj__botao:focus-visible {
+  outline: 3px solid var(--cor-texto);
+  outline-offset: 3px;
 }
 .kj__barra {
   display: flex;

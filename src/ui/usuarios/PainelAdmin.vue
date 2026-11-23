@@ -57,6 +57,9 @@ const link = ref<
   | undefined
 >();
 const copiaAvisada = ref('');
+/** Campo com o endereço, aberto só quando nenhum modo de cópia deu certo. */
+const mostrarCampoManual = ref(false);
+const campoManual = ref<HTMLInputElement>();
 /** Trocar e-mail: a conta aberta para edição, o valor digitado e, só na própria conta, a senha atual. */
 const editandoEmail = ref<string | undefined>();
 const emailEditado = ref('');
@@ -265,19 +268,78 @@ async function excluir(login: string): Promise<void> {
   await executar({ acao: 'excluir', usuario: login }, `Usuário ${login} excluído.`);
 }
 
+/**
+ * Copia por `execCommand` num textarea temporário, para navegador sem clipboard API (contexto sem HTTPS seguro,
+ * navegador antigo) e para quando o `writeText` é recusado. Síncrono, sem `await` antes: o gesto do toque ainda
+ * vale. Devolve o foco ao botão, porque selecionar o textarea o tira de lá. O textarea sai do DOM na hora.
+ */
+function copiarPeloExecCommand(texto: string): boolean {
+  if (typeof document.execCommand !== 'function') return false;
+  const foco = document.activeElement;
+  const area = document.createElement('textarea');
+  area.value = texto;
+  area.readOnly = true;
+  area.setAttribute('aria-hidden', 'true');
+  area.style.position = 'fixed';
+  area.style.top = '0';
+  area.style.left = '0';
+  area.style.opacity = '0';
+  area.style.fontSize = '16px';
+  document.body.appendChild(area);
+  try {
+    area.select();
+    area.setSelectionRange(0, texto.length);
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    area.remove();
+    if (foco instanceof HTMLElement) foco.focus({ preventScroll: true });
+  }
+}
+
+function avisarCopiado(): void {
+  mostrarCampoManual.value = false;
+  copiaAvisada.value = 'Link copiado.';
+}
+
+/** Nada copiou: o endereço vai para um campo já selecionado, para a pessoa copiar com o toque longo ou com Ctrl+C. */
+async function oferecerCopiaManual(): Promise<void> {
+  mostrarCampoManual.value = true;
+  copiaAvisada.value = 'Não foi possível copiar. Selecione o link e copie à mão.';
+  await nextTick();
+  campoManual.value?.focus();
+  campoManual.value?.select();
+  campoManual.value?.setSelectionRange(0, enderecoDoLink.value.length);
+}
+
+/**
+ * Cascata: `writeText`, depois `execCommand`, e por fim o campo selecionado. Sem clipboard API, o `execCommand`
+ * roda já na chamada do clique, sem `await` antes, que é o que mantém o gesto do usuário no Safari e no Chrome
+ * Android.
+ */
 async function copiar(): Promise<void> {
   if (!link.value) return;
+  const texto = enderecoDoLink.value;
+  const area = navigator.clipboard;
+  if (!area?.writeText) {
+    if (copiarPeloExecCommand(texto)) avisarCopiado();
+    else await oferecerCopiaManual();
+    return;
+  }
   try {
-    await navigator.clipboard.writeText(enderecoDoLink.value);
-    copiaAvisada.value = 'Link copiado.';
+    await area.writeText(texto);
+    avisarCopiado();
   } catch {
-    copiaAvisada.value = 'Não foi possível copiar. Selecione o link e copie à mão.';
+    if (copiarPeloExecCommand(texto)) avisarCopiado();
+    else await oferecerCopiaManual();
   }
 }
 
 function dispensarLink(): void {
   link.value = undefined;
   copiaAvisada.value = '';
+  mostrarCampoManual.value = false;
 }
 
 /**
@@ -330,6 +392,19 @@ onBeforeUnmount(() => {
       <p>Ele só aparece agora, vale por 48 horas e uma vez só. Envie por um canal privado.</p>
       <p v-if="fraseDoEnvio">{{ fraseDoEnvio }}</p>
       <p v-if="copiaAvisada">{{ copiaAvisada }}</p>
+      <div v-if="mostrarCampoManual" class="ar-campo">
+        <label :for="`${idBase}-link-manual`">Endereço do convite</label>
+        <input
+          :id="`${idBase}-link-manual`"
+          ref="campoManual"
+          data-acao="campo-link"
+          type="text"
+          readonly
+          :value="enderecoDoLink"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
       <div class="ar-admin__acoes-aviso">
         <button type="button" class="ar-botao" data-acao="copiar" @click="copiar">
           Copiar link

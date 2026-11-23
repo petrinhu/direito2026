@@ -17,6 +17,10 @@
 #       que estão em claro (sem a assinatura do git-crypt), mais o NOME de todo arquivo
 #       rastreado (git ls-files), cifrado inclusive. Conteúdo cifrado não é lido. O conjunto
 #       vem do git, então .worktrees e node_modules ficam de fora. Imprime só caminho e contagem.
+#
+# Regra de saída de TODOS os modos (PROIBICOES-SAIDA-SEM-TERMO): um achado sai como caminho (ou
+# "resposta do servidor") e número da linha. Nunca sai o termo, nem o trecho da linha. O preci
+# repassa essa saída ao terminal, por isso ela não pode carregar o termo.
 set -uo pipefail
 
 ARQUIVO_TERMOS="${VERIFICAR_PROIBICOES_TERMOS:-$HOME/.config/secrets/caderno-direito-termos-proibidos.txt}"
@@ -48,8 +52,8 @@ if [ "${#TERMOS[@]}" -eq 0 ]; then
 fi
 
 if [ "${1:-}" = "--amplo" ]; then
-  # Modo próprio: não reusa varrer_nome nem varrer_conteudo, porque elas imprimem o termo achado.
-  # Aqui a saída é só caminho e contagem. Uma única chamada de python lê os termos e os arquivos.
+  # Modo próprio: uma única chamada de python lê os termos e os arquivos, e a saída é só caminho e
+  # contagem (a mesma regra de saída dos modos antigos, sem o termo). Não reusa as funções de bash.
   python3 -I - "${2:-.}" "$ARQUIVO_TERMOS" <<'PY'
 import os
 import subprocess
@@ -125,16 +129,33 @@ ALVO="${1:-}"
 ARQUIVOS_VARRIDOS=0
 ACHADOS=0
 
+# Procura cada termo no texto já normalizado. Guarda em ACHOU_N quantos termos apareceram e em
+# ACHOU_LINHA a primeira linha de qualquer um deles (0 se nenhum). Nunca imprime o termo: quem
+# chama imprime só o caminho (ou a origem) e o número da linha.
+procurar_termos() {
+  local texto="$1" termo linha
+  ACHOU_N=0
+  ACHOU_LINHA=0
+  for termo in "${TERMOS[@]}"; do
+    linha="$(printf '%s\n' "$texto" | grep -nF -- "$termo" | head -n 1 | cut -d: -f1)"
+    if [ -n "$linha" ]; then
+      ACHOU_N=$((ACHOU_N + 1))
+      if [ "$ACHOU_LINHA" -eq 0 ] || [ "$linha" -lt "$ACHOU_LINHA" ]; then
+        ACHOU_LINHA="$linha"
+      fi
+    fi
+  done
+}
+
 varrer_conteudo() {
   local caminho="$1"
   local conteudo
   conteudo="$(normalizar < "$caminho" 2>/dev/null || true)"
-  for termo in "${TERMOS[@]}"; do
-    if printf '%s' "$conteudo" | grep -qF -- "$termo"; then
-      echo "PROIBIÇÃO ENCONTRADA: '$termo' em $caminho" >&2
-      ACHADOS=$((ACHADOS + 1))
-    fi
-  done
+  procurar_termos "$conteudo"
+  if [ "$ACHOU_N" -gt 0 ]; then
+    echo "PROIBIÇÃO ENCONTRADA em $caminho, linha $ACHOU_LINHA" >&2
+    ACHADOS=$((ACHADOS + ACHOU_N))
+  fi
   ARQUIVOS_VARRIDOS=$((ARQUIVOS_VARRIDOS + 1))
 }
 
@@ -142,23 +163,21 @@ varrer_nome() {
   local caminho="$1"
   local nome_normalizado
   nome_normalizado="$(printf '%s' "$caminho" | normalizar)"
-  for termo in "${TERMOS[@]}"; do
-    if printf '%s' "$nome_normalizado" | grep -qF -- "$termo"; then
-      echo "PROIBIÇÃO NO NOME DO ARQUIVO: '$termo' em $caminho" >&2
-      ACHADOS=$((ACHADOS + 1))
-    fi
-  done
+  procurar_termos "$nome_normalizado"
+  if [ "$ACHOU_N" -gt 0 ]; then
+    echo "PROIBIÇÃO NO NOME DO ARQUIVO: $caminho" >&2
+    ACHADOS=$((ACHADOS + ACHOU_N))
+  fi
 }
 
 if [ "$ALVO" = "-" ]; then
   # Resposta HTTP vinda da entrada padrão (verificação pós-publicação, V6).
   conteudo="$(normalizar)"
-  for termo in "${TERMOS[@]}"; do
-    if printf '%s' "$conteudo" | grep -qF -- "$termo"; then
-      echo "PROIBIÇÃO ENCONTRADA (resposta do servidor): '$termo'" >&2
-      ACHADOS=$((ACHADOS + 1))
-    fi
-  done
+  procurar_termos "$conteudo"
+  if [ "$ACHOU_N" -gt 0 ]; then
+    echo "PROIBIÇÃO ENCONTRADA (resposta do servidor), linha $ACHOU_LINHA" >&2
+    ACHADOS=$((ACHADOS + ACHOU_N))
+  fi
   ARQUIVOS_VARRIDOS=1
 else
   DIRETORIO="${ALVO:-.}"

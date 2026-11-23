@@ -18,6 +18,10 @@ const LONGAS = [
   '/p/p1/redacao-juridica-1/u3-material-peticao-consumidor/peticao'
 ] as const;
 const CURTAS = ['/', '/novidades', '/p/p1', '/p/p1/intr-direito', '/p/p1/juri-simulado'] as const;
+// E2E-ADAPTADO-TRILHA-LINHAS (decisão do CPO de 22/11/2026, TRILHA-ADAPTADO-LINHAS): até 640 px
+// a trilha mostra só os dois últimos níveis; de 641 px para cima, todos.
+const LARGURAS_DA_CONTAGEM = [360, 640, 641, 768, 810, 1280] as const;
+const NIVEIS_ATE_640 = 2;
 
 async function medirTrilha(page: Page) {
   return page.evaluate(() => {
@@ -74,6 +78,31 @@ for (const { caminho, longa } of ROTAS) {
           `${caminho} a 810px: primeira linha do título`
         ).toBeLessThanOrEqual(ALTURA_DA_JANELA);
       }
+    });
+  }
+}
+
+for (const caminho of LONGAS) {
+  for (const largura of LARGURAS_DA_CONTAGEM) {
+    test(`níveis visíveis, trilha longa, ${caminho}, ${largura}px, modo adaptado`, async ({
+      page
+    }) => {
+      await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
+      await page.goto(caminho);
+      await page.locator('main').first().waitFor({ state: 'visible' });
+      await esperarLayoutAssentar(page);
+      const contagem = await page.evaluate(() => {
+        const itens = Array.from(document.querySelectorAll<HTMLElement>('.trilha-navegacao li'));
+        return {
+          total: itens.length,
+          visiveis: itens.filter((li) => li.getClientRects().length > 0).length
+        };
+      });
+      expect(contagem.total, `${caminho}: trilha com mais de dois níveis`).toBeGreaterThan(
+        NIVEIS_ATE_640
+      );
+      const esperado = largura <= 640 ? NIVEIS_ATE_640 : contagem.total;
+      expect(contagem.visiveis, `${caminho} a ${largura}px: níveis visíveis`).toBe(esperado);
     });
   }
 }

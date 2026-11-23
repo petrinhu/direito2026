@@ -94,7 +94,7 @@ Ordens do líder de 21/11/2026, na forma em que ele escreveu: "Quero a melhor ef
 ### A máquina
 
 - Os núcleos 0 e 1 ficam livres para o sistema e para o Claude Code. Todo trabalho pesado roda com `taskset -c 2-15`, dentro de `systemd-run --user --scope -p TasksMax=400 -p MemoryMax=6G`.
-- Trabalho pesado é vitest, vue-tsc, build, Playwright e a suíte PHP. Só um roda por vez, dentro de `flock /var/tmp/onda-paralela/pesado.trava`. Motivo, medido em 21/11: sete agentes testando ao mesmo tempo levaram a carga a 117 em 16 núcleos e esgotaram a memória (30 de 31 GB), e o sistema matou um processo de teste da publicação em curso.
+- Trabalho pesado é vitest, vue-tsc, build, Playwright e a suíte PHP. Só um roda por vez, dentro de `flock /var/tmp/pesado.trava`, a trava única da máquina (L-11 reformada em 23/11/2026; a publicação fura a fila e roda fora dela). Motivo, medido em 21/11: sete agentes testando ao mesmo tempo levaram a carga a 117 em 16 núcleos e esgotaram a memória (30 de 31 GB), e o sistema matou um processo de teste da publicação em curso.
 - A espera é sempre sem gasto: `flock` bloqueante, ou o aviso de fim da própria ferramenta. Laço de espera é proibido. Um `read -t 5 < /dev/zero` gira a 90% de um núcleo, porque `/dev/zero` responde na hora.
 
 ### A publicação

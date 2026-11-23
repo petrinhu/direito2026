@@ -1046,7 +1046,7 @@ preparar_destinos() {
   conferir_md5_pasta "$PACOTE_LOCAL/webroot" "$DESTINO_WEBROOT_NOVO" webroot-novo
   conferir_portao_no_destino "$DESTINO_WEBROOT_NOVO/api/nucleo" "$DESTINO_APP/atual"
   if [ "$DIVERGENCIAS" -ne 0 ]; then
-    recusar "preparo com $DIVERGENCIAS divergência(s); nada foi virado (o público segue na versão atual)"
+    recusar "preparo com $DIVERGENCIAS divergência(s); o ponteiro atual já aponta para v$VERSAO_NOVA (trocado antes da conferência e não desfeito), e quem está logado já recebe essa versão pelo portão. O webroot público não foi trocado."
   fi
 }
 
@@ -1321,7 +1321,7 @@ principal() {
   preparar_regras
   if [ "$MODO" = preparar ]; then
     preparar_destinos
-    echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O público segue na versão atual."
+    echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O ponteiro atual já aponta para v$VERSAO_NOVA: quem está logado já recebe essa versão pelo portão, com o webroot público antigo, até a virada."
     echo "publicar: próximo passo: a virada e a conferência manual (V1 a V8 do plano), depois: npm run publicar -- --concluir"
     exit 0
   fi

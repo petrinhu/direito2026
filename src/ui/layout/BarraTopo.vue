@@ -356,14 +356,15 @@ onBeforeUnmount(() => {
 }
 
 /*
-  Celular estreito (até 348px), modo normal: o cabeçalho fixo passava de 256px
-  (E2E-G1-320, 266px de 320 a 348px; a faixa de 349px para cima tem duas linhas
-  e já cabe). Corta só o espaço vertical: o respiro de cima e de baixo da faixa
-  e o espaço entre as linhas caem de 0.5rem para 0.25rem. Fonte, alvo de toque
-  e ordem de Tab não mudam. De 349px para cima a regra não vale, então a altura
-  segue como estava (V4). O modo adaptado tem a própria faixa e não entra aqui.
+  Celular estreito (até 359px), modo normal: o cabeçalho fixo passava de 256px
+  (E2E-G1-320, 266px de 320 a 348px; de 349 a 359px a linha do rádio (6a45f64)
+  somou uma linha e levou o cabeçalho a 263px). Corta só o espaço vertical: o
+  respiro de cima e de baixo da faixa e o espaço entre as linhas caem de
+  0.5rem para 0.25rem. Fonte, alvo de toque e ordem de Tab não mudam. A partir
+  de 360px a regra não vale, então a altura segue como estava. O modo adaptado
+  tem a própria faixa e não entra aqui.
 */
-@media (max-width: 348px) {
+@media (max-width: 359px) {
   :root:not([data-modo-adaptado='on']) .barra-topo__linha {
     padding-block: var(--esp-1, 0.25rem);
     row-gap: var(--esp-1, 0.25rem);

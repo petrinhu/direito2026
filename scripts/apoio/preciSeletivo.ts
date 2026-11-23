@@ -4,14 +4,18 @@
  * build com o portão de pacote publicável, varreduras do dist) não passam por aqui: rodam sempre.
  *
  * Regra de falha: qualquer dúvida vira completo. Sem tag base, com PRECI_COMPLETO=1, ou com
- * mudança em arquivo que afeta o preci inteiro (scripts/, configs, package*.json, tests/apoio),
- * nenhum passo é pulado.
+ * mudança em arquivo que afeta o preci inteiro (scripts/, configs da raiz, package*.json,
+ * tests/apoio), nenhum passo é pulado.
+ *
+ * O portão de pacote real (portao-pacote.teste.php) não depende da mudança: é o campo pacoteReal
+ * do plano, sempre verdadeiro. Sem ele, uma publicação só de conteúdo chegaria ao ar sem checar o
+ * tipo e a CSP do pacote que acabou de ser gerado.
  *
  * Uso (o preci.sh chama assim; saída é atribuição de shell, com valores entre aspas simples):
  *   node --import tsx scripts/apoio/preciSeletivo.ts --base <tag|""> --arquivos <lista> [--completo 0|1]
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, posix, relative } from 'node:path';
 
 export type PassoSeletivo =
   'lint' | 'prettier' | 'vueTsc' | 'depcruise' | 'vitest' | 'conteudo' | 'php';
@@ -27,7 +31,39 @@ export interface Plano {
   completo: boolean;
   motivo: string;
   passos: Record<PassoSeletivo, Decisao>;
+  /**
+   * Portão de pacote real (servidor/testes/portao-pacote.teste.php, filtro PACOTE_REAL_FILTRO).
+   * Fora de passos: roda SEMPRE, em toda publicação, porque o pacote muda a cada build. Quando a
+   * suíte PHP inteira já roda (php.roda), ela inclui este grupo e o preci não o repete.
+   */
+  pacoteReal: Decisao;
 }
+
+/** Filtro do rodar.php (nome contém este texto). Todo teste(...) de portao-pacote tem o texto. */
+export const PACOTE_REAL_FILTRO = 'pacote real';
+
+/**
+ * Configs da raiz cuja mudança muda como o preci confere o projeto. Lista explícita (cada entrada
+ * é testada, existe na raiz, no spec); o padrão de ehConfigRaiz pega o resto.
+ */
+export const CONFIGS_DA_RAIZ: readonly string[] = [
+  '.browserslistrc',
+  '.dependency-cruiser.cjs',
+  '.gitattributes',
+  '.gitignore',
+  '.prettierignore',
+  '.prettierrc.json',
+  'eslint.config.js',
+  'index.html',
+  'package.json',
+  'package-lock.json',
+  'playwright.ar.config.ts',
+  'playwright.config.ts',
+  'playwright.portao.config.ts',
+  'tsconfig.json',
+  'vite.config.ts',
+  'vitest.config.ts'
+];
 
 export interface OpcoesPlano {
   /** Última tag publicada (v*). Vazio ou null = não há base: completo. */
@@ -37,11 +73,36 @@ export interface OpcoesPlano {
   caracterizacao?: readonly string[];
   /** Arquivo existe no disco (lint e vitest não recebem arquivo apagado). */
   existe?: (caminho: string) => boolean;
+  /**
+   * Por spec de vitest, os caminhos do repo que o texto dele cita (ver referenciasDoSpec).
+   * Um spec que lê um .vue ou .css com readFileSync não tem aresta no grafo de imports: esta
+   * lista é a aresta que falta. Spec cujo caminho citado muda entra no vitest.
+   */
+  referencias?: ReadonlyMap<string, readonly string[]>;
+  /**
+   * Specs que leem arquivo por caminho montado em tempo de execução e não citam nenhum
+   * caminho existente. Rodam sempre que a mudança toca src/ ou tests/ (regra conservadora).
+   */
+  sempreRodar?: readonly string[];
 }
 
 const EXT_LINT = /\.(ts|tsx|vue|js|mjs|cjs)$/;
-const EXT_PRETTIER = /\.(ts|tsx|vue|js|mjs|cjs|json|md|css|html|ya?ml)$/;
+// *.md não entra: o .prettierignore já deixa o prettier de fora de todo .md.
+const EXT_PRETTIER = /\.(ts|tsx|vue|js|mjs|cjs|json|css|html|ya?ml)$/;
 const EXT_VITEST = /\.(ts|tsx|vue|js|mjs)$/;
+
+/**
+ * Arquivo da raiz que é configuração: qualquer dotfile (.prettierrc, .eslintrc, .env...), qualquer
+ * .json, .cjs ou .mjs, qualquer *.config.*, e a lista explícita. Dúvida vira completo: a raiz do
+ * repo tem poucos arquivos de conteúdo (README.md, TODO.md, CLAUDE.md ficam de fora de propósito).
+ */
+const ehConfigRaiz = (p: string): boolean =>
+  !p.includes('/') &&
+  (CONFIGS_DA_RAIZ.includes(p) ||
+    p.startsWith('.') ||
+    /\.(json|cjs|mjs)$/.test(p) ||
+    /\.config\.[cm]?[jt]s$/.test(p) ||
+    /^tsconfig[\w.-]*\.json$/.test(p));
 
 const ehGatilhoCompleto = (p: string): boolean =>
   p.startsWith('scripts/') ||
@@ -50,10 +111,132 @@ const ehGatilhoCompleto = (p: string): boolean =>
   /^(vite|vitest|playwright)(\.[\w-]+)?\.config\.[cm]?[jt]s$/.test(p) ||
   /^tsconfig[\w.-]*\.json$/.test(p) ||
   p.startsWith('.dependency-cruiser') ||
-  p.startsWith('tests/apoio/');
+  p.startsWith('tests/apoio/') ||
+  ehConfigRaiz(p);
 
+/** Decisão do portão de pacote real: sempre roda, qualquer que seja a mudança. */
+const PACOTE_REAL_SEMPRE: Decisao = {
+  roda: true,
+  alvo: null,
+  motivo: 'sempre: o pacote muda a cada build'
+};
+
+// docs/ não entra: nenhum validador do conteúdo (validar-conteudo, citações, R3 da fonte) lê
+// docs/. Quem lê docs/versoes/novidades.json é um spec (versoes.paridade) e o separar-pacote,
+// e isso cai pela aresta por texto, não por este gatilho.
 const ehConteudoFonte = (p: string): boolean =>
-  p.startsWith('src/conteudo/') || p.startsWith('src/dados/') || p.startsWith('docs/');
+  p.startsWith('src/conteudo/') || p.startsWith('src/dados/');
+
+const LEITURA_DE_ARQUIVO = /\b(readFileSync|readdirSync|readFile|statSync|existsSync|globSync)\b/;
+const CAMINHO_LITERAL = /(['"`])([^'"`\n\r]{1,400}?)\1/g;
+const CHAMADA_DE_CAMINHO = /\b(?:join|resolve)\(([^()]*)\)/g;
+const ARG_LITERAL = /^(['"`])([^'"`]*)\1$/;
+const IMPORT_RELATIVO = /['"](\.{1,2}\/[^'"\n\r]+)['"]/g;
+
+/**
+ * Caminhos do repo que o texto de um arquivo de teste cita, relativos à raiz. Três formas:
+ * literal com barra ou extensão; literais em sequência de join/resolve (resolve(RAIZ, 'src',
+ * 'ui', 'x.vue') vira src/ui/x.vue, só se for arquivo); e template com ${} (o que vem depois
+ * do ${} conta). Cada uma é tentada a partir da pasta do arquivo e da raiz. Caminho que não
+ * existe no repo também fica (arquivo apagado na mudança tem de casar com o spec que o citava).
+ * .md não entra.
+ */
+function candidatos(caminhoArquivo: string, conteudo: string): string[] {
+  const pasta = posix.dirname(caminhoArquivo);
+  const achados = new Set<string>();
+  const cita = (bruto: string): void => {
+    const lit = bruto.replace(/\$\{[^}]*\}/g, '/').replace(/^\/+/, '');
+    if (!lit || lit.includes('${') || /\.md$/i.test(lit)) return;
+    for (const base of [pasta, '.']) {
+      const c = posix.normalize(posix.join(base, lit)).replace(/\/+$/, '');
+      if (c && c !== '.' && !c.startsWith('..')) achados.add(c);
+    }
+  };
+  for (const m of conteudo.matchAll(CAMINHO_LITERAL)) {
+    const lit = m[2] ?? '';
+    if (lit.includes('/') || /\.[A-Za-z0-9]{1,8}$/.test(lit) || lit.includes('${')) cita(lit);
+  }
+  for (const m of conteudo.matchAll(CHAMADA_DE_CAMINHO)) {
+    const partes = (m[1] ?? '')
+      .split(',')
+      .map((a) => ARG_LITERAL.exec(a.trim())?.[2])
+      .filter((x): x is string => x !== undefined);
+    // Só arquivo (termina em extensão). Pasta montada por segmentos (join(raiz, 'docs'))
+    // casaria com qualquer arquivo dela; quem só lê pasta cai em sempreRodar, que é conservador.
+    const caminho = partes.join('/');
+    if (partes.length && /\.[A-Za-z0-9]{1,8}$/.test(caminho)) cita(caminho);
+  }
+  return [...achados];
+}
+
+/** Só o que o spec cita no próprio texto (sem seguir helpers). Usado nos testes do seletor. */
+export function referenciasDoSpec(caminhoSpec: string, conteudo: string): string[] {
+  return candidatos(caminhoSpec, conteudo);
+}
+
+/** Specs de vitest do repo (as pastas do include de vitest.config.ts), relativos à raiz. */
+function listarSpecs(raiz: string): string[] {
+  const achados: string[] = [];
+  for (const pasta of ['tests/unidade', 'tests/componente', 'tests/caracterizacao']) {
+    const abs = join(raiz, pasta);
+    if (!existsSync(abs)) continue;
+    for (const n of readdirSync(abs, { recursive: true }).map(String)) {
+      if (n.endsWith('.spec.ts')) achados.push(`${pasta}/${n.split('\\').join('/')}`);
+    }
+  }
+  return achados.sort();
+}
+
+/** Imports relativos que levam a arquivo dentro de tests/ (helpers), para seguir a leitura. */
+function importsDeTeste(raiz: string, caminho: string, conteudo: string): string[] {
+  const pasta = posix.dirname(caminho);
+  const achados: string[] = [];
+  for (const m of conteudo.matchAll(IMPORT_RELATIVO)) {
+    const base = posix.normalize(posix.join(pasta, m[1] ?? ''));
+    if (!base.startsWith('tests/')) continue;
+    for (const alvo of [base, `${base}.ts`, `${base}/index.ts`]) {
+      if (alvo.endsWith('.ts') && existsSync(join(raiz, alvo))) {
+        achados.push(alvo);
+        break;
+      }
+    }
+  }
+  return achados;
+}
+
+/**
+ * Lê os specs do repo, com os helpers de tests/ que importam, e devolve a aresta por texto e a
+ * lista de specs que rodam sempre (leem arquivo e nenhum caminho citado existe no repo).
+ */
+export function coletarReferencias(raiz: string): {
+  referencias: Map<string, string[]>;
+  sempreRodar: string[];
+} {
+  const referencias = new Map<string, string[]>();
+  const sempreRodar: string[] = [];
+  for (const spec of listarSpecs(raiz)) {
+    const uniao = new Set<string>();
+    const lidos = new Set<string>();
+    const fila = [spec];
+    let leAlgo = false;
+    while (fila.length) {
+      const atual = fila.pop() as string;
+      if (lidos.has(atual)) continue;
+      lidos.add(atual);
+      const conteudo = readFileSync(join(raiz, atual), 'utf8');
+      if (LEITURA_DE_ARQUIVO.test(conteudo)) leAlgo = true;
+      for (const c of candidatos(atual, conteudo)) uniao.add(c);
+      fila.push(...importsDeTeste(raiz, atual, conteudo));
+    }
+    referencias.set(spec, [...uniao]);
+    if (leAlgo && ![...uniao].some((c) => existsSync(join(raiz, c)))) sempreRodar.push(spec);
+  }
+  return { referencias, sempreRodar };
+}
+
+/** Mudança no repo casa com um caminho citado: arquivo igual, ou pasta citada que o contém. */
+const casaComMudanca = (citado: string, arquivos: readonly string[]): boolean =>
+  arquivos.some((m) => m === citado || m.startsWith(`${citado}/`));
 
 const ehServidor = (p: string): boolean =>
   p.startsWith('servidor/') || p.startsWith('public/api/') || p === 'public/.htaccess';
@@ -73,7 +256,8 @@ const completo = (motivo: string): Plano => {
       vitest: todos,
       conteudo: todos,
       php: todos
-    }
+    },
+    pacoteReal: PACOTE_REAL_SEMPRE
   };
 };
 
@@ -98,6 +282,12 @@ export function planejar(arquivos: readonly string[], opcoes: OpcoesPlano): Plan
   if (arquivos.some((p) => p.startsWith('src/conteudo/')) && opcoes.caracterizacao) {
     vitestArquivos.push(...opcoes.caracterizacao);
   }
+  // Aresta por texto: spec que cita (lê por fs) um caminho mudado. O import (grafo) cobre o
+  // resto, já que vitest related segue imports diretos e indiretos.
+  for (const [spec, citados] of opcoes.referencias ?? []) {
+    if (citados.some((c) => casaComMudanca(c, arquivos))) vitestArquivos.push(spec);
+  }
+  if (temSrcOuTests) vitestArquivos.push(...(opcoes.sempreRodar ?? []));
   const vitestUnicos = [...new Set(vitestArquivos)];
 
   return {
@@ -121,11 +311,12 @@ export function planejar(arquivos: readonly string[], opcoes: OpcoesPlano): Plan
         : pulado('pulado: nenhum arquivo de código de teste ou de src mudou'),
       conteudo: temConteudo
         ? { roda: true, alvo: 'todos', motivo: '' }
-        : pulado('pulado: nada em src/conteudo, src/dados ou docs/ mudou'),
+        : pulado('pulado: nada em src/conteudo ou src/dados mudou'),
       php: temServidor
         ? { roda: true, alvo: 'todos', motivo: '' }
         : pulado('pulado: nada em servidor/, public/api/ ou public/.htaccess mudou')
-    }
+    },
+    pacoteReal: PACOTE_REAL_SEMPRE
   };
 }
 
@@ -167,11 +358,14 @@ function cli(argv: string[]): number {
     return 2;
   }
 
+  const { referencias, sempreRodar } = coletarReferencias(raiz);
   const plano = planejar(arquivos, {
     base: base || null,
     completoForcado,
     caracterizacao: listarCaracterizacao(raiz),
-    existe: (p) => existsSync(join(raiz, p))
+    existe: (p) => existsSync(join(raiz, p)),
+    referencias,
+    sempreRodar
   });
 
   const linhas: string[] = [
@@ -194,6 +388,8 @@ function cli(argv: string[]): number {
     linhas.push(`PRECI_${n}_ALVO=${cit(alvo)}`);
     linhas.push(`PRECI_${n}_MOTIVO=${cit(decisao.motivo)}`);
   }
+  linhas.push(`PRECI_PACOTE_REAL_RODA=${plano.pacoteReal.roda ? 1 : 0}`);
+  linhas.push(`PRECI_PACOTE_REAL_FILTRO=${cit(PACOTE_REAL_FILTRO)}`);
   console.log(linhas.join('\n'));
   return 0;
 }

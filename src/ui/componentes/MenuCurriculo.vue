@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 import type { Curriculo, ReferenciaUnidade } from '@/core/curriculo/tipos';
 import type { ConteudoUnidade } from '@/core/unidade/tipos';
 import { itensDaCadeira } from '@/app/curriculo/itensDaCadeira';
-import { rotuloSemViuva } from '@/app/curriculo/rotuloSemViuva';
+import { rotuloDoMenu } from './rotuloDoMenu';
 import EstadoEmBreve from './EstadoEmBreve.vue';
 import MenuUnidadeComAbas from './MenuUnidadeComAbas.vue';
 import { ESTADO_MENU } from './menuEstado';
@@ -121,6 +121,7 @@ async function alternarUnidade(chave: string, unidade: ReferenciaUnidade): Promi
  * blocos existirem na árvore.
  */
 function abrirCadeiaDaPaginaAtual(caminho: string): void {
+  if (caminho === 'kelsen-jump') abertos.add('game');
   const cadeia = cadeiaDoCaminho(props.curriculo, caminho);
   for (const id of cadeia.ids) abertos.add(id);
   if (cadeia.unidade && cadeia.chave) {
@@ -182,7 +183,7 @@ provide(ESTADO_MENU, {
           </li>
           <li v-for="cadeira in periodo.cadeiras" :key="cadeira.id">
             <template v-if="cadeira.estado === 'em-breve'">
-              <EstadoEmBreve :rotulo="rotuloSemViuva(cadeira.nome)" />
+              <EstadoEmBreve :rotulo="rotuloDoMenu(cadeira.nome)" />
             </template>
             <RouterLink
               v-else-if="cadeira.restrita"
@@ -192,7 +193,7 @@ provide(ESTADO_MENU, {
                 ehAtual(`p/${periodo.id}/${cadeira.id}`, caminhoAtual) ? 'page' : undefined
               "
             >
-              {{ rotuloSemViuva(cadeira.nome) }}
+              {{ rotuloDoMenu(cadeira.nome) }}
             </RouterLink>
             <template v-else>
               <button
@@ -204,7 +205,7 @@ provide(ESTADO_MENU, {
                 @keydown.esc="fechar(`c-${cadeira.id}`, $event)"
               >
                 <span class="menu-curriculo__seta" aria-hidden="true" />
-                {{ rotuloSemViuva(cadeira.nome) }}
+                {{ rotuloDoMenu(cadeira.nome) }}
               </button>
               <ul
                 v-show="estaAberto(`c-${cadeira.id}`)"
@@ -233,7 +234,7 @@ provide(ESTADO_MENU, {
                       >
                         <span class="menu-curriculo__seta" aria-hidden="true" />
                         <span class="menu-curriculo__rotulo-av">{{
-                          rotuloSemViuva(item.rotulo)
+                          rotuloDoMenu(item.rotulo)
                         }}</span>
                       </button>
                     </div>
@@ -254,7 +255,10 @@ provide(ESTADO_MENU, {
                           :nivel-abas="5"
                         />
                         <li v-else>
-                          <EstadoEmBreve v-if="grupo.topicos.length === 0" :rotulo="grupo.rotulo" />
+                          <EstadoEmBreve
+                            v-if="grupo.topicos.length === 0"
+                            :rotulo="rotuloDoMenu(grupo.rotulo)"
+                          />
                           <template v-else>
                             <button
                               type="button"
@@ -276,7 +280,7 @@ provide(ESTADO_MENU, {
                               "
                             >
                               <span class="menu-curriculo__seta" aria-hidden="true" />
-                              {{ grupo.rotulo }}
+                              {{ rotuloDoMenu(grupo.rotulo) }}
                             </button>
                             <ul
                               v-show="
@@ -340,7 +344,7 @@ provide(ESTADO_MENU, {
                               : undefined
                           "
                         >
-                          {{ cadeira.atalhoUnidade.rotulo }}
+                          {{ rotuloDoMenu(cadeira.atalhoUnidade.rotulo) }}
                         </RouterLink>
                       </div>
                     </li>
@@ -348,6 +352,44 @@ provide(ESTADO_MENU, {
                 </template>
               </ul>
             </template>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <hr class="menu-curriculo__separador" />
+    <!--
+      Grupo Game (ordem do líder, 21/11/2026): mesmo disclosure dos grupos de cadeira. O segundo
+      item é só um placeholder "aguarde": não é link e fica com aria-disabled.
+    -->
+    <ul class="menu-curriculo__nivel-1">
+      <li>
+        <button
+          type="button"
+          :aria-expanded="estaAberto('game') ? 'true' : 'false'"
+          aria-controls="lista-game"
+          class="menu-curriculo__botao"
+          @click="alternar('game')"
+          @keydown.esc="fechar('game', $event)"
+        >
+          <span class="menu-curriculo__seta" aria-hidden="true" />
+          Game
+        </button>
+        <ul
+          v-show="estaAberto('game')"
+          id="lista-game"
+          class="menu-curriculo__nivel-2 menu-curriculo__lista--guia"
+        >
+          <li>
+            <RouterLink
+              to="/kelsen-jump"
+              class="menu-curriculo__link-unidade"
+              :aria-current="ehAtual('kelsen-jump', caminhoAtual) ? 'page' : undefined"
+            >
+              Kelsen Jump
+            </RouterLink>
+          </li>
+          <li>
+            <span class="menu-curriculo__link-unidade" aria-disabled="true">aguarde</span>
           </li>
         </ul>
       </li>

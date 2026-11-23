@@ -67,9 +67,13 @@ function seletorDoTitulo(caminho: string): string {
   return caminho === '/' ? '#titulo-caderno' : 'main h1, main h2';
 }
 
-// 340 e 348 são as bordas da faixa de 341 a 348 px (F1-b, D15): a regra vai até 348 px.
+// 340 e 348 são as bordas da faixa de 341 a 348 px (F1-b, D15). A regra de espaçamento do
+// modo normal vai até 359 px (E2E-G1-320): de 349 a 359 px a linha do rádio pedia uma linha a mais.
 // 881 e 1024 px: modo adaptado acima de 880 px (E2E-ADAPTADO-FIXO-1280, F2c).
-const LARGURAS_DO_CABECALHO = [320, 340, 341, 348, 349, 360, 412, 768, 881, 1024, 1280];
+const LARGURAS_DO_CABECALHO = [
+  320, 340, 341, 348, 349, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 412, 768, 881, 1024,
+  1280
+];
 
 /**
  * Falhas de produto já catalogadas (TODO.md, INBOX). Cada grupo é um ID com uma
@@ -164,7 +168,9 @@ for (const caminho of caminhosParaCabecalho(curriculo)) {
  * 265,8 px no escuro e 210,9 px no claro, então a borda medida no claro não vale no escuro. Mede só a
  * altura, no modo normal, nas bordas da regra e um passo fora de cada uma.
  */
-const LARGURAS_DO_TEMA_ESCURO = [...new Set([348, 349, 351, 352])];
+const LARGURAS_DO_TEMA_ESCURO = [
+  ...new Set([348, 349, 351, 352, 353, 354, 355, 356, 357, 358, 359])
+];
 
 for (const caminho of caminhosParaCabecalho(curriculo)) {
   for (const largura of LARGURAS_DO_TEMA_ESCURO) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { IdRadio } from '@/core/radio/catalogo';
 import type { StoreRadio } from '@/app/radio/tocadorRadio';
 import { CONTATO_EMAIL } from '@/app/rodape/titular';
@@ -14,6 +14,53 @@ const props = defineProps<{ store: StoreRadio }>();
 
 const painelAberto = ref(false);
 const dialogo = ref<HTMLDialogElement | null>(null);
+const raiz = ref<HTMLElement | null>(null);
+const botaoAbrir = ref<HTMLButtonElement | null>(null);
+
+/**
+ * Fechar o quadro só esconde a seleção: não mexe na store, então a rádio segue tocando. Quando o
+ * foco estava dentro do quadro (Esc, X), ele volta ao "Rádio", que é quem o abriu. O clique fora
+ * não rouba foco: o usuário já foi para outro lugar de propósito.
+ */
+function fecharQuadro(devolverFoco: boolean): void {
+  painelAberto.value = false;
+  if (devolverFoco) botaoAbrir.value?.focus();
+}
+
+function alternarQuadro(): void {
+  painelAberto.value = !painelAberto.value;
+}
+
+function aoPressionarTecla(evento: KeyboardEvent): void {
+  if (evento.key !== 'Escape') return;
+  // Esc com o aviso de IP aberto é do <dialog> nativo (ele cancela sozinho).
+  if (dialogo.value?.open) return;
+  fecharQuadro(true);
+}
+
+/**
+ * "Dentro" é a árvore inteira do tocador: no celular os controles estão no painel flutuante, e no
+ * computador Tocar e Silenciar ficam na barra. Só um pointerdown fora dela fecha. O clique que
+ * abriu o quadro acontece antes de os ouvintes existirem e cairia dentro de qualquer forma.
+ */
+function aoApertarFora(evento: Event): void {
+  if (raiz.value?.contains(evento.target as HTMLElement | null)) return;
+  fecharQuadro(false);
+}
+
+function ouvirFora(ativo: boolean): void {
+  if (ativo) {
+    document.addEventListener('keydown', aoPressionarTecla);
+    document.addEventListener('pointerdown', aoApertarFora);
+  } else {
+    document.removeEventListener('keydown', aoPressionarTecla);
+    document.removeEventListener('pointerdown', aoApertarFora);
+  }
+}
+
+watch(painelAberto, (aberto) => ouvirFora(aberto));
+
+onBeforeUnmount(() => ouvirFora(false));
 
 const pedindoConsentimento = computed(() => props.store.estado.value === 'pedindoConsentimento');
 const tocando = computed(
@@ -50,19 +97,20 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
 </script>
 
 <template>
-  <div class="tocador" :class="{ 'tocador--aberto': painelAberto }">
+  <div ref="raiz" class="tocador" :class="{ 'tocador--aberto': painelAberto }">
     <button
+      ref="botaoAbrir"
       type="button"
       class="tocador__abrir"
-      aria-controls="tocador-painel"
+      aria-controls="tocador-detalhes"
       :aria-expanded="painelAberto ? 'true' : 'false'"
-      @click="painelAberto = !painelAberto"
+      @click="alternarQuadro"
     >
       <span class="tocador__led" :data-estado="props.store.estado.value" aria-hidden="true" />
       Rádio
     </button>
 
-    <div id="tocador-painel" class="tocador__painel">
+    <div class="tocador__painel">
       <div class="tocador__controles">
         <button
           type="button"
@@ -99,6 +147,15 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
       </div>
 
       <div v-show="painelAberto" id="tocador-detalhes" class="tocador__detalhes">
+        <button
+          type="button"
+          class="tocador__fechar"
+          aria-label="Fechar seleção de rádio"
+          @click="fecharQuadro(true)"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+
         <label class="tocador__escolha">
           <span class="tocador__rotulo">Rádio</span>
           <select :value="props.store.radio.value.id" @change="aoEscolherRadio">
@@ -258,8 +315,11 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
   gap: 0.4rem;
 }
 
+/* O input não herda a cor do pai. Sem esta linha ele usa a cor padrão do navegador (medida:
+   #9d968e sobre o branco do cabeçalho no modo adaptado escuro, 2,9:1). */
 .tocador__volume input {
   width: 6rem;
+  color: var(--cor-sidebar-texto, #faf9f5);
 }
 
 .tocador__rotulo {
@@ -281,9 +341,34 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
   align-items: stretch;
   min-width: 18rem;
   padding: var(--esp-3, 0.75rem);
+  /* Faixa de cima reservada ao X (ver .tocador__fechar), para o select não passar por baixo dele. */
+  padding-top: 3rem;
   background: var(--cor-sidebar-fundo, #0d2440);
   color: var(--cor-sidebar-texto, #faf9f5);
   border: 1px solid currentColor;
+}
+
+/* Alvo de 44 x 44 px sem condição de modo (WCAG 2.5.5). Cor herdada do quadro, que já usa os
+   tokens de sidebar nos três modos (claro, escuro e adaptado). Não tira o contorno de foco. */
+.tocador__fechar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+  cursor: pointer;
 }
 
 .tocador__emissoras {
@@ -344,6 +429,8 @@ const linkSugestao = `mailto:${CONTATO_EMAIL}?subject=${encodeURIComponent('Suge
     right: 0;
     z-index: 70;
     padding: var(--esp-3, 0.75rem);
+    /* Faixa de cima do painel reservada ao X: ele é absoluto em relação ao painel neste tamanho. */
+    padding-top: 3rem;
     background: var(--cor-sidebar-fundo, #0d2440);
     color: var(--cor-sidebar-texto, #faf9f5);
   }

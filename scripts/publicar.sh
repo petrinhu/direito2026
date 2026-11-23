@@ -17,7 +17,8 @@
 # nos dois hosts. Só com tudo verde envia branch e tag ao git, e prova com git ls-remote.
 #
 # --preparar: a mesma sequência até o preci e P1 a P3 (app em versoes/, dados da Júri no privado
-# aditivo, webroot em direito2026_webroot_novo). Não troca o que o público vê e não envia nada ao git.
+# aditivo, webroot em direito2026_webroot_novo). Troca o ponteiro atual para a versão nova (o webroot
+# público lê o app por esse ponteiro, em portao.php), mas não troca o webroot público, e não envia nada ao git.
 # --concluir: depois da virada manual (V2 a V8 do plano), confere o ar, envia branch e tag e prova
 # no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
@@ -103,6 +104,8 @@ ITENS_NOVIDADE=()
 
 # Estado para desfazer só o que foi criado aqui (lido pelo trap de saída).
 PACKAGE_ALTERADO=0
+# "arquivo sha256" do que o publicar copiou para R: o desfazer só restaura o que ainda é isso (LU-F1.3-N2).
+SHA_ESCRITO=()
 RELEASE_FEITO=0
 TAG_CRIADA=0
 DEPLOY_INICIADO=0
@@ -409,6 +412,7 @@ gravar_e_commitar() {
     fi
     PACKAGE_ALTERADO=1
     cp -- "$CLONE/$arquivo" "$RAIZ/$arquivo" || recusar "não copiei $arquivo do clone (nada foi commitado)"
+    SHA_ESCRITO+=("$arquivo $(sha256sum -- "$RAIZ/$arquivo" | cut -d' ' -f1)")
     cmp -s -- "$CLONE/$arquivo" "$RAIZ/$arquivo" ||
       recusar "$arquivo copiado diverge do testado pelo preci (nada foi commitado)"
   done
@@ -444,8 +448,12 @@ criar_tag() {
 # limpa): é nele que o preci roda. R não é tocado até o preci ficar verde.
 preparar_clone() {
   mkdir -p "$PASTA_CLONES"
-  CLONE="$(mktemp -d "$PASTA_CLONES/pub-clone.XXXXXX")" ||
-    recusar "não criei a pasta do clone em $PASTA_CLONES"
+  # LU-F1.3-N1: o caminho entra em CLONE ANTES de a pasta existir. Um kill no grupo entre a criação e o
+  # registro deixava órfão um pub-clone.* que o trap não conhecia. O nome é desta execução (pid e aleatório),
+  # e uma pasta que já exista não é nossa: não é registrada, nem apagada.
+  CLONE="$PASTA_CLONES/pub-clone.$$.$RANDOM$RANDOM"
+  [ ! -e "$CLONE" ] || { CLONE=""; recusar "caminho do clone já existe em $PASTA_CLONES (nada foi feito)"; }
+  mkdir -m 700 -- "$CLONE" || recusar "não criei a pasta do clone em $PASTA_CLONES"
   git clone -q "$RAIZ" "$CLONE" || recusar "git clone do repositório falhou (mensagem acima)"
   git -C "$CLONE" checkout -q --detach "$BASE" ||
     recusar "não consegui pôr o clone no commit base"
@@ -1025,7 +1033,8 @@ conferir_ar() {
   fi
 }
 
-# Preparo (--preparar): P1 a P3. Nada que o público vê muda: o webroot novo fica em direito2026_webroot_novo.
+# Preparo (--preparar): P1 a P3. Troca o ponteiro atual (trocar_ponteiro) para a versão nova, que o webroot
+# público serve por portao.php; o webroot público não é trocado, e o novo fica em direito2026_webroot_novo.
 preparar_destinos() {
   DEPLOY_INICIADO=1
   DIVERGENCIAS=0
@@ -1037,7 +1046,7 @@ preparar_destinos() {
   conferir_md5_pasta "$PACOTE_LOCAL/webroot" "$DESTINO_WEBROOT_NOVO" webroot-novo
   conferir_portao_no_destino "$DESTINO_WEBROOT_NOVO/api/nucleo" "$DESTINO_APP/atual"
   if [ "$DIVERGENCIAS" -ne 0 ]; then
-    recusar "preparo com $DIVERGENCIAS divergência(s); nada foi virado (o público segue na versão atual)"
+    recusar "preparo com $DIVERGENCIAS divergência(s); o ponteiro atual já aponta para v$VERSAO_NOVA (trocado antes da conferência e não desfeito), e quem está logado já recebe essa versão pelo portão. O webroot público não foi trocado."
   fi
 }
 
@@ -1170,6 +1179,22 @@ enviar_ao_git() {
   provar_envio || recusar "prova do envio falhou (mensagem acima); confira com git ls-remote antes de agir"
 }
 
+# Desfaz só o que este script copiou para R (LU-F1.3-N2, L-25): volta ao base o arquivo que ainda é o
+# que foi copiado. Se alguém editou depois da cópia, não toca e avisa: apagar o trecho de outra pessoa
+# seria perda de dado. A cópia do publicar continua lá, e o aviso diz como voltar à mão.
+desfazer_arquivos_escritos() {
+  local i arquivo sha_copiado
+  for ((i = 0; i < ${#SHA_ESCRITO[@]}; i++)); do
+    arquivo="${SHA_ESCRITO[i]% *}"
+    sha_copiado="${SHA_ESCRITO[i]##* }"
+    if [ "$(sha256sum -- "$RAIZ/$arquivo" 2>/dev/null | cut -d' ' -f1)" = "$sha_copiado" ]; then
+      git checkout -- "$arquivo" >/dev/null 2>&1 || true
+    else
+      echo "publicar: AVISO: $arquivo foi editado depois da cópia do publicar; não restaurei, para não apagar a sua edição. Conferir e voltar ao base à mão: git diff -- $arquivo; git checkout -- $arquivo" >&2
+    fi
+  done
+}
+
 desfazer_release() {
   local atual
   atual="$(git rev-parse HEAD 2>/dev/null || true)"
@@ -1183,7 +1208,7 @@ desfazer_release() {
   fi
   git reset -q --soft HEAD~1 || return 0
   git restore --staged -- package.json docs/versoes/novidades.json || true
-  git checkout -- package.json docs/versoes/novidades.json || true
+  desfazer_arquivos_escritos
   RELEASE_FEITO=0
   PACKAGE_ALTERADO=0
   echo "publicar: desfeito: commit de release e tag local v$VERSAO_NOVA removidos; package.json de volta a $VERSAO_ATUAL" >&2
@@ -1217,7 +1242,7 @@ ao_sair() {
       fi
     else
       if [ "$PACKAGE_ALTERADO" = 1 ]; then
-        git checkout -- package.json docs/versoes/novidades.json >/dev/null 2>&1 || true
+        desfazer_arquivos_escritos
         PACKAGE_ALTERADO=0
       fi
       if [ "$RELEASE_FEITO" = 1 ]; then
@@ -1296,7 +1321,7 @@ principal() {
   preparar_regras
   if [ "$MODO" = preparar ]; then
     preparar_destinos
-    echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O público segue na versão atual."
+    echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O ponteiro atual já aponta para v$VERSAO_NOVA: quem está logado já recebe essa versão pelo portão, com o webroot público antigo, até a virada."
     echo "publicar: próximo passo: a virada e a conferência manual (V1 a V8 do plano), depois: npm run publicar -- --concluir"
     exit 0
   fi

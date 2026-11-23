@@ -8,7 +8,8 @@
 # qualidade (lint, prettier, depcruise, vue-tsc, vitest, validação e citações do conteúdo,
 # suíte PHP) rodam só quando a mudança desde a última tag os toca; a regra vem impressa na
 # linha do "── nome ──" de cada passo pulado. Sem tag base, ou com PRECI_COMPLETO=1, ou com
-# mudança em scripts/ e configs, tudo roda (completo). Ver scripts/apoio/preciSeletivo.ts.
+# mudança em scripts/ e configs da raiz, tudo roda (completo). O portão de pacote real roda
+# sempre, mesmo quando a suíte PHP é pulada. Ver scripts/apoio/preciSeletivo.ts.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -111,6 +112,8 @@ else
 fi
 
 passo "termos proibidos (R3), público" bash scripts/verificar-proibicoes.sh public
+# Incondicional (LU-F1.3-N3): README, CLAUDE, docs em claro e nomes de todos os rastreados, cifrados inclusive.
+passo "termos proibidos (R3), amplo: README, CLAUDE, docs em claro e nomes rastreados" bash scripts/verificar-proibicoes.sh --amplo .
 
 if [ "$PRECI_VITEST_RODA" = 1 ]; then
   if [ "$PRECI_VITEST_ALVO" = TODOS ]; then
@@ -134,10 +137,17 @@ passo "vazamento do conteúdo restrito (dist, árvore e histórico)" node --impo
 passo "vazamento do conteúdo da Júri (dist; sem JSON, só com a cadeira publicada)" node --import tsx scripts/verificar-conteudo-restrito-juri.ts
 passo "e-mail fora da lista (sem endereço real na árvore; EM-B1)" bash scripts/verificar-emails.sh
 
+# Suíte PHP inteira só quando o servidor mudou (ou completo). Ela inclui o grupo "pacote real".
+# Quando não roda, o grupo "pacote real" (portao-pacote.teste.php: tipo e CSP por HTTP, com
+# sessão, no pacote que este build acabou de gerar) roda SEMPRE, em toda publicação: o pacote
+# muda a cada build, então o teste é portão de segurança, não seletivo (PRECI-CONFIG-PACOTE).
 if [ "$PRECI_PHP_RODA" = 1 ]; then
   passo "suíte PHP da área restrita (servidor/testes)" php servidor/testes/rodar.php
 else
   pular "suíte PHP da área restrita (servidor/testes)" "$PRECI_PHP_MOTIVO"
+  if [ "$PRECI_PACOTE_REAL_RODA" = 1 ]; then
+    passo "portão de pacote real, sempre (tipo e CSP por HTTP, com sessão, no pacote)" php servidor/testes/rodar.php "$PRECI_PACOTE_REAL_FILTRO"
+  fi
 fi
 
 echo "preci: tudo verde (total ${SECONDS}s)"

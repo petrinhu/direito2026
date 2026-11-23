@@ -23,6 +23,7 @@ import AvisoLegal from '../componentes/AvisoLegal.vue';
 import QuadroProva from '../componentes/QuadroProva.vue';
 import BotaoHome from '../componentes/BotaoHome.vue';
 import { CHAVE_ALVO_QUADRO_APOS_TITULO } from '../componentes/alvoQuadroProva';
+import { useEsconderAoRolar } from '../composables/esconderAoRolar';
 
 const props = withDefaults(
   defineProps<{
@@ -56,6 +57,9 @@ const naPaginaInicial = computed(() => props.caminhoAtual === '');
 // Na página do calendário o quadro de contagem começa minimizado, sem escolha
 // gravada (ordem do orquestrador, para ratificação do líder, 20/10/2026).
 const naPaginaDoCalendario = computed(() => props.caminhoAtual === 'calendario');
+// KELSEN-JUMP: na página do jogo o quadro de prova também começa minimizado, para o jogo e a lição
+// de fim de partida ficarem inteiros na tela a 360 px. Só essa rota muda; as outras seguem como antes.
+const naPaginaDoJogo = computed(() => props.caminhoAtual === 'kelsen-jump');
 // No modo adaptado o quadro de prova não flutua: vai para o topo da coluna de conteúdo, em espaço
 // próprio do fluxo (AV3-F0f, decisão do CPO a ratificar pelo líder). É a mesma instância, só muda o
 // lugar, por Teleport. Fora do modo, o quadro segue na pilha inferior, como sempre.
@@ -194,6 +198,8 @@ function aoTeclaNaGaveta(evento: KeyboardEvent): void {
 const FOLGA_DE_BAIXO_PX = 16;
 const RESPIRO_PX = 8;
 const pilhaRef = ref<HTMLElement>();
+// FLUTUANTES-ROLAGEM: no celular a pilha some ao rolar para baixo; inert tira-a do Tab enquanto some.
+const pilhaEscondida = useEsconderAoRolar(pilhaRef);
 let observadorPilha: InstanceType<typeof window.ResizeObserver> | undefined;
 
 function publicarRecuoDaPilha(altura: number): void {
@@ -285,12 +291,17 @@ onBeforeUnmount(() => {
     sticky no fim do documento), então ficam empilhados e nunca se sobrepõem nem cobrem o conteúdo
     do fim da página. O botão Home vai por último, no canto inferior direito, abaixo do quadro.
   -->
-  <div ref="pilhaRef" class="layout-base__inferior">
+  <div
+    ref="pilhaRef"
+    class="layout-base__inferior"
+    :class="{ 'layout-base__inferior--escondida': pilhaEscondida }"
+    :inert="pilhaEscondida"
+  >
     <!-- O quadro de prova não aparece na área restrita (ordem do líder, 20/10/2026). -->
     <Teleport :to="alvoDoQuadro" :disabled="!quadroNoConteudo">
       <QuadroProva
         v-if="!emAreaRestrita"
-        :minimizado-por-padrao="naPaginaDoCalendario"
+        :minimizado-por-padrao="naPaginaDoCalendario || naPaginaDoJogo"
         @mudou-minimizado="aoMudarMinimizadoDoQuadro"
       />
     </Teleport>
@@ -363,6 +374,27 @@ onBeforeUnmount(() => {
 
 .layout-base__inferior > * {
   pointer-events: auto;
+}
+
+/* FLUTUANTES-ROLAGEM: no celular a pilha sai pela base ao rolar para baixo e volta ao subir ou
+   parar. O transform some para fora da tela; visibility tira o conteúdo da árvore de acessibilidade. */
+@media (max-width: 880px) {
+  .layout-base__inferior {
+    transition:
+      transform var(--transicao-rapida, 150ms ease),
+      visibility var(--transicao-rapida, 150ms ease);
+  }
+
+  .layout-base__inferior--escondida {
+    transform: translateY(calc(100% + var(--esp-6, 2rem)));
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 880px) and (prefers-reduced-motion: reduce) {
+  .layout-base__inferior {
+    transition: none;
+  }
 }
 
 /* Botão Home: canto inferior direito da pilha, alinhado à mesma margem direita

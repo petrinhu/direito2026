@@ -9,7 +9,7 @@ declare(strict_types=1);
  *
  * Marcas: --sem-servidor pula os testes que precisam do php -S local; --sem-laco
  * pula os que precisam de escuta local ou de exec. Sem --sem-laco, o runner
- * pula os mesmos testes sozinho quando o ambiente não tem exec nem escuta
+ * pula os mesmos testes sozinho quando falta ao ambiente o exec ou a escuta
  * (função desabilitada): saem como "pulado por ambiente", nunca como falha.
  */
 

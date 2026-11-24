@@ -20,6 +20,7 @@ async function cabecalhoDaNavegacao(page: Page): Promise<string | null> {
 test('visitante sem sessão recebe a limpeza de cache e storage, nunca cookies', async ({
   page
 }) => {
+  await page.goto('/');
   await esperarEntrada(page);
   const cabecalho = await cabecalhoDaNavegacao(page);
   expect(cabecalho).toBe('"cache", "storage"');

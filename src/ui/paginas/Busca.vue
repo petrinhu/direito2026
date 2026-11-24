@@ -85,6 +85,12 @@ watch(() => route.query.q, buscarDaQuery);
   padding: var(--esp-6, 2rem);
 }
 
+/* A caixa do título tem só a largura do texto. Com a caixa cheia, ela chegava sob o botão Home
+   flutuante do canto inferior direito a 360 px (LU-F5.1-N1); o texto nunca chegou. */
+.pagina-busca h1 {
+  width: fit-content;
+}
+
 .pagina-busca__botao {
   min-height: 44px;
   margin-block: var(--esp-3, 0.75rem);

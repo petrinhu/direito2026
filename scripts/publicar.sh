@@ -816,6 +816,8 @@ enviar_webroot() {
   local destino="$1" origem="$PACOTE_LOCAL/webroot/" simulacao="$ESPACO/simulacao-webroot.txt"
   local -a apagar=()
   local total
+  [ -d "$PACOTE_LOCAL/webroot/api/nucleo" ] ||
+    recusar "pacote sem webroot/api/nucleo: não envio o webroot (nada foi apagado)"
   conferir_destino_seguro "$destino"
   no_destino "mkdir -p -- '$destino'" || recusar "não consegui criar $destino"
   rsync_destino "$origem" "$destino/" -rlt --checksum --delete -n -i --filter=". $REGRAS" \
@@ -829,10 +831,23 @@ enviar_webroot() {
     printf '%s\n' "${apagar[@]}" | sed 's/^/publicar:   apagar: /'
   fi
   DEPLOY_INICIADO=1
+  enviar_nucleo_primeiro "$PACOTE_LOCAL/webroot" "$destino"
   rsync_destino "$origem" "$destino/" -rlt --checksum --delete --max-delete="$TETO_APAGAR_WEBROOT" \
     --filter=". $REGRAS" ||
     recusar "envio do webroot falhou (o ponteiro ainda não mudou)"
   echo "publicar: webroot enviado para $destino"
+}
+
+# PUBLICAR-NUCLEO-ANTES (LU-F4.3): o núcleo (api/nucleo/) vai numa passada própria, sem --delete, ANTES do
+# webroot inteiro. Sem isso, um api/*.php novo chegava ao servidor antes do núcleo que ele chama, e dava 500
+# por segundos. Só acrescenta: o --delete continua na passada completa, com o teto e a simulação de antes.
+enviar_nucleo_primeiro() {
+  local webroot="$1" destino="$2"
+  no_destino "mkdir -p -- '$destino/api/nucleo'" ||
+    recusar "não consegui criar $destino/api/nucleo (o webroot não foi enviado)"
+  rsync_destino "$webroot/api/nucleo/" "$destino/api/nucleo" -rlt --checksum ||
+    recusar "envio do núcleo (api/nucleo) falhou antes do webroot (o ponteiro ainda não mudou)"
+  echo "publicar: núcleo (api/nucleo) enviado antes do webroot"
 }
 
 # Comando remoto da quarentena (AV-F5, docs/publicacao.md): MOVE a versão para

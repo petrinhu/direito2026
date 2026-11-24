@@ -120,3 +120,13 @@ teste('presença: arquivo de presença ilegível dá conectado false na listagem
     igual(false, $linha['conectado'] ?? null, 'arquivo ilegível conta como sem sessão aberta');
     chmod(presencaArquivo($a, 'ana'), 0600);
 });
+
+teste('presença: sem o argumento conectado, d26_conta_publica devolve null (sem informação), nunca false', function (): void {
+    $c = [
+        'usuario' => 'ana', 'admin' => false, 'ativo' => true, 'deveTrocarSenha' => false,
+        'criadoEm' => '2026-11-01T00:00:00+00:00', 'ultimoLogin' => null, 'aparelhos' => [],
+    ];
+    igual(null, d26_conta_publica($c, 10)['conectado'], 'quem não informa a presença não afirma que a conta está desconectada');
+    igual(true, d26_conta_publica($c, 10, true)['conectado'], 'com a presença informada, o valor passa');
+    igual(false, d26_conta_publica($c, 10, false)['conectado'], 'com false explícito, false');
+});

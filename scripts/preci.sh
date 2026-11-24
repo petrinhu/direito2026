@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Roda, na máquina local, a mesma sequência que o CI roda (seção 14 e T15.4
-# do manual de testes). Sai no primeiro passo que falhar, para que o
-# problema apareça antes do push, não depois.
+# Roda, na máquina local, a sequência de verificações de um CI, no molde da
+# seção T15 do manual de testes (pré-CI, com o modelo Node/TypeScript da T15.4).
+# O repositório não tem CI na nuvem: este pré-CI fica no lugar dele. Sai no
+# primeiro passo que falhar, para que o problema apareça antes do push, não depois.
 #
 # PRECI-SELETIVO: os passos de segurança rodam sempre (cifra, partição, travessão, geração,
 # construção com o portão de pacote publicável, varreduras do dist e do restrito). Os de

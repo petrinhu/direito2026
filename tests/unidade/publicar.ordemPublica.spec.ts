@@ -44,6 +44,7 @@ const REAIS = [
 /** Etapas trocadas por registro: cada chamada vira uma linha no arquivo de log. */
 const ETAPAS = [
   'ler_argumentos',
+  'conferir_publicacao_interrompida',
   'conferir_branch_e_arvore',
   'calcular_versoes',
   'conferir_tag_local',
@@ -52,6 +53,7 @@ const ETAPAS = [
   'conferir_destinos',
   'conferir_remoto',
   'conferir_insumos',
+  'marcar_em_andamento',
   'gravar_e_commitar',
   'criar_tag',
   'preparar_clone',
@@ -184,6 +186,7 @@ describe('ordem da fase pública (AV-F5, OS-1)', () => {
       expect(r.status, r.saida).toBe(0);
       expect(r.chamadas).toEqual([
         'ler_argumentos',
+        'conferir_publicacao_interrompida',
         'conferir_branch_e_arvore',
         'calcular_versoes',
         'conferir_tag_local',
@@ -191,6 +194,7 @@ describe('ordem da fase pública (AV-F5, OS-1)', () => {
         'conferir_destinos',
         'conferir_remoto',
         'conferir_insumos',
+        'marcar_em_andamento',
         'preparar_clone',
         'copiar_dispositivos',
         'rodar_preci',

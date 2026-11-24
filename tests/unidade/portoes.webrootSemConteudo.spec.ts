@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -132,5 +132,22 @@ describe('portão do webroot sem conteúdo', () => {
     const r = rodar({ WEBROOT_PATH: join(tmp, 'nao-existe') });
     expect(r.status).toBe(1);
     expect(saidaCompleta(r)).toContain('pasta ausente');
+  });
+});
+
+describe('onde o portão do webroot roda (LU-F4.2-N3)', () => {
+  const PRECI = readFileSync(join(RAIZ, 'scripts/preci.sh'), 'utf-8').split('\n');
+  const PACOTE = JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf-8')) as {
+    scripts: Record<string, string>;
+  };
+
+  it('roda no preci, logo depois da construção, e não no npm run build', () => {
+    const construcao = PRECI.findIndex((linha) => linha.includes('npm run build:construir'));
+    const portao = PRECI.findIndex((linha) =>
+      linha.includes('scripts/verificar-webroot-sem-conteudo.ts')
+    );
+    expect(construcao).toBeGreaterThan(-1);
+    expect(portao).toBeGreaterThan(construcao);
+    expect(PACOTE.scripts.build).not.toContain('verificar-webroot-sem-conteudo');
   });
 });

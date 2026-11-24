@@ -10,6 +10,11 @@
  * Não repete a varredura restrita do dist (verificar-conteudo-restrito, no preci): aquele
  * portão já cobre o pacote inteiro e a árvore. Este só fecha o webroot.
  *
+ * Onde roda: no preci (scripts/preci.sh, passo logo depois de build:construir), e não no
+ * `npm run build`. Motivo: o arquivo de termos mora fora do repositório, em ~/.config/secrets,
+ * na máquina de publicação; o build não pode depender dele. O publicar só segue com o preci
+ * verde, então este portão roda antes de qualquer envio. Pino: portoes.webrootSemConteudo.spec.ts.
+
  * Nunca imprime termo nem trecho (L-28): só caminho, número da regra e contagens.
  * Falha fechada: webroot ausente ou vazio, arquivo de termos ausente ou sem termo,
  * src/conteudo sem literal (zero janela é varredura quebrada, L-36).

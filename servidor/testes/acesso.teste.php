@@ -223,3 +223,18 @@ teste('acesso: página vencida (token que não casa com o cookie pré) volta a t
     verdadeiro(!isset($c->cookies['__Host-d26']), 'nenhuma sessão aberta pelo envio recusado');
     igual(303, acessoEnviar($c, $novo, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN)->status, 'o envio seguinte, com o token novo, entra');
 });
+
+teste('limpeza do visitante: a entrada e as respostas recusadas da tela de acesso mandam Clear-Site-Data "cache", "storage"; quem entrou não recebe', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    $c = $a->cliente();
+    $limpeza = '"cache", "storage"';
+    igual($limpeza, $c->get('/', PORTAO_NAVEGACAO)->cabecalho('clear-site-data'), 'entrada (GET) de visitante');
+    [$token] = acessoTela($c);
+    $recusada = acessoEnviar($c, $token, '/', Ambiente::LOGIN_ADMIN, 'senha-errada-1');
+    igual(401, $recusada->status, 'senha errada é recusada');
+    igual($limpeza, $recusada->cabecalho('clear-site-data'), 'resposta recusada da tela de acesso');
+    $logado = $a->entrar();
+    $app = $logado->get('/', PORTAO_NAVEGACAO);
+    igual('', (string) $app->cabecalho('clear-site-data'), 'quem entrou não recebe a limpeza');
+});

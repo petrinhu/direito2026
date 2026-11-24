@@ -56,6 +56,9 @@ PRECI_TMPDIR=/var/tmp/preci-pub
 # Pacote de cada versão, guardado entre --preparar e --concluir. Fica em pasta do usuário (700), fora
 # do IDrive e fora de /var/tmp (caminho previsível em diretório compartilhado é risco: LU-F4.3).
 PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES-${XDG_STATE_HOME:-$HOME/.local/state}/caderno-publicar}"
+# Marca de execução em andamento (LU-F4.3-N8): fica na pasta privada e sobrevive a kill -9. Ver registrar_marca.
+MARCA_PUBLICACAO="$PASTA_PACOTES/publicacao-em-andamento"
+MARCA_ESCRITA=0
 # Clone descartável do preci (L-55: subpasta do projeto, ignorada pelo git).
 PASTA_CLONES="$RAIZ/.worktrees"
 CLONE=""
@@ -440,6 +443,7 @@ gravar_e_commitar() {
 criar_tag() {
   git tag -a "v$VERSAO_NOVA" -m "Caderno de Direito v$VERSAO_NOVA"
   TAG_CRIADA=1
+  registrar_marca
 }
 
 # Clone descartável no commit base (BASE, lido em conferir_branch_e_arvore), com a árvore destravada pela
@@ -466,6 +470,7 @@ preparar_clone() {
   (cd "$CODIGO" && node --import tsx "$CODIGO/scripts/apoio/versao-cli.ts" gravar "$CLONE/package.json" "$VERSAO_NOVA") >/dev/null ||
     recusar "não consegui gravar a versão nova no clone (nada foi commitado)"
   gravar_entrada_novidades
+  registrar_marca
 }
 
 # Apaga o clone deste script, por caminho exato. Nunca apaga nada fora de $PASTA_CLONES/pub-clone.*.
@@ -1229,8 +1234,55 @@ desfazer_release() {
   echo "publicar: desfeito: commit de release e tag local v$VERSAO_NOVA removidos; package.json de volta a $VERSAO_ATUAL" >&2
 }
 
+# LU-F4.3-N8: uma morte abrupta (kill -9, queda de energia) não passa pelo trap, e deixava commit de release,
+# tag local e envio parcial sem nenhum aviso na execução seguinte. A marca é escrita antes do primeiro passo que
+# muda R (ou o remoto) e só o fim tratado (ao_sair) a apaga. Marca presente = a execução anterior não terminou:
+# esta recusa e não desfaz, não apaga e não envia nada. A decisão de repetir é do líder.
+registrar_marca() {
+  [ "${MARCA_ESCRITA:-0}" = 1 ] || return 0
+  (
+    umask 077
+    {
+      printf 'pid=%s\n' "$$"
+      printf 'modo=%s\n' "$MODO"
+      printf 'versao=%s\n' "${VERSAO_NOVA:-}"
+      printf 'base=%s\n' "${BASE:-}"
+      printf 'release=%s\n' "${SHA_RELEASE:-}"
+      printf 'tag_criada=%s\n' "${TAG_CRIADA:-0}"
+      printf 'espaco=%s\n' "${ESPACO:-}"
+      printf 'clone=%s\n' "${CLONE:-}"
+    } > "$MARCA_PUBLICACAO"
+  )
+}
+
+marcar_em_andamento() {
+  preparar_pasta_pacotes
+  MARCA_ESCRITA=1
+  registrar_marca
+}
+
+conferir_publicacao_interrompida() {
+  local pid
+  if [ ! -e "$MARCA_PUBLICACAO" ] && [ ! -L "$MARCA_PUBLICACAO" ]; then
+    return 0
+  fi
+  echo "publicar: marca da execução anterior em $MARCA_PUBLICACAO:" >&2
+  sed 's/^/publicar:   /' "$MARCA_PUBLICACAO" >&2 || true
+  pid="$(sed -n 's/^pid=//p' "$MARCA_PUBLICACAO" 2>/dev/null | head -n 1)"
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    recusar "outra execução do publicar parece estar em andamento (pid $pid); espere ela terminar. Nada foi feito por esta execução."
+  fi
+  recusar "a publicação anterior não terminou (pid ${pid:-desconhecido}): pode ter ficado commit de release ou tag local, e envio ao git parcial. Antes de repetir, confira: git log -1 --format='%H %s'; git tag --list 'v*'; git ls-remote github refs/heads/main; git ls-remote --tags github. Depois, e só depois, remova a marca pelo caminho exato: $MARCA_PUBLICACAO. Nada foi desfeito nem enviado por esta execução."
+}
+
 ao_sair() {
   local codigo=$?
+  # Fim tratado (qualquer código, inclusive sinal que o trap leu): a marca de execução em andamento sai aqui.
+  # Só remove a marca que ESTA execução escreveu (LU-F4.3-N8): uma execução recusada não a apaga.
+  if [ "${MARCA_ESCRITA:-0}" = 1 ]; then
+    rm -f -- "$MARCA_PUBLICACAO"
+    MARCA_ESCRITA=0
+  fi
   # Incondicional: sucesso ou falha, o clone (com a chave do git-crypt) sai.
   apagar_clone || echo "publicar: AVISO: não consegui apagar o clone; apague por caminho exato: $CLONE" >&2
   # Publicado e só a poda falhou: o aviso "poda pendente" já foi dado por principal. Não é remoto parcial.
@@ -1292,6 +1344,7 @@ concluir() {
   [ -d "$PACOTE_LOCAL" ] || recusar "sem o pacote guardado de v$VERSAO_NOVA (rode --preparar antes)"
   preparar_pasta_pacotes
   conferir_pacote_guardado "$PACOTE_LOCAL"
+  marcar_em_andamento
   DEPLOY_INICIADO=1
   montar_caminhos_protegidos
   conferir_ar
@@ -1303,6 +1356,7 @@ concluir() {
 
 principal() {
   ler_argumentos "$@"
+  conferir_publicacao_interrompida
   if [ "$MODO" = concluir ]; then
     concluir
     return 0
@@ -1319,6 +1373,7 @@ principal() {
   conferir_destinos
   conferir_remoto
   conferir_insumos
+  marcar_em_andamento
   ESPACO="$(mktemp -d /var/tmp/publicar.XXXXXX)"
   preparar_clone
   copiar_dispositivos

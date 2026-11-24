@@ -29,6 +29,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { normalizarParaBusca } from '../src/core/restrito/termosVazamento';
+import { janelasDe } from './apoio/janelas';
 import { OBRIGATORIOS_WEBROOT, ehDoWebroot, listarArquivos } from './apoio/pacotePublico';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
@@ -38,7 +39,6 @@ const ARQUIVO_TERMOS =
   process.env.VERIFICAR_PROIBICOES_TERMOS ??
   join(homedir(), '.config/secrets/caderno-direito-termos-proibidos.txt');
 const CONTEUDO = resolve(process.env.CONTEUDO_PATH ?? join(RAIZ, 'src/conteudo'));
-const TAMANHO_JANELA = 40;
 
 function ehPasta(caminho: string): boolean {
   return statSync(caminho, { throwIfNoEntry: false })?.isDirectory() ?? false;
@@ -51,15 +51,6 @@ function lerTermos(): string[] | undefined {
     .split('\n')
     .map((linha) => normalizarParaBusca(linha))
     .filter((termo) => termo.length > 0);
-}
-
-/** Janelas deslizantes de TAMANHO_JANELA caracteres de um texto já normalizado. */
-function janelas(texto: string): string[] {
-  const saida: string[] = [];
-  for (let i = 0; i + TAMANHO_JANELA <= texto.length; i += 1) {
-    saida.push(texto.slice(i, i + TAMANHO_JANELA));
-  }
-  return saida;
 }
 
 /** Valores de literal de string (aspas e template sem substituição) de um arquivo .ts. */
@@ -137,7 +128,7 @@ function principal(): number {
   const janelasDoWebroot = new Map<string, string>();
   for (const caminho of caminhos) {
     const texto = normalizarParaBusca(readFileSync(join(WEBROOT, caminho), 'utf-8'));
-    for (const janela of janelas(texto)) {
+    for (const janela of janelasDe(texto)) {
       if (!janelasDoWebroot.has(janela)) janelasDoWebroot.set(janela, caminho);
     }
   }
@@ -157,7 +148,7 @@ function principal(): number {
   const comTrecho = new Set<string>();
   let trechos = 0;
   for (const texto of textosConteudo) {
-    for (const janela of janelas(texto)) {
+    for (const janela of janelasDe(texto)) {
       trechos += 1;
       const achado = janelasDoWebroot.get(janela);
       if (achado !== undefined) comTrecho.add(achado);

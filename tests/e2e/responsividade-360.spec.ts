@@ -105,7 +105,10 @@ async function controlesDoCabecalhoComProblema(
         problemas.push({ controle: nome, motivo: 'não existe' });
       }
       for (const el of elementos) {
-        if (getComputedStyle(el).display === 'none') continue;
+        // Oculto de verdade: sem caixa de layout, ou um ancestral com display:none/visibility:hidden
+        // (checkVisibility vê os ancestrais). Um link de nível que a trilha tira da árvore não é alvo.
+        if (el.getClientRects().length === 0) continue;
+        if (el.checkVisibility({ visibilityProperty: true }) === false) continue;
         const caixa = el.getBoundingClientRect();
         const rotulo = nome === 'trilha' ? `trilha "${el.textContent?.trim()}"` : nome;
         if (caixa.left < -0.5 || caixa.right > larguraJanela + 0.5) {
@@ -354,3 +357,44 @@ for (const tema of ['claro', 'escuro'] as const) {
     ).toBeGreaterThanOrEqual(3);
   });
 }
+
+/**
+ * Controle do helper controlesDoCabecalhoComProblema (TRILHA-ADAPTADO-LINHAS): (a) um alvo
+ * VISÍVEL menor que 44 px tem de ser cobrado; (b) um link dentro de um `li` oculto
+ * (display:none no ancestral, nível que a trilha tira da árvore) não é alvo e não pode ser cobrado.
+ */
+test('controle do helper: alvo visível menor que 44px é cobrado', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/');
+  await page.locator('.botao-modo-adaptado').waitFor({ state: 'visible' });
+  await page.evaluate(() => {
+    document
+      .querySelector('.barra-topo')!
+      .insertAdjacentHTML(
+        'beforeend',
+        '<button class="botao-modo-adaptado" style="width:20px;height:20px;padding:0">x</button>'
+      );
+  });
+  const problemas = await controlesDoCabecalhoComProblema(page, true);
+  expect(problemas).toContainEqual(
+    expect.objectContaining({
+      controle: 'Leitura ampliada',
+      motivo: expect.stringMatching(/^alvo de 20x/)
+    })
+  );
+});
+
+test('controle do helper: link dentro de li oculto não é cobrado como alvo', async ({ page }) => {
+  await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: true });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/');
+  await page.locator('.trilha-navegacao a').first().waitFor({ state: 'visible' });
+  await page.evaluate(() => {
+    document
+      .querySelector('.trilha-navegacao ol')!
+      .insertAdjacentHTML('beforeend', '<li style="display:none"><a href="#">oculto</a></li>');
+  });
+  const problemas = await controlesDoCabecalhoComProblema(page, true);
+  expect(problemas.filter((p) => p.controle.includes('oculto'))).toEqual([]);
+});

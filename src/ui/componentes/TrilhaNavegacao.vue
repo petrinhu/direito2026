@@ -294,18 +294,22 @@ const trilhaLonga = computed(() => itens.value.length > 2);
   hyphens: none;
 }
 
-:root[data-modo-adaptado='on']
-  .trilha-navegacao
-  ol[data-truncavel='true']
-  li:nth-last-child(n + 3) {
-  display: flex;
-}
+/* Até 640px o modo adaptado herda a regra de 880px (trilha de dois níveis, sem barra no
+   penúltimo), como no modo normal. Acima de 640px, todos os níveis, cada um inteiro. */
+@media (min-width: 641px) {
+  :root[data-modo-adaptado='on']
+    .trilha-navegacao
+    ol[data-truncavel='true']
+    li:nth-last-child(n + 3) {
+    display: flex;
+  }
 
-:root[data-modo-adaptado='on']
-  .trilha-navegacao
-  ol[data-truncavel='true']
-  li:nth-last-child(2)::before {
-  content: '/' !important;
-  margin: 0 var(--esp-2, 0.5rem);
+  :root[data-modo-adaptado='on']
+    .trilha-navegacao
+    ol[data-truncavel='true']
+    li:nth-last-child(2)::before {
+    content: '/' !important;
+    margin: 0 var(--esp-2, 0.5rem);
+  }
 }
 </style>

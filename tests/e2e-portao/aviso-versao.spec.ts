@@ -486,6 +486,31 @@ test('troca de senha pendente: a tela de troca não mostra aviso e /versao.json 
   expect(resposta.status()).toBe(403);
 });
 
+test('D2b: módulo que falta depois de publicar mostra o banner e não recarrega a página', async ({
+  page
+}) => {
+  await entrarNoApp(page, CONTA_ANA_PAULA, '/');
+  publicarVersaoSintetica(VERSAO_NOVA, NOVIDADES);
+  await page.evaluate(() => {
+    (window as unknown as JanelaDeTeste).marcaDoTeste = 'sem-recarga';
+  });
+
+  // Mesmo gatilho do teste unitário (falhaModulo.spec.ts): o vite:preloadError chega ao tratador,
+  // que consulta /versao.json (aqui, a versão nova publicada) e cancela o padrão. Cancelado =
+  // dispatchEvent devolve false.
+  const cancelado = await page.evaluate(
+    () => !window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }))
+  );
+  expect(cancelado, 'o tratador tem de cancelar o evento padrão do Vite').toBe(true);
+
+  await expect(page.locator(TEXTO_AVISO)).toBeVisible();
+  await expect(page.locator(TEXTO_AVISO)).toContainText('Ana Paula, o site foi atualizado');
+  const marca = await page.evaluate(() => (window as unknown as JanelaDeTeste).marcaDoTeste);
+  expect(marca, 'com versão nova confirmada, a página não pode recarregar sozinha').toBe(
+    'sem-recarga'
+  );
+});
+
 test('a frase do quiz aparece no aviso das áreas restritas e some numa cadeira comum', async ({
   page
 }) => {

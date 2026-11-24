@@ -128,3 +128,26 @@ teste('presença: a faxina termina com arquivo ilegível na pasta, e a listagem 
     clearstatcache();
     verdadeiro(!is_file(presencaArquivo($a, 'ana')), 'a faxina apagou o arquivo ilegível');
 });
+
+teste('presença: o marcador da faxina sai com 0600 mesmo com umask 022, e volta a 0600 se já existia com 0644', function (): void {
+    // O servidor herda a umask deste processo no spawn: 022 reproduz o modo de hospedagem que deixava o marcador em 0644.
+    $antiga = umask(0022);
+    try {
+        $a = Ambiente::novo();
+    } finally {
+        umask($antiga);
+    }
+    presencaPasta($a);
+    presencaAna($a);
+    $adm = $a->entrar(); // o primeiro login cria o marcador
+    $marcador = $a->priv . '/presenca/.faxina';
+    clearstatcache();
+    verdadeiro(is_file($marcador), 'o marcador existe depois do primeiro login');
+    igual(0600, fileperms($marcador) & 0777, 'marcador novo sai 600, não 644 (umask 022)');
+
+    chmod($marcador, 0644);
+    presencaEnvelhecerFaxina($a, 601);
+    igual(200, $adm->get('/api/sessao.php')->status, 'a atividade do admin segue 200');
+    clearstatcache();
+    igual(0600, fileperms($marcador) & 0777, 'marcador antigo 644 volta a 600 na próxima faxina');
+});

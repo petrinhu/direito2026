@@ -12,8 +12,8 @@
  * termo encontrado sai 1.
  *
  * Variáveis (todas opcionais, para provar o portão vermelho fora da árvore):
- *   CADERNO_RESTRITO  caminho do JSON (padrão relativo à raiz do repositório:
- *                     ../site_direito2026_restrito/conteudo/interdisciplinar.json)
+ *   CADERNO_RESTRITO  caminho do JSON. Vazio ou ausente: padrão relativo à raiz do
+ *                     repositório (../site_direito2026_restrito/conteudo/interdisciplinar.json)
  *   DIST_PATH         pasta do pacote (padrão dist/ da raiz)
  *   REPO_RAIZ         raiz do repositório git a varrer (padrão: a deste script)
  */
@@ -27,14 +27,13 @@ import {
   normalizarParaBusca
 } from '../src/core/restrito/termosVazamento';
 import { varrerHistorico } from './apoio/varrerHistorico';
+import { caminhoRestrito } from './apoio/caminhoRestrito';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(process.env.REPO_RAIZ ?? join(AQUI, '..'));
 const DIST = resolve(RAIZ, process.env.DIST_PATH ?? 'dist');
-const CAMINHO_JSON = resolve(
-  RAIZ,
-  process.env.CADERNO_RESTRITO ?? '../site_direito2026_restrito/conteudo/interdisciplinar.json'
-);
+// RESTRITO-CAMINHO: CADERNO_RESTRITO vazio cai no padrão (ver caminhoRestrito); antes, vazio virava a própria raiz.
+const CAMINHO_JSON = caminhoRestrito(process.env.CADERNO_RESTRITO, RAIZ);
 
 interface Varredura {
   readonly analisados: number;

@@ -121,16 +121,19 @@ const D26_CONVITE_REPETICAO = 'A repetição não confere com a senha nova.';
 function d26_tela_convite(string $login, string $token, string $csrf, ?string $erro = null): string
 {
     $titulo = $erro ?? 'Criar senha';
-    $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
+    $erroHtml = $erro === null ? '' : '<p id="convite-erro" role="alert">' . d26_tela_e($erro) . '</p>';
+    $descreveNova = ($erro === null ? '' : 'convite-erro ') . 'senhaNova-ajuda';
+    $invalidaNova = $erro !== null && $erro !== D26_CONVITE_REPETICAO ? ' aria-invalid="true"' : '';
+    $invalidaRepetida = $erro === D26_CONVITE_REPETICAO ? ' aria-invalid="true"' : '';
     return d26_tela_documento($titulo, '<h1>Criar senha</h1>' . $erroHtml
         . '<form method="post" action="/api/convite.php?envio">'
         . '<label for="usuario">Usuário</label>'
         . '<input id="usuario" name="usuario" type="text" value="' . d26_tela_e($login) . '" autocomplete="username" readonly>'
         . '<label for="senhaNova">Senha nova (15 caracteres ou mais)</label>'
-        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required autofocus aria-describedby="senhaNova-ajuda">'
+        . '<input id="senhaNova" name="senhaNova" type="password" autocomplete="new-password" minlength="15" required autofocus aria-describedby="' . $descreveNova . '"' . $invalidaNova . '>'
         . '<p id="senhaNova-ajuda">A senha precisa ter pelo menos 15 caracteres.</p>'
         . '<label for="senhaRepetida">Repita a senha</label>'
-        . '<input id="senhaRepetida" name="senhaRepetida" type="password" autocomplete="new-password" minlength="15" required>'
+        . '<input id="senhaRepetida" name="senhaRepetida" type="password" autocomplete="new-password" minlength="15" required' . $invalidaRepetida . '>'
         . '<input type="hidden" name="t" value="' . d26_tela_e($token) . '">'
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($csrf) . '">'
         . '<button type="submit">Criar senha e entrar</button>'

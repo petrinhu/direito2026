@@ -23,7 +23,8 @@ function d26_presenca_faxina_oportunista(string $priv, int $agora): void
         return;
     }
     // Sem o marcador a faxina segue assim mesmo (ADM-F6d): a retenção de 13 h vale mais que varrer a pasta a cada pedido.
-    if (!@touch($marcador, $agora)) {
+    // Modo 600 explícito: o touch sozinho herda a umask do processo (022 deixa o marcador legível por outros).
+    if (!@touch($marcador, $agora) || !@chmod($marcador, 0600)) {
         d26_presenca_avisar($priv, 'faxina da presença falhou (marcador)');
     }
     d26_presenca_faxina($priv, $agora);

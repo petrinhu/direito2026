@@ -503,7 +503,7 @@ function d26_conta_achar(array $dados, string $login): ?array
  *
  * @return array<string, mixed>
  */
-function d26_conta_publica(array $c, ?int $agora = null, bool $conectado = false): array
+function d26_conta_publica(array $c, ?int $agora = null, ?bool $conectado = null): array
 {
     $agora ??= time();
     return [
@@ -523,6 +523,7 @@ function d26_conta_publica(array $c, ?int $agora = null, bool $conectado = false
         'usoSimultaneo' => (int) ($c['usoSimultaneo'] ?? 0),
         'bloqueadaEm' => is_array($c['bloqueada'] ?? null) ? (int) $c['bloqueada']['em'] : null,
         // Sessão aberta (ADM-F3): calculada por quem lista, a partir da presença. Este arquivo não lê a presença.
+        // Sem o argumento, null (sem informação): nunca false, que afirmaria que a conta está desconectada.
         'conectado' => $conectado,
     ];
 }

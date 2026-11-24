@@ -712,6 +712,63 @@ teste('convite: C16 senha curta, igual ao login ou repetição diferente: tela c
     igual(303, cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA))->status, 'o mesmo link ainda entra');
 });
 
+/** Tag de abertura do input de id dado, como veio na tela (vazio se não existir). */
+function cvbA11yTag(string $html, string $id): string
+{
+    return preg_match('/<input id="' . preg_quote($id, '/') . '"[^>]*>/', $html, $m) === 1 ? $m[0] : '';
+}
+
+/**
+ * Verdadeiro quando algum id citado em aria-describedby da tag leva a um <p role="alert"> cujo texto
+ * contém o trecho. A ajuda (senhaNova-ajuda) tem o mesmo texto do mínimo, então só o <p role="alert"> prova a mensagem do erro.
+ */
+function cvbA11yAlertaDescrito(string $tag, string $html, string $trecho): bool
+{
+    if (preg_match('/aria-describedby="([^"]+)"/', $tag, $d) !== 1) {
+        return false;
+    }
+    foreach (explode(' ', $d[1]) as $id) {
+        $achou = preg_match('/<p id="' . preg_quote($id, '/') . '" role="alert">([^<]*)<\/p>/', $html, $m) === 1
+            && str_contains(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'), $trecho);
+        if ($achou) {
+            return true;
+        }
+    }
+    return false;
+}
+
+teste('convite: o erro do 400 liga o campo da senha nova à mensagem (aria-describedby) e marca o aria-invalid no campo certo', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $c = $a->cliente();
+    $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
+
+    $curta = cvb2Enviar($c, cvb2Campos($token, $csrf, 'Curta-1'));
+    igual(400, $curta->status, 'senha curta');
+    contem('<p id="convite-erro" role="alert">', $curta->corpo, 'a mensagem tem id e role=alert');
+    verdadeiro(
+        cvbA11yAlertaDescrito(cvbA11yTag($curta->corpo, 'senhaNova'), $curta->corpo, 'pelo menos 15 caracteres'),
+        'senha curta: o senhaNova descreve-se pelo <p role="alert"> com o texto do erro'
+    );
+    contem('aria-invalid="true"', cvbA11yTag($curta->corpo, 'senhaNova'), 'senha curta: aria-invalid no senhaNova');
+    verdadeiro(
+        !str_contains(cvbA11yTag($curta->corpo, 'senhaRepetida'), 'aria-invalid'),
+        'senha curta: o senhaRepetida não leva aria-invalid'
+    );
+
+    $diferente = cvb2Enviar($c, cvb2Campos($token, $csrf, CVB2_SENHA, 'OutraSenhaDiferente-1'));
+    igual(400, $diferente->status, 'repetição diferente');
+    verdadeiro(
+        cvbA11yAlertaDescrito(cvbA11yTag($diferente->corpo, 'senhaNova'), $diferente->corpo, CVB2_REPETICAO),
+        'repetição: o senhaNova descreve-se pelo <p role="alert"> com o texto do erro'
+    );
+    contem('aria-invalid="true"', cvbA11yTag($diferente->corpo, 'senhaRepetida'), 'repetição: aria-invalid no senhaRepetida');
+    verdadeiro(
+        !str_contains(cvbA11yTag($diferente->corpo, 'senhaNova'), 'aria-invalid'),
+        'repetição: o senhaNova não leva aria-invalid'
+    );
+});
+
 // ---- C17: sem cookie pré, sem HMAC, Origin de outro site ou corpo JSON: recusa e nada grava ---
 
 teste('convite: C17 sem cookie pré ou sem o HMAC: 403; Origin de outro site: 403; corpo JSON: 400; nada grava', function (): void {

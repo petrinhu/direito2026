@@ -203,6 +203,18 @@ onBeforeUnmount(() => observador?.disconnect());
   }
 }
 
+/*
+  Modo adaptado: a fonte de 24 px faz a tabela passar da largura do quadro também acima de 640 px, e
+  com overflow visible ela vazava e a página inteira rolava para o lado (u1, de 641 a 1024 px, 1218 px
+  contra 1024). Com o modo ligado, o quadro rola sozinho em qualquer largura, como já previsto em
+  docs/modo-adaptado.md, seção 4. Só na tela: a impressão segue inteira, como na regra abaixo.
+*/
+@media screen {
+  :root[data-modo-adaptado='on'] .bloco-teorico__corpo :deep(.tabela-rolavel) {
+    overflow-x: auto;
+  }
+}
+
 @media print {
   /* Na impressão não existe rolagem: a tabela aparece inteira, mesmo que
      precise reduzir a fonte ou quebrar linha nas células. */

@@ -3,6 +3,7 @@ import { computed, inject } from 'vue';
 import { CHAVE_SESSAO } from '@/app/chaves';
 import '../area-restrita/estilo.css';
 import PainelAdmin from '@/ui/usuarios/PainelAdmin.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 import NaoEncontrado from './NaoEncontrado.vue';
 
 // Gerenciar usuários (ordem do líder, LU-F3.2): só administrador. Quem não é recebe a
@@ -24,6 +25,7 @@ function tentarDeNovo(): void {
   <NaoEncontrado v-if="pronta && !admin" />
   <section v-else-if="admin" class="usuarios">
     <h1>Gerenciar usuários</h1>
+    <AlvoQuadroProva />
     <PainelAdmin :usuario-atual="usuario" :administrar="sessao.administrar" />
   </section>
   <div v-else-if="falhou" class="usuarios__falha">

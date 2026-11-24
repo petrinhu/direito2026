@@ -189,6 +189,9 @@ function d26_tela_esqueci_enviado(): string
  */
 const D26_TEXTO_BLOQUEIO = 'Esta conta foi bloqueada porque foi usada em dois aparelhos ao mesmo tempo. Fale com Petrus para liberar.';
 
+/** Aviso da tela que expirou (página aberta antes de outra visita trocar o cookie pré). Curto, sem a senha. */
+const D26_TEXTO_PAGINA_VENCIDA = 'Sua página tinha expirado. Entre de novo.';
+
 /** Texto do aviso da tela de entrada, por código da lista fechada (D26_AVISOS). */
 function d26_tela_texto_aviso(string $codigo): ?string
 {
@@ -207,16 +210,18 @@ function d26_tela_texto_aviso(string $codigo): ?string
  * Com $aviso (SU-B2), vale a mesma regra, em parágrafo próprio com estilo informativo, e o
  * campo usuário é descrito por ele. Se vierem os dois, o título segue o erro.
  */
-function d26_tela_entrada(string $token, string $destino, ?string $erro = null, ?string $aviso = null): string
+/** $usuario volta preenchido só quando a tela é refeita depois de uma recusa (nunca a senha). */
+function d26_tela_entrada(string $token, string $destino, ?string $erro = null, ?string $aviso = null, string $usuario = ''): string
 {
     $titulo = $erro ?? $aviso ?? 'Caderno de Direito';
     $avisoHtml = $aviso === null ? '' : '<p class="entrada-aviso" role="alert" id="aviso-sessao">' . d26_tela_e($aviso) . '</p>';
     $erroHtml = $erro === null ? '' : '<p role="alert">' . d26_tela_e($erro) . '</p>';
     $descrito = $aviso === null ? '' : ' aria-describedby="aviso-sessao"';
+    $valorUsuario = $usuario === '' ? '' : ' value="' . d26_tela_e($usuario) . '"';
     return d26_tela_documento($titulo, '<h1>Caderno de Direito</h1>' . $avisoHtml . $erroHtml
         . '<form method="post" action="/api/acesso.php">'
         . '<label for="usuario">Usuário</label>'
-        . '<input id="usuario" name="usuario" type="text" autocomplete="username" autofocus required' . $descrito . '>'
+        . '<input id="usuario" name="usuario" type="text" autocomplete="username" autofocus required' . $valorUsuario . $descrito . '>'
         . '<label for="senha">Senha</label>'
         . '<input id="senha" name="senha" type="password" autocomplete="current-password" required>'
         . '<input type="hidden" name="csrf" value="' . d26_tela_e($token) . '">'

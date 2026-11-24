@@ -109,22 +109,46 @@ function d26_csrf_pre_atual(string $priv): string
     return d26_csrf_pre_token($nonce, d26_segredo($priv));
 }
 
-/**
- * Defesa de POST de formulário (tela de entrada e de troca, plano seção 1.4 e T24).
- * O token vem do campo oculto e é comparado SEMPRE com o HMAC do cookie pré, mesmo com
- * sessão aberta: o POST da tela leva o cookie de sessão (same-site), e o token da sessão
- * não é o que a tela entregou. d26_exigir_post_seguro não muda.
- */
-function d26_exigir_formulario_seguro(string $priv): void
+/** Formulário de tipo application/x-www-form-urlencoded e de origem própria; senão, JSON de erro. */
+function d26_exigir_formulario_tipo_e_origem(): void
 {
     $tipo = strtolower(trim(explode(';', (string) ($_SERVER['CONTENT_TYPE'] ?? ''))[0]));
     if ($tipo !== 'application/x-www-form-urlencoded') {
         d26_erro(400, 'tipo-conteudo', 'Requisição inválida.');
     }
     d26_exigir_origem_propria();
+}
+
+/**
+ * O token do campo oculto casa com o HMAC do cookie pré? Só devolve true ou false, sem recusar:
+ * quem chama decide o que mostrar (a tela de entrada renova o par, em vez de dar JSON cru).
+ */
+function d26_formulario_token_confere(string $priv): bool
+{
     $nonce = d26_pre_nonce();
     $enviado = $_POST['csrf'] ?? '';
-    if ($nonce === '' || !is_string($enviado) || !hash_equals(d26_csrf_pre_token($nonce, d26_segredo($priv)), $enviado)) {
+    return $nonce !== '' && is_string($enviado) && hash_equals(d26_csrf_pre_token($nonce, d26_segredo($priv)), $enviado);
+}
+
+/**
+ * Par novo para uma tela que expirou: cookie pré novo e o token que casa com ele. O token antigo
+ * da página vencida deixa de valer; nada é aceito por ele.
+ */
+function d26_formulario_renovar(string $priv): string
+{
+    return d26_csrf_pre_token(d26_pre_emitir(), d26_segredo($priv));
+}
+
+/**
+ * Defesa de POST de formulário (troca, esqueci, convite, plano seção 1.4 e T24).
+ * O token vem do campo oculto e é comparado SEMPRE com o HMAC do cookie pré, mesmo com
+ * sessão aberta: o POST da tela leva o cookie de sessão (same-site), e o token da sessão
+ * não é o que a tela entregou. d26_exigir_post_seguro não muda.
+ */
+function d26_exigir_formulario_seguro(string $priv): void
+{
+    d26_exigir_formulario_tipo_e_origem();
+    if (!d26_formulario_token_confere($priv)) {
         d26_erro(403, 'csrf', 'Sessão inválida. Recarregue a página e tente de novo.');
     }
 }

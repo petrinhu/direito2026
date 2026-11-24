@@ -203,3 +203,23 @@ teste('sair: Clear-Site-Data é exatamente "cache" (reprova cookies, storage e *
     igual('"cache"', $valor, 'valor exato');
     verdadeiro(!in_array($valor, ['"cookies"', '"storage"', '"*"'], true), 'nenhum valor que derrube o domínio-pai');
 });
+
+teste('acesso: página vencida (token que não casa com o cookie pré) volta a tela de entrada com token novo, o usuário digitado e o aviso; a senha não é conferida', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    $c = $a->cliente();
+    [$tokenVelho] = acessoTela($c);
+    // Outra visita à tela troca o cookie pré; o formulário desta página fica com um token que não casa.
+    unset($c->cookies['__Host-d26pre']);
+    acessoTela($c);
+    $r = acessoEnviar($c, $tokenVelho, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN);
+    igual(403, $r->status, 'página vencida é recusada, sem entrar');
+    verdadeiro(str_contains((string) $r->cabecalho('content-type'), 'text/html'), 'volta a tela de entrada, não JSON cru');
+    verdadeiro(str_contains($r->corpo, 'Sua página tinha expirado. Entre de novo.'), 'aviso curto da página vencida');
+    verdadeiro(str_contains($r->corpo, 'value="' . Ambiente::LOGIN_ADMIN . '"'), 'o usuário digitado volta');
+    verdadeiro(!str_contains($r->corpo, Ambiente::SENHA_ADMIN), 'a senha nunca volta na tela');
+    $novo = acessoCampo($r->corpo, 'csrf');
+    verdadeiro($novo !== '' && $novo !== $tokenVelho, 'a tela traz um token novo');
+    verdadeiro(!isset($c->cookies['__Host-d26']), 'nenhuma sessão aberta pelo envio recusado');
+    igual(303, acessoEnviar($c, $novo, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN)->status, 'o envio seguinte, com o token novo, entra');
+});

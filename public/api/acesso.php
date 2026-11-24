@@ -9,17 +9,24 @@ require_once __DIR__ . '/nucleo/portao.php';
  * Entrada pelo formulário da tela (plano do CTO do login único, seções 1.4 e 1.5; LU-F2.5).
  * Sucesso: 303 para o destino validado, com Clear-Site-Data "cache". Falha: a mesma tela,
  * com a frase, em 401; limite de tentativas: a tela com a frase e os segundos, em 429.
- * Erro de formato, origem ou token: JSON de erro, como nos demais endpoints.
+ * Erro de formato ou origem: JSON de erro, como nos demais endpoints. Token que não casa (página vencida):
+ * a tela de entrada de novo, com par novo e aviso curto; o login não é tentado.
  */
 d26_metodo(['POST']);
 $priv = d26_priv();
 d26_sessao_iniciar($priv, false); // só abre sessão se já houver uma em disco; a queda aqui não avisa (SU-B2)
 d26_aviso_consumir();
-d26_exigir_formulario_seguro($priv);
+d26_exigir_formulario_tipo_e_origem();
 
 $usuario = is_string($_POST['usuario'] ?? null) ? $_POST['usuario'] : '';
-$senha = is_string($_POST['senha'] ?? null) ? $_POST['senha'] : '';
 $destino = d26_destino_seguro($_POST['destino'] ?? null);
+// Página vencida (outra visita à tela trocou o cookie pré): nada é conferido, nem a senha. A tela volta
+// com um par novo de cookie e token, o usuário digitado e o aviso; a senha nunca volta.
+if (!d26_formulario_token_confere($priv)) {
+    d26_portao_tela(403, d26_tela_entrada(d26_formulario_renovar($priv), $destino, null, D26_TEXTO_PAGINA_VENCIDA, $usuario), PORTAO_CSP_TELA);
+}
+
+$senha = is_string($_POST['senha'] ?? null) ? $_POST['senha'] : '';
 
 $r = d26_login_executar($priv, $usuario, $senha);
 if ($r['estado'] === 'entrou') {

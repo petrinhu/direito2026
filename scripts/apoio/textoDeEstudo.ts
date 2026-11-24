@@ -31,8 +31,9 @@ import { readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import ts from 'typescript';
 import { normalizarParaBusca } from '../../src/core/restrito/termosVazamento';
+import { TAMANHO_JANELA, janelasDe } from './janelas';
 
-export const TAMANHO_JANELA = 40;
+export { TAMANHO_JANELA } from './janelas';
 export const FILTRO = 'git-crypt';
 export const ESCOPO_FONTE =
   /^src\/conteudo\/p\d+\/[^/]+\/[^/]+\/.*\.ts$|^src\/conteudo\/kelsen-jump\/licoes\.ts$/;
@@ -303,8 +304,7 @@ export function indexarFontes(
     fontes += 1;
     for (const valor of valoresDeString(caminho, codigo)) {
       for (const fragmento of fragmentos(valor)) {
-        for (let i = 0; i + TAMANHO_JANELA <= fragmento.length; i += 1) {
-          const janela = fragmento.slice(i, i + TAMANHO_JANELA);
+        for (const janela of janelasDe(fragmento)) {
           if (ehDeFrasePermitida(janela) || janelas.has(janela)) continue;
           janelas.set(janela, caminho);
         }
@@ -323,8 +323,8 @@ export function fontesCasadas(
   const origens = new Set<string>();
   const formas = [...formasDoClaro(codigo), ...formasDeLiteraisUnidos(caminho, codigo)];
   for (const forma of formas) {
-    for (let i = 0; i + TAMANHO_JANELA <= forma.length; i += 1) {
-      const origem = janelas.get(forma.slice(i, i + TAMANHO_JANELA));
+    for (const janela of janelasDe(forma)) {
+      const origem = janelas.get(janela);
       if (origem !== undefined) origens.add(origem);
     }
   }

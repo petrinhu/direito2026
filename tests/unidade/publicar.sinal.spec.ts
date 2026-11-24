@@ -32,7 +32,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ_REPO = resolve(AQUI, '../..');
 const TEMPO_MAXIMO_MS = 60_000;
-type Sinal = 'SIGTERM' | 'SIGINT' | 'SIGHUP';
+type Sinal = 'SIGTERM' | 'SIGINT' | 'SIGHUP' | 'SIGKILL';
 
 const temporarios: string[] = [];
 afterEach(() => {
@@ -191,6 +191,8 @@ function ambientePublicar(f: Fixture): Record<string, string | undefined> {
     VERIFICAR_PROIBICOES_TERMOS: join(f.home, 'termos-sinteticos.txt'),
     // Ensaio local: nenhum ssh para a hospedagem real neste teste (destino vazio = local).
     PUBLICAR_DESTINO_HOST: '',
+    // Marca de execução (LU-F4.3-N8) numa pasta do ensaio, nunca na pasta de pacotes do líder.
+    PUBLICAR_PASTA_PACOTES: join(f.home, 'estado-publicar'),
     PUBLICAR_DESTINO_RAIZ: join(f.home, 'domains', 'drpetrus.top')
   };
 }
@@ -240,7 +242,7 @@ async function publicarComSinal(f: Fixture, sinal: Sinal): Promise<Saida> {
 }
 
 function signalNumero(sinal: string): number {
-  const mapa: Readonly<Record<string, number>> = { SIGHUP: 1, SIGINT: 2, SIGTERM: 15 };
+  const mapa: Readonly<Record<string, number>> = { SIGHUP: 1, SIGINT: 2, SIGKILL: 9, SIGTERM: 15 };
   return mapa[sinal] ?? 0;
 }
 
@@ -320,4 +322,59 @@ describe('publicar.sh: a release nasce depois do preci verde (regra 3 do CLAUDE.
     expect(git(f.raiz, ['status', '--porcelain', '--untracked-files=no']).trim()).toBe('');
     expect(readFileSync(join(f.raiz, 'package.json'), 'utf-8')).toBe(pacoteAntes);
   });
+});
+
+describe('publicar.sh: morte abrupta deixa marca e a execução seguinte recusa (LU-F4.3-N8)', () => {
+  const marcaDo = (f: Fixture): string =>
+    join(f.home, 'estado-publicar', 'publicacao-em-andamento');
+
+  it(
+    'kill -9 durante o preci: a marca fica, e a execução seguinte recusa sem rodar o preci',
+    async () => {
+      const f = montarFixture();
+      const headAntes = git(f.raiz, ['rev-parse', 'HEAD']).trim();
+
+      await publicarComSinal(f, 'SIGKILL');
+      expect(existsSync(marcaDo(f)), 'a marca devia ficar após kill -9').toBe(true);
+      // A morte abrupta não passa pelo trap: a pasta de diagnóstico (/var/tmp/publicar.*) fica. A marca a
+      // registra (espaco=, depois do clone), e este teste a põe na lista de limpeza, para não deixar lixo.
+      const marca = readFileSync(marcaDo(f), 'utf-8');
+      const espaco = marca.match(/^espaco=(.*)$/m)?.[1] ?? '';
+      expect(espaco, marca).toMatch(/^\/var\/tmp\/publicar\.[A-Za-z0-9]+$/);
+      temporarios.push(espaco);
+
+      // A marca não é apagada por quem recusa: a segunda e a terceira execução também recusam.
+      for (let i = 0; i < 2; i++) {
+        rmSync(f.marcador, { force: true });
+        const r = publicarAteOFim(f);
+        expect(r.codigo, r.texto).not.toBe(0);
+        expect(r.texto).toContain('a publicação anterior não terminou');
+        expect(r.texto).toContain('pid ');
+        expect(existsSync(f.marcador), 'a recusa não pode rodar o preci').toBe(false);
+        expect(existsSync(marcaDo(f)), 'a recusa não apaga a marca').toBe(true);
+      }
+      expect(git(f.raiz, ['rev-parse', 'HEAD']).trim()).toBe(headAntes);
+    },
+    TEMPO_MAXIMO_MS
+  );
+
+  it(
+    'TERM durante o preci: o fim tratado apaga a marca, e a execução seguinte não recusa por ela',
+    async () => {
+      const f = montarFixture();
+      const { texto } = await publicarComSinal(f, 'SIGTERM');
+      registrarDiagnostico(texto);
+      expect(existsSync(marcaDo(f)), 'o fim tratado devia apagar a marca').toBe(false);
+
+      writeFileSync(
+        f.caixa,
+        `#!/usr/bin/env bash\n${CAIXA_REPROVANDO({ raiz: f.raiz, marcador: f.marcador, estado: f.estado })}`
+      );
+      chmodSync(f.caixa, 0o755);
+      const r = publicarAteOFim(f);
+      expect(r.texto).not.toContain('não terminou');
+      expect(r.texto).toContain('preci reprovou');
+    },
+    TEMPO_MAXIMO_MS
+  );
 });

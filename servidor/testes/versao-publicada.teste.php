@@ -85,3 +85,49 @@ teste('versao.json: trocar o ponteiro atual faz a MESMA sessão receber a versã
     igual('2.0.0.0', $c->get('/versao.json')->json()['versao'] ?? null, 'depois da troca: versão');
     contem('MARCA-V2', $c->get('/index.html')->corpo, 'depois da troca: index.html da versão nova');
 });
+
+teste('versao.json: arquivo que não está no manifesto dá 404 sem corpo, mesmo com sessão', function (): void {
+    $a = Ambiente::novo();
+    versaoPubSemearVersao($a, 'v1', '1.0.0.0', 'MARCA-V1');
+    file_put_contents($a->app . '/versoes/v1/segredo.txt', 'SEGREDO-FORA-DO-MANIFESTO');
+    versaoPubApontar($a, 'v1');
+    $c = $a->entrar();
+    $r = $c->get('/segredo.txt');
+    igual(404, $r->status, 'fora do manifesto: status');
+    igual('', $r->corpo, 'fora do manifesto: sem corpo');
+});
+
+teste('versao.json: link que sai da pasta do app dá 503 sem corpo e sem o conteúdo do alvo', function (): void {
+    $a = Ambiente::novo();
+    versaoPubSemearVersao($a, 'v1', '1.0.0.0', 'MARCA-V1');
+    versaoPubApontar($a, 'v1');
+    $fora = $a->raiz . '/fora.json';
+    file_put_contents($fora, json_encode(['versao' => 'SEGREDO-LINK']));
+    unlink($a->app . '/versoes/v1/versao.json');
+    symlink($fora, $a->app . '/versoes/v1/versao.json');
+    $c = $a->entrar();
+    $r = $c->get('/versao.json');
+    igual(503, $r->status, 'link para fora: status');
+    igual('', $r->corpo, 'link para fora: sem corpo');
+});
+
+teste('versao.json: manifesto ausente dá 503 sem corpo, e o banner não recebe versão parcial', function (): void {
+    $a = Ambiente::novo();
+    versaoPubSemearVersao($a, 'v1', '1.0.0.0', 'MARCA-V1');
+    versaoPubApontar($a, 'v1');
+    $c = $a->entrar();
+    unlink($a->app . '/versoes/v1/manifesto.json');
+    $r = $c->get('/versao.json');
+    igual(503, $r->status, 'manifesto ausente: status');
+    igual('', $r->corpo, 'manifesto ausente: sem corpo');
+});
+
+teste('versao.json: caminho com ".." depois de decodificar dá 400 sem corpo, mesmo com sessão', function (): void {
+    $a = Ambiente::novo();
+    versaoPubSemearVersao($a, 'v1', '1.0.0.0', 'MARCA-V1');
+    versaoPubApontar($a, 'v1');
+    $c = $a->entrar();
+    $r = $c->get('/x/%2E%2E/versao.json');
+    igual(400, $r->status, 'caminho com "..": status');
+    igual('', $r->corpo, 'caminho com "..": sem corpo');
+});

@@ -3,6 +3,7 @@ import { inject, ref } from 'vue';
 import { CHAVE_SESSAO } from '@/app/chaves';
 import '../area-restrita/estilo.css';
 import FormularioTrocaSenha from '@/ui/area-restrita/FormularioTrocaSenha.vue';
+import AlvoQuadroProva from '../componentes/AlvoQuadroProva.vue';
 
 // Trocar senha (ordem do líder, LU-F3.2): para todo usuário logado, pelo menu.
 const sessao = inject(CHAVE_SESSAO)!;
@@ -31,6 +32,7 @@ async function trocar(atual: string, nova: string): Promise<void> {
 <template>
   <section class="conta">
     <h1>Trocar senha</h1>
+    <AlvoQuadroProva />
     <p v-if="aviso" class="conta__aviso" role="status">{{ aviso }}</p>
     <FormularioTrocaSenha :key="versao" :ocupado="ocupado" :mensagem="mensagem" @trocar="trocar" />
   </section>

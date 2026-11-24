@@ -327,14 +327,14 @@ preparar_rodada() {
 
 # ---------- execução ----------
 
-if [[ $MODO == limpar ]]; then
-  if [[ $DESTINO == caixa ]]; then copiar_cli_caixa; fi
-  limpar_marcados
-  exit $?
-fi
-
+# Armadilhas antes do modo limpar: a limpeza e a remoção do CLI temporário rodam na saída (ao_sair), em todo modo.
 trap ao_sair EXIT
 trap 'exit 130' INT TERM
+
+if [[ $MODO == limpar ]]; then
+  if [[ $DESTINO == caixa ]]; then copiar_cli_caixa; fi
+  exit 0
+fi
 
 if [[ $DESTINO == caixa ]]; then
   copiar_cli_caixa

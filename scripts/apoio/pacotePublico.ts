@@ -11,14 +11,8 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-/** Regra de passagem direta de literais (`- [L]`), como texto de RewriteRule. */
-const PASSAGEM_LITERAIS =
-  '^(sw\\.js|robots\\.txt|entrada\\.css|convite\\.js|icones/favicon\\.svg|fontes/inter-400\\.woff2|fontes/cormorant-garamond-700\\.woff2|fontes/OFL\\.txt)$';
 /** Regra de passagem direta dos endpoints da API, como texto de RewriteRule. */
 const PASSAGEM_API = '^api/[a-z0-9/-]+\\.php$';
-
-/** Passagens diretas do .htaccess: o texto exato das regras de passagem. */
-export const PASSAGENS_ESPERADAS: readonly string[] = [PASSAGEM_LITERAIS, PASSAGEM_API];
 
 /** Literais que o servidor entrega sem portão. */
 export const LITERAIS: readonly string[] = [
@@ -32,16 +26,30 @@ export const LITERAIS: readonly string[] = [
   'fontes/OFL.txt'
 ];
 
+/** Regra de passagem direta de literais (`- [L]`), como texto de RewriteRule: derivada de LITERAIS. */
+const PASSAGEM_LITERAIS = `^(${LITERAIS.map((literal) => literal.replace(/\./g, '\\.')).join('|')})$`;
+
+/** Passagens diretas do .htaccess: o texto exato das regras de passagem. */
+export const PASSAGENS_ESPERADAS: readonly string[] = [PASSAGEM_LITERAIS, PASSAGEM_API];
+
 export const HTACCESS_RAIZ = '.htaccess';
 export const HTACCESS_NUCLEO = 'api/nucleo/.htaccess';
+
+/** Endpoints da API que o webroot precisa ter (piso: sem eles o site não sobe). */
+const ENDPOINTS_OBRIGATORIOS: readonly string[] = ['api/portao.php', 'api/saude.php'];
 
 /** O webroot precisa ter estes (piso: sem eles o site não sobe). */
 export const OBRIGATORIOS_WEBROOT: readonly string[] = [
   ...LITERAIS,
   HTACCESS_RAIZ,
   HTACCESS_NUCLEO,
-  'api/portao.php',
-  'api/saude.php'
+  ...ENDPOINTS_OBRIGATORIOS
+];
+
+/** O pacote do build (portão do .htaccess) confere estes três. */
+export const OBRIGATORIOS_HTACCESS: readonly string[] = [
+  ...ENDPOINTS_OBRIGATORIOS,
+  HTACCESS_NUCLEO
 ];
 
 export const MANIFESTO_APP = 'manifesto.json';

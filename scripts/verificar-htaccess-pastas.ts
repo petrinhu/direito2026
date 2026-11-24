@@ -6,9 +6,9 @@
  * portão confere, em ordem:
  *  1. as regras de passagem são exatamente a lista fechada PASSAGENS_ESPERADAS
  *     (qualquer liberação nova reprova, mesmo sem arquivo em dist);
- *  2. em dist, o que o .htaccess deixa passar direto é exatamente o que se espera:
- *     LITERAIS (sw.js, robots.txt, entrada.css, convite.js, icones/favicon.svg, as duas fontes) e os endpoints
- *     api/**.php fora de api/nucleo; cada um existe e passa; nada mais passa;
+ *  2. em dist, o que o .htaccess deixa passar direto é exatamente o que se espera: LITERAIS
+ *     (de pacotePublico) e os endpoints api/**.php fora de api/nucleo; cada um existe e passa;
+ *     nada mais passa;
  *  3. api/nucleo/ é negado (regra F), com o .htaccess da pasta presente;
  *  4. dist/.htaccess é igual ao público (VERIFICAR_HTACCESS_REFERENCIA, padrão
  *     public/.htaccess);
@@ -21,10 +21,15 @@
  * Variáveis (opcionais): DIST_PATH (padrão dist/), VERIFICAR_HTACCESS_REFERENCIA.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extrairRegras, veredito } from '../src/core/rotas/regrasHtaccess';
-import { LITERAIS, PASSAGENS_ESPERADAS } from './apoio/pacotePublico';
+import {
+  LITERAIS,
+  OBRIGATORIOS_HTACCESS,
+  PASSAGENS_ESPERADAS,
+  listarArquivos
+} from './apoio/pacotePublico';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, '..');
@@ -33,7 +38,6 @@ const REFERENCIA = resolve(
   process.env.VERIFICAR_HTACCESS_REFERENCIA ?? join(RAIZ, 'public/.htaccess')
 );
 
-const OBRIGATORIOS = ['api/portao.php', 'api/saude.php', 'api/nucleo/.htaccess'];
 const PASTAS_CONHECIDAS = new Set(['api', 'assets', 'fontes', 'icones']);
 
 function ehPasta(caminho: string): boolean {
@@ -42,14 +46,6 @@ function ehPasta(caminho: string): boolean {
 
 function ehArquivo(caminho: string): boolean {
   return statSync(caminho, { throwIfNoEntry: false })?.isFile() ?? false;
-}
-
-function listarArquivos(pasta: string, base: string = pasta): string[] {
-  return readdirSync(pasta, { withFileTypes: true }).flatMap((entrada) => {
-    const caminho = join(pasta, entrada.name);
-    if (entrada.isDirectory()) return listarArquivos(caminho, base);
-    return [relative(base, caminho).split(sep).join('/')];
-  });
 }
 
 /**
@@ -139,7 +135,7 @@ function principal(): number {
       reprovar(`dist/${pasta}/ é pasta nova sem decisão no .htaccess (pasta nova)`);
     }
   }
-  for (const obrigatorio of OBRIGATORIOS) {
+  for (const obrigatorio of OBRIGATORIOS_HTACCESS) {
     if (!arquivos.includes(obrigatorio)) {
       reprovar(`dist/${obrigatorio} é obrigatório no pacote e não está lá`);
     }

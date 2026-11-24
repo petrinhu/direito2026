@@ -167,9 +167,10 @@ function abrirCalendario(): void {
   max-width: min(100%, 22rem);
 }
 
-/* Quebra quando não cabe (WCAG 2.2, técnica C31; E2E-G1-320): a 320 px no modo adaptado a linha
-   tinha 295 px de conteúdo em 218 px e a página rolava 26 px de lado. Sem order nem reverse, para a
-   ordem de Tab seguir a visual. */
+/* Quebra quando não cabe (WCAG 2.2, técnica C31; E2E-G1-320), no modo normal e no adaptado: a regra
+   não tem guarda de modo (decisão do CTO). O caso medido foi o do modo adaptado a 320 px, em que a
+   linha tinha 295 px de conteúdo em 218 px e a página rolava 26 px de lado. Sem order nem reverse,
+   para a ordem de Tab seguir a visual. */
 .quadro-prova__topo {
   display: flex;
   flex-wrap: wrap;

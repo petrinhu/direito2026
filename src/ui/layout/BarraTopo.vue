@@ -296,10 +296,9 @@ onBeforeUnmount(() => {
 }
 
 /*
-  Acima de 880 px o cabeçalho do modo rola sem a margem de baixo (F5-01, decisão do líder de
-  20/11/2026): a margem levava a primeira linha do título a 643 px a 881 px, fora da primeira
-  tela de 640 px. A onda volta a pender sobre os primeiros 14 px abaixo do cabeçalho, como
-  quando ele era fixo nessa faixa. Até 880 px a margem fica.
+  Acima de 880 px, zera a margem de baixo do cabeçalho do modo adaptado (F5-01, decisão do líder
+  de 20/11/2026), que empurrava o conteúdo para baixo. A onda volta a pender sobre os primeiros
+  14 px abaixo do cabeçalho. Até 880 px a margem fica.
 */
 @media (min-width: 881px) {
   :root[data-modo-adaptado='on'] .barra-topo {

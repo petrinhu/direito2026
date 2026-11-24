@@ -1272,7 +1272,7 @@ conferir_publicacao_interrompida() {
   if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
     recusar "outra execução do publicar parece estar em andamento (pid $pid); espere ela terminar. Nada foi feito por esta execução."
   fi
-  recusar "a publicação anterior não terminou (pid ${pid:-desconhecido}): pode ter ficado commit de release ou tag local, e envio ao git parcial. Antes de repetir, confira: git log -1 --format='%H %s'; git tag --list 'v*'; git ls-remote github refs/heads/main; git ls-remote --tags github. Depois, e só depois, remova a marca pelo caminho exato: $MARCA_PUBLICACAO. Nada foi desfeito nem enviado por esta execução."
+  recusar "a publicação anterior não terminou (pid ${pid:-desconhecido}): pode ter ficado commit de release ou tag local, e envio ao git parcial. Antes de repetir, confira: git log -1 --format='%H %s'; git tag --list 'v*'; git ls-remote $REMOTO refs/heads/$BRANCH_PUBLICA; git ls-remote --tags $REMOTO. Depois, e só depois, remova a marca pelo caminho exato: $MARCA_PUBLICACAO. Nada foi desfeito nem enviado por esta execução."
 }
 
 ao_sair() {

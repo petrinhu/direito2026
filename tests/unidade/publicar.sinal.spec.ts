@@ -336,6 +336,12 @@ describe('publicar.sh: morte abrupta deixa marca e a execução seguinte recusa 
 
       await publicarComSinal(f, 'SIGKILL');
       expect(existsSync(marcaDo(f)), 'a marca devia ficar após kill -9').toBe(true);
+      // A morte abrupta não passa pelo trap: a pasta de diagnóstico (/var/tmp/publicar.*) fica. A marca a
+      // registra (espaco=, depois do clone), e este teste a põe na lista de limpeza, para não deixar lixo.
+      const marca = readFileSync(marcaDo(f), 'utf-8');
+      const espaco = marca.match(/^espaco=(.*)$/m)?.[1] ?? '';
+      expect(espaco, marca).toMatch(/^\/var\/tmp\/publicar\.[A-Za-z0-9]+$/);
+      temporarios.push(espaco);
 
       // A marca não é apagada por quem recusa: a segunda e a terceira execução também recusam.
       for (let i = 0; i < 2; i++) {

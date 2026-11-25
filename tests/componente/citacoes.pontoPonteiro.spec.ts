@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { criarControladorCitacoes } from '@/ui/componentes/citacoes';
+
+type OpcoesControlador = Parameters<typeof criarControladorCitacoes>[0];
 
 /**
  * Ordem do líder, 22/09/2026, verbatim: "o balao está abrindo num local
@@ -31,8 +33,8 @@ function dispararPonteiro(
 describe('criarControladorCitacoes: ponto do ponteiro repassado à abertura', () => {
   let regiao: HTMLElement;
   let botao: HTMLElement;
-  let aoAbrir: ReturnType<typeof vi.fn>;
-  let aoFechar: ReturnType<typeof vi.fn>;
+  let aoAbrir: Mock<OpcoesControlador['aoAbrir']>;
+  let aoFechar: Mock<OpcoesControlador['aoFechar']>;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -52,8 +54,8 @@ describe('criarControladorCitacoes: ponto do ponteiro repassado à abertura', ()
     regiao.appendChild(botao);
     document.body.appendChild(regiao);
 
-    aoAbrir = vi.fn();
-    aoFechar = vi.fn();
+    aoAbrir = vi.fn<OpcoesControlador['aoAbrir']>();
+    aoFechar = vi.fn<OpcoesControlador['aoFechar']>();
   });
 
   afterEach(() => {

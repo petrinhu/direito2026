@@ -25,8 +25,15 @@ function d26_dir_app(): string
     return dirname(__DIR__, 4) . '/direito2026_app';
 }
 
+/**
+ * Limpeza do navegador só para visitante (sem sessão): cache e storage do site, para que um service worker
+ * antigo ou dado guardado não prenda a tela de entrada. "cookies" e "*" ficam de fora: derrubariam o login
+ * e o domínio-pai (T19). Quem entrou não recebe este cabeçalho.
+ */
+const D26_LIMPEZA_VISITANTE = '"cache", "storage"';
+
 /** Cabeçalhos de toda resposta do portão. Limpa os de inicio.php (JSON, CSP none) antes. */
-function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tamanho = null, string $referrer = 'same-origin'): void
+function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tamanho = null, string $referrer = 'same-origin', bool $limpar = false): void
 {
     while (ob_get_level() > 0) {
         ob_end_clean();
@@ -55,6 +62,9 @@ function d26_portao_cabecalhos(int $status, string $tipo, string $csp, ?int $tam
     if ($tamanho !== null) {
         header('Content-Length: ' . $tamanho);
     }
+    if ($limpar) {
+        header('Clear-Site-Data: ' . D26_LIMPEZA_VISITANTE);
+    }
 }
 
 /** Resposta sem corpo (401, 403, 404, 405, 400). */
@@ -68,9 +78,9 @@ function d26_portao_vazio(int $status, array $cabecalhos = [], string $referrer 
 }
 
 /** Tela HTML do portão (entrada, troca ou indisponível), sem JavaScript. */
-function d26_portao_tela(int $status, string $html, string $csp, string $referrer = 'same-origin'): never
+function d26_portao_tela(int $status, string $html, string $csp, string $referrer = 'same-origin', bool $limpar = false): never
 {
-    d26_portao_cabecalhos($status, 'text/html; charset=utf-8', $csp, strlen($html), $referrer);
+    d26_portao_cabecalhos($status, 'text/html; charset=utf-8', $csp, strlen($html), $referrer, $limpar);
     echo $html;
     exit;
 }
@@ -185,7 +195,7 @@ function d26_portao_decidir(): never
             }
             $aviso = d26_aviso_da_tela($motivo);
             d26_aviso_consumir();
-            d26_portao_tela(200, d26_tela_entrada(d26_csrf_pre_token($nonce, d26_segredo($priv)), $caminho, null, $aviso), PORTAO_CSP_TELA);
+            d26_portao_tela(200, d26_tela_entrada(d26_csrf_pre_token($nonce, d26_segredo($priv)), $caminho, null, $aviso), PORTAO_CSP_TELA, 'same-origin', true);
         }
         // Pedido que não é navegação não mostra tela: a queda por outro aparelho ou bloqueio leva o cookie para a próxima navegação (SU-B2, BL-B1).
         if ($motivo !== null) {

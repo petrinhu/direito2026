@@ -203,3 +203,38 @@ teste('sair: Clear-Site-Data é exatamente "cache" (reprova cookies, storage e *
     igual('"cache"', $valor, 'valor exato');
     verdadeiro(!in_array($valor, ['"cookies"', '"storage"', '"*"'], true), 'nenhum valor que derrube o domínio-pai');
 });
+
+teste('acesso: página vencida (token que não casa com o cookie pré) volta a tela de entrada com token novo, o usuário digitado e o aviso; a senha não é conferida', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    $c = $a->cliente();
+    [$tokenVelho] = acessoTela($c);
+    // Outra visita à tela troca o cookie pré; o formulário desta página fica com um token que não casa.
+    unset($c->cookies['__Host-d26pre']);
+    acessoTela($c);
+    $r = acessoEnviar($c, $tokenVelho, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN);
+    igual(403, $r->status, 'página vencida é recusada, sem entrar');
+    verdadeiro(str_contains((string) $r->cabecalho('content-type'), 'text/html'), 'volta a tela de entrada, não JSON cru');
+    verdadeiro(str_contains($r->corpo, 'Sua página tinha expirado. Entre de novo.'), 'aviso curto da página vencida');
+    verdadeiro(str_contains($r->corpo, 'value="' . Ambiente::LOGIN_ADMIN . '"'), 'o usuário digitado volta');
+    verdadeiro(!str_contains($r->corpo, Ambiente::SENHA_ADMIN), 'a senha nunca volta na tela');
+    $novo = acessoCampo($r->corpo, 'csrf');
+    verdadeiro($novo !== '' && $novo !== $tokenVelho, 'a tela traz um token novo');
+    verdadeiro(!isset($c->cookies['__Host-d26']), 'nenhuma sessão aberta pelo envio recusado');
+    igual(303, acessoEnviar($c, $novo, '/', Ambiente::LOGIN_ADMIN, Ambiente::SENHA_ADMIN)->status, 'o envio seguinte, com o token novo, entra');
+});
+
+teste('limpeza do visitante: a entrada e as respostas recusadas da tela de acesso mandam Clear-Site-Data "cache", "storage"; quem entrou não recebe', function (): void {
+    $a = Ambiente::novo();
+    portaoSemearApp($a);
+    $c = $a->cliente();
+    $limpeza = '"cache", "storage"';
+    igual($limpeza, $c->get('/', PORTAO_NAVEGACAO)->cabecalho('clear-site-data'), 'entrada (GET) de visitante');
+    [$token] = acessoTela($c);
+    $recusada = acessoEnviar($c, $token, '/', Ambiente::LOGIN_ADMIN, 'senha-errada-1');
+    igual(401, $recusada->status, 'senha errada é recusada');
+    igual($limpeza, $recusada->cabecalho('clear-site-data'), 'resposta recusada da tela de acesso');
+    $logado = $a->entrar();
+    $app = $logado->get('/', PORTAO_NAVEGACAO);
+    igual('', (string) $app->cabecalho('clear-site-data'), 'quem entrou não recebe a limpeza');
+});

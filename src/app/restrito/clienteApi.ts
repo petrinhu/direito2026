@@ -31,6 +31,8 @@ export interface UsuarioAdmin {
   readonly envioFalhouEm?: string | null;
   /** Sessão aberta e válida agora (pelas regras da sessão do servidor). Ausente em servidor antigo. */
   readonly conectado?: boolean;
+  /** Instante (epoch de segundos) em que o uso simultâneo bloqueou a conta. Ausente ou `null`: a conta não está bloqueada. */
+  readonly bloqueadaEm?: number | null;
 }
 
 /**
@@ -61,7 +63,7 @@ export type AcaoUsuario =
       readonly senhaAtual?: string;
     }
   | {
-      readonly acao: 'redefinir' | 'ativar' | 'desativar' | 'excluir';
+      readonly acao: 'redefinir' | 'ativar' | 'desativar' | 'excluir' | 'desbloquear';
       readonly usuario: string;
     };
 

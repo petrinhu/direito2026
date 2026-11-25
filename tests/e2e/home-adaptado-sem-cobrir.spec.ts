@@ -24,11 +24,12 @@ const PAGINAS = [
   { nome: 'Petição', caminho: '/p/p1/intr-direito/u3-material-danos-morais/peticao' }
 ] as const;
 
-interface Caixa {
-  esquerda: number;
-  topo: number;
-  direita: number;
-  base: number;
+/** Retângulo lido do layout (mesmos campos de DOMRect que o teste usa); tipo local porque o eslint do projeto não conhece DOMRect. */
+interface Retangulo {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
 interface Medida {
@@ -74,7 +75,7 @@ async function medirHomeContraCartao(page: Page): Promise<Medida> {
         };
       }
 
-      const sobrepoe = (a: DOMRect, b: DOMRect): boolean =>
+      const sobrepoe = (a: Retangulo, b: Retangulo): boolean =>
         Math.min(a.right, b.right) - Math.max(a.left, b.left) > tolerancia &&
         Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > tolerancia;
 

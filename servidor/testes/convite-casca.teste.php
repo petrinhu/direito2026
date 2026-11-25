@@ -116,7 +116,7 @@ teste('convite-casca: C3.6 cinquenta GET não mudam nenhum arquivo do privado (s
     igual($antes, cascaInstantaneo($a->priv), 'nenhum arquivo do privado mudou');
 });
 
-teste('convite-casca: C3.7 GET com outro parâmetro, sem t: a mesma casca (o link antigo com t é o 303 da C5)', function (): void {
+teste('convite-casca: C3.7 GET com outro parâmetro, sem t: a mesma casca (o link com t também é casca, sem 303: convite-legado)', function (): void {
     $a = Ambiente::novo();
     $c = $a->cliente();
     $semT = cascaSemNonce($c->get('/api/convite.php', PORTAO_NAVEGACAO)->corpo);

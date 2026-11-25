@@ -11,10 +11,12 @@ import { CONTA_ADMIN } from './apoio/constantes';
  * elemento. Medida por cor computada no navegador (sem espera fixa) e, no rodapé, conferida
  * também por captura de tela pelo QA.
  *
- * Parte A: o link de oferecimento do rodapé, alcançado por Tab, nos três modos e nas duas
- * larguras. Parte B (L-17): varredura de todo elemento que recebe foco por Tab nas páginas
- * inicial, de unidade, de troca de senha e do painel; reprovação fora das regras de anel sobre
- * a superfície escura da lateral só é listada, não afirmada.
+ * Parte A: o link de oferecimento do rodapé, alcançado por Tab, nos quatro modos (claro, escuro,
+ * ampliada e alto contraste por forced-colors) e nas três larguras (360, 768 e 1280 px).
+ * Parte B (L-17): varredura de todo elemento que recebe foco por Tab nas páginas
+ * inicial, de unidade, de troca de senha e do painel; toda reprovação nas regras afirmadas
+ * (superfície escura, botão de pular, tabela de conteúdo) falha o teste. Reprovação fora das
+ * regras só é listada.
  */
 const PISO_CONTRASTE = 3;
 const PISO_ESPESSURA_PX = 2;
@@ -26,6 +28,9 @@ const REGRAS_DA_SUPERFICIE_ESCURA: Record<string, string> = {
   'rodape-oferecimento': '.rodape__link-oferecimento',
   'menu-lateral':
     '.menu-curriculo__botao, .menu-curriculo a, .menu-curriculo__sair, .menu-curriculo__toggle',
+  // A11Y-FOCO-ACHADOS: o botão de pular e as regiões roláveis das tabelas de conteúdo.
+  'pular-para-conteudo': 'a.layout-base__pular',
+  'tabela-de-conteudo': 'div.tabela-rolavel',
   'selo-home': '.selo-home',
   trilha: '.trilha-navegacao a',
   // A11Y-FOCO-2: a faixa da barra do topo é escura nos dois temas e a lista de cadeiras tinha
@@ -45,24 +50,17 @@ const REGRAS_DA_SUPERFICIE_ESCURA: Record<string, string> = {
  * compara o anel com o fundo do pai e não vê o traço desenhado em cima da lateral (A11Y-FOCO-3).
  * Só se afirma onde o anel é desenhado por dentro, que é o conserto da região do painel.
  */
-const REGRA_COM_ITEM_E = 'painel-tabela-rolavel';
+const REGRAS_COM_ITEM_E: ReadonlySet<string> = new Set([
+  'menu-lateral',
+  'pular-para-conteudo',
+  'tabela-de-conteudo',
+  'painel-tabela-rolavel'
+]);
 
-/**
- * O menu lateral ocupa a largura inteira da lateral (e, a 360, da gaveta): o anel de fora fica
- * sempre rente à borda e é cortado dos lados, nos três modos. A cor do anel passa (item c). O corte
- * é geometria do menu, fora do escopo desta correção: fica listado, não afirmado.
- */
-const REGRA_COM_GEOMETRIA_PROPRIA = 'menu-lateral';
-
-/**
- * A região rolável da tabela só recebe foco quando rola (A11Y-TABINDEX-TABELA). Nas larguras do
- * portão ela empilha e não rola, então zero medidos só vale quando nenhuma região do painel rolou.
- */
-const REGRA_SO_RECEBE_FOCO_AO_ROLAR = 'painel-tabela-rolavel';
-
-type Modo = 'claro' | 'escuro' | 'ampliada';
-const MODOS: readonly Modo[] = ['claro', 'escuro', 'ampliada'];
-const LARGURAS = [360, 1280] as const;
+/** claro e escuro: normal; ampliada: adaptado (Leitura ampliada); altoContraste: forced-colors. */
+type Modo = 'claro' | 'escuro' | 'ampliada' | 'altoContraste';
+const MODOS: readonly Modo[] = ['claro', 'escuro', 'ampliada', 'altoContraste'];
+const LARGURAS = [360, 768, 1280] as const;
 
 interface Pagina {
   readonly nome: string;
@@ -338,7 +336,10 @@ async function medirFocoAtual(regras: Record<string, string>): Promise<MedidaFoc
 test.beforeEach(() => resetarPrivado());
 
 async function prepararModo(page: Page, modo: Modo): Promise<void> {
-  await page.emulateMedia({ colorScheme: modo === 'escuro' ? 'dark' : 'light' });
+  await page.emulateMedia({
+    colorScheme: modo === 'escuro' ? 'dark' : 'light',
+    forcedColors: modo === 'altoContraste' ? 'active' : 'none'
+  });
   if (modo === 'ampliada') {
     await page.addInitScript((chave) => localStorage.setItem(chave, 'true'), CHAVE_MODO_ADAPTADO);
   }
@@ -363,7 +364,8 @@ function reprovacoes(m: MedidaFoco, ignorarForaDaTela: boolean): string[] {
   if (m.estilo !== 'solid' || !(m.espessura >= PISO_ESPESSURA_PX)) itens.push('b');
   if (!(m.razao >= PISO_CONTRASTE)) itens.push('c');
   if (!m.cabe && !(ignorarForaDaTela && m.foraDaTela)) itens.push('d');
-  if (m.regra === REGRA_COM_ITEM_E && m.pontos.some((p) => !p.dentro)) itens.push('e');
+  if (REGRAS_COM_ITEM_E.has(m.regra ?? '') && (m.pontos.length < 2 || m.pontos.some((p) => !p.dentro)))
+    itens.push('e');
   return itens;
 }
 
@@ -387,7 +389,7 @@ function linha(
     `razao=${Number.isFinite(m.razao) ? m.razao.toFixed(2) : 'NaN'}`,
     `itens=${itens.join('') || '-'}`,
     m.cortadoPor ? `cortado-por=${m.cortadoPor} caixa=${m.geometria}` : '',
-    m.regra === REGRA_COM_ITEM_E
+    REGRAS_COM_ITEM_E.has(m.regra ?? '')
       ? `pontos=${m.pontos.map((p) => `${p.lado}:${p.dentro ? 'dentro' : 'FORA'}(${p.hit})`).join(',')}`
       : '',
     m.foraDaTela ? 'fora-da-tela' : ''
@@ -408,6 +410,8 @@ interface AlvoA {
    * rola, o alvo tem de ficar fora da ordem de Tab (sem tabindex); onde rola, tem de receber foco e contorno.
    */
   readonly soSeRola?: boolean;
+  /** A 360 px o menu lateral fica na gaveta: abre-a antes de procurar o alvo. */
+  readonly naGaveta?: boolean;
 }
 
 const ALVOS_A: readonly AlvoA[] = [
@@ -415,6 +419,23 @@ const ALVOS_A: readonly AlvoA[] = [
     nome: 'link de oferecimento do rodapé',
     seletor: '.rodape__link-oferecimento',
     larguras: LARGURAS
+  },
+  // A11Y-FOCO-ACHADOS (1): itens do menu lateral, com o contorno de fora cortado nos lados.
+  {
+    nome: 'item do menu lateral',
+    seletor: '.menu-curriculo a',
+    larguras: LARGURAS,
+    pagina: PAGINAS[1],
+    naGaveta: true
+  },
+  // A11Y-FOCO-ACHADOS (2): botão de pular para o conteúdo, cortado pela janela a 360 (Leitura ampliada).
+  { nome: 'botão de pular para o conteúdo', seletor: 'a.layout-base__pular', larguras: LARGURAS },
+  // A11Y-FOCO-ACHADOS (2): região rolável da tabela de conteúdo da unidade.
+  {
+    nome: 'região rolável da tabela de conteúdo',
+    seletor: 'div.tabela-rolavel',
+    larguras: LARGURAS,
+    pagina: PAGINAS[1]
   },
   {
     nome: 'alternador de tema da barra do topo',
@@ -458,6 +479,10 @@ for (const alvo of ALVOS_A) {
         await prepararModo(page, modo);
         await entrarNoApp(page, CONTA_ADMIN, '/');
         await abrirPagina(page, alvo.pagina ?? PAGINAS[0]!, largura);
+        if (alvo.naGaveta && largura <= 880) {
+          await page.locator('.barra-topo__botao-gaveta').click();
+          await expect(page.locator('.menu-curriculo').first()).toBeVisible();
+        }
         await ligarModalidadeDeTeclado(page);
 
         if (alvo.soSeRola) {
@@ -504,7 +529,7 @@ for (const alvo of ALVOS_A) {
           `(c) contraste do contorno ${m.corAnel} contra o fundo real ${m.corFundo}`
         ).toBeGreaterThanOrEqual(PISO_CONTRASTE);
         expect(m.cabe, `(d) a caixa do anel cabe (cortada por: ${m.cortadoPor})`).toBe(true);
-        if (m.regra === REGRA_COM_ITEM_E) {
+        if (REGRAS_COM_ITEM_E.has(m.regra ?? '')) {
           const fora = m.pontos.filter((ponto) => !ponto.dentro);
           expect(
             fora.map((ponto) => `${ponto.lado}: ${ponto.hit}`),
@@ -512,8 +537,8 @@ for (const alvo of ALVOS_A) {
           ).toEqual([]);
           expect(
             m.pontos.length,
-            '(e) ao menos um lado do anel está dentro da janela'
-          ).toBeGreaterThan(0);
+            '(e) os dois lados do anel estão dentro da janela'
+          ).toBe(2);
         }
       });
     }
@@ -568,9 +593,9 @@ for (const modo of MODOS) {
       for (const pagina of PAGINAS) passagens.push({ nome: pagina.nome, largura, gaveta: false });
     }
     passagens.push({ nome: 'inicial', largura: 360, gaveta: true });
+    passagens.push({ nome: 'inicial', largura: 768, gaveta: true });
 
     const feitas: string[] = [];
-    let algumaTabelaRolou = false;
     for (const { nome, largura, gaveta } of passagens) {
       const pagina = PAGINAS.find((p) => p.nome === nome)!;
       await abrirPagina(page, pagina, largura);
@@ -580,14 +605,6 @@ for (const modo of MODOS) {
       }
       const rotulo = gaveta ? `${nome}+gaveta` : nome;
       const passagem = await percorrerPorTab(page);
-      if (nome === 'painel') {
-        const rolou = await page.evaluate(() =>
-          [...document.querySelectorAll<HTMLElement>('.ar-tabela-rolavel')].some(
-            (e) => e.scrollWidth > e.clientWidth
-          )
-        );
-        if (rolou) algumaTabelaRolou = true;
-      }
       expect(
         passagem.encontrados,
         `paradas de Tab em ${rotulo} (${modo}, ${largura})`
@@ -606,13 +623,9 @@ for (const modo of MODOS) {
         const itens = reprovacoes(m, true);
         if (itens.length === 0) continue;
         falharam += 1;
-        const afirmados =
-          m.regra === REGRA_COM_GEOMETRIA_PROPRIA ? itens.filter((i) => i !== 'd') : itens;
         const texto = linha(rotulo, modo, largura, m, itens);
-        console.log(
-          `${m.regra === null ? 'FORA-DO-ESCOPO' : afirmados.length > 0 ? 'AFIRMADO' : 'LISTADO'} ${texto}`
-        );
-        if (m.regra && afirmados.length > 0) reprovadosDasRegras.push(texto);
+        console.log(`${m.regra === null ? 'FORA-DO-ESCOPO' : 'AFIRMADO'} ${texto}`);
+        if (m.regra) reprovadosDasRegras.push(texto);
       }
     }
 
@@ -622,28 +635,28 @@ for (const modo of MODOS) {
     // Lista escrita por extenso, de propósito: não é a que o laço percorre. Uma página que saia
     // do laço não muda a igualdade entre ANALISADOS e ENCONTRADOS (cada passagem se compara só
     // consigo mesma), mas muda esta lista.
-    expect(feitas, 'as nove passagens da varredura, na ordem').toEqual([
+    expect(feitas, 'as catorze passagens da varredura, na ordem').toEqual([
       'inicial 360',
       'unidade 360',
       'troca-de-senha 360',
       'painel 360',
+      'inicial 768',
+      'unidade 768',
+      'troca-de-senha 768',
+      'painel 768',
       'inicial 1280',
       'unidade 1280',
       'troca-de-senha 1280',
       'painel 1280',
-      'inicial+gaveta 360'
+      'inicial+gaveta 360',
+      'inicial+gaveta 768'
     ]);
     for (const regra of Object.keys(REGRAS_DA_SUPERFICIE_ESCURA)) {
-      const medidos = medidosPorRegra.get(regra) ?? 0;
-      console.log(`FOCO-REGRA | modo=${modo} | ${regra} medidos=${medidos}`);
-      if (regra === REGRA_SO_RECEBE_FOCO_AO_ROLAR && medidos === 0 && !algumaTabelaRolou) {
-        console.log(
-          `FOCO-REGRA | modo=${modo} | ${regra} sem medidos porque nenhuma .ar-tabela-rolavel rolou nas passagens do painel`
-        );
-        continue;
-      }
+      console.log(
+        `FOCO-REGRA | modo=${modo} | ${regra} medidos=${medidosPorRegra.get(regra) ?? 0}`
+      );
       expect(
-        medidos,
+        medidosPorRegra.get(regra) ?? 0,
         `a varredura mediu ao menos um elemento da regra ${regra} (${modo})`
       ).toBeGreaterThan(0);
     }

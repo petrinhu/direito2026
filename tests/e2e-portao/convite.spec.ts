@@ -1728,7 +1728,7 @@ for (const { largura, altura } of AMBOS_OS_VIEWPORTS) {
 
 /*
  * V17-C8 (plano da onda 1.17, seção 3): o convite inteiro com o token no fragmento (#t=), sem JavaScript, com o
- * script bloqueado, com o fragmento cortado, com o link legado (?t=) e com o link usado ou vencido. Os seis casos
+ * script bloqueado, com o fragmento cortado, com o link antigo (?t=), que cai na tela de link incompleto, e com o link usado ou vencido. Os seis casos
  * rodam em 7039b0f com reprovação nos casos 1 a 5 (vermelho) e em HEAD com verde (chromium e brave).
  *
  * Medida de log (critério 4.2): quando V17_C8_TOKENS aponta para um arquivo, cada caso anota "caso<TAB>token"
@@ -1932,7 +1932,7 @@ test('V17-C8 caso 4b: colar o link completo na mesma aba, sobre o aviso de link 
   }
 });
 
-test('V17-C8 caso 5: link legado com ?t= leva por 303 ao fragmento, mostra o formulário e cria a senha', async ({
+test('V17-C8 caso 5: link antigo com ?t= cai na tela de link incompleto, sem 303, e não consome o convite', async ({
   browser
 }) => {
   test.setTimeout(180_000);
@@ -1945,15 +1945,21 @@ test('V17-C8 caso 5: link legado com ?t= leva por 303 ao fragmento, mostra o for
     try {
       const aparelho = await pessoa.newPage();
       const resposta = await aparelho.goto(`${ORIGEM}/api/convite.php?t=${token}`);
-      const primeiro = await resposta?.request().redirectedFrom()?.response();
-      expect(primeiro?.status(), 'caso 5: o link legado responde 303').toBe(303);
-      const destino = primeiro?.headers()['location'] ?? '';
-      expect(destino === `/api/convite.php#t=${token}`, 'caso 5: o 303 leva ao fragmento').toBe(
-        true
-      );
+      expect(
+        resposta?.request().redirectedFrom(),
+        'caso 5: nenhum redirecionamento (sem 303)'
+      ).toBeNull();
+      expect(resposta?.status(), 'caso 5: o link antigo responde a casca, 200').toBe(200);
+      await expect(
+        aparelho.locator('#convite-aviso'),
+        'caso 5: aviso de link incompleto'
+      ).toContainText('O link chegou incompleto');
+      await expect(aparelho.locator('#convite-form'), 'caso 5: formulário escondido').toBeHidden();
+      // O link antigo não consumiu o convite: o mesmo convite, no formato #t=, ainda cria a senha.
+      await aparelho.goto(`${ORIGEM}/api/convite.php#t=${token}`);
       await esperarFormularioDoConvite(aparelho);
-      await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 5, link legado');
-      expect(await sessaoAutenticada(pessoa), 'caso 5: sessão aberta pelo link legado').toBe(true);
+      await criarSenhaPeloConvite(aparelho, SENHA_PRIMEIRA, 'caso 5, depois do link antigo');
+      expect(await sessaoAutenticada(pessoa), 'caso 5: sessão aberta pelo convite #t=').toBe(true);
     } finally {
       await pessoa.close();
     }

@@ -5,25 +5,11 @@ require_once __DIR__ . '/apoio/nucleo.php';
 require_once __DIR__ . '/cli-apoio.php';
 
 /**
- * Links antigos com ?t= (V17-C5, decisão Q2 do líder: aceitar por 48 h). O GET com um token de formato certo
- * responde 303 para /api/convite.php#t=<T>: o navegador manda o fragmento ao script da casca, e o GET não lê
- * conta, não toca o limite e não grava o token. O uso é contado num arquivo de tamanho limitado (3 dias) que não
- * guarda o token. Formato errado (63 ou 65 hex, maiúsculas, vazio, lista) é M3 com 404, sem ler conta.
- * Nome de teste começa com "convite-legado:" (filtro do rodar.php).
+ * Link com ?t= (o formato de antes da 1.17, com o token na consulta). Sai o ramo que aceitava esse link: o GET com
+ * ?t= recebe a casca, que é a tela de link incompleto (o convite.js mostra o aviso quando não há #t=). Vale para
+ * qualquer valor de t, inclusive o de formato certo. Nada disso lê conta, reserva limite por IP, grava o token ou
+ * cria contador. Nome de teste começa com "convite-legado:" (filtro do rodar.php).
  */
-
-/** Soma dos bytes de todos os arquivos sob $dir (medida do crescimento do privado). */
-function legadoBytes(string $dir): int
-{
-    $total = 0;
-    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
-    foreach ($it as $f) {
-        if ($f->isFile()) {
-            $total += $f->getSize();
-        }
-    }
-    return $total;
-}
 
 /** Varre todos os arquivos sob $dir e conta os que contêm $trecho. Piso: conta os arquivos varridos (L-36). @return array{arquivos: int, achados: int} */
 function legadoVarrer(string $dir, string $trecho): array
@@ -42,25 +28,42 @@ function legadoVarrer(string $dir, string $trecho): array
     return ['arquivos' => $arquivos, 'achados' => $achados];
 }
 
-teste('convite-legado: L2 quarenta GET com link antigo não tocam o limite: o POST com token errado segue dando 404, não 429', function (): void {
+teste('convite-legado: L1 GET com ?t= de formato certo: 200 com a casca, sem Location, sem o token no corpo, no-store e referrer só com a origem', function (): void {
+    $a = Ambiente::novo();
+    $token = cvb2Convidar($a, 'ana');
+    $r = $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO);
+    igual(200, $r->status, 'link com ?t= recebe a casca, sem 303');
+    verdadeiro($r->cabecalho('location') === null, 'nenhum Location na resposta');
+    igual('private, no-store', $r->cabecalho('cache-control'), 'sem cache');
+    igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer só com a origem');
+    naoContem($token, $r->corpo, 'o token não volta no corpo da casca');
+    contem('<input type="hidden" name="t" value="">', $r->corpo, 'campo t segue vazio: o token só entra pelo #t=');
+    contem('<form id="convite-form" method="post" action="/api/convite.php?envio" hidden>', $r->corpo, 'formulário segue escondido');
+});
+
+teste('convite-legado: L2 quarenta GET com ?t= não tocam o limite: com o IP cheio, o GET segue 200 e o POST segue dando 429', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $c = $a->cliente();
     $csrf = cvb2Campo(cvb2Casca($c)->corpo, 'csrf');
     $limitesAntes = hash_file('sha256', $a->priv . '/tentativas.json');
     for ($i = 0; $i < 40; $i++) {
-        igual(303, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, "GET legado $i");
+        igual(200, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, "GET com t $i");
     }
-    igual($limitesAntes, hash_file('sha256', $a->priv . '/tentativas.json'), 'o GET legado não mexe em tentativas.json');
-    igual(404, cvb2Enviar($c, cvb2Campos(str_repeat('0', 64), $csrf, CVB2_SENHA))->status, 'o POST de token errado dá 404, o IP segue livre');
+    igual($limitesAntes, hash_file('sha256', $a->priv . '/tentativas.json'), 'o GET com t não mexe em tentativas.json');
+    for ($i = 0; $i < 30; $i++) {
+        igual(404, cvb2Enviar($c, cvb2Campos(str_repeat('0', 64), $csrf, CVB2_SENHA))->status, "falha de token $i");
+    }
+    igual(429, cvb2Enviar($c, cvb2Campos(str_repeat('0', 64), $csrf, CVB2_SENHA))->status, 'com o IP cheio, o POST dá 429');
+    igual(200, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'com o IP cheio, o GET com ?t= segue 200 (não é 429 nem 303)');
 });
 
-teste('convite-legado: L3 depois de três GET com link antigo, o token não aparece em nenhum arquivo do privado; o controle acha o hash', function (): void {
+teste('convite-legado: L3 três GET com ?t= não gravam o token em nenhum arquivo do privado; o controle acha o hash', function (): void {
     $a = Ambiente::novo();
     $tokens = [cvb2Convidar($a, 'ana'), cvb2Convidar($a, 'bia'), cvb2Convidar($a, 'cora')];
     $c = $a->cliente();
     foreach ($tokens as $t) {
-        igual(303, $c->get('/api/convite.php?t=' . $t, PORTAO_NAVEGACAO)->status, 'link antigo');
+        igual(200, $c->get('/api/convite.php?t=' . $t, PORTAO_NAVEGACAO)->status, 'link com ?t=');
     }
     $encontrados = 0;
     $arquivos = 0;
@@ -75,26 +78,25 @@ teste('convite-legado: L3 depois de três GET com link antigo, o token não apar
     verdadeiro($controle['achados'] >= 1, 'controle positivo: o hash do token aparece em usuarios.json (o grep lê os arquivos)');
 });
 
-teste('convite-legado: L4 PUT com link antigo continua 405, sem efeito', function (): void {
+teste('convite-legado: L4 PUT com ?t= continua 405, sem efeito', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $r = $a->cliente()->enviar('PUT', '/api/convite.php?t=' . $token, '', []);
     igual(405, $r->status, 'método PUT');
 });
 
-teste('convite-legado: L5 com usuarios.json corrompido ou ausente, o link antigo segue 303 (o GET não lê contas)', function (): void {
+teste('convite-legado: L5 com usuarios.json corrompido ou ausente, o GET com ?t= segue 200 (a casca não lê contas)', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     file_put_contents($a->priv . '/usuarios.json', '{quebrado');
-    igual(303, $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'com usuarios.json corrompido');
+    igual(200, $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'com usuarios.json corrompido');
     unlink($a->priv . '/usuarios.json');
-    igual(303, $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'com usuarios.json ausente');
+    igual(200, $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'com usuarios.json ausente');
 });
 
-teste('convite-legado: L6 t com 63 ou 65 hex, em maiúsculas, vazio ou em lista: M3 com 404, sem linha nova no erros.log', function (): void {
+teste('convite-legado: L6 t com 63 ou 65 hex, em maiúsculas, vazio ou em lista: casca 200, sem 404 e sem linha nova no erros.log', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
-    file_put_contents($a->priv . '/usuarios.json', '{quebrado'); // formato errado não pode ler contas: segue 404 mesmo assim
     $log = $a->priv . '/erros.log';
     $antes = is_file($log) ? (string) file_get_contents($log) : '';
     $c = $a->cliente();
@@ -106,32 +108,25 @@ teste('convite-legado: L6 t com 63 ou 65 hex, em maiúsculas, vazio ou em lista:
         '/api/convite.php?t[]=' . $token,
     ];
     foreach ($pedidos as $caminho) {
-        cvb2Mensagem($c->get($caminho, PORTAO_NAVEGACAO), 404, CVB2_M3);
+        $r = $c->get($caminho, PORTAO_NAVEGACAO);
+        igual(200, $r->status, "casca para $caminho");
+        verdadeiro($r->cabecalho('location') === null, 'nenhum Location');
     }
     $depois = is_file($log) ? (string) file_get_contents($log) : '';
     igual($antes, $depois, 'nenhuma linha nova no erros.log');
     naoContem($token, $depois, 'o token não vai ao erros.log');
 });
 
-teste('convite-legado: L7 mil GET com link antigo não fazem o privado crescer além de 1 KiB, e o contador guarda no máximo 3 dias', function (): void {
+teste('convite-legado: L7 cinquenta GET com ?t= não mudam nenhum arquivo do privado e não criam contador', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
-    // Contador com cinco dias antigos já gravados: a conta tem de cair para 3 no primeiro uso.
-    $dias = [];
-    for ($i = 5; $i >= 1; $i--) {
-        $dias[date('Y-m-d', strtotime("-$i day"))] = 1;
-    }
-    file_put_contents($a->priv . '/convite-legado.json', json_encode(['dias' => $dias], JSON_THROW_ON_ERROR));
     $c = $a->cliente();
-    igual(303, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, 'primeiro uso com o contador cheio');
-    $d = json_decode((string) file_get_contents($a->priv . '/convite-legado.json'), true, 512, JSON_THROW_ON_ERROR);
-    verdadeiro(count($d['dias']) <= 3, 'o contador guarda no máximo 3 dias (guardou ' . count($d['dias']) . ')');
-    $antes = legadoBytes($a->priv);
-    for ($i = 0; $i < 1000; $i++) {
-        igual(303, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, "GET legado $i");
+    $c->get('/api/convite.php', PORTAO_NAVEGACAO); // aquece: a primeira emissão do cookie pré pode criar o segredo
+    $antes = cascaInstantaneo($a->priv);
+    verdadeiro(count($antes) > 0, 'piso de varredura: o privado tem arquivos');
+    for ($i = 0; $i < 50; $i++) {
+        igual(200, $c->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO)->status, "GET com t $i");
     }
-    $crescimento = legadoBytes($a->priv) - $antes;
-    verdadeiro($crescimento <= 1024, "o privado cresceu $crescimento bytes em 1000 GET (teto: 1024)");
-    $d = json_decode((string) file_get_contents($a->priv . '/convite-legado.json'), true, 512, JSON_THROW_ON_ERROR);
-    verdadeiro(count($d['dias']) <= 3, 'depois de mil GET o contador segue com no máximo 3 dias');
+    igual($antes, cascaInstantaneo($a->priv), 'nenhum arquivo do privado mudou nem nasceu');
+    verdadeiro(!is_file($a->priv . '/convite-legado.json'), 'nenhum contador de link antigo foi criado');
 });

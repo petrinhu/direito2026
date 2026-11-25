@@ -529,16 +529,16 @@ function cvb2ConcluirPost(array $req): Resposta
 
 // ---- C11: GET com t na URL (link antigo, C5): 303 para o fragmento, sem corpo e sem gravar -------
 
-teste('convite: C11 GET com t na URL: 303 para /api/convite.php#t=, sem corpo, no-store, referrer strict-origin, nada gravado', function (): void {
+teste('convite: C11 GET com t na URL: 200 com a casca (tela de link incompleto), sem 303, sem o token no corpo, no-store, referrer strict-origin, nada gravado', function (): void {
     $a = Ambiente::novo();
     $token = cvb2Convidar($a, 'ana');
     $antes = hash_file('sha256', $a->priv . '/usuarios.json');
     $r = $a->cliente()->get('/api/convite.php?t=' . $token, PORTAO_NAVEGACAO);
-    igual(303, $r->status, 'link antigo vai para o fragmento');
-    igual('/api/convite.php#t=' . $token, $r->cabecalho('location'), 'Location com o token só no fragmento');
+    igual(200, $r->status, 'link com t recebe a casca, sem 303');
+    verdadeiro($r->cabecalho('location') === null, 'nenhum Location');
     igual('private, no-store', $r->cabecalho('cache-control'), 'sem cache');
     igual('strict-origin', $r->cabecalho('referrer-policy'), 'referrer só com a origem');
-    igual('', $r->corpo, 'o 303 não tem corpo');
+    naoContem($token, $r->corpo, 'o token não volta no corpo');
     igual($antes, hash_file('sha256', $a->priv . '/usuarios.json'), 'o GET não grava usuarios.json');
 });
 

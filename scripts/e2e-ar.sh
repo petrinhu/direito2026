@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # E2E no ar (V17-F3, contrato OS 3.6). Cria, usa e apaga contas temporárias pela própria administração do site.
 #
-# Uso: bash scripts/e2e-ar.sh <base|pre|pos|limpar> (--caixa <pasta> | --ar)
-#   base   : administradora do robô; aluno criado pelo painel; convite; entrada; saída; exclusão.
-#   pre    : cria o aluno pendente que atravessa o publicar, guarda o link antigo (?t=) e sai.
-#   pos    : o aluno antigo recebe a senha pelo 303; o painel o exclui e cria outro com link #t=.
+# Uso: bash scripts/e2e-ar.sh <base|pos|limpar> (--caixa <pasta> | --ar)
+#   base   : administradora do robô; aluno criado pelo painel; convite #t=; senha; troca; abas; imagens; saída; exclusão.
+#   pos    : o mesmo roteiro do base, rodado logo depois da publicação (2ª validação do rito).
 #   limpar : apaga o que estiver no marcador LIMPEZA-PENDENTE e confere pela auditoria.
+# O modo pre saiu com o ramo do link antigo ?t= (CONVITE-LEGADO-REMOVER): o link antigo não existe mais.
 #
 # --caixa <pasta>: caixa local com public/ (produto), privado/ (contas sintéticas) e app/ (dist).
 #                  O cli/ é copiado de servidor/cli. A caixa é servida por php -S em 127.0.0.1:4751.
@@ -28,8 +28,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case "$MODO" in
-  base|pre|pos|limpar) ;;
-  *) echo "uso: e2e-ar.sh <base|pre|pos|limpar> (--caixa <pasta> | --ar)" >&2; exit 2 ;;
+  base|pos|limpar) ;;
+  *) echo "uso: e2e-ar.sh <base|pos|limpar> (--caixa <pasta> | --ar)" >&2; exit 2 ;;
 esac
 [[ -n "$DESTINO" ]] || { echo "recusa: informe --caixa <pasta> ou --ar" >&2; exit 2; }
 # Trava por código: nesta fatia (F3) o ar não é tocado. A F8 é rodada pelo main com E2E_AR_LIBERADO=1.
@@ -124,7 +124,7 @@ retrato_get() { sed -n "s/^$1=//p" "$RETRATO" 2>/dev/null | tail -n1; }
 # Conferência de vazamento, sobre a saída crua ANTES de apagá-la. Só conta; nunca imprime o achado.
 verificar_sem_vazamento() {
   local pats="$OS/segredo/.pats" achados
-  grep -E '^(ALUNO_SENHA|ALUNO_NOVO_SENHA|ADM_SENHA_|ALUNO_LINK|ALUNO_NOVO_LINK)' "$SEGREDO" \
+  grep -E '^(ALUNO_SENHA|ADM_SENHA_|ALUNO_LINK)' "$SEGREDO" \
     | sed 's/^[^=]*=//' | grep -v '^$' > "$pats" || true
   if [[ ! -s $pats ]]; then
     rm -f "$pats"
@@ -176,12 +176,6 @@ ao_sair() {
   # A conferência de vazamento roda SEMPRE, em sucesso, falha e derrubada, antes de apagar a saída.
   if [[ -f $SEGREDO ]]; then
     verificar_sem_vazamento || rc=4
-  fi
-  if [[ $MODO == pre && $CONCLUIDO == 1 && $rc == 0 ]]; then
-    rm -rf "${SAIDA:?}"
-    mkdir -p -m 700 "$SAIDA"
-    rm -f "$OS/pw.log"
-    exit "$rc"
   fi
   if [[ -f $MARCADOR ]]; then
     if ! limpar_marcados; then
@@ -255,7 +249,7 @@ conferir_cabecalhos() {
   return "$falhas"
 }
 
-# Item 7 da 3.6: cabeçalhos da casca só no pos (a versão de hoje, no base e no pre, não tem casca).
+# Item 7 da 3.6: cabeçalhos da casca só no pos, no ar. O base não confere cabeçalhos.
 cabecalhos_do_modo() {
   if [[ $MODO != pos ]]; then
     echo "cabeçalhos: não se aplicam ao modo $MODO" >&2
@@ -294,34 +288,18 @@ rodar_spec() {
 preparar_rodada() {
   local ts
   ts=$(date -u +%Y%m%d%H%M%S)
-  if [[ $MODO == base || $MODO == pre ]]; then
-    [[ ! -e $MARCADOR ]] || { echo "marcador presente: rode limpar antes (L-54)" >&2; return 5; }
-    [[ $(admins_ativos) -ge 1 ]] || { echo "sem administradora ativa pré-existente" >&2; return 5; }
-    segredo_set ADM_LOGIN "e2e-adm-$ts"
-    segredo_set ADM_SENHA_INICIAL "$(gerar)"
-    segredo_set ADM_SENHA_NOVA "$(gerar)"
-    segredo_set ALUNO_LOGIN "e2e-aluno-$ts"
-    segredo_set ALUNO_EMAIL "e2e@example.com"
-    segredo_set ALUNO_SENHA "$(gerar)"
-    segredo_set ALUNO_LINK_ANTIGO ""
-    retrato_gravar "$MODO" "$(contas_total)" "$(admins_total)" 0
-    marcar "$(segredo_get ADM_LOGIN)"
-    criar_admin "$(segredo_get ADM_LOGIN)" "$(segredo_get ADM_SENHA_INICIAL)" >/dev/null || return 3
-    marcar "$(segredo_get ALUNO_LOGIN)"
-  else
-    [[ -f $MARCADOR ]] || { echo "sem marcador: falta o pre" >&2; return 5; }
-    [[ -n $(segredo_get ALUNO_LINK_ANTIGO) ]] || { echo "sem o link antigo do pre" >&2; return 5; }
-    [[ $(existe "$(segredo_get ALUNO_LOGIN)") == 1 ]] || { echo "o aluno do pre não existe mais" >&2; return 5; }
-    segredo_set ADM_LOGIN "e2e-adm-$ts"
-    segredo_set ADM_SENHA_INICIAL "$(gerar)"
-    segredo_set ADM_SENHA_NOVA "$(gerar)"
-    segredo_set ALUNO_NOVO_LOGIN "e2e-alunonovo-$ts"
-    segredo_set ALUNO_NOVO_SENHA "$(gerar)"
-    retrato_gravar pos "$(contas_total)" "$(admins_total)" 1
-    marcar "$(segredo_get ADM_LOGIN)"
-    criar_admin "$(segredo_get ADM_LOGIN)" "$(segredo_get ADM_SENHA_INICIAL)" >/dev/null || return 3
-    marcar "$(segredo_get ALUNO_NOVO_LOGIN)"
-  fi
+  [[ ! -e $MARCADOR ]] || { echo "marcador presente: rode limpar antes (L-54)" >&2; return 5; }
+  [[ $(admins_ativos) -ge 1 ]] || { echo "sem administradora ativa pré-existente" >&2; return 5; }
+  segredo_set ADM_LOGIN "e2e-adm-$ts"
+  segredo_set ADM_SENHA_INICIAL "$(gerar)"
+  segredo_set ADM_SENHA_NOVA "$(gerar)"
+  segredo_set ALUNO_LOGIN "e2e-aluno-$ts"
+  segredo_set ALUNO_EMAIL "e2e@example.com"
+  segredo_set ALUNO_SENHA "$(gerar)"
+  retrato_gravar "$MODO" "$(contas_total)" "$(admins_total)" 0
+  marcar "$(segredo_get ADM_LOGIN)"
+  criar_admin "$(segredo_get ADM_LOGIN)" "$(segredo_get ADM_SENHA_INICIAL)" >/dev/null || return 3
+  marcar "$(segredo_get ALUNO_LOGIN)"
   return 0
 }
 
@@ -343,11 +321,10 @@ else
   preparar_ar
 fi
 
-# Falha de preparo antes do primeiro GET: limpa e repete uma vez (OS 3.6, item 9). Não em pos,
-# porque a limpeza levaria o aluno do pre junto.
+# Falha de preparo antes do primeiro GET: limpa e repete uma vez (OS 3.6, item 9).
 rc=0
 preparar_rodada || rc=$?
-if [[ $rc == 3 && $MODO != pos ]]; then
+if [[ $rc == 3 ]]; then
   limpar_marcados || true
   rc=0
   preparar_rodada || rc=$?
@@ -357,21 +334,6 @@ fi
 rc=0
 rodar_spec || rc=$?
 [[ $rc == 0 ]] || exit "$rc"
-
-if [[ $MODO == pre ]]; then
-  ADM=$(segredo_get ADM_LOGIN)
-  ALUNO=$(segredo_get ALUNO_LOGIN)
-  cli remover-conta.php "$ADM" >/dev/null 2>&1 || true
-  [[ $(existe "$ADM") == 0 ]] || { echo "a administradora do robô não saiu" >&2; exit 4; }
-  [[ $(contas_total) == $(( $(retrato_get CONTAS_INICIO) + 1 )) ]] \
-    || { echo "pre: contas fora do esperado (+1 aluno pendente)" >&2; exit 4; }
-  [[ $(admins_total) == "$(retrato_get ADMINS_INICIO)" ]] || { echo "pre: administradoras fora do esperado" >&2; exit 4; }
-  printf '%s\n' "$ALUNO" > "$MARCADOR"
-  cabecalhos_do_modo
-  CONCLUIDO=1
-  echo "pre concluído: aluno pendente mantido para o publicar; administradora do robô removida" >&2
-  exit 0
-fi
 
 if ! cabecalhos_do_modo; then
   echo "cabeçalhos fora do esperado (só no ar)" >&2

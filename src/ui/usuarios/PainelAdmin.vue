@@ -67,6 +67,8 @@ const senhaAtualEditada = ref('');
 
 const confirmandoExclusao = ref<string | undefined>();
 const botaoCancelar = ref<HTMLButtonElement[]>();
+const confirmandoDesbloqueio = ref<string | undefined>();
+const botaoCancelarDesbloqueio = ref<HTMLButtonElement[]>();
 
 const tituloDoLink = computed(() =>
   link.value
@@ -99,6 +101,7 @@ function textoDoEstado(u: UsuarioAdmin): string {
   const partes: string[] = [];
   if (!u.ativo) partes.push('Desativado');
   else if (!pendente) partes.push('Ativo');
+  if (estaBloqueada(u)) partes.push('Bloqueada');
   if (!pendente && u.deveTrocarSenha) partes.push('Troca de senha pendente');
   if (u.email === null) partes.push('Sem e-mail');
   const falha = formatarFalhaDeEnvio(u.envioFalhouEm);
@@ -266,6 +269,41 @@ async function pedirConfirmacao(login: string): Promise<void> {
 async function excluir(login: string): Promise<void> {
   confirmandoExclusao.value = undefined;
   await executar({ acao: 'excluir', usuario: login }, `Usuário ${login} excluído.`);
+}
+
+/** O servidor grava o instante do bloqueio por uso simultâneo; o painel só mostra se ele existe. */
+function estaBloqueada(u: UsuarioAdmin): boolean {
+  return typeof u.bloqueadaEm === 'number';
+}
+
+/** Botão de uma ação da linha, pelo nome da conta: o foco volta a um controle que continua na tela. */
+function botaoDaConta(acao: string, login: string): HTMLButtonElement | undefined {
+  return Array.from(
+    secao.value?.querySelectorAll<HTMLButtonElement>(`button[data-acao="${acao}"]`) ?? []
+  ).find((botao) => botao.dataset.usuario === login);
+}
+
+async function pedirDesbloqueio(login: string): Promise<void> {
+  confirmandoDesbloqueio.value = login;
+  await nextTick();
+  botaoCancelarDesbloqueio.value?.[0]?.focus();
+}
+
+async function cancelarDesbloqueio(login: string): Promise<void> {
+  confirmandoDesbloqueio.value = undefined;
+  await nextTick();
+  botaoDaConta('desbloquear', login)?.focus();
+}
+
+/**
+ * O botão Desbloquear some quando a conta sai do bloqueio: o foco vai ao Redefinir da mesma linha. Se a ação
+ * falhar, a conta segue bloqueada e o foco fica no próprio Desbloquear.
+ */
+async function desbloquear(login: string): Promise<void> {
+  confirmandoDesbloqueio.value = undefined;
+  await executar({ acao: 'desbloquear', usuario: login }, `Usuário ${login} desbloqueado.`);
+  await nextTick();
+  (botaoDaConta('desbloquear', login) ?? botaoDaConta('redefinir', login))?.focus();
 }
 
 /**
@@ -583,7 +621,43 @@ onBeforeUnmount(() => {
                     Excluir
                   </button>
                 </div>
+                <div
+                  v-else-if="confirmandoDesbloqueio === u.usuario"
+                  class="ar-admin__confirmar"
+                  role="group"
+                  :aria-label="`Confirmar desbloqueio de ${u.usuario}`"
+                >
+                  <p>Desbloquear esta conta?</p>
+                  <button
+                    ref="botaoCancelarDesbloqueio"
+                    type="button"
+                    class="ar-botao"
+                    data-acao="cancelar-desbloqueio"
+                    @click="cancelarDesbloqueio(u.usuario)"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="ar-botao ar-botao--primario"
+                    data-acao="confirmar-desbloqueio"
+                    @click="desbloquear(u.usuario)"
+                  >
+                    Desbloquear
+                  </button>
+                </div>
                 <div v-else class="ar-admin__acoes">
+                  <button
+                    v-if="estaBloqueada(u)"
+                    type="button"
+                    class="ar-botao"
+                    data-acao="desbloquear"
+                    :data-usuario="u.usuario"
+                    :aria-label="`Desbloquear ${u.usuario}`"
+                    @click="pedirDesbloqueio(u.usuario)"
+                  >
+                    Desbloquear
+                  </button>
                   <button
                     type="button"
                     class="ar-botao"

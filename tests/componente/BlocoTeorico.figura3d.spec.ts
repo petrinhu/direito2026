@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /* global DOMRect */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { nextTick, ref } from 'vue';
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils';
 import BlocoTeorico from '@/ui/componentes/BlocoTeorico.vue';
@@ -67,10 +67,10 @@ class ObservadorFalso {
 }
 
 function figuraMontadaFalsa(): FiguraMontada & {
-  redimensionar: ReturnType<typeof vi.fn>;
-  destruir: ReturnType<typeof vi.fn>;
+  redimensionar: Mock<() => void>;
+  destruir: Mock<() => void>;
 } {
-  return { redimensionar: vi.fn(), destruir: vi.fn() };
+  return { redimensionar: vi.fn<() => void>(), destruir: vi.fn<() => void>() };
 }
 
 const SOM_FALSO = {

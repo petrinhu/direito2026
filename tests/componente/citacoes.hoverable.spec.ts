@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { criarControladorCitacoes } from '@/ui/componentes/citacoes';
+
+type OpcoesControlador = Parameters<typeof criarControladorCitacoes>[0];
 
 /**
  * WCAG 2.1 SC 1.4.13 (Content on Hover or Focus) exige que conteúdo
@@ -39,8 +41,8 @@ describe('criarControladorCitacoes: balão hoverable', () => {
   let regiao: HTMLElement;
   let botao: HTMLElement;
   let balao: HTMLElement;
-  let aoAbrir: ReturnType<typeof vi.fn>;
-  let aoFechar: ReturnType<typeof vi.fn>;
+  let aoAbrir: Mock<OpcoesControlador['aoAbrir']>;
+  let aoFechar: Mock<OpcoesControlador['aoFechar']>;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -63,8 +65,8 @@ describe('criarControladorCitacoes: balão hoverable', () => {
     balao = document.createElement('div');
     document.body.appendChild(balao);
 
-    aoAbrir = vi.fn();
-    aoFechar = vi.fn();
+    aoAbrir = vi.fn<OpcoesControlador['aoAbrir']>();
+    aoFechar = vi.fn<OpcoesControlador['aoFechar']>();
   });
 
   afterEach(() => {

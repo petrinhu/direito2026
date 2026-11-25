@@ -370,7 +370,10 @@ function reprovacoes(m: MedidaFoco, ignorarForaDaTela: boolean): string[] {
   if (m.estilo !== 'solid' || !(m.espessura >= PISO_ESPESSURA_PX)) itens.push('b');
   if (!(m.razao >= PISO_CONTRASTE)) itens.push('c');
   if (!m.cabe && !(ignorarForaDaTela && m.foraDaTela)) itens.push('d');
-  if (REGRAS_COM_ITEM_E.has(m.regra ?? '') && (m.pontos.length < 2 || m.pontos.some((p) => !p.dentro)))
+  if (
+    REGRAS_COM_ITEM_E.has(m.regra ?? '') &&
+    (m.pontos.length < 2 || m.pontos.some((p) => !p.dentro))
+  )
     itens.push('e');
   return itens;
 }
@@ -541,10 +544,7 @@ for (const alvo of ALVOS_A) {
             fora.map((ponto) => `${ponto.lado}: ${ponto.hit}`),
             '(e) o anel está desenhado sobre a própria região, não sobre outro elemento'
           ).toEqual([]);
-          expect(
-            m.pontos.length,
-            '(e) os dois lados do anel estão dentro da janela'
-          ).toBe(2);
+          expect(m.pontos.length, '(e) os dois lados do anel estão dentro da janela').toBe(2);
         }
       });
     }

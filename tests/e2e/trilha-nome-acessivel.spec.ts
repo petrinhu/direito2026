@@ -79,10 +79,9 @@ test('nome acessível de cada item da trilha, na árvore nativa, sai sem U+00AD 
     textosVisiveis.some((texto) => texto.includes(HIFEN_MOLE)),
     `precondição: algum item da trilha traz U+00AD no texto visível (${JSON.stringify(textosVisiveis)})`
   ).toBe(true);
-  expect(
-    nomesNaArvore,
-    'mesmos links na árvore nativa e na tela, na mesma ordem'
-  ).toHaveLength(textosVisiveis.length);
+  expect(nomesNaArvore, 'mesmos links na árvore nativa e na tela, na mesma ordem').toHaveLength(
+    textosVisiveis.length
+  );
   textosVisiveis.forEach((visivel, indice) => {
     expect(nomesNaArvore[indice], `nome nativo do item "${visivel}"`).toBe(
       visivel.replaceAll(HIFEN_MOLE, '')

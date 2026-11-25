@@ -122,9 +122,10 @@ test.describe('botão Home no modo adaptado: não cobre o cartão de prova', () 
         ).toEqual([]);
         expect(medida.homeNaPilha, 'Home ainda na pilha inferior (sticky)').toBe(false);
         expect(medida.homeNoConteudo, 'Home fora da coluna de conteúdo').toBe(true);
-        expect(medida.homeDepoisDoQuadro, 'Home não vem logo depois do cartão na ordem do DOM').toBe(
-          true
-        );
+        expect(
+          medida.homeDepoisDoQuadro,
+          'Home não vem logo depois do cartão na ordem do DOM'
+        ).toBe(true);
         expect(medida.alvoLargura, 'alvo do Home mais estreito que 44 px').toBeGreaterThanOrEqual(
           ALVO_MINIMO_PX
         );
@@ -151,7 +152,9 @@ test.describe('botão Home fora do modo adaptado: a pilha inferior não muda', (
         };
       });
       expect(estado.homeNaPilha, 'Home saiu da pilha inferior fora do modo adaptado').toBe(true);
-      expect(estado.cartaoNaPilha, 'cartão saiu da pilha inferior fora do modo adaptado').toBe(true);
+      expect(estado.cartaoNaPilha, 'cartão saiu da pilha inferior fora do modo adaptado').toBe(
+        true
+      );
       expect(estado.sticky, 'pilha inferior deixou de ser sticky fora do modo adaptado').toBe(true);
     });
   }

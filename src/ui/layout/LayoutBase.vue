@@ -338,6 +338,8 @@ onBeforeUnmount(() => {
 .layout-base__pular:focus {
   left: var(--esp-3, 0.75rem);
   top: var(--esp-3, 0.75rem);
+  /* A11Y-FOCO-ACHADOS: na Leitura ampliada o anel de fora passava da janela a 360. Por dentro da caixa. */
+  outline-offset: calc(var(--foco-espessura, 2px) * -1);
 }
 
 .layout-base__corpo {

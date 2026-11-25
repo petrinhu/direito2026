@@ -569,7 +569,9 @@ provide(ESTADO_MENU, {
      anel de foco tem de ter contraste contra O FUNDO REAL do elemento
      (L-42), não contra o token genérico de marca. */
   outline: 2px solid var(--cor-sidebar-texto, #faf9f5);
-  outline-offset: 2px;
+  /* A11Y-FOCO-ACHADOS: o item ocupa a largura inteira da lateral (ou da gaveta a 360), então o anel
+     de fora era cortado pela janela e pelo pai. Deslocamento negativo desenha o anel por dentro. */
+  outline-offset: -2px;
 }
 
 .menu-curriculo a {

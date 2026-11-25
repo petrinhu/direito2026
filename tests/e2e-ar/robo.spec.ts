@@ -1,7 +1,8 @@
 import { appendFileSync, readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
-// Robô do E2E no ar (V17-F3). Cada modo é uma rodada de scripts/e2e-ar.sh: base, pre ou pos.
+// Robô do E2E no ar (V17-F3). Cada modo é uma rodada de scripts/e2e-ar.sh: base ou pos (o mesmo roteiro).
 // Segredos: lidos do arquivo em E2E_AR_SEGREDO (modo 600). Nunca vêm de argumento nem de variável.
 // Falhas: asserções sobre booleanos com mensagem fixa, para que o valor digitado não entre no relatório.
 
@@ -103,11 +104,6 @@ async function excluirPeloPainel(page: Page, usuario: string): Promise<void> {
   await expect(page.locator('tbody tr', { hasText: usuario })).toHaveCount(0);
 }
 
-function tokenDoConvite(convite: string): string {
-  const achado = /[?#]t=([0-9a-f]{64})$/.exec(convite);
-  return achado?.[1] ?? '';
-}
-
 /** Item 7 da 3.6 na tela do aluno: troca de senha em /conta (a nova é a atual invertida, 48 caracteres,
  * diferente da atual e dentro de 15 a 128), abas da unidade e imagens da unidade. */
 async function conferirTelaDoAluno(page: Page, senhaAtual: string): Promise<void> {
@@ -172,10 +168,10 @@ async function sairEVoltar(page: Page): Promise<void> {
 test.describe('robô do e2e no ar', () => {
   test.skip(!SEGREDO || !BASE, 'sem segredo ou base: rode por scripts/e2e-ar.sh');
 
-  test('base: a administradora cria o aluno pelo painel, o aluno cria a senha, entra, sai e o painel o exclui', async ({
+  test('base e pos: a administradora cria o aluno pelo painel, o aluno cria a senha, entra, sai e o painel o exclui', async ({
     browser
   }) => {
-    test.skip(MODO !== 'base', 'rodada de outro modo');
+    test.skip(MODO !== 'base' && MODO !== 'pos', 'rodada de outro modo');
     const s = segredo();
     const admin = await browser.newContext();
     const pa = await admin.newPage();
@@ -187,11 +183,11 @@ test.describe('robô do e2e no ar', () => {
     await trocarSenhaObrigatoria(pa, exigir(s, 'ADM_SENHA_INICIAL'), exigir(s, 'ADM_SENHA_NOVA'));
 
     const convite = await criarPeloPainel(pa, exigir(s, 'ALUNO_LOGIN'), exigir(s, 'ALUNO_EMAIL'));
-    // A caixa de base roda o produto 924591f, que ainda emite ?t= (link antigo). O formato novo é #t=.
     expect(
-      /^\/api\/convite\.php(\?t=|#t=)[0-9a-f]{64}$/.test(convite),
-      'o painel devolveu o convite em um dos dois formatos'
+      /^\/api\/convite\.php#t=[0-9a-f]{64}$/.test(convite),
+      'o painel devolveu o convite no formato #t='
     ).toBe(true);
+    guardar('ALUNO_LINK', `${BASE}${convite}`);
     passo('aluno-criado');
 
     const { contexto: aluno, page: pagAluno } = await criarSenhaPeloConvite(
@@ -212,95 +208,19 @@ test.describe('robô do e2e no ar', () => {
     await admin.close();
   });
 
-  test('pre: cria o aluno pendente que atravessa o publicar, guarda o link antigo (?t=) e sai', async ({
-    browser
-  }) => {
-    test.skip(MODO !== 'pre', 'rodada de outro modo');
-    const s = segredo();
-    const admin = await browser.newContext();
-    const pa = await admin.newPage();
-
-    passo('primeiro-get');
-    await pa.goto(`${BASE}/`);
-    await expect(pa.locator('#senha')).toBeVisible();
-    await entrar(pa, exigir(s, 'ADM_LOGIN'), exigir(s, 'ADM_SENHA_INICIAL'));
-    await trocarSenhaObrigatoria(pa, exigir(s, 'ADM_SENHA_INICIAL'), exigir(s, 'ADM_SENHA_NOVA'));
-
-    const convite = await criarPeloPainel(pa, exigir(s, 'ALUNO_LOGIN'), exigir(s, 'ALUNO_EMAIL'));
-    const token = tokenDoConvite(convite);
-    expect(token.length, 'o painel devolveu um token de 64 caracteres').toBe(64);
-    guardar('ALUNO_LINK_ANTIGO', `${BASE}/api/convite.php?t=${token}`);
-    passo('aluno-pendente-criado');
-
-    await sair(pa);
-    await admin.close();
-  });
-
-  test('pos: o aluno do link antigo recebe a senha pelo 303; o painel troca o aluno e o novo convite sai em #t=', async ({
-    browser
+  test('pos: o link antigo com ?t= cai na tela de link incompleto, sem 303 (CONVITE-LEGADO-REMOVER)', async ({
+    request
   }) => {
     test.skip(MODO !== 'pos', 'rodada de outro modo');
-    const s = segredo();
-
-    // 1) O link antigo responde 303 para o fragmento, sem seguir o redirect aqui.
-    passo('primeiro-get');
-    const contexto = await browser.newContext();
-    const pAntigo = await contexto.newPage();
-    const resposta = await pAntigo.request.get(exigir(s, 'ALUNO_LINK_ANTIGO'), { maxRedirects: 0 });
-    expect(resposta.status(), 'o link antigo responde 303').toBe(303);
-    const destino = resposta.headers()['location'] ?? '';
-    expect(destino.startsWith('/api/convite.php#t='), 'o 303 vai para o fragmento #t=').toBe(true);
-
-    // 2) A pessoa abre o link antigo, cria a senha e entra.
-    await pAntigo.goto(exigir(s, 'ALUNO_LINK_ANTIGO'));
-    await expect(pAntigo.locator('#senhaNova')).toBeVisible();
-    await pAntigo.locator('#senhaNova').fill(exigir(s, 'ALUNO_SENHA'));
-    await pAntigo.locator('#senhaRepetida').fill(exigir(s, 'ALUNO_SENHA'));
-    await pAntigo.getByRole('button', { name: 'Criar senha e entrar' }).click();
-    await expect(pAntigo.locator('#app')).toHaveCount(1);
-    expect(new URL(pAntigo.url()).hash, 'a barra perdeu o fragmento depois do link antigo').toBe(
-      ''
-    );
-    await sair(pAntigo);
-    await contexto.close();
-    passo('aluno-antigo-entrou');
-
-    // 3) A administradora do robô exclui o aluno antigo e cria o novo, com o mesmo e-mail.
-    const admin = await browser.newContext();
-    const pa = await admin.newPage();
-    await pa.goto(`${BASE}/`);
-    await expect(pa.locator('#senha')).toBeVisible();
-    await entrar(pa, exigir(s, 'ADM_LOGIN'), exigir(s, 'ADM_SENHA_INICIAL'));
-    await trocarSenhaObrigatoria(pa, exigir(s, 'ADM_SENHA_INICIAL'), exigir(s, 'ADM_SENHA_NOVA'));
-    await excluirPeloPainel(pa, exigir(s, 'ALUNO_LOGIN'));
-    passo('aluno-antigo-excluido');
-
-    const convite = await criarPeloPainel(
-      pa,
-      exigir(s, 'ALUNO_NOVO_LOGIN'),
-      exigir(s, 'ALUNO_EMAIL')
-    );
-    expect(convite.startsWith('/api/convite.php#t='), 'o convite novo sai no formato #t=').toBe(
-      true
-    );
-    expect(convite.includes('?t='), 'o convite novo não traz ?t=').toBe(false);
-    guardar('ALUNO_NOVO_LINK', `${BASE}${convite}`);
-    passo('aluno-novo-criado');
-
-    // 4) O aluno novo cria a senha pelo #t=, entra, sai.
-    const { contexto: novo, page: pNovo } = await criarSenhaPeloConvite(
-      browser,
-      convite,
-      exigir(s, 'ALUNO_NOVO_SENHA')
-    );
-    expect(new URL(pNovo.url()).hash, 'a barra perdeu o fragmento no convite novo').toBe('');
-    await conferirTelaDoAluno(pNovo, exigir(s, 'ALUNO_NOVO_SENHA'));
-    await conferirPainelDoAluno(pa, exigir(s, 'ALUNO_NOVO_LOGIN'));
-    await sairEVoltar(pNovo);
-    await novo.close();
-    passo('aluno-novo-saiu');
-
-    await sair(pa);
-    await admin.close();
+    // Token de formato certo e inexistente: a casca não lê conta, então o valor não importa para a resposta.
+    const token = randomBytes(32).toString('hex');
+    const resposta = await request.get(`${BASE}/api/convite.php?t=${token}`, { maxRedirects: 0 });
+    expect(resposta.status(), 'o link com ?t= responde a casca, 200, e não 303').toBe(200);
+    expect(resposta.headers()['location'] ?? '', 'o link com ?t= não traz Location').toBe('');
+    expect(
+      (await resposta.text()).includes('name="t" value=""'),
+      'a casca mantém o campo t vazio: o token só entra pelo fragmento'
+    ).toBe(true);
+    passo('link-antigo-incompleto');
   });
 });

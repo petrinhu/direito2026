@@ -290,6 +290,9 @@ onBeforeUnmount(() => {
     Pilha inferior: quadro de contagem e botão Home. Os dois são sticky dentro desta caixa (que é
     sticky no fim do documento), então ficam empilhados e nunca se sobrepõem nem cobrem o conteúdo
     do fim da página. O botão Home vai por último, no canto inferior direito, abaixo do quadro.
+    No modo adaptado os dois saem da pilha (cada um pelo próprio Teleport) e seguem no fluxo: o
+    Home vai logo depois do cartão, para não cobri-lo ao rolar (ordem do CPO, ratificada pelo líder
+    em 25/11/2026).
   -->
   <div
     ref="pilhaRef"
@@ -305,13 +308,20 @@ onBeforeUnmount(() => {
         @mudou-minimizado="aoMudarMinimizadoDoQuadro"
       />
     </Teleport>
-    <nav
-      v-if="!naPaginaInicial"
-      class="layout-base__nav-home"
-      aria-label="Atalho da página inicial"
-    >
-      <BotaoHome />
-    </nav>
+    <!--
+      Só o modo adaptado move o Home, e só para o mesmo alvo do cartão, depois dele (o Teleport do
+      cartão vem antes, então o Home entra logo depois). Fora do modo, nem o calendário com o quadro
+      expandido o move: o Home fica na pilha, como sempre.
+    -->
+    <Teleport :to="alvoDoQuadro" :disabled="!cartaoNoConteudo">
+      <nav
+        v-if="!naPaginaInicial"
+        class="layout-base__nav-home"
+        aria-label="Atalho da página inicial"
+      >
+        <BotaoHome />
+      </nav>
+    </Teleport>
   </div>
 </template>
 
@@ -406,6 +416,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-self: flex-end;
   margin-right: var(--esp-4, 1rem);
+}
+
+/* Modo adaptado: o Home está no fluxo, logo depois do cartão (sai da pilha sticky). Fica à direita, com
+   o respiro de cima do espaço entre blocos. Como rola com a página, não cobre o cartão. */
+:root[data-modo-adaptado='on'] .layout-base__nav-home {
+  justify-content: flex-end;
+  margin: var(--esp-3, 0.75rem) var(--esp-4, 1rem) 0 0;
 }
 
 .layout-base__sobreposicao {
@@ -548,6 +565,11 @@ onBeforeUnmount(() => {
   }
 
   .layout-base__inferior {
+    display: none;
+  }
+
+  /* No modo adaptado o Home sai da pilha e vai para o fluxo: na impressão ele some, como na pilha. */
+  .layout-base__nav-home {
     display: none;
   }
 }

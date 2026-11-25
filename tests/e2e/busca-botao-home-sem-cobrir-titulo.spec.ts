@@ -39,6 +39,8 @@ interface MedidaBusca {
   h1: Caixa;
   textoH1: Caixa;
   pilhaEscondida: boolean;
+  selo: Caixa | null;
+  homeLogoDepoisDoCartao: boolean;
 }
 
 function area(a: Caixa, b: Caixa): number {
@@ -72,7 +74,18 @@ async function medirBusca(page: Page): Promise<MedidaBusca> {
       botaoAltura: caixaBotao.height,
       h1: caixa(caixaH1),
       textoH1: caixa(caixaTexto),
-      pilhaEscondida: pilha?.classList.contains('layout-base__inferior--escondida') ?? true
+      pilhaEscondida: pilha?.classList.contains('layout-base__inferior--escondida') ?? true,
+      selo: (() => {
+        const selo = document.querySelector<HTMLElement>(
+          'a[aria-label="Caderno de Direito, página inicial"]'
+        );
+        return selo ? caixa(selo.getBoundingClientRect()) : null;
+      })(),
+      homeLogoDepoisDoCartao: (() => {
+        const cartao = document.querySelector('aside.quadro-prova');
+        const nav = document.querySelector('.layout-base__nav-home');
+        return cartao !== null && nav !== null && cartao.nextElementSibling === nav;
+      })()
     };
   });
 }
@@ -90,7 +103,30 @@ async function segurarIndiceDaBusca(page: Page): Promise<() => void> {
   return () => liberar();
 }
 
-function conferir(medida: MedidaBusca, fase: string): void {
+/**
+ * No modo adaptado o Home está no fluxo, logo depois do cartão (ordem do CPO, 25/11/2026), e rola com a
+ * página: pode ficar abaixo da primeira tela. Por isso só o modo normal (Home sticky) exige que ele esteja
+ dentro da janela. Sobreposição com o título e alvo de 44 px valem nos dois modos.
+ */
+/**
+ * (c) no modo adaptado o Home rola com a página: depois de descer até o fim, continua focável e
+ * clicável, e não herda o `inert` da pilha escondida.
+ */
+async function conferirHomeAposRolagem(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })
+  );
+  await esperarLayoutAssentar(page);
+  const home = page.locator('.layout-base__nav-home a.botao-home');
+  const herdaInert = await home.evaluate((el) => el.closest('[inert]') !== null);
+  expect(herdaInert, 'Home herdou inert da pilha escondida').toBe(false);
+  await home.focus();
+  await expect(home, 'Home não recebe foco depois de rolar').toBeFocused();
+  await expect(home, 'Home não visível depois de rolar').toBeVisible();
+  await home.click({ trial: true });
+}
+
+function conferir(medida: MedidaBusca, fase: string, modoAdaptado: boolean): void {
   expect(medida.pilhaEscondida, `${fase}: a pilha do Home não pode estar escondida`).toBe(false);
   expect(area(medida.botao, medida.h1), `${fase}: sobreposição do Home com a caixa do h1`).toBe(0);
   expect(
@@ -98,13 +134,24 @@ function conferir(medida: MedidaBusca, fase: string): void {
     `${fase}: sobreposição do Home com o texto do h1`
   ).toBe(0);
   expect(medida.botao.esquerda, `${fase}: Home fora da tela à esquerda`).toBeGreaterThanOrEqual(0);
-  expect(medida.botao.topo, `${fase}: Home fora da tela em cima`).toBeGreaterThanOrEqual(0);
   expect(medida.botao.direita, `${fase}: Home fora da tela à direita`).toBeLessThanOrEqual(
     medida.janela.largura
   );
-  expect(medida.botao.base, `${fase}: Home fora da tela embaixo`).toBeLessThanOrEqual(
-    medida.janela.altura
-  );
+  if (!modoAdaptado) {
+    expect(medida.botao.topo, `${fase}: Home fora da tela em cima`).toBeGreaterThanOrEqual(0);
+    expect(medida.botao.base, `${fase}: Home fora da tela embaixo`).toBeLessThanOrEqual(
+      medida.janela.altura
+    );
+  } else {
+    // (a) o selo da marca (SeloHome, na BarraTopo) fica dentro da primeira tela.
+    expect(medida.selo, `${fase}: selo da marca ausente`).not.toBeNull();
+    expect(medida.selo!.topo, `${fase}: selo acima da primeira tela`).toBeGreaterThanOrEqual(0);
+    expect(medida.selo!.base, `${fase}: selo abaixo da primeira tela`).toBeLessThanOrEqual(
+      medida.janela.altura
+    );
+    // (b) o Home vem logo depois do cartão de prova, no DOM (e, por isso, na ordem de foco).
+    expect(medida.homeLogoDepoisDoCartao, `${fase}: Home não vem logo depois do cartão`).toBe(true);
+  }
   expect(medida.botaoLargura, `${fase}: largura do alvo do Home`).toBeGreaterThanOrEqual(
     ALVO_MINIMO
   );
@@ -132,7 +179,7 @@ for (const estado of ESTADOS_DE_BUSCA) {
             type: 'medida-busca-carregando',
             description: JSON.stringify(durante)
           });
-          conferir(durante, 'durante o carregamento do índice');
+          conferir(durante, 'durante o carregamento do índice', modo.modoAdaptado);
 
           liberarIndice();
           await page.locator(AVISO_CARREGANDO).waitFor({ state: 'detached' });
@@ -143,7 +190,8 @@ for (const estado of ESTADOS_DE_BUSCA) {
             type: 'medida-busca-pronta',
             description: JSON.stringify(depois)
           });
-          conferir(depois, 'depois do carregamento do índice');
+          conferir(depois, 'depois do carregamento do índice', modo.modoAdaptado);
+          if (modo.modoAdaptado) await conferirHomeAposRolagem(page);
         } finally {
           liberarIndice();
         }

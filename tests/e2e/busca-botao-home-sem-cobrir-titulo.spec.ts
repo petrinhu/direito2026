@@ -90,7 +90,12 @@ async function segurarIndiceDaBusca(page: Page): Promise<() => void> {
   return () => liberar();
 }
 
-function conferir(medida: MedidaBusca, fase: string): void {
+/**
+ * No modo adaptado o Home está no fluxo, logo depois do cartão (ordem do CPO, 25/11/2026), e rola com a
+ * página: pode ficar abaixo da primeira tela. Por isso só o modo normal (Home sticky) exige que ele esteja
+ dentro da janela. Sobreposição com o título e alvo de 44 px valem nos dois modos.
+ */
+function conferir(medida: MedidaBusca, fase: string, modoAdaptado: boolean): void {
   expect(medida.pilhaEscondida, `${fase}: a pilha do Home não pode estar escondida`).toBe(false);
   expect(area(medida.botao, medida.h1), `${fase}: sobreposição do Home com a caixa do h1`).toBe(0);
   expect(
@@ -98,13 +103,15 @@ function conferir(medida: MedidaBusca, fase: string): void {
     `${fase}: sobreposição do Home com o texto do h1`
   ).toBe(0);
   expect(medida.botao.esquerda, `${fase}: Home fora da tela à esquerda`).toBeGreaterThanOrEqual(0);
-  expect(medida.botao.topo, `${fase}: Home fora da tela em cima`).toBeGreaterThanOrEqual(0);
   expect(medida.botao.direita, `${fase}: Home fora da tela à direita`).toBeLessThanOrEqual(
     medida.janela.largura
   );
-  expect(medida.botao.base, `${fase}: Home fora da tela embaixo`).toBeLessThanOrEqual(
-    medida.janela.altura
-  );
+  if (!modoAdaptado) {
+    expect(medida.botao.topo, `${fase}: Home fora da tela em cima`).toBeGreaterThanOrEqual(0);
+    expect(medida.botao.base, `${fase}: Home fora da tela embaixo`).toBeLessThanOrEqual(
+      medida.janela.altura
+    );
+  }
   expect(medida.botaoLargura, `${fase}: largura do alvo do Home`).toBeGreaterThanOrEqual(
     ALVO_MINIMO
   );
@@ -132,7 +139,7 @@ for (const estado of ESTADOS_DE_BUSCA) {
             type: 'medida-busca-carregando',
             description: JSON.stringify(durante)
           });
-          conferir(durante, 'durante o carregamento do índice');
+          conferir(durante, 'durante o carregamento do índice', modo.modoAdaptado);
 
           liberarIndice();
           await page.locator(AVISO_CARREGANDO).waitFor({ state: 'detached' });
@@ -143,7 +150,7 @@ for (const estado of ESTADOS_DE_BUSCA) {
             type: 'medida-busca-pronta',
             description: JSON.stringify(depois)
           });
-          conferir(depois, 'depois do carregamento do índice');
+          conferir(depois, 'depois do carregamento do índice', modo.modoAdaptado);
         } finally {
           liberarIndice();
         }

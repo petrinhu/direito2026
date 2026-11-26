@@ -1467,7 +1467,7 @@ principal() {
   if [ "$MODO" = preparar ]; then
     preparar_destinos
     echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O ponteiro atual já aponta para v$VERSAO_NOVA: quem está logado já recebe essa versão pelo portão, com o webroot público antigo, até a virada."
-    echo "publicar: próximo passo: a virada e a conferência manual (V1 a V8 do plano), depois: npm run publicar -- --concluir"
+    echo "publicar: próximo passo: a virada (V1 a V8 de docs/publicacao.md; a V7 é o e2e no ar, scripts/e2e-ar.sh pos), depois: npm run publicar -- --concluir"
     exit 0
   fi
   publicar_versao

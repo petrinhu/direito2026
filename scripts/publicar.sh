@@ -19,7 +19,7 @@
 # --preparar: a mesma sequência até o preci e P1 a P3 (app em versoes/, dados da Júri no privado
 # aditivo, webroot em direito2026_webroot_novo). Troca o ponteiro atual para a versão nova (o webroot
 # público lê o app por esse ponteiro, em portao.php), mas não troca o webroot público, e não envia nada ao git.
-# --concluir: depois da virada manual (V2 a V8 do plano), confere o ar, envia branch e tag e prova
+# --concluir: depois da virada (V2 a V8 do plano; a prova com login, V7, é o e2e no ar, scripts/e2e-ar.sh modo pos), confere o ar, envia branch e tag e prova
 # no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
 # --seco: confere e imprime o plano, sem alterar nada.
@@ -1399,7 +1399,7 @@ ao_sair() {
   exit "$codigo"
 }
 
-# --concluir: o ar já tem a versão, conferido à mão pelo líder (V7). Confere, envia e prova.
+# --concluir: o ar já tem a versão, com a prova com login (V7) feita pelo e2e no ar (scripts/e2e-ar.sh, modo pos). Confere, envia e prova.
 concluir() {
   conferir_branch_e_arvore
   VERSAO_NOVA="$(node --import tsx scripts/apoio/versao-cli.ts ler package.json)" ||
@@ -1467,7 +1467,7 @@ principal() {
   if [ "$MODO" = preparar ]; then
     preparar_destinos
     echo "publicar: preparado: v$VERSAO_NOVA no destino (versoes/, webroot novo e privado aditivo). O ponteiro atual já aponta para v$VERSAO_NOVA: quem está logado já recebe essa versão pelo portão, com o webroot público antigo, até a virada."
-    echo "publicar: próximo passo: a virada e a conferência manual (V1 a V8 do plano), depois: npm run publicar -- --concluir"
+    echo "publicar: próximo passo: a virada (V1 a V8 de docs/publicacao.md; a V7 é o e2e no ar, scripts/e2e-ar.sh pos), depois: npm run publicar -- --concluir"
     exit 0
   fi
   publicar_versao

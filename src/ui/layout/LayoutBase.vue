@@ -207,7 +207,72 @@ function publicarRecuoDaPilha(altura: number): void {
     altura > 0 ? `${altura + FOLGA_DE_BAIXO_PX + RESPIRO_PX}px` : '';
 }
 
+/**
+ * Foco de teclado sob o cartão "Faltam N dias" (WCAG 2.4.11, LU-F5.1-N1). O navegador rola ao focar só
+ * quando o elemento não está visível na janela inteira, e não conta o cartão fixo, então um foco
+ * parcialmente visível fica sob ele. Este recuo rola o mínimo para o foco ficar fora do cartão, com até
+ * 24 px de respiro. Se o foco for mais alto que a área livre, rola até o topo dele ficar abaixo do
+ * cabeçalho. A área livre usa a altura de repouso do cabeçalho (offsetHeight): ele some ao descer e volta
+ * ao subir, então medir pelo retângulo do momento daria um topo que ele cobre depois.
+ * Não move nem minimiza o cartão. Só age sobre foco por teclado (última entrada e :focus-visible) e ignora
+ * elemento em camada fixa (gaveta, cabeçalho), que a rolagem da janela não move.
+ */
+const RESPIRO_DO_FOCO_PX = 24;
+let ultimaEntradaFoiTeclado = false;
+
+function registrarTeclado(): void {
+  ultimaEntradaFoiTeclado = true;
+}
+
+function registrarPonteiro(): void {
+  ultimaEntradaFoiTeclado = false;
+}
+
+function estaEmCamadaFixa(alvo: HTMLElement): boolean {
+  for (let no: HTMLElement | null = alvo; no; no = no.parentElement) {
+    if (getComputedStyle(no).position === 'fixed') return true;
+  }
+  return false;
+}
+
+function rolarFocoParaFora(alvo: HTMLElement): void {
+  if (!ultimaEntradaFoiTeclado || pilhaEscondida.value || !alvo.matches(':focus-visible')) return;
+  if (estaEmCamadaFixa(alvo)) return;
+  const cartao = document.querySelector<HTMLElement>('aside.quadro-prova');
+  if (!cartao || cartao.contains(alvo) || pilhaRef.value?.contains(alvo)) return;
+  const c = cartao.getBoundingClientRect();
+  const r = alvo.getBoundingClientRect();
+  if (!(r.left < c.right && r.right > c.left)) return;
+  const cabecalho = document.querySelector<HTMLElement>('header.barra-topo');
+  const topoLivre = cabecalho?.offsetHeight ?? 0;
+  const area = c.top - topoLivre;
+  const estilo = getComputedStyle(alvo);
+  const contorno =
+    estilo.outlineStyle === 'none'
+      ? 0
+      : parseFloat(estilo.outlineWidth) + parseFloat(estilo.outlineOffset);
+  const topoDoContorno = r.top - contorno;
+  let delta = 0;
+  if (r.height <= area) {
+    const limite = c.top - Math.min(RESPIRO_DO_FOCO_PX, area - r.height);
+    if (topoDoContorno < topoLivre) delta = topoDoContorno - topoLivre;
+    else if (r.bottom > limite) delta = r.bottom - limite;
+  } else if (topoDoContorno < topoLivre || topoDoContorno > c.top) {
+    delta = topoDoContorno - topoLivre;
+  }
+  if (delta === 0) return;
+  const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollBy({ top: delta, behavior: reduzirMovimento ? 'auto' : 'smooth' });
+}
+
+function aoReceberFoco(evento: FocusEvent): void {
+  if (evento.target instanceof HTMLElement) rolarFocoParaFora(evento.target);
+}
+
 onMounted(() => {
+  document.addEventListener('focusin', aoReceberFoco);
+  document.addEventListener('keydown', registrarTeclado, true);
+  document.addEventListener('pointerdown', registrarPonteiro, true);
   const pilha = pilhaRef.value;
   if (!pilha) return;
   publicarRecuoDaPilha(pilha.offsetHeight);
@@ -218,6 +283,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  document.removeEventListener('focusin', aoReceberFoco);
+  document.removeEventListener('keydown', registrarTeclado, true);
+  document.removeEventListener('pointerdown', registrarPonteiro, true);
   window.clearTimeout(fimDoDeslize);
   observadorPilha?.disconnect();
   observadorPilha = undefined;

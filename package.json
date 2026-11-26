@@ -11,7 +11,7 @@
     "verificar:sw-matador": "node --import tsx scripts/verificar-sw-matador.ts",
     "verificar:cache-fingerprint": "node --import tsx scripts/verificar-cache-fingerprint.ts",
     "preview": "vite preview",
-    "test:unit": "vitest run tests/unidade tests/componente",
+    "test:unit": "node --import tsx scripts/garantir-dispositivos.ts && vitest run tests/unidade tests/componente",
     "test:unit:watch": "vitest tests/unidade tests/componente",
     "test:e2e": "playwright test",
     "test:e2e:portao": "playwright test --config=playwright.portao.config.ts",

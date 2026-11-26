@@ -53,7 +53,8 @@ BORDA="${PUBLICAR_BORDA-1}"
 RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
 MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-9010464df712}"
 PRECI_TMPDIR=/var/tmp/preci-pub
-# Pacote de cada versão, guardado entre --preparar e --concluir. Fica em pasta do usuário (700), fora
+# Pacote de cada versão, guardado entre --preparar e --concluir. Depois do sucesso ficam só o da versão no
+# ar e o da anterior (reter_pacotes_apos_sucesso). Fica em pasta do usuário (700), fora
 # do IDrive e fora de /var/tmp (caminho previsível em diretório compartilhado é risco: LU-F4.3).
 PASTA_PACOTES="${PUBLICAR_PASTA_PACOTES-${XDG_STATE_HOME:-$HOME/.local/state}/caderno-publicar}"
 # Marca de execução em andamento (LU-F4.3-N8): fica na pasta privada e sobrevive a kill -9. Ver registrar_marca.
@@ -560,6 +561,14 @@ gravar_ultimo_verde() {
     echo "publicar: AVISO: não gravei o último pré-CI verde (a próxima rodada sai completa)" >&2
 }
 
+# Recibo da rodada de navegador (CISO-52-PUBLICAR, decisão do líder de 25/11/2026): se as partes do navegador
+# (public/api e tests/e2e-portao) mudaram desde a última tag, a publicação exige o recibo verde delas. Sem
+# recibo, ou com recibo de outro conteúdo, recusa antes de qualquer escrita. A mensagem traz o comando.
+conferir_recibo_navegador() {
+  RECIBO_PASTA="$PASTA_PACOTES/recibos" bash "$RAIZ/scripts/apoio/recibo-navegador.sh" conferir ||
+    recusar "recibo do teste de navegador não confere; nada foi publicado (comando na mensagem acima)"
+}
+
 # O pacote que o preci acabou de separar. Ausência é falha: nada foi publicado ainda.
 conferir_pacote_local() {
   PACOTE_LOCAL="$CLONE/dist-pacote"
@@ -616,6 +625,34 @@ apagar_pacote_versao() {
   conferir_pasta_segura "$PASTA_PACOTES"
   rm -rf -- "$destino"
   echo "publicar: pacote da v$1 apagado ($destino)"
+}
+
+# Depois do sucesso (conferir_ar e enviar_ao_git já passaram), guarda só o pacote da versão no ar e o da
+# versão anterior (o alvo do rollback). Apaga os demais pacotes da pasta, por caminho exato. Antes do
+# sucesso esta função não roda, e recusa sem apagar nada se o pacote da versão nova não existir.
+reter_pacotes_apos_sucesso() {
+  local versao anterior="" ordenadas_linha
+  local -a ordenadas=()
+  preparar_pasta_pacotes
+  [ -d "$(destino_do_pacote "$VERSAO_NOVA")" ] && [ ! -L "$(destino_do_pacote "$VERSAO_NOVA")" ] ||
+    recusar "sem o pacote guardado de v$VERSAO_NOVA: nada foi apagado"
+  [[ "$VERSAO_NOVA" =~ ^[0-9.]+$ ]] || recusar "versão fora do padrão: nada foi apagado"
+  mapfile -t ordenadas < <(
+    find "$PASTA_PACOTES" -mindepth 1 -maxdepth 1 -type d -name 'v[0-9]*' -printf '%f\n' |
+      sed 's/^v//' | grep -E '^[0-9.]+$' | sort -V || true
+  )
+  # A anterior é a versão imediatamente antes da nova na ordem de versão (sort -V, não de texto).
+  for ordenadas_linha in "${ordenadas[@]}"; do
+    [ "$ordenadas_linha" = "$VERSAO_NOVA" ] && break
+    anterior="$ordenadas_linha"
+  done
+  for ordenadas_linha in "${ordenadas[@]}"; do
+    if [ "$ordenadas_linha" = "$VERSAO_NOVA" ] || [ "$ordenadas_linha" = "$anterior" ]; then
+      continue
+    fi
+    apagar_pacote_versao "$ordenadas_linha"
+  done
+  echo "publicar: pacotes guardados: v$VERSAO_NOVA (no ar)${anterior:+ e v$anterior (anterior)}"
 }
 
 # Guarda o pacote desta versão, para --concluir conferir e enviar sem refazer o preci (700).
@@ -1386,7 +1423,7 @@ concluir() {
   conferir_ar
   enviar_ao_git
   provar_clone_fresco
-  apagar_pacote_versao "$VERSAO_NOVA"
+  reter_pacotes_apos_sucesso
   echo "concluído: v$VERSAO_NOVA sha=$(git rev-parse --short=12 HEAD) divergencias=0"
 }
 
@@ -1406,6 +1443,7 @@ principal() {
     imprimir_plano
     exit 0
   fi
+  conferir_recibo_navegador
   conferir_destinos
   conferir_remoto
   conferir_insumos
@@ -1436,7 +1474,7 @@ principal() {
   montar_caminhos_protegidos
   conferir_ar
   enviar_ao_git
-  apagar_pacote_versao "$VERSAO_NOVA"
+  reter_pacotes_apos_sucesso
   # A versão já está no ar, conferida e no git. A poda é a última etapa (AV-F5, OS-1): se ela falhar,
   # nada é desfeito; sai com código 3 e avisa só da poda, sem a mensagem de remoto parcial.
   PUBLICADO=1

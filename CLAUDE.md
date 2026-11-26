@@ -120,12 +120,13 @@ Crie a release, isto é, a versão nova com número próprio, só dentro do `pub
 ### O pré-CI
 
 - Faça o pré-CI parar no primeiro passo reprovado e mostrar quantos segundos cada passo levou.
-- Rode no pré-CI só o que a mudança toca, contra a última versão publicada:
+- Rode no pré-CI só o que a mudança toca, contra o último pré-CI verde (SHA anotado fora do git; sem ele, a rodada sai completa):
   - Rode sempre a cifra, a partição, o travessão, o build com o portão de pacote publicável, as varreduras de vazamento do restrito e da Júri e a conferência depois do envio.
   - Rode conforme o que mudou:
     - os testes ligados aos arquivos mudados;
     - a suíte PHP, só se mudou o servidor;
     - as checagens de conteúdo, só se mudou o conteúdo;
     - lint e formatação, só nos arquivos tocados.
-  - Rode a suíte inteira quando mudar algo em `scripts/`, num arquivo de configuração ou no `package.json`, quando não houver versão publicada para comparar, ou com `PRECI_COMPLETO=1`.
+  - Rode a suíte inteira quando mudar algo em `scripts/`, num arquivo de configuração ou no `package.json`, quando não houver último verde válido para comparar, ou com `PRECI_COMPLETO=1`.
+- Registro de decisão (L-68): em 26/11 o líder decidiu, por AskUserQuestion, trocar a base do pré-CI seletivo da última tag `v*` pelo último pré-CI verde, anotado fora do git (`scripts/apoio/preciBaseVerde.sh`). Sem o arquivo, ou com SHA que não existe ou não é ancestral do HEAD, a rodada sai completa. O pré-CI para no primeiro passo reprovado (`passo()` em `scripts/preci.sh`), e não grava verde quando a árvore estava suja.
 - Não deixe uma verificação custar mais que a mudança que ela confere. Quando custar, meça o tempo de cada passo e corte o desperdício, sem tirar nenhum portão de segurança ou de privacidade por causa do tempo.

@@ -1,9 +1,10 @@
 /**
- * PRECI-SELETIVO: decide, a partir da lista de arquivos mudados desde a última tag publicada,
- * quais passos seletivos do preci rodam. Os passos de segurança (cifra, partição, travessão,
+ * PRECI-SELETIVO: decide, a partir da lista de arquivos mudados desde o último pré-CI verde (SHA
+ * guardado fora do git, ver scripts/apoio/preciBaseVerde.sh), quais passos seletivos do preci rodam.
+ * Os passos de segurança (cifra, partição, travessão,
  * build com o portão de pacote publicável, varreduras do dist) não passam por aqui: rodam sempre.
  *
- * Regra de falha: qualquer dúvida vira completo. Sem tag base, com PRECI_COMPLETO=1, ou com
+ * Regra de falha: qualquer dúvida vira completo. Sem último verde válido, com PRECI_COMPLETO=1, ou com
  * mudança em arquivo que afeta o preci inteiro (scripts/, configs da raiz, package*.json,
  * tests/apoio), nenhum passo é pulado.
  *
@@ -12,7 +13,7 @@
  * tipo e a CSP do pacote que acabou de ser gerado.
  *
  * Uso (o preci.sh chama assim; saída é atribuição de shell, com valores entre aspas simples):
- *   node --import tsx scripts/apoio/preciSeletivo.ts --base <tag|""> --arquivos <lista> [--completo 0|1]
+ *   node --import tsx scripts/apoio/preciSeletivo.ts --base <sha|""> --arquivos <lista> [--completo 0|1]
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, posix, relative } from 'node:path';
@@ -66,7 +67,7 @@ export const CONFIGS_DA_RAIZ: readonly string[] = [
 ];
 
 export interface OpcoesPlano {
-  /** Última tag publicada (v*). Vazio ou null = não há base: completo. */
+  /** SHA do último pré-CI verde (validado pelo preciBaseVerde.sh). Vazio ou null = não há base: completo. */
   base: string | null;
   completoForcado?: boolean;
   /** Arquivos de tests/caracterizacao, incluídos inteiros quando src/conteudo muda. */
@@ -265,7 +266,7 @@ const pulado = (motivo: string): Decisao => ({ roda: false, alvo: null, motivo }
 
 export function planejar(arquivos: readonly string[], opcoes: OpcoesPlano): Plano {
   if (opcoes.completoForcado) return completo('PRECI_COMPLETO=1');
-  if (!opcoes.base) return completo('sem tag base (v*) para comparar');
+  if (!opcoes.base) return completo('sem último pré-CI verde válido para comparar');
   const gatilho = arquivos.find(ehGatilhoCompleto);
   if (gatilho) return completo(`mudou ${gatilho}, que afeta o preci inteiro`);
 

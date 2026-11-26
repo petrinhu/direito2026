@@ -60,6 +60,11 @@ arquivos_com_falha() {
   sed -n -E 's/^ +[0-9]+\) \[[^]]+\] › (tests\/e2e-portao\/[^:]+):.*/\1/p' -- "$1" | sort -u
 }
 
+# Valor de um campo ("chave=valor") de uma decisão de várias linhas: só a primeira linha com a chave.
+extrair() {
+  printf '%s\n' "$2" | sed -n "s/^$1=//p" | head -n 1
+}
+
 # Decisão da rodada inteira: verde (rc 0); repetir (falha só no piramide3d, uma vez); vermelho (o resto).
 decidir() {
   local log="$1" rc="$2" falhas
@@ -104,12 +109,12 @@ gravar() {
     decisao="$(decidir_repeticao "$rc")"
   fi
   rm -f -- "$log" "$log.repeticao"
-  resultado="${decisao#resultado=}"
+  resultado="$(extrair resultado "$decisao")"
   if [ "$resultado" != verde ]; then
     echo "recibo: a rodada de navegador não fechou verde ($decisao); nada gravado" >&2
     return 1
   fi
-  observacao="$(printf '%s\n' "$decisao" | sed -n 's/^observacao=//p')"
+  observacao="$(extrair observacao "$decisao")"
   arquivo="$(caminho)"
   dir="$(dirname -- "$arquivo")"
   (umask 077 && mkdir -p -- "$dir") || return 1
@@ -158,6 +163,7 @@ case "${1:-}" in
   caminho) caminho ;;
   hash) hash_no_commit HEAD ;;
   gravar) gravar ;;
+  extrair) extrair "${2:-}" "${3:-}" ;;
   decidir) decidir "${2:-}" "${3:-1}" ;;
   decidir-repeticao) decidir_repeticao "${2:-1}" ;;
   conferir) conferir ;;

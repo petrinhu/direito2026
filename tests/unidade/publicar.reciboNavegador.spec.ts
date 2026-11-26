@@ -250,3 +250,19 @@ describe('decisão do gravar: repetição de uma vez só do piramide3d (PIR-H7)'
     expect(r.stdout).not.toContain('resultado=verde');
   });
 });
+
+describe('extração do resultado da decisão (gravar)', () => {
+  it('extrai só o campo pedido de uma decisão de duas linhas (verde com observação)', () => {
+    const decisao = spawnSync('bash', [SCRIPT_FONTE, 'decidir-repeticao', '0'], {
+      encoding: 'utf-8'
+    }).stdout;
+    const resultado = spawnSync('bash', [SCRIPT_FONTE, 'extrair', 'resultado', decisao], {
+      encoding: 'utf-8'
+    });
+    expect(resultado.stdout.trim()).toBe('verde');
+    const observacao = spawnSync('bash', [SCRIPT_FONTE, 'extrair', 'observacao', decisao], {
+      encoding: 'utf-8'
+    });
+    expect(observacao.stdout.trim()).toBe('piramide3d repetido 1 vez (instável, PIR-H7)');
+  });
+});

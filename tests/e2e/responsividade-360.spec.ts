@@ -123,11 +123,20 @@ async function controlesDoCabecalhoComProblema(
             motivo: `alvo de ${caixa.width.toFixed(0)}x${caixa.height.toFixed(0)}px`
           });
         }
+        // Rola só na vertical até o controle (a medida de x já valeu, e a rolagem horizontal
+        // não pode vazar para o próximo controle). Abaixo da primeira tela o centro devolve null,
+        // e null reprova (TEST-COBERTURA-NULL).
+        const rolagemX = window.scrollX;
+        el.scrollIntoView({ block: 'center' });
+        window.scrollTo(rolagemX, window.scrollY);
+        const centro = el.getBoundingClientRect();
         const topo = document.elementFromPoint(
-          caixa.left + caixa.width / 2,
-          caixa.top + caixa.height / 2
+          centro.left + centro.width / 2,
+          centro.top + centro.height / 2
         );
-        if (!topo || !(el.contains(topo) || topo.contains(el))) {
+        if (topo === null) {
+          problemas.push({ controle: rotulo, motivo: 'centro fora da janela depois de rolar' });
+        } else if (!(el.contains(topo) || topo.contains(el))) {
           problemas.push({ controle: rotulo, motivo: 'coberto por outro elemento no centro' });
         }
       }
@@ -289,11 +298,19 @@ for (const caminho of caminhosParaCabecalho(curriculo).filter((c) => c !== '/'))
           ) {
             achados.push(`página atual "${textoAtual}" fora da caixa da trilha ou da tela`);
           }
+          // Rola só na vertical até a página atual (a medida de x acima já valeu). Abaixo da
+          // primeira tela o centro devolve null, e null reprova (TEST-COBERTURA-NULL).
+          const rolagemX = window.scrollX;
+          atual.scrollIntoView({ block: 'center' });
+          window.scrollTo(rolagemX, window.scrollY);
+          const centroAtual = atual.getBoundingClientRect();
           const topo = document.elementFromPoint(
-            caixaAtual.left + caixaAtual.width / 2,
-            caixaAtual.top + caixaAtual.height / 2
+            centroAtual.left + centroAtual.width / 2,
+            centroAtual.top + centroAtual.height / 2
           );
-          if (!topo || !(atual.contains(topo) || topo.contains(atual))) {
+          if (topo === null) {
+            achados.push(`página atual "${textoAtual}" fora da janela depois de rolar`);
+          } else if (!(atual.contains(topo) || topo.contains(atual))) {
             achados.push(`página atual "${textoAtual}" coberta por outro elemento`);
           }
           return achados;

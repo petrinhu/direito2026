@@ -100,8 +100,15 @@ async function focoDentroDaGaveta(page: Page): Promise<boolean> {
   });
 }
 
-/** Mede um alvo pelo seletor: tamanho, e se o centro dele devolve ele mesmo (ou um filho). */
+/**
+ * Mede um alvo pelo seletor: tamanho, e se o centro dele devolve ele mesmo (ou um filho). Rola até
+ * o alvo antes: abaixo da primeira tela o elementFromPoint devolve null, e null reprova (TEST-COBERTURA-NULL).
+ */
 async function medirAlvo(page: Page, seletor: string): Promise<MedidaGatilho | null> {
+  await page.evaluate((s: string) => {
+    document.querySelector<HTMLElement>(s)?.scrollIntoView({ block: 'center' });
+  }, seletor);
+  await esperarLayoutAssentar(page);
   return page.evaluate((s: string) => {
     const alvo = document.querySelector<HTMLElement>(s);
     if (!alvo) return null;

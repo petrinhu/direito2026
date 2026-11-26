@@ -15,7 +15,10 @@ const ESTADOS_DE_BUSCA = [
   { nome: 'com resultados', caminho: '/busca?q=direito' },
   { nome: 'vazia', caminho: '/busca' }
 ] as const;
-const LARGURAS = [360, 412] as const;
+// 360 e 412 já vinham da correção original; 768 (tablet) e 1280 (desktop) são as outras larguras fixas
+// do projeto (CLAUDE.md), e o tema escuro é o caso em que o título ficou cortado sob o cabeçalho.
+const LARGURAS = [360, 412, 768, 1280] as const;
+const TEMAS = ['claro', 'escuro'] as const;
 const MODOS = [
   { nome: 'normal', modoAdaptado: false },
   { nome: 'adaptado', modoAdaptado: true }
@@ -161,41 +164,43 @@ function conferir(medida: MedidaBusca, fase: string, modoAdaptado: boolean): voi
 for (const estado of ESTADOS_DE_BUSCA) {
   for (const modo of MODOS) {
     for (const largura of LARGURAS) {
-      test(`botão Home não cobre o título nem o texto, ${estado.nome}, ${modo.nome}, ${largura}px`, async ({
-        page
-      }) => {
-        await page.clock.setFixedTime(new Date(DATA_FIXA));
-        await prepararEstadoInicial(page, { tema: 'claro', modoAdaptado: modo.modoAdaptado });
-        await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
-        const liberarIndice = await segurarIndiceDaBusca(page);
-        try {
-          await page.goto(estado.caminho);
-          await page.locator('main h1').first().waitFor({ state: 'visible' });
-          await page.locator(AVISO_CARREGANDO).waitFor({ state: 'visible' });
-          await esperarLayoutAssentar(page);
+      for (const tema of TEMAS) {
+        test(`botão Home não cobre o título nem o texto, ${estado.nome}, ${modo.nome}, ${tema}, ${largura}px`, async ({
+          page
+        }) => {
+          await page.clock.setFixedTime(new Date(DATA_FIXA));
+          await prepararEstadoInicial(page, { tema, modoAdaptado: modo.modoAdaptado });
+          await page.setViewportSize({ width: largura, height: ALTURA_DA_JANELA });
+          const liberarIndice = await segurarIndiceDaBusca(page);
+          try {
+            await page.goto(estado.caminho);
+            await page.locator('main h1').first().waitFor({ state: 'visible' });
+            await page.locator(AVISO_CARREGANDO).waitFor({ state: 'visible' });
+            await esperarLayoutAssentar(page);
 
-          const durante = await medirBusca(page);
-          test.info().annotations.push({
-            type: 'medida-busca-carregando',
-            description: JSON.stringify(durante)
-          });
-          conferir(durante, 'durante o carregamento do índice', modo.modoAdaptado);
+            const durante = await medirBusca(page);
+            test.info().annotations.push({
+              type: 'medida-busca-carregando',
+              description: JSON.stringify(durante)
+            });
+            conferir(durante, 'durante o carregamento do índice', modo.modoAdaptado);
 
-          liberarIndice();
-          await page.locator(AVISO_CARREGANDO).waitFor({ state: 'detached' });
-          await esperarLayoutAssentar(page);
+            liberarIndice();
+            await page.locator(AVISO_CARREGANDO).waitFor({ state: 'detached' });
+            await esperarLayoutAssentar(page);
 
-          const depois = await medirBusca(page);
-          test.info().annotations.push({
-            type: 'medida-busca-pronta',
-            description: JSON.stringify(depois)
-          });
-          conferir(depois, 'depois do carregamento do índice', modo.modoAdaptado);
-          if (modo.modoAdaptado) await conferirHomeAposRolagem(page);
-        } finally {
-          liberarIndice();
-        }
-      });
+            const depois = await medirBusca(page);
+            test.info().annotations.push({
+              type: 'medida-busca-pronta',
+              description: JSON.stringify(depois)
+            });
+            conferir(depois, 'depois do carregamento do índice', modo.modoAdaptado);
+            if (modo.modoAdaptado) await conferirHomeAposRolagem(page);
+          } finally {
+            liberarIndice();
+          }
+        });
+      }
     }
   }
 }

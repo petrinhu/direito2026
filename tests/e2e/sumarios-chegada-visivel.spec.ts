@@ -31,7 +31,11 @@ const CASOS: readonly Casos[] = [
   { nome: '360 adaptado', largura: 360, altura: 640, tema: 'claro', modoAdaptado: true },
   { nome: '1280 claro', largura: 1280, altura: 800, tema: 'claro', modoAdaptado: false },
   { nome: '1280 escuro', largura: 1280, altura: 800, tema: 'escuro', modoAdaptado: false },
-  { nome: '1280 adaptado', largura: 1280, altura: 800, tema: 'claro', modoAdaptado: true }
+  { nome: '1280 adaptado', largura: 1280, altura: 800, tema: 'claro', modoAdaptado: true },
+  // Tablet (768 px): a terceira das 3 larguras fixas do projeto (CLAUDE.md, teste visual).
+  { nome: '768 claro', largura: 768, altura: 1024, tema: 'claro', modoAdaptado: false },
+  { nome: '768 escuro', largura: 768, altura: 1024, tema: 'escuro', modoAdaptado: false },
+  { nome: '768 adaptado', largura: 768, altura: 1024, tema: 'claro', modoAdaptado: true }
 ];
 
 interface Chegada {

@@ -29,7 +29,8 @@ async function medirBotaoDeLinha(
       r.left >= 0 &&
       r.top >= 0 &&
       r.right <= document.documentElement.clientWidth &&
-      r.bottom <= window.innerHeight;
+      // Folga de 1 px por arredondamento, decisão do líder de 26/11 (folga de 1 px no teste).
+      r.bottom <= window.innerHeight + 1;
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
     const pontos: Array<[number, number]> = [

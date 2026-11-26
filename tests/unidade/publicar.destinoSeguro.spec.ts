@@ -179,6 +179,20 @@ describe('publicar.sh: destino seguro (revisão F5.2)', () => {
     expect(r.saida).not.toContain('DIVERGENCIAS=0');
   });
 
+  it('LU-F4.3-N6: um byte trocado no destino dá DIVERGENCIAS=1 em conferir_md5_pasta', () => {
+    const origem = join(tmp, 'pacote');
+    mkdirSync(origem);
+    writeFileSync(join(origem, 'a.txt'), 'x\n');
+    const destino = join(raiz, 'public_html', 'direito2026');
+    writeFileSync(join(destino, 'a.txt'), 'y\n');
+    const r = rodar(
+      `conferir_md5_pasta '${origem}' '${destino}' webroot; echo "DIVERGENCIAS=$DIVERGENCIAS"`
+    );
+    expect(r.status, r.saida).toBe(0);
+    expect(r.saida).toContain('md5 do destino difere do pacote');
+    expect(r.saida).toMatch(/^DIVERGENCIAS=1$/m);
+  });
+
   it('S5: componente da raiz (domains/drpetrus.top) como symlink é recusado, mesmo com realpath coincidente', () => {
     const real = join(tmp, 'fora', 'domains', 'drpetrus.top');
     mkdirSync(join(real, 'public_html', 'direito2026'), { recursive: true });

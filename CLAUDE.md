@@ -130,3 +130,11 @@ Crie a release, isto é, a versão nova com número próprio, só dentro do `pub
   - Rode a suíte inteira quando mudar algo em `scripts/`, num arquivo de configuração ou no `package.json`, quando não houver último verde válido para comparar, ou com `PRECI_COMPLETO=1`.
 - Registro de decisão (L-68): em 26/11 o líder decidiu, por AskUserQuestion, trocar a base do pré-CI seletivo da última tag `v*` pelo último pré-CI verde, anotado fora do git (`scripts/apoio/preciBaseVerde.sh`). Sem o arquivo, ou com SHA que não existe ou não é ancestral do HEAD, a rodada sai completa. O pré-CI para no primeiro passo reprovado (`passo()` em `scripts/preci.sh`), e não grava verde quando a árvore estava suja.
 - Não deixe uma verificação custar mais que a mudança que ela confere. Quando custar, meça o tempo de cada passo e corte o desperdício, sem tirar nenhum portão de segurança ou de privacidade por causa do tempo.
+
+### O recibo do navegador
+
+**Data:** registro de decisão (L-68) da decisão do líder de 25/11/2026, por AskUserQuestion, opção "Recibo do teste (Recomendado)". Verbatim: "O teste roda na fila normal e grava um recibo. A publicação recusa se essas partes mudaram e o recibo não confere. Custa quase nada na hora de publicar."
+
+- As partes são `public/api` (inclui as telas do servidor, `public/api/nucleo/telas.php`) e `tests/e2e-portao`. A rodada é `npm run test:e2e:portao`, inteira, sem filtro, pela fila do pesado: `scripts/apoio/recibo-navegador.sh gravar`.
+- O recibo fica fora do git, com o SHA testado, o hash das partes e o resultado verde.
+- O `publicar` recusa, antes de qualquer escrita, quando as partes mudaram desde a última tag `v*` e o recibo não confere (sem recibo, com hash de outro conteúdo ou sem resultado verde). Partes intactas seguem sem recibo. Nenhum portão foi afrouxado.

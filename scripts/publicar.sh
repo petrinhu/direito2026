@@ -561,6 +561,14 @@ gravar_ultimo_verde() {
     echo "publicar: AVISO: não gravei o último pré-CI verde (a próxima rodada sai completa)" >&2
 }
 
+# Recibo da rodada de navegador (CISO-52-PUBLICAR, decisão do líder de 25/11/2026): se as partes do navegador
+# (public/api e tests/e2e-portao) mudaram desde a última tag, a publicação exige o recibo verde delas. Sem
+# recibo, ou com recibo de outro conteúdo, recusa antes de qualquer escrita. A mensagem traz o comando.
+conferir_recibo_navegador() {
+  RECIBO_PASTA="$PASTA_PACOTES/recibos" bash "$RAIZ/scripts/apoio/recibo-navegador.sh" conferir ||
+    recusar "recibo do teste de navegador não confere; nada foi publicado (comando na mensagem acima)"
+}
+
 # O pacote que o preci acabou de separar. Ausência é falha: nada foi publicado ainda.
 conferir_pacote_local() {
   PACOTE_LOCAL="$CLONE/dist-pacote"
@@ -1435,6 +1443,7 @@ principal() {
     imprimir_plano
     exit 0
   fi
+  conferir_recibo_navegador
   conferir_destinos
   conferir_remoto
   conferir_insumos

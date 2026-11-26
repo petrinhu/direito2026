@@ -134,7 +134,12 @@ function montarFixture(): Fixture {
   );
   mkdirSync(join(raiz, 'scripts/apoio'), { recursive: true });
   copyFileSync(join(RAIZ_REPO, 'scripts/publicar.sh'), join(raiz, 'scripts/publicar.sh'));
-  for (const nome of ['dispositivos-publicacao.sh', 'versao.ts', 'versao-cli.ts']) {
+  for (const nome of [
+    'dispositivos-publicacao.sh',
+    'versao.ts',
+    'versao-cli.ts',
+    'recibo-navegador.sh'
+  ]) {
     copyFileSync(join(RAIZ_REPO, 'scripts/apoio', nome), join(raiz, 'scripts/apoio', nome));
   }
   symlinkSync(join(RAIZ_REPO, 'node_modules'), join(raiz, 'node_modules'), 'dir');
@@ -147,6 +152,7 @@ function montarFixture(): Fixture {
   git(raiz, ['commit', '-q', '-m', 'teste: base sintetica']);
   git(raiz, ['remote', 'add', 'github', bare]);
   git(raiz, ['push', '-q', 'github', 'main']);
+  gravarReciboSintetico(raiz, join(home, '.local', 'state', 'caderno-publicar'));
   mkdirSync(join(home, 'domains', 'drpetrus.top'), { recursive: true });
   return { raiz, home, caixa, chave, restrito, hooks };
 }
@@ -159,6 +165,24 @@ function instalarGancho(f: Fixture, corpo: string): void {
 }
 
 /** Roda o publicar até o fim (sem sinal) e devolve o código de saída e o texto. */
+/**
+ * Recibo verde sintético (CISO-52-PUBLICAR): o hash vem do próprio script sobre as partes desta fixture
+ * (aqui não há public/api nem tests/e2e-portao). O teste exercita o gate real; não o contorna.
+ */
+function gravarReciboSintetico(raiz: string, pastaPacotes: string): void {
+  const hash = execFileSync('bash', [join(raiz, 'scripts/apoio/recibo-navegador.sh'), 'hash'], {
+    cwd: raiz,
+    env: ambienteGit(),
+    encoding: 'utf-8'
+  }).trim();
+  const recibos = join(pastaPacotes, 'recibos');
+  mkdirSync(recibos, { recursive: true, mode: 0o700 });
+  writeFileSync(
+    join(recibos, 'navegador.recibo'),
+    `sha=sintetico\npartes=${hash}\nresultado=verde\n`
+  );
+}
+
 function publicar(f: Fixture): { codigo: number | null; texto: string } {
   const r = spawnSync('bash', ['scripts/publicar.sh', 'recurso', '--novidade', 'tecnica'], {
     cwd: f.raiz,

@@ -111,6 +111,9 @@ function roteiro(alvo: 'principal' | 'podar', c: Cenario, log: string, espaco: s
     'set -euo pipefail',
     ...REAIS.map(funcaoOuVazio),
     ...stubs,
+    // Recibo do navegador (CISO-52-PUBLICAR): o gate tem testes próprios em publicar.reciboNavegador.spec.ts.
+    // Aqui é um passo sem efeito e sem registro, para não mudar a ordem das etapas que este teste confere.
+    'conferir_recibo_navegador() { :; }',
     NO_DESTINO,
     `LOG='${log}'`,
     `FAKE_ESPACO='${espaco}'`,

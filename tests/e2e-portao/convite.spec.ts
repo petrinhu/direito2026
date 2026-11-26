@@ -2035,3 +2035,61 @@ function pegarExpiracao(arquivo: string, usuario: string): number {
   };
   return dados.usuarios.find((c) => c.usuario === usuario)?.convite?.expiraEm ?? -1;
 }
+
+/**
+ * REF-POL-L77: o convite manda só a origem no Referer (strict-origin), e o controle que compensa isso é a tela não
+ * carregar nada de outra origem. Este teste confere no navegador, com o convite.js já rodado: todo pedido de rede
+ * vai para a origem do site, e todo src, href e action do HTML (depois do JavaScript) também.
+ */
+function origemDoAtributo(valor: string, base: string): string {
+  try {
+    return new URL(valor, base).origin;
+  } catch {
+    return 'invalida';
+  }
+}
+
+test('REF-POL-L77: a tela do convite não carrega recurso de outra origem, no pedido de rede nem no HTML', async ({
+  browser
+}) => {
+  test.setTimeout(180_000);
+  const { contexto: contextoAdmin, page: admin } = await adminLogado(browser);
+  const pessoa = await novaPessoa(browser);
+  try {
+    const caminho = await criarConviteParaCaso(admin, 'ref-pol-sintetico');
+    const page = await pessoa.newPage();
+    const pedidos: string[] = [];
+    page.on('request', (pedido) => pedidos.push(pedido.url()));
+    await abrirLink(page, `${ORIGEM}${caminho}`);
+    await esperarFormularioDoConvite(page);
+    await page.waitForLoadState('networkidle');
+
+    expect(
+      pedidos.filter((u) => u.startsWith(`${ORIGEM}/entrada.css`)).length,
+      'REF-POL-L77: a tela pediu entrada.css (controle de que o registro pegou pedidos)'
+    ).toBeGreaterThan(0);
+    expect(
+      pedidos.filter((u) => u.startsWith(`${ORIGEM}/convite.js`)).length,
+      'REF-POL-L77: a tela pediu convite.js'
+    ).toBeGreaterThan(0);
+    const deOutraOrigem = pedidos.filter((u) => origemDoAtributo(u, ORIGEM) !== ORIGEM);
+    expect(deOutraOrigem, 'REF-POL-L77: pedidos de rede para outra origem').toEqual([]);
+
+    const html = await page.content();
+    const valores = [...html.matchAll(/\b(?:src|href|action)\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)].map(
+      (m) => m[1] ?? m[2] ?? ''
+    );
+    expect(
+      valores.length,
+      'REF-POL-L77: o HTML tem atributos src, href ou action para conferir'
+    ).toBeGreaterThan(0);
+    const deOutraOrigemNoHtml = valores.filter((v) => origemDoAtributo(v, ORIGEM) !== ORIGEM);
+    expect(
+      deOutraOrigemNoHtml,
+      'REF-POL-L77: src, href ou action para outra origem no HTML'
+    ).toEqual([]);
+  } finally {
+    await pessoa.close();
+    await contextoAdmin.close();
+  }
+});

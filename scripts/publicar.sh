@@ -51,7 +51,7 @@ DOMINIO_PAI="${PUBLICAR_DOMINIO_PAI-https://drpetrus.top}"
 HOST_PUBLICO="${PUBLICAR_HOST_PUBLICO-direito2026.drpetrus.top}"
 BORDA="${PUBLICAR_BORDA-1}"
 RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
-MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-6e66aeb03564}"
+MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-9010464df712}"
 PRECI_TMPDIR=/var/tmp/preci-pub
 # Pacote de cada versão, guardado entre --preparar e --concluir. Fica em pasta do usuário (700), fora
 # do IDrive e fora de /var/tmp (caminho previsível em diretório compartilhado é risco: LU-F4.3).

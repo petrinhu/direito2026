@@ -102,10 +102,39 @@ async function aproximar(page: Page, id: string): Promise<void> {
   await page.locator(`#${id}`).evaluate((el) => el.scrollIntoView({ block: 'center' }));
 }
 
-/** Traz o elemento para o meio da janela e confere que ele cabe e que nada fixo da página o cobre. */
+/**
+ * Traz o elemento para o meio da janela e confere que ele cabe e que nada fixo da página o cobre.
+ * Espera também a rolagem chegar ao evento `scroll` da página: a posição muda já no scrollIntoView, mas
+ * o evento é entregue depois (sob carga, até dezenas de quadros). Um hover que caia antes dele ativa a
+ * fatia e o evento a fecha (PIR-H7-INSTAVEL). A espera é por estado: a última posição que a página
+ * reportou no evento tem de ser a posição atual; se a figura já estava no lugar, não há evento e vale.
+ */
 async function centralizar(page: Page, seletor: string): Promise<void> {
   const alvo = page.locator(seletor);
+  await page.evaluate(() => {
+    const w = window as unknown as { posicaoReportada?: number };
+    if (w.posicaoReportada === undefined) {
+      w.posicaoReportada = window.scrollY;
+      window.addEventListener(
+        'scroll',
+        () => {
+          w.posicaoReportada = window.scrollY;
+        },
+        { passive: true }
+      );
+    }
+  });
   await alvo.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const w = window as unknown as { posicaoReportada?: number };
+          return window.scrollY === w.posicaoReportada ? 'rolagem entregue' : 'rolagem em curso';
+        }),
+      { message: `a rolagem para ${seletor} não chegou ao evento scroll da página` }
+    )
+    .toBe('rolagem entregue');
   await expect
     .poll(
       () =>

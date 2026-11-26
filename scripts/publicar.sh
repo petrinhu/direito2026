@@ -51,7 +51,7 @@ DOMINIO_PAI="${PUBLICAR_DOMINIO_PAI-https://drpetrus.top}"
 HOST_PUBLICO="${PUBLICAR_HOST_PUBLICO-direito2026.drpetrus.top}"
 BORDA="${PUBLICAR_BORDA-1}"
 RAIZ_PRINCIPAL="${PUBLICAR_RAIZ_PRINCIPAL-https://drpetrus.top/}"
-MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-6e66aeb03564}"
+MD5_RAIZ_PRINCIPAL="${PUBLICAR_MD5_RAIZ-9010464df712}"
 PRECI_TMPDIR=/var/tmp/preci-pub
 # Pacote de cada versão, guardado entre --preparar e --concluir. Fica em pasta do usuário (700), fora
 # do IDrive e fora de /var/tmp (caminho previsível em diretório compartilhado é risco: LU-F4.3).
@@ -530,22 +530,34 @@ copiar_dispositivos() {
 }
 
 rodar_preci() {
-  local log="$ESPACO/preci.log" rc=0
+  local log="$ESPACO/preci.log" rc=0 base_verde=""
   local -a envoltorio=()
   mkdir -p "$PRECI_TMPDIR"
+  # Base do seletivo (decisão do líder de 26/11): o último verde é lido AQUI, fora da caixa, cujo HOME é
+  # outro (não enxerga nem grava o estado do usuário). Vai para o preci por variável, que atravessa a caixa.
+  # Sem estado, ou SHA inválido, fica vazio: rodada completa. Quem grava o verde é gravar_ultimo_verde.
+  base_verde="$(cd "$CLONE" && env -u PRECI_BASE_VERDE bash scripts/apoio/preciBaseVerde.sh ler)" || base_verde=""
   # CADERNO_CAIXA (L-50): preci isolado num bwrap. Vazio = roda direto, na sessão.
   if [ -n "${CADERNO_CAIXA:-}" ]; then
     envoltorio=("$CADERNO_CAIXA")
   fi
   echo "publicar: preci no clone (saída em arquivo privado; não é exibida, pode citar trechos do conteúdo restrito)"
   (cd "$CLONE" && CADERNO_RESTRITO="$CONTEUDO_RESTRITO" CADERNO_RESTRITO_JURI="$CADERNO_RESTRITO_JURI" \
-    TMPDIR="$PRECI_TMPDIR" "${envoltorio[@]}" bash scripts/preci.sh) \
+    TMPDIR="$PRECI_TMPDIR" PRECI_BASE_VERDE="$base_verde" "${envoltorio[@]}" bash scripts/preci.sh) \
     > "$log" 2>&1 || rc=$?
   if [ "$rc" -ne 0 ]; then
     grep -E '^FALHOU' "$log" | sed 's/^/publicar: /' >&2 || true
     recusar "preci reprovou (código $rc); nada foi commitado nem tagueado"
   fi
   echo "publicar: preci verde"
+}
+
+# Último pré-CI verde (decisão do líder de 26/11): o SHA da release é a árvore que o preci testou, porque o
+# cmp de gravar_e_commitar garante os dois arquivos copiados do clone. Gravado do lado de fora, depois da
+# release. Falhar aqui não desfaz nada: a próxima rodada só sai completa.
+gravar_ultimo_verde() {
+  (cd "$RAIZ" && bash scripts/apoio/preciBaseVerde.sh gravar "$SHA_RELEASE") ||
+    echo "publicar: AVISO: não gravei o último pré-CI verde (a próxima rodada sai completa)" >&2
 }
 
 # O pacote que o preci acabou de separar. Ausência é falha: nada foi publicado ainda.
@@ -1410,6 +1422,7 @@ principal() {
   conferir_pacote_local
   conferir_historico_pacote
   gravar_e_commitar
+  gravar_ultimo_verde
   criar_tag
   guardar_pacote
   preparar_regras

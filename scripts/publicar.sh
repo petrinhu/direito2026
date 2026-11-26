@@ -19,7 +19,7 @@
 # --preparar: a mesma sequência até o preci e P1 a P3 (app em versoes/, dados da Júri no privado
 # aditivo, webroot em direito2026_webroot_novo). Troca o ponteiro atual para a versão nova (o webroot
 # público lê o app por esse ponteiro, em portao.php), mas não troca o webroot público, e não envia nada ao git.
-# --concluir: depois da virada manual (V2 a V8 do plano), confere o ar, envia branch e tag e prova
+# --concluir: depois da virada (V2 a V8 do plano; a prova com login, V7, é o e2e no ar, scripts/e2e-ar.sh modo pos), confere o ar, envia branch e tag e prova
 # no remoto (ls-remote e clone fresco sem chave, 6.2).
 #
 # --seco: confere e imprime o plano, sem alterar nada.
@@ -1399,7 +1399,7 @@ ao_sair() {
   exit "$codigo"
 }
 
-# --concluir: o ar já tem a versão, conferido à mão pelo líder (V7). Confere, envia e prova.
+# --concluir: o ar já tem a versão, com a prova com login (V7) feita pelo e2e no ar (scripts/e2e-ar.sh, modo pos). Confere, envia e prova.
 concluir() {
   conferir_branch_e_arvore
   VERSAO_NOVA="$(node --import tsx scripts/apoio/versao-cli.ts ler package.json)" ||

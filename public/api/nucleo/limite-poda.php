@@ -7,10 +7,10 @@ if (!defined('D26_API')) {
 }
 
 /**
- * Poda de 90 dias do registro de limite (LGPD-LIMITE, ordem do líder de 25/11/2026).
- *
- * Alcance: só as linhas de contexto `limite-conta` do erros.log, no formato de d26_log_erro_em
- * (data UTC ISO 8601, contexto, detalhe). Outras linhas do erros.log ficam como estão.
+ * Prazo de guarda do registro do servidor (LGPD-LIMITE, ordem do líder de 26/11/2026, que
+ * substituiu a de 25/11): toda linha do erros.log, de qualquer contexto, sai aos 60 dias. Quem sai
+ * vai para a quarentena e é purgado 30 dias depois, no total de 90. Linha no formato de
+ * d26_log_erro_em (data UTC ISO 8601, contexto, detalhe).
  *
  * Interruptor: $priv/poda-lgpd.json, criado à mão pelo líder. É a assinatura da sub-fase 5.3:
  *   {"publicado_em": <unix, instante da publicação>, "assinatura": "<nome do líder>"}
@@ -18,7 +18,7 @@ if (!defined('D26_API')) {
  * publicação, a poda não muda nada: o erros.log fica byte a byte igual.
  *
  * Rito de cada poda, na ordem (na dúvida, a linha fica):
- *  1. linha com data legível, de no máximo D26_PODA_LINHA_MAX (90 dias) fica;
+ *  1. linha com data legível, de no máximo D26_PODA_LINHA_MAX (60 dias) fica;
  *  2. linha de incidente confirmado (data listada em incidentes-linhas.txt) vai inteira para
  *     incidentes.log, que esta poda não apaga;
  *  3. as demais linhas vencidas vão, inteiras, para poda-quarentena/q-<instante>.log (600),
@@ -27,14 +27,13 @@ if (!defined('D26_API')) {
  *     exclusivo, com as linhas que ficaram.
  *
  * Sem linha nova: a poda não grava no erros.log e não chama d26_log_erro_em sob a trava.
- * O gancho d26_poda_oportunista roda dentro da reserva de login, no máximo uma vez por hora
+ * A poda só roda quando há login (gancho d26_poda_oportunista), no máximo uma vez por hora
  * (marcador poda-lgpd.marca), e nunca derruba o login: qualquer falha vira uma linha no erros.log.
  */
 const D26_PODA_CARENCIA = 172800;
-const D26_PODA_LINHA_MAX = 7776000;
+const D26_PODA_LINHA_MAX = 5184000;
 const D26_PODA_QUARENTENA = 2592000;
 const D26_PODA_INTERVALO = 3600;
-const D26_PODA_CONTEXTO = 'limite-conta';
 
 /** Interruptor válido ou null. Qualquer defeito conta como desligado (falha fechada). @return array{publicado_em:int, assinatura:string}|null */
 function d26_poda_estado(string $priv): ?array
@@ -201,7 +200,7 @@ function d26_poda_separar(string $bruto, int $agora, array $incidentes): array
             continue;
         }
         $t = d26_poda_instante($m[1]);
-        $venceu = $m[2] === D26_PODA_CONTEXTO && $t !== null && $t <= $agora && $agora - $t > D26_PODA_LINHA_MAX;
+        $venceu = $t !== null && $t <= $agora && $agora - $t > D26_PODA_LINHA_MAX;
         if (!$venceu) {
             $manter .= $linha;
         } elseif (isset($incidentes[$m[1]])) {

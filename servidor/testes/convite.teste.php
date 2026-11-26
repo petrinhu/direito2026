@@ -1292,3 +1292,38 @@ teste('convite: D13 a casca e a tela 400 enviam para /api/convite.php?envio, que
     $csrfB = cvb2Campo(cvb2Casca($cb)->corpo, 'csrf');
     igual(303, cvb2Enviar($cb, cvb2Campos($tokenB, $csrfB, CVB2_SENHA))->status, 'o POST sem ?envio (casca aberta antes da publicação) segue aceito');
 });
+
+// ---- REF-POL-L77: a checagem do servidor (Origin e Sec-Fetch-Site) não depende do Referer ------------
+// O convite usa strict-origin, e o controle compensatório é a checagem de Origin, que não lê o Referer.
+// O teste mostra que o POST sem Referer segue a mesma regra do POST com Referer, e que Origin de outro site segue
+// recusada sem Referer, sem gravar nada.
+
+teste('convite: REF-POL-L77 o POST sem Referer segue a mesma regra do com Referer, e Origin de outro site segue recusada sem ele', function (): void {
+    $a = Ambiente::novo();
+    $tokenSem = cvb2Convidar($a, 'ana');
+    $tokenCom = cvb2Convidar($a, 'bia');
+    $tokenHostil = cvb2Convidar($a, 'caio');
+    $tokenFora = cvb2Convidar($a, 'dora');
+
+    $semReferer = $a->cliente();
+    $csrfSem = cvb2Campo(cvb2Casca($semReferer)->corpo, 'csrf');
+    $comReferer = $a->cliente();
+    $csrfCom = cvb2Campo(cvb2Casca($comReferer)->corpo, 'csrf');
+    $hostil = $a->cliente();
+    $csrfHostil = cvb2Campo(cvb2Casca($hostil)->corpo, 'csrf');
+    $fora = $a->cliente();
+    $csrfFora = cvb2Campo(cvb2Casca($fora)->corpo, 'csrf');
+
+    $r1 = cvb2Enviar($semReferer, cvb2Campos($tokenSem, $csrfSem, CVB2_SENHA), ['Referer' => null]);
+    $r2 = cvb2Enviar($comReferer, cvb2Campos($tokenCom, $csrfCom, CVB2_SENHA), ['Referer' => $comReferer->origem() . '/']);
+    $r3 = cvb2Enviar($hostil, cvb2Campos($tokenHostil, $csrfHostil, CVB2_SENHA), ['Referer' => 'http://site-de-outro.example/?t=' . $tokenHostil]);
+    igual(303, $r1->status, 'sem Referer e com Origin própria: cria a senha e entra');
+    igual(303, $r2->status, 'com Referer próprio: cria a senha e entra');
+    igual(303, $r3->status, 'com Referer de outro site e Origin própria: a checagem não olha o Referer');
+    igual($r2->cabecalho('location'), $r1->cabecalho('location'), 'mesmo destino com e sem Referer');
+
+    $antes = hash_file('sha256', $a->priv . '/usuarios.json');
+    $r4 = cvb2Enviar($fora, cvb2Campos($tokenFora, $csrfFora, CVB2_SENHA), ['Referer' => null, 'Origin' => 'http://site-de-outro.example']);
+    igual(403, $r4->status, 'sem Referer e com Origin de outro site: recusa');
+    igual($antes, hash_file('sha256', $a->priv . '/usuarios.json'), 'a recusa sem Referer não grava');
+});

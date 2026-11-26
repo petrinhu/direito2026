@@ -935,6 +935,7 @@ publicar_versao() {
   checar_poda_previa
   anterior="$(anterior_no_destino)"
   echo "publicar: versão anterior no destino: ${anterior:-nenhuma (primeira publicação com este comando)}"
+  enviar_senhas_comuns
   enviar_app
   enviar_webroot "$DESTINO_WEBROOT"
   trocar_ponteiro
@@ -1063,6 +1064,7 @@ conferir_ar() {
 preparar_destinos() {
   DEPLOY_INICIADO=1
   DIVERGENCIAS=0
+  enviar_senhas_comuns
   enviar_app
   trocar_ponteiro
   enviar_dados_juri
@@ -1096,6 +1098,23 @@ enviar_dados_juri() {
 # git-crypt no blob. A magia é lida em hexadecimal, sem pipe com status: com pipefail, o head que
 # fecha cedo dava SIGPIPE e reprovava arquivo cifrado grande (falso positivo, LU-F4.3).
 # Zero arquivo cifrado é falha (varredura quebrada).
+# NIST-SENHAS-PROIBIDAS: a lista de senhas comuns vai ao privado do destino antes do app novo, que a lê para
+# recusar senha comum. Sai do clone do commit base; a cópia no destino é conferida por md5 e divergência recusa.
+# Sem a lista no privado, a criação, a redefinição e a troca de senha recusam (fail secure).
+enviar_senhas_comuns() {
+  local origem="$CLONE/servidor/dados/senhas-proibidas.txt" antes="$DIVERGENCIAS"
+  [ -s "$origem" ] ||
+    recusar "lista de senhas comuns ausente ou vazia no clone (NIST-SENHAS-PROIBIDAS): sem ela a troca recusa tudo"
+  conferir_destino_seguro "$DESTINO_PRIVADO"
+  no_destino "mkdir -p -m 700 '$DESTINO_PRIVADO'" || recusar "não criei a pasta privada para a lista de senhas comuns"
+  rsync_destino "$origem" "$DESTINO_PRIVADO/senhas-proibidas.txt" -t --checksum --chmod=F600 ||
+    recusar "envio da lista de senhas comuns falhou (nada do app foi trocado)"
+  conferir_md5_arquivo "$origem" "$DESTINO_PRIVADO/senhas-proibidas.txt" senhas-comuns
+  [ "$DIVERGENCIAS" = "$antes" ] ||
+    recusar "cópia da lista de senhas comuns diverge no destino (md5); nada do app foi trocado"
+  echo "publicar: lista de senhas comuns no privado (md5 conferido, 600)"
+}
+
 contar_cifra() {
   local dir="$1" ref="$2" f magia encontrados=0 claros=0
   local -a arquivos=()

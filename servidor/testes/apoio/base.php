@@ -316,6 +316,9 @@ final class Ambiente
             file_put_contents($a->docroot . '/arquivo.txt', 'estatico');
         }
         $a->zerarTentativas(); // como o CLI: tentativas.json existe desde o provisionamento
+        // Lista de senhas comuns (NIST-SENHAS-PROIBIDAS): no privado, como o deploy a leva. Sem ela a troca recusa tudo (fail secure).
+        copy(RAIZ_REPO . '/servidor/dados/senhas-proibidas.txt', $a->priv . '/senhas-proibidas.txt');
+        chmod($a->priv . '/senhas-proibidas.txt', 0600);
         if ($opcoes['admin'] ?? true) {
             $a->semearUsuario(self::LOGIN_ADMIN, self::SENHA_ADMIN, true, $opcoes['deveTrocar'] ?? false);
         }

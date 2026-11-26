@@ -9,6 +9,10 @@ if (!defined('D26_API')) {
 if (!defined('D26_LOCK_TETO_MS')) {
     define('D26_LOCK_TETO_MS', 300);
 }
+// Testes de unidade chamam a validação de senha fora do servidor: a lista vem do repositório (o servidor lê o privado).
+if (!defined('D26_SENHAS_COMUNS_CAMINHO')) {
+    define('D26_SENHAS_COMUNS_CAMINHO', RAIZ_REPO . '/servidor/dados/senhas-proibidas.txt');
+}
 foreach (['config', 'armazenamento', 'respostas', 'contas', 'limite', 'dispositivo', 'csrf'] as $modulo) {
     require_once RAIZ_REPO . "/public/api/nucleo/$modulo.php";
 }

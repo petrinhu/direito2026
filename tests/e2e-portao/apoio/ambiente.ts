@@ -185,6 +185,19 @@ export function prepararAmbiente(dist: string): void {
   writeFileSync(join(PRIVADO, 'acervo.json'), JSON.stringify(acervo));
   chmodSync(join(PRIVADO, 'acervo.json'), 0o600);
 
+  // NIST-SENHAS-PROIBIDAS: a lista vai ao privado, como o deploy a leva. Sem ela a troca de senha recusa tudo (fail secure).
+  const listaSenhas = join(
+    import.meta.dirname,
+    '..',
+    '..',
+    '..',
+    'servidor',
+    'dados',
+    'senhas-proibidas.txt'
+  );
+  copyFileSync(listaSenhas, join(PRIVADO, 'senhas-proibidas.txt'));
+  chmodSync(join(PRIVADO, 'senhas-proibidas.txt'), 0o600);
+
   montarApp(dist);
   restaurarVersaoBase();
 }

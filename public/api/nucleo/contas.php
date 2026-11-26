@@ -77,6 +77,22 @@ function d26_email_em_uso(array $usuarios, string $email, string $loginIgnorado)
     return false;
 }
 
+/** Lista de senhas comuns no privado (NIST-SENHAS-PROIBIDAS): uma por linha, minúsculas, sem repetidas. */
+const D26_SENHAS_COMUNS_ARQUIVO = 'senhas-proibidas.txt';
+
+/**
+ * Senhas comuns como conjunto (chave = senha), ou null se a lista não existe ou não abre: quem chama recusa a senha
+ * (fail secure). Sem cache estático: os cerca de 10 MB saem antes do Argon2id (64 MB) começar. Não grava nem registra
+ * a senha testada.
+ * @return array<string, true>|null
+ */
+function d26_senhas_comuns(): ?array
+{
+    $arquivo = defined('D26_SENHAS_COMUNS_CAMINHO') ? D26_SENHAS_COMUNS_CAMINHO : d26_priv() . '/' . D26_SENHAS_COMUNS_ARQUIVO;
+    $linhas = @file($arquivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    return $linhas === false ? null : array_fill_keys($linhas, true);
+}
+
 /** Devolve a mensagem de recusa em pt-br, ou null se a senha nova serve. */
 function d26_validar_senha_nova(string $nova, string $login, string $atual): ?string
 {
@@ -89,6 +105,13 @@ function d26_validar_senha_nova(string $nova, string $login, string $atual): ?st
     }
     if ($tamanho > D26_SENHA_MAXIMA) {
         return 'A senha pode ter no máximo 128 caracteres.';
+    }
+    $comuns = d26_senhas_comuns();
+    if ($comuns === null) {
+        return 'Não foi possível conferir a senha agora. Tente de novo em instantes.';
+    }
+    if (isset($comuns[mb_strtolower($nova, 'UTF-8')])) {
+        return 'Essa senha é muito comum. Escolha outra.';
     }
     if ($nova === $login) {
         return 'A senha não pode ser igual ao nome de usuário.';

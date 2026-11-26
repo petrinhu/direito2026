@@ -20,7 +20,8 @@ teste('config: D26_PRIVADO só vale no cli-server', function (): void {
 
 teste('senha nova: 15 a 128 caracteres contados em caracteres, não bytes (LU-F2.5, plano seção 3)', function (): void {
     verdadeiro(is_string(d26_validar_senha_nova(str_repeat('a', 14), 'ana', 'x')), '14 caracteres recusados');
-    igual(null, d26_validar_senha_nova(str_repeat('a', 15), 'ana', 'x'));
+    // 'a' x 15 está na lista de senhas comuns (NIST-SENHAS-PROIBIDAS): o enchimento do teste de tamanho não pode ser comum.
+    igual(null, d26_validar_senha_nova(str_repeat('Ab3', 5), 'ana', 'x'));
     igual(null, d26_validar_senha_nova(str_repeat('a', 128), 'ana', 'x'));
     verdadeiro(is_string(d26_validar_senha_nova(str_repeat('a', 129), 'ana', 'x')), '129 caracteres recusados');
     igual(null, d26_validar_senha_nova(str_repeat('ç', 15), 'ana', 'x'));

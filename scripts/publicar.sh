@@ -643,6 +643,11 @@ P usuarios.json
 P tentativas.json
 P segredo.key
 P erros.log
+P poda-lgpd.json
+P poda-lgpd.marca
+P poda-quarentena/
+P incidentes.log
+P incidentes-linhas.txt
 P verificacoes.log
 P pausado-*
 P *.lock

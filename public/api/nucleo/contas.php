@@ -23,7 +23,6 @@ const D26_CONTAS_PADRAO = ['versao' => 1, 'usuarios' => []];
  * uma senha maior não tem conta correspondente: é recusada antes do Argon2id (X9).
  */
 const D26_SENHA_MAXIMA = 128;
-const D26_ALFABETO_PROVISORIA = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 
 function d26_contas_arquivo(string $priv): string
 {
@@ -124,10 +123,8 @@ function d26_validar_senha_nova(string $nova, string $login, string $atual): ?st
 
 /**
  * Senha provisória escolhida por quem administra: de $minimo a 128 caracteres.
- * O CLI do líder aceita 1 (padrão); a API do admin exige 8 (D26_PROVISORIA_MINIMA_API).
+ * O CLI do líder aceita 1 (padrão); a API do admin exige 8.
  */
-const D26_PROVISORIA_MINIMA_API = 8;
-
 function d26_senha_provisoria_valida(string $senha, int $minimo = 1): bool
 {
     if (!mb_check_encoding($senha, 'UTF-8')) {
@@ -135,16 +132,6 @@ function d26_senha_provisoria_valida(string $senha, int $minimo = 1): bool
     }
     $n = mb_strlen($senha, 'UTF-8');
     return $n >= $minimo && $n <= D26_SENHA_MAXIMA;
-}
-
-function d26_gerar_senha_provisoria(): string
-{
-    $senha = '';
-    $max = strlen(D26_ALFABETO_PROVISORIA) - 1;
-    for ($i = 0; $i < 12; $i++) {
-        $senha .= D26_ALFABETO_PROVISORIA[random_int(0, $max)];
-    }
-    return $senha;
 }
 
 function d26_hash_senha(string $senha): string

@@ -6,6 +6,8 @@ if (!defined('D26_API')) {
     exit;
 }
 
+require_once __DIR__ . '/limite-poda.php';
+
 /**
  * Limite de tentativas de login. Arquivo tentativas.json:
  * {"u": {sha256(login+IP): {n, ult}}, "ip": {sha256(IP): {f: [ts...]}}, "c": {sha256(login): {f: [ts...]}}}.
@@ -125,6 +127,8 @@ function d26_limite_reservar(string $priv, string $login, string $ip, int $agora
  */
 function d26_limite_reservar_detalhado(string $priv, string $login, string $ip, int $agora, bool|callable $dispositivoConfiavel = false): array
 {
+    // LGPD-LIMITE: poda do registro de limite, fora da trava e só com interruptor ligado (nunca derruba o login).
+    d26_poda_oportunista($priv, $agora);
     $grupo = d26_limite_ip_agrupado($ip);
     return d26_atualizar_json(
         d26_limite_arquivo($priv),

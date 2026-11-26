@@ -73,7 +73,7 @@ const ETAPAS = [
   'montar_caminhos_protegidos',
   'conferir_ar',
   'enviar_ao_git',
-  'apagar_pacote_versao',
+  'reter_pacotes_apos_sucesso',
   'conferir_destino_seguro'
 ];
 
@@ -217,7 +217,7 @@ describe('ordem da fase pública (AV-F5, OS-1)', () => {
         'montar_caminhos_protegidos',
         'conferir_ar',
         'enviar_ao_git',
-        'apagar_pacote_versao',
+        'reter_pacotes_apos_sucesso',
         'no_destino:ls',
         'no_destino:mv'
       ]);

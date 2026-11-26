@@ -199,3 +199,54 @@ describe('publicar exige o recibo (ponto de chamada)', () => {
     expect(posRecibo).toBeLessThan(principal.indexOf('preparar_clone'));
   });
 });
+
+describe('decisão do gravar: repetição de uma vez só do piramide3d (PIR-H7)', () => {
+  const LINHA_PIRAMIDE =
+    '  1) [chromium] › tests/e2e-portao/piramide3d.spec.ts:376:3 › a 1280 px, com WebGL › Esc a devolve';
+  const LINHA_CONVITE =
+    '  2) [brave] › tests/e2e-portao/convite.spec.ts:578:3 › exigirRefererSemToken';
+
+  function decidir(log: string, rc: number): { status: number | null; saida: string } {
+    const arquivo = join(tmp, 'rodada.log');
+    writeFileSync(arquivo, log);
+    const r = spawnSync('bash', [SCRIPT_FONTE, 'decidir', arquivo, String(rc)], {
+      encoding: 'utf-8'
+    });
+    return { status: r.status, saida: `${r.stdout}${r.stderr}` };
+  }
+
+  it('rodada verde: resultado verde e nenhuma observação', () => {
+    const r = decidir('  524 passed (22.3m)\n', 0);
+    expect(r.status, r.saida).toBe(0);
+    expect(r.saida).toContain('resultado=verde');
+    expect(r.saida).not.toContain('observacao=');
+  });
+
+  it('falha só no piramide3d: manda repetir esse spec uma vez', () => {
+    const r = decidir(`${LINHA_PIRAMIDE}\n  1 failed\n  524 passed\n`, 1);
+    expect(r.saida).toContain('resultado=repetir');
+  });
+
+  it('falha no piramide3d e em outro arquivo: vermelho, sem repetição', () => {
+    const r = decidir(`${LINHA_PIRAMIDE}\n${LINHA_CONVITE}\n`, 1);
+    expect(r.saida).toContain('resultado=vermelho');
+    expect(r.saida).not.toContain('resultado=repetir');
+  });
+
+  it('rc diferente de zero sem linha de falha reconhecível: vermelho', () => {
+    const r = decidir('  Error: algo sem arquivo\n', 1);
+    expect(r.saida).toContain('resultado=vermelho');
+  });
+
+  it('repetição do piramide3d que passa: verde com a observação que diz que foi repetido', () => {
+    const r = spawnSync('bash', [SCRIPT_FONTE, 'decidir-repeticao', '0'], { encoding: 'utf-8' });
+    expect(r.stdout).toContain('resultado=verde');
+    expect(r.stdout).toContain('observacao=piramide3d repetido 1 vez (instável, PIR-H7)');
+  });
+
+  it('repetição do piramide3d que falha de novo: vermelho', () => {
+    const r = spawnSync('bash', [SCRIPT_FONTE, 'decidir-repeticao', '1'], { encoding: 'utf-8' });
+    expect(r.stdout).toContain('resultado=vermelho');
+    expect(r.stdout).not.toContain('resultado=verde');
+  });
+});

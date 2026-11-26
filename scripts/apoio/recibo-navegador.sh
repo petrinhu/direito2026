@@ -55,28 +55,71 @@ hash_da_ultima_tag() {
   hash_no_commit "$(git -C "$RAIZ" rev-list -n 1 "$tag")"
 }
 
+# Arquivos com falha, pelo resumo do list reporter ("  N) [navegador] › tests/e2e-portao/arquivo:linha › nome").
+arquivos_com_falha() {
+  sed -n -E 's/^ +[0-9]+\) \[[^]]+\] › (tests\/e2e-portao\/[^:]+):.*/\1/p' -- "$1" | sort -u
+}
+
+# Decisão da rodada inteira: verde (rc 0); repetir (falha só no piramide3d, uma vez); vermelho (o resto).
+decidir() {
+  local log="$1" rc="$2" falhas
+  if [ "$rc" -eq 0 ]; then
+    echo "resultado=verde"
+    return 0
+  fi
+  falhas="$(arquivos_com_falha "$log")"
+  if [ "$falhas" = "tests/e2e-portao/piramide3d.spec.ts" ]; then
+    echo "resultado=repetir"
+  else
+    echo "resultado=vermelho"
+  fi
+}
+
+# Decisão da repetição única do piramide3d (PIR-H7, instável): passou = verde, com a observação no recibo.
+decidir_repeticao() {
+  if [ "$1" -eq 0 ]; then
+    echo "resultado=verde"
+    echo "observacao=piramide3d repetido 1 vez (instável, PIR-H7)"
+  else
+    echo "resultado=vermelho"
+  fi
+}
+
 gravar() {
-  local sha hash rc dir tmp arquivo
+  local sha hash rc dir tmp arquivo log decisao resultado observacao=""
   sha="$(git -C "$RAIZ" rev-parse HEAD)" || return 1
   if [ -n "$(git -C "$RAIZ" status --porcelain -- "${PARTES[@]}")" ]; then
     echo "recibo: as partes têm mudança sem commit; commite antes de gravar o recibo (nada gravado)" >&2
     return 1
   fi
   hash="$(hash_no_commit HEAD)"
-  (cd "$RAIZ" && npm run test:e2e:portao)
-  rc=$?
-  if [ "$rc" -ne 0 ]; then
-    echo "recibo: a rodada de navegador reprovou (rc=$rc); nada gravado" >&2
+  log="$(mktemp)" || return 1
+  (cd "$RAIZ" && npm run test:e2e:portao) 2>&1 | tee "$log"
+  rc=${PIPESTATUS[0]}
+  decisao="$(decidir "$log" "$rc")"
+  if [ "$decisao" = "resultado=repetir" ]; then
+    echo "recibo: só o piramide3d falhou; repetindo esse spec uma vez (PIR-H7, instável)" >&2
+    (cd "$RAIZ" && npm run test:e2e:portao -- tests/e2e-portao/piramide3d.spec.ts) 2>&1 | tee "$log.repeticao"
+    rc=${PIPESTATUS[0]}
+    decisao="$(decidir_repeticao "$rc")"
+  fi
+  rm -f -- "$log" "$log.repeticao"
+  resultado="${decisao#resultado=}"
+  if [ "$resultado" != verde ]; then
+    echo "recibo: a rodada de navegador não fechou verde ($decisao); nada gravado" >&2
     return 1
   fi
+  observacao="$(printf '%s\n' "$decisao" | sed -n 's/^observacao=//p')"
   arquivo="$(caminho)"
   dir="$(dirname -- "$arquivo")"
   (umask 077 && mkdir -p -- "$dir") || return 1
   tmp="$(mktemp -- "$dir/.recibo.XXXXXX")" || return 1
-  if printf 'sha=%s\npartes=%s\nresultado=verde\nnavegadores=chromium,brave\ndata=%s\n' \
-    "$sha" "$hash" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$tmp" &&
+  if printf 'sha=%s\npartes=%s\nresultado=verde\nnavegadores=chromium,brave\ndata=%s\n%s' \
+    "$sha" "$hash" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    "${observacao:+observacao=$observacao
+}" > "$tmp" &&
     chmod 600 -- "$tmp" && mv -f -- "$tmp" "$arquivo"; then
-    echo "recibo: gravado para o SHA $sha (partes $hash)"
+    echo "recibo: gravado para o SHA $sha (partes $hash)${observacao:+; $observacao}"
     return 0
   fi
   rm -f -- "$tmp"
@@ -115,6 +158,8 @@ case "${1:-}" in
   caminho) caminho ;;
   hash) hash_no_commit HEAD ;;
   gravar) gravar ;;
+  decidir) decidir "${2:-}" "${3:-1}" ;;
+  decidir-repeticao) decidir_repeticao "${2:-1}" ;;
   conferir) conferir ;;
   *)
     echo "uso: recibo-navegador.sh caminho | hash | gravar | conferir" >&2

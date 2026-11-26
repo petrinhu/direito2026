@@ -137,4 +137,5 @@ Crie a release, isto é, a versão nova com número próprio, só dentro do `pub
 
 - As partes são `public/api` (inclui as telas do servidor, `public/api/nucleo/telas.php`) e `tests/e2e-portao`. A rodada é `npm run test:e2e:portao`, inteira, sem filtro, pela fila do pesado: `scripts/apoio/recibo-navegador.sh gravar`.
 - O recibo fica fora do git, com o SHA testado, o hash das partes e o resultado verde.
+- Se só `tests/e2e-portao/piramide3d.spec.ts` falhar, o `gravar` o repete uma vez (PIR-H7, instável), e o recibo registra a observação. Uma segunda falha dele, ou qualquer outra falha, deixa o recibo vermelho.
 - O `publicar` recusa, antes de qualquer escrita, quando as partes mudaram desde a última tag `v*` e o recibo não confere (sem recibo, com hash de outro conteúdo ou sem resultado verde). Partes intactas seguem sem recibo. Nenhum portão foi afrouxado.

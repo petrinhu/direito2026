@@ -31,7 +31,7 @@ function git(...args: string[]): string {
       '-c',
       'user.name=teste',
       '-c',
-      'user.email=teste@example.invalid',
+      'user.email=teste@example.com',
       '-c',
       'commit.gpgsign=false',
       '-c',
